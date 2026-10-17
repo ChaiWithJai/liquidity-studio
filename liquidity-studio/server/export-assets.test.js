@@ -53,8 +53,8 @@ test('brand typography uses bundled approved families and never injects arbitrar
   const campaign = { infographic: { headline: 'Reviewed source', statRows: ['Source excerpt'], bottomTakeaway: 'Review the source' } };
   const svg = renderSvg({ brandProfile: { logoText: 'CWJ//ॐ', fonts: { heading: 'Mona Sans', body: 'Inter' } }, campaign });
   assert.match(svg, /CWJ\/\/ॐ/);
-  assert.match(svg, /font-family="Mona Sans"/);
-  assert.match(svg, /font-family="Inter"/);
+  assert.match(svg, /font-family="Mona Sans, Noto Sans Devanagari/);
+  assert.match(svg, /font-family="Inter, Noto Sans Devanagari/);
   const unsafe = renderSvg({ brandProfile: { fonts: { heading: '\" onload=\"alert(1)' } }, campaign });
   assert.doesNotMatch(unsafe, /onload/);
 });
