@@ -58,3 +58,11 @@ test('provider attribution does not depend on a Gemini key; invented claims are 
     await assert.rejects(run(new AIGateway({ provider: 'openai-gateway', allowSynthetic: false })), /Invalid campaign field types/);
   } finally { globalThis.fetch = original; }
  });
+
+test('failed synthetic generation includes an error trace', async () => {
+  const gateway = new AIGateway({ allowSynthetic: true });
+  await assert.rejects(generateMultiFormatCampaign({ gateway, story: { id: 'empty', title: 'No facts', verifiedFacts: [] } }), error => {
+    assert.equal(error.trace.status, 'error');
+    return /supplied fact/.test(error.message);
+  });
+});

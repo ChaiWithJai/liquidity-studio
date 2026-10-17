@@ -122,25 +122,25 @@ export class AIGateway {
       // If external call failed and we can fall back to synthetic output
       if (this.config.allowSynthetic && prompt && responseSchema) {
         try {
-        const parsedOutput = synthesizeFallbackCampaign(prompt, traceMeta);
-        const provenance = { mode: 'synthetic', requiresReview: true, source: 'supplied-story-facts', reason: 'provider-failure' };
-        parsedOutput.provenance = provenance;
-        const latencyMs = Date.now() - startedAt;
-        return {
-          output: parsedOutput,
-          trace: {
-            traceId: `tr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-            timestamp: new Date().toISOString(),
-            provider: 'fallback-synthetic',
-            model: `${model}-fallback`,
-            latencyMs,
-            status: 'degraded',
-            provenance,
-            fallbackReason: 'Provider request or output validation failed',
-            promptChars: (prompt || '').length,
-            ...traceMeta
-          }
-        };
+          const parsedOutput = synthesizeFallbackCampaign(prompt, traceMeta);
+          const provenance = { mode: 'synthetic', requiresReview: true, source: 'supplied-story-facts', reason: 'provider-failure' };
+          parsedOutput.provenance = provenance;
+          const latencyMs = Date.now() - startedAt;
+          return {
+            output: parsedOutput,
+            trace: {
+              traceId: `tr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+              timestamp: new Date().toISOString(),
+              provider: 'fallback-synthetic',
+              model: `${model}-fallback`,
+              latencyMs,
+              status: 'degraded',
+              provenance,
+              fallbackReason: 'Provider request or output validation failed',
+              promptChars: (prompt || '').length,
+              ...traceMeta
+            }
+          };
         } catch (fallbackError) {
           err = fallbackError;
         }
