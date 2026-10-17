@@ -1,0 +1,33 @@
+name: Verify
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: liquidity-studio
+    env:
+      AI_PROVIDER: gcp-gemini
+      AI_ALLOW_SYNTHETIC: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build served UI
+        run: npm run build
+      - name: Verify HTTP and service contracts with synthetic data
+        run: npm run test:backwards
+      - name: Verify structural graph and legacy source checks
+        run: npm run qa:loop
+      - name: Require generated assets to match committed source
+        run: git diff --exit-code -- dist
