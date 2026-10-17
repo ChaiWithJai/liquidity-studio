@@ -14,6 +14,9 @@ test.beforeAll(async () => {
   directory = mkdtempSync(join(tmpdir(), 'studio-google-browser-'));
   process.env.AI_ALLOW_SYNTHETIC = 'true';
   if (emulatorHost) {
+    if (!/^(127\.0\.0\.1|localhost):\d+$/.test(emulatorHost)) throw new Error('Test requires loopback Auth Emulator');
+    const reset = await fetch(`http://${emulatorHost}/emulator/v1/projects/demo-liquidity-auth/accounts`, {method:'DELETE'});
+    if (!reset.ok) throw new Error('Could not reset isolated demo Auth Emulator accounts');
     process.env.STUDIO_AUTH_MODE = 'google';
     process.env.STUDIO_AUTH_EMULATOR_ENABLED = 'true';
     process.env.STUDIO_GOOGLE_FOUNDER_EMAIL = founderEmail;
