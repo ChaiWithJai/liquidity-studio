@@ -57,7 +57,7 @@ test('both presets evaluate source coverage without requiring financial numbers'
   assert.equal(result.domain, 'culture-wellbeing');
   assert.equal(result.factualAccuracy, 'not_assessed');
   assert.equal(result.editorialReviewRequired, true);
-  assert.equal(BRAND_PRESETS.vedic_dharma.logoText, 'CWJ');
+  assert.equal(BRAND_PRESETS.vedic_dharma.logoText, 'CWJ // ॐ');
   assert.equal(BRAND_PRESETS.vedic_dharma.strategy.clinicalClaimsQuarantined, true);
 });
 
@@ -129,4 +129,20 @@ test('source claims require explicit classification instead of silently treating
   const unclassified = { sourceClaims: [{ ...story.sourceClaims[0] }] };
   delete unclassified.sourceClaims[0].kind;
   assert.throws(() => getApprovedClaims(unclassified), error => error.code === 'SOURCE_KIND_REQUIRED');
+});
+
+test('CWJ preserves founder positioning without promoting research tasks or titles to verified claims', async () => {
+  const preset = BRAND_PRESETS.vedic_dharma;
+  assert.equal(preset.websiteUrl, 'https://chaiwithjai.com');
+  assert.equal(preset.strategy.valueGroups.length, 4);
+  assert.equal(preset.strategy.pillars.length, 5);
+  assert.equal(preset.researchBacklog.length, 5);
+  for (const task of preset.researchBacklog) {
+    assert.deepEqual(task.sourceClaims, []);
+    assert.deepEqual(task.verifiedFacts, []);
+    await assert.rejects(run(gateway({ allowSynthetic: true }), task, preset), /Approve at least one sourced claim/);
+  }
+  const misleadingTitle = { ...story, title: 'A $250M cure for every illness' };
+  const campaign = campaignFromApprovedClaims(misleadingTitle);
+  assert.doesNotMatch(JSON.stringify(campaign), /250M|cure|illness/);
 });
