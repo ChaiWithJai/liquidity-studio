@@ -110,7 +110,7 @@ export async function generateMultiFormatCampaign({ gateway, story, brandProfile
 Content domain: ${brandProfile.contentDomain || 'general'}. Preserve source meaning and units.
 Controlled excerpt mode: return the supplied campaign JSON exactly. Do not add facts, labels, statistics or claims.
 All output requires editorial review. Source approval is not proof of scientific or financial truth.`;
-  const prompt = `Approved source claims:\n${JSON.stringify(claims)}\nReturn this exact campaign JSON:\n${JSON.stringify(expectedCampaign)}`;
+  const prompt = `Approved source claims:\n${JSON.stringify(claims.map(({ id, text, sourceUrl, kind }) => ({ id, text, sourceUrl, kind })))}\nReturn this exact campaign JSON:\n${JSON.stringify(expectedCampaign)}`;
 
   const responseSchema = {
     type: 'OBJECT',
