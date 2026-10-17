@@ -33,6 +33,7 @@ else if(args[0]==='secrets'&&args[1]==='list')console.log(JSON.stringify(existin
 else if(args[0]==='secrets'&&args[1]==='versions'&&args[2]==='list')console.log(JSON.stringify(existing?[{name:'projects/pilot-project/secrets/'+args[3]+'/versions/1',state:'ENABLED'}]:[]));
 else if(args[0]==='secrets'&&args[1]==='versions'&&args[2]==='add')console.log(JSON.stringify({name:'projects/pilot-project/secrets/'+args[3]+'/versions/1'}));
 else if(args[0]==='run'&&args[2]==='describe')console.log(JSON.stringify({metadata:{annotations:{'run.googleapis.com/iap-enabled':process.env.TEST_IAP_DISABLED?'false':'true'}}}));
+else if(args[0]==='iap'&&args[1]==='settings'&&args[2]==='get')console.log(JSON.stringify(process.env.TEST_CUSTOM_OAUTH?{accessSettings:{oauthSettings:{clientId:'test.apps.googleusercontent.com'}}}:{}));
 else if(args.includes('get-iam-policy'))console.log(JSON.stringify({bindings:process.env.TEST_BROAD_IAP?[{role:'roles/iap.httpsResourceAccessor',members:['allAuthenticatedUsers']}]:[]}));
 else console.log('{}');
 `, { mode: 0o755 });
@@ -91,4 +92,13 @@ test('access is separate, requires IAP already enabled and denies unexpected inh
     assert.equal(result.status, 1);
     assert.deepEqual(changes(result), []);
   }
+});
+
+test('external identity does not block prerequisites; access requires observed custom OAuth rather than a readiness flag', () => {
+  const external = { PILOT_MARKETER_EMAIL: 'nicole.mercede@gmail.com' };
+  assert.equal(run('apply', external).status, 0);
+  const denied = run('access', { ...external, PILOT_EXTERNAL_IAP_OAUTH_READY: 'true' });
+  assert.equal(denied.status, 1);
+  assert.deepEqual(changes(denied), []);
+  assert.equal(run('access', { ...external, TEST_CUSTOM_OAUTH: '1' }).status, 0);
 });

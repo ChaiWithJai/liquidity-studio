@@ -65,7 +65,6 @@ try {
   requireMatch(organization, /^\d+$/, 'PILOT_ORGANIZATION_ID');
   for (const user of users) requireMatch(user, /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 'explicit founder and marketer email');
   if (users[0].toLowerCase() === users[1].toLowerCase()) throw new Error('Founder and marketer must be distinct accounts');
-  if (users.some(user => user.split('@')[1].toLowerCase() !== 'chaiwithjai.com') && process.env.PILOT_EXTERNAL_IAP_OAUTH_READY !== 'true') throw new Error('External IAP users require separately verified OAuth configuration before provisioning');
   if (mode !== 'plan' && process.argv[3] !== '--apply') throw new Error('Resource or access changes require --apply');
   if (mode === 'plan') {
     console.log(JSON.stringify({ project, organization, region, budgetUSD: budget, billingGate: 'linked account and verified monthly all-service project budget required before any mutation', users, resourceStage: 'prerequisites only; service deployment and access are separate' }));
@@ -89,6 +88,11 @@ try {
     if (mode === 'apply') for (const secret of secrets) requireMatch(process.env[secret.variable], /^[^\r\n]{16,256}$/, secret.variable);
     const info = verifyGate();
     if (mode === 'access') {
+      if (users.some(user => user.split('@')[1].toLowerCase() !== 'chaiwithjai.com')) {
+        const settings = json(['iap', 'settings', 'get', '--resource-type=cloud-run', `--service=${service}`, `--region=${region}`, ...globalFlags]);
+        const clientId = settings.accessSettings?.oauthSettings?.clientId ?? settings.access_settings?.oauth_settings?.client_id;
+        if (!clientId || !clientId.endsWith('.apps.googleusercontent.com')) throw new Error('External access requires a custom OAuth client configured in Console; no access permissions changed');
+      }
       const configuredService = json(['run', 'services', 'describe', service, `--region=${region}`, ...globalFlags]);
       if (configuredService.metadata?.annotations?.['run.googleapis.com/iap-enabled'] !== 'true') throw new Error('Service must already enforce native IAP before granting users access');
       const policy = json(['iap', 'web', 'get-iam-policy', '--resource-type=cloud-run', `--service=${service}`, `--region=${region}`, ...globalFlags]);
