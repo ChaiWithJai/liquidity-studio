@@ -50,7 +50,7 @@ function command(args, { execute = false, capture = false } = {}) {
 try {
   validateConfig({ project, region, budget, service, database, bucket, image });
   if (aiLocation !== "us")
-    throw new Error("PILOT_AI_LOCATION must use the approved us multi-region");
+    throw new Error("PILOT_AI_LOCATION must use the selected us multi-region");
   if (!["plan", "preflight", "deploy", "rollback"].includes(mode))
     throw new Error("Use plan, preflight, deploy or rollback");
   const readOnly = [
