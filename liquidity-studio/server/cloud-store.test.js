@@ -111,3 +111,25 @@ test('cloud readiness checks both dependencies and redacts SDK diagnostics', asy
     return error.code === 'CLOUD_DEPENDENCY_UNAVAILABLE';
   });
 });
+
+test('GCS reel text export preserves its UTF8 MIME metadata', async () => {
+  const store = new FirestoreStore({ firestore: fakeFirestore(), bucket: fakeBucket() });
+  const bytes = Buffer.from('Reel script: source notes');
+  const reference = await store.uploadArtifact(scope, 'reel-one', bytes, 'text/plain; charset=utf-8');
+  assert.equal(reference.contentType, 'text/plain; charset=utf-8');
+  assert.deepEqual(await store.downloadArtifact(scope, reference), bytes);
+});
+
+test('overlapping readiness checks share one underlying dependency operation', async () => {
+  const store = new FirestoreStore({ firestore: fakeFirestore(), bucket: fakeBucket() });
+  let resolve;
+  let calls = 0;
+  store.bucket.getMetadata = () => { calls++; return new Promise(done => { resolve = done; }); };
+  const first = store.checkHealth();
+  const second = store.checkHealth();
+  await new Promise(done => setImmediate(done));
+  assert.equal(calls, 1);
+  resolve([{}]);
+  await Promise.all([first, second]);
+  assert.equal(store.healthRequest, null);
+});
