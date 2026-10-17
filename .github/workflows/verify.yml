@@ -30,7 +30,7 @@ jobs:
       - name: Install the locked application and test dependencies
         run: npm ci --engine-strict --no-fund
       - name: Build the canonical served Svelte UI
-        run: npm run build
+        run: NODE_ENV=production npm run build
       - name: Verify all Node unit and HTTP integration contracts
         run: node --test server/*.test.js
       - name: Verify project budget and deployment evidence guards
@@ -63,7 +63,7 @@ jobs:
       - name: Install real Chromium and its Linux dependencies
         run: npx playwright install --with-deps chromium
       - name: Build the actual browser application
-        run: npm run build
+        run: NODE_ENV=production npm run build
       - name: Verify operator workflows in Chromium against authenticated APIs
         run: npm run test:browser -- --project=chromium
       - uses: actions/upload-artifact@v4
@@ -134,7 +134,7 @@ jobs:
       - name: Install real Chromium
         run: npx playwright install --with-deps chromium
       - name: Build the actual Google sign-in UI
-        run: npm run build
+        run: NODE_ENV=production npm run build
       - name: Verify Google popup and bearer authorization against the official Auth Emulator
         run: bash ../scripts/test-google-auth-emulator.sh
       - uses: actions/upload-artifact@v4
