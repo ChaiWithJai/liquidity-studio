@@ -27,6 +27,8 @@ jobs:
         run: npm run build
       - name: Verify HTTP and service contracts with synthetic data
         run: npm run test:backwards
+      - name: Verify operational probes and truthful telemetry
+        run: node --test server/operational-health.test.js
       - name: Verify structural graph and legacy source checks
         run: npm run qa:loop
       - name: Require generated assets to match committed source
