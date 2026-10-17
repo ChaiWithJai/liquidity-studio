@@ -567,9 +567,13 @@ test("actual CWJ profile round trips with structured strategy and quarantined re
   assert.equal(bootstrap.brandProfile.strategy.valueGroups.length, 4);
   assert.equal(bootstrap.brandProfile.strategy.pillars.length, 5);
   assert.equal(bootstrap.backlog.length, 5);
-  assert.ok(
-    bootstrap.backlog.every((story) => story.sourceClaims.length === 0),
-  );
+  assert.ok(bootstrap.backlog.slice(0, 4).every((story) => story.sourceClaims.length === 0));
+  const culturalTask = bootstrap.backlog[4];
+  assert.match(culturalTask.title, /Yoga Sutras/);
+  assert.equal(culturalTask.sourceClaims.length, 1);
+  assert.equal(culturalTask.sourceClaims[0].kind, 'cultural');
+  assert.equal(culturalTask.sourceClaims[0].status, 'unreviewed');
+  assert.equal(culturalTask.verifiedFacts.length, 0);
   assert.equal(bootstrap.brandProfile.researchBacklog, undefined);
   const response = await f.api(
     "/api/studio/brand-profile",
