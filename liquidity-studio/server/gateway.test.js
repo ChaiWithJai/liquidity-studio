@@ -146,3 +146,9 @@ test('CWJ preserves founder positioning without promoting research tasks or titl
   const campaign = campaignFromApprovedClaims(misleadingTitle);
   assert.doesNotMatch(JSON.stringify(campaign), /250M|cure|illness/);
 });
+
+test('provider prompts exclude internal source reviewer identity', async () => {
+  const clinical = { ...story, sourceClaims: [{ ...story.sourceClaims[0], kind: 'clinical', clinicalReview: { reviewerId: 'private-reviewer-id', reviewedAt: '2026-10-17T12:00:00Z' } }] };
+  const mock = { async generateStructured({ prompt }) { assert.doesNotMatch(prompt, /private-reviewer-id|clinicalReview/); return {}; } };
+  await run(mock, clinical);
+});
