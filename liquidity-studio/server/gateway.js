@@ -169,7 +169,7 @@ function synthesizeFallbackCampaign(prompt = '', traceMeta = {}) {
   const rawFacts = story.verifiedFacts || [];
 
   let facts = rawFacts.length ? [...rawFacts] : [];
-  if (!facts.length) {
+  if (!facts.length && !traceMeta.story) {
     const factsBlock = prompt.match(/Verified Facts:\s*([\s\S]+?)(?=\n\nReturn|$)/)?.[1];
     if (factsBlock) {
       facts = factsBlock.split('\n').map((l) => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean);
