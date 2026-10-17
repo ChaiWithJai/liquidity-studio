@@ -49,3 +49,12 @@ test('provider attribution does not depend on a Gemini key; invented claims are 
     await assert.rejects(run(new AIGateway({ provider: 'openai-gateway', allowSynthetic: false })), /Gross margin label/);
   } finally { globalThis.fetch = original; }
 });
+
+ test('malformed provider fields are rejected before campaign persistence', async () => {
+  const original = globalThis.fetch;
+  const malformed = { infographic: { statRows: [null, null, null] }, carousel: { slides: [{}, {}, {}, {}] }, story: {}, reel: { beats: [{}, {}, {}] } };
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(malformed) } }] }) });
+  try {
+    await assert.rejects(run(new AIGateway({ provider: 'openai-gateway', allowSynthetic: false })), /Invalid campaign field types/);
+  } finally { globalThis.fetch = original; }
+ });

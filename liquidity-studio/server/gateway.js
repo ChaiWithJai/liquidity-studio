@@ -194,6 +194,16 @@ function validateCampaign(output, story) {
       !output.story || !Array.isArray(output.reel?.beats) || output.reel.beats.length !== 3) {
     throw new Error('Invalid campaign structure');
   }
+  const textFields = (value, fields) => value && fields.every(field => typeof value[field] === 'string' && value[field].trim());
+  if (!textFields(output.infographic, ['headline', 'bottomTakeaway', 'caption']) ||
+      !output.infographic.statRows.every(value => typeof value === 'string' && value.trim()) ||
+      !textFields(output.carousel, ['coverHook']) ||
+      !output.carousel.slides.every((slide, i) => slide?.slideNumber === i + 1 && textFields(slide, ['title', 'bodyMetric', 'visualNote'])) ||
+      !textFields(output.story, ['hookBanner', 'keyStatHighlight', 'interactiveStickerPrompt']) ||
+      !textFields(output.reel, ['spokenHook0to3s', 'closingCta']) ||
+      !output.reel.beats.every(beat => textFields(beat, ['timecode', 'voiceover', 'onScreenText', 'bRollDirection']))) {
+    throw new Error('Invalid campaign field types');
+  }
   if (!story) return;
   const facts = story.verifiedFacts || [];
   const allowed = new Set((facts.join(' ') + ' ' + story.title).match(/\d+(?:[.,]\d+)*/g) || []);
