@@ -1,3 +1,9 @@
+@font-face { font-family: "DejaVu Sans"; src: url("/fonts/DejaVuSans.ttf"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "DejaVu Sans"; src: url("/fonts/DejaVuSans-Bold.ttf"); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: "Mona Sans"; src: url("/fonts/MonaSans-Regular.otf"); font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: "Mona Sans"; src: url("/fonts/MonaSans-Bold.otf"); font-weight: 700; font-style: normal; font-display: block; }
+@font-face { font-family: "Inter"; src: url("/fonts/InterVariable.ttf"); font-weight: 100 900; font-style: normal; font-display: block; }
+@font-face { font-family: "Instrument Serif"; src: url("/fonts/InstrumentSerif-Regular.ttf"); font-weight: 400; font-style: normal; font-display: block; }
 :root {
   font-family: "DM Sans", system-ui, sans-serif;
   color: #222a24;

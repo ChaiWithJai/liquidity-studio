@@ -13,3 +13,6 @@
 !server/*.js
 server/*test*.js
 server/fixtures/
+
+!public/
+!public/**

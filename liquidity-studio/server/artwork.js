@@ -28,11 +28,11 @@ function wrap(value, characters, maximumLines) {
   return lines;
 }
 
-function textBlock(value, x, y, size, width, maxLines, fill, weight = 400) {
+function textBlock(value, x, y, size, width, maxLines, fill, weight = 400, font = 'DejaVu Sans') {
   const lines = wrap(value, Math.max(8, Math.floor(width / (size * 0.63))), maxLines);
   return {
     height: Math.max(1, lines.length) * size * 1.3,
-    svg: `<text data-preflight-text="true" x="${x}" y="${y}" fill="${fill}" font-size="${size}" font-weight="${weight}">${lines.map((line, i) => `<tspan x="${x}" dy="${i ? size * 1.3 : 0}">${escapeXml(line)}</tspan>`).join('')}</text>`
+    svg: `<text data-preflight-text="true" x="${x}" y="${y}" fill="${fill}" font-family="${font}" font-size="${size}" font-weight="${weight}">${lines.map((line, i) => `<tspan x="${x}" dy="${i ? size * 1.3 : 0}">${escapeXml(line)}</tspan>`).join('')}</text>`
   };
 }
 
@@ -67,16 +67,19 @@ export function renderSvg({ brandProfile = {}, campaign, format = 'infographic',
     title = beat.onScreenText || campaign.reel.spokenHook0to3s;
     paragraphs = [beat.voiceover]; takeaway = campaign.reel.closingCta;
   }
+  const chooseFont = (value, fallback) => ['Mona Sans', 'Inter', 'Instrument Serif', 'DejaVu Sans'].find((name) => String(value || '').split('/')[0].trim() === name) || fallback;
+  const headingFont = chooseFont(brandProfile.fonts?.heading, 'DejaVu Sans');
+  const bodyFont = chooseFont(brandProfile.fonts?.body, 'DejaVu Sans');
   const blocks = [];
   let y = top;
-  const heading = textBlock(title, 80, y, 52, contentWidth, 5, foreground, 700);
+  const heading = textBlock(title, 80, y, 52, contentWidth, 5, foreground, 700, headingFont);
   blocks.push(heading.svg); y += heading.height + 72;
   for (const paragraph of paragraphs) {
-    const body = textBlock(paragraph, 106, y, 34, contentWidth - 60, 5, foreground);
+    const body = textBlock(paragraph, 106, y, 34, contentWidth - 60, 5, foreground, 400, bodyFont);
     blocks.push(`<path d="M80 ${y - 30}v${body.height + 10}" stroke="${accent}" stroke-width="6"/>`, body.svg);
     y += body.height + 50;
   }
-  const footer = textBlock(takeaway, 80, y + 10, 29, contentWidth, 4, muted);
+  const footer = textBlock(takeaway, 80, y + 10, 29, contentWidth, 4, muted, 400, bodyFont);
   const bottom = vertical ? height * 0.82 - 35 : height - 80;
   if (y + footer.height > bottom) throw new Error('Content exceeds the safe artwork area. Shorten the copy before exporting.');
   blocks.push(footer.svg);
