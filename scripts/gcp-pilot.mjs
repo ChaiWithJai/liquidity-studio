@@ -1,5 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { googleDeploymentEnv, verifyGoogleProvider } from './gcp-google.mjs';
 import { validateConfig, validateBudget, validateReport } from './gcp-validation.mjs';
 
 const mode = process.argv[2] || 'plan';
@@ -38,7 +41,7 @@ try {
   if (mode === 'plan') {
     console.log(JSON.stringify({ project, region, monthlyBudgetUSD: budget, database, bucket, runtimeAccount, target: 'founder and one marketer', storage: 'Firestore and private GCS; never ephemeral SQLite on Cloud Run', readiness: 'not deployed; preflight and local acceptance required', costLimits: 'budget alerts are not hard caps; eligible service caps have enforcement latency; generation quotas and single-instance limit required' }));
     for (const args of readOnly) command(args);
-    console.log(JSON.stringify({ prerequisites: ['Reauthenticate gcloud', 'Verify project ownership/billing and us-east4 resources', 'Set USD100 aggregate alerts and separately eligible Cloud Run/AI spend caps with headroom for storage/logging', 'Create least-privilege runtime identity and individual secret access', 'Configure direct browser IAP for exactly the two invited Google identities', 'Pass local persistence, isolation, export and restore tests', 'Build linux/amd64 image and record immutable digest', 'Record current Cloud Run revision and backup manifest before deployment'] }));
+    console.log(JSON.stringify({ prerequisites: ['Reauthenticate gcloud', 'Verify project ownership/billing and us-east4 resources', 'Set USD100 aggregate alerts and separately eligible Cloud Run/AI spend caps with headroom for storage/logging', 'Create runtime identity with firebaseauth.users.get and scoped data access; no app passwords', 'Configure Google provider and application email allowlist; public UI with signed-token data APIs', 'Pass local persistence, isolation, export and restore tests', 'Build linux/amd64 image and record immutable digest', 'Record current Cloud Run revision and backup manifest before deployment'] }));
   } else if (mode === 'preflight') {
     for (const args of readOnly) command(args, { execute: true });
   } else {
@@ -69,15 +72,24 @@ try {
       command(['run', 'services', 'update-traffic', service, `--project=${project}`, `--region=${region}`, `--to-revisions=${revision}=100`], { execute: true });
     } else {
       requireValue(image, 'PILOT_IMAGE with immutable sha256 digest', /@sha256:[a-f0-9]{64}$/);
-      const founderSecret = requireValue(process.env.PILOT_FOUNDER_PASSWORD_SECRET, 'PILOT_FOUNDER_PASSWORD_SECRET', /^[a-zA-Z0-9_-]+:\d+$/);
-      const marketerSecret = requireValue(process.env.PILOT_MARKETER_PASSWORD_SECRET, 'PILOT_MARKETER_PASSWORD_SECRET', /^[a-zA-Z0-9_-]+:\d+$/);
+      if (report.authMode !== 'google' || report.checks?.anonymousApi !== 'passed' || report.checks?.googleAuth !== 'passed') throw new Error('Google-mode image acceptance must prove anonymous API denial and managed sign-in before deployment');
+      const googleEnv = googleDeploymentEnv(process.env, project);
+      const tokenResult = spawnSync('gcloud', ['auth', 'print-access-token', `--project=${project}`], { encoding: 'utf8', stdio: 'pipe' });
+      if (tokenResult.status !== 0) throw new Error('Google provider verification requires authenticated project access');
+      await verifyGoogleProvider({ project, token: tokenResult.stdout.trim() });
       const datastore = JSON.parse(command(readOnly[4], { execute: true, capture: true }));
       if (datastore.locationId !== region || datastore.type !== 'FIRESTORE_NATIVE') throw new Error('Datastore must use Firestore Native in the authorized region');
       const assetBucket = JSON.parse(command(readOnly[5], { execute: true, capture: true }));
       if (assetBucket.name !== bucket || String(assetBucket.projectNumber) !== String(projectInfo.projectNumber) || assetBucket.location?.toLowerCase() !== region || assetBucket.iamConfiguration?.publicAccessPrevention !== 'enforced' || assetBucket.iamConfiguration?.uniformBucketLevelAccess?.enabled !== true) throw new Error('Asset bucket must belong to the verified project/region with public access prevention and uniform access enforced');
       for (const args of readOnly.slice(2, 4)) command(args, { execute: true });
-      command(['run', 'deploy', service, `--project=${project}`, `--region=${region}`, `--image=${image}`, `--service-account=${runtimeAccount}`, '--execution-environment=gen2', '--cpu=1', '--memory=512Mi', '--min-instances=0', '--max-instances=1', '--max=1', '--concurrency=8', '--timeout=60', '--no-allow-unauthenticated', '--iap', '--ingress=all', '--no-traffic', '--tag=pilot-candidate', `--set-env-vars=STUDIO_STORAGE_MODE=firestore,GOOGLE_CLOUD_PROJECT=${project},STUDIO_FIRESTORE_DATABASE=${database},STUDIO_ASSET_BUCKET=${bucket},STUDIO_COOKIE_SECURE=true,AI_PROVIDER=gcp-vertex,GOOGLE_CLOUD_LOCATION=${region},AI_VERTEX_USE_METADATA=true,AI_ALLOW_SYNTHETIC=false,STUDIO_DAILY_GENERATION_LIMIT=20`, `--set-secrets=STUDIO_FOUNDER_PASSWORD=${founderSecret},STUDIO_MARKETER_PASSWORD=${marketerSecret}`], { execute: true });
-      console.log('Candidate created with no production traffic. Verify IAP, sign-in, isolation, real provider, restore and spend controls before promoting traffic.');
+      const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'liquidity-cloud-env-'));
+      fs.chmodSync(directory, 0o700);
+      const envFile = path.join(directory, 'environment.json');
+      fs.writeFileSync(envFile, JSON.stringify({ ...googleEnv, STUDIO_STORAGE_MODE: 'firestore', GOOGLE_CLOUD_PROJECT: project, STUDIO_FIRESTORE_DATABASE: database, STUDIO_ASSET_BUCKET: bucket, STUDIO_COOKIE_SECURE: 'true', AI_PROVIDER: 'gcp-vertex', GOOGLE_CLOUD_LOCATION: region, AI_VERTEX_USE_METADATA: 'true', AI_ALLOW_SYNTHETIC: 'false', STUDIO_DAILY_GENERATION_LIMIT: '20' }), { mode: 0o600 });
+      try {
+      command(['run', 'deploy', service, `--project=${project}`, `--region=${region}`, `--image=${image}`, `--service-account=${runtimeAccount}`, '--execution-environment=gen2', '--cpu=1', '--memory=512Mi', '--min-instances=0', '--max-instances=1', '--max=1', '--concurrency=8', '--timeout=60', '--allow-unauthenticated', '--no-iap', '--ingress=all', '--no-traffic', '--tag=pilot-candidate', `--env-vars-file=${envFile}`, '--clear-secrets'], { execute: true });
+      } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+      console.log('Candidate created with no production traffic. Verify anonymous API 401, Google sign-in for both authorized users, outsider rejection, isolation, real provider, restore and spend controls before promoting traffic.');
     }
   }
 } catch (error) {

@@ -27,8 +27,8 @@ else if(args[0]==='storage'&&args[2]==='list')console.log(JSON.stringify(existin
 else if(args[0]==='storage'&&args[2]==='describe')console.log(JSON.stringify({name:'pilot-project-liquidity-assets',projectNumber:'12345',location:'US-EAST4',iamConfiguration:{publicAccessPrevention:'enforced',uniformBucketLevelAccess:{enabled:true}}}));
 else if(args[0]==='iam'&&args[1]==='service-accounts'&&args[2]==='list')console.log(JSON.stringify(existing?[{email:'liquidity-runtime@pilot-project.iam.gserviceaccount.com'}]:[]));
 else if(args[0]==='artifacts'&&args[2]==='list')console.log(JSON.stringify(existing?[{name:'projects/pilot-project/locations/us-east4/repositories/liquidity-studio'}]:[]));
-else if(args[0]==='iam'&&args[1]==='roles'&&args[2]==='list')console.log(JSON.stringify(existing?[{name:'projects/pilot-project/roles/liquidityVertexPredictor',includedPermissions:['aiplatform.endpoints.predict','serviceusage.services.use']},{name:'projects/pilot-project/roles/liquidityArtifactAccess',includedPermissions:['storage.buckets.get','storage.objects.create','storage.objects.delete','storage.objects.get']}]:[]));
-else if(args[0]==='iam'&&args[1]==='roles'&&args[2]==='describe')console.log(JSON.stringify({includedPermissions:args[3]==='liquidityVertexPredictor'?['aiplatform.endpoints.predict','serviceusage.services.use']:['storage.buckets.get','storage.objects.create','storage.objects.delete','storage.objects.get']}));
+else if(args[0]==='iam'&&args[1]==='roles'&&args[2]==='list')console.log(JSON.stringify(existing?[{name:'projects/pilot-project/roles/liquidityAuthReader'}, {name:'projects/pilot-project/roles/liquidityVertexPredictor',includedPermissions:['aiplatform.endpoints.predict','serviceusage.services.use']},{name:'projects/pilot-project/roles/liquidityArtifactAccess',includedPermissions:['storage.buckets.get','storage.objects.create','storage.objects.delete','storage.objects.get']}]:[]));
+else if(args[0]==='iam'&&args[1]==='roles'&&args[2]==='describe')console.log(JSON.stringify({includedPermissions:args[3]==='liquidityAuthReader'?['firebaseauth.users.get']:args[3]==='liquidityVertexPredictor'?['aiplatform.endpoints.predict','serviceusage.services.use']:['storage.buckets.get','storage.objects.create','storage.objects.delete','storage.objects.get']}));
 else if(args[0]==='secrets'&&args[1]==='list')console.log(JSON.stringify(existing?[{name:'projects/pilot-project/secrets/liquidity-founder-password'},{name:'projects/pilot-project/secrets/liquidity-marketer-password'}]:[]));
 else if(args[0]==='secrets'&&args[1]==='versions'&&args[2]==='list')console.log(JSON.stringify(existing?[{name:'projects/pilot-project/secrets/'+args[3]+'/versions/1',state:'ENABLED'}]:[]));
 else if(args[0]==='secrets'&&args[1]==='versions'&&args[2]==='add')console.log(JSON.stringify({name:'projects/pilot-project/secrets/'+args[3]+'/versions/1'}));
@@ -37,7 +37,7 @@ else if(args[0]==='iap'&&args[1]==='settings'&&args[2]==='get')console.log(JSON.
 else if(args.includes('get-iam-policy'))console.log(JSON.stringify({bindings:process.env.TEST_BROAD_IAP?[{role:'roles/iap.httpsResourceAccessor',members:['allAuthenticatedUsers']}]:[]}));
 else console.log('{}');
 `, { mode: 0o755 });
-  const result = spawnSync(process.execPath, [script, mode, ...(mode === 'plan' ? [] : ['--apply'])], { encoding: 'utf8', env: { ...process.env, PATH: `${directory}${path.delimiter}${process.env.PATH}`, PILOT_PROJECT: project, PILOT_REGION: 'us-east4', PILOT_MONTHLY_BUDGET: '100', PILOT_FOUNDER_EMAIL: 'founder@chaiwithjai.com', PILOT_MARKETER_EMAIL: 'marketer@chaiwithjai.com', PILOT_FOUNDER_PASSWORD: secret, PILOT_MARKETER_PASSWORD: secret, PILOT_BILLING_ACCOUNT: account, PILOT_BUDGET_ID: 'pilot-budget', TEST_LOG: log, TEST_BUDGET: JSON.stringify(budgetValue), ...env } });
+  const result = spawnSync(process.execPath, [script, mode, ...(mode === 'plan' ? [] : ['--apply'])], { encoding: 'utf8', env: { ...process.env, PILOT_AUTH_MODE:'legacy-password-iap', PATH: `${directory}${path.delimiter}${process.env.PATH}`, PILOT_PROJECT: project, PILOT_REGION: 'us-east4', PILOT_MONTHLY_BUDGET: '100', PILOT_FOUNDER_EMAIL: 'founder@chaiwithjai.com', PILOT_MARKETER_EMAIL: 'marketer@chaiwithjai.com', PILOT_FOUNDER_PASSWORD: secret, PILOT_MARKETER_PASSWORD: secret, PILOT_BILLING_ACCOUNT: account, PILOT_BUDGET_ID: 'pilot-budget', TEST_LOG: log, TEST_BUDGET: JSON.stringify(budgetValue), ...env } });
   let records = [];
   try { records = readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse); } catch {}
   rmSync(directory, { recursive: true, force: true });
@@ -101,4 +101,12 @@ test('external identity does not block prerequisites; access requires observed c
   assert.equal(denied.status, 1);
   assert.deepEqual(changes(denied), []);
   assert.equal(run('access', { ...external, TEST_CUSTOM_OAUTH: '1' }).status, 0);
+});
+
+test('managed Google prerequisites create minimal auth reader without passwords or IAP grants', () => {
+  const result = run('apply', {PILOT_AUTH_MODE:'google',PILOT_FOUNDER_PASSWORD:'',PILOT_MARKETER_PASSWORD:''});
+  assert.equal(result.status,0,result.stderr);
+  assert.ok(!result.records.some(record=>['secrets','iap'].includes(record.args[0])));
+  assert.ok(result.records.some(record=>record.args.includes('--permissions=firebaseauth.users.get')));
+  assert.ok(result.records.some(record=>record.args.includes('--role=projects/pilot-project/roles/liquidityAuthReader')));
 });
