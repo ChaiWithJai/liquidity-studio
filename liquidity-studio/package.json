@@ -16,9 +16,9 @@
   "dependencies": {
     "@google-cloud/firestore": "9.3.1",
     "@google-cloud/storage": "8.4.0",
+    "firebase": "12.19.0",
     "firebase-admin": "14.5.0",
-    "sharp": "0.35.5",
-    "firebase": "13.0.0"
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
@@ -27,6 +27,8 @@
     "vite": "^6.0.0"
   },
   "overrides": {
-    "@grpc/grpc-js": "1.14.6"
+    "@grpc/grpc-js": "1.14.6",
+    "@firebase/app": "0.16.2",
+    "@firebase/app-compat": "0.5.18"
   }
 }
