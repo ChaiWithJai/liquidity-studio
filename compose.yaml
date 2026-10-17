@@ -10,6 +10,13 @@ services:
       PORT: "8080"
       # Explicit local demonstration mode. No provider credentials enter the image.
       AI_ALLOW_SYNTHETIC: ${AI_ALLOW_SYNTHETIC:-true}
+      STUDIO_DATABASE_PATH: /data/studio.sqlite
+      STUDIO_FOUNDER_USERNAME: ${STUDIO_FOUNDER_USERNAME:-founder}
+      STUDIO_FOUNDER_PASSWORD: ${STUDIO_FOUNDER_PASSWORD:?Run node scripts/setup-local.mjs first}
+      STUDIO_MARKETER_USERNAME: ${STUDIO_MARKETER_USERNAME:-marketer}
+      STUDIO_MARKETER_PASSWORD: ${STUDIO_MARKETER_PASSWORD:?Run node scripts/setup-local.mjs first}
+    volumes:
+      - studio-data:/data
     init: true
     read_only: true
     tmpfs:
@@ -19,3 +26,5 @@ services:
     security_opt:
       - no-new-privileges:true
     stop_grace_period: 15s
+volumes:
+  studio-data:

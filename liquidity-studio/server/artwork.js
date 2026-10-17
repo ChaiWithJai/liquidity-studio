@@ -46,6 +46,7 @@ export function renderSvg({ brandProfile = {}, campaign, format = 'infographic',
   const foreground = color(palette[3]?.hex, '#F4F1EA');
   const muted = color(palette[1]?.hex, '#A8C5A0');
   const vertical = height === 1920;
+  const contentWidth = format === 'reel' ? 740 : 900;
   const top = vertical ? 330 : 140;
   let title, paragraphs, takeaway;
   if (format === 'infographic') {
@@ -68,14 +69,14 @@ export function renderSvg({ brandProfile = {}, campaign, format = 'infographic',
   }
   const blocks = [];
   let y = top;
-  const heading = textBlock(title, 80, y, 52, 900, 5, foreground, 700);
+  const heading = textBlock(title, 80, y, 52, contentWidth, 5, foreground, 700);
   blocks.push(heading.svg); y += heading.height + 72;
   for (const paragraph of paragraphs) {
-    const body = textBlock(paragraph, 106, y, 34, 840, 5, foreground);
+    const body = textBlock(paragraph, 106, y, 34, contentWidth - 60, 5, foreground);
     blocks.push(`<path d="M80 ${y - 30}v${body.height + 10}" stroke="${accent}" stroke-width="6"/>`, body.svg);
     y += body.height + 50;
   }
-  const footer = textBlock(takeaway, 80, y + 10, 29, 900, 4, muted);
+  const footer = textBlock(takeaway, 80, y + 10, 29, contentWidth, 4, muted);
   const bottom = vertical ? height * 0.82 - 35 : height - 80;
   if (y + footer.height > bottom) throw new Error('Content exceeds the safe artwork area. Shorten the copy before exporting.');
   blocks.push(footer.svg);

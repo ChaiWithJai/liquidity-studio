@@ -1,16 +1,24 @@
-# Both build and runtime use only Node built-ins. No npm installation is needed.
+# The canonical Svelte build and native PNG renderer use the committed lockfile.
 # Digest pins the multi-platform Node 22 image; update deliberately with CI evidence.
 FROM node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS frontend-builder
 WORKDIR /app
-COPY package.json ./
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY index.html vite.config.js ./
 COPY scripts ./scripts
-RUN npm run build
+COPY src ./src
+COPY server ./server
+RUN npm run build && npm prune --omit=dev
 
 FROM node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS runtime
 WORKDIR /app
 ENV NODE_ENV=production PORT=8080
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /data && chown node:node /data
 COPY --from=frontend-builder --chown=node:node /app/dist ./dist
-COPY --chown=node:node package.json ./
+COPY --from=frontend-builder --chown=node:node /app/node_modules ./node_modules
+COPY --chown=node:node package.json package-lock.json ./
 COPY --chown=node:node server ./server
 USER node
 EXPOSE 8080
