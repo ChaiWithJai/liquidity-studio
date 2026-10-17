@@ -39,3 +39,14 @@ jobs:
         run: npm run qa:loop
       - name: Require generated assets to match committed source
         run: git diff --exit-code -- dist
+
+  docker-local:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and exercise local container without provider credentials
+        run: bash scripts/docker-smoke.sh

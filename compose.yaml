@@ -1,0 +1,21 @@
+name: liquidity-local
+services:
+  studio:
+    build:
+      context: ./liquidity-studio
+    image: liquidity-studio:local
+    ports:
+      - "127.0.0.1:${STUDIO_LOCAL_PORT:-3001}:8080"
+    environment:
+      PORT: "8080"
+      # Explicit local demonstration mode. No provider credentials enter the image.
+      AI_ALLOW_SYNTHETIC: ${AI_ALLOW_SYNTHETIC:-true}
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s

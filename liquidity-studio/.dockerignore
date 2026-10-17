@@ -1,0 +1,10 @@
+# Allowlist: exclude credentials, local state, dependencies, and repository metadata.
+**
+!Dockerfile
+!package.json
+!scripts/
+!scripts/build-dist.js
+!server/
+!server/*.js
+server/*test*.js
+server/fixtures/
