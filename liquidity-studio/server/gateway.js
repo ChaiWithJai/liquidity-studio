@@ -121,6 +121,7 @@ export class AIGateway {
     } catch (err) {
       // If external call failed and we can fall back to synthetic output
       if (this.config.allowSynthetic && prompt && responseSchema) {
+        try {
         const parsedOutput = synthesizeFallbackCampaign(prompt, traceMeta);
         const provenance = { mode: 'synthetic', requiresReview: true, source: 'supplied-story-facts', reason: 'provider-failure' };
         parsedOutput.provenance = provenance;
@@ -140,6 +141,9 @@ export class AIGateway {
             ...traceMeta
           }
         };
+        } catch (fallbackError) {
+          err = fallbackError;
+        }
       }
 
       const latencyMs = Date.now() - startedAt;
