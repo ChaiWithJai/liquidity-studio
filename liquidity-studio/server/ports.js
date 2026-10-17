@@ -1,0 +1,68 @@
+/**
+ * Dependency Inversion Layer: Core Ports / Interfaces (server/ports.js)
+ *
+ * High-level business workflows (Batch Producing Drafts, Multi-Format Formatting,
+ * Backlog & Content Calendar Management, Silent Eval & Backpropagation Logging)
+ * depend ONLY on these abstract Port contracts—never on concrete GCP or third-party SDKs.
+ */
+
+export class AIProviderPort {
+  /**
+   * @param {{ systemInstruction: string, prompt: string, responseSchema: object, traceMeta?: object }} params
+   * @returns {Promise<{ output: any, trace: object }>}
+   */
+  async generateStructured(params) {
+    throw new Error('AIProviderPort.generateStructured() must be implemented by an adapter');
+  }
+  getConfig() {
+    throw new Error('AIProviderPort.getConfig() must be implemented by an adapter');
+  }
+  updateConfig(patch) {
+    throw new Error('AIProviderPort.updateConfig() must be implemented by an adapter');
+  }
+}
+
+export class BacklogCalendarRepositoryPort {
+  async getBrandProfile() {
+    throw new Error('Not implemented');
+  }
+  async updateBrandProfile(patch) {
+    throw new Error('Not implemented');
+  }
+  async listBacklog() {
+    throw new Error('Not implemented');
+  }
+  async addBacklogStory(story) {
+    throw new Error('Not implemented');
+  }
+  async updateStoryStatus(storyId, status, scheduledDay) {
+    throw new Error('Not implemented');
+  }
+  async saveCampaignDraft(storyId, campaign) {
+    throw new Error('Not implemented');
+  }
+  async getCalendarSchedule() {
+    throw new Error('Not implemented');
+  }
+}
+
+export class TelemetryEvalSinkPort {
+  evaluateCampaignSilent(campaign) {
+    throw new Error('Not implemented');
+  }
+  recordGenerationTrace(payload) {
+    throw new Error('Not implemented');
+  }
+  recordMarketerAction(payload) {
+    throw new Error('Not implemented');
+  }
+  recordBatchJob(job) {
+    throw new Error('Not implemented');
+  }
+  getSnapshot() {
+    throw new Error('Not implemented');
+  }
+  exportBackpropJsonl() {
+    throw new Error('Not implemented');
+  }
+}

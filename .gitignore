@@ -1,0 +1,9 @@
+.DS_Store
+*.zip
+new_file*
+node_modules/
+.env
+.env.*
+!.env.example
+output/
+*.log

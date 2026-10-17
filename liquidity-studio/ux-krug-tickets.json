@@ -1,0 +1,88 @@
+{
+  "world_model_version": "1.0.0-krug",
+  "overall_metrics_before_fixes": {
+    "avg_trunk_test_score": 35.0,
+    "avg_goodwill_reservoir": 38.75,
+    "total_question_marks_detected": 10,
+    "total_tickets_generated": 7
+  },
+  "tickets": [
+    {
+      "ticket_id": "KRUG-001",
+      "priority": "P0_BLOCKER",
+      "krug_law": "First Law: Don't Make Me Think! (Eliminate Raw JSON & Sync 4 Visual Previews)",
+      "module_source": "Classify Module (Noise & Clutter) + Generate Module (Billboard Design)",
+      "affected_screens": ["screen_m4_exporter"],
+      "target_files": ["src/App.svelte", "scripts/build-dist.js", "dist/app.js"],
+      "problem_diagnosis": "In dist/app.js (line 183), Screen M4 renders raw JSON (<pre>JSON.stringify</pre>) instead of visual cards, and src/App.svelte (line 284) dropped the 4 format tabs (Infographic 4:5, Carousel 4-Slide, IG Story 9:16, Reel Beat Sheet). A marketer should never read raw JSON.",
+      "redesign_prescription": "Render visual billboard previews for all 4 formats (4:5 Infographic card, 4-slide Carousel deck, 9:16 Story with interactive poll sticker, and 3-beat Reel storyboard table) with inline editing in both src/App.svelte and dist/app.js.",
+      "expected_goodwill_gain": "+35 pts"
+    },
+    {
+      "ticket_id": "KRUG-002",
+      "priority": "P0_BLOCKER",
+      "krug_law": "Affordance & Convention Law (Fix Fake 'Ask Studio Agent' Input Box)",
+      "module_source": "Classify Module (Question Mark / Deceptive Affordance)",
+      "affected_screens": ["screen_m1_brand", "screen_m2_backlog", "screen_m3_calendar", "screen_m4_exporter"],
+      "target_files": ["src/App.svelte", "scripts/build-dist.js"],
+      "problem_diagnosis": "The bottom of the right-hand Liquidity Studio Agent sidebar renders 'Ask Studio Agent...' inside a static <div> styled like an input field. Clicking it does nothing, immediately draining Krug's Goodwill Reservoir.",
+      "redesign_prescription": "Convert 'Ask Studio Agent...' into a real, working <input> + submit form that lets the marketer type natural-language quick commands (e.g., 'Make headline punchier', 'Schedule for Friday', or 'Add story') and executes them immediately.",
+      "expected_goodwill_gain": "+20 pts"
+    },
+    {
+      "ticket_id": "KRUG-003",
+      "priority": "P1_HIGH",
+      "krug_law": "Trunk Test Question #1 & #2 (Fix Site ID '←' Back-Arrow & Strip Internal M1/A4 Spec Codes)",
+      "module_source": "Retrieve Module (Navigation & Information Scent) + Trunk Test Evaluator",
+      "affected_screens": ["global_nav", "screen_m1_brand", "screen_m2_backlog", "screen_m3_calendar", "screen_m4_exporter"],
+      "target_files": ["src/App.svelte", "scripts/build-dist.js"],
+      "problem_diagnosis": "1) Top-left Site ID says '← Liquidity Studio v0', making it look like a Back button rather than a home brand identity. 2) Primary tabs say 'M1. Brand Overview', 'M2. Weekly Backlog', 'A4. Context Graph', leaking internal engineering spec IDs into the user UI.",
+      "redesign_prescription": "Replace '← Liquidity Studio v0' with a clickable top-left brand mark ('💎 The Liquidity Desk') that resets to Home, and rename tabs to high-scent labels: 'Brand Kit', 'Backlog', 'Calendar', and 'Campaign Studio' with a clear step progress indicator.",
+      "expected_goodwill_gain": "+20 pts (Trunk Test +40 pts)"
+    },
+    {
+      "ticket_id": "KRUG-004",
+      "priority": "P1_HIGH",
+      "krug_law": "Trunk Test Question #6 (Add Instant Search & Status/Pillar Filter to Backlog & Calendar)",
+      "module_source": "Retrieve Module (Search vs. Browse Foraging)",
+      "affected_screens": ["screen_m2_backlog", "screen_m3_calendar"],
+      "target_files": ["src/App.svelte", "scripts/build-dist.js"],
+      "problem_diagnosis": "Trunk Test fails question #6 ('How can I search?'). When weekly batch jobs populate dozens of stories, search-dominant users have no way to filter the Backlog or Calendar by keyword, category, or status ('Draft Ready', 'Scheduled', 'Exported').",
+      "redesign_prescription": "Add a persistent Search & Status Filter bar ('🔍 Search stories or metrics...' + status filter pills: All | Draft Ready | Scheduled | Exported) at the top of the Backlog and Calendar views.",
+      "expected_goodwill_gain": "+15 pts (Trunk Test +20 pts)"
+    },
+    {
+      "ticket_id": "KRUG-005",
+      "priority": "P1_HIGH",
+      "krug_law": "Satisficing & Mindless Clicks (1-Click 'Schedule & Export' Flow Inside Screen M4)",
+      "module_source": "Rank Module (Satisficing & Click Pain Reduction)",
+      "affected_screens": ["screen_m4_exporter", "screen_m3_calendar"],
+      "target_files": ["src/App.svelte", "scripts/build-dist.js"],
+      "problem_diagnosis": "To format a story AND approve its calendar day, the user currently has to bounce between Backlog -> Multi-Format Exporter -> Calendar -> Approve (4 clicks across 3 tabs). Furthermore, Calendar slices(0,5), hiding Saturday and Sunday stories.",
+      "redesign_prescription": "1) Add an inline Day Selector + '📅 Schedule & Export' action directly inside the Multi-Format Exporter header so the marketer can format, schedule, and export in one place. 2) Render all 7 days (Mon–Sun) on the Content Calendar with a direct 'Open Studio →' button on every slot.",
+      "expected_goodwill_gain": "+20 pts"
+    },
+    {
+      "ticket_id": "KRUG-006",
+      "priority": "P2_MEDIUM",
+      "krug_law": "Affordance Integrity on Brand Kit (Interactive Logo URL & Editable Hex Swatches)",
+      "module_source": "Classify Module (Eliminate Dead Affordances on Screen M1)",
+      "affected_screens": ["screen_m1_brand"],
+      "target_files": ["src/App.svelte", "scripts/build-dist.js"],
+      "problem_diagnosis": "On Screen M1 (Brand Overview), the '+ Add a logo' card and the 4 circular color swatches look interactive but are static dead clicks.",
+      "redesign_prescription": "Make the Brand Kit color swatches editable via native <input type='color'> pickers and make '+ Add a logo' toggle a clean logo text/monogram badge that immediately updates the live 4:5 Infographic and 9:16 Story previews.",
+      "expected_goodwill_gain": "+15 pts"
+    },
+    {
+      "ticket_id": "KRUG-007",
+      "priority": "P2_MEDIUM",
+      "krug_law": "Third Law: Omit Needless Words (Cut Instructional & Co-Pilot Happy Talk by 50%)",
+      "module_source": "Generate Module (Needless Word Omission)",
+      "affected_screens": ["screen_m1_brand", "screen_m2_backlog", "screen_m3_calendar", "screen_m4_exporter"],
+      "target_files": ["src/App.svelte", "scripts/build-dist.js"],
+      "problem_diagnosis": "Hero subheader (16 words) and Studio Agent intro ('Hi 👋 I'm your Pomelli-style campaign co-pilot. Pick an action below:' — 12 words) repeat what the buttons already say.",
+      "redesign_prescription": "Trim hero subheader to 7 words ('Turn weekly liquidity trends into 4-channel campaigns.') and replace agent happy talk with a live contextual status cue ('Active: Angel City FC • 4 formats ready').",
+      "expected_goodwill_gain": "+15 pts"
+    }
+  ]
+}
