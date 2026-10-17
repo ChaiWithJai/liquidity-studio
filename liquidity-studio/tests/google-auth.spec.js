@@ -137,6 +137,13 @@ test('pending Google popup restores explicit retry after 90 seconds without auth
   const pendingPopup = await pendingPopupPromise;
   await pendingPopup.waitForLoadState('domcontentloaded');
   await expect(pendingPopup.locator('#title')).toContainText('Sign-in with Google.com');
+  // The widget can render before its helper iframe finishes loading Google gapi.
+  // Fast-forwarding then expires gapi's real handshake timeout before its network
+  // callback arrives. Wait for the official emulator's actual relay initialization.
+  const relay = page.frameLocator('iframe[src*="/emulator/auth/iframe"]');
+  await expect.poll(async () => relay.locator('html').evaluate(() =>
+    typeof window.parentContainer?.send === 'function'
+  )).toBe(true);
   await expect(page.getByRole('button',{name:'Signing in…',exact:true})).toBeDisabled();
   await page.clock.fastForward(90001);
   await expect(page.getByRole('alert')).toContainText('Google sign-in has not completed. Finish the Google popup or try again.');
