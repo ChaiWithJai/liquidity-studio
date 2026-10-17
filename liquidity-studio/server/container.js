@@ -10,7 +10,7 @@ import { getApprovedClaims } from "./source-integrity.js";
 import { randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
 import { AIGateway } from "./gateway.js";
-import { ObservabilityEngine } from "./observability.js";
+import { ObservabilityEngine, classifyFeedback } from "./observability.js";
 import { CONTEXT_GRAPH, verifyContextGraphTopology } from "./context-graph.js";
 import {
   DEFAULT_BRAND_PROFILE,
@@ -338,8 +338,9 @@ export function createAppContainer(overrides = {}) {
     async runWeeklyBatch({
       maxStories = 1,
       idempotencyKey = randomUUID(),
+      retryOfJobId = null,
     } = {}) {
-      const claim = await repo.claimJob?.(idempotencyKey);
+      const claim = await repo.claimJob?.(idempotencyKey, { retryOfJobId });
       if (claim?.busy)
         throw fail(409, "Another batch is running for this brand");
       if (claim && !claim.claimed)
@@ -349,9 +350,16 @@ export function createAppContainer(overrides = {}) {
           observability: await telemetry.getSnapshot(),
         };
       const trackedJob = claim?.job;
+      const jobLineage = {
+        retryOfJobId: trackedJob?.retryOfJobId || null,
+        retryRootJobId: trackedJob?.retryRootJobId || trackedJob?.jobId || null,
+        attempt: trackedJob?.attempt || 1,
+        previousCompletedStoryIds: trackedJob?.previousCompletedStoryIds || [],
+      };
       const startedAt = Date.now();
       let backlog = [];
       const results = [];
+      let activeStoryId = null;
       try {
         const discovery = repo.read
           ? await discoverInto(repo)
@@ -365,6 +373,8 @@ export function createAppContainer(overrides = {}) {
         const targetStories = backlog
           .filter((story) => {
             if (story.campaignDraft) return false;
+            if (jobLineage.previousCompletedStoryIds.includes(story.id))
+              return false;
             try {
               return getApprovedClaims(story).length > 0;
             } catch {
@@ -376,9 +386,11 @@ export function createAppContainer(overrides = {}) {
           await repo.updateJob(trackedJob.jobId, {
             stage: "formatting",
             eligibleStories: targetStories.length,
+            targetStoryIds: targetStories.map((story) => story.id),
           });
 
         for (const story of targetStories) {
+          activeStoryId = story.id;
           const res =
             await multiFormatFormatterService.generateCampaignForStory(
               story.id,
@@ -387,6 +399,7 @@ export function createAppContainer(overrides = {}) {
           if (trackedJob)
             await repo.updateJob(trackedJob.jobId, {
               completedStoryIds: results.map((result) => result.story.id),
+              generationIds: results.map((result) => result.trace.traceId),
             });
         }
 
@@ -395,6 +408,7 @@ export function createAppContainer(overrides = {}) {
           Math.max(1, results.length);
 
         const job = await telemetry.recordBatchJob({
+          ...jobLineage,
           jobId: trackedJob?.jobId || `job_weekly_${Date.now()}`,
           trigger: "Admin Batch Trigger",
           startedAt: new Date(startedAt).toISOString(),
@@ -420,8 +434,10 @@ export function createAppContainer(overrides = {}) {
           await repo.updateJob(trackedJob.jobId, {
             status: "FAILED",
             errorCode: "BATCH_EXECUTION_FAILED",
+            failedStoryId: activeStoryId,
           });
         await telemetry.recordBatchJob({
+          ...jobLineage,
           jobId: trackedJob?.jobId || `job_weekly_${Date.now()}`,
           trigger: "Admin Batch Trigger",
           startedAt: new Date(startedAt).toISOString(),
@@ -431,13 +447,14 @@ export function createAppContainer(overrides = {}) {
           evalPassRate: null,
           status: "FAILED",
           errorCode: "BATCH_EXECUTION_FAILED",
+          failedStoryId: activeStoryId,
         });
         throw error;
       }
     },
   };
 
-  // Founder Admin: DI Switchboard, Silent Eval Telemetry, Backprop Dataset Export
+  // Founder operations: adapters, source-contract telemetry and complete event export
   const adminObservabilityService = {
     async getOverview() {
       return {
@@ -463,7 +480,9 @@ export function createAppContainer(overrides = {}) {
       const records = telemetry.allFeedback
         ? await telemetry.allFeedback()
         : telemetry.backpropDataset;
-      return records.map((row) => JSON.stringify(row)).join("\n");
+      return records
+        .map((row) => JSON.stringify(classifyFeedback(row)))
+        .join("\n");
     },
     getContextGraph() {
       return {

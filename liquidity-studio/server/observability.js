@@ -1,10 +1,29 @@
 import { evaluateCampaign } from "./domain.js";
 /**
- * Admin Observability, Hidden Quality Eval & Backpropagation Telemetry Store (server/observability.js)
- *
- * Upgraded via Backwards Testing to link every { storyId, rawGeneration, humanFinalVersion, delta }
- * into a complete DPO / Prompt-Backpropagation Preference Pair.
+ * Durable callers record generation baselines and subsequent operational events.
+ * Edits, scheduling and downloads are not preference labels or trained optimization.
  */
+
+export function classifyFeedback(record) {
+  const action = record.humanSignal || "";
+  const eventType =
+    record.isGenerationBaseline ||
+    record.isBaselinePair ||
+    action.includes("draft_generated")
+      ? "generation_baseline"
+      : action === "edited_inline_by_marketer"
+        ? "human_edit"
+        : action.startsWith("scheduled_")
+          ? "schedule_action"
+          : ["download_created", "exported_to_social"].includes(action)
+            ? "export_action"
+            : action === "updated_brand_profile"
+              ? "brand_profile_action"
+              : action === "queued_to_backlog"
+                ? "backlog_action"
+                : "operational_action";
+  return { ...record, eventType, preferenceLabel: null };
+}
 
 export class ObservabilityEngine {
   constructor() {
@@ -42,6 +61,9 @@ export class ObservabilityEngine {
     this.backpropDataset.unshift({
       recordId: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       isBaselinePair: true,
+      isGenerationBaseline: true,
+      eventType: "generation_baseline",
+      preferenceLabel: null,
       generationId: trace.traceId,
       timestamp: new Date().toISOString(),
       storyId,
@@ -99,7 +121,7 @@ export class ObservabilityEngine {
       }
     }
 
-    const record = {
+    const record = classifyFeedback({
       recordId: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       timestamp: new Date().toISOString(),
       storyId,
@@ -115,7 +137,7 @@ export class ObservabilityEngine {
           ? structuredClone(existingPair.rawGeneration?.[format])
           : null,
       humanFinalVersion: structuredClone(finalContent),
-    };
+    });
     this.backpropDataset.unshift(record);
     return record;
   }
@@ -161,7 +183,7 @@ export class ObservabilityEngine {
       },
       batchJobs: this.batchJobs,
       traces: this.traces.slice(0, 25),
-      backpropDataset: this.backpropDataset.slice(0, 25),
+      backpropDataset: this.backpropDataset.slice(0, 25).map(classifyFeedback),
     };
   }
 }

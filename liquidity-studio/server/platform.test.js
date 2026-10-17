@@ -675,3 +675,154 @@ test("real generated assets and feedback eject and import with authorized scope 
   assert.equal(restored.telemetry.traces[0].brandId, "brand_vedic");
   assert.equal(restored.telemetry.traces[0].contentPresetId, "liquidity_desk");
 });
+
+test("partial batches retain completed work and explicit retry lineage without duplicating successful generations", async (t) => {
+  const { createAppContainer } = await import("./container.js");
+  const { DurableTelemetry } = await import("./durable-telemetry.js");
+  const { campaignFromApprovedClaims } = await import("./source-integrity.js");
+  const f = await fixture(t);
+  const repo = (
+    await f.platform.forScope({
+      organizationId: "org_default",
+      brandId: "brand_vedic",
+      preset: "vedic_dharma",
+    })
+  ).ports.repo;
+  for (const title of ["Partial second", "Partial first"])
+    await repo.addBacklogStory({
+      title,
+      sourceClaims: [
+        {
+          id: "fixture",
+          text: "An approved fixture excerpt.",
+          sourceUrl: "https://example.org/partial-fixture",
+          kind: "general",
+          status: "approved",
+        },
+      ],
+    });
+  const calls = [];
+  const gateway = {
+    getConfig: () => ({ provider: "fixture" }),
+    async generateStructured({ traceMeta }) {
+      calls.push(traceMeta.story.id);
+      if (calls.length === 2)
+        throw Object.assign(new Error("Injected provider failure"), {
+          trace: { traceId: "partial-failed", error: "PROVIDER_HTTP_ERROR" },
+        });
+      return {
+        output: campaignFromApprovedClaims(traceMeta.story),
+        trace: {
+          traceId: `partial-trace-${calls.length}`,
+          status: "success",
+          provider: "fixture",
+          model: "fixture",
+        },
+      };
+    },
+  };
+  const app = createAppContainer({
+    repo,
+    aiGateway: gateway,
+    telemetry: new DurableTelemetry(repo),
+  });
+  const batch = app.services.batchProductionService;
+  await assert.rejects(
+    batch.runWeeklyBatch({
+      maxStories: 2,
+      idempotencyKey: "partial-attempt-one",
+    }),
+    /Injected/,
+  );
+  const failed = (await repo.read()).jobs[0];
+  assert.equal(failed.status, "FAILED");
+  assert.deepEqual(failed.completedStoryIds, [calls[0]]);
+  const replay = await batch.runWeeklyBatch({
+    maxStories: 2,
+    idempotencyKey: "partial-attempt-one",
+  });
+  assert.equal(replay.replayed, true);
+  assert.equal(calls.length, 2);
+  assert.equal(failed.failedStoryId, calls[1]);
+  await repo.mutate((state) => {
+    state.backlog.find((story) => story.id === calls[0]).campaignDraft = null;
+    return state;
+  });
+  const retried = await batch.runWeeklyBatch({
+    maxStories: 2,
+    idempotencyKey: "partial-attempt-two",
+    retryOfJobId: failed.jobId,
+  });
+  assert.equal(retried.job.status, "COMPLETED");
+  assert.equal(retried.job.retryOfJobId, failed.jobId);
+  assert.equal(retried.job.attempt, 2);
+  assert.equal(retried.job.formatsPrepared, 4);
+  assert.equal(calls.length, 3);
+  assert.equal(calls.filter((id) => id === calls[0]).length, 1);
+  const history = (await repo.read()).jobs;
+  assert.equal(history.length, 2);
+  assert.equal(history[0].retryRootJobId, failed.jobId);
+  assert.deepEqual(
+    history[0].previousCompletedStoryIds,
+    failed.completedStoryIds,
+  );
+  await assert.rejects(
+    batch.runWeeklyBatch({
+      idempotencyKey: "foreign-retry",
+      retryOfJobId: "foreign-job",
+    }),
+    (error) => error.status === 404,
+  );
+  await assert.rejects(
+    batch.runWeeklyBatch({
+      idempotencyKey: "completed-retry",
+      retryOfJobId: retried.job.jobId,
+    }),
+    (error) => error.status === 409,
+  );
+});
+
+test("preflight persists validated displayed-frame provenance with the measured revision", async (t) => {
+  const f = await fixture(t);
+  await f.login();
+  const { backlog } = await (await f.api("/api/studio/bootstrap")).json();
+  const story = backlog[0];
+  const viewContext = {
+    mode: "instagram",
+    frameIndex: 2,
+    storyFrame: 1,
+    pollVote: "A",
+    measuredAt: new Date().toISOString(),
+  };
+  const body = {
+    storyId: story.id,
+    expectedRevision: story.revision,
+    format: "carousel",
+    canvas: { width: 1080, height: 1350 },
+    textBoxes: [],
+    background: "#ffffff",
+    caption: "Fixture",
+    captionLimit: 125,
+    viewContext,
+  };
+  const response = await f.api("/api/studio/preflight", body);
+  assert.equal(response.status, 200);
+  const state = await (
+    await f.platform.forScope({
+      organizationId: "org_default",
+      brandId: "brand_default",
+    })
+  ).ports.repo.read();
+  const record = state.preflights.at(-1);
+  assert.deepEqual(record.settings.viewContext, viewContext);
+  assert.equal(record.storyRevision, story.revision);
+  assert.equal(
+    (
+      await f.api("/api/studio/preflight", {
+        ...body,
+        viewContext: { ...viewContext, frameIndex: 99 },
+      })
+    ).status,
+    400,
+  );
+});

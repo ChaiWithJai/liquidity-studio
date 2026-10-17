@@ -67,6 +67,36 @@ function claims(value) {
     return result;
   });
 }
+function viewContext(value) {
+  if (value === undefined) return null;
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    Object.keys(value).some(
+      (key) =>
+        ![
+          "mode",
+          "frameIndex",
+          "storyFrame",
+          "pollVote",
+          "measuredAt",
+        ].includes(key),
+    ) ||
+    !["instagram", "design"].includes(value.mode) ||
+    !Number.isInteger(value.frameIndex) ||
+    value.frameIndex < 0 ||
+    value.frameIndex > 3 ||
+    !Number.isInteger(value.storyFrame) ||
+    value.storyFrame < 0 ||
+    value.storyFrame > 3 ||
+    ![null, "A", "B"].includes(value.pollVote) ||
+    typeof value.measuredAt !== "string" ||
+    !Number.isFinite(Date.parse(value.measuredAt))
+  )
+    throw fail(400, "Invalid preflight view context");
+  return { ...value };
+}
 async function readBody(req, limit = 262144) {
   if (!(req.headers["content-type"] || "").startsWith("application/json"))
     throw fail(415, "Use application/json");
@@ -619,12 +649,17 @@ export function createHttpServer(
           throw fail(409, "Draft changed; rerun preflight");
         if (!formats.includes(body.format)) throw fail(400, "Invalid format");
         const measured = computePreflight(body);
+        const context = viewContext(body.viewContext);
         const record = await repo.savePreflight({
           storyId,
           format: body.format,
           storyRevision: story.revision,
           generationId: story.generationId || null,
-          settings: { canvas: body.canvas, captionLimit: body.captionLimit },
+          settings: {
+            canvas: body.canvas,
+            captionLimit: body.captionLimit,
+            viewContext: context,
+          },
           ...measured,
         });
         return json(200, { ...measured, evidenceId: record.id });
@@ -704,6 +739,8 @@ export function createHttpServer(
       }
       if (route === "/api/admin/run-weekly-batch" && req.method === "POST") {
         if (!trustedTestMode) text(body.idempotencyKey, "idempotency key", 128);
+        if (body.retryOfJobId !== undefined)
+          text(body.retryOfJobId, "previous batch id", 128);
         const maxStories = body.maxStories ?? 1;
         if (!Number.isInteger(maxStories) || maxStories < 1 || maxStories > 50)
           throw fail(400, "Invalid batch size");
@@ -711,6 +748,7 @@ export function createHttpServer(
           200,
           await batch.runWeeklyBatch({
             idempotencyKey: body.idempotencyKey,
+            retryOfJobId: body.retryOfJobId || null,
             maxStories,
           }),
         );

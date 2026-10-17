@@ -5,6 +5,7 @@ import {
   BRAND_PRESETS,
 } from "./domain.js";
 import { fail } from "./auth.js";
+import { classifyFeedback } from "./observability.js";
 export const scopeKey = ({ organizationId, brandId }) =>
   `scope:${organizationId}:${brandId}`;
 
@@ -283,7 +284,7 @@ export class ScopedRepository {
       return state;
     });
   }
-  async claimJob(idempotencyKey) {
+  async claimJob(idempotencyKey, { retryOfJobId = null } = {}) {
     let job;
     let claimed = false,
       busy = false;
@@ -298,7 +299,18 @@ export class ScopedRepository {
           previous.status = "INTERRUPTED";
       }
       job = state.jobs.find((job) => job.idempotencyKey === idempotencyKey);
+      if (job && (job.retryOfJobId || null) !== retryOfJobId) {
+        throw fail(409, "An idempotency key cannot change retry lineage");
+      }
       if (!job) {
+        const previous = retryOfJobId
+          ? state.jobs.find((previous) => previous.jobId === retryOfJobId)
+          : null;
+        if (retryOfJobId && !previous)
+          throw fail(404, "Previous batch not found in this brand");
+        if (previous && !["FAILED", "INTERRUPTED"].includes(previous.status)) {
+          throw fail(409, "Only a failed or interrupted batch can be retried");
+        }
         const active = state.jobs.find((row) => row.status === "RUNNING");
         if (active) {
           busy = true;
@@ -314,6 +326,17 @@ export class ScopedRepository {
           leaseExpiresAt: Date.now() + 1800000,
           startedAt: new Date().toISOString(),
           completedStoryIds: [],
+          retryOfJobId,
+          retryRootJobId: previous
+            ? previous.retryRootJobId || previous.jobId
+            : null,
+          attempt: previous ? (previous.attempt || 1) + 1 : 1,
+          previousCompletedStoryIds: [
+            ...new Set([
+              ...(previous?.previousCompletedStoryIds || []),
+              ...(previous?.completedStoryIds || []),
+            ]),
+          ],
         };
         state.jobs.unshift(job);
         claimed = true;
@@ -408,6 +431,8 @@ export class ScopedRepository {
   }
   async exportData() {
     const data = await this.read();
+    data.telemetry.backpropDataset =
+      data.telemetry.backpropDataset.map(classifyFeedback);
     const rows = [
       ...data.telemetry.traces,
       ...data.telemetry.backpropDataset,

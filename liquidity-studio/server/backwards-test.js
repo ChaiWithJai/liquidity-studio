@@ -2,7 +2,7 @@
  * Backwards Verification & Contract Test Suite (server/backwards-test.js)
  *
  * Tests the v0 architecture BACKWARDS from the terminal economic outcomes:
- *   Stage 1 (Terminal Outcome B — Founder Proof): Verify JSONL Backpropagation Preference Pair
+ *   Stage 1 (Terminal Outcome B — Founder Proof): Verify JSONL generation baseline and feedback events
  *            has both `rawGeneration` (LLM) and `humanFinalVersion` (Marketer inline edit + export)
  *            with a recalculated post-edit silent eval score.
  *   Stage 2 (Terminal Outcome A — Marketer Proof): Verify Screen M4 (`Multi-Format Exporter`)
@@ -154,9 +154,9 @@ async function runBackwardsTestSuite() {
     // NOW ASSERT BACKWARDS FROM TERMINAL OUTCOMES -> SCREENS -> PORTS
     // -----------------------------------------------------------------------
 
-    // BACKWARDS TEST 1: Terminal Outcome B (Backpropagation JSONL Dataset)
+    // BACKWARDS TEST 1: Terminal Outcome B (Complete operational feedback JSONL)
     console.log(
-      "\n[Backwards Test 1/7] Terminal Outcome B: Backprop JSONL Preference Pair...",
+      "\n[Backwards Test 1/7] Terminal Outcome B: Generation baseline and feedback JSONL...",
     );
     const jsonlRes = await api("GET", "/api/admin/backprop-jsonl");
     assert.equal(jsonlRes.status, 200);
@@ -182,7 +182,7 @@ async function runBackwardsTestSuite() {
       "Preference record must capture marketer inline-edited headline (chosen)",
     );
     console.log(
-      "  ✅ PASS: JSONL contains paired { rawGeneration, humanFinalVersion } for offline DPO/backprop.",
+      "  ✅ PASS: JSONL preserves raw/final content as unlabeled events; no trained optimization is claimed.",
     );
 
     // BACKWARDS TEST 2: Terminal Outcome A (Screen M4 Multi-Format Completeness)

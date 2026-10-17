@@ -19,6 +19,7 @@ export async function runWeeklyJob({
   brandId = process.env.STUDIO_JOB_BRAND_ID,
   maxStories = Number(process.env.STUDIO_JOB_MAX_STORIES || 10),
   idempotencyKey = process.env.STUDIO_JOB_IDEMPOTENCY_KEY || weeklyKey(),
+  retryOfJobId = process.env.STUDIO_JOB_RETRY_OF_JOB_ID || null,
 } = {}) {
   await platform.ready;
   if (
@@ -43,6 +44,7 @@ export async function runWeeklyJob({
   const result = await app.services.batchProductionService.runWeeklyBatch({
     maxStories,
     idempotencyKey,
+    retryOfJobId,
   });
   console.log(
     JSON.stringify({

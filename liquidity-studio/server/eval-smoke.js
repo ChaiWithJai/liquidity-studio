@@ -55,7 +55,7 @@ async function runSmokeEval() {
     `${adminOverview.observability.summary.avgEvalScore}%`,
   );
   console.log(
-    " -> Backprop Preference Pairs Ready for JSONL Export:",
+    " -> Unlabeled feedback events ready for JSONL export:",
     adminOverview.observability.summary.backpropRecordsCollected,
   );
 }
