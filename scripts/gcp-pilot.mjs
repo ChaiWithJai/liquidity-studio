@@ -29,6 +29,7 @@ function requireValue(value, name, pattern) {
   return value;
 }
 function command(args, { execute = false, capture = false } = {}) {
+  if (!args.includes(`--billing-project=${project}`)) args = [...args, `--billing-project=${project}`];
   if (!execute) {
     console.log(JSON.stringify({ executable: "gcloud", args }));
     return;
@@ -58,6 +59,7 @@ try {
       "projects",
       "describe",
       project,
+      `--project=${project}`,
       "--format=json(projectId,projectNumber,lifecycleState)",
     ],
     [
@@ -65,6 +67,7 @@ try {
       "projects",
       "describe",
       project,
+      `--project=${project}`,
       "--format=json(billingEnabled,billingAccountName)",
     ],
     [
@@ -125,6 +128,7 @@ try {
       JSON.stringify({
         prerequisites: [
           "Reauthenticate gcloud",
+          "Explicitly enable cloudbilling.googleapis.com and billingbudgets.googleapis.com on the selected project before billing verification; see gcp-prerequisites.md",
           "Verify project ownership/billing and us-east4 resources",
           "Set USD100 aggregate alerts and separately eligible Cloud Run/AI spend caps with headroom for storage/logging",
           "Create runtime identity with firebaseauth.users.get and scoped data access; no app passwords",

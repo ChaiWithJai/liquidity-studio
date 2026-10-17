@@ -110,3 +110,22 @@ test('managed Google prerequisites create minimal auth reader without passwords 
   assert.ok(result.records.some(record=>record.args.includes('--permissions=firebaseauth.users.get')));
   assert.ok(result.records.some(record=>record.args.includes('--role=projects/pilot-project/roles/liquidityAuthReader')));
 });
+
+
+test('plan explicitly exposes billing API bootstrap and required API inventory without invoking gcloud', () => {
+  const result=run('plan');assert.equal(result.status,0,result.stderr);assert.deepEqual(result.records,[]);
+  const lines=result.stdout.trim().split('\n').map(JSON.parse);
+  assert.match(lines[0].billingApiBootstrap,/Explicitly enable/);
+  const enables=lines.filter(line=>line.args?.slice(0,2).join(' ')==='services enable');
+  assert.equal(enables.length,2);
+  for(const api of ['cloudbilling.googleapis.com','billingbudgets.googleapis.com'])assert.ok(enables.every(line=>line.args.includes(api)));
+  assert.ok(enables[0].args.includes('--project=pilot-project'));assert.ok(enables[0].args.includes('--billing-project=pilot-project'));
+});
+
+test('provisioning billing read gates select the explicit quota project before service enable', () => {
+ const result=run('apply',{PILOT_AUTH_MODE:'google',PILOT_FOUNDER_PASSWORD:'',PILOT_MARKETER_PASSWORD:''});assert.equal(result.status,0,result.stderr);
+ const reads=result.records.filter(record=>record.args[0]==='projects'||record.args[0]==='billing');
+ assert.ok(reads.every(record=>record.args.includes('--project=pilot-project')&&record.args.includes('--billing-project=pilot-project')));
+ const firstEnable=result.records.findIndex(record=>record.args[0]==='services'&&record.args[1]==='enable');
+ const budgetRead=result.records.findIndex(record=>record.args[0]==='billing'&&record.args[1]==='budgets');assert.ok(firstEnable>budgetRead);
+});

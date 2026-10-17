@@ -299,3 +299,10 @@ test("service lookup auth, permission, network or malformed results never reach 
     assert.deepEqual(mutations(result), []);
   }
 });
+
+
+test('deployment project and linked-billing reads use the explicitly selected quota project', () => {
+  const result=fixture();assert.equal(result.status,0,result.stderr);
+  const reads=result.commands.filter(args=>args[0]==='projects'||args[0]==='billing');
+  assert.ok(reads.length>=3);assert.ok(reads.every(args=>args.includes('--project=test-studio-project')&&args.includes('--billing-project=test-studio-project')));
+});
