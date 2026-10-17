@@ -830,3 +830,87 @@ test("preflight persists validated displayed-frame provenance with the measured 
     400,
   );
 });
+
+test("only persisted PNG and text artifacts stamp real export chronology; failure leaves timestamps unchanged", async (t) => {
+  const previous = process.env.AI_ALLOW_SYNTHETIC;
+  process.env.AI_ALLOW_SYNTHETIC = "true";
+  t.after(() => {
+    if (previous === undefined) delete process.env.AI_ALLOW_SYNTHETIC;
+    else process.env.AI_ALLOW_SYNTHETIC = previous;
+  });
+  const f = await fixture(t);
+  const app = await f.platform.forScope({
+    organizationId: "org_default",
+    brandId: "brand_default",
+    preset: "liquidity_desk",
+  });
+  const repo = app.ports.repo,
+    formatter = app.services.multiFormatFormatterService;
+  const story = await repo.addBacklogStory({
+    title: "Chronology fixture",
+    sourceClaims: [
+      {
+        id: "source",
+        text: "A short sourced excerpt.",
+        sourceUrl: "https://example.org/export-time",
+        kind: "general",
+        status: "approved",
+      },
+    ],
+  });
+  await formatter.generateCampaignForStory(story.id);
+  assert.equal(
+    (await repo.listBacklog()).find((item) => item.id === story.id).exportedAt,
+    null,
+  );
+  const originalUpload = repo.store.uploadArtifact;
+  repo.store.uploadArtifact = async () => {
+    throw new Error("Injected artifact persistence failure");
+  };
+  await assert.rejects(
+    formatter.exportFormattedAsset({ storyId: story.id, format: "reel" }),
+    /persistence failure/,
+  );
+  assert.equal(
+    (await repo.listBacklog()).find((item) => item.id === story.id).exportedAt,
+    null,
+  );
+  delete repo.store.uploadArtifact;
+  for (const format of ["infographic", "reel"]) {
+    const exported = await formatter.exportFormattedAsset({
+      storyId: story.id,
+      format,
+    });
+    const asset = await repo.getAsset(exported.exportId);
+    const saved = (await repo.listBacklog()).find(
+      (item) => item.id === story.id,
+    );
+    assert.equal(saved.exportedAt, asset.createdAt);
+    assert.ok(Number.isFinite(Date.parse(saved.exportedAt)));
+  }
+  const lastStamp = (await repo.listBacklog()).find(
+    (item) => item.id === story.id,
+  ).exportedAt;
+  repo.store.uploadArtifact = async () => {
+    throw new Error("Injected later persistence failure");
+  };
+  await assert.rejects(
+    formatter.exportFormattedAsset({ storyId: story.id, format: "reel" }),
+    /persistence failure/,
+  );
+  assert.equal(
+    (await repo.listBacklog()).find((item) => item.id === story.id).exportedAt,
+    lastStamp,
+  );
+  if (originalUpload) repo.store.uploadArtifact = originalUpload;
+  else delete repo.store.uploadArtifact;
+  await repo.mutate((state) => {
+    state.backlog.find((item) => item.id === story.id).exportedAt =
+      "not-a-date";
+    return state;
+  });
+  assert.equal(
+    (await repo.listBacklog()).find((item) => item.id === story.id).exportedAt,
+    null,
+  );
+});

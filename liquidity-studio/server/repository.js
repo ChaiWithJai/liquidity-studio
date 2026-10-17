@@ -82,7 +82,17 @@ export class ScopedRepository {
     ).brandProfile;
   }
   async listBacklog() {
-    return (await this.read()).backlog;
+    return (await this.read()).backlog.map((story) => ({
+      ...story,
+      exportedAt:
+        typeof story.exportedAt === "string" &&
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(
+          story.exportedAt,
+        ) &&
+        Number.isFinite(Date.parse(story.exportedAt))
+          ? new Date(story.exportedAt).toISOString()
+          : null,
+    }));
   }
   async getCalendarSchedule() {
     const backlog = await this.listBacklog();
@@ -386,6 +396,7 @@ export class ScopedRepository {
             throw fail(409, "Draft changed during export; retry");
           story.status = "Exported";
           story.exportedRevision = record.storyRevision;
+          story.exportedAt = record.createdAt;
           story.revision++;
         }
         state.assets.push(record);
