@@ -72,3 +72,29 @@ The Docker smoke explicitly applies `compose.test-password.yaml`, sets `NODE_ENV
 CI runs legacy contracts/browser cases with explicit password-mode fixture constructors in a test environment, real Chromium Google sign-in separately against the official Auth Emulator, actual Firestore emulator transactions with Java 21, and Docker acceptance. Source inspection and synthetic providers do not prove deployed service connectivity. Earlier Docker Desktop recovery and local ARM64 acceptance remain baseline evidence; evaluate all checks against the final integrated Google commit.
 
 Local success is not cloud deployment. Project/IAM/Identity Platform configuration, authorized cloud domains, Firestore/GCS, paid-provider access, scheduling, budget and rollback need their own recorded pilot evidence. This setup does not activate billing or select a software license.
+
+## Optional renewable local Vertex credentials
+
+Google sign-in and AI generation use separate managed services. The normal Compose configuration can run Google sign-in without AI metadata access. The existing `compose.google-adc.yaml` mount supplies the same operator ADC file to Firebase Admin for account revocation checks; merely mounting it does not enable Vertex calls.
+
+For a reviewed **local** real-provider acceptance run, use the already configured explicit Google project and readonly ADC file. Select Vertex ADC deliberately and disable synthetic fallback:
+
+```sh
+export AI_PROVIDER=gcp-vertex
+export AI_VERTEX_USE_ADC=true
+export AI_ALLOW_SYNTHETIC=false
+export GOOGLE_CLOUD_LOCATION=us
+export AI_MODEL=gemini-3.5-flash-lite
+# STUDIO_FIREBASE_PROJECT_ID and STUDIO_LOCAL_ADC_PATH must already be set explicitly.
+docker compose --env-file .env.local -f compose.yaml -f compose.google-adc.yaml up --build -d
+```
+
+The overlay passes the selected Firebase project as `GOOGLE_CLOUD_PROJECT` and defaults to the selected pilot's US routing/model. These settings are configuration, not a provider availability or pricing guarantee. Input bytes, output tokens and daily generation attempts retain server ceilings; approved sourced content is still required. A bounded actual-provider campaign must be verified separately by the operator. No real provider call is made by the unit tests.
+
+The pinned official `google-auth-library` uses its public `GoogleAuth.getAccessToken()` API to cache and refresh access credentials from `GOOGLE_APPLICATION_CREDENTIALS`. An explicit file is required; missing/invalid/revoked ADC fails without provider fetch or synthetic substitution when `AI_ALLOW_SYNTHETIC=false`. There is no application credential database, token file, hourly copy/paste token step, token API response or token logging. Keep the ADC file outside the repository, image, tenant data and backups, mount it readonly, and grant only the approved project permissions. Refresh-token rotation or revocation remains an operator action through Google.
+
+`AI_VERTEX_USE_ADC` defaults off. Cloud Run rejects this local-only flag and continues to use `AI_VERTEX_USE_METADATA=true` with its runtime service identity. When metadata is explicitly selected locally it takes precedence over ADC; a metadata failure never falls through to local ADC. Existing explicitly supplied short-lived tokens retain their existing precedence for controlled diagnostics, but are not the normal local workflow. The configured request deadline includes credential resolution. The SDK's credential lookup may settle after cancellation, but an abort guard prevents any subsequent model fetch after the deadline.
+
+Verification under Node 22: `node --test server/vertex-adc.test.js server/gateway.test.js`. These tests use trusted constructor adapters for token/provider I/O and an actual SDK missing-file failure. They do not prove live ADC permissions, Vertex model readiness or production generation quality.
+
+Official references: [Google Auth Library public API](https://googleapis.dev/nodejs/google-auth-library/latest/classes/GoogleAuth.html), [Google Auth Library ADC guidance](https://github.com/googleapis/google-auth-library-nodejs#application-default-credentials), [ADC file selection](https://docs.cloud.google.com/docs/authentication/application-default-credentials).

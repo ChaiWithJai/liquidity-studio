@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { createLocalADCTokenProvider } from "./vertex-adc.js";
 import {
   campaignFromApprovedClaims,
   getApprovedClaims,
@@ -32,6 +33,9 @@ export class AIGateway {
   constructor(config = {}) {
     this.fetch = config.fetch || globalThis.fetch;
     this.accessTokenProvider = config.accessTokenProvider;
+    this.adcTokenProvider = config.adcTokenProvider;
+    if (process.env.AI_VERTEX_USE_ADC === "true" && process.env.K_SERVICE)
+      throw new Error("Local Vertex ADC is forbidden on Cloud Run; use metadata identity");
     this.maxInputBytes = Number(process.env.AI_MAX_INPUT_BYTES || 32768);
     this.maxOutputTokensLimit = Number(
       process.env.AI_MAX_OUTPUT_TOKENS || 8192,
@@ -269,6 +273,12 @@ export class AIGateway {
                 throw new Error("Metadata identity unavailable");
               token = (await tokenResponse.json()).access_token;
             }
+            if (!token && process.env.AI_VERTEX_USE_ADC === "true" && process.env.AI_VERTEX_USE_METADATA !== "true") {
+              if (process.env.K_SERVICE)
+                throw Object.assign(new Error("Local ADC is forbidden on Cloud Run"), {code:"PROVIDER_CONFIG_INVALID"});
+              this.adcTokenProvider ||= createLocalADCTokenProvider();
+              token = await this.adcTokenProvider({signal:controller.signal});
+            }
             base = vertexOpenAIBase(
               this.config.projectId,
               this.config.location,
@@ -304,6 +314,9 @@ export class AIGateway {
             ],
           };
         }
+        // SDK credential discovery/refresh may settle after our deadline. Never start
+        // a provider request once that deadline has aborted, even with a fetch test adapter.
+        controller.signal.throwIfAborted();
         const response = await this.fetch(url, {
           method: "POST",
           headers,
