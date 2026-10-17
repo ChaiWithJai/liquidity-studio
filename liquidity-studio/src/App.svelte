@@ -530,16 +530,25 @@
       error = failure.message;
     }
   }
-  async function runBatch() {
+  async function runBatch(retryOfJobId = null) {
+    const scopeToken = lastScopeToken;
     busy = true;
+    error = "";
     try {
       await post("/api/admin/run-weekly-batch", {
         idempotencyKey: crypto.randomUUID(),
         maxStories: 5,
+        ...(retryOfJobId ? { retryOfJobId } : {}),
       });
+      if (scopeToken !== lastScopeToken) return;
       await loadScope();
-      notice = "Scoped batch completed. Review every generated draft.";
+      await loadAdmin();
+      notice = retryOfJobId
+        ? "Retry completed. Previously completed drafts were preserved."
+        : "Scoped batch completed. Review every generated draft.";
     } catch (failure) {
+      if (scopeToken !== lastScopeToken) return;
+      await loadAdmin();
       error = failure.message;
     } finally {
       busy = false;
@@ -1328,7 +1337,7 @@
           </section>
           <section class="panel">
             <h2>Scoped operations</h2>
-            <button class="secondary" disabled={busy} onclick={runBatch}
+            <button class="secondary" disabled={busy} onclick={() => runBatch()}
               >Run this brand’s batch</button
             >
             <p>
@@ -1340,6 +1349,30 @@
               Jobs use this organization and brand. Export is separate from
               publishing.
             </p>
+            <h3>Recent batch attempts</h3>
+            <ul aria-label="Recent batch attempts">
+              {#each adminData?.observability?.jobs?.slice(0, 10) || [] as job (job.jobId)}
+                <li>
+                  <strong>{job.status}</strong> · Attempt {job.attempt || 1}
+                  <p class="small muted">
+                    {job.completedStoryIds?.length || 0} completed stories
+                    {job.retryOfJobId ? ` · Retry of ${job.retryOfJobId.slice(0, 8)}` : ''}
+                  </p>
+                  {#if job.status === 'FAILED' || job.status === 'INTERRUPTED'}
+                    <button
+                      class="secondary"
+                      disabled={busy}
+                      onclick={() => runBatch(job.jobId)}
+                      aria-label={`${job.status === 'FAILED' ? 'Retry failed batch' : 'Retry interrupted batch'} ${job.jobId.slice(0, 8)}`}
+                    >
+                      {job.status === 'FAILED' ? 'Retry failed batch' : 'Retry interrupted batch'}
+                    </button>
+                  {/if}
+                </li>
+              {:else}
+                <li class="muted">No batch attempts for this brand.</li>
+              {/each}
+            </ul>
           </section>
           <section class="panel">
             <h2>Organization management</h2>
