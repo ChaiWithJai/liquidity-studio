@@ -83,7 +83,7 @@ export function renderSvg({ brandProfile = {}, campaign, format = 'infographic',
   const bottom = vertical ? height * 0.82 - 35 : height - 80;
   if (y + footer.height > bottom) throw new Error('Content exceeds the safe artwork area. Shorten the copy before exporting.');
   blocks.push(footer.svg);
-  const brand = escapeXml(brandProfile.brandName || 'Campaign Studio');
+  const brand = escapeXml([brandProfile.logoText, brandProfile.brandName || 'Campaign Studio'].filter(Boolean).join(' · '));
   const provenance = campaign.provenance?.mode === 'synthetic' ? 'SYNTHETIC DRAFT · REVIEW REQUIRED' : 'EDITORIAL DRAFT';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(title)}"><title>${escapeXml(title)}</title><rect width="${width}" height="${height}" fill="${background}"/><g font-family="DejaVu Sans, sans-serif"><text x="80" y="${vertical ? 250 : 65}" fill="${muted}" font-size="26" font-weight="700">${brand}</text><path d="M80 ${top - 55}h920" stroke="${accent}" stroke-width="3"/>${blocks.join('')}<text x="80" y="${height - 35}" fill="${muted}" font-size="19">${provenance}${format === 'carousel' ? ` · ${slideIndex + 1}/4` : ''}</text></g></svg>`;
 }

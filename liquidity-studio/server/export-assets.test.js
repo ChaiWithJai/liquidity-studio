@@ -51,7 +51,8 @@ test('PNG exports contain the requested raster dimensions, carousel contains fou
 
 test('brand typography uses bundled approved families and never injects arbitrary SVG attributes', () => {
   const campaign = { infographic: { headline: 'Reviewed source', statRows: ['Source excerpt'], bottomTakeaway: 'Review the source' } };
-  const svg = renderSvg({ brandProfile: { fonts: { heading: 'Mona Sans', body: 'Inter' } }, campaign });
+  const svg = renderSvg({ brandProfile: { logoText: 'CWJ//ॐ', fonts: { heading: 'Mona Sans', body: 'Inter' } }, campaign });
+  assert.match(svg, /CWJ\/\/ॐ/);
   assert.match(svg, /font-family="Mona Sans"/);
   assert.match(svg, /font-family="Inter"/);
   const unsafe = renderSvg({ brandProfile: { fonts: { heading: '\" onload=\"alert(1)' } }, campaign });

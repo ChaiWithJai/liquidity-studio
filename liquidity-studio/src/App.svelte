@@ -3,6 +3,17 @@
   import Emulator from "./Emulator.svelte";
   import "./studio.css";
 
+  const supportedFonts = [
+    "Mona Sans",
+    "Inter",
+    "Instrument Serif",
+    "DejaVu Sans",
+  ];
+  function supportedFont(value) {
+    const firstFamily =
+      typeof value === "string" ? value.split("/")[0].trim() : "";
+    return supportedFonts.includes(firstFamily) ? firstFamily : "DejaVu Sans";
+  }
   const days = [
     "Monday",
     "Tuesday",
@@ -193,7 +204,9 @@
       if (token !== lastScopeToken) return;
       brandProfile = data.brandProfile;
       if (brandProfile) {
-        brandProfile.fonts ||= { heading: "", body: "" };
+        brandProfile.fonts ||= { heading: "DejaVu Sans", body: "DejaVu Sans" };
+        brandProfile.fonts.heading = supportedFont(brandProfile.fonts.heading);
+        brandProfile.fonts.body = supportedFont(brandProfile.fonts.body);
         brandProfile.colors ||= [];
       }
       backlog = data.backlog || [];
@@ -429,6 +442,10 @@
           .filter((key) => brandProfile[key] !== undefined)
           .map((key) => [key, brandProfile[key]]),
       );
+      patch.fonts = {
+        heading: supportedFont(brandProfile.fonts.heading),
+        body: supportedFont(brandProfile.fonts.body),
+      };
       const result = await post("/api/studio/brand-profile", patch);
       brandProfile = result.brandProfile || brandProfile;
       notice = "Brand profile saved for this brand.";
@@ -1169,10 +1186,21 @@
               bind:value={brandProfile.logoText}
             /></label
           ><label
-            >Heading font<input
+            >Heading font<select
+              aria-label="Heading font"
               bind:value={brandProfile.fonts.heading}
-            /></label
-          ><label>Body font<input bind:value={brandProfile.fonts.body} /></label
+              >{#each supportedFonts as family (family)}<option value={family}
+                  >{family}</option
+                >{/each}</select
+            ></label
+          ><label
+            >Body font<select
+              aria-label="Body font"
+              bind:value={brandProfile.fonts.body}
+              >{#each supportedFonts as family (family)}<option value={family}
+                  >{family}</option
+                >{/each}</select
+            ></label
           >
           <div class="full color-list">
             {#each brandProfile.colors || [] as color (color.name)}<label

@@ -32,6 +32,8 @@ jobs:
         run: npm run build
       - name: Verify all Node unit and HTTP integration contracts
         run: node --test server/*.test.js
+      - name: Verify project budget and deployment evidence guards
+        run: node --test ../scripts/*.test.mjs
       - name: Verify HTTP and service contracts with reviewed synthetic fixtures
         run: npm run test:backwards
       - name: Verify structural graph and source checks

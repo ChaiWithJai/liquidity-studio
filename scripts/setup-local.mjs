@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const target = path.join(root, '.env');
+const target = path.resolve(process.env.STUDIO_ENV_FILE || path.join(root, '.env'));
 if (fs.existsSync(target)) {
   console.log('Existing .env preserved. Review it locally; credentials were not changed.');
 } else {
@@ -13,5 +13,5 @@ if (fs.existsSync(target)) {
   fs.writeFileSync(target, values.join('\n'), { mode: 0o600, flag: 'wx' });
   console.log('Created private .env with independent random founder and marketer passwords.');
 }
-console.log('Start: docker compose up --build --detach --wait');
+console.log(`Start: docker compose --env-file ${target} up --build --detach --wait`);
 console.log(`Read login credentials locally in ${target}. Do not commit or share the file.`);
