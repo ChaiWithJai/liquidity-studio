@@ -13,6 +13,19 @@ Status: module order approved by the founder on 2026-10-17; Organization → Bra
 
 Build order: container-runtime → durable-storage → identity-tenant-access → operator-workflow → gcp-pilot → managed-billing-exit. Existing defect fixes and read-only audits can proceed in parallel; runtime architecture changes follow reviewed module specs.
 
+## Pilot hierarchy
+
+```mermaid
+flowchart TD
+    O[Organization / agency account] --> B1[Brand: The Liquidity Desk]
+    O --> B2[Brand: Chai With Jai]
+    F[Founder: organization admin] --> O
+    M[Marketer: explicit brand access] --> B1
+    M --> B2
+    B1 --> D1[Scoped drafts, assets, jobs and feedback]
+    B2 --> D2[Scoped drafts, assets, jobs and feedback]
+```
+
 ## Account and brand boundary
 
 An organization or agency is the account tenant. It contains multiple brands. The pilot has one organization and two proposed brands: liquidity_desk and vedic_dharma. The founder administers the organization; the marketer is granted explicit brand access. Brand presets are configuration, not authorization.
