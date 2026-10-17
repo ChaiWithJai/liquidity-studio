@@ -28,6 +28,8 @@
   let pointerStart = 0;
   let artworkElement = $state();
   let evidence = $state(null);
+  // Only the canonical renderer's XML-escaped, fixed SVG markup reaches @html.
+  // Never pass user HTML or provider-supplied markup through this boundary.
   function artwork(props) { try { return renderSvg(props); } catch { return '<div class="artwork-error">Artwork exceeds its layout. Shorten the copy and save before export.</div>'; } }
   let artifactHtml = $derived(artwork({ campaign, brandProfile, format, slideIndex: slide }));
   let handle = $derived((brandProfile?.handle || brandProfile?.brandName || 'studio').replace(/[^a-zA-Z0-9_.]/g, '').toLowerCase());
@@ -43,6 +45,7 @@
     return () => clearTimeout(timer);
   });
   onMount(() => {
+    if (window.innerWidth < 700) zoom = 75;
     const timer = setInterval(() => {
       if (reelPlaying) {
         reelTime = Math.min(30, reelTime + .25);
@@ -83,7 +86,9 @@
       const box = node.getBoundingClientRect();
       return { x: box.x - rect.x, y: box.y - rect.y, width: box.width, height: box.height, foreground: rgbToHex(getComputedStyle(node).fill) };
     });
-    const payload = { format, canvas: { width: rect.width, height: rect.height }, textBoxes, background, caption, captionLimit: Number(captionThreshold) };
+    const stage = artworkElement.parentElement;
+    const obstructionBoxes = mode === 'instagram' ? [...stage.querySelectorAll('.poll-sticker,.reel-rail,.reel-meta,.story-chrome,.story-reply')].map(node => { const box = node.getBoundingClientRect(); return { x: box.x - rect.x, y: box.y - rect.y, width: box.width, height: box.height }; }) : [];
+    const payload = { format, obstructionBoxes, canvas: { width: rect.width, height: rect.height }, textBoxes, background, caption, captionLimit: Number(captionThreshold) };
     const result = computePreflight(payload);
     evidence = result.metrics;
     onpreflight(payload);
@@ -114,7 +119,7 @@
   </div>
   <p class="muted small">Approximate Instagram chrome. Local interactions only. Validate final assets in Instagram before publishing.</p>
   <div class="phone-well">
-    <div class:raw={mode === 'design'} class="phone" style:width="{phoneWidth}px" style:zoom={zoom / 100}>
+    <div class:raw={mode === 'design'} class="phone" aria-label="Simulated phone viewport" style:width="{phoneWidth}px" style:height={mode === 'design' ? 'auto' : `${Math.round(phoneWidth * 874 / 402)}px`} style:zoom={zoom / 100}>
       {#if mode !== 'design'}<div class="statusbar"><span>9:41</span><span class="island"></span><span>▴ ▰ ▮</span></div>{/if}
       {#if mode === 'grid'}
         <div class="profile-header"><b>{handle}</b><button aria-label="Profile options" onclick={() => notice = 'Profile options are a local simulation.'}>☰</button></div>
