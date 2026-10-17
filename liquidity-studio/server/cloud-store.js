@@ -88,7 +88,7 @@ export class FirestoreStore {
 
   async uploadArtifact(scope, id, buffer, contentType) {
     const prefix = this.scopePrefix(scope);
-    if (!this.bucket || !identifier(id) || !Buffer.isBuffer(buffer) || !buffer.length || buffer.length > MAX_ARTIFACT_BYTES || !['image/png', 'image/jpeg', 'image/webp', 'application/pdf', 'application/json', 'application/zip', 'text/plain', 'video/mp4'].includes(contentType)) throw failure('INVALID_ARTIFACT', 'Artifact ID, bytes or content type is invalid');
+    if (!this.bucket || !identifier(id) || !Buffer.isBuffer(buffer) || !buffer.length || buffer.length > MAX_ARTIFACT_BYTES || !['image/png', 'image/jpeg', 'image/webp', 'application/pdf', 'application/json', 'application/zip', 'text/plain', 'text/plain; charset=utf-8', 'video/mp4'].includes(contentType)) throw failure('INVALID_ARTIFACT', 'Artifact ID, bytes or content type is invalid');
     const sha256 = hash(buffer);
     const object = `${prefix}${id}/${sha256}`;
     const file = this.bucket.file(object);
@@ -118,14 +118,21 @@ export class FirestoreStore {
   }
 
   async checkHealth() {
-    try {
-      await this.get('identity');
-      if (!this.bucket) throw new Error('Asset bucket not configured');
-      await this.bucket.getMetadata();
-      return { repository: 'available', artifacts: 'available' };
-    } catch {
-      throw failure('CLOUD_DEPENDENCY_UNAVAILABLE', 'Cloud repository or artifact dependency is unavailable');
+    // An HTTP deadline does not cancel SDK work. Share the outstanding probe so
+    // repeated liveness polling cannot create unbounded dependency requests.
+    if (!this.healthRequest) {
+      this.healthRequest = (async () => {
+        try {
+          await this.get('identity');
+          if (!this.bucket) throw new Error('Asset bucket not configured');
+          await this.bucket.getMetadata();
+          return { repository: 'available', artifacts: 'available' };
+        } catch {
+          throw failure('CLOUD_DEPENDENCY_UNAVAILABLE', 'Cloud repository or artifact dependency is unavailable');
+        }
+      })().finally(() => { this.healthRequest = null; });
     }
+    return this.healthRequest;
   }
 
   async backup() { throw failure('REMOTE_BACKUP_REQUIRED', 'Use an authorized Firestore/GCS backup or scoped portable export; local backup paths are unsupported'); }
@@ -136,6 +143,6 @@ export async function createCloudStore({ projectId = process.env.GOOGLE_CLOUD_PR
   if (!projectId || !bucketName || /[\s/:]/.test(bucketName)) throw failure('CLOUD_CONFIG_REQUIRED', 'Firestore mode requires an explicit project and GCS bucket');
   const [{ Firestore }, { Storage }] = await Promise.all([import('@google-cloud/firestore'), import('@google-cloud/storage')]);
   const firestore = new Firestore({ projectId, databaseId });
-  const storage = new Storage({ projectId, retryOptions: { autoRetry: true, maxRetries: 2 } });
+  const storage = new Storage({ projectId, retryOptions: { autoRetry: true, maxRetries: 2, totalTimeout: 10, maxRetryDelay: 1 } });
   return new FirestoreStore({ firestore, bucket: storage.bucket(bucketName), collection });
 }
