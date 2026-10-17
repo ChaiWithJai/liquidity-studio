@@ -401,8 +401,16 @@
       },
     ];
   }
+  function removeSourceClaim(id) {
+    reviewClaims = reviewClaims.filter((claim) => claim.id !== id);
+  }
   async function saveSourceClaims() {
     if (!selectedStory) return;
+    if (!reviewClaims.length) {
+      error = "Add at least one sourced claim before saving the review.";
+      return;
+    }
+    error = "";
     try {
       const result = await post("/api/studio/source-claims", {
         storyId: selectedStory.id,
@@ -1034,7 +1042,11 @@
                     meaning. Clinical claims require a separate clinical review.
                   </p>
                   {#each reviewClaims as claim, i (claim.id)}<fieldset>
-                      <legend>Claim {i + 1}</legend><label
+                      <legend>Claim {i + 1}</legend><button
+                        class="secondary"
+                        onclick={() => removeSourceClaim(claim.id)}
+                        aria-label={`Remove claim ${i + 1}`}
+                        >Remove claim {i + 1}</button><label
                         >Claim text<textarea bind:value={claim.text} rows="3"
                         ></textarea></label
                       ><label
@@ -1108,7 +1120,11 @@
               </p>
               <div class="field-editor">
                 {#each reviewClaims as claim, i (claim.id)}<fieldset>
-                    <legend>Claim {i + 1}</legend><label
+                    <legend>Claim {i + 1}</legend><button
+                        class="secondary"
+                        onclick={() => removeSourceClaim(claim.id)}
+                        aria-label={`Remove claim ${i + 1}`}
+                        >Remove claim {i + 1}</button><label
                       >Claim text<textarea bind:value={claim.text} rows="3"
                       ></textarea></label
                     ><label

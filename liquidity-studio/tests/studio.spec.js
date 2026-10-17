@@ -475,3 +475,30 @@ test("profile grid uses real scheduled/exported records and excludes ordinary dr
   await expect(page.locator(".profile-grid")).not.toContainText("ordinary draft excluded");
   await expect(cells.nth(4)).toContainText("No scheduled or exported post");
 });
+
+
+test("seeded finance claims can be reduced to one supported reviewed source", async ({ page }) => {
+  await signIn(page);
+  await page.locator(".story-row").filter({hasText:"Angel City FC"}).getByRole("button",{name:"Open story"}).click();
+  await expect(page.getByLabel("Claim text",{exact:true})).toHaveCount(3);
+  await page.getByRole("button",{name:"Remove claim 3",exact:true}).click();
+  await page.getByRole("button",{name:"Remove claim 2",exact:true}).click();
+  await expect(page.getByLabel("Claim text",{exact:true})).toHaveCount(1);
+  await page.getByLabel("Claim text",{exact:true}).fill("The source describes a signed media agreement.");
+  await page.getByLabel("HTTPS source URL",{exact:true}).fill("https://example.org/source-reviewed-for-test");
+  await page.getByLabel("Claim classification",{exact:true}).selectOption("financial");
+  await page.getByLabel("Review status",{exact:true}).selectOption("approved");
+  await page.getByRole("button",{name:"Save source review",exact:true}).click();
+  await expect(page.getByRole("status").filter({hasText:"Source review saved"})).toBeVisible();
+  await page.getByRole("button",{name:"Generate four-format draft",exact:true}).click();
+  await expect(page.getByLabel("Headline",{exact:true})).toBeVisible();
+  await page.getByText("Review source claims",{exact:true}).click();
+  await expect(page.getByRole("button",{name:"Remove claim 1",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Remove claim 1",exact:true}).click();
+  await page.getByRole("button",{name:"Save source review",exact:true}).click();
+  await expect(page.getByRole("alert")).toContainText("Add at least one sourced claim before saving the review.");
+  const bootstrap = await (await page.request.get(base + "/api/studio/bootstrap" + scope)).json();
+  const saved = bootstrap.backlog.find(story => story.id === "story_angel_city");
+  expect(saved.sourceClaims).toHaveLength(1);
+  expect(saved.sourceClaims[0].status).toBe("approved");
+});
