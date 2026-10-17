@@ -29,7 +29,8 @@ function requireValue(value, name, pattern) {
   return value;
 }
 function command(args, { execute = false, capture = false } = {}) {
-  if (!args.includes(`--billing-project=${project}`)) args = [...args, `--billing-project=${project}`];
+  if (!args.includes(`--billing-project=${project}`))
+    args = [...args, `--billing-project=${project}`];
   if (!execute) {
     console.log(JSON.stringify({ executable: "gcloud", args }));
     return;
@@ -386,7 +387,7 @@ try {
             "--max=1",
             "--concurrency=8",
             "--timeout=60",
-            "--allow-unauthenticated",
+            "--no-invoker-iam-check",
             "--no-iap",
             "--ingress=all",
             ...(existingService ? ["--no-traffic"] : []),
@@ -399,6 +400,69 @@ try {
       } finally {
         fs.rmSync(directory, { recursive: true, force: true });
       }
+      // Probe the tagged candidate, including when main traffic remains on an older revision.
+      const deployed = JSON.parse(
+        command(
+          [
+            "run",
+            "services",
+            "describe",
+            service,
+            `--project=${project}`,
+            `--region=${region}`,
+            "--format=json(status.traffic)",
+          ],
+          { execute: true, capture: true },
+        ),
+      );
+      const candidate = deployed.status?.traffic?.find(
+        (entry) => entry.tag === "pilot-candidate",
+      );
+      const candidateUrl = new URL(candidate?.url || "invalid:");
+      if (
+        candidateUrl.protocol !== "https:" ||
+        !candidateUrl.hostname.endsWith(".run.app") ||
+        candidateUrl.username ||
+        candidateUrl.password ||
+        candidateUrl.pathname !== "/" ||
+        candidateUrl.search ||
+        candidateUrl.hash
+      ) {
+        throw new Error(
+          "Deployment completed but candidate URL could not be verified; public acceptance failed",
+        );
+      }
+      for (const [route, status] of [
+        ["/", 200],
+        ["/api/auth/config", 200],
+        ["/api/auth/session", 401],
+        ["/api/studio/bootstrap", 401],
+      ]) {
+        const response = await fetch(new URL(route, candidateUrl), {
+          redirect: "manual",
+          signal: AbortSignal.timeout(10000),
+        });
+        if (response.status !== status)
+          throw new Error(
+            `Deployment completed but public acceptance failed for ${route}: expected ${status}, received ${response.status}`,
+          );
+        if (route === "/api/auth/config") {
+          const config = await response.json();
+          if (
+            config.mode !== "google" ||
+            config.firebase?.projectId !== project ||
+            config.emulator
+          )
+            throw new Error(
+              "Deployment completed but public Google configuration acceptance failed",
+            );
+        } else {
+          await response.body?.cancel();
+        }
+      }
+      console.log(
+        "Candidate public transport passed: sign-in surface and Google configuration reachable; anonymous session/studio access denied. Authorized Google sign-in and runtime dependency acceptance remain separate checks.",
+      );
       console.log(
         existingService
           ? "Candidate revision created with no assigned main-service traffic; its tagged URL can still receive requests. Verify anonymous API 401, Google sign-in, outsider rejection, isolation, real provider, restore and spend controls before promoting traffic."
