@@ -34,6 +34,7 @@ async function runSmokeEval() {
   // JTBD #2: Multi-Format Channel Export + Implicit Telemetry Capture
   const topStory = boot.backlog[0];
   await multiFormatFormatterService.exportFormattedAsset({
+    storyId: topStory.id,
     storyTitle: topStory.title,
     format: "carousel",
     content: batchRes.latestCampaign.carousel,

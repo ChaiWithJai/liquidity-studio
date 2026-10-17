@@ -247,7 +247,7 @@ async function runBackwardsTestSuite() {
       "Backlog story must retain 3 verified financial facts",
     );
     console.log(
-      "  ✅ PASS: Weekly Backlog preserves verified financial facts and trend badges.",
+      "  ✅ PASS: Weekly backlog preserves the explicitly supplied test inputs.",
     );
 
     // BACKWARDS TEST 5: Screen M1 (Brand Profile Bento Persistence)
@@ -268,14 +268,14 @@ async function runBackwardsTestSuite() {
     assert.equal(
       adminRes.data.observability.summary.avgEvalScore,
       100,
-      "Silent Eval score should be 100%",
+      "Controlled source-excerpt coverage should be complete",
     );
     assert.ok(
       adminRes.data.observability.traces.length >= 1,
       "Admin traces must record latency and model",
     );
     console.log(
-      `  ✅ PASS: Admin Observability recorded ${adminRes.data.observability.traces[0].latencyMs}ms trace with 100% silent eval.`,
+      `  ✅ PASS: Admin Observability recorded ${adminRes.data.observability.traces[0].latencyMs}ms trace with complete source-excerpt coverage (factual accuracy not assessed).`,
     );
 
     // BACKWARDS TEST 7: Dependency Inversion Hot-Swap (Zero-GCP Mock Gateway Injection)
@@ -313,7 +313,7 @@ async function runBackwardsTestSuite() {
     assert.equal(
       fedBatch.job.evalPassRate,
       1.0,
-      "Federated gateway output must pass silent eval at 100%",
+      "Mock gateway must preserve every approved synthetic source excerpt",
     );
     assert.equal(
       (

@@ -59,7 +59,7 @@ try {
     if (projectInfo.projectId !== project || projectInfo.lifecycleState !== 'ACTIVE') throw new Error('The explicitly selected project must be active and accessible');
     const billingInfo = JSON.parse(command(readOnly[1], { execute: true, capture: true }));
     if (!billingInfo.billingEnabled || billingInfo.billingAccountName !== `billingAccounts/${process.env.PILOT_BILLING_ACCOUNT}`) throw new Error('The project must use the explicitly verified billing account');
-    const accountBudget = JSON.parse(command(['billing', 'budgets', 'describe', process.env.PILOT_BUDGET_ID, `--billing-account=${process.env.PILOT_BILLING_ACCOUNT}`, '--format=json'], { execute: true, capture: true }));
+    const accountBudget = JSON.parse(command(['billing', 'budgets', 'describe', process.env.PILOT_BUDGET_ID, `--billing-account=${process.env.PILOT_BILLING_ACCOUNT}`, `--project=${project}`, '--format=json'], { execute: true, capture: true }));
     if (accountBudget.name !== `billingAccounts/${process.env.PILOT_BILLING_ACCOUNT}/budgets/${process.env.PILOT_BUDGET_ID}`) throw new Error('Budget identity does not match the approved account and ID');
     validateBudget(accountBudget, { projectNumber: String(projectInfo.projectNumber), budget });
     if (mode === 'rollback') {
