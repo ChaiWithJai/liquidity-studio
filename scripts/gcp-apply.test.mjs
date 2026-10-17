@@ -31,7 +31,7 @@ function fixture({
   const preload = path.join(directory, "fetch.cjs");
   writeFileSync(
     preload,
-    `global.fetch = async () => ({ok:true,json:async()=>({name:'projects/test-studio-project/defaultSupportedIdpConfigs/google.com',enabled:!process.env.TEST_PROVIDER_DISABLED,clientId:'test.apps.googleusercontent.com'})});`,
+    `global.fetch = async (url) => String(url).includes('.run.app') ? ({status:process.env.TEST_PUBLIC_DENIED ? 403 : String(url).endsWith('/api/auth/session') || String(url).endsWith('/api/studio/bootstrap') ? 401 : 200,json:async()=>({mode:process.env.TEST_PUBLIC_BAD_CONFIG?'password':'google',firebase:{projectId:'test-studio-project'}})}) : ({ok:true,json:async()=>({name:'projects/test-studio-project/defaultSupportedIdpConfigs/google.com',enabled:!process.env.TEST_PROVIDER_DISABLED,clientId:'test.apps.googleusercontent.com'})});`,
   );
   const reportPath = path.join(directory, "report.json");
   const report = {
@@ -70,6 +70,7 @@ else if (args[0]==='run' && args[1]==='services' && args[2]==='list') {
  if(process.env.TEST_SERVICE_LIST_RESPONSE!==undefined)console.log(process.env.TEST_SERVICE_LIST_RESPONSE);
  else console.log(JSON.stringify([{metadata:{name:'liquidity-studio'}}]));
 }
+else if (args[0]==='run' && args[1]==='services' && args[2]==='describe') console.log(JSON.stringify({status:{traffic:[{tag:'pilot-candidate',url:process.env.TEST_CANDIDATE_URL||'https://pilot-candidate---liquidity-studio-test.run.app'}]}}));
 else if (args[0]==='run' && args[1]==='revisions') console.log(JSON.stringify({spec:{containers:[{image:process.env.TEST_PREVIOUS_IMAGE}]}}));
 else { if(args[0]==='run'&&args[1]==='deploy'){const file=args.find(arg=>arg.startsWith('--env-vars-file=')).split('=')[1];fs.writeFileSync(process.env.TEST_RUNTIME_ENV_LOG,fs.readFileSync(file));}console.log('{}'); }
 `,
@@ -138,7 +139,7 @@ test("only a passing bound report and verified private dependencies reach the fa
   assert.equal(result.deploymentEnv.AI_MAX_OUTPUT_TOKENS, "4096");
   assert.equal(result.deploymentEnv.STUDIO_DAILY_GENERATION_LIMIT, "20");
   assert.equal(result.deploymentEnv.STUDIO_GLOBAL_DAILY_GENERATION_LIMIT, "20");
-  assert.ok(deploy.includes("--allow-unauthenticated"));
+  assert.ok(deploy.includes("--no-invoker-iam-check"));
   assert.ok(deploy.includes("--clear-secrets"));
   assert.ok(!deploy.some((arg) => /PASSWORD|--set-secrets/.test(arg)));
   assert.ok(deploy.includes("--no-iap"));
@@ -265,7 +266,7 @@ test("verified absent first service omits unsupported flag and reports 100 perce
     assert.equal(result.status, 0, result.stderr);
     const [deploy] = mutations(result);
     assert.ok(!deploy.includes("--no-traffic"));
-    assert.ok(deploy.includes("--allow-unauthenticated"));
+    assert.ok(deploy.includes("--no-invoker-iam-check"));
     assert.ok(deploy.includes("--no-iap"));
     assert.match(result.stdout, /100% initial traffic/);
     assert.match(result.stdout, /data APIs remain Google-protected/);
@@ -297,5 +298,36 @@ test("service lookup auth, permission, network or malformed results never reach 
     const result = fixture({ env: { TEST_SERVICE_LIST_RESPONSE: raw } });
     assert.equal(result.status, 1);
     assert.deepEqual(mutations(result), []);
+  }
+});
+
+test("deployment project and linked-billing reads use the explicitly selected quota project", () => {
+  const result = fixture();
+  assert.equal(result.status, 0, result.stderr);
+  const reads = result.commands.filter(
+    (args) => args[0] === "projects" || args[0] === "billing",
+  );
+  assert.ok(reads.length >= 3);
+  assert.ok(
+    reads.every(
+      (args) =>
+        args.includes("--project=test-studio-project") &&
+        args.includes("--billing-project=test-studio-project"),
+    ),
+  );
+});
+
+test("CLI success does not conceal public invocation denial or wrong Google config", () => {
+  for (const env of [
+    { TEST_PUBLIC_DENIED: "1" },
+    { TEST_PUBLIC_BAD_CONFIG: "1" },
+    { TEST_CANDIDATE_URL: "https://attacker.example/" },
+  ]) {
+    const result = fixture({ env });
+    assert.notEqual(result.status, 0);
+    assert.match(
+      result.stderr,
+      /acceptance failed|configuration acceptance failed/,
+    );
   }
 });

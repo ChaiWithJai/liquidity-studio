@@ -24,11 +24,13 @@ const secrets = legacyPasswords ? [
   { id: 'liquidity-founder-password', variable: 'PILOT_FOUNDER_PASSWORD' },
   { id: 'liquidity-marketer-password', variable: 'PILOT_MARKETER_PASSWORD' }
 ] : [];
-const apis = ['run.googleapis.com', 'firestore.googleapis.com', 'storage.googleapis.com', 'secretmanager.googleapis.com', 'artifactregistry.googleapis.com', 'iap.googleapis.com', 'aiplatform.googleapis.com', 'iam.googleapis.com', 'cloudscheduler.googleapis.com', 'identitytoolkit.googleapis.com', 'firebase.googleapis.com'];
+const billingBootstrapApis = ['cloudbilling.googleapis.com', 'billingbudgets.googleapis.com'];
+const apis = [...billingBootstrapApis, 'run.googleapis.com', 'firestore.googleapis.com', 'storage.googleapis.com', 'secretmanager.googleapis.com', 'artifactregistry.googleapis.com', 'iap.googleapis.com', 'aiplatform.googleapis.com', 'iam.googleapis.com', 'cloudscheduler.googleapis.com', 'identitytoolkit.googleapis.com', 'firebase.googleapis.com'];
 const requireMatch = (value, pattern, name) => { if (typeof value !== 'string' || !pattern.test(value)) throw new Error(`Set a valid ${name}`); return value; };
 const globalFlags = [`--project=${project}`, '--quiet', '--verbosity=error'];
 
 function cli(args, { input, execute = mode !== 'plan' } = {}) {
+  if (!args.includes(`--billing-project=${project}`)) args = [...args, `--billing-project=${project}`];
   if (!execute) { console.log(JSON.stringify({ executable: 'gcloud', args, ...(input !== undefined ? { stdin: 'redacted secret input' } : {}) })); return; }
   const env = { ...process.env, CLOUDSDK_CORE_DISABLE_PROMPTS: '1', CLOUDSDK_CORE_LOG_HTTP: 'false', CLOUDSDK_CORE_VERBOSITY: 'error' };
   for (const key of Object.keys(env)) if (/^(PILOT|STUDIO)_.*PASSWORD$/.test(key) || ['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'AI_GATEWAY_KEY'].includes(key)) delete env[key];
@@ -48,9 +50,9 @@ function assertPrivate(metadata, projectNumber) {
   if (metadata.name !== bucket || String(metadata.projectNumber) !== String(projectNumber) || metadata.location?.toLowerCase() !== region || metadata.iamConfiguration?.publicAccessPrevention !== 'enforced' || metadata.iamConfiguration?.uniformBucketLevelAccess?.enabled !== true) throw new Error('Existing bucket must be private and owned by the authorized project/region; automatic repair is refused');
 }
 function verifyGate() {
-  const info = json(['projects', 'describe', project]);
+  const info = json(['projects', 'describe', project, ...globalFlags]);
   if (info.projectId !== project || info.lifecycleState !== 'ACTIVE' || info.parent?.type !== 'organization' || String(info.parent.id) !== organization) throw new Error('Project must be active in the explicitly approved organization');
-  const billing = json(['billing', 'projects', 'describe', project]);
+  const billing = json(['billing', 'projects', 'describe', project, ...globalFlags]);
   const account = requireMatch(process.env.PILOT_BILLING_ACCOUNT, /^[a-fA-F0-9]{6}-[a-fA-F0-9]{6}-[a-fA-F0-9]{6}$/, 'PILOT_BILLING_ACCOUNT');
   const budgetId = requireMatch(process.env.PILOT_BUDGET_ID, /^[a-zA-Z0-9_-]{1,128}$/, 'PILOT_BUDGET_ID');
   if (!billing.billingEnabled || billing.billingAccountName !== `billingAccounts/${account}`) throw new Error('Verified linked billing is required before any resource change');
@@ -69,7 +71,8 @@ try {
   if (users[0].toLowerCase() === users[1].toLowerCase()) throw new Error('Founder and marketer must be distinct accounts');
   if (mode !== 'plan' && process.argv[3] !== '--apply') throw new Error('Resource or access changes require --apply');
   if (mode === 'plan') {
-    console.log(JSON.stringify({ project, organization, region, budgetUSD: budget, billingGate: 'linked account and verified monthly all-service project budget required before any mutation', users, resourceStage: 'prerequisites only; service deployment and access are separate' }));
+    console.log(JSON.stringify({ project, organization, region, budgetUSD: budget, billingGate: 'linked account and verified monthly all-service project budget required before application provisioning', billingApiBootstrap: 'Explicitly enable the two billing APIs before verification; apply never bootstraps them ahead of the billing gate', users, resourceStage: 'prerequisites only; service deployment and access are separate' }));
+    cli(['services', 'enable', ...billingBootstrapApis, ...globalFlags, `--billing-project=${project}`]);
     cli(['services', 'enable', ...apis, ...globalFlags]);
     cli(['firestore', 'databases', 'create', `--database=${database}`, `--location=${region}`, '--type=firestore-native', '--delete-protection', '--enable-pitr', ...globalFlags]);
     cli(['storage', 'buckets', 'create', `gs://${bucket}`, `--location=${region}`, '--uniform-bucket-level-access', '--public-access-prevention', ...globalFlags]);

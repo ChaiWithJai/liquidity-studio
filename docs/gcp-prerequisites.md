@@ -46,3 +46,17 @@ Supply actual public Firebase web configuration and principal email allowlist th
 Verification: `node --test scripts/gcp-provision.test.mjs scripts/gcp-google.test.mjs scripts/gcp-apply.test.mjs` covers command contracts using fake CLI/API adapters. Live inventory and user/browser acceptance remain separate evidence.
 
 Official references: [Firestore creation](https://docs.cloud.google.com/sdk/gcloud/reference/firestore/databases/create), [Google web sign-in](https://docs.cloud.google.com/identity-platform/docs/web/google), [Firebase authentication IAM](https://docs.cloud.google.com/iam/docs/roles-permissions/firebaseauth).
+
+
+## Explicit billing API bootstrap for a new project
+
+Both `cloudbilling.googleapis.com` and `billingbudgets.googleapis.com` must be enabled in the selected project before the read-only billing/budget gates can run. Enabling only the Budget API is insufficient: linked-project billing reads use Cloud Billing. The provisioner's plan prints the required bootstrap separately, and both APIs are included in its required-service inventory.
+
+```sh
+gcloud services enable cloudbilling.googleapis.com billingbudgets.googleapis.com \
+  --project="$PILOT_PROJECT" --billing-project="$PILOT_PROJECT"
+```
+
+This is an explicit operator bootstrap step, not a side effect of `preflight` or an automatic mutation ahead of verification. `apply` still verifies the explicit active project/organization, linked billing account and all-service project budget before provisioning application resources. A missing API or failed authentication remains a failure; it is not interpreted as an absent budget or permission grant. Run the read-only preflight again after enabling the APIs. Billing/project read commands pass the explicit project flag, and both CLI helpers add `--billing-project` for the selected project. A stale gcloud default project or global billing quota configuration therefore cannot silently select another quota project.
+
+Cloud Billing is a prerequisite for inspecting billing state; enabling it does not configure a spend cap, change the USD100 budget, publish the app or authorize unrelated resources.
