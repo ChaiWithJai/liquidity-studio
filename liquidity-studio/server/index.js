@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createAppContainer } from './container.js';
+import { checkReadiness } from './operational-health.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(__dirname, '..', 'dist');
@@ -43,6 +44,14 @@ export function createHttpServer(appContainer = createAppContainer()) {
 
   return http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') return sendJson(res, 200, { ok: true });
+
+    if (req.method === 'GET' && req.url === '/healthz') {
+      return sendJson(res, 200, { status: 'alive' });
+    }
+    if (req.method === 'GET' && req.url === '/readyz') {
+      const readiness = await checkReadiness(appContainer);
+      return sendJson(res, readiness.status === 'ready' ? 200 : 503, readiness);
+    }
 
     // SURFACE 1: MARKETER STUDIO ROUTES
     if (req.method === 'GET' && req.url === '/api/studio/bootstrap') {

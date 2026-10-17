@@ -8,18 +8,7 @@
 export class ObservabilityEngine {
   constructor() {
     this.traces = [];
-    this.batchJobs = [
-      {
-        jobId: 'job_weekly_seed',
-        trigger: 'Cloud Scheduler (Monday 09:00 UTC)',
-        startedAt: new Date(Date.now() - 3600 * 1000 * 6).toISOString(),
-        durationMs: 5840,
-        storiesDiscovered: 5,
-        formatsPrepared: 20,
-        evalPassRate: 1.0,
-        status: 'COMPLETED'
-      }
-    ];
+    this.batchJobs = [];
     this.backpropDataset = [];
   }
 
@@ -126,7 +115,7 @@ export class ObservabilityEngine {
       : 0;
     const avgEvalScore = totalTraces
       ? Math.round(this.traces.reduce((acc, t) => acc + (t.evalScore || 0), 0) / totalTraces)
-      : 100;
+      : null;
 
     return {
       summary: {

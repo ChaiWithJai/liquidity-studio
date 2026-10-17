@@ -219,34 +219,50 @@ export function createAppContainer(overrides = {}) {
   const batchProductionService = {
     async runWeeklyBatch({ maxStories = 1 } = {}) {
       const startedAt = Date.now();
-      const backlog = await repo.listBacklog();
-      const targetStories = backlog.slice(0, maxStories);
+      let backlog = [];
       const results = [];
+      try {
+        backlog = await repo.listBacklog();
+        const targetStories = backlog.slice(0, maxStories);
 
-      for (const story of targetStories) {
-        const res = await multiFormatFormatterService.generateCampaignForStory(story.id);
-        results.push(res);
+        for (const story of targetStories) {
+          const res = await multiFormatFormatterService.generateCampaignForStory(story.id);
+          results.push(res);
+        }
+
+        const avgEval =
+          results.reduce((acc, r) => acc + r.evalResult.score, 0) / Math.max(1, results.length);
+
+        const job = telemetry.recordBatchJob({
+          jobId: `job_weekly_${Date.now()}`,
+          trigger: 'Admin Batch Trigger',
+          startedAt: new Date(startedAt).toISOString(),
+          durationMs: Date.now() - startedAt,
+          storiesDiscovered: backlog.length,
+          formatsPrepared: results.length * 4,
+          evalPassRate: Number((avgEval / 100).toFixed(2)),
+          status: 'COMPLETED'
+        });
+
+        return {
+          job,
+          latestCampaign: results[0]?.campaign || null,
+          observability: telemetry.getSnapshot()
+        };
+      } catch (error) {
+        telemetry.recordBatchJob({
+          jobId: `job_weekly_${Date.now()}`,
+          trigger: 'Admin Batch Trigger',
+          startedAt: new Date(startedAt).toISOString(),
+          durationMs: Date.now() - startedAt,
+          storiesDiscovered: backlog.length,
+          formatsPrepared: results.length * 4,
+          evalPassRate: null,
+          status: 'FAILED',
+          errorCode: 'BATCH_EXECUTION_FAILED'
+        });
+        throw error;
       }
-
-      const avgEval =
-        results.reduce((acc, r) => acc + r.evalResult.score, 0) / Math.max(1, results.length);
-
-      const job = telemetry.recordBatchJob({
-        jobId: `job_weekly_${Date.now()}`,
-        trigger: 'Cloud Scheduler / Admin Batch Trigger',
-        startedAt: new Date(startedAt).toISOString(),
-        durationMs: Date.now() - startedAt,
-        storiesDiscovered: backlog.length,
-        formatsPrepared: results.length * 4,
-        evalPassRate: Number((avgEval / 100).toFixed(2)),
-        status: 'COMPLETED'
-      });
-
-      return {
-        job,
-        latestCampaign: results[0]?.campaign || null,
-        observability: telemetry.getSnapshot()
-      };
     }
   };
 
