@@ -20,9 +20,13 @@ test('auth-only apply binds project, preserves disabled alternatives and never e
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'provider-test-'));fs.mkdirSync(path.join(dir,'lib/bin'),{recursive:true});fs.writeFileSync(path.join(dir,'package.json'),JSON.stringify({version:'15.34.0'}));
  try {
   const calls=[];const input={...env,PILOT_CONFIRM_PROJECT:env.PILOT_PROJECT,PILOT_FIREBASE_CLI:path.join(dir,'lib/bin/firebase.js')};
-  const run=(exe,args)=>{calls.push(args);return{status:0,stdout:'secret-token'};};
+  const run=(exe,args,options)=>{assert.equal(options.timeout,120000);calls.push(args);return{status:0,stdout:'secret-token'};};
   const fetchImpl=async url=>({ok:true,json:async()=>url.includes('/webApps/')?{appId:env.PILOT_FIREBASE_APP_ID,projectId:env.PILOT_PROJECT}:url.endsWith('/config')?{signIn:{anonymous:{enabled:false},email:{enabled:false}}}:{enabled:true,clientId:'client.apps.googleusercontent.com',clientSecret:'never-expose'}});
   const result=await provisionGoogleProvider({mode:'apply',env:input,run,fetchImpl});assert.equal(result.googleEnabled,true);assert.doesNotMatch(JSON.stringify(result),/never-expose|secret-token/);
   const deployment=calls[1];assert.equal(deployment[deployment.indexOf('--only')+1],'auth');assert.equal(deployment[deployment.indexOf('--project')+1],env.PILOT_PROJECT);assert.ok(!fs.existsSync(deployment[deployment.indexOf('--config')+1]));
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('foreign Firebase redirect domains fail before credentials or CLI mutation',async()=>{
+ await assert.rejects(provisionGoogleProvider({mode:'apply',env:{...env,PILOT_CONFIRM_PROJECT:env.PILOT_PROJECT,PILOT_AUTH_DOMAIN:'attacker-project.firebaseapp.com'},run:()=>assert.fail('must not invoke CLI'),fetchImpl:()=>assert.fail('must not contact API')}),/match the explicit project/);
 });

@@ -2,7 +2,7 @@
 
 Use the supported [Firebase CLI Authentication configuration](https://firebase.google.com/docs/auth/configure-providers-cli), not the retired IAP OAuth Admin API. The reviewed official `firebase-tools@15.34.0` can create the Google OAuth brand/client through its auth-only deployment. Its implementation reuses an existing Firebase app. Set up the explicit project/Web App first; review that no unrelated apps would be selected.
 
-Install the pinned CLI into a private temporary tools directory using `npm install --prefix "$TOOLS" firebase-tools@15.34.0`. Set `PILOT_FIREBASE_CLI` to its absolute `node_modules/firebase-tools/lib/bin/firebase.js`. Configure these inputs in private operator environment, never committed values:
+Install the pinned CLI into a private temporary tools directory using `npm install --prefix "$TOOLS" firebase-tools@15.34.0`. Set `PILOT_FIREBASE_CLI` to its absolute `node_modules/firebase-tools/lib/bin/firebase.js`. For this pilot, the auth domain must exactly equal the explicit project ID plus `.firebaseapp.com`; other domains require a separately reviewed ownership-validation change. CLI operations have a 120-second deadline. Configure these inputs in private operator environment, never committed values:
 
 ```text
 PILOT_PROJECT=your-project-id

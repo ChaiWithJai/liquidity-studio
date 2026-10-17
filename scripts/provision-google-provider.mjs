@@ -7,7 +7,7 @@ export function validateProviderInput(env) {
  const project=env.PILOT_PROJECT, appId=env.PILOT_FIREBASE_APP_ID, supportEmail=env.PILOT_SUPPORT_EMAIL;
  if(!/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/.test(project||'') || !/^1:\d+:web:[a-f0-9]+$/.test(appId||'') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supportEmail||'')) throw new Error('Explicit valid project, Firebase Web App ID and support email required');
  const authDomain=env.PILOT_AUTH_DOMAIN;
- if(!/^[a-z0-9-]+\.firebaseapp\.com$/.test(authDomain||'')) throw new Error('Verified Firebase auth domain required');
+ if(authDomain !== `${project}.firebaseapp.com`) throw new Error('Pilot Firebase auth domain must match the explicit project');
  return {project,appId,supportEmail,authDomain};
 }
 export function assertDisabled(config) {
@@ -22,7 +22,7 @@ export async function provisionGoogleProvider({mode,env=process.env,run=spawnSyn
  if(!cli || !path.isAbsolute(cli)) throw new Error('Absolute pinned Firebase CLI entrypoint required');
  const packageFile=path.resolve(path.dirname(cli),'../../package.json');
  if(JSON.parse(fs.readFileSync(packageFile,'utf8')).version!=='15.34.0') throw new Error('Only reviewed firebase-tools 15.34.0 supported');
- const auth=run('gcloud',['auth','print-access-token',`--project=${input.project}`],{encoding:'utf8',stdio:'pipe'});
+ const auth=run('gcloud',['auth','print-access-token',`--project=${input.project}`],{encoding:'utf8',stdio:'pipe',timeout:120000});
  if(auth.status!==0) throw new Error('Operator authentication unavailable');
  const request=async url=>{const r=await fetchImpl(url,{headers:{Authorization:`Bearer ${auth.stdout.trim()}`,'x-goog-user-project':input.project},signal:AbortSignal.timeout(15000),redirect:'error'});if(!r.ok)throw new Error('Provider inventory verification failed');return r.json();};
  const base=`https://identitytoolkit.googleapis.com/admin/v2/projects/${input.project}`;
@@ -32,7 +32,7 @@ export async function provisionGoogleProvider({mode,env=process.env,run=spawnSyn
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'liquidity-provider-'));fs.chmodSync(dir,0o700);
  try {
   const file=path.join(dir,'firebase.json');fs.writeFileSync(file,JSON.stringify({auth:{providers:{anonymous:false,emailPassword:false,googleSignIn:{oAuthBrandDisplayName:'Liquidity Studio',supportEmail:input.supportEmail,authorizedRedirectUris:[`https://${input.authDomain}/__/auth/handler`]}}}}),{mode:0o600});
-  const result=run(process.execPath,[cli,'deploy','--only','auth','--project',input.project,'--config',file,'--non-interactive'],{cwd:dir,encoding:'utf8',stdio:'pipe',env:{...env,CLOUDSDK_CORE_LOG_HTTP:'false'}});
+  const result=run(process.execPath,[cli,'deploy','--only','auth','--project',input.project,'--config',file,'--non-interactive'],{cwd:dir,encoding:'utf8',stdio:'pipe',timeout:120000,env:{...env,CLOUDSDK_CORE_LOG_HTTP:'false'}});
   if(result.status!==0) throw new Error('Pinned Firebase auth-only provisioning failed; no CLI diagnostic payload is exposed');
   const provider=await request(base+'/defaultSupportedIdpConfigs/google.com');
   if(provider.enabled!==true || !provider.clientId?.endsWith('.apps.googleusercontent.com')) throw new Error('Enabled Google provider was not confirmed');
