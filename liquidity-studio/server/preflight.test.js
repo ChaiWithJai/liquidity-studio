@@ -12,7 +12,14 @@ test('preflight computes actual overlap/contrast and reports simulation limits',
   assert.equal('confidenceScore' in blocked, false);
 });
 test('empty geometry stays unmeasured and invalid input fails', () => {
-  assert.equal(computePreflight({ ...input, textBoxes: [] }).checks[0].status, 'unmeasured');
+  assert.equal(computePreflight({ ...input, textBoxes: [] }).checks.find(check => check.id === 'safe-zones').status, 'unmeasured');
   assert.throws(() => computePreflight({ ...input, canvas: { width: 0, height: 700 } }), /Invalid/);
   assert.throws(() => computePreflight({ ...input, captionLimit: 5 }), /Invalid/);
+});
+
+test('aspect ratio and partial color evidence cannot silently pass', () => {
+  const result = computePreflight({ ...input, canvas: { width: 400, height: 400 }, textBoxes: [...input.textBoxes, { x: 40, y: 200, width: 100, height: 20, foreground: 'invalid' }] });
+  assert.equal(result.checks.find(check => check.id === 'aspect-ratio').status, 'warning');
+  assert.equal(result.metrics.unmeasuredColorCount, 1);
+  assert.equal(result.checks.find(check => check.id === 'contrast').status, 'unmeasured');
 });
