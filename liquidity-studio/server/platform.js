@@ -1,14 +1,27 @@
 import { DurableStore } from "./storage.js";
 import { IdentityService } from "./auth.js";
+import { GoogleIdentityService } from "./google-auth.js";
 import { ScopedRepository } from "./repository.js";
 import { DurableTelemetry } from "./durable-telemetry.js";
 import { AIGateway } from "./gateway.js";
 import { createAppContainer } from "./container.js";
-export function createPlatform({ store } = {}) {
+export function createPlatform({
+  store,
+  authMode = process.env.STUDIO_AUTH_MODE || "google",
+  googleAuth,
+} = {}) {
   const platform = { store: null, identity: null };
-  const initialize = (activeStore) => {
+  const initialize = async (activeStore) => {
     platform.store = activeStore;
-    platform.identity = new IdentityService(activeStore);
+    if (authMode === "google")
+      platform.identity = new GoogleIdentityService(activeStore, googleAuth);
+    else if (
+      authMode === "password" &&
+      !process.env.K_SERVICE &&
+      process.env.NODE_ENV !== "production"
+    )
+      platform.identity = new IdentityService(activeStore);
+    else throw new Error("Unsupported or unsafe authentication mode");
     return platform.identity.provisionFromEnvironment();
   };
   if (store) platform.ready = initialize(store);

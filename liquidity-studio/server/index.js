@@ -145,7 +145,9 @@ async function readBody(req, limit = 262144) {
   });
 }
 
-function token(req) {
+function token(req, mode) {
+  if (mode === "google")
+    return /^Bearer ([^\s]+)$/.exec(req.headers.authorization || "")?.[1];
   const cookie = (req.headers.cookie || "")
     .split(";")
     .map((value) => value.trim())
@@ -193,7 +195,7 @@ export function createHttpServer(
         res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
         res.setHeader(
           "Access-Control-Allow-Headers",
-          "Content-Type,X-Organization-Id,X-Brand-Id",
+          "Content-Type,Authorization,X-Organization-Id,X-Brand-Id",
         );
         return json(204, {});
       }
@@ -316,9 +318,14 @@ export function createHttpServer(
         );
       }
       const identity = platform?.identity;
+      if (route === "/api/auth/config" && req.method === "GET")
+        return json(
+          200,
+          identity?.publicConfiguration?.() || { mode: "password" },
+        );
       let user = trustedTestMode
         ? { id: "test", username: "test", role: "founder" }
-        : await identity.authenticate(token(req));
+        : await identity.authenticate(token(req, identity.mode));
       const session = async () => {
         const organizations = await identity.organizations(user);
         return {
@@ -340,6 +347,7 @@ export function createHttpServer(
         );
       };
       if (route === "/api/auth/login" && req.method === "POST") {
+        if (identity.mode === "google") throw fail(405, "Use Google sign-in");
         const body = await readBody(req);
         const login = await identity.login(
           text(body.username, "username", 128),
@@ -353,8 +361,8 @@ export function createHttpServer(
         return json(200, await session());
       }
       if (route === "/api/auth/logout" && req.method === "POST") {
-        await identity.logout(token(req));
-        cookie("", true);
+        await identity.logout(token(req, identity.mode));
+        if (identity.mode !== "google") cookie("", true);
         return json(200, { user: null });
       }
       if (!user)

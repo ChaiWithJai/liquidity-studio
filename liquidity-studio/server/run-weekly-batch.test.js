@@ -13,7 +13,7 @@ test("weekly worker uses New York week, validates scope and replays durable job 
     "weekly:2026-10-19:America/New_York",
   );
   const store = new DurableStore(":memory:");
-  const platform = createPlatform({ store });
+  const platform = createPlatform({ store, authMode: "password" });
   const input = {
     platform,
     organizationId: "org_default",
