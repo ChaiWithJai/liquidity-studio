@@ -54,7 +54,15 @@
   let caption = $derived(
     campaign?.infographic?.caption || campaign?.story?.hookBanner || "",
   );
-  let beat = $derived(Math.min(2, Math.floor(reelTime / 10)));
+  let beat = $derived.by(() => {
+    const beats = campaign?.reel?.beats || [];
+    for (let i = beats.length - 1; i >= 0; i--) {
+      const start = beats[i].timecode?.match(/^(\d+):(\d+)/);
+      if (start && reelTime >= Number(start[1]) * 60 + Number(start[2]))
+        return i;
+    }
+    return 0;
+  });
   let reelBeats = $derived(campaign?.reel?.beats || []);
   let carouselSlides = $derived(campaign?.carousel?.slides || []);
   let gridItems = $derived([
@@ -92,8 +100,17 @@
         }
       }
     }, 250);
-    return () => clearInterval(timer);
+    document.fonts.addEventListener("loadingdone", measure);
+    return () => {
+      clearInterval(timer);
+      document.fonts.removeEventListener("loadingdone", measure);
+    };
   });
+  function setMode(next) {
+    mode = next;
+    reelPlaying = false;
+    storyPlaying = false;
+  }
   function navigate(direction) {
     if (format === "carousel")
       slide = Math.max(
@@ -123,6 +140,7 @@
   }
   async function measure() {
     await tick();
+    await document.fonts.ready;
     if (!artworkElement || mode === "grid") {
       evidence = null;
       return;
@@ -197,14 +215,14 @@
     <span class="simulation">Local simulation</span>
   </div>
   <div class="segmented" aria-label="Preview mode">
-    <button class:active={mode === "design"} onclick={() => (mode = "design")}
+    <button class:active={mode === "design"} onclick={() => setMode("design")}
       >Design Mode</button
     >
     <button
       class:active={mode === "instagram"}
-      onclick={() => (mode = "instagram")}>In-Situ Instagram</button
+      onclick={() => setMode("instagram")}>In-Situ Instagram</button
     >
-    <button class:active={mode === "grid"} onclick={() => (mode = "grid")}
+    <button class:active={mode === "grid"} onclick={() => setMode("grid")}
       >3×3 Profile Grid</button
     >
   </div>
@@ -350,7 +368,7 @@
                   >{storyPlaying ? "Ⅱ" : "▶"}</button
                 ><button
                   aria-label="Close story preview"
-                  onclick={() => (mode = "design")}>×</button
+                  onclick={() => setMode("design")}>×</button
                 >
               </div>
             </div>
