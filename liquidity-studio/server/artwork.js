@@ -47,7 +47,7 @@ export function renderSvg({ brandProfile = {}, campaign, format = 'infographic',
   const muted = color(palette[1]?.hex, '#A8C5A0');
   const vertical = height === 1920;
   const contentWidth = format === 'reel' ? 740 : 900;
-  const top = vertical ? 330 : 140;
+  const top = vertical ? 400 : 140;
   let title, paragraphs, takeaway;
   if (format === 'infographic') {
     const item = campaign.infographic;
@@ -85,5 +85,5 @@ export function renderSvg({ brandProfile = {}, campaign, format = 'infographic',
   blocks.push(footer.svg);
   const brand = escapeXml([brandProfile.logoText, brandProfile.brandName || 'Campaign Studio'].filter(Boolean).join(' · '));
   const provenance = campaign.provenance?.mode === 'synthetic' ? 'SYNTHETIC DRAFT · REVIEW REQUIRED' : 'EDITORIAL DRAFT';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(title)}"><title>${escapeXml(title)}</title><rect width="${width}" height="${height}" fill="${background}"/><g font-family="DejaVu Sans, Noto Sans Devanagari, sans-serif"><text x="80" y="${vertical ? 250 : 65}" fill="${muted}" font-size="26" font-weight="700">${brand}</text><path d="M80 ${top - 55}h920" stroke="${accent}" stroke-width="3"/>${blocks.join('')}<text x="80" y="${height - 35}" fill="${muted}" font-size="19">${provenance}${format === 'carousel' ? ` · ${slideIndex + 1}/4` : ''}</text></g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(title)}"><title>${escapeXml(title)}</title><rect width="${width}" height="${height}" fill="${background}"/><g font-family="DejaVu Sans, Noto Sans Devanagari, sans-serif"><text data-preflight-text="true" x="80" y="${vertical ? 305 : 65}" fill="${muted}" font-size="26" font-weight="700">${brand}</text><path d="M80 ${top - 55}h920" stroke="${accent}" stroke-width="3"/>${blocks.join('')}<text data-preflight-text="true" x="80" y="${vertical ? Math.floor(height * 0.80) : height - 35}" fill="${muted}" font-size="19">${provenance}${format === 'carousel' ? ` · ${slideIndex + 1}/4` : ''}</text></g></svg>`;
 }
