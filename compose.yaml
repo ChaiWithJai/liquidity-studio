@@ -8,13 +8,16 @@ services:
       - "127.0.0.1:${STUDIO_LOCAL_PORT:-3001}:8080"
     environment:
       PORT: "8080"
-      # Explicit local demonstration mode. No provider credentials enter the image.
+      NODE_ENV: ${STUDIO_NODE_ENV:-production}
+      STUDIO_AUTH_MODE: ${STUDIO_AUTH_MODE:-google}
       AI_ALLOW_SYNTHETIC: ${AI_ALLOW_SYNTHETIC:-true}
       STUDIO_DATABASE_PATH: /data/studio.sqlite
-      STUDIO_FOUNDER_USERNAME: ${STUDIO_FOUNDER_USERNAME:-founder}
-      STUDIO_FOUNDER_PASSWORD: ${STUDIO_FOUNDER_PASSWORD:?Run node scripts/setup-local.mjs first}
-      STUDIO_MARKETER_USERNAME: ${STUDIO_MARKETER_USERNAME:-marketer}
-      STUDIO_MARKETER_PASSWORD: ${STUDIO_MARKETER_PASSWORD:?Run node scripts/setup-local.mjs first}
+      STUDIO_FIREBASE_PROJECT_ID: ${STUDIO_FIREBASE_PROJECT_ID:-}
+      STUDIO_FIREBASE_API_KEY: ${STUDIO_FIREBASE_API_KEY:-}
+      STUDIO_FIREBASE_AUTH_DOMAIN: ${STUDIO_FIREBASE_AUTH_DOMAIN:-}
+      STUDIO_FIREBASE_APP_ID: ${STUDIO_FIREBASE_APP_ID:-}
+      STUDIO_GOOGLE_FOUNDER_EMAIL: ${STUDIO_GOOGLE_FOUNDER_EMAIL:-}
+      STUDIO_GOOGLE_MARKETER_EMAIL: ${STUDIO_GOOGLE_MARKETER_EMAIL:-}
     volumes:
       - studio-data:/data
     init: true

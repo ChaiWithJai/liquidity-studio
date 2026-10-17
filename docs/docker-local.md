@@ -1,53 +1,74 @@
-# Local Docker operation
+# Docker locally with Google sign-in
 
-The current delivery branch runs the canonical Svelte application with authenticated founder/marketer accounts and a persistent SQLite volume. Local container acceptance has passed; remote CI and independent review remain merge gates. The original imported prototype had a different generated UI and process-local data. Those limitations describe the baseline, not this implementation.
+The normal local runtime uses Google Identity Platform / Firebase Authentication and defaults to Google-only sign-in. It does not create application passwords. Use the same Google authentication project and verified founder/marketer allowlist for local port 3001 and the private GCP pilot. Provider setup and actual Google consent must be completed separately; a synthetic content fixture or emulator login does not prove production Google access.
 
-Prerequisites: a responding Docker Desktop Linux engine, Compose v2, and Node 22 for setup and acceptance scripts. `docker version` must return server details before building.
-
-From the repository root:
+## Configure and start
 
 ```sh
 node scripts/setup-local.mjs
+# Edit .env locally: supply the six Firebase/email values listed below.
 docker compose --env-file .env up --build --detach --wait
 ```
 
-Setup creates independent random founder and marketer passwords in a private, ignored `.env` file. It preserves an existing file instead of overwriting credentials. Read that file locally to sign in; never paste its contents into issues, logs or chat. If an existing file lacks the account variables, configure them before starting. Username/password bootstrap values are used to create missing accounts; changing an environment password does not silently rotate a persisted account. Use the account rotation endpoint described in backend-operations.md.
+Setup writes a private ignored `.env` template with `STUDIO_AUTH_MODE=google`, `STUDIO_NODE_ENV=production`, and no passwords. It preserves an existing file. Remove obsolete password values from an old local file; the normal Compose file never passes them to the container. Missing Google configuration fails readiness instead of falling back to passwords. Configure:
 
-An alternative private file can live outside the checkout:
+```
+STUDIO_FIREBASE_PROJECT_ID=<explicit-authentication-project>
+STUDIO_FIREBASE_API_KEY=<public-web-app-api-key>
+STUDIO_FIREBASE_AUTH_DOMAIN=<project>.firebaseapp.com
+STUDIO_FIREBASE_APP_ID=<public-web-app-id>
+STUDIO_GOOGLE_FOUNDER_EMAIL=<verified-founder-google-email>
+STUDIO_GOOGLE_MARKETER_EMAIL=<verified-marketer-google-email>
+```
+
+The project must enable Google as an authentication provider, register the web application, and authorize localhost plus the intended cloud hostname. Firebase web configuration is public; do not substitute service-account private keys. Founder and marketer emails must differ. See [Google identity setup and migration](google-auth.md) for token checks, account authorization and revocation permissions.
+
+The backend also needs Application Default Credentials (ADC) with `firebaseauth.users.get` on the authentication project to check revoked/disabled accounts. The optional local-only overlay mounts an explicitly chosen existing ADC file read-only:
+
+```sh
+STUDIO_LOCAL_ADC_PATH=/absolute/private/path/application_default_credentials.json \
+  docker compose --env-file .env -f compose.yaml -f compose.google-adc.yaml up --build --detach --wait
+```
+
+The overlay refuses to create a missing source path. The non-root container user must be able to read that file; verify local ownership/access without printing its content. Do not make credentials world-readable or bake them into the image. This mount and its `GOOGLE_APPLICATION_CREDENTIALS` environment variable are for local Docker only. Cloud Run uses its attached service identity and must not receive a local ADC path. Keep local ADC files and `.env` outside version control.
+
+A separate environment file can live outside the checkout:
 
 ```sh
 STUDIO_ENV_FILE=/private/path/studio.env node scripts/setup-local.mjs
 docker compose --env-file /private/path/studio.env up --build --detach --wait
 ```
 
-`STUDIO_ENV_FILE` selects the setup script's destination. Pass the same file explicitly to Compose; Compose does not infer that variable as its own env-file option. The destination directory must already exist and be private. Setup does not print passwords.
+The destination directory must exist. `STUDIO_ENV_FILE` selects setup's output; pass that file explicitly to Compose. Open http://127.0.0.1:3001 and choose **Continue with Google**. The port binds to loopback and leaves port 3000 intact. `STUDIO_LOCAL_PORT` selects another unused port. `AI_ALLOW_SYNTHETIC=true` only enables visibly marked source-excerpt generation after source review; it does not alter authentication or verify factual claims.
 
-Open http://127.0.0.1:3001. The port binds only to loopback and leaves the existing port-3000 process intact. `STUDIO_LOCAL_PORT` selects another unused port. The default local mode explicitly allows synthetic source-excerpt generation; users must supply, classify and approve source claims before generating. Clinical review remains a separate recorded act. Synthetic success is not provider connectivity or factual verification.
+## Build, persistence and recovery
 
-## Build and state
+The pinned Node 22 Dockerfile uses the lockfile and canonical Svelte/Vite build, installs runtime Firebase Admin/Google SDKs and Sharp, includes fonts, and runs as non-root with a read-only filesystem except `/tmp` and `/data`. The named `studio-data` volume contains SQLite authorization memberships, brand profiles, reviews, drafts, calendar, jobs, usage, telemetry, preflight evidence and artifacts. In Google mode it contains no application password hashes or application session tokens. Google accounts and refresh tokens are managed by Firebase and the browser SDK, respectively.
 
-The Dockerfile pins its multi-platform Node 22 base by digest, runs `npm ci` against the committed lockfile, builds the real Svelte/Vite UI, and prunes development packages from the runtime. Runtime dependencies include Sharp for PNG rendering and Google SDKs for the configured cloud adapter. The image contains fallback fonts, runs as the non-root `node` user, drops capabilities and uses a read-only filesystem except `/tmp` and `/data`.
-
-The named `studio-data` volume mounts at `/data`; `STUDIO_DATABASE_PATH=/data/studio.sqlite` persists accounts, sessions, profiles, source reviews, drafts/edits, calendar, jobs, usage, telemetry, preflight evidence and local artifact bytes. Normal stop/recreate preserves this volume. `docker compose down --volumes` deletes it and is not a normal shutdown command. The build context excludes credentials, local databases, dependency folders, tests and repository metadata.
+Normal stop/recreate preserves the volume. `docker compose down --volumes` deletes it and is not normal shutdown. The first Google-mode migration preserves stable principal IDs/memberships and removes legacy app credentials; historical backups may still contain them. Back up before migration and use only a compatible image for rollback. Reverting an image does not restore removed passwords. See [backend recovery](backend-operations.md) and [Google migration](google-auth.md).
 
 ```sh
-# Normal operator logs and stop; keep the data volume.
 docker compose --env-file .env logs --follow studio
 docker compose --env-file .env down --timeout 15
-# Isolated acceptance project with disposable credentials and its own volume.
+```
+
+`/healthz` checks serving-process liveness. `/readyz` bounds repository readiness and cloud artifact access when applicable. It does not certify a live Google login, paid content provider or external publication. Real Google sign-in and revocation lookup need their own operator acceptance.
+
+## Separate verification boundaries
+
+```sh
+# Official Auth Emulator + actual Chromium Google popup and backend SDK verification.
+# Requires application dependencies, built dist, and installed Playwright Chromium.
+NODE_ENV=test bash scripts/test-google-auth-emulator.sh
+
+# Disposable legacy API/container persistence contract only.
 bash scripts/docker-smoke.sh
 ```
 
-The acceptance script creates a separate Compose project, generates temporary credentials, uses an alternate loopback port, then cleans up only its own container/network/volume. It exercises real sign-in and role restrictions, scoped generation/edit/calendar behavior, an actual PNG download, cross-brand denial, non-root identity, graceful shutdown and retained records/downloads after container recreation. The main local instance and its volume are separate.
+The Google script uses `firebase-tools@15.34.0` in a separate private development-tool cache, a `demo-*` project, and a temporary loopback Auth Emulator (default port 19098). `emulators:exec` owns readiness and shutdown and propagates browser failures. It checks the actual compiled Google sign-in UI, popup cancellation, Google token refresh/persistence, backend verification, real download, role restrictions, outsider denial and signout. It never provisions cloud resources. Emulator credentials are not accepted by a production deployment; the backend forbids emulator mode on Cloud Run/production and requires loopback clients. Override `STUDIO_AUTH_EMULATOR_PORT` only to another unused local port.
 
-Python 3.12 is a CI/test-host requirement for structural QA, not an application runtime dependency. The browser CI job runs actual Chromium against the compiled UI and authenticated APIs. The Firestore emulator job uses Java 21 and real Google SDK transactions without provisioning cloud resources.
+The Docker smoke explicitly applies `compose.test-password.yaml`, sets `NODE_ENV=test` and password authentication, generates disposable credentials, and uses its own Compose project, loopback port and volume. It verifies lifecycle, scoped edits/calendar, actual PNG downloads and ejection/import recovery after recreation. It cleans up only that disposable project. This validates persistence/container behavior, not production Google authentication. Production and Cloud Run reject password mode even if explicitly configured. Do not apply the test overlay to the local Google pilot.
 
-## Health, recovery and rollout
+CI runs legacy contracts/browser cases with explicit password-mode fixture constructors in a test environment, real Chromium Google sign-in separately against the official Auth Emulator, actual Firestore emulator transactions with Java 21, and Docker acceptance. Source inspection and synthetic providers do not prove deployed service connectivity. Earlier Docker Desktop recovery and local ARM64 acceptance remain baseline evidence; evaluate all checks against the final integrated Google commit.
 
-`/healthz` checks the serving process. `/readyz` bounds repository readiness; cloud mode additionally checks the artifact bucket. Neither endpoint certifies provider connectivity or publication. A process that cannot access its data is not ready even if liveness responds.
-
-Local acceptance passed on Docker Desktop 4.39.0 / Engine 28.0.1, Linux ARM64. The initial Docker engine hang was resolved only after the user authorized a Desktop restart. No reset or prune was used. Hosted checks must be evaluated on the final integrated commit; the earlier prototype image's green smoke does not validate the current authenticated/persistent image.
-
-Before rollback, take a consistent SQLite backup and preserve the current data directory. Stop only this Compose project, rebuild the intended prior application revision, and retain the volume unless performing a reviewed restore. A pre-persistence prototype revision cannot operate the new authenticated data contract and is not a safe substitute for restoring a compatible release. Database startup rejects newer schema versions. The backup/restore CLI validates snapshots, refuses overwrite and revokes recovered sessions; full commands and account recovery are in backend-operations.md.
-
-Local success is not a deployed GCP pilot. Cloud project resources, IAM, secrets, Firestore/GCS access, scheduling, budget settings and rollback require their own recorded deployment evidence. This setup does not activate billing or grant a software license.
+Local success is not cloud deployment. Project/IAM/Identity Platform configuration, authorized cloud domains, Firestore/GCS, paid-provider access, scheduling, budget and rollback need their own recorded pilot evidence. This setup does not activate billing or select a software license.

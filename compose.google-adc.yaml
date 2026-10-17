@@ -1,0 +1,12 @@
+# Explicit local-only ADC mount. Do not use this overlay on Cloud Run.
+services:
+  studio:
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /var/run/google/local-adc.json
+    volumes:
+      - type: bind
+        source: ${STUDIO_LOCAL_ADC_PATH:?Supply an explicit local ADC JSON file path}
+        target: /var/run/google/local-adc.json
+        read_only: true
+        bind:
+          create_host_path: false
