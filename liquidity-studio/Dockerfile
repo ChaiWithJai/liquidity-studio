@@ -13,7 +13,7 @@ RUN npm run build && npm prune --omit=dev
 
 FROM node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS runtime
 WORKDIR /app
-ENV NODE_ENV=production PORT=8080
+ENV NODE_ENV=production PORT=8080 XDG_CACHE_HOME=/tmp/.cache
 RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core fontconfig \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /data && chown node:node /data

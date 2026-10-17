@@ -16,7 +16,7 @@ for (const route of ['/', '/healthz', '/readyz']) assert.equal((await request(ro
 assert.equal((await request('/api/studio/bootstrap' + scope, null, true)).status, 401);
 await login(process.env.STUDIO_FOUNDER_USERNAME || 'founder', process.env.STUDIO_FOUNDER_PASSWORD);
 if (mode === 'prepare') {
-  const claim = { id: 'container-fixture', text: 'This is a synthetic container acceptance fixture.', sourceUrl: 'https://example.org/container-fixture', status: 'approved' };
+  const claim = { id: 'container-fixture', text: 'This is a synthetic container acceptance fixture.', sourceUrl: 'https://example.org/container-fixture', status: 'approved', kind: 'general' };
   const created = await request('/api/studio/backlog' + scope, { title: 'Container acceptance fixture', category: 'Test fixture', sourceClaims: [claim] });
   assert.equal(created.status, 201); const story = (await created.json()).story;
   const generated = await request('/api/studio/generate-campaign' + scope, { storyId: story.id });
