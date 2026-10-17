@@ -34,7 +34,9 @@ The `durable-storage` module must provide optimistic concurrency, idempotent wri
 
 Cloud Storage object names include organization and brand scope. Bucket public access is prohibited; only the server can resolve authorized asset IDs. If signed URLs are added, issue short-lived links only after membership and ownership checks; possession permits access until expiry, so URL logs and exports must be protected. [Signed URL behavior](https://docs.cloud.google.com/storage/docs/access-control/signed-urls).
 
-The pilot's network gate remains Cloud Run IAM: grant invocation only to the two approved human identities, and use a local authenticated proxy for browser access. Application Clerk sessions enforce separate founder/marketer and Brand rights; the IAM proxy identifies its operator, not every application user behind it. Each person must run their own loopback-only proxy. No shared public proxy or `allUsers` grant. This proposes a small operational constraint for the two-person pilot; a later direct browser/IAP design is a separate reviewed change. [Developer authentication](https://docs.cloud.google.com/run/docs/authenticating/developers).
+The proposed operator entry is a direct HTTPS browser link protected by Cloud Run's direct Identity-Aware Proxy (IAP) integration. Grant IAP access only to the founder and marketer; retain the service's invoker IAM check and grant the IAP service identity the required invocation permission. The marketer needs no CLI or local proxy. IAP guards the perimeter; Clerk/application sessions still enforce Organization/Brand grants. Test their combined sign-in, redirects, cookies and logout; do not assume IAP proves Clerk identity. External identities or projects without a GCP organization may require custom OAuth setup. [Current IAP integration and access requirements](https://docs.cloud.google.com/run/docs/securing/identity-aware-proxy-cloud-run).
+
+This is a proposed choice requiring founder approval and an integration test. If IAP cannot support the invited marketer's identity or the chosen UX, a separately approved alternative is HTTPS Cloud Run transport reachable publicly with mandatory application authentication and authorization on every protected request; that removes the IAP perimeter and changes the exposure/cost model. Never activate that alternative implicitly or expose the current prototype. `gcloud run services proxy` is a developer diagnostic only, and may require additional programmatic IAP authorization; it is not pilot-user onboarding. [Developer diagnostics](https://docs.cloud.google.com/run/docs/authenticating/developers).
 
 Organization membership comes from Clerk's verified session context; Brand membership is application-owned and checked server-side on every operation. Deny unknown/revoked membership. Founder can manage both brands; marketer grants are explicit per brand. Admin operational views require founder/operator privileges and scoped/redacted content. Background jobs resolve recorded authorization/scopes instead of inheriting a process-global active brand. [Clerk Organizations](https://clerk.com/docs/guides/organizations/overview), [roles and permissions](https://clerk.com/docs/guides/organizations/control-access/roles-and-permissions).
 
@@ -76,23 +78,23 @@ git diff --exit-code -- dist
 
 Synthetic contract tests do not establish provider readiness. A later approved provider probe must use a model actually supported by the selected API/project, a small bounded request, source-grounded content, visible provider provenance and a recorded cost/quota limit.
 
-**After spec approval and a separately approved implementation/deployment plan only**, populate the following inputs: `PILOT_PROJECT`, `PILOT_REGION`, `PILOT_REPOSITORY`, `PILOT_SERVICE`, `PILOT_IMAGE` (digest, not mutable tag), `PILOT_RUNTIME_SA`, `PILOT_GEMINI_SECRET_VERSION`, `PILOT_CLERK_SECRET_VERSION`, and two `PILOT_*_IAM_MEMBER` identities. The datastore/bucket configuration contract must be defined by #2 before deployment; this draft does not invent environment variables that the current application ignores.
+**After spec approval and a separately approved implementation/deployment plan only**, populate the following inputs: `PILOT_PROJECT`, `PILOT_REGION`, `PILOT_REPOSITORY`, `PILOT_SERVICE`, `PILOT_IMAGE` (digest, not mutable tag), `PILOT_RUNTIME_SA`, `PILOT_GEMINI_SECRET_VERSION`, `PILOT_CLERK_SECRET_VERSION`, and two `PILOT_*_IAP_MEMBER` identities. The datastore/bucket configuration contract must be defined by #2 before deployment; this draft does not invent environment variables that the current application ignores.
 
 Illustrative deployment acceptance command, requiring existing approved resources, configured durable adapter and identity integration in the image:
 
 ```sh
 gcloud run deploy "$PILOT_SERVICE" --project="$PILOT_PROJECT" --region="$PILOT_REGION" \
   --image="$PILOT_IMAGE" --service-account="$PILOT_RUNTIME_SA" \
-  --no-allow-unauthenticated --invoker-iam-check --ingress=all \
+  --no-allow-unauthenticated --invoker-iam-check --iap --ingress=all \
   --min=0 --max=1 --concurrency=4 --cpu=1 --memory=512Mi --timeout=120 \
   --port=8080 --update-env-vars=AI_ALLOW_SYNTHETIC=false \
   --update-secrets="GEMINI_API_KEY=$PILOT_GEMINI_SECRET_VERSION,CLERK_SECRET_KEY=$PILOT_CLERK_SECRET_VERSION" \
   --startup-probe=httpGet.path=/healthz,httpGet.port=8080 --no-traffic --tag=pilot-candidate
 ```
 
-`--ingress=all` allows the two users' external machines to reach the IAM gate; it does not permit unauthenticated invocation. Do not disable the invoker IAM check. The future approved resource plan must specify API enablement, registry/image publishing, datastore, buckets, backup retention, service-account bindings, two invoker bindings and budget controls before this command becomes runnable. No such resources were created here. Full deployment command syntax was checked against installed SDK help and [official deploy reference](https://docs.cloud.google.com/sdk/gcloud/reference/run/deploy). [Maximum instances](https://docs.cloud.google.com/run/docs/configuring/max-instances) remains an operational limit, not a cost guarantee.
+`--ingress=all` allows browser traffic to reach the IAP perimeter; it does not grant unauthenticated application access. The approved resource plan must configure/verify IAP's service identity and OAuth client, then grant only the two intended IAP principals. Do not disable the invoker IAM check. The future approved resource plan must specify API enablement, registry/image publishing, datastore, buckets, backup retention, service-account bindings, two IAP-access bindings and budget controls before this command becomes runnable. No such resources were created here. Full deployment command syntax was checked against installed SDK help and [official deploy reference](https://docs.cloud.google.com/sdk/gcloud/reference/run/deploy). [Maximum instances](https://docs.cloud.google.com/run/docs/configuring/max-instances) remains an operational limit, not a cost guarantee.
 
-After an approved candidate exists, each operator can inspect it without making it public:
+After an approved candidate exists, validate its direct HTTPS link in each user's browser, including a denied third identity. The commands below are developer-only diagnostics, requiring approved IAM/programmatic IAP setup; they are not marketer setup steps:
 
 ```sh
 gcloud run services describe "$PILOT_SERVICE" --project="$PILOT_PROJECT" --region="$PILOT_REGION" --format='yaml(status.traffic,status.conditions)'
@@ -112,7 +114,7 @@ The candidate's tagged URL must also be checked/restricted during rollback; traf
 
 ## Backup, restore and customer exit contract
 
-Before pilot writes: agree recovery targets (proposed RPO 24h and RTO 4h, not measured), retention and owner; enable approved backups and execute a restore drill in a separate isolated database. For a later approved full-project backup, these are the explicit admin operations (not performed now):
+Before pilot writes: agree recovery targets (proposed RPO 24h and RTO 4h, not measured), retention and owner; enable approved backups and execute a restore drill in a separate isolated database. For a later approved whole-database backup, these are the explicit admin operations (not performed now):
 
 ```sh
 gcloud firestore export "gs://$PILOT_BACKUP_BUCKET/$PILOT_BACKUP_PREFIX" --project="$PILOT_PROJECT" --database="$PILOT_DATABASE"
@@ -162,7 +164,7 @@ Use Node's test runner for repository/authorization/idempotency, HTTP tests for 
 - Docker image builds reproducibly without credentials; non-3000 loopback smoke passes health/readiness and both users' workflows. Explicit synthetic demonstration and real-provider readiness are distinct.
 - Saving an edit, recreating the container and starting a new Cloud Run revision retains drafts, settings, schedule and lineage. Concurrent edits detect conflicts.
 - Both users sign in; founder sees both brands; marketer sees only granted brands. Forged organization/brand/asset IDs, batch jobs, cache entries, telemetry and export paths cannot cross scopes. Membership revocation takes effect within a documented, tested limit.
-- Unknown users fail both the IAM perimeter and application authorization. The two named identities alone receive invocation; no public binding exists. `/readyz` fails safely on datastore failure without leaking identifiers or secrets.
+- Unknown users fail both the IAP perimeter and application authorization. The two named identities alone receive IAP access; no public binding exists. `/readyz` fails safely on datastore failure without leaking identifiers or secrets.
 - New/reopened provider and synthetic drafts identify provenance; generation failures preserve edits and reset loading. Clinical claims in `vedic_dharma` remain quarantined until sourced/editorially approved.
 - Export actions reflect real deliverables (#5); queueing/scheduling does not pretend to publish. Browser/API isolation (#8), tenant batch (#9), scoped portable export (#10) and honest telemetry (#6) have recorded results before the pilot is called complete.
 - Candidate health, traffic rollback, backup/restore and secret-rotation drills succeed with evidence. Live data is never overwritten to prove rollback.
@@ -176,6 +178,6 @@ Ask before the next gated phase: approve this spec or request changes, then revi
 
 Never: create resources while investigating, publish this in-memory unauthenticated prototype, commit secrets, print access tokens, infer authorization from a brand selector, choose a license implicitly, or call synthetic scores factual evidence.
 
-Founder decisions still needed: project/region and billing owner; both pilot identities and exact Brand grants; Firestore versus another durable adapter after #2 review; proxy-first UX acceptance; retention/RPO/RTO; generation/token/monthly caps; provider/model/API and data policy; and later commercial entitlement/license/tax/exit terms.
+Founder decisions still needed: project/region and billing owner; both pilot identities and exact Brand grants; Firestore versus another durable adapter after #2 review; direct-browser IAP identity/OAuth and Clerk UX acceptance; retention/RPO/RTO; generation/token/monthly caps; provider/model/API and data policy; and later commercial entitlement/license/tax/exit terms.
 
 **Stop at Specify.** The applied [spec-driven-development skill](https://github.com/addyosmani/agent-skills/blob/aeac41d4d005999432bb7312f7ff06383a91d59d/skills/spec-driven-development/SKILL.md) says: “Stop after writing the spec.” Human approval in a later turn is required before Plan, Tasks or Implement. This PR supplies the concrete review artifact; it does not request approval of uncreated cloud resources.
