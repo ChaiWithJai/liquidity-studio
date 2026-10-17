@@ -1,3 +1,6 @@
+import { getApprovedClaims, campaignFromApprovedClaims } from './source-integrity.js';
+export { evaluateCampaign } from './source-integrity.js';
+
 /**
  * Marketer-First Domain & Multi-Format Campaign Studio (server/domain.js)
  *
@@ -8,6 +11,9 @@
  */
 
 export const DEFAULT_BRAND_PROFILE = {
+  id: 'liquidity_desk',
+  contentDomain: 'finance',
+  logoText: 'THE LIQUIDITY DESK',
   brandName: 'The Liquidity Desk',
   websiteUrl: 'https://liquiditydesk.media',
   tagline: 'They cover the lifestyle. We follow the liquidity.',
@@ -98,33 +104,13 @@ export const INITIAL_CONTENT_BACKLOG = [
  * from a single backlog item using the pluggable AI Gateway.
  */
 export async function generateMultiFormatCampaign({ gateway, story, brandProfile = DEFAULT_BRAND_PROFILE }) {
-  const systemInstruction = `You are a creative marketing director for "${brandProfile.brandName}".
-Brand voice: "${brandProfile.tagline}" — crisp, insider, empowering, hard-number driven, zero academic jargon.
-Use only the supplied facts. Never invent numbers, ownership claims, or conclusions. Preserve the meaning of financial metrics. Use neutral fact labels when the source does not specify a metric. All output requires editorial source review.`;
-
-  const prompt = `Create a complete 4-format social media campaign pack for this backlog story:
-Story Title: ${story.title}
-Category: ${story.category}
-Verified Facts:
-${story.verifiedFacts.map((f, i) => `${i + 1}. ${f}`).join('\n')}
-
-Return a JSON object containing all 4 ready-to-export marketing formats:
-1. "infographic": Single 1080x1350 pinned breakdown card:
-   - "headline": <= 8 words, punchy uppercase hook
-   - "statRows": array of 3 concise hard-number bullet strings (each <= 90 chars, preserve supplied facts; do not force numbers)
-   - "bottomTakeaway": 1 sentence (<= 130 chars) on ownership, margins, or deal mechanics
-   - "caption": Engaging Instagram caption with 3 hashtags
-2. "carousel": 4-slide swipe deck:
-   - "coverHook": <= 8 words cover headline
-   - "slides": array of 4 objects { "slideNumber", "title", "bodyMetric", "visualNote" }
-3. "story": 1080x1920 vertical Instagram Story:
-   - "hookBanner": <= 7 words urgent top banner
-   - "keyStatHighlight": 1 massive hero number + 1-line explanation
-   - "interactiveStickerPrompt": Poll or slider question to drive audience engagement
-4. "reel": 30-second vertical Reel script & visual storyboard:
-   - "spokenHook0to3s": Short opening line grounded in supplied facts
-   - "beats": array of 3 objects { "timecode", "voiceover", "onScreenText", "bRollDirection" }
-   - "closingCta": Final 1-line call to action`;
+  const claims = getApprovedClaims(story);
+  const expectedCampaign = campaignFromApprovedClaims(story);
+  const systemInstruction = `You format approved source excerpts for ${brandProfile.brandName}.
+Content domain: ${brandProfile.contentDomain || 'general'}. Preserve source meaning and units.
+Controlled excerpt mode: return the supplied campaign JSON exactly. Do not add facts, labels, statistics or claims.
+All output requires editorial review. Source approval is not proof of scientific or financial truth.`;
+  const prompt = `Approved source claims:\n${JSON.stringify(claims)}\nReturn this exact campaign JSON:\n${JSON.stringify(expectedCampaign)}`;
 
   const responseSchema = {
     type: 'OBJECT',
@@ -197,6 +183,22 @@ Return a JSON object containing all 4 ready-to-export marketing formats:
     systemInstruction,
     prompt,
     responseSchema,
-    traceMeta: { operation: 'generate_4format_campaign', storyId: story.id, story }
+    traceMeta: { operation: 'generate_4format_campaign', storyId: story.id, story, brandId: brandProfile.id, contentDomain: brandProfile.contentDomain }
   });
 }
+
+
+// Presets are brand configuration, never an authorization or organization boundary.
+export const BRAND_PRESETS = {
+  liquidity_desk: { ...DEFAULT_BRAND_PROFILE, strategy: { editorialReviewRequired: true, valueGroups: ['Founders', 'Operators'], pillars: ['Ownership', 'Media rights', 'Business economics'] } },
+  vedic_dharma: {
+    id: 'vedic_dharma', brandName: 'Chai With Jai', logoText: 'CWJ', websiteUrl: '',
+    contentDomain: 'culture-wellbeing', tagline: 'Chai With Jai',
+    mission: 'Explore culture and wellbeing through clearly sourced, carefully reviewed stories.',
+    fonts: { heading: 'Mona Sans', body: 'Inter' },
+    colors: [{ name: 'Night', hex: '#0B101B' }, { name: 'Orange', hex: '#E85D04' }, { name: 'Blue', hex: '#219EBC' }, { name: 'Light', hex: '#E5E7EB' }],
+    ExportFormats: [...DEFAULT_BRAND_PROFILE.ExportFormats],
+    strategy: { status: 'owner-review-required', editorialReviewRequired: true, clinicalClaimsQuarantined: true, valueGroups: [], pillars: [] }
+  }
+};
+export const TENANT_PRESETS = BRAND_PRESETS;
