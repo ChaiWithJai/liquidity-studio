@@ -4,18 +4,19 @@
  * Implements all 3 Core JTBDs + Founder Admin Observability via Ports & Adapters.
  */
 
-import { discoverInto } from './discovery.js';
-import { getApprovedClaims } from './source-integrity.js';
-import { randomUUID } from 'node:crypto';
-import { fail } from './auth.js';
-import { AIGateway } from './gateway.js';
-import { ObservabilityEngine } from './observability.js';
-import { CONTEXT_GRAPH, verifyContextGraphTopology } from './context-graph.js';
+import { createExport } from "./export-assets.js";
+import { discoverInto } from "./discovery.js";
+import { getApprovedClaims } from "./source-integrity.js";
+import { randomUUID } from "node:crypto";
+import { fail } from "./auth.js";
+import { AIGateway } from "./gateway.js";
+import { ObservabilityEngine } from "./observability.js";
+import { CONTEXT_GRAPH, verifyContextGraphTopology } from "./context-graph.js";
 import {
   DEFAULT_BRAND_PROFILE,
   INITIAL_CONTENT_BACKLOG,
-  generateMultiFormatCampaign
-} from './domain.js';
+  generateMultiFormatCampaign,
+} from "./domain.js";
 
 export class InMemoryGCPFirestoreAdapter {
   constructor() {
@@ -23,9 +24,16 @@ export class InMemoryGCPFirestoreAdapter {
     this.assets = [];
     this.backlog = INITIAL_CONTENT_BACKLOG.map((item, idx) => ({
       ...item,
-      scheduledDay: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][idx % 5],
+      scheduledDay: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"][
+        idx % 5
+      ],
       campaignDraft: null,
-      sourceClaims: item.verifiedFacts.map((text, index) => ({ id: `legacy_${index}`, text, sourceUrl: null, status: 'unreviewed' }))
+      sourceClaims: item.verifiedFacts.map((text, index) => ({
+        id: `legacy_${index}`,
+        text,
+        sourceUrl: null,
+        status: "unreviewed",
+      })),
     }));
   }
 
@@ -45,17 +53,20 @@ export class InMemoryGCPFirestoreAdapter {
   async addBacklogStory(storyInput) {
     const newStory = {
       id: `story_${Date.now()}`,
-      title: storyInput.title || 'New Brand Ownership Breakdown',
-      category: storyInput.category || 'Creator & Founder Liquidity',
-      trendBadge: '✨ Added to Queue',
-      status: 'In Backlog',
-      scheduledDay: storyInput.scheduledDay || 'Monday',
-      audienceTag: storyInput.audienceTag || 'Global Audience',
+      title: storyInput.title || "New Brand Ownership Breakdown",
+      category: storyInput.category || "Creator & Founder Liquidity",
+      trendBadge: "✨ Added to Queue",
+      status: "In Backlog",
+      scheduledDay: storyInput.scheduledDay || "Monday",
+      audienceTag: storyInput.audienceTag || "Global Audience",
       sourceClaims: storyInput.sourceClaims || [],
-      verifiedFacts: (storyInput.sourceClaims || []).filter(claim => claim.status === 'approved').map(claim => claim.text),
-      campaignDraft: null
+      verifiedFacts: (storyInput.sourceClaims || [])
+        .filter((claim) => claim.status === "approved")
+        .map((claim) => claim.text),
+      campaignDraft: null,
     };
-    if (!newStory.sourceClaims.length) throw fail(400, 'Supplied source claims are required');
+    if (!newStory.sourceClaims.length)
+      throw fail(400, "Supplied source claims are required");
     this.backlog.unshift(newStory);
     return newStory;
   }
@@ -72,8 +83,11 @@ export class InMemoryGCPFirestoreAdapter {
     const story = this.backlog.find((s) => s.id === storyId);
     if (story) {
       story.campaignDraft = campaign;
-      if (story.status === 'In Backlog' || story.status === 'Ready for Campaign') {
-        story.status = 'Draft Ready';
+      if (
+        story.status === "In Backlog" ||
+        story.status === "Ready for Campaign"
+      ) {
+        story.status = "Draft Ready";
       }
     }
     return story;
@@ -81,19 +95,42 @@ export class InMemoryGCPFirestoreAdapter {
 
   async updateCampaignFormatDraft(storyId, format, updatedFormatContent) {
     const story = this.backlog.find((s) => s.id === storyId);
-    if (!story || !story.campaignDraft) throw new Error(`Draft not found for story: ${storyId}`);
+    if (!story || !story.campaignDraft)
+      throw new Error(`Draft not found for story: ${storyId}`);
     story.campaignDraft[format] = updatedFormatContent;
     return story;
   }
 
-  async saveAsset(asset) { const record = { id: randomUUID(), ...asset }; this.assets.push(record); return record; }
-  async getAsset(id) { return this.assets.find(asset => asset.id === id); }
-  async updateSourceClaims(id, claims) { const story = this.backlog.find(story => story.id === id); if (!story) throw fail(404, 'Story not found'); story.sourceClaims = claims; story.verifiedFacts = claims.filter(claim => claim.status === 'approved').map(claim => claim.text); return story; }
+  async saveAsset(asset) {
+    const record = { id: randomUUID(), ...asset };
+    this.assets.push(record);
+    return record;
+  }
+  async getAsset(id) {
+    return this.assets.find((asset) => asset.id === id);
+  }
+  async updateSourceClaims(id, claims) {
+    const story = this.backlog.find((story) => story.id === id);
+    if (!story) throw fail(404, "Story not found");
+    story.sourceClaims = claims;
+    story.verifiedFacts = claims
+      .filter((claim) => claim.status === "approved")
+      .map((claim) => claim.text);
+    return story;
+  }
   async getCalendarSchedule() {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const days = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
     return days.map((day) => ({
       day,
-      items: this.backlog.filter((s) => s.scheduledDay === day)
+      items: this.backlog.filter((s) => s.scheduledDay === day),
     }));
   }
 }
@@ -109,18 +146,18 @@ export function createAppContainer(overrides = {}) {
       const [brandProfile, backlog, calendar] = await Promise.all([
         repo.getBrandProfile(),
         repo.listBacklog(),
-        repo.getCalendarSchedule()
+        repo.getCalendarSchedule(),
       ]);
       return { brandProfile, backlog, calendar };
     },
     async updateBrandProfile(patch) {
       const updated = await repo.updateBrandProfile(patch);
       await telemetry.recordMarketerAction({
-        storyId: 'brand_profile',
+        storyId: "brand_profile",
         storyTitle: updated.brandName,
-        format: 'brand_kit',
-        action: 'updated_brand_profile',
-        finalContent: updated
+        format: "brand_kit",
+        action: "updated_brand_profile",
+        finalContent: updated,
       });
       return { brandProfile: updated };
     },
@@ -129,31 +166,35 @@ export function createAppContainer(overrides = {}) {
       await telemetry.recordMarketerAction({
         storyId: story.id,
         storyTitle: story.title,
-        format: 'backlog_item',
-        action: 'queued_to_backlog',
-        finalContent: story
+        format: "backlog_item",
+        action: "queued_to_backlog",
+        finalContent: story,
       });
       return {
         story,
         backlog: await repo.listBacklog(),
-        calendar: await repo.getCalendarSchedule()
+        calendar: await repo.getCalendarSchedule(),
       };
     },
     async scheduleStory({ storyId, status, scheduledDay }) {
-      const updated = await repo.updateStoryStatus(storyId, status, scheduledDay);
+      const updated = await repo.updateStoryStatus(
+        storyId,
+        status,
+        scheduledDay,
+      );
       await telemetry.recordMarketerAction({
         storyId: updated.id,
         storyTitle: updated.title,
-        format: 'calendar_slot',
+        format: "calendar_slot",
         action: `scheduled_${status}_${scheduledDay}`,
-        finalContent: { status, scheduledDay }
+        finalContent: { status, scheduledDay },
       });
       return {
         story: updated,
         backlog: await repo.listBacklog(),
-        calendar: await repo.getCalendarSchedule()
+        calendar: await repo.getCalendarSchedule(),
       };
-    }
+    },
   };
 
   // JTBD #2: Formatting for Multi-Channel Posting (Infographic, Carousel, Story, Reel)
@@ -161,127 +202,239 @@ export function createAppContainer(overrides = {}) {
     async generateCampaignForStory(storyId) {
       const backlog = await repo.listBacklog();
       const story = backlog.find((s) => s.id === storyId);
-      if (!story) throw fail(404, 'Story not found');
+      if (!story) throw fail(404, "Story not found");
       const brandProfile = await repo.getBrandProfile();
 
-      const { output: campaign, trace } = await generateMultiFormatCampaign({
-        gateway: aiGateway,
+      let campaign, trace, reservation;
+      try {
+        getApprovedClaims(story);
+        reservation = await repo.reserveGeneration?.();
+        ({ output: campaign, trace } = await generateMultiFormatCampaign({
+          gateway: aiGateway,
+          story,
+          brandProfile,
+        }));
+      } catch (error) {
+        if (reservation)
+          await repo.finalizeGeneration(reservation, {
+            status: "failed",
+            mode: "failed",
+            traceId: error.trace?.traceId,
+          });
+        await telemetry.recordGenerationFailure?.({
+          storyId: story.id,
+          trace: error.trace || { error: error.code },
+        });
+        throw error;
+      }
+
+      campaign.provenance = {
+        ...campaign.provenance,
+        generationId: trace.traceId,
+        requiresReview: true,
+      };
+      const savedStory = await repo.saveCampaignDraft(
+        story.id,
+        campaign,
+        story.revision,
+      );
+
+      const evalResult = telemetry.evaluateCampaignSilent(
+        campaign,
         story,
-        brandProfile
-      });
-
-      await repo.saveCampaignDraft(story.id, campaign, story.revision);
-
-      const evalResult = telemetry.evaluateCampaignSilent(campaign, story, brandProfile);
+        brandProfile,
+      );
       await telemetry.recordGenerationTrace({
         trace,
         storyId: story.id,
         storyTitle: story.title,
         campaign,
         story,
-        evalResult
+        evalResult,
       });
 
-      await repo.recordUsage?.({ id: trace.traceId, type: 'generation', mode: campaign.provenance?.mode || 'unknown' });
-      return { story, campaign, evalResult, trace };
+      if (reservation)
+        await repo.finalizeGeneration(reservation, {
+          status: "completed",
+          mode: campaign.provenance?.mode || "unknown",
+          traceId: trace.traceId,
+        });
+      else
+        await repo.recordUsage?.({
+          id: trace.traceId,
+          type: "generation",
+          mode: campaign.provenance?.mode || "unknown",
+        });
+      return { story: savedStory, campaign, evalResult, trace };
     },
     async saveInlineEdit({ storyId, format, content, expectedRevision }) {
-      const story = await repo.updateCampaignFormatDraft(storyId, format, content, expectedRevision);
+      const story = await repo.updateCampaignFormatDraft(
+        storyId,
+        format,
+        content,
+        expectedRevision,
+      );
       const record = await telemetry.recordMarketerAction({
         storyId: story.id,
         storyTitle: story.title,
         format,
-        action: 'edited_inline_by_marketer',
-        finalContent: content
+        action: "edited_inline_by_marketer",
+        finalContent: content,
       });
       return {
         story,
         campaign: story.campaignDraft,
-        preferenceRecord: record
+        preferenceRecord: record,
       };
     },
-    async exportFormattedAsset({ storyId, storyTitle, format, content }) {
-      if (storyId) {
-        await repo.updateStoryStatus(storyId, 'Exported');
-      }
-      const record = await telemetry.recordMarketerAction({
-        storyId: storyId || 'ad_hoc',
-        storyTitle,
+    async exportFormattedAsset({ storyId, format }) {
+      if (!["infographic", "carousel", "story", "reel"].includes(format))
+        throw fail(400, "Invalid export format");
+      const story = (await repo.listBacklog()).find(
+        (story) => story.id === storyId,
+      );
+      if (!story?.campaignDraft) throw fail(404, "Draft not found");
+      getApprovedClaims(story);
+      const output = await createExport({
+        brandProfile: await repo.getBrandProfile(),
+        campaign: story.campaignDraft,
         format,
-        action: 'exported_to_social',
-        finalContent: content
       });
+      const asset = await repo.saveAsset({
+        storyId: story.id,
+        format,
+        filename: output.filename,
+        contentType: output.contentType,
+        base64: output.bytes.toString("base64"),
+        generationId:
+          story.generationId ||
+          story.campaignDraft.provenance?.generationId ||
+          null,
+        storyRevision: story.revision,
+      });
+      if (!repo.scope) await repo.updateStoryStatus(story.id, "Exported");
+      await telemetry.recordMarketerAction({
+        storyId: story.id,
+        storyTitle: story.title,
+        format,
+        action: "download_created",
+        finalContent: story.campaignDraft[format],
+      });
+      await repo.recordUsage?.({ id: asset.id, type: "export", format });
       return {
         exported: true,
-        exportId: record.recordId,
+        exportId: asset.id,
+        filename: asset.filename,
         format,
-        timestamp: record.timestamp,
+        timestamp: asset.createdAt || new Date().toISOString(),
         backlog: await repo.listBacklog(),
-        calendar: await repo.getCalendarSchedule()
+        calendar: await repo.getCalendarSchedule(),
       };
-    }
+    },
   };
 
   // JTBD #1: Weekly Batch Producing Content Drafts
   const batchProductionService = {
-    async runWeeklyBatch({ maxStories = 1, idempotencyKey = randomUUID() } = {}) {
+    async runWeeklyBatch({
+      maxStories = 1,
+      idempotencyKey = randomUUID(),
+    } = {}) {
       const claim = await repo.claimJob?.(idempotencyKey);
-      if (claim && !claim.claimed) return { job: claim.job, replayed: true, observability: await telemetry.getSnapshot() };
+      if (claim?.busy)
+        throw fail(409, "Another batch is running for this brand");
+      if (claim && !claim.claimed)
+        return {
+          job: claim.job,
+          replayed: true,
+          observability: await telemetry.getSnapshot(),
+        };
       const trackedJob = claim?.job;
       const startedAt = Date.now();
       let backlog = [];
       const results = [];
       try {
-        const discovery = repo.read ? await discoverInto(repo) : { added: 0, configured: false };
-        if (trackedJob) await repo.updateJob(trackedJob.jobId, { stage: 'reviewed_eligible', discovery });
+        const discovery = repo.read
+          ? await discoverInto(repo)
+          : { added: 0, configured: false };
+        if (trackedJob)
+          await repo.updateJob(trackedJob.jobId, {
+            stage: "reviewed_eligible",
+            discovery,
+          });
         backlog = await repo.listBacklog();
-        const targetStories = backlog.filter(story => { if (story.campaignDraft) return false; try { return getApprovedClaims(story).length > 0; } catch { return false; } }).slice(0, maxStories);
-        if (trackedJob) await repo.updateJob(trackedJob.jobId, { stage: 'formatting', eligibleStories: targetStories.length });
+        const targetStories = backlog
+          .filter((story) => {
+            if (story.campaignDraft) return false;
+            try {
+              return getApprovedClaims(story).length > 0;
+            } catch {
+              return false;
+            }
+          })
+          .slice(0, maxStories);
+        if (trackedJob)
+          await repo.updateJob(trackedJob.jobId, {
+            stage: "formatting",
+            eligibleStories: targetStories.length,
+          });
 
         for (const story of targetStories) {
-          const res = await multiFormatFormatterService.generateCampaignForStory(story.id);
+          const res =
+            await multiFormatFormatterService.generateCampaignForStory(
+              story.id,
+            );
           results.push(res);
-          if (trackedJob) await repo.updateJob(trackedJob.jobId, { completedStoryIds: results.map(result => result.story.id) });
+          if (trackedJob)
+            await repo.updateJob(trackedJob.jobId, {
+              completedStoryIds: results.map((result) => result.story.id),
+            });
         }
 
         const avgEval =
-          results.reduce((acc, r) => acc + r.evalResult.score, 0) / Math.max(1, results.length);
+          results.reduce((acc, r) => acc + r.evalResult.score, 0) /
+          Math.max(1, results.length);
 
         const job = await telemetry.recordBatchJob({
           jobId: trackedJob?.jobId || `job_weekly_${Date.now()}`,
-          trigger: 'Admin Batch Trigger',
+          trigger: "Admin Batch Trigger",
           startedAt: new Date(startedAt).toISOString(),
           durationMs: Date.now() - startedAt,
           storiesDiscovered: backlog.length,
           formatsPrepared: results.length * 4,
-          evalPassRate: results.length ? Number((avgEval / 100).toFixed(2)) : null,
-          status: 'COMPLETED',
-          stage: 'completed',
-          discovery
+          evalPassRate: results.length
+            ? Number((avgEval / 100).toFixed(2))
+            : null,
+          status: "COMPLETED",
+          stage: "completed",
+          discovery,
         });
 
         if (trackedJob) await repo.updateJob(trackedJob.jobId, job);
         return {
           job,
           latestCampaign: results[0]?.campaign || null,
-          observability: await telemetry.getSnapshot()
+          observability: await telemetry.getSnapshot(),
         };
       } catch (error) {
-        if (trackedJob) await repo.updateJob(trackedJob.jobId, { status: 'FAILED', errorCode: 'BATCH_EXECUTION_FAILED' });
+        if (trackedJob)
+          await repo.updateJob(trackedJob.jobId, {
+            status: "FAILED",
+            errorCode: "BATCH_EXECUTION_FAILED",
+          });
         await telemetry.recordBatchJob({
           jobId: trackedJob?.jobId || `job_weekly_${Date.now()}`,
-          trigger: 'Admin Batch Trigger',
+          trigger: "Admin Batch Trigger",
           startedAt: new Date(startedAt).toISOString(),
           durationMs: Date.now() - startedAt,
           storiesDiscovered: backlog.length,
           formatsPrepared: results.length * 4,
           evalPassRate: null,
-          status: 'FAILED',
-          errorCode: 'BATCH_EXECUTION_FAILED'
+          status: "FAILED",
+          errorCode: "BATCH_EXECUTION_FAILED",
         });
         throw error;
       }
-    }
+    },
   };
 
   // Founder Admin: DI Switchboard, Silent Eval Telemetry, Backprop Dataset Export
@@ -291,27 +444,33 @@ export function createAppContainer(overrides = {}) {
         diAdapters: {
           aiProviderPort: aiGateway.constructor.name,
           repositoryPort: repo.constructor.name,
-          telemetrySinkPort: telemetry.constructor.name
+          storage: repo.store?.constructor.name || "InMemoryTestAdapter",
+          telemetrySinkPort: telemetry.constructor.name,
         },
         gateway: aiGateway.getConfig(),
-        observability: await telemetry.getSnapshot()
+        observability: await telemetry.getSnapshot(),
       };
     },
     async updateGatewayConfig(patch) {
       const gateway = aiGateway.updateConfig(patch);
-      await repo.mutate?.(state => ({ ...state, gatewayConfig: patch }));
+      await repo.mutate?.((state) => ({
+        ...state,
+        gatewayConfig: { ...state.gatewayConfig, ...patch },
+      }));
       return { gateway };
     },
     async exportBackpropDatasetJsonl() {
-      const records = telemetry.allFeedback ? await telemetry.allFeedback() : telemetry.backpropDataset;
-      return records.map((row) => JSON.stringify(row)).join('\n');
+      const records = telemetry.allFeedback
+        ? await telemetry.allFeedback()
+        : telemetry.backpropDataset;
+      return records.map((row) => JSON.stringify(row)).join("\n");
     },
     getContextGraph() {
       return {
         graph: CONTEXT_GRAPH,
-        topologyValidation: verifyContextGraphTopology()
+        topologyValidation: verifyContextGraphTopology(),
       };
-    }
+    },
   };
 
   return {
@@ -320,7 +479,7 @@ export function createAppContainer(overrides = {}) {
       backlogCalendarService,
       multiFormatFormatterService,
       batchProductionService,
-      adminObservabilityService
-    }
+      adminObservabilityService,
+    },
   };
 }
