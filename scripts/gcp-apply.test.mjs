@@ -65,6 +65,11 @@ else if (args[0]==='billing' && args[1]==='projects') console.log(JSON.stringify
 else if (args[0]==='billing' && args[1]==='budgets') console.log(process.env.TEST_BUDGET);
 else if (args[0]==='firestore') console.log(JSON.stringify({locationId:'us-east4',type:'FIRESTORE_NATIVE'}));
 else if (args[0]==='storage') console.log(JSON.stringify({name:'test-studio-project-liquidity-assets',projectNumber:process.env.TEST_BUCKET_PROJECT||'12345',location:'US-EAST4',iamConfiguration:{publicAccessPrevention:'enforced',uniformBucketLevelAccess:{enabled:!process.env.TEST_BUCKET_PUBLIC}}}));
+else if (args[0]==='run' && args[1]==='services' && args[2]==='list') {
+ if(process.env.TEST_SERVICE_LIST_FAILURE){console.error(process.env.TEST_SERVICE_LIST_FAILURE);process.exit(1);}
+ if(process.env.TEST_SERVICE_LIST_RESPONSE!==undefined)console.log(process.env.TEST_SERVICE_LIST_RESPONSE);
+ else console.log(JSON.stringify([{metadata:{name:'liquidity-studio'}}]));
+}
 else if (args[0]==='run' && args[1]==='revisions') console.log(JSON.stringify({spec:{containers:[{image:process.env.TEST_PREVIOUS_IMAGE}]}}));
 else { if(args[0]==='run'&&args[1]==='deploy'){const file=args.find(arg=>arg.startsWith('--env-vars-file=')).split('=')[1];fs.writeFileSync(process.env.TEST_RUNTIME_ENV_LOG,fs.readFileSync(file));}console.log('{}'); }
 `,
@@ -235,5 +240,62 @@ test("pilot rejects unapproved AI locations before any cloud command", () => {
     const result = fixture({ env: { PILOT_AI_LOCATION } });
     assert.equal(result.status, 1);
     assert.deepEqual(result.commands, []);
+  }
+});
+
+test("existing service keeps no-traffic staging with authoritative project and region lookup", () => {
+  const result = fixture();
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(mutations(result)[0].includes("--no-traffic"));
+  const lookup = result.commands.find(
+    (args) => args[0] === "run" && args[1] === "services" && args[2] === "list",
+  );
+  assert.ok(lookup.includes("--project=test-studio-project"));
+  assert.ok(lookup.includes("--region=us-east4"));
+  assert.ok(lookup.includes("--format=json(metadata.name)"));
+  assert.match(result.stdout, /no assigned main-service traffic/);
+  assert.match(result.stdout, /tagged URL can still receive requests/);
+});
+
+test("verified absent first service omits unsupported flag and reports 100 percent initial pilot traffic", () => {
+  for (const rows of [[], [{ metadata: { name: "another-service" } }]]) {
+    const result = fixture({
+      env: { TEST_SERVICE_LIST_RESPONSE: JSON.stringify(rows) },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const [deploy] = mutations(result);
+    assert.ok(!deploy.includes("--no-traffic"));
+    assert.ok(deploy.includes("--allow-unauthenticated"));
+    assert.ok(deploy.includes("--no-iap"));
+    assert.match(result.stdout, /100% initial traffic/);
+    assert.match(result.stdout, /data APIs remain Google-protected/);
+    assert.match(result.stdout, /not a zero-traffic deployment/);
+  }
+});
+
+test("service lookup auth, permission, network or malformed results never reach deployment", () => {
+  for (const failure of [
+    "PERMISSION_DENIED",
+    "NOT_FOUND",
+    "UNAUTHENTICATED",
+    "Connection timed out",
+  ]) {
+    const result = fixture({ env: { TEST_SERVICE_LIST_FAILURE: failure } });
+    assert.equal(result.status, 1);
+    assert.deepEqual(mutations(result), []);
+  }
+  for (const raw of [
+    "not JSON",
+    "{}",
+    "null",
+    "[null]",
+    "[{}]",
+    '[{"metadata":{"name":42}}]',
+    '[{"metadata":{"name":"bad/name"}}]',
+    '[{"metadata":{"name":"liquidity-studio"}},{"metadata":{"name":"liquidity-studio"}}]',
+  ]) {
+    const result = fixture({ env: { TEST_SERVICE_LIST_RESPONSE: raw } });
+    assert.equal(result.status, 1);
+    assert.deepEqual(mutations(result), []);
   }
 });
