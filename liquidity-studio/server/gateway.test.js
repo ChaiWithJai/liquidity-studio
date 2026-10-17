@@ -4,7 +4,7 @@ import { AIGateway } from './gateway.js';
 import { generateMultiFormatCampaign, BRAND_PRESETS, INITIAL_CONTENT_BACKLOG, evaluateCampaign } from './domain.js';
 import { campaignFromApprovedClaims, getApprovedClaims, validateCampaign } from './source-integrity.js';
 
-const story = { id: 'reviewed', title: 'Source notes', sourceClaims: [{ id: 'source-one', text: '$80M reported revenue', sourceUrl: 'https://example.test/report', status: 'approved' }] };
+const story = { id: 'reviewed', title: 'Source notes', sourceClaims: [{ id: 'source-one', kind: 'financial', text: '$80M reported revenue', sourceUrl: 'https://example.test/report', status: 'approved' }] };
 const run = (gateway, input = story, brandProfile) => generateMultiFormatCampaign({ gateway, story: input, brandProfile });
 const successfulResponse = campaign => ({ ok: true, text: async () => JSON.stringify({ choices: [{ message: { content: JSON.stringify(campaign) } }] }) });
 const gateway = (config = {}) => new AIGateway({ provider: 'openai-gateway', gatewayUrl: 'https://example.test/v1', ...config });
@@ -50,7 +50,7 @@ test('clinical claims require separately recorded clinical review; malformed sou
 });
 
 test('both presets evaluate source coverage without requiring financial numbers', () => {
-  const culture = { ...story, sourceClaims: [{ ...story.sourceClaims[0], text: 'This archive records a cultural practice.' }] };
+  const culture = { ...story, sourceClaims: [{ ...story.sourceClaims[0], kind: 'cultural', text: 'This archive records a cultural practice.' }] };
   const campaign = campaignFromApprovedClaims(culture);
   const result = evaluateCampaign(campaign, culture, BRAND_PRESETS.vedic_dharma);
   assert.equal(result.overallPass, true);
@@ -123,4 +123,10 @@ test('configuration rejects invalid providers, credential URLs and unbounded lim
   assert.throws(() => gateway({ gatewayUrl: 'https://example.test?key=secret' }), /HTTPS/);
   assert.throws(() => gateway({ timeoutMs: 0 }), /Invalid AI limits/);
   assert.throws(() => new AIGateway({ provider: 'gcp-vertex', projectId: '' }), /explicit project/);
+});
+
+test('source claims require explicit classification instead of silently treating clinical content as general', () => {
+  const unclassified = { sourceClaims: [{ ...story.sourceClaims[0] }] };
+  delete unclassified.sourceClaims[0].kind;
+  assert.throws(() => getApprovedClaims(unclassified), error => error.code === 'SOURCE_KIND_REQUIRED');
 });
