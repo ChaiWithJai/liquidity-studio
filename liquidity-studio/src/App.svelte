@@ -367,6 +367,8 @@
         throw new Error("Server did not return a downloadable artifact");
       backlog = result.backlog || backlog;
       calendar = result.calendar || calendar;
+      selectedStory =
+        backlog.find((story) => story.id === selectedStory.id) || selectedStory;
       notice = "Export created. Download the actual file below.";
     } catch (failure) {
       error = `Export failed: ${failure.message}`;

@@ -135,7 +135,14 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
   expect(file.status()).toBe(200);
   expect(file.headers()["content-type"]).toContain("image/png");
   expect((await file.body()).subarray(1, 4).toString()).toBe("PNG");
-  console.log("PNG download bytes verified");
+  await page
+    .getByLabel("Headline", { exact: true })
+    .fill("AFTER DOWNLOAD SOURCE NOTE");
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Changes saved." }),
+  ).toBeVisible();
+  console.log("PNG download bytes and post-export revision verified");
   await page.getByRole("button", { name: "Carousel 4 slides" }).click();
   await expect(page.locator(".slide-count")).toHaveText("1/4");
   await page.getByLabel("Next slide").click();
@@ -223,7 +230,7 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
   await expect(page.getByText("No stories here yet.")).toBeVisible();
   expect(errors).toEqual([]);
 });
-test("source review, failed generation preservation, responsive layout and revoked brand access", async ({
+test("source review, failed generation preservation, responsive layout and unauthorized brand access", async ({
   page,
 }) => {
   await signIn(page);
