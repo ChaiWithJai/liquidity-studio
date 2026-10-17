@@ -227,7 +227,9 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
     failedContrast.data.preflights.at(-1).metrics.contrastRatio,
   ).toBeLessThan(4.5);
   await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
-  await expect(page.getByText("No stories here yet.")).toBeVisible();
+  await expect(
+    page.locator(".story-row").filter({ hasText: "Browser source fixture" }),
+  ).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 test("source review, failed generation preservation, responsive layout and unauthorized brand access", async ({
@@ -326,4 +328,59 @@ test("operator adds and reviews sources through the real UI; marketer access is 
     (await marketer.request.get(base + "/api/admin/overview" + scope)).status(),
   ).toBe(403);
   await marketerContext.close();
+});
+
+test("CWJ positioning is labeled and an empty research topic can acquire reviewed sources", async ({
+  page,
+}) => {
+  await signIn(page);
+  const container = await platform.forScope({
+    organizationId: "org_default",
+    brandId: "brand_vedic",
+    preset: "vedic_dharma",
+  });
+  await container.ports.repo.addBacklogStory({
+    title: "Unreviewed research topic fixture",
+    category: "Source research",
+    sourceClaims: [],
+    scheduledDay: "Monday",
+  });
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
+  await page.getByRole("button", { name: "Brand Kit", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Proposed editorial positioning" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Research queue · unreviewed" }),
+  ).toBeVisible();
+  await page
+    .locator(".story-row")
+    .filter({ hasText: "Unreviewed research topic fixture" })
+    .getByRole("button", { name: "Review sources" })
+    .click();
+  await page
+    .getByRole("button", { name: "Add source claim", exact: true })
+    .click();
+  await page
+    .getByLabel("Claim text", { exact: true })
+    .fill("A cultural source describes its historical context.");
+  await page
+    .getByLabel("HTTPS source URL", { exact: true })
+    .fill("https://example.org/cultural-primary-source");
+  await page
+    .getByLabel("Claim classification", { exact: true })
+    .selectOption("cultural");
+  await page
+    .getByLabel("Review status", { exact: true })
+    .selectOption("approved");
+  await page
+    .getByRole("button", { name: "Save source review", exact: true })
+    .click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Source review saved" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Generate four-format draft" })
+    .click();
+  await expect(page.getByLabel("Headline", { exact: true })).toBeVisible();
 });
