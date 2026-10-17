@@ -15,7 +15,7 @@ jobs:
     env:
       AI_PROVIDER: gcp-gemini
       AI_ALLOW_SYNTHETIC: 'true'
-      npm_config_cache: ${{ runner.temp }}/npm-contracts
+      npm_config_cache: /tmp/npm-contracts
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -48,7 +48,7 @@ jobs:
       run:
         working-directory: liquidity-studio
     env:
-      npm_config_cache: ${{ runner.temp }}/npm-browser
+      npm_config_cache: /tmp/npm-browser
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -79,7 +79,7 @@ jobs:
       run:
         working-directory: liquidity-studio
     env:
-      npm_config_cache: ${{ runner.temp }}/npm-firestore
+      npm_config_cache: /tmp/npm-firestore
       CLOUDSDK_CORE_PROJECT: demo-liquidity-studio
     steps:
       - uses: actions/checkout@v4

@@ -38,6 +38,15 @@ if (mode === 'prepare') {
   const bootstrap = await (await request('/api/studio/bootstrap' + scope)).json(); const story = bootstrap.backlog.find(story => story.id === record.storyId);
   assert.equal(story?.campaignDraft?.infographic?.headline, 'A PERSISTED CONTAINER DRAFT'); assert.equal(story.scheduledDay, 'Friday');
   assert.equal((await request(record.downloadUrl)).status, 200);
-  const ejected = await request('/api/admin/eject' + scope); assert.equal(ejected.status, 200); assert.ok((await ejected.json()).data.assets.length > 0);
-  console.log('Recreated container retained drafts, calendar and downloadable artifacts; ejection succeeded.');
+  const ejected = await request('/api/admin/eject' + scope); assert.equal(ejected.status, 200);
+  const bundle = await ejected.json(); assert.ok(bundle.data.assets.length > 0); assert.ok(bundle.data.telemetry.traces.length > 0);
+  const created = await request('/api/admin/brands', { organizationId: 'org_default', name: 'Container recovery proof', preset: 'liquidity_desk' });
+  assert.equal(created.status, 201); const recoveredBrand = (await created.json()).brand;
+  const recoveredScope = '?organizationId=org_default&brandId=' + encodeURIComponent(recoveredBrand.id);
+  const imported = await request('/api/admin/import' + recoveredScope, { bundle, remapScope: true }); assert.equal(imported.status, 200);
+  const recovered = await (await request('/api/studio/bootstrap' + recoveredScope)).json();
+  assert.equal(recovered.backlog.find(item => item.id === record.storyId)?.campaignDraft?.infographic?.headline, 'A PERSISTED CONTAINER DRAFT');
+  const recoveredDownload = record.downloadUrl.replace('brand_default', encodeURIComponent(recoveredBrand.id));
+  assert.equal((await request(recoveredDownload)).status, 200);
+  console.log('Recreated container retained drafts, calendar and artifacts; generated lineage and actual asset ejection/import recovery passed.');
 } else throw new Error('Use prepare or after-restart with a private temporary record path');
