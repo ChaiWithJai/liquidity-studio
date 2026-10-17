@@ -192,13 +192,35 @@ All output requires editorial review. Source approval is not proof of scientific
 export const BRAND_PRESETS = {
   liquidity_desk: { ...DEFAULT_BRAND_PROFILE, strategy: { editorialReviewRequired: true, valueGroups: ['Founders', 'Operators'], pillars: ['Ownership', 'Media rights', 'Business economics'] } },
   vedic_dharma: {
-    id: 'vedic_dharma', brandName: 'Chai With Jai', logoText: 'CWJ', websiteUrl: '',
-    contentDomain: 'culture-wellbeing', tagline: 'Chai With Jai',
+    id: 'vedic_dharma', brandName: 'Chai With Jai', logoText: 'CWJ // ॐ', websiteUrl: 'https://chaiwithjai.com',
+    contentDomain: 'culture-wellbeing', tagline: 'They sell the aesthetic. We honor the lineage and prove the physiology.',
     mission: 'Explore culture and wellbeing through clearly sourced, carefully reviewed stories.',
     fonts: { heading: 'Mona Sans', body: 'Inter' },
     colors: [{ name: 'Night', hex: '#0B101B' }, { name: 'Orange', hex: '#E85D04' }, { name: 'Blue', hex: '#219EBC' }, { name: 'Light', hex: '#E5E7EB' }],
     ExportFormats: [...DEFAULT_BRAND_PROFILE.ExportFormats],
-    strategy: { status: 'owner-review-required', editorialReviewRequired: true, clinicalClaimsQuarantined: true, valueGroups: [], pillars: [] }
+    strategy: {
+      status: 'proposed-positioning', editorialReviewRequired: true, clinicalClaimsQuarantined: true,
+      valueGroups: [
+        { id: 'lineage-reclamationists', name: 'Lineage Reclamationists', ageRange: '20–38', motivation: 'Authentic Sanskrit, Shastra and cultural roots' },
+        { id: 'empirical-bio-strategists', name: 'Empirical Bio-Strategists', ageRange: '25–45', motivation: 'Source-backed physiology and biomarkers' },
+        { id: 'shakti-sadhana-seekers', name: 'Shakti & Sadhana Seekers', ageRange: '24–50+', motivation: 'Devotion and intuition with rigor through the Ramanujan Continuum' },
+        { id: 'sovereign-healers-educators', name: 'Sovereign Healers & Educators', ageRange: '28–55', motivation: 'Citation-backed pedagogy' }
+      ],
+      pillars: [
+        'Shastra vs. Grift Audits (De-Colonizing Wellness)',
+        'Ramanujan Continuum (Divine Feminine, Intuition & Neuroscience)',
+        'Pranayama & Autonomic Engineering',
+        'Empirical Ayurveda & Circadian Biochemistry',
+        'Lineage & Living Sanatana Dharma'
+      ]
+    },
+    researchBacklog: [
+      'Ashwagandha: classical sources and evidence review',
+      'Ramanujan, devotion and mathematical proof',
+      'Bhramari: lineage and primary physiology research',
+      'Dinacharya and circadian research',
+      'Yoga Sutras: yamas, niyamas and posture'
+    ].map((title, i) => ({ id: `vedic_research_${i + 1}`, title, category: 'Source research', status: 'In Backlog', reviewStatus: 'unreviewed', trendBadge: 'Research required', audienceTag: 'Chai With Jai', sourceClaims: [], verifiedFacts: [] }))
   }
 };
 export const TENANT_PRESETS = BRAND_PRESETS;
