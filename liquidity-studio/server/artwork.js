@@ -32,7 +32,7 @@ function textBlock(value, x, y, size, width, maxLines, fill, weight = 400, font 
   const lines = wrap(value, Math.max(8, Math.floor(width / (size * 0.63))), maxLines);
   return {
     height: Math.max(1, lines.length) * size * 1.3,
-    svg: `<text data-preflight-text="true" x="${x}" y="${y}" fill="${fill}" font-family="${font}" font-size="${size}" font-weight="${weight}">${lines.map((line, i) => `<tspan x="${x}" dy="${i ? size * 1.3 : 0}">${escapeXml(line)}</tspan>`).join('')}</text>`
+    svg: `<text data-preflight-text="true" x="${x}" y="${y}" fill="${fill}" font-family="${font}, Noto Sans Devanagari, sans-serif" font-size="${size}" font-weight="${weight}">${lines.map((line, i) => `<tspan x="${x}" dy="${i ? size * 1.3 : 0}">${escapeXml(line)}</tspan>`).join('')}</text>`
   };
 }
 
@@ -85,5 +85,5 @@ export function renderSvg({ brandProfile = {}, campaign, format = 'infographic',
   blocks.push(footer.svg);
   const brand = escapeXml([brandProfile.logoText, brandProfile.brandName || 'Campaign Studio'].filter(Boolean).join(' · '));
   const provenance = campaign.provenance?.mode === 'synthetic' ? 'SYNTHETIC DRAFT · REVIEW REQUIRED' : 'EDITORIAL DRAFT';
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(title)}"><title>${escapeXml(title)}</title><rect width="${width}" height="${height}" fill="${background}"/><g font-family="DejaVu Sans, sans-serif"><text x="80" y="${vertical ? 250 : 65}" fill="${muted}" font-size="26" font-weight="700">${brand}</text><path d="M80 ${top - 55}h920" stroke="${accent}" stroke-width="3"/>${blocks.join('')}<text x="80" y="${height - 35}" fill="${muted}" font-size="19">${provenance}${format === 'carousel' ? ` · ${slideIndex + 1}/4` : ''}</text></g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeXml(title)}"><title>${escapeXml(title)}</title><rect width="${width}" height="${height}" fill="${background}"/><g font-family="DejaVu Sans, Noto Sans Devanagari, sans-serif"><text x="80" y="${vertical ? 250 : 65}" fill="${muted}" font-size="26" font-weight="700">${brand}</text><path d="M80 ${top - 55}h920" stroke="${accent}" stroke-width="3"/>${blocks.join('')}<text x="80" y="${height - 35}" fill="${muted}" font-size="19">${provenance}${format === 'carousel' ? ` · ${slideIndex + 1}/4` : ''}</text></g></svg>`;
 }
