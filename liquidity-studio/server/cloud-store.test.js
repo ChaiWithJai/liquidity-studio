@@ -26,7 +26,7 @@ function fakeFirestore() {
 
 function fakeBucket() {
   const objects = new Map();
-  return { name: 'pilot-private-assets', objects, file(object, options = {}) {
+  return { name: 'pilot-private-assets', objects, async getMetadata() { return [{}]; }, file(object, options = {}) {
     return {
       async save(buffer, config) {
         assert.equal(config.preconditionOpts.ifGenerationMatch, 0);
@@ -100,4 +100,14 @@ test('GCS boundary: traversal IDs, empty bytes and unsupported executable conten
   await assert.rejects(store.uploadArtifact(scope, '../escape', Buffer.from('x'), 'text/plain'), error => error.code === 'INVALID_ARTIFACT');
   await assert.rejects(store.uploadArtifact({ ...scope, brandId: '../escape' }, 'id', Buffer.from('x'), 'text/plain'), error => error.code === 'INVALID_ARTIFACT_SCOPE');
   await assert.rejects(store.uploadArtifact(scope, 'id', Buffer.from('x'), 'text/html'), error => error.code === 'INVALID_ARTIFACT');
+});
+
+test('cloud readiness checks both dependencies and redacts SDK diagnostics', async () => {
+  const store = new FirestoreStore({ firestore: fakeFirestore(), bucket: fakeBucket() });
+  assert.deepEqual(await store.checkHealth(), { repository: 'available', artifacts: 'available' });
+  store.bucket.getMetadata = async () => { throw new Error('private-bucket?token=secret'); };
+  await assert.rejects(store.checkHealth(), error => {
+    assert.doesNotMatch(error.message, /private|token|secret/);
+    return error.code === 'CLOUD_DEPENDENCY_UNAVAILABLE';
+  });
 });
