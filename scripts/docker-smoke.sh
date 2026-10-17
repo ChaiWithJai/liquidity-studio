@@ -18,6 +18,8 @@ node scripts/container-acceptance.mjs prepare "$record_dir/record.json"
 container_id=$(docker compose ps --quiet studio)
 [ "$(docker inspect --format '{{.Config.User}}' "$container_id")" = node ]
 [ "$(docker exec "$container_id" id -u)" != 0 ]
+font_family=$(docker exec "$container_id" fc-match -f '%{family}' ':charset=0950')
+[[ "$font_family" == *"Noto Sans Devanagari"* ]]
 docker compose stop --timeout 15 studio
 [ "$(docker inspect --format '{{.State.ExitCode}}' "$container_id")" = 0 ]
 docker compose up --detach --force-recreate --wait --wait-timeout 90
