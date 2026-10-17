@@ -52,7 +52,7 @@ function verifyGate() {
   const account = requireMatch(process.env.PILOT_BILLING_ACCOUNT, /^[a-fA-F0-9]{6}-[a-fA-F0-9]{6}-[a-fA-F0-9]{6}$/, 'PILOT_BILLING_ACCOUNT');
   const budgetId = requireMatch(process.env.PILOT_BUDGET_ID, /^[a-zA-Z0-9_-]{1,128}$/, 'PILOT_BUDGET_ID');
   if (!billing.billingEnabled || billing.billingAccountName !== `billingAccounts/${account}`) throw new Error('Verified linked billing is required before any resource change');
-  const configuredBudget = json(['billing', 'budgets', 'describe', budgetId, `--billing-account=${account}`]);
+  const configuredBudget = json(['billing', 'budgets', 'describe', budgetId, `--billing-account=${account}`, ...globalFlags]);
   if (configuredBudget.name !== `billingAccounts/${account}/budgets/${budgetId}`) throw new Error('Budget identity does not match the approved account');
   validateBudget(configuredBudget, { projectNumber: String(info.projectNumber), budget });
   return info;
