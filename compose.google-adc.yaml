@@ -3,6 +3,16 @@ services:
   studio:
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /var/run/google/local-adc.json
+      # Mounting ADC for Google sign-in does not implicitly enable AI calls.
+      AI_PROVIDER: ${AI_PROVIDER:-gcp-gemini}
+      AI_VERTEX_USE_ADC: ${AI_VERTEX_USE_ADC:-false}
+      AI_VERTEX_USE_METADATA: "false"
+      GOOGLE_CLOUD_PROJECT: ${STUDIO_FIREBASE_PROJECT_ID:?Supply the Google authentication project explicitly}
+      GOOGLE_CLOUD_LOCATION: ${GOOGLE_CLOUD_LOCATION:-us}
+      AI_MODEL: ${AI_MODEL:-gemini-2.5-flash}
+      AI_MAX_INPUT_BYTES: ${AI_MAX_INPUT_BYTES:-32768}
+      AI_MAX_OUTPUT_TOKENS: ${AI_MAX_OUTPUT_TOKENS:-8192}
+      STUDIO_DAILY_GENERATION_LIMIT: ${STUDIO_DAILY_GENERATION_LIMIT:-20}
     volumes:
       - type: bind
         source: ${STUDIO_LOCAL_ADC_PATH:?Supply an explicit local ADC JSON file path}
