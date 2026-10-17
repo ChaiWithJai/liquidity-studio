@@ -582,3 +582,20 @@ test("actual CWJ profile round trips with structured strategy and quarantined re
     "Edited source-first profile",
   );
 });
+
+test("both preset brand profiles round trip their own strategy schemas", async (t) => {
+  const f = await fixture(t);
+  await f.login();
+  for (const brandId of ["brand_default", "brand_vedic"]) {
+    const scope = `organizationId=org_default&brandId=${brandId}`;
+    const { brandProfile } = await (
+      await f.api("/api/studio/bootstrap", undefined, scope)
+    ).json();
+    const response = await f.api(
+      "/api/studio/brand-profile",
+      brandProfile,
+      scope,
+    );
+    assert.equal(response.status, 200, brandId);
+  }
+});

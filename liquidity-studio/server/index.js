@@ -480,16 +480,23 @@ export function createHttpServer(
                 ].includes(key),
             ) ||
             strategy.editorialReviewRequired !== true ||
-            strategy.clinicalClaimsQuarantined !== true ||
-            typeof strategy.status !== "string" ||
+            (strategy.clinicalClaimsQuarantined !== undefined &&
+              strategy.clinicalClaimsQuarantined !== true) ||
+            (strategy.status !== undefined &&
+              typeof strategy.status !== "string") ||
             !Array.isArray(strategy.valueGroups) ||
             strategy.valueGroups.length > 20 ||
             strategy.valueGroups.some(
               (group) =>
                 !group ||
-                Object.values(group).some(
-                  (value) => typeof value !== "string" || value.length > 500,
-                ),
+                Array.isArray(group) ||
+                (typeof group === "string"
+                  ? group.length > 500
+                  : typeof group !== "object" ||
+                    Object.values(group).some(
+                      (value) =>
+                        typeof value !== "string" || value.length > 500,
+                    )),
             ) ||
             !Array.isArray(strategy.pillars) ||
             strategy.pillars.length > 20 ||
@@ -680,7 +687,9 @@ export function createHttpServer(
           throw fail(400, "Unsupported gateway setting");
         if (
           body.provider &&
-          !["gcp-gemini", "openai-gateway"].includes(body.provider)
+          !["gcp-gemini", "gcp-vertex", "openai-gateway"].includes(
+            body.provider,
+          )
         )
           throw fail(400, "Invalid provider");
         if (body.model) text(body.model, "model", 128);
