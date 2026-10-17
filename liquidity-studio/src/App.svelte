@@ -49,6 +49,8 @@
     calendar = data.calendar || [];
     if (!selectedStory && backlog.length > 0) {
       selectedStory = backlog[0];
+      campaign = selectedStory.campaignDraft || null;
+      selectedScheduleDay = selectedStory.scheduledDay || 'Thursday';
     }
   }
 
@@ -93,9 +95,22 @@
     await saveBrandProfile();
   }
 
+  function openStoryInStudio(story) {
+    selectedStory = story;
+    selectedScheduleDay = story.scheduledDay || 'Thursday';
+    campaign = story.campaignDraft || null;
+    marketerTab = 'campaign_studio';
+    if (campaign) {
+      statusPill = 'Saved campaign loaded';
+    } else {
+      return createCampaignForStory(story);
+    }
+  }
+
   async function createCampaignForStory(story = selectedStory) {
     if (!story) return;
     selectedStory = story;
+    selectedScheduleDay = story.scheduledDay || 'Thursday';
     marketerTab = 'campaign_studio';
     loading = true;
     statusPill = '✨ Gathering financial facts & formatting 4 channels...';
@@ -107,6 +122,7 @@
       });
       const data = await res.json();
       campaign = data.campaign;
+      selectedStory = data.story || story;
       backlog = data.backlog || backlog;
       calendar = data.calendar || calendar;
       statusPill = '✨ 100% Complete — 4 Formats Ready';
@@ -119,6 +135,9 @@
   async function saveInlineEdit(formatKey, field, value) {
     if (!campaign || !selectedStory) return;
     if (field) campaign[formatKey][field] = value;
+    selectedStory.campaignDraft = campaign;
+    const backlogStory = backlog.find(item => item.id === selectedStory.id);
+    if (backlogStory) backlogStory.campaignDraft = campaign;
     await fetch('/api/studio/save-edit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -384,7 +403,7 @@
                     <div style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">{item.title}</div>
                     <div style="font-size: 12px; color: #a9ada4;">{item.verifiedFacts ? item.verifiedFacts[0] : ''}</div>
                   </div>
-                  <button onclick={() => createCampaignForStory(item)} style="background: #c5d86d; color: #141513; border: none; padding: 10px 18px; border-radius: 999px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;">
+                  <button onclick={() => openStoryInStudio(item)} style="background: #c5d86d; color: #141513; border: none; padding: 10px 18px; border-radius: 999px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;">
                     Format 4 Channels →
                   </button>
                 </div>
@@ -408,7 +427,7 @@
                         <div style="font-weight: 700; margin-bottom: 4px; color: #f4f1ea;">{story.title}</div>
                         <div style="color: #c5d86d; font-size: 10px; margin-bottom: 6px;">{story.status}</div>
                         <div style="display: flex; gap: 4px;">
-                          <button onclick={() => createCampaignForStory(story)} style="flex: 1; background: #c5d86d; color: #141513; border: none; padding: 4px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer;">
+                          <button onclick={() => openStoryInStudio(story)} style="flex: 1; background: #c5d86d; color: #141513; border: none; padding: 4px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer;">
                             Studio →
                           </button>
                           <button onclick={() => updateSchedule(story.id, 'Scheduled', slot.day)} style="background: #a8c5a0; color: #141513; border: none; padding: 4px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer;">

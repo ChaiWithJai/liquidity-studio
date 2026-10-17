@@ -37,6 +37,8 @@ async function bootstrap() {
   state.backlog = studioRes.backlog || [];
   state.calendar = studioRes.calendar || [];
   state.selectedStory = state.backlog[0] || null;
+  state.campaign = state.selectedStory?.campaignDraft || null;
+  state.selectedScheduleDay = state.selectedStory?.scheduledDay || 'Thursday';
   state.adminData = adminRes;
   state.contextGraphData = graphRes;
   render();
@@ -70,6 +72,7 @@ window.generateCampaign = async (storyId) => {
   }).then(r => r.json());
   state.selectedStory = res.story;
   state.campaign = res.campaign;
+  state.selectedScheduleDay = res.story.scheduledDay || 'Thursday';
   state.backlog = res.backlog || state.backlog;
   state.calendar = res.calendar || state.calendar;
   state.loading = false;
@@ -83,13 +86,24 @@ window.openStoryInStudio = (storyId) => {
   if (story) {
     state.selectedStory = story;
     state.marketerTab = 'campaign_studio';
-    window.generateCampaign(storyId);
+    state.selectedScheduleDay = story.scheduledDay || 'Thursday';
+    state.campaign = story.campaignDraft || null;
+    if (state.campaign) {
+      state.statusPill = 'Saved campaign loaded';
+      render();
+    } else {
+      return window.generateCampaign(storyId);
+    }
   }
 };
 
 window.saveInlineEdit = async (formatKey, field, value) => {
   if (!state.campaign || !state.campaign[formatKey] || !state.selectedStory) return;
   state.campaign[formatKey][field] = value;
+  // Keep the local backlog draft current when navigating before the next bootstrap.
+  state.selectedStory.campaignDraft = state.campaign;
+  const backlogStory = state.backlog.find(s => s.id === state.selectedStory.id);
+  if (backlogStory) backlogStory.campaignDraft = state.campaign;
   await fetch('/api/studio/save-edit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -515,7 +529,7 @@ function renderCampaignStudio() {
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <select id="scheduleDaySelect" onchange="window.setScheduleDay(this.value)" style="background:#212320;color:#f4f1ea;border:1px solid #353933;padding:9px 14px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">
-            ${days.map(d => `<option value="${d}" ${(story?.scheduledDay===d||state.selectedScheduleDay===d)?'selected':''}>${d}</option>`).join('')}
+            ${days.map(d => `<option value="${d}" ${(state.selectedScheduleDay===d)?'selected':''}>${d}</option>`).join('')}
           </select>
           <button onclick="window.scheduleAndExport('${activeFmt}', document.getElementById('scheduleDaySelect').value)" style="background:#c5d86d;color:#141513;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">
             📅 Schedule & Export

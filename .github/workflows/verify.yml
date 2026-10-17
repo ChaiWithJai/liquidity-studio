@@ -25,6 +25,8 @@ jobs:
           python-version: '3.12'
       - name: Build served UI
         run: npm run build
+      - name: Verify saved draft navigation and schedule selection
+        run: node server/navigation-test.js
       - name: Verify HTTP and service contracts with synthetic data
         run: npm run test:backwards
       - name: Verify operational probes and truthful telemetry
