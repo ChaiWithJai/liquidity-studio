@@ -318,6 +318,13 @@ export function createHttpServer(
         );
       }
       const identity = platform?.identity;
+      if (
+        identity?.configuration?.emulator &&
+        !["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(
+          req.socket.remoteAddress,
+        )
+      )
+        throw fail(403, "Auth emulator requires a loopback client");
       if (route === "/api/auth/config" && req.method === "GET")
         return json(
           200,
