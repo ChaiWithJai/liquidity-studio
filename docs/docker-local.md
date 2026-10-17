@@ -27,6 +27,8 @@ The container filesystem is read-only except ephemeral `/tmp`; all current appli
 
 ## Verification and rollback
 
-Local Docker Desktop on the development host currently has running backend processes and an existing desktop-linux socket, but both `docker version` (8 seconds) and a direct socket `/_ping` (5 seconds) time out. Therefore local container execution is blocked by engine availability. No engine restart, reset, prune, or existing workload mutation was attempted. Compose configuration validation works. Hosted CI provides actual build/runtime evidence once green; it does not establish that the local engine has recovered.
+Local verification passed on Docker Desktop 4.39.0, Engine 28.0.1, Linux ARM64. The actual image build and smoke script passed: page/liveness/readiness, bootstrap, synthetic generation provenance, non-root identity, and graceful termination with exit 0. Hosted CI also passed the same smoke script on Linux AMD64, along with all existing contract gates.
+
+The local engine initially timed out on version and direct socket probes. After explicit user authorization to restart Docker Desktop, the official restart command failed its stop deadline. Quitting/relaunching the app required terminating its hung backend, after which the engine recovered. No reset, prune, image deletion, or unrelated container configuration changes were performed. The existing Node process on port 3000 remained intact.
 
 To roll back a running demonstration, stop this Compose project and rebuild the earlier Git revision. There is no data migration; restarting either revision discards current memory state. Do not reset Docker Desktop as part of application rollback. GCP deployment and persistent storage recovery are subsequent work in sprint #19.
