@@ -33,6 +33,8 @@
   let authMode = $state("unavailable");
   let googleAuth;
   let authSequence = 0;
+  let googleLoginSequence = 0;
+  let googleLoginTimer;
   let user = $state(null);
   let organizations = $state([]);
   let organizationId = $state("");
@@ -151,6 +153,11 @@
       organizations.find((org) => org.id === organizationId)?.brands?.[0]?.id ||
       "";
   }
+  function invalidateGoogleLoginAttempt() {
+    googleLoginSequence++;
+    clearTimeout(googleLoginTimer);
+    googleLoginTimer = undefined;
+  }
   function clearWorkspace() {
     lastScopeToken++;
     user = null;
@@ -182,6 +189,7 @@
         if (authMode === "google") {
           googleAuth = createGoogleAuth(config);
           unsubscribe = googleAuth.watch(async (identity) => {
+            invalidateGoogleLoginAttempt();
             const sequence = ++authSequence;
             clearWorkspace();
             booting = true;
@@ -214,21 +222,39 @@
       }
     }
     initialize();
-    return () => { disposed = true; authSequence++; unsubscribe?.(); };
+    return () => { disposed = true; authSequence++; invalidateGoogleLoginAttempt(); unsubscribe?.(); };
   });
   async function loginGoogle() {
     if (busy || !googleAuth) return;
+    invalidateGoogleLoginAttempt();
+    const attempt = googleLoginSequence;
     busy = true;
     error = "";
+    // Firebase owns popup authentication; this timer only restores an explicit retry.
+    // Public SDK flow: https://firebase.google.com/docs/auth/web/google-signin
+    const timer = setTimeout(() => {
+      if (attempt !== googleLoginSequence) return;
+      invalidateGoogleLoginAttempt();
+      busy = false;
+      error = "Google sign-in has not completed. Finish the Google popup or try again.";
+    }, 90000);
+    googleLoginTimer = timer;
     try {
       await googleAuth.login();
     } catch (failure) {
+      if (attempt !== googleLoginSequence) return;
       error = failure.code === "auth/popup-closed-by-user"
         ? "Google sign-in was closed. Select Continue with Google to try again."
         : failure.code === "auth/popup-blocked"
           ? "Allow the Google sign-in popup, then try again."
           : failure.message || "Google sign-in failed. Try again.";
-    } finally { busy = false; }
+    } finally {
+      clearTimeout(timer);
+      if (attempt === googleLoginSequence) {
+        googleLoginTimer = undefined;
+        busy = false;
+      }
+    }
   }
   async function login(event) {
     event.preventDefault();
@@ -254,6 +280,7 @@
       if (authMode === "google") await googleAuth.logout();
       else await post("/api/auth/logout", {}, false);
       authSequence++;
+      invalidateGoogleLoginAttempt();
       clearWorkspace();
       booting = false;
     } catch (failure) { error = failure.message; }

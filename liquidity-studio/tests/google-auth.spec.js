@@ -121,3 +121,55 @@ test('real Auth Emulator Google popup verifies backend access, persistence, expo
   await expect(page.getByRole('button',{name:'Story backlog',exact:true})).toHaveCount(0);
   await expect(page.getByRole('button',{name:'Continue with Google'})).toBeVisible();
 });
+
+test('pending Google popup restores explicit retry after 90 seconds without authenticating', async ({page}) => {
+  test.skip(!emulatorHost, 'Requires explicit local Firebase Auth Emulator; no production-token forgery.');
+  await page.context().route('https://unpkg.com/material-components-web@10/**', route => route.abort());
+  await page.context().route('https://fonts.googleapis.com/**', route => route.abort());
+  // The clock changes elapsed waiting only; SDK identity and backend verification stay real.
+  // https://playwright.dev/docs/clock#test-inactivity-monitoring
+  await page.clock.install();
+  await page.goto(base);
+  const continueButton = page.getByRole('button',{name:'Continue with Google',exact:true});
+  await expect(continueButton).toBeEnabled();
+  const pendingPopupPromise = page.waitForEvent('popup');
+  await continueButton.click();
+  const pendingPopup = await pendingPopupPromise;
+  await pendingPopup.waitForLoadState('domcontentloaded');
+  await expect(pendingPopup.locator('#title')).toContainText('Sign-in with Google.com');
+  // The widget can render before its helper iframe finishes loading Google gapi.
+  // Fast-forwarding then expires gapi's real handshake timeout before its network
+  // callback arrives. Wait for the official emulator's actual relay initialization.
+  const relay = page.frameLocator('iframe[src*="/emulator/auth/iframe"]');
+  await expect.poll(async () => relay.locator('html').evaluate(() =>
+    typeof window.parentContainer?.send === 'function'
+  )).toBe(true);
+  await expect(page.getByRole('button',{name:'Signing in…',exact:true})).toBeDisabled();
+  await page.clock.fastForward(90001);
+  await expect(page.getByRole('alert')).toContainText('Google sign-in has not completed. Finish the Google popup or try again.');
+  await expect(continueButton).toBeEnabled();
+  await expect(page.getByRole('button',{name:'Story backlog',exact:true})).toHaveCount(0);
+  expect((await page.request.get(base+'/api/auth/session')).status()).toBe(401);
+  expect(page.context().pages()).toHaveLength(2); // No automatic replacement popup.
+
+  const retryPopupPromise = page.waitForEvent('popup');
+  await continueButton.click();
+  const retryPopup = await retryPopupPromise;
+  await retryPopup.waitForLoadState('domcontentloaded');
+  await expect(retryPopup.locator('#title')).toContainText('Sign-in with Google.com');
+  // The SDK rejects/closes its older popup. That stale catch/finally must not
+  // clear the newer attempt's pending state or replace its message.
+  await expect.poll(() => pendingPopup.isClosed()).toBe(true);
+  await expect(page.getByRole('button',{name:'Signing in…',exact:true})).toBeDisabled();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await retryPopup.getByRole('button',{name:'Add new account'}).click();
+  await retryPopup.getByLabel('Email').fill(founderEmail);
+  await retryPopup.getByRole('button',{name:'Sign in with Google.com'}).click();
+  await expect(page.getByRole('button',{name:'Operations',exact:true})).toBeVisible();
+  // A completed observer invalidates the waiting timer; no stale timeout returns.
+  await page.clock.fastForward(90001);
+  await expect(page.getByRole('button',{name:'Operations',exact:true})).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await page.getByRole('button',{name:'Sign out',exact:true}).click();
+  await expect(continueButton).toBeEnabled();
+});
