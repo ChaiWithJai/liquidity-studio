@@ -1,9 +1,29 @@
+import { evaluateCampaign } from "./domain.js";
 /**
- * Admin Observability, Hidden Quality Eval & Backpropagation Telemetry Store (server/observability.js)
- *
- * Upgraded via Backwards Testing to link every { storyId, rawGeneration, humanFinalVersion, delta }
- * into a complete DPO / Prompt-Backpropagation Preference Pair.
+ * Durable callers record generation baselines and subsequent operational events.
+ * Edits, scheduling and downloads are not preference labels or trained optimization.
  */
+
+export function classifyFeedback(record) {
+  const action = record.humanSignal || "";
+  const eventType =
+    record.isGenerationBaseline ||
+    record.isBaselinePair ||
+    action.includes("draft_generated")
+      ? "generation_baseline"
+      : action === "edited_inline_by_marketer"
+        ? "human_edit"
+        : action.startsWith("scheduled_")
+          ? "schedule_action"
+          : ["download_created", "exported_to_social"].includes(action)
+            ? "export_action"
+            : action === "updated_brand_profile"
+              ? "brand_profile_action"
+              : action === "queued_to_backlog"
+                ? "backlog_action"
+                : "operational_action";
+  return { ...record, eventType, preferenceLabel: null };
+}
 
 export class ObservabilityEngine {
   constructor() {
@@ -15,50 +35,36 @@ export class ObservabilityEngine {
   /**
    * Silent 4-format quality evaluation (runs strictly in Admin layer; invisible to Marketer UI).
    */
-  evaluateCampaignSilent(campaign) {
-    const checks = [];
-    const formats = ['infographic', 'carousel', 'story', 'reel'];
-    for (const fmt of formats) {
-      const item = campaign?.[fmt];
-      if (!item) continue;
-      const serialized = JSON.stringify(item);
-      const hasHardNumbers = /(\$\d+|\d+(\.\d+)?%|\d+(\.\d+)?x|\b\d+\s*(million|billion|m|b|k)\b)/i.test(serialized);
-      const hasOwnershipAngle = /\b(margin|equity|stake|valuation|buyback|royalt|backend|distribution|multiple|take-rate|cogs|ownership|cap table|upside|cash flow|rights|yield|control)\b/i.test(serialized);
-      const hookText = item.headline || item.coverHook || item.hookBanner || item.spokenHook0to3s || '';
-      const headlineWords = hookText.trim().split(/\s+/).filter(Boolean).length;
-      const conciseHook = headlineWords > 0 && headlineWords <= (fmt === 'reel' ? 16 : 10);
-
-      checks.push({
-        format: fmt,
-        hasHardNumbers,
-        hasOwnershipAngle,
-        conciseHook,
-        passed: hasHardNumbers && hasOwnershipAngle && conciseHook
-      });
-    }
-
-    const passedCount = checks.filter((c) => c.passed).length;
-    return {
-      overallPass: passedCount === checks.length && checks.length > 0,
-      score: checks.length ? Math.round((passedCount / checks.length) * 100) : 0,
-      formatChecks: checks
-    };
+  evaluateCampaignSilent(campaign, story, brandProfile) {
+    return evaluateCampaign(campaign, story, brandProfile);
   }
 
-  recordGenerationTrace({ trace, storyId, storyTitle, campaign, evalResult }) {
+  recordGenerationTrace({
+    trace,
+    storyId,
+    storyTitle,
+    campaign,
+    evalResult,
+    story,
+  }) {
     const entry = {
       ...trace,
+      generationId: trace.traceId,
       storyId,
       storyTitle,
       evalScore: evalResult.score,
       evalPass: evalResult.overallPass,
-      formatChecks: evalResult.formatChecks
+      formatChecks: evalResult.formatChecks,
     };
     this.traces.unshift(entry);
 
     this.backpropDataset.unshift({
       recordId: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       isBaselinePair: true,
+      isGenerationBaseline: true,
+      eventType: "generation_baseline",
+      preferenceLabel: null,
+      generationId: trace.traceId,
       timestamp: new Date().toISOString(),
       storyId,
       storyTitle,
@@ -66,29 +72,56 @@ export class ObservabilityEngine {
       provider: trace.provider,
       evalScoreBeforeHuman: evalResult.score,
       evalScoreAfterHuman: evalResult.score,
-      humanSignal: 'batch_draft_generated',
+      humanSignal: "draft_generated",
+      sourceClaims: structuredClone(story?.sourceClaims || []),
+      assessmentMeaning: evalResult.scoreMeaning || null,
       rawGeneration: structuredClone(campaign),
-      humanFinalVersion: structuredClone(campaign)
+      humanFinalVersion: structuredClone(campaign),
     });
 
     return entry;
   }
 
+  recordGenerationFailure({ storyId, trace }) {
+    const entry = {
+      traceId: trace?.traceId || `failed_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      storyId,
+      status: "error",
+      errorCode: trace?.error || "GENERATION_FAILED",
+      latencyMs: trace?.latencyMs || 0,
+      evalScore: null,
+    };
+    this.traces.unshift(entry);
+    return entry;
+  }
+
   recordMarketerAction({ storyId, storyTitle, format, action, finalContent }) {
     // Always link human edit/export back to the pristine baseline generation record
-    const existingPair = this.backpropDataset.find((r) => r.storyId === storyId && r.isBaselinePair);
+    const existingPair = this.backpropDataset.find(
+      (r) => r.storyId === storyId && r.isBaselinePair,
+    );
+    const previousContent =
+      existingPair && format
+        ? structuredClone(existingPair.humanFinalVersion?.[format])
+        : null;
     let postEditEvalScore = null;
     if (existingPair && format && finalContent) {
-      existingPair.humanSignal = action;
-      if (existingPair.humanFinalVersion && existingPair.humanFinalVersion[format]) {
+      if (
+        existingPair.humanFinalVersion &&
+        existingPair.humanFinalVersion[format]
+      ) {
         existingPair.humanFinalVersion[format] = structuredClone(finalContent);
-        const reEval = this.evaluateCampaignSilent(existingPair.humanFinalVersion);
+        const reEval = this.evaluateCampaignSilent(
+          existingPair.humanFinalVersion,
+          { sourceClaims: existingPair.sourceClaims },
+        );
         existingPair.evalScoreAfterHuman = reEval.score;
         postEditEvalScore = reEval.score;
       }
     }
 
-    const record = {
+    const record = classifyFeedback({
       recordId: `bp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       timestamp: new Date().toISOString(),
       storyId,
@@ -96,9 +129,15 @@ export class ObservabilityEngine {
       format,
       humanSignal: action,
       evalScoreAfterHuman: postEditEvalScore,
-      rawGeneration: existingPair && format ? structuredClone(existingPair.rawGeneration?.[format]) : null,
-      humanFinalVersion: structuredClone(finalContent)
-    };
+      generationId: existingPair?.generationId || null,
+      previousContent,
+      delta: { before: previousContent, after: structuredClone(finalContent) },
+      rawGeneration:
+        existingPair && format
+          ? structuredClone(existingPair.rawGeneration?.[format])
+          : null,
+      humanFinalVersion: structuredClone(finalContent),
+    });
     this.backpropDataset.unshift(record);
     return record;
   }
@@ -111,23 +150,40 @@ export class ObservabilityEngine {
   getSnapshot() {
     const totalTraces = this.traces.length;
     const avgLatencyMs = totalTraces
-      ? Math.round(this.traces.reduce((acc, t) => acc + (t.latencyMs || 0), 0) / totalTraces)
+      ? Math.round(
+          this.traces.reduce((acc, t) => acc + (t.latencyMs || 0), 0) /
+            totalTraces,
+        )
       : 0;
-    const avgEvalScore = totalTraces
-      ? Math.round(this.traces.reduce((acc, t) => acc + (t.evalScore || 0), 0) / totalTraces)
+    const evaluated = this.traces.filter((trace) =>
+      Number.isFinite(trace.evalScore),
+    );
+    const avgEvalScore = evaluated.length
+      ? Math.round(
+          evaluated.reduce((acc, trace) => acc + trace.evalScore, 0) /
+            evaluated.length,
+        )
       : null;
 
     return {
       summary: {
         totalGenerations: totalTraces,
+        failedGenerations: this.traces.filter(
+          (trace) => trace.status === "error",
+        ).length,
+        syntheticGenerations: this.traces.filter(
+          (trace) => trace.status === "degraded",
+        ).length,
+        assessmentMeaning:
+          "source-excerpt coverage; factual accuracy is not assessed",
         avgLatencyMs,
         avgEvalScore,
         backpropRecordsCollected: this.backpropDataset.length,
-        weeklyBatchCount: this.batchJobs.length
+        weeklyBatchCount: this.batchJobs.length,
       },
       batchJobs: this.batchJobs,
       traces: this.traces.slice(0, 25),
-      backpropDataset: this.backpropDataset.slice(0, 25)
+      backpropDataset: this.backpropDataset.slice(0, 25).map(classifyFeedback),
     };
   }
 }

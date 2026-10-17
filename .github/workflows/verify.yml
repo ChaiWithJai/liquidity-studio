@@ -8,45 +8,105 @@ permissions:
 jobs:
   contracts:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: liquidity-studio
     env:
       AI_PROVIDER: gcp-gemini
       AI_ALLOW_SYNTHETIC: 'true'
+      npm_config_cache: /tmp/npm-contracts
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: liquidity-studio/package-lock.json
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Build served UI
+      - name: Install the locked application and test dependencies
+        run: npm ci --no-fund
+      - name: Build the canonical served Svelte UI
         run: npm run build
-      - name: Verify saved draft navigation and schedule selection
-        run: node server/navigation-test.js
-      - name: Verify gateway integrity contracts
-        run: npm run test:gateway
-      - name: Verify HTTP and service contracts with synthetic data
+      - name: Verify all Node unit and HTTP integration contracts
+        run: node --test server/*.test.js
+      - name: Verify project budget and deployment evidence guards
+        run: node --test ../scripts/*.test.mjs
+      - name: Verify HTTP and service contracts with reviewed synthetic fixtures
         run: npm run test:backwards
-      - name: Verify operational probes and truthful telemetry
-        run: node --test server/operational-health.test.js
-      - name: Verify process startup and shutdown
-        run: node --test server/runtime.test.js
-      - name: Verify structural graph and legacy source checks
+      - name: Verify structural graph and source checks
         run: npm run qa:loop
       - name: Require generated assets to match committed source
         run: git diff --exit-code -- dist
 
-  docker-local:
+  browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: liquidity-studio
+    env:
+      npm_config_cache: /tmp/npm-browser
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build and exercise local container without provider credentials
+          cache: npm
+          cache-dependency-path: liquidity-studio/package-lock.json
+      - name: Install the locked dependencies
+        run: npm ci --no-fund
+      - name: Install real Chromium and its Linux dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Build the actual browser application
+        run: npm run build
+      - name: Verify operator workflows in Chromium against authenticated APIs
+        run: npm run test:browser -- --project=chromium
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: chromium-failure-evidence
+          path: liquidity-studio/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  firestore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: liquidity-studio
+    env:
+      npm_config_cache: /tmp/npm-firestore
+      CLOUDSDK_CORE_PROJECT: demo-liquidity-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: liquidity-studio/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          install_components: cloud-firestore-emulator
+      - name: Install the locked SDK and test dependencies
+        run: npm ci --no-fund
+      - name: Verify real Firestore transactions and restart behavior locally
+        run: bash ../scripts/test-firestore-emulator.sh
+
+  docker-local:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and recreate the authenticated persistent local container
         run: bash scripts/docker-smoke.sh

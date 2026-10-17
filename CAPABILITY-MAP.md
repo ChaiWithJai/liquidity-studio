@@ -1,6 +1,6 @@
 # Liquidity Studio capability map
 
-Status: module order approved by the founder on 2026-10-17; Organization → Brand clarification incorporated. Module specifications are proposed until separately reviewed. GitHub Issues is the task source of truth, with #12 as the rolling tracker and #18/#19 as sprint items 12/13.
+Status: module order and epic execution authorized by the founder on 2026-10-17; Organization → Brand clarification implemented in the delivery branch. Local acceptance and independent review are underway, with final remote CI and cloud deployment evidence still required. GitHub Issues is the task source of truth, with #12 as the rolling tracker and #18/#19 as sprint items 12/13.
 
 | Module id | Responsibility | Depends on | Issues |
 |---|---|---|---|
@@ -11,7 +11,7 @@ Status: module order approved by the founder on 2026-10-17; Organization → Bra
 | gcp-pilot | Private founder-plus-marketer service, deployment evidence and rollback | operator-workflow | #19 |
 | managed-billing-exit | Managed entitlements and usage, portable customer export and self-hosted recovery | gcp-pilot | #18 |
 
-Build order: container-runtime → durable-storage → identity-tenant-access → operator-workflow → gcp-pilot → managed-billing-exit. Existing defect fixes and read-only audits can proceed in parallel; runtime architecture changes follow reviewed module specs.
+Build order: container-runtime → durable-storage → identity-tenant-access → operator-workflow → gcp-pilot → managed-billing-exit. The order above records the implementation dependency path. Authorized delivery continues through verification; it does not require reopening a superseded specification-approval gate.
 
 ## Pilot hierarchy
 
@@ -28,11 +28,17 @@ flowchart TD
 
 ## Account and brand boundary
 
-An organization or agency is the account tenant. It contains multiple brands. The pilot has one organization and two proposed brands: liquidity_desk and vedic_dharma. The founder administers the organization; the marketer is granted explicit brand access. Brand presets are configuration, not authorization.
+An organization or agency is the account tenant. It contains multiple brands. The pilot has one organization and two configured brand presets: liquidity_desk and vedic_dharma. Account brand IDs remain separate from those preset IDs. The founder administers the organization; the marketer is granted explicit brand access. Brand presets are configuration, not authorization.
 
 Every data boundary carries organization_id and, for brand-owned data, brand_id. Membership checks use verified server-side identity. Resource lookup must bind both IDs; supplying another brand ID does not grant access. Caches, generated assets, job inputs, logs, usage events and dataset exports follow the same scope. Explicit service/admin jobs have narrowly granted scope rather than a process-global active tenant.
 
 Do not introduce unbounded recursion for the pilot. Agency delegation across client organizations is a future explicit relationship with tested permission traversal; parent membership must not silently grant access to all descendants. This preserves a path to the founder's nested-tenant model without treating arbitrary depth as an implemented feature.
+
+## Current evidence and remaining boundaries
+
+The current delivery branch has canonical Svelte UI and Chromium tests, founder/marketer sessions and memberships, SQLite restart/recovery/concurrency tests, an async Firestore/GCS adapter with a real Firestore emulator contract, scoped jobs/telemetry/feedback, real PNG/ZIP/script export, measured simulation preflight, and portable manifests with explicit remapping/checksums. Local Docker acceptance verifies a real image, sign-in/isolation and retained records after recreation. CWJ positioning and five research tasks are present; unsourced or unreviewed clinical claims remain blocked.
+
+This evidence does not establish a live GCP service, a configured working scheduler/source feed, paid provider connectivity, factual/clinical accuracy, activated billing, an unlimited tenancy hierarchy, or a selected license. Daily generation reservations are conservative attempt limits, not a dollar meter. Firestore has an explicit four-MiB aggregate-record capacity limit. Keep these distinctions visible when reviewing issue acceptance.
 
 ## Delivery evidence
 
@@ -48,4 +54,4 @@ The founder proposed $500/month plus a $1,500 bespoke setup fee, or $6,000 upfro
 
 The repository is public, but no open-source or commercial license has been selected. Code ownership, customer self-hosting rights, contribution terms and managed-service rights need an explicit license decision; this document grants no license. The pilot must not depend on a billing purchase to authenticate its two invited users.
 
-The tenant handoff is a request, not proof that multi-brand code exists. Medical, historical and numerical content claims need source review; keyword/number checks and synthetic examples cannot establish truth.
+The original tenant handoff was a specification request. Multi-brand code now has implementation and test evidence described above; the handoff itself remains separate from that evidence. Medical, historical and numerical content claims need source review; keyword/number checks and synthetic examples cannot establish truth.

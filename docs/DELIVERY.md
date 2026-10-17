@@ -2,6 +2,12 @@
 
 Own Liquidity Studio as an operable service. Keep this issue open as the queue entry point while new issues arrive. Baseline imported at 9d8e5f0; no earlier application history exists.
 
+## Current implementation and verification
+
+The integrated delivery branch implements canonical Svelte/Vite UI, scoped local identity, SQLite persistence, the async Firestore/GCS adapter, source-controlled generation, real artifacts, feedback lineage, discovery/job contracts and recovery tooling. Local browser/container and real Firestore emulator checks have run. Final remote CI and independent review remain release gates; these statements are not issue-closure or deployed-cloud claims.
+
+The dependency ordering below records the delivery sequence. It is not a list of unimplemented modules or a renewed approval gate. The founder authorized execution of the epic; broader commercial and licensing choices remain explicitly undecided.
+
 ## Execution order and dependencies
 
 - First wave, parallel: #1 draft navigation, #3 generation integrity, #6 truthful health and telemetry. These are narrow changes that can be independently verified.
@@ -14,9 +20,9 @@ Own Liquidity Studio as an operable service. Keep this issue open as the queue e
 
 ## System flow
 
-Browser → generated dist UI → Node HTTP controllers → use-case services → repository / AI gateway / telemetry → previews, calendar, exports, admin and feedback datasets.
+Browser → canonical Svelte/Vite dist UI → Node HTTP controllers → use-case services → repository / AI gateway / telemetry → previews, calendar, exports, admin and feedback datasets.
 
-The RFC names Cloud Run, Firestore, GCS, Scheduler and BigQuery; those are intended dependencies, not verified deployed integrations.
+The RFC originally named Cloud Run, Firestore, GCS, Scheduler and BigQuery as intended dependencies. Firestore/GCS now have adapter and emulator/boundary evidence; worker/scheduler authentication and configuration contracts exist. Actual cloud deployment and scheduling status require recorded evidence. BigQuery is not an implemented integration.
 
 ## Loop contract
 

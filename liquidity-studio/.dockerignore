@@ -2,9 +2,17 @@
 **
 !Dockerfile
 !package.json
+!package-lock.json
+!index.html
+!vite.config.js
+!src/
+!src/**
 !scripts/
 !scripts/build-dist.js
 !server/
 !server/*.js
 server/*test*.js
 server/fixtures/
+
+!public/
+!public/**
