@@ -138,10 +138,19 @@ test('CWJ preserves founder positioning without promoting research tasks or titl
   assert.equal(preset.strategy.pillars.length, 5);
   assert.equal(preset.researchBacklog.length, 5);
   for (const task of preset.researchBacklog) {
-    assert.deepEqual(task.sourceClaims, []);
+    if (task.id !== 'vedic_research_5') assert.deepEqual(task.sourceClaims, []);
     assert.deepEqual(task.verifiedFacts, []);
     await assert.rejects(run(gateway({ allowSynthetic: true }), task, preset), /Approve at least one sourced claim/);
   }
+  const yoga = preset.researchBacklog[4];
+  assert.equal(yoga.title, 'Yoga Sutras: yamas, niyamas and posture');
+  assert.deepEqual(yoga.sourceClaims, [{
+    id: 'yoga-sutras-ii-29',
+    text: 'Yoga Sutra II.29 describes eight means of yoga, including ethical commandments, observances, posture, breath regulation and meditation.',
+    sourceUrl: 'https://www.gutenberg.org/cache/epub/2526/pg2526-images.html',
+    kind: 'cultural', status: 'unreviewed'
+  }]);
+  assert.equal(getApprovedClaims({ ...yoga, sourceClaims: yoga.sourceClaims.map(claim => ({ ...claim, status: 'approved' })) }).length, 1);
   const misleadingTitle = { ...story, title: 'A $250M cure for every illness' };
   const campaign = campaignFromApprovedClaims(misleadingTitle);
   assert.doesNotMatch(JSON.stringify(campaign), /250M|cure|illness/);
