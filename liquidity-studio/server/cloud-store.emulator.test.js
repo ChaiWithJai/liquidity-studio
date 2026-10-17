@@ -21,6 +21,9 @@ test('real Firestore emulator: restart, concurrent transactions, chunk shrink, s
     assert.equal((await second.get(key)).text.length, 200000);
     await Promise.all(Array.from({ length: 12 }, () => second.update(key, value => ({ count: value.count + 1 }))));
     assert.deepEqual(await second.get(key), { count: 12 });
+    const beforeRevision = (await second.ref(key).get()).data().revision;
+    await second.update(key, current => current);
+    assert.equal((await second.ref(key).get()).data().revision, beforeRevision);
     assert.deepEqual(await second.keys('scope:org-one:'), [key]);
     assert.deepEqual(await second.get(secondKey), { count: 9 });
     await assert.rejects(second.update(key, () => { throw new Error('cancel operation'); }), /cancel operation/);
