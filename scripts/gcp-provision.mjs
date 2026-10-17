@@ -141,7 +141,7 @@ try {
         versions[secret.id] = `${secret.id}:${version}`;
         mutate(['secrets', 'add-iam-policy-binding', secret.id, `--member=${member}`, '--role=roles/secretmanager.secretAccessor']);
       }
-      console.log(JSON.stringify({ stage: 'prerequisites-ready', project, region, database, bucket, runtime, registry, secretVersions: versions, access: 'not granted until private IAP-enabled service deployment and separate access stage' }));
+      console.log(JSON.stringify({ stage: 'prerequisites-ready', project, region, database, bucket, runtime, registry, secretVersions: versions, access: legacyPasswords ? 'not granted until private IAP-enabled service deployment and separate access stage' : 'application Google allowlist and token authorization; live sign-in and tenant isolation remain unverified' }));
     }
   }
 } catch (error) { console.error(error.message); process.exitCode = 1; }

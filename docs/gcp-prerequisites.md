@@ -1,10 +1,18 @@
 # Minimal two-person GCP prerequisite provisioner
 
-Recorded operator status on 2026-10-17: project `liquidity-studio-pilot-261017` was created ACTIVE in organization `313384662705` (`chaiwithjai.com`), project number `504282493214`. Root reported no visible billing accounts (`[]`), so linking and all paid-service provisioning remain blocked pending the owner's billing-console action. Only project-creation default APIs were enabled. This script's changes have not been applied; its tests use a fake CLI.
+## Recorded operator state
 
-`scripts/gcp-provision.mjs` has three stages. `plan` prints intended resources/IAM without invoking gcloud. `apply --apply` creates prerequisite resources only, after verifying the selected project's organization, linked billing account and positive monthly project budget at most USD100. `access --apply` runs only after a separately deployed private IAP-enabled service exists. It grants the two explicitly named Google users IAP access and the IAP service agent Cloud Run invocation. No app/customer payments are configured.
+Verified on 2026-10-17: project `liquidity-studio-pilot-261017` is active in the `chaiwithjai.com` organization (`313384662705`), project number `504282493214`. Billing is linked and enabled. A monthly USD100 project-only, all-service budget has current-spend alerts at 50%, 80% and 100%. Alerts are notifications, not a guaranteed hard spending cap.
 
-Supply non-secret inputs explicitly; the CLI's configured project never selects the deployment:
+Prerequisites were provisioned: a named Firestore Native database `liquidity-studio-pilot` in `us-east4` with deletion protection and PITR, private GCS bucket `liquidity-studio-pilot-261017-liquidity-assets` with uniform access and public-access prevention, regional Artifact Registry repository `liquidity-studio`, and runtime service account `liquidity-runtime`. The initial password-based prerequisite run also created two regional password secrets. They are historical resources, not part of the Google deployment; the current deployment clears secret mounts. No Cloud Run service is deployed as of this verification.
+
+Google Identity Platform is initialized and a Firebase web application is registered. Its auth handler responds, but this is not proof that the Google provider or live sign-in works. Google provider configuration and live founder/marketer authentication remain pending Console reauthentication. Local Application Default Credentials also need renewal. Do not use emulator or password-test evidence to declare live authentication ready.
+
+## Current operator flow
+
+`scripts/gcp-provision.mjs plan` prints proposed resources/IAM without invoking gcloud. `apply --apply` verifies the explicit project, organization, linked billing account and monthly project budget before any mutation; it reuses compatible existing resources. The Google default creates no application passwords or IAP user grants. It adds a minimal authentication read role for Admin SDK revocation checks. This Google-specific IAM increment must still be applied and verified before live acceptance.
+
+Supply inputs explicitly; the CLI configured project never selects deployment:
 
 ```sh
 export PILOT_PROJECT=liquidity-studio-pilot-261017
@@ -16,38 +24,15 @@ export PILOT_MARKETER_EMAIL='REPLACE_WITH_DISTINCT_APPROVED_GOOGLE_ACCOUNT'
 node scripts/gcp-provision.mjs plan
 ```
 
-Invalid/missing identities prevent even a plan from appearing ready. Both user emails must be provided. External Google accounts require separately verified OAuth configuration and `PILOT_EXTERNAL_IAP_OAUTH_READY=true`; IAM bindings alone do not establish that external-user OAuth works. Browser checks after deployment remain required.
+Set `PILOT_BILLING_ACCOUNT` and `PILOT_BUDGET_ID` privately to the verified resources before `apply --apply`. Both users must be distinct. Real personal addresses, billing identifiers and credentials belong in private operator configuration, not this public repository. The current Google deployment uses `STUDIO_GOOGLE_FOUNDER_EMAIL` and `STUDIO_GOOGLE_MARKETER_EMAIL` for the application allowlist; see [Google authentication](google-auth.md).
 
-Before the coordinated resource step, set `PILOT_BILLING_ACCOUNT` and `PILOT_BUDGET_ID` to verified resources. The budget must cover exactly project number 504282493214, all services and a monthly period, with current-spend alert delivery enabled. An alert is not a hard spending cap. Do not bypass the check when the billing account list is empty. Budget creation/linking and real resource provisioning are separate operator actions.
+Runtime access is `roles/datastore.user` in this dedicated pilot project; a custom prediction role with `aiplatform.endpoints.predict` and `serviceusage.services.use`; bucket-scoped get/create/delete object permissions and bucket metadata read; and `firebaseauth.users.get` for revoked/disabled-account checks. The runtime receives no project owner/editor, billing-admin, image-publisher or IAM-admin role. Do not reuse this project for unrelated customer databases.
 
-For the actual prerequisite step, provide `PILOT_FOUNDER_PASSWORD` and `PILOT_MARKETER_PASSWORD` through a trusted local secret/environment mechanism. Do not put values in shell history, committed files, chat, CLI arguments or public CI logs. Each initial password must be 16–256 characters without newlines. The child gcloud environment strips password/provider-key values; Secret Manager receives the intended password only through stdin (`--data-file=-`). CLI output/diagnostics are captured and never echoed. Secret version metadata is printed as a deployable version pointer; payloads are not printed. Existing enabled secret versions are preserved on rerun, so this is not a password-rotation tool.
+Existing resource region, type, ownership, security and custom-role permissions are checked before reuse. Partial failures do not delete resources; inspect and rerun. Resource removal, historical secret retirement and IAM removal are separate reviewed operations. Provisioning is not deployment or live acceptance. Follow [the deployment evidence contract](deployment-evidence-contract.md) to build, validate, deploy a candidate without production traffic, test it and promote it.
 
-```sh
-# Only after root coordinates billing/budget and resource creation:
-node scripts/gcp-provision.mjs apply --apply
-# Then deploy through the separate evidence-checked gcp-pilot.mjs flow.
-node scripts/gcp-provision.mjs access --apply
-```
+## Historical password/IAP path
 
-The prerequisite set is limited to required APIs, a named Firestore Native database in us-east4 with deletion protection/PITR, private GCS with uniform access/public-access prevention, a regional Docker registry, one runtime service identity and two password secrets replicated in us-east4. Firestore PITR and other resources are billable after creation; managed restore/backups and cost acceptance still need live verification.
-
-Runtime permissions are `roles/datastore.user` in this dedicated pilot project, a custom prediction-only role (`aiplatform.endpoints.predict`, `serviceusage.services.use`), a bucket-scoped custom role (`storage.buckets.get`, object get/create/delete), and secret accessor on only the two named secrets. The runtime receives no project owner/editor, secret-admin, billing-admin, image-publisher or IAM-admin role. Datastore permission covers this dedicated project's databases; do not reuse the project for unrelated customer systems. The deployment/operator identity remains separate and must already hold the administrative permissions required to create these resources.
-
-Existing resources are inspected before creation; different database regions/types, bucket ownership/security or custom-role permission sets are rejected rather than silently replaced. API enablement and individual IAM additions are retryable; partial failure does not delete already-created resources. Rerun after inspecting the failure. This script has no destructive cleanup or billing disablement path. Secret rotation, removal of IAM access, deletion and data retention require their own reviewed operation.
-
-The access stage refuses disabled IAP and unexpected direct/project/organization `roles/iap.httpsResourceAccessor` bindings. It cannot substitute for a complete effective-permissions audit, OAuth configuration and real two-account/unknown-account browser tests. It adds resource-specific user permissions rather than granting a domain or all authenticated users; it does not revoke existing policies automatically.
-
-Verification: `node --test scripts/gcp-provision.test.mjs`. The five mock-CLI tests cover no-call plans, pre-mutation billing/auth/budget denial, secret stdin/environment/output handling, idempotent resource/secret reuse and separate denied/allowed IAP stages. They are command-contract evidence, not live GCP/IAM proof.
-
-Official references: [Firestore creation](https://docs.cloud.google.com/sdk/gcloud/reference/firestore/databases/create), [secret stdin versions](https://docs.cloud.google.com/sdk/gcloud/reference/secrets/versions/add), [native Cloud Run IAP](https://docs.cloud.google.com/run/docs/securing/identity-aware-proxy-cloud-run), [scoped IAP bindings](https://docs.cloud.google.com/sdk/gcloud/reference/iap/web/add-iam-policy-binding). Installed SDK help confirmed bucket security and role commands; existing custom roles are separately described to inspect their full permission set.
-
-## External pilot access
-
-Prerequisite provisioning is independent of OAuth configuration. The access stage observes a custom OAuth client ID in effective service settings and ignores `PILOT_EXTERNAL_IAP_OAUTH_READY`; a boolean is not evidence. Client presence alone does not prove External audience or successful login: verify both users in separate browser sessions before claiming acceptance.
-
-The [IAP OAuth Admin API was retired in March 2026](https://docs.cloud.google.com/iap/docs/programmatic-oauth-clients). Create the custom client in Console, not `gcloud iap oauth-clients create`. Configure Google Auth Platform branding and External audience; in IAP Applications choose the Cloud Run resource, Settings, Custom OAuth, Auto Generate Credentials, then Save. The [official custom OAuth guide](https://docs.cloud.google.com/iap/docs/custom-oauth-configuration) documents this path and automatically configured redirect. A manual Web application client instead needs `https://iap.googleapis.com/v1/oauth/clientIds/CLIENT_ID:handleRedirect`.
-
-Prefer Console direct configuration to avoid handling the secret locally. If applying existing credentials through CLI, write settings into a private mode-0600 temporary file with a private parent directory, invoke `gcloud iap settings set FILE --project=PROJECT --resource-type=cloud-run --region=us-east4 --service=SERVICE`, then remove the file. Never place credentials in command arguments, shell history, logs, Git, or chat. Only the two explicit pilot identities receive service-scoped IAP access; External audience does not itself grant IAM access.
+`PILOT_AUTH_MODE=legacy-password-iap` remains only for isolated command-contract regression tests and historical recovery review. It is not the current pilot path. Application production startup rejects password mode, and deployment/rollback both require Google-mode evidence. Do not use the provisioner's legacy `access` stage for Google mode; the script refuses it. Existing password secrets and accessor bindings must be retired after confirming no retained legacy workload needs them; the provisioner does not delete them automatically.
 
 ## Google managed application mode
 
@@ -56,3 +41,8 @@ The default provisioner now creates a runtime role containing only `firebaseauth
 The deployment candidate uses public Cloud Run transport with IAP disabled. Public static UI, health and sign-in endpoints are intentional; application data remains protected by verified Google tokens and explicit server-side role/membership checks. Before promoting traffic prove anonymous protected APIs return 401, both configured Google users can sign in, an outsider cannot access app data, tenant isolation holds, and restore works. Public invocation alone must never imply application authorization. A fresh exact-image acceptance report must carry `authMode: google` and passing `googleAuth` / `anonymousApi` checks; password-era evidence is rejected.
 
 Supply actual public Firebase web configuration and principal email allowlist through environment variables (`STUDIO_FIREBASE_*`, `STUDIO_GOOGLE_FOUNDER_EMAIL`, `STUDIO_GOOGLE_MARKETER_EMAIL`). The deployment writes these to a private temporary environment file, removes it after deployment and clears all secret mounts. It reads Google provider configuration using the authenticated operator token, checks that the Google web provider is enabled, and never prints its response because it can contain the OAuth client secret. Provider setup and live Google login remain separate operator work. No cloud changes were performed while implementing this revision.
+
+
+Verification: `node --test scripts/gcp-provision.test.mjs scripts/gcp-google.test.mjs scripts/gcp-apply.test.mjs` covers command contracts using fake CLI/API adapters. Live inventory and user/browser acceptance remain separate evidence.
+
+Official references: [Firestore creation](https://docs.cloud.google.com/sdk/gcloud/reference/firestore/databases/create), [Google web sign-in](https://docs.cloud.google.com/identity-platform/docs/web/google), [Firebase authentication IAM](https://docs.cloud.google.com/iam/docs/roles-permissions/firebaseauth).
