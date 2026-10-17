@@ -4,10 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createAppContainer } from './container.js';
 import { checkReadiness } from './operational-health.js';
+import { startServer } from './runtime.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(__dirname, '..', 'dist');
-const PORT = process.env.PORT || 3000;
 
 export function createHttpServer(appContainer = createAppContainer()) {
   const {
@@ -177,20 +177,5 @@ export function createHttpServer(appContainer = createAppContainer()) {
 
 // Start server if run directly
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
-  const server = createHttpServer();
-  const tryListen = (port) => {
-    server.once('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        const nextPort = Number(port) === 8080 ? 3000 : Number(port) + 1;
-        console.warn(`Port ${port} in use, trying port ${nextPort}...`);
-        tryListen(nextPort);
-      } else {
-        console.error('Server error:', err);
-      }
-    });
-    server.listen(port, '0.0.0.0', () => {
-      console.log(`Liquidity Studio v0 listening on http://localhost:${port}`);
-    });
-  };
-  tryListen(PORT);
+  startServer(createHttpServer());
 }
