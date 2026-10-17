@@ -4,7 +4,7 @@ Generation fails when credentials are absent or the provider request/output is i
 
 Synthetic campaigns carry `campaign.provenance.mode = synthetic`, `requiresReview = true`, and a trace with `status = degraded`. They copy supplied facts without inventing financial figures or relabeling broadcast revenue as gross margin. The supplied backlog facts are not externally verified by this service. Provider output also requires editorial review. The numeric allowlist and gross-margin label guard are conservative checks, not proof of factual correctness. Numbers reused with changed units or other semantic changes require editorial review.
 
-The browser must show provenance for generation and reopened saved campaigns. That dependent UI work is tracked in issue #3; this server change alone does not complete its visibility acceptance criterion.
+Both browser implementations show provenance for new, reopened and legacy drafts and preserve existing drafts on HTTP/network generation failures. Issue #3 remains open: addBacklogStory in container.js still inserts fabricated default facts when facts are omitted, and the gateway cannot determine whether a supplied fact was fabricated upstream. Remove those defaults and require explicit source facts before closing #3.
 
 Validation: `npm run test:gateway`; existing isolated suites require explicit `AI_ALLOW_SYNTHETIC=true npm run test:backwards` and `AI_ALLOW_SYNTHETIC=true npm run qa:loop`.
 
