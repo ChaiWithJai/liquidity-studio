@@ -80,7 +80,7 @@ try {
       "list",
       `--project=${project}`,
       `--region=${region}`,
-      "--format=table(metadata.name,status.url)",
+      "--format=json(metadata.name)",
     ],
     [
       "firestore",
@@ -317,7 +317,27 @@ try {
         throw new Error(
           "Asset bucket must belong to the verified project/region with public access prevention and uniform access enforced",
         );
-      for (const args of readOnly.slice(2, 4)) command(args, { execute: true });
+      command(readOnly[2], { execute: true });
+      // A successful authoritative list is required. Authentication, permission,
+      // network and malformed responses must never be mistaken for absence.
+      const services = JSON.parse(
+        command(readOnly[3], { execute: true, capture: true }),
+      );
+      if (
+        !Array.isArray(services) ||
+        services.some(
+          (item) =>
+            !item ||
+            typeof item.metadata?.name !== "string" ||
+            !/^[a-z][a-z0-9-]{0,62}$/.test(item.metadata.name),
+        )
+      ) {
+        throw new Error("Cloud Run service existence response is invalid");
+      }
+      const names = services.map((item) => item.metadata.name);
+      if (new Set(names).size !== names.length)
+        throw new Error("Cloud Run service existence response is ambiguous");
+      const existingService = names.includes(service);
       const directory = fs.mkdtempSync(
         path.join(os.tmpdir(), "liquidity-cloud-env-"),
       );
@@ -365,7 +385,7 @@ try {
             "--allow-unauthenticated",
             "--no-iap",
             "--ingress=all",
-            "--no-traffic",
+            ...(existingService ? ["--no-traffic"] : []),
             "--tag=pilot-candidate",
             `--env-vars-file=${envFile}`,
             "--clear-secrets",
@@ -376,7 +396,9 @@ try {
         fs.rmSync(directory, { recursive: true, force: true });
       }
       console.log(
-        "Candidate created with no production traffic. Verify anonymous API 401, Google sign-in for both authorized users, outsider rejection, isolation, real provider, restore and spend controls before promoting traffic.",
+        existingService
+          ? "Candidate revision created with no assigned main-service traffic; its tagged URL can still receive requests. Verify anonymous API 401, Google sign-in, outsider rejection, isolation, real provider, restore and spend controls before promoting traffic."
+          : "First pilot service created with 100% initial traffic. Sign-in/static surfaces are public; studio/admin data APIs remain Google-protected. Verify anonymous API 401, both authorized users, outsider rejection, isolation, real provider, restore and spend controls before inviting users. This is not a zero-traffic deployment.",
       );
     }
   }
