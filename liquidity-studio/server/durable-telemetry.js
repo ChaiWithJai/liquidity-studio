@@ -1,10 +1,10 @@
 import {ObservabilityEngine} from './observability.js';
 export class DurableTelemetry extends ObservabilityEngine {
  constructor(repo){super();this.repo=repo;}
- record(method,args){let result;this.repo.mutate(state=>{Object.assign(this,state.telemetry);result=super[method](...args);state.telemetry={traces:this.traces,batchJobs:this.batchJobs,backpropDataset:this.backpropDataset};return state;});return result;}
+ async record(method,args){let result;await this.repo.mutate(state=>{Object.assign(this,state.telemetry);result=super[method](...args);state.telemetry={traces:this.traces,batchJobs:this.batchJobs,backpropDataset:this.backpropDataset};return state;});return result;}
  recordGenerationTrace(payload){return this.record('recordGenerationTrace',[payload]);}
  recordMarketerAction(payload){return this.record('recordMarketerAction',[payload]);}
  recordBatchJob(payload){return this.record('recordBatchJob',[payload]);}
- getSnapshot(){Object.assign(this,this.repo.read().telemetry);const snapshot=super.getSnapshot();return {...snapshot,jobs:this.repo.read().jobs,usageEvents:this.repo.read().usage.length,preflights:this.repo.read().preflights.slice(-25)};}
- allFeedback(){return this.repo.read().telemetry.backpropDataset;}
+ async getSnapshot(){const state=await this.repo.read();Object.assign(this,state.telemetry);const snapshot=super.getSnapshot();return {...snapshot,jobs:state.jobs,usageEvents:state.usage.length,preflights:state.preflights.slice(-25),operationalEvents:(state.operationalEvents||[]).slice(-100)};}
+ async allFeedback(){return (await this.repo.read()).telemetry.backpropDataset;}
 }

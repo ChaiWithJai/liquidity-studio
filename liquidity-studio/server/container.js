@@ -4,6 +4,10 @@
  * Implements all 3 Core JTBDs + Founder Admin Observability via Ports & Adapters.
  */
 
+import { discoverInto } from './discovery.js';
+import { getApprovedClaims } from './source-integrity.js';
+import { randomUUID } from 'node:crypto';
+import { fail } from './auth.js';
 import { AIGateway } from './gateway.js';
 import { ObservabilityEngine } from './observability.js';
 import { CONTEXT_GRAPH, verifyContextGraphTopology } from './context-graph.js';
@@ -15,11 +19,13 @@ import {
 
 export class InMemoryGCPFirestoreAdapter {
   constructor() {
-    this.brandProfile = { ...DEFAULT_BRAND_PROFILE };
+    this.brandProfile = structuredClone(DEFAULT_BRAND_PROFILE);
+    this.assets = [];
     this.backlog = INITIAL_CONTENT_BACKLOG.map((item, idx) => ({
       ...item,
       scheduledDay: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][idx % 5],
-      campaignDraft: null
+      campaignDraft: null,
+      sourceClaims: item.verifiedFacts.map((text, index) => ({ id: `legacy_${index}`, text, sourceUrl: null, status: 'unreviewed' }))
     }));
   }
 
@@ -45,16 +51,11 @@ export class InMemoryGCPFirestoreAdapter {
       status: 'In Backlog',
       scheduledDay: storyInput.scheduledDay || 'Monday',
       audienceTag: storyInput.audienceTag || 'Global Audience',
-      verifiedFacts:
-        Array.isArray(storyInput.verifiedFacts) && storyInput.verifiedFacts.length
-          ? storyInput.verifiedFacts
-          : [
-              storyInput.fact1 || '$100M+ estimated brand valuation driven by founder equity retention',
-              storyInput.fact2 || '65%+ gross margins via direct-to-consumer and retail distribution',
-              storyInput.fact3 || '100% IP and licensing control retained in holding company'
-            ],
+      sourceClaims: storyInput.sourceClaims || [],
+      verifiedFacts: (storyInput.sourceClaims || []).filter(claim => claim.status === 'approved').map(claim => claim.text),
       campaignDraft: null
     };
+    if (!newStory.sourceClaims.length) throw fail(400, 'Supplied source claims are required');
     this.backlog.unshift(newStory);
     return newStory;
   }
@@ -85,6 +86,9 @@ export class InMemoryGCPFirestoreAdapter {
     return story;
   }
 
+  async saveAsset(asset) { const record = { id: randomUUID(), ...asset }; this.assets.push(record); return record; }
+  async getAsset(id) { return this.assets.find(asset => asset.id === id); }
+  async updateSourceClaims(id, claims) { const story = this.backlog.find(story => story.id === id); if (!story) throw fail(404, 'Story not found'); story.sourceClaims = claims; story.verifiedFacts = claims.filter(claim => claim.status === 'approved').map(claim => claim.text); return story; }
   async getCalendarSchedule() {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     return days.map((day) => ({
@@ -111,7 +115,7 @@ export function createAppContainer(overrides = {}) {
     },
     async updateBrandProfile(patch) {
       const updated = await repo.updateBrandProfile(patch);
-      telemetry.recordMarketerAction({
+      await telemetry.recordMarketerAction({
         storyId: 'brand_profile',
         storyTitle: updated.brandName,
         format: 'brand_kit',
@@ -122,7 +126,7 @@ export function createAppContainer(overrides = {}) {
     },
     async addStory(input) {
       const story = await repo.addBacklogStory(input);
-      telemetry.recordMarketerAction({
+      await telemetry.recordMarketerAction({
         storyId: story.id,
         storyTitle: story.title,
         format: 'backlog_item',
@@ -137,7 +141,7 @@ export function createAppContainer(overrides = {}) {
     },
     async scheduleStory({ storyId, status, scheduledDay }) {
       const updated = await repo.updateStoryStatus(storyId, status, scheduledDay);
-      telemetry.recordMarketerAction({
+      await telemetry.recordMarketerAction({
         storyId: updated.id,
         storyTitle: updated.title,
         format: 'calendar_slot',
@@ -156,7 +160,8 @@ export function createAppContainer(overrides = {}) {
   const multiFormatFormatterService = {
     async generateCampaignForStory(storyId) {
       const backlog = await repo.listBacklog();
-      const story = backlog.find((s) => s.id === storyId) || backlog[0];
+      const story = backlog.find((s) => s.id === storyId);
+      if (!story) throw fail(404, 'Story not found');
       const brandProfile = await repo.getBrandProfile();
 
       const { output: campaign, trace } = await generateMultiFormatCampaign({
@@ -165,22 +170,24 @@ export function createAppContainer(overrides = {}) {
         brandProfile
       });
 
-      await repo.saveCampaignDraft(story.id, campaign);
+      await repo.saveCampaignDraft(story.id, campaign, story.revision);
 
-      const evalResult = telemetry.evaluateCampaignSilent(campaign);
-      telemetry.recordGenerationTrace({
+      const evalResult = telemetry.evaluateCampaignSilent(campaign, story, brandProfile);
+      await telemetry.recordGenerationTrace({
         trace,
         storyId: story.id,
         storyTitle: story.title,
         campaign,
+        story,
         evalResult
       });
 
+      await repo.recordUsage?.({ id: trace.traceId, type: 'generation', mode: campaign.provenance?.mode || 'unknown' });
       return { story, campaign, evalResult, trace };
     },
-    async saveInlineEdit({ storyId, format, content }) {
-      const story = await repo.updateCampaignFormatDraft(storyId, format, content);
-      const record = telemetry.recordMarketerAction({
+    async saveInlineEdit({ storyId, format, content, expectedRevision }) {
+      const story = await repo.updateCampaignFormatDraft(storyId, format, content, expectedRevision);
+      const record = await telemetry.recordMarketerAction({
         storyId: story.id,
         storyTitle: story.title,
         format,
@@ -197,7 +204,7 @@ export function createAppContainer(overrides = {}) {
       if (storyId) {
         await repo.updateStoryStatus(storyId, 'Exported');
       }
-      const record = telemetry.recordMarketerAction({
+      const record = await telemetry.recordMarketerAction({
         storyId: storyId || 'ad_hoc',
         storyTitle,
         format,
@@ -217,41 +224,52 @@ export function createAppContainer(overrides = {}) {
 
   // JTBD #1: Weekly Batch Producing Content Drafts
   const batchProductionService = {
-    async runWeeklyBatch({ maxStories = 1 } = {}) {
+    async runWeeklyBatch({ maxStories = 1, idempotencyKey = randomUUID() } = {}) {
+      const claim = await repo.claimJob?.(idempotencyKey);
+      if (claim && !claim.claimed) return { job: claim.job, replayed: true, observability: await telemetry.getSnapshot() };
+      const trackedJob = claim?.job;
       const startedAt = Date.now();
       let backlog = [];
       const results = [];
       try {
+        const discovery = repo.read ? await discoverInto(repo) : { added: 0, configured: false };
+        if (trackedJob) await repo.updateJob(trackedJob.jobId, { stage: 'reviewed_eligible', discovery });
         backlog = await repo.listBacklog();
-        const targetStories = backlog.slice(0, maxStories);
+        const targetStories = backlog.filter(story => { if (story.campaignDraft) return false; try { return getApprovedClaims(story).length > 0; } catch { return false; } }).slice(0, maxStories);
+        if (trackedJob) await repo.updateJob(trackedJob.jobId, { stage: 'formatting', eligibleStories: targetStories.length });
 
         for (const story of targetStories) {
           const res = await multiFormatFormatterService.generateCampaignForStory(story.id);
           results.push(res);
+          if (trackedJob) await repo.updateJob(trackedJob.jobId, { completedStoryIds: results.map(result => result.story.id) });
         }
 
         const avgEval =
           results.reduce((acc, r) => acc + r.evalResult.score, 0) / Math.max(1, results.length);
 
-        const job = telemetry.recordBatchJob({
-          jobId: `job_weekly_${Date.now()}`,
+        const job = await telemetry.recordBatchJob({
+          jobId: trackedJob?.jobId || `job_weekly_${Date.now()}`,
           trigger: 'Admin Batch Trigger',
           startedAt: new Date(startedAt).toISOString(),
           durationMs: Date.now() - startedAt,
           storiesDiscovered: backlog.length,
           formatsPrepared: results.length * 4,
-          evalPassRate: Number((avgEval / 100).toFixed(2)),
-          status: 'COMPLETED'
+          evalPassRate: results.length ? Number((avgEval / 100).toFixed(2)) : null,
+          status: 'COMPLETED',
+          stage: 'completed',
+          discovery
         });
 
+        if (trackedJob) await repo.updateJob(trackedJob.jobId, job);
         return {
           job,
           latestCampaign: results[0]?.campaign || null,
-          observability: telemetry.getSnapshot()
+          observability: await telemetry.getSnapshot()
         };
       } catch (error) {
-        telemetry.recordBatchJob({
-          jobId: `job_weekly_${Date.now()}`,
+        if (trackedJob) await repo.updateJob(trackedJob.jobId, { status: 'FAILED', errorCode: 'BATCH_EXECUTION_FAILED' });
+        await telemetry.recordBatchJob({
+          jobId: trackedJob?.jobId || `job_weekly_${Date.now()}`,
           trigger: 'Admin Batch Trigger',
           startedAt: new Date(startedAt).toISOString(),
           durationMs: Date.now() - startedAt,
@@ -268,7 +286,7 @@ export function createAppContainer(overrides = {}) {
 
   // Founder Admin: DI Switchboard, Silent Eval Telemetry, Backprop Dataset Export
   const adminObservabilityService = {
-    getOverview() {
+    async getOverview() {
       return {
         diAdapters: {
           aiProviderPort: aiGateway.constructor.name,
@@ -276,15 +294,17 @@ export function createAppContainer(overrides = {}) {
           telemetrySinkPort: telemetry.constructor.name
         },
         gateway: aiGateway.getConfig(),
-        observability: telemetry.getSnapshot()
+        observability: await telemetry.getSnapshot()
       };
     },
-    updateGatewayConfig(patch) {
-      return { gateway: aiGateway.updateConfig(patch) };
+    async updateGatewayConfig(patch) {
+      const gateway = aiGateway.updateConfig(patch);
+      await repo.mutate?.(state => ({ ...state, gatewayConfig: patch }));
+      return { gateway };
     },
-    exportBackpropDatasetJsonl() {
-      const snap = telemetry.getSnapshot();
-      return snap.backpropDataset.map((row) => JSON.stringify(row)).join('\n');
+    async exportBackpropDatasetJsonl() {
+      const records = telemetry.allFeedback ? await telemetry.allFeedback() : telemetry.backpropDataset;
+      return records.map((row) => JSON.stringify(row)).join('\n');
     },
     getContextGraph() {
       return {
