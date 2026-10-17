@@ -14,7 +14,7 @@ test.beforeAll(async () => {
   process.env.STUDIO_FOUNDER_PASSWORD = password;
   process.env.STUDIO_MARKETER_PASSWORD = password;
   process.env.AI_ALLOW_SYNTHETIC = "true";
-  platform = createPlatform({
+  platform = createPlatform({authMode: "password",
     store: new DurableStore(join(directory, "studio.sqlite")),
   });
   await platform.ready;

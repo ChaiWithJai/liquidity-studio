@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import Emulator from "./Emulator.svelte";
+  import { createGoogleAuth } from "./lib/google-auth.js";
   import "./studio.css";
 
   const supportedFonts = [
@@ -29,6 +30,9 @@
     { id: "story", name: "Story", ratio: "9:16" },
     { id: "reel", name: "Reel", ratio: "30s script" },
   ];
+  let authMode = $state("unavailable");
+  let googleAuth;
+  let authSequence = 0;
   let user = $state(null);
   let organizations = $state([]);
   let organizationId = $state("");
@@ -102,6 +106,8 @@
   }
   async function request(path, options = {}, scoped = true) {
     const requestScopeToken = lastScopeToken;
+    const authHeaders = authMode === "google"
+      ? { Authorization: `Bearer ${await googleAuth.getToken()}` } : {};
     const response = await fetch(
       path + (scoped ? (path.includes("?") ? "&" : "?") + scopeQuery() : ""),
       {
@@ -110,12 +116,13 @@
         headers: {
           ...(options.body ? { "Content-Type": "application/json" } : {}),
           ...options.headers,
+          ...authHeaders,
         },
       },
     );
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      if (response.status === 401) user = null;
+      if (response.status === 401) clearWorkspace();
       throw new Error(
         data.error || data.message || `Request failed (${response.status})`,
       );
@@ -144,21 +151,85 @@
       organizations.find((org) => org.id === organizationId)?.brands?.[0]?.id ||
       "";
   }
-  onMount(async () => {
-    try {
-      const response = await fetch("/api/auth/session", {
-        credentials: "same-origin",
-      });
-      if (response.ok) {
-        applySession(await response.json());
-        if (brandId) await loadScope();
+  function clearWorkspace() {
+    lastScopeToken++;
+    user = null;
+    organizations = [];
+    permissions = {};
+    organizationId = "";
+    brandId = "";
+    backlog = [];
+    calendar = [];
+    selectedStory = null;
+    campaign = null;
+    brandProfile = null;
+    adminData = null;
+    preflight = null;
+    exportUrl = "";
+    pendingEdits = false;
+  }
+  onMount(() => {
+    let disposed = false;
+    let unsubscribe;
+    async function initialize() {
+      try {
+        const configResponse = await fetch("/api/auth/config");
+        if (!configResponse.ok) throw new Error("Could not load sign-in configuration.");
+        const config = await configResponse.json();
+        if (disposed) return;
+        if (!["google", "password"].includes(config.mode)) throw new Error("Unsupported sign-in configuration.");
+        authMode = config.mode;
+        if (authMode === "google") {
+          googleAuth = createGoogleAuth(config);
+          unsubscribe = googleAuth.watch(async (identity) => {
+            const sequence = ++authSequence;
+            clearWorkspace();
+            booting = true;
+            try {
+              if (identity) {
+                const session = await request("/api/auth/session", {}, false);
+                if (disposed || sequence !== authSequence) return;
+                applySession(session);
+                if (brandId) await loadScope();
+              }
+            } catch (failure) {
+              if (!disposed && sequence === authSequence) {
+                clearWorkspace();
+                error = `Google sign-in could not open this workspace: ${failure.message}. Check your invited account or contact the studio operator.`;
+              }
+            } finally {
+              if (!disposed && sequence === authSequence) { booting = false; busy = false; }
+            }
+          });
+        } else {
+          const response = await fetch("/api/auth/session", {credentials: "same-origin"});
+          if (response.ok && !disposed) {
+            applySession(await response.json());
+            if (brandId) await loadScope();
+          }
+          if (!disposed) booting = false;
+        }
+      } catch (failure) {
+        if (!disposed) { error = failure.message; booting = false; }
       }
-    } catch {
-      error = "Could not connect to the studio. Check the server and retry.";
-    } finally {
-      booting = false;
     }
+    initialize();
+    return () => { disposed = true; authSequence++; unsubscribe?.(); };
   });
+  async function loginGoogle() {
+    if (busy || !googleAuth) return;
+    busy = true;
+    error = "";
+    try {
+      await googleAuth.login();
+    } catch (failure) {
+      error = failure.code === "auth/popup-closed-by-user"
+        ? "Google sign-in was closed. Select Continue with Google to try again."
+        : failure.code === "auth/popup-blocked"
+          ? "Allow the Google sign-in popup, then try again."
+          : failure.message || "Google sign-in failed. Try again.";
+    } finally { busy = false; }
+  }
   async function login(event) {
     event.preventDefault();
     busy = true;
@@ -180,14 +251,24 @@
   }
   async function logout() {
     try {
-      await post("/api/auth/logout", {}, false);
-      user = null;
-      organizations = [];
-      backlog = [];
-      campaign = null;
-    } catch (failure) {
-      error = failure.message;
-    }
+      if (authMode === "google") await googleAuth.logout();
+      else await post("/api/auth/logout", {}, false);
+      authSequence++;
+      clearWorkspace();
+      booting = false;
+    } catch (failure) { error = failure.message; }
+  }
+  async function downloadArtifact(event) {
+    if (authMode !== "google") return;
+    event.preventDefault();
+    try {
+      const response = await fetch(exportUrl, {headers:{Authorization:`Bearer ${await googleAuth.getToken()}`}});
+      if (!response.ok) throw new Error(`Download failed (${response.status}). Sign in again if access expired.`);
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement("a");
+      link.href = url; link.download = exportName; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (failure) { error = failure.message; }
   }
   async function loadScope() {
     const token = ++lastScopeToken;
@@ -595,7 +676,8 @@
       <span class="wordmark">◈ LIQUIDITY STUDIO</span>
       <h1>Good work starts<br />with a clear view.</h1>
       <p>Sign in to your private brand workspace.</p>
-      <form onsubmit={login}>
+      {#if authMode === "google"}<button class="primary" disabled={busy} onclick={loginGoogle}>{busy ? "Signing in…" : "Continue with Google"}</button>
+      {:else if authMode === "password"}<form onsubmit={login}>
         <label
           >Username<input
             name="username"
@@ -614,7 +696,7 @@
         ><button class="primary" disabled={busy}
           >{busy ? "Signing in…" : "Sign in →"}</button
         >
-      </form>
+      </form>{/if}
       {#if error}<p class="error" role="alert">{error}</p>{/if}
       <p class="small muted">
         Accounts are provisioned by your studio operator. No public
@@ -838,7 +920,7 @@
             </div>
           </div>
           {#if exportUrl}<p class="download">
-              <a href={exportUrl} download={exportName}>↓ {exportName}</a><small
+              <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
                 >Actual exported artifact · scope authorization required</small
               >
             </p>{/if}
