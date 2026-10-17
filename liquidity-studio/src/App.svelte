@@ -1,720 +1,287 @@
 <script>
   import { onMount } from 'svelte';
+  import Emulator from './Emulator.svelte';
+  import './studio.css';
 
-  // Surface switcher: 'marketer' vs 'admin'
-  let surfaceMode = $state('marketer');
-  // 4 Marketer Step Tabs: 'brand_profile' | 'backlog' | 'calendar' | 'campaign_studio'
-  let marketerTab = $state('campaign_studio');
-  let adminTab = $state('context_graph');
-  let activeFormat = $state('infographic'); // 'infographic' | 'carousel' | 'story' | 'reel'
-
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const formats = [{ id: 'infographic', name: 'Feed post', ratio: '4:5' }, { id: 'carousel', name: 'Carousel', ratio: '4 slides' }, { id: 'story', name: 'Story', ratio: '9:16' }, { id: 'reel', name: 'Reel', ratio: '30s script' }];
+  let user = $state(null);
+  let organizations = $state([]);
+  let organizationId = $state('');
+  let brandId = $state('');
+  let permissions = $state({});
+  let username = $state('');
+  let password = $state('');
+  let booting = $state(true);
+  let busy = $state(false);
+  let error = $state('');
+  let notice = $state('');
+  let tab = $state('backlog');
   let brandProfile = $state(null);
   let backlog = $state([]);
   let calendar = $state([]);
   let selectedStory = $state(null);
   let campaign = $state(null);
-  let adminData = $state(null);
-  let contextGraphData = $state(null);
-
-  let loading = $state(false);
-  let statusPill = $state('✨ Ready to create');
-  let exportToast = $state('');
-
-  // KRUG-004 Search & Status Filter
-  let searchQuery = $state('');
+  let format = $state('infographic');
+  let scheduledDay = $state('Monday');
+  let search = $state('');
   let statusFilter = $state('All');
-  let selectedScheduleDay = $state('Thursday');
+  let editJson = $state('');
+  let editFields = $state({});
+  let pendingEdits = $state(false);
+  let title = $state('');
+  let sourceFacts = $state('');
+  let sourceUrls = $state('');
+  let reviewClaims = $state([]);
+  let category = $state('Editorial');
+  let newDay = $state('Monday');
+  let newOrganization = $state('');
+  let newBrand = $state('');
+  let adminData = $state(null);
+  let graph = $state(null);
+  let readiness = $state(null);
+  let preflight = $state(null);
+  let exportUrl = $state('');
+  let exportName = $state('');
+  let lastScopeToken = 0;
+  let preflightSequence = 0;
+  let currentOrganization = $derived(organizations.find(org => org.id === organizationId));
+  let currentBrand = $derived(currentOrganization?.brands?.find(brand => brand.id === brandId));
+  let filteredStories = $derived(backlog.filter(story => (!search || (story.title + ' ' + story.category).toLowerCase().includes(search.toLowerCase())) && (statusFilter === 'All' || story.status === statusFilter)));
+  let provenance = $derived(campaign?.provenance?.mode === 'synthetic' ? 'Synthetic draft · source review required' : campaign?.provenance?.mode === 'provider' ? 'Provider draft · source review required' : 'Source provenance unverified · review required');
+  let canAdmin = $derived(permissions?.admin === true || user?.role === 'founder');
 
-  // KRUG-002 Agent Command Input
-  let agentCommand = $state('');
-  let agentFeedback = $state('');
-
-  let newTitle = $state('');
-  let newCategory = $state('Founder Equity & Buybacks');
-  let newFact1 = $state('');
-  let newScheduledDay = $state('Monday');
-
+  function scopeQuery() {
+    return new URLSearchParams({ organizationId, brandId }).toString();
+  }
+  async function request(path, options = {}, scoped = true) {
+    const response = await fetch(path + (scoped ? (path.includes('?') ? '&' : '?') + scopeQuery() : ''), {
+      ...options, credentials: 'same-origin',
+      headers: { ...(options.body ? { 'Content-Type': 'application/json' } : {}), ...options.headers }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 401) user = null;
+      throw new Error(data.error || data.message || `Request failed (${response.status})`);
+    }
+    return data;
+  }
+  function post(path, body = {}, scoped = true) { return request(path, { method: 'POST', body: JSON.stringify(body) }, scoped); }
+  function applySession(session) {
+    user = session.user;
+    organizations = session.organizations || [];
+    permissions = session.permissions || {};
+    organizationId = session.activeScope?.organizationId || organizations[0]?.id || '';
+    brandId = session.activeScope?.brandId || organizations.find(org => org.id === organizationId)?.brands?.[0]?.id || '';
+  }
   onMount(async () => {
-    await loadStudioBootstrap();
-    await loadAdminOverview();
-    await loadContextGraph();
-  });
-
-  async function loadStudioBootstrap() {
-    const res = await fetch('/api/studio/bootstrap');
-    const data = await res.json();
-    brandProfile = data.brandProfile;
-    if (!brandProfile.logoText) brandProfile.logoText = '💎 THE LIQUIDITY DESK';
-    backlog = data.backlog || [];
-    calendar = data.calendar || [];
-    if (!selectedStory && backlog.length > 0) {
-      selectedStory = backlog[0];
-      campaign = selectedStory.campaignDraft || null;
-      selectedScheduleDay = selectedStory.scheduledDay || 'Thursday';
-      if (campaign) statusPill = campaignStatus(campaign);
-    }
-  }
-
-  async function loadAdminOverview() {
-    const res = await fetch('/api/admin/overview');
-    adminData = await res.json();
-  }
-
-  async function loadContextGraph() {
-    const res = await fetch('/api/admin/context-graph');
-    contextGraphData = await res.json();
-  }
-
-  function goHome() {
-    surfaceMode = 'marketer';
-    marketerTab = 'backlog';
-  }
-
-  async function saveBrandProfile() {
-    if (!brandProfile) return;
-    const res = await fetch('/api/studio/brand-profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(brandProfile)
-    });
-    const data = await res.json();
-    brandProfile = data.brandProfile;
-    exportToast = 'Saved Brand Profile';
-    setTimeout(() => (exportToast = ''), 2500);
-    await loadAdminOverview();
-  }
-
-  async function updateBrandColor(index, newHex) {
-    if (!brandProfile || !brandProfile.colors[index]) return;
-    brandProfile.colors[index].hex = newHex;
-    await saveBrandProfile();
-  }
-
-  async function updateLogoText(newText) {
-    if (!brandProfile) return;
-    brandProfile.logoText = newText;
-    await saveBrandProfile();
-  }
-
-  function campaignStatus(draft) {
-    if (draft?.provenance?.mode === 'synthetic') return 'Synthetic draft · Degraded mode · Source review required';
-    if (draft?.provenance?.mode === 'provider') return 'Provider draft · Source review required';
-    return 'Draft provenance unavailable · Source review required';
-  }
-
-  function openStoryInStudio(story) {
-    selectedStory = story;
-    selectedScheduleDay = story.scheduledDay || 'Thursday';
-    campaign = story.campaignDraft || null;
-    marketerTab = 'campaign_studio';
-    if (campaign) {
-      statusPill = campaignStatus(campaign);
-    } else {
-      return createCampaignForStory(story);
-    }
-  }
-
-  async function createCampaignForStory(story = selectedStory) {
-    if (!story) return;
-    selectedStory = story;
-    selectedScheduleDay = story.scheduledDay || 'Thursday';
-    marketerTab = 'campaign_studio';
-    loading = true;
-    statusPill = '✨ Gathering financial facts & formatting 4 channels...';
     try {
-      const res = await fetch('/api/studio/generate-campaign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storyId: story.id })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.story || !data.campaign) throw new Error('Generation failed');
-      campaign = data.campaign;
-      selectedStory = data.story || story;
-      backlog = data.backlog || backlog;
-      calendar = data.calendar || calendar;
-      statusPill = campaignStatus(campaign);
-    } catch {
-      statusPill = 'Generation failed. Check provider configuration and retry. Existing draft preserved.';
-    } finally {
-      loading = false;
-    }
+      const response = await fetch('/api/auth/session', { credentials: 'same-origin' });
+      if (response.ok) { applySession(await response.json()); if (brandId) await loadScope(); }
+    } catch { error = 'Could not connect to the studio. Check the server and retry.'; }
+    finally { booting = false; }
+  });
+  async function login(event) {
+    event.preventDefault(); busy = true; error = '';
+    try {
+      const session = await post('/api/auth/login', { username, password }, false);
+      password = ''; applySession(session); await loadScope();
+    } catch (failure) { error = failure.message; }
+    finally { busy = false; }
   }
-
-  async function saveInlineEdit(formatKey, field, value) {
-    if (!campaign || !selectedStory) return;
-    if (field) campaign[formatKey][field] = value;
-    selectedStory.campaignDraft = campaign;
-    const backlogStory = backlog.find(item => item.id === selectedStory.id);
-    if (backlogStory) backlogStory.campaignDraft = campaign;
-    await fetch('/api/studio/save-edit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        storyId: selectedStory.id,
-        format: formatKey,
-        content: campaign[formatKey]
-      })
-    });
-    exportToast = `Saved edit to ${formatKey} (linked for backprop)`;
-    setTimeout(() => (exportToast = ''), 2500);
-    await loadAdminOverview();
+  async function logout() {
+    try { await post('/api/auth/logout', {}, false); user = null; organizations = []; backlog = []; campaign = null; }
+    catch (failure) { error = failure.message; }
   }
-
-  async function updateSchedule(storyId, status, scheduledDay) {
-    const res = await fetch('/api/studio/schedule', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ storyId, status, scheduledDay })
-    });
-    const data = await res.json();
-    backlog = data.backlog;
-    calendar = data.calendar;
-    exportToast = `Updated calendar: ${scheduledDay} (${status})`;
-    setTimeout(() => (exportToast = ''), 2500);
-    await loadAdminOverview();
+  async function loadScope() {
+    const token = ++lastScopeToken;
+    error = ''; busy = true;
+    selectedStory = null; campaign = null; adminData = null; preflight = null; exportUrl = ''; pendingEdits = false;
+    try {
+      const data = await request('/api/studio/bootstrap');
+      if (token !== lastScopeToken) return;
+      brandProfile = data.brandProfile; backlog = data.backlog || []; calendar = data.calendar || [];
+      if (data.organizations) organizations = data.organizations;
+      if (data.permissions) permissions = data.permissions;
+      if (backlog.length) selectStory(backlog[0]);
+    } catch (failure) { if (token === lastScopeToken) { error = failure.message; backlog = []; calendar = []; brandProfile = null; } }
+    finally { if (token === lastScopeToken) busy = false; }
   }
-
-  async function exportFormat(formatKey) {
-    if (!campaign || !selectedStory) return;
-    const res = await fetch('/api/studio/export-asset', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        storyId: selectedStory.id,
-        storyTitle: selectedStory.title,
-        format: formatKey,
-        content: campaign[formatKey]
-      })
-    });
-    const data = await res.json();
-    if (data.exported) {
-      backlog = data.backlog || backlog;
-      calendar = data.calendar || calendar;
-      exportToast = `Exported ${formatKey.toUpperCase()} pack (${data.exportId || 'complete'})`;
-      setTimeout(() => (exportToast = ''), 3500);
-      await loadAdminOverview();
-    }
+  async function switchOrganization(event) {
+    if (pendingEdits && !(await saveEdit())) return;
+    organizationId = event.currentTarget.value;
+    brandId = organizations.find(org => org.id === organizationId)?.brands?.[0]?.id || '';
+    await loadScope();
   }
-
-  async function scheduleAndExport(formatKey, day) {
-    if (!campaign || !selectedStory) return;
-    const targetDay = day || selectedScheduleDay || 'Thursday';
-    await updateSchedule(selectedStory.id, 'Scheduled', targetDay);
-    await exportFormat(formatKey);
-    exportToast = `Scheduled for ${targetDay} & Exported ${formatKey.toUpperCase()}!`;
-    setTimeout(() => (exportToast = ''), 3500);
+  async function switchBrand(event) {
+    if (pendingEdits && !(await saveEdit())) return;
+    brandId = event.currentTarget.value; await loadScope();
   }
-
-  async function addBacklogStory() {
-    if (!newTitle.trim()) return;
-    const res = await fetch('/api/studio/backlog', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: newTitle,
-        category: newCategory,
-        fact1: newFact1,
-        scheduledDay: newScheduledDay
-      })
-    });
-    const data = await res.json();
-    backlog = data.backlog;
-    calendar = data.calendar;
-    newTitle = '';
-    newFact1 = '';
-    await loadAdminOverview();
+  function selectStory(story) {
+    selectedStory = story; campaign = story?.campaignDraft || null;
+    scheduledDay = story?.scheduledDay || 'Monday'; reviewClaims = (story?.sourceClaims || story?.verifiedFacts?.map((text, i) => ({ id: `claim_${i}`, text, sourceUrl: '', status: 'unreviewed' })) || []).map(claim => ({ ...claim })); exportUrl = ''; preflight = null; syncEditor();
   }
-
-  async function executeAgentCommand() {
-    const text = (agentCommand || '').trim().toLowerCase();
-    if (!text) return;
-
-    if (text.includes('punchier') || text.includes('headline')) {
-      if (campaign && selectedStory) {
-        const fmt = activeFormat;
-        const current = campaign[fmt];
-        if (fmt === 'infographic' && current.headline) {
-          current.headline = current.headline.toUpperCase() + ' (REWRITE)';
-          await saveInlineEdit('infographic', 'headline', current.headline);
-        } else if (fmt === 'carousel' && current.coverHook) {
-          current.coverHook = current.coverHook.toUpperCase() + ' (REWRITE)';
-          await saveInlineEdit('carousel', 'coverHook', current.coverHook);
-        }
-        agentFeedback = '✨ Made headline punchier & synced for backpropagation!';
-      } else {
-        agentFeedback = '⚠️ Generate a campaign pack first.';
-      }
-    } else if (text.includes('schedule')) {
-      const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-      const matchedDay = days.find(d => text.includes(d));
-      const targetDay = matchedDay ? matchedDay.charAt(0).toUpperCase() + matchedDay.slice(1) : 'Friday';
-      if (selectedStory) {
-        await updateSchedule(selectedStory.id, 'Scheduled', targetDay);
-        agentFeedback = `📅 Scheduled ${selectedStory.title.slice(0, 20)}... for ${targetDay}`;
-      } else {
-        agentFeedback = '⚠️ Select a story from Backlog first.';
-      }
-    } else if (text.includes('calendar')) {
-      marketerTab = 'calendar';
-      agentFeedback = '📅 Switched to Mon–Sun Content Calendar.';
-    } else if (text.includes('brand') || text.includes('kit')) {
-      marketerTab = 'brand_profile';
-      agentFeedback = '🎨 Switched to Brand Kit.';
-    } else if (text.includes('backlog')) {
-      marketerTab = 'backlog';
-      agentFeedback = '📋 Switched to Weekly Backlog.';
-    } else if (text.includes('export')) {
-      await exportFormat(activeFormat);
-      agentFeedback = `📤 Exported ${activeFormat.toUpperCase()} pack!`;
-    } else if (text.includes('format') || text.includes('generate')) {
-      await createCampaignForStory(selectedStory);
-      agentFeedback = '✨ Generated 4-channel campaign pack!';
-    } else {
-      agentFeedback = `✨ Executed command: "${text}"`;
-    }
-    agentCommand = '';
+  function syncEditor() { editFields = campaign?.[format] ? JSON.parse(JSON.stringify(campaign[format])) : {}; editJson = campaign?.[format] ? JSON.stringify(editFields, null, 2) : ''; pendingEdits = false; }
+  function updateField(key, value) { editFields[key] = value; editJson = JSON.stringify(editFields, null, 2); pendingEdits = true; }
+  function updateNested(key, index, field, value) { if (field) editFields[key][index][field] = value; else editFields[key][index] = value; editJson = JSON.stringify(editFields, null, 2); pendingEdits = true; }
+  async function openStory(story) {
+    if (pendingEdits && !(await saveEdit())) return;
+    selectStory(story); tab = 'studio';
   }
-
-  // Filtered Backlog
-  let filteredBacklog = $derived(
-    backlog.filter(item => {
-      const matchesSearch = !searchQuery ||
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.verifiedFacts && item.verifiedFacts.some(f => f.toLowerCase().includes(searchQuery.toLowerCase())));
-      const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-  );
-
-  const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  async function selectFormat(next) {
+    if (pendingEdits && !(await saveEdit())) return;
+    format = next; exportUrl = ''; syncEditor();
+  }
+  async function generate() {
+    if (!selectedStory || busy) return;
+    if (pendingEdits && !(await saveEdit())) return;
+    busy = true; error = ''; const token = lastScopeToken; const storyId = selectedStory.id;
+    try {
+      const result = await post('/api/studio/generate-campaign', { storyId });
+      if (token !== lastScopeToken || selectedStory?.id !== storyId) return;
+      campaign = result.campaign; selectedStory = result.story;
+      backlog = result.backlog || backlog; calendar = result.calendar || calendar; syncEditor();
+      notice = 'Draft generated. Review the sources before export.';
+    } catch (failure) { if (token === lastScopeToken) error = `Generation failed: ${failure.message}. Your existing draft is preserved.`; }
+    finally { if (token === lastScopeToken) busy = false; }
+  }
+  async function saveEdit() {
+    if (!campaign || !selectedStory || !pendingEdits) return true;
+    error = '';
+    try {
+      const content = JSON.parse(editJson);
+      if (!content || typeof content !== 'object' || Array.isArray(content)) throw new Error('Format content must be a JSON object');
+      const saved = await post('/api/studio/save-edit', { storyId: selectedStory.id, format, content, expectedRevision: selectedStory.revision });
+      if (saved.story) selectedStory = saved.story;
+      else if (saved.revision !== undefined) selectedStory.revision = saved.revision;
+      campaign[format] = content;
+      selectedStory.campaignDraft = campaign;
+      const story = backlog.find(item => item.id === selectedStory.id); if (story) story.campaignDraft = campaign;
+      pendingEdits = false; notice = 'Changes saved.'; return true;
+    } catch (failure) { error = `Could not save: ${failure.message}. Your editor text is still here.`; return false; }
+  }
+  async function updateSchedule() {
+    if (!selectedStory) return;
+    try {
+      const data = await post('/api/studio/schedule', { storyId: selectedStory.id, status: 'Scheduled', scheduledDay });
+      selectedStory.scheduledDay = scheduledDay; selectedStory.status = 'Scheduled';
+      backlog = data.backlog || backlog; calendar = data.calendar || calendar;
+      notice = `Assigned to ${scheduledDay}. This does not publish to Instagram.`;
+    } catch (failure) { error = failure.message; }
+  }
+  async function exportAsset() {
+    if (!(await saveEdit()) || !selectedStory || !campaign) return;
+    busy = true; error = ''; exportUrl = '';
+    try {
+      const result = await post('/api/studio/export-asset', { storyId: selectedStory.id, format, content: campaign[format] });
+      exportUrl = result.downloadUrl || result.artifact?.downloadUrl || '';
+      exportName = result.filename || result.artifact?.filename || 'Download export';
+      if (!exportUrl) throw new Error('Server did not return a downloadable artifact');
+      backlog = result.backlog || backlog; calendar = result.calendar || calendar;
+      notice = 'Export created. Download the actual file below.';
+    } catch (failure) { error = `Export failed: ${failure.message}`; }
+    finally { busy = false; }
+  }
+  async function saveSourceClaims() {
+    if (!selectedStory) return;
+    try {
+      const result = await post('/api/studio/source-claims', { storyId: selectedStory.id, sourceClaims: reviewClaims, expectedRevision: selectedStory.revision });
+      if (result.story) { selectedStory = result.story; const index = backlog.findIndex(story => story.id === selectedStory.id); if (index >= 0) backlog[index] = selectedStory; }
+      notice = 'Source review saved. Only approved sourced claims can enter generation.';
+    } catch (failure) { error = failure.message; }
+  }
+  async function saveProfile(event) {
+    event.preventDefault();
+    try { const result = await post('/api/studio/brand-profile', brandProfile); brandProfile = result.brandProfile || brandProfile; notice = 'Brand profile saved for this brand.'; }
+    catch (failure) { error = failure.message; }
+  }
+  async function addStory(event) {
+    event.preventDefault();
+    const facts = sourceFacts.split('\n').map(line => line.trim()).filter(Boolean);
+    if (!facts.length) { error = 'Add at least one supplied fact. The studio will not invent source facts.'; return; }
+    try {
+      const result = await post('/api/studio/backlog', { title, category, scheduledDay: newDay, verifiedFacts: facts, sourceClaims: facts.map((text, i) => ({ id: `claim_${i}`, text, sourceUrl: sourceUrls.split('\n')[i]?.trim() || '', status: 'unreviewed' })), sourceUrls: sourceUrls.split('\n').filter(Boolean), sourceStatus: 'unreviewed' });
+      backlog = result.backlog || [result.story, ...backlog]; calendar = result.calendar || calendar;
+      title = ''; sourceFacts = ''; sourceUrls = ''; notice = 'Story added. Supplied facts still need source review.';
+    } catch (failure) { error = failure.message; }
+  }
+  async function loadAdmin() {
+    tab = 'admin'; error = '';
+    try { [adminData, graph, readiness] = await Promise.all([request('/api/admin/overview'), request('/api/admin/context-graph'), fetch('/readyz').then(response => response.json())]); }
+    catch (failure) { error = failure.message; }
+  }
+  async function createOrganization(event) {
+    event.preventDefault();
+    try {
+      await post('/api/admin/organizations', { name: newOrganization });
+      const session = await request('/api/auth/session', {}, false); organizations = session.organizations || organizations; newOrganization = ''; notice = 'Organization created.';
+    } catch (failure) { error = failure.message; }
+  }
+  async function createBrand(event) {
+    event.preventDefault();
+    try {
+      await post('/api/admin/brands', { organizationId, name: newBrand });
+      const session = await request('/api/auth/session', {}, false); organizations = session.organizations || organizations; newBrand = ''; notice = 'Brand created.';
+    } catch (failure) { error = failure.message; }
+  }
+  async function runBatch() {
+    busy = true;
+    try { await post('/api/admin/run-weekly-batch'); await loadScope(); notice = 'Scoped batch completed. Review every generated draft.'; }
+    catch (failure) { error = failure.message; }
+    finally { busy = false; }
+  }
+  async function recordPreflight(payload) {
+    if (!selectedStory || !user) return;
+    const sequence = ++preflightSequence; const token = lastScopeToken;
+    try {
+      const result = await post('/api/studio/preflight', { storyId: selectedStory.id, ...payload });
+      if (sequence === preflightSequence && token === lastScopeToken) preflight = result;
+    } catch (failure) { if (token === lastScopeToken) preflight = { error: failure.message }; }
+  }
 </script>
 
-<div style="min-height: 100vh; background: #141513; color: #f4f1ea; font-family: 'Inter', system-ui, sans-serif;">
-  <!-- KRUG-003: Clickable top-left brand mark -->
-  <nav style="display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; border-bottom: 1px solid #262925;">
-    <div style="display: flex; align-items: center; gap: 14px;">
-      <button onclick={goHome} style="background: #212320; border: 1px solid #323630; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 800; color: #f4f1ea; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-        <span>💎</span> The Liquidity Desk
-      </button>
-      <span style="background: #a8c5a0; color: #141513; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">
-        {statusPill}
-      </span>
-    </div>
-
-    <div style="display: flex; gap: 8px; background: #212320; padding: 4px; border-radius: 999px; border: 1px solid #323630;">
-      <button
-        onclick={() => (surfaceMode = 'marketer')}
-        style="padding: 8px 16px; border-radius: 999px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {surfaceMode === 'marketer' ? '#c5d86d' : 'transparent'}; color: {surfaceMode === 'marketer' ? '#141513' : '#a9ada4'};"
-      >
-        ✨ Marketer Studio
-      </button>
-      <button
-        onclick={() => (surfaceMode = 'admin')}
-        style="padding: 8px 16px; border-radius: 999px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {surfaceMode === 'admin' ? '#c5d86d' : 'transparent'}; color: {surfaceMode === 'admin' ? '#141513' : '#a9ada4'};"
-      >
-        🛠️ Founder Admin & Ops
-      </button>
-    </div>
-  </nav>
-
-  {#if exportToast}
-    <div style="position: fixed; bottom: 24px; right: 24px; background: #c5d86d; color: #141513; padding: 12px 20px; border-radius: 999px; font-weight: 700; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.5);">
-      ✅ {exportToast}
-    </div>
-  {/if}
-
-  {#if surfaceMode === 'marketer'}
-    <div style="max-width: 1420px; margin: 0 auto; padding: 28px 32px; display: grid; grid-template-columns: 1fr 340px; gap: 28px;">
-      <div>
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="font-family: Georgia, serif; font-style: italic; font-weight: 400; font-size: 36px; margin: 0 0 6px;">Your Business Profile & Campaign Studio</h1>
-          <!-- KRUG-007: Trimmed to 7 words -->
-          <p style="margin: 0; color: #a9ada4; font-size: 15px; font-weight: 500;">Turn weekly liquidity trends into 4-channel campaigns.</p>
-        </div>
-
-        <!-- KRUG-003: Step-by-step High-Scent Progress Navigation Tabs -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); background: #1a1c19; border-radius: 16px 16px 0 0; border: 1px solid #2b2e29; border-bottom: none;">
-          <button onclick={() => (marketerTab = 'brand_profile')} style="padding: 14px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {marketerTab === 'brand_profile' ? '#252824' : 'transparent'}; color: {marketerTab === 'brand_profile' ? '#c5d86d' : '#f4f1ea'}; border-bottom: {marketerTab === 'brand_profile' ? '2px solid #c5d86d' : 'none'};">
-            1. Brand Kit
-          </button>
-          <button onclick={() => (marketerTab = 'backlog')} style="padding: 14px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {marketerTab === 'backlog' ? '#252824' : 'transparent'}; color: {marketerTab === 'backlog' ? '#c5d86d' : '#f4f1ea'}; border-bottom: {marketerTab === 'backlog' ? '2px solid #c5d86d' : 'none'};">
-            2. Backlog ({filteredBacklog.length})
-          </button>
-          <button onclick={() => (marketerTab = 'calendar')} style="padding: 14px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {marketerTab === 'calendar' ? '#252824' : 'transparent'}; color: {marketerTab === 'calendar' ? '#c5d86d' : '#f4f1ea'}; border-bottom: {marketerTab === 'calendar' ? '2px solid #c5d86d' : 'none'};">
-            3. Calendar
-          </button>
-          <button onclick={() => (marketerTab = 'campaign_studio')} style="padding: 14px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {marketerTab === 'campaign_studio' ? '#252824' : 'transparent'}; color: {marketerTab === 'campaign_studio' ? '#c5d86d' : '#f4f1ea'}; border-bottom: {marketerTab === 'campaign_studio' ? '2px solid #c5d86d' : 'none'};">
-            4. Campaign Studio
-          </button>
-        </div>
-
-        <div style="background: #212320; border: 1px solid #2b2e29; border-radius: 0 0 20px 20px; padding: 24px;">
-          {#if marketerTab === 'brand_profile' && brandProfile}
-            <!-- KRUG-006: Interactive Brand Kit -->
-            <div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px;">
-                <div style="background: #2a2d29; border-radius: 14px; padding: 20px; border: 1px solid #353933;">
-                  <h3 style="margin: 0 0 8px; font-size: 18px;">{brandProfile.brandName}</h3>
-                  <div style="color: #a8c5a0; font-size: 13px; margin-bottom: 8px;">{brandProfile.websiteUrl}</div>
-                  <p style="color: #d5d8d0; font-size: 14px; font-style: italic; margin: 0;">"{brandProfile.tagline}"</p>
-                </div>
-                <div style="background: #2a2d29; border-radius: 14px; padding: 20px; border: 1px solid #353933;">
-                  <div style="font-weight: 700; font-size: 13px; color: #c5d86d; margin-bottom: 8px;">💎 BRAND LOGO & MONOGRAM</div>
-                  <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-                    <div style="background: #141513; border: 2px solid #a8c5a0; padding: 8px 14px; border-radius: 8px; font-weight: 800; color: #a8c5a0; font-size: 14px;">
-                      {brandProfile.logoText || '💎 THE LIQUIDITY DESK'}
-                    </div>
-                  </div>
-                  <div style="display: flex; gap: 6px;">
-                    <input bind:value={brandProfile.logoText} style="flex: 1; padding: 8px 10px; background: #141513; border: 1px solid #3a3e38; border-radius: 6px; color: #f4f1ea; font-size: 12px;" />
-                    <button onclick={saveBrandProfile} style="background: #a8c5a0; color: #141513; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 700; font-size: 12px; cursor: pointer;">Update</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Color Palette with Pickers -->
-              <div style="background: #2a2d29; border-radius: 14px; padding: 20px; border: 1px solid #353933;">
-                <div style="font-weight: 700; font-size: 14px; margin-bottom: 14px;">🎨 Color Palette (Click swatch to edit)</div>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
-                  {#each brandProfile.colors as c, idx}
-                    <div style="text-align: center; background: #1f221e; padding: 12px; border-radius: 10px; border: 1px solid #353933;">
-                      <input type="color" bind:value={c.hex} onchange={() => updateBrandColor(idx, c.hex)} style="width: 52px; height: 52px; border-radius: 50%; border: 2px solid #3a3e38; cursor: pointer; background: none; padding: 0; display: block; margin: 0 auto 8px;" />
-                      <div style="font-weight: 700; font-size: 12px;">{c.name}</div>
-                      <div style="font-family: monospace; font-size: 11px; color: #a8c5a0;">{c.hex}</div>
-                    </div>
-                  {/each}
-                </div>
-              </div>
-            </div>
-          {:else if marketerTab === 'backlog'}
-            <!-- KRUG-004: Persistent Search & Filter -->
-            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 18px; flex-wrap: wrap;">
-              <input type="text" placeholder="🔍 Search stories, metrics, categories..." bind:value={searchQuery} style="flex: 1; min-width: 240px; padding: 10px 16px; background: #181a17; border: 1px solid #353933; border-radius: 999px; color: #f4f1ea; font-size: 13px;" />
-              <div style="display: flex; gap: 6px;">
-                {#each ['All', 'Ready for Campaign', 'Draft Ready', 'Scheduled', 'Exported'] as st}
-                  <button onclick={() => (statusFilter = st)} style="background: {statusFilter === st ? '#c5d86d' : '#2a2d29'}; color: {statusFilter === st ? '#141513' : '#d5d8d0'}; border: none; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; cursor: pointer;">{st}</button>
-                {/each}
-              </div>
-            </div>
-
-            <div>
-              {#each filteredBacklog as item}
-                <div style="background: #2a2d29; border: 1px solid #353933; border-radius: 14px; padding: 16px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
-                  <div style="max-width: 70%;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                      <span style="font-size: 11px; color: #a8c5a0; font-weight: 600;">{item.trendBadge}</span>
-                      <span style="font-size: 11px; color: #a9ada4;">•</span>
-                      <span style="font-size: 11px; color: #c5d86d; font-weight: 600;">📅 {item.scheduledDay}</span>
-                      <span style="font-size: 11px; background: #1f221e; border: 1px solid #353933; padding: 2px 8px; border-radius: 4px; color: #d5d8d0;">{item.status}</span>
-                    </div>
-                    <div style="font-size: 16px; font-weight: 700; margin-bottom: 6px;">{item.title}</div>
-                    <div style="font-size: 12px; color: #a9ada4;">{item.verifiedFacts ? item.verifiedFacts[0] : ''}</div>
-                  </div>
-                  <button onclick={() => openStoryInStudio(item)} style="background: #c5d86d; color: #141513; border: none; padding: 10px 18px; border-radius: 999px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap;">
-                    Format 4 Channels →
-                  </button>
-                </div>
-              {/each}
-            </div>
-          {:else if marketerTab === 'calendar'}
-            <!-- KRUG-004 & KRUG-005: All 7 days with search -->
-            <div style="margin-bottom: 18px;">
-              <input type="text" placeholder="🔍 Search scheduled stories across all 7 days..." bind:value={searchQuery} style="width: 100%; padding: 10px 16px; background: #181a17; border: 1px solid #353933; border-radius: 999px; color: #f4f1ea; font-size: 13px;" />
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
-              {#each calendar as slot}
-                <div style="background: #181a17; border: 1px solid #2f332d; border-radius: 12px; padding: 12px; min-height: 260px; display: flex; flex-direction: column; justify-content: space-between;">
-                  <div>
-                    <div style="font-size: 12px; font-weight: 800; color: #c5d86d; margin-bottom: 10px; border-bottom: 1px solid #2f332d; padding-bottom: 6px;">
-                      {slot.day} ({slot.items.length})
-                    </div>
-                    {#each slot.items as story}
-                      <div style="background: #252824; border-radius: 8px; padding: 8px; margin-bottom: 8px; font-size: 11px; border-left: 3px solid #a8c5a0;">
-                        <div style="font-weight: 700; margin-bottom: 4px; color: #f4f1ea;">{story.title}</div>
-                        <div style="color: #c5d86d; font-size: 10px; margin-bottom: 6px;">{story.status}</div>
-                        <div style="display: flex; gap: 4px;">
-                          <button onclick={() => openStoryInStudio(story)} style="flex: 1; background: #c5d86d; color: #141513; border: none; padding: 4px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer;">
-                            Studio →
-                          </button>
-                          <button onclick={() => updateSchedule(story.id, 'Scheduled', slot.day)} style="background: #a8c5a0; color: #141513; border: none; padding: 4px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer;">
-                            ✓
-                          </button>
-                        </div>
-                      </div>
-                    {/each}
-                  </div>
-                  <div style="font-size: 10px; color: #6d736a; text-align: center;">{slot.items.length === 0 ? 'Open slot' : ''}</div>
-                </div>
-              {/each}
-            </div>
-          {:else}
-            <!-- KRUG-001 & KRUG-005: Campaign Studio with 1-Click Schedule & Export + 4 Visual Previews -->
-            {#if campaign && selectedStory}
-              <div>
-                <p role="status" style="color: #c5d86d;">{campaignStatus(campaign)}</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #1a1c19; padding: 16px 20px; border-radius: 14px; border: 1px solid #353933; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-                  <div>
-                    <span style="font-size: 11px; color: #a8c5a0; font-weight: 700;">ACTIVE STORY:</span>
-                    <h3 style="margin: 2px 0 0; font-size: 18px;">{selectedStory.title}</h3>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <select bind:value={selectedScheduleDay} style="background: #212320; color: #f4f1ea; border: 1px solid #353933; padding: 9px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer;">
-                      {#each allDays as d}
-                        <option value={d}>{d}</option>
-                      {/each}
-                    </select>
-                    <button onclick={() => scheduleAndExport(activeFormat, selectedScheduleDay)} style="background: #c5d86d; color: #141513; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                      📅 Schedule & Export
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Format Switcher Tabs -->
-                <div style="display: flex; gap: 8px; margin-bottom: 18px;">
-                  <button onclick={() => (activeFormat = 'infographic')} style="padding: 9px 16px; border-radius: 999px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {activeFormat === 'infographic' ? '#c5d86d' : '#2a2d29'}; color: {activeFormat === 'infographic' ? '#141513' : '#d5d8d0'};">📊 Infographic (4:5)</button>
-                  <button onclick={() => (activeFormat = 'carousel')} style="padding: 9px 16px; border-radius: 999px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {activeFormat === 'carousel' ? '#c5d86d' : '#2a2d29'}; color: {activeFormat === 'carousel' ? '#141513' : '#d5d8d0'};">🗂️ Carousel (4-Slide)</button>
-                  <button onclick={() => (activeFormat = 'story')} style="padding: 9px 16px; border-radius: 999px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {activeFormat === 'story' ? '#c5d86d' : '#2a2d29'}; color: {activeFormat === 'story' ? '#141513' : '#d5d8d0'};">📱 IG Story (9:16)</button>
-                  <button onclick={() => (activeFormat = 'reel')} style="padding: 9px 16px; border-radius: 999px; border: none; cursor: pointer; font-weight: 700; font-size: 13px; background: {activeFormat === 'reel' ? '#c5d86d' : '#2a2d29'}; color: {activeFormat === 'reel' ? '#141513' : '#d5d8d0'};">🎬 Reel (9:16)</button>
-                </div>
-
-                <!-- Visual Billboard Previews -->
-                <div style="background: #181a17; border: 1px solid #353933; border-radius: 16px; padding: 24px;">
-                  {#if activeFormat === 'infographic' && campaign.infographic}
-                    <div style="display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start;">
-                      <div style="background: #141513; border: 2px solid #a8c5a0; border-radius: 16px; padding: 24px; min-height: 480px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 12px 32px rgba(0,0,0,0.4);">
-                        <div>
-                          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                            <span style="background: #a8c5a0; color: #141513; font-weight: 800; font-size: 11px; padding: 3px 8px; border-radius: 4px;">{brandProfile?.logoText || '💎 THE LIQUIDITY DESK'}</span>
-                            <span style="color: #a9ada4; font-size: 11px; font-weight: 600;">INFOGRAPHIC 4:5</span>
-                          </div>
-                          <div style="font-size: 22px; font-weight: 800; line-height: 1.2; color: #f4f1ea; margin-bottom: 18px; text-transform: uppercase;">
-                            {campaign.infographic.headline}
-                          </div>
-                          <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px;">
-                            {#each campaign.infographic.statRows as row}
-                              <div style="background: #212320; border-left: 3px solid #c5d86d; padding: 10px 12px; border-radius: 6px; font-size: 13px; line-height: 1.4;">
-                                {row}
-                              </div>
-                            {/each}
-                          </div>
-                        </div>
-                        <div style="background: #252824; border: 1px solid #353933; border-radius: 8px; padding: 12px; font-size: 12px; color: #d5d8d0;">
-                          <strong style="color: #c5d86d;">💡 DEAL TAKEAWAY:</strong> {campaign.infographic.bottomTakeaway}
-                        </div>
-                      </div>
-
-                      <div style="background: #212320; border-radius: 14px; padding: 20px; border: 1px solid #353933;">
-                        <h4 style="margin: 0 0 14px; font-size: 15px; color: #c5d86d;">✏️ Inline Editor</h4>
-                        <div style="margin-bottom: 14px;">
-                          <label style="font-size: 12px; font-weight: 700; color: #a9ada4; display: block; margin-bottom: 4px;">Headline</label>
-                          <input type="text" bind:value={campaign.infographic.headline} onchange={() => saveInlineEdit('infographic', 'headline', campaign.infographic.headline)} style="width: 100%; padding: 10px; background: #141513; border: 1px solid #353933; border-radius: 8px; color: #f4f1ea; font-size: 14px; font-weight: 700;" />
-                        </div>
-                        <div style="margin-bottom: 14px;">
-                          <label style="font-size: 12px; font-weight: 700; color: #a9ada4; display: block; margin-bottom: 4px;">Takeaway</label>
-                          <input type="text" bind:value={campaign.infographic.bottomTakeaway} onchange={() => saveInlineEdit('infographic', 'bottomTakeaway', campaign.infographic.bottomTakeaway)} style="width: 100%; padding: 10px; background: #141513; border: 1px solid #353933; border-radius: 8px; color: #f4f1ea; font-size: 13px;" />
-                        </div>
-                        <div style="margin-bottom: 16px;">
-                          <label style="font-size: 12px; font-weight: 700; color: #a9ada4; display: block; margin-bottom: 4px;">Caption</label>
-                          <textarea rows="3" bind:value={campaign.infographic.caption} onchange={() => saveInlineEdit('infographic', 'caption', campaign.infographic.caption)} style="width: 100%; padding: 10px; background: #141513; border: 1px solid #353933; border-radius: 8px; color: #f4f1ea; font-size: 12px; line-height: 1.4;"></textarea>
-                        </div>
-                        <button onclick={() => exportFormat('infographic')} style="width: 100%; background: #c5d86d; color: #141513; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                          📤 Export 1080×1350 Card
-                        </button>
-                      </div>
-                    </div>
-                  {:else if activeFormat === 'carousel' && campaign.carousel}
-                    <div>
-                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; background: #212320; padding: 14px 18px; border-radius: 10px;">
-                        <div>
-                          <span style="font-size: 11px; color: #a8c5a0; font-weight: 700;">COVER HOOK:</span>
-                          <div style="font-size: 18px; font-weight: 800; color: #f4f1ea; text-transform: uppercase;">{campaign.carousel.coverHook}</div>
-                        </div>
-                        <button onclick={() => exportFormat('carousel')} style="background: #c5d86d; color: #141513; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer;">
-                          📤 Export 4-Slide Deck
-                        </button>
-                      </div>
-                      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
-                        {#each campaign.carousel.slides as s}
-                          <div style="background: #141513; border: 2px solid #2f332d; border-radius: 14px; padding: 16px; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;">
-                            <div>
-                              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="background: #a8c5a0; color: #141513; font-weight: 800; font-size: 11px; padding: 2px 8px; border-radius: 4px;">Slide {s.slideNumber}</span>
-                                <span style="font-size: 10px; color: #a9ada4;">4:5 SWIPE</span>
-                              </div>
-                              <div style="font-weight: 700; font-size: 14px; margin-bottom: 8px; color: #f4f1ea;">{s.title}</div>
-                              <div style="background: #212320; border-left: 2px solid #c5d86d; padding: 8px 10px; border-radius: 4px; font-size: 12px; line-height: 1.4; margin-bottom: 10px;">
-                                {s.bodyMetric}
-                              </div>
-                            </div>
-                            <div style="font-size: 11px; color: #a8c5a0; background: #182018; border: 1px dashed #354a33; padding: 8px; border-radius: 6px;">
-                              👁️ {s.visualNote}
-                            </div>
-                          </div>
-                        {/each}
-                      </div>
-                    </div>
-                  {:else if activeFormat === 'story' && campaign.story}
-                    <div style="display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: center;">
-                      <div style="background: #141513; border: 3px solid #353933; border-radius: 28px; padding: 24px 20px; height: 520px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 12px 32px rgba(0,0,0,0.5); margin: 0 auto;">
-                        <div>
-                          <div style="background: #c5d86d; color: #141513; font-weight: 800; font-size: 13px; text-align: center; border-radius: 8px; padding: 10px; margin-bottom: 24px; text-transform: uppercase;">
-                            {campaign.story.hookBanner}
-                          </div>
-                          <div style="font-size: 15px; font-weight: 700; text-align: center; color: #f4f1ea; background: #212320; padding: 20px; border-radius: 14px; border: 1px solid #353933; line-height: 1.4;">
-                            {campaign.story.keyStatHighlight}
-                          </div>
-                        </div>
-                        <div style="background: #252824; border: 2px solid #a8c5a0; border-radius: 16px; padding: 14px; text-align: center;">
-                          <div style="font-size: 11px; font-weight: 800; color: #a8c5a0; margin-bottom: 4px;">🗳️ INTERACTIVE POLL</div>
-                          <div style="font-size: 13px; font-weight: 700; margin-bottom: 10px;">{campaign.story.interactiveStickerPrompt}</div>
-                          <div style="display: flex; gap: 8px;">
-                            <div style="flex: 1; background: #141513; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600;">Equity</div>
-                            <div style="flex: 1; background: #141513; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 600;">Cash</div>
-                          </div>
-                        </div>
-                      </div>
-                      <div style="background: #212320; border-radius: 14px; padding: 20px; border: 1px solid #353933;">
-                        <h4 style="margin: 0 0 14px; font-size: 15px; color: #c5d86d;">📱 Instagram Story 9:16</h4>
-                        <div style="margin-bottom: 14px;">
-                          <label style="font-size: 12px; font-weight: 700; color: #a9ada4; display: block; margin-bottom: 4px;">Hook Banner</label>
-                          <input type="text" bind:value={campaign.story.hookBanner} onchange={() => saveInlineEdit('story', 'hookBanner', campaign.story.hookBanner)} style="width: 100%; padding: 10px; background: #141513; border: 1px solid #353933; border-radius: 8px; color: #f4f1ea; font-size: 13px;" />
-                        </div>
-                        <div style="margin-bottom: 14px;">
-                          <label style="font-size: 12px; font-weight: 700; color: #a9ada4; display: block; margin-bottom: 4px;">Hero Stat</label>
-                          <input type="text" bind:value={campaign.story.keyStatHighlight} onchange={() => saveInlineEdit('story', 'keyStatHighlight', campaign.story.keyStatHighlight)} style="width: 100%; padding: 10px; background: #141513; border: 1px solid #353933; border-radius: 8px; color: #f4f1ea; font-size: 13px;" />
-                        </div>
-                        <button onclick={() => exportFormat('story')} style="width: 100%; background: #c5d86d; color: #141513; border: none; padding: 12px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                          📤 Export 1080×1920 Story
-                        </button>
-                      </div>
-                    </div>
-                  {:else if activeFormat === 'reel' && campaign.reel}
-                    <div>
-                      <div style="background: #212320; border-radius: 12px; padding: 16px 20px; margin-bottom: 18px; border-left: 4px solid #c5d86d; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                          <span style="font-size: 11px; color: #c5d86d; font-weight: 800;">🎙️ 0–3s SPOKEN HOOK:</span>
-                          <div style="font-size: 16px; font-weight: 700; margin-top: 2px; color: #f4f1ea;">"{campaign.reel.spokenHook0to3s}"</div>
-                        </div>
-                        <button onclick={() => exportFormat('reel')} style="background: #c5d86d; color: #141513; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer;">
-                          📤 Export Reel Script
-                        </button>
-                      </div>
-                      <table style="width: 100%; border-collapse: collapse; background: #141513; border: 1px solid #353933; border-radius: 10px; overflow: hidden; font-size: 13px;">
-                        <thead>
-                          <tr style="background: #212320; color: #a8c5a0; text-align: left;">
-                            <th style="padding: 12px; border-bottom: 1px solid #353933; width: 120px;">Timecode</th>
-                            <th style="padding: 12px; border-bottom: 1px solid #353933;">Voiceover</th>
-                            <th style="padding: 12px; border-bottom: 1px solid #353933; width: 160px;">On-Screen Text</th>
-                            <th style="padding: 12px; border-bottom: 1px solid #353933;">B-Roll Visual</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {#each campaign.reel.beats as b}
-                            <tr style="border-bottom: 1px solid #2a2d29;">
-                              <td style="padding: 12px; font-family: monospace; color: #c5d86d; font-weight: 700;">{b.timecode}</td>
-                              <td style="padding: 12px; color: #f4f1ea; line-height: 1.4;">{b.voiceover}</td>
-                              <td style="padding: 12px;"><span style="background: #212320; padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 11px;">{b.onScreenText}</span></td>
-                              <td style="padding: 12px; color: #a9ada4; font-size: 12px;">{b.bRollDirection}</td>
-                            </tr>
-                          {/each}
-                        </tbody>
-                      </table>
-                      <div style="margin-top: 16px; background: #212320; padding: 12px 18px; border-radius: 8px; font-size: 13px;">
-                        <strong style="color: #a8c5a0;">📢 CLOSING CTA:</strong> "{campaign.reel.closingCta}"
-                      </div>
-                    </div>
-                  {/if}
-                </div>
-              </div>
+<svelte:head><title>Liquidity Studio · Brand workspace</title><meta name="description" content="Private editorial workspace for brand campaigns, measured previews and source review." /></svelte:head>
+{#if booting}<main class="login-shell"><p role="status">Connecting to your studio…</p></main>
+{:else if !user}
+  <main class="login-shell"><div class="login-card"><span class="wordmark">◈ LIQUIDITY STUDIO</span><h1>Good work starts<br />with a clear view.</h1><p>Sign in to your private brand workspace.</p><form onsubmit={login}><label>Username<input name="username" autocomplete="username" bind:value={username} required /></label><label>Password<input name="password" type="password" autocomplete="current-password" bind:value={password} required /></label><button class="primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in →'}</button></form>{#if error}<p class="error" role="alert">{error}</p>{/if}<p class="small muted">Accounts are provisioned by your studio operator. No public registration.</p></div><div class="login-art"><span class="eyebrow">YOUR EDITORIAL WORKSPACE</span><h2>From a good story.<br />To a considered campaign.</h2><div class="login-cards"><span>SOURCE</span><span>SHAPE</span><span>PREVIEW</span></div><p>One place to edit, inspect and export.<br />Every brand keeps its own context.</p></div></main>
+{:else}
+  <div class="app-shell">
+    <aside class="sidebar"><a href="/" class="wordmark" onclick={e => { e.preventDefault(); tab = 'backlog'; }}>◈<span>LIQUIDITY<br />STUDIO</span></a><div class="scope-selectors"><label>Organization<select aria-label="Organization" value={organizationId} onchange={switchOrganization}>{#each organizations as org (org.id)}<option value={org.id}>{org.name}</option>{/each}</select></label><label>Brand<select aria-label="Brand" value={brandId} onchange={switchBrand}>{#each currentOrganization?.brands || [] as brand (brand.id)}<option value={brand.id}>{brand.name}</option>{/each}</select></label></div><nav aria-label="Main navigation">{#each [{ id: 'backlog', label: 'Story backlog', icon: '▤' }, { id: 'calendar', label: 'Content calendar', icon: '▦' }, { id: 'studio', label: 'Campaign Studio', icon: '◧' }, { id: 'brand', label: 'Brand Kit', icon: '◉' }] as item (item.id)}<button class:active={tab === item.id} onclick={() => tab = item.id}><span>{item.icon}</span>{item.label}</button>{/each}{#if canAdmin}<button class:active={tab === 'admin'} onclick={loadAdmin}><span>⌘</span>Operations</button>{/if}</nav><div class="sidebar-bottom"><span class="avatar">{user.username?.slice(0, 2)}</span><div><b>{user.username}</b><small>{user.role}</small></div><button aria-label="Sign out" onclick={logout}>↪</button></div></aside>
+    <main class="workspace"><header class="workspace-header"><div><span class="eyebrow">{currentOrganization?.name || 'ORGANIZATION'} / {currentBrand?.name || 'BRAND'}</span><h1>{tab === 'backlog' ? 'Good stories, next up.' : tab === 'calendar' ? 'Make room for the week.' : tab === 'studio' ? 'Campaign Studio' : tab === 'brand' ? 'Your brand, clearly.' : 'Studio operations'}</h1><p>{tab === 'studio' ? 'Edit the substance. Inspect the surface. Export with context.' : 'A focused workspace for source-backed editorial work.'}</p></div><span class="private-badge">● Private workspace</span></header>
+      {#if error}<div class="error banner" role="alert">{error}<button aria-label="Dismiss error" onclick={() => error = ''}>×</button></div>{/if}{#if notice}<div class="notice banner" role="status">{notice}<button aria-label="Dismiss notice" onclick={() => notice = ''}>×</button></div>{/if}
+      {#if tab === 'backlog'}
+        <div class="section-line"><div><h2>Story backlog <span class="count">{backlog.length}</span></h2><p class="muted">Opening a saved story keeps your edits.</p></div><div class="filters"><input aria-label="Search stories" placeholder="Search stories…" bind:value={search} /><select aria-label="Filter by status" bind:value={statusFilter}><option>All</option>{#each [...new Set(backlog.map(story => story.status))] as status (status)}<option>{status}</option>{/each}</select></div></div>
+        <div class="story-list">{#each filteredStories as story (story.id)}<article class="story-row"><div class="story-day"><b>{story.scheduledDay?.slice(0, 3) || '—'}</b><span>{story.campaignDraft ? 'DRAFT' : 'SOURCE'}</span></div><div class="story-copy"><span class="eyebrow">{story.category}</span><h3>{story.title}</h3><p>{story.verifiedFacts?.[0] || 'Add source facts before generating.'}</p><span class="status-tag">{story.status}</span></div><button class="secondary" onclick={() => openStory(story)}>{story.campaignDraft ? 'Open draft' : 'Open story'} ↗</button></article>{:else}<div class="empty"><h3>No stories here yet.</h3><p>Add supplied facts below. The studio will not invent them.</p></div>{/each}</div>
+        <details class="panel add-story"><summary>Add a story</summary><form class="form-grid" onsubmit={addStory}><label class="full">Story title<input bind:value={title} required /></label><label>Category<input bind:value={category} /></label><label>Calendar day<select bind:value={newDay}>{#each days as day (day)}<option>{day}</option>{/each}</select></label><label class="full">Supplied facts, one per line<textarea bind:value={sourceFacts} rows="4" required placeholder="Add the specific facts you want the draft to use." ></textarea></label><label class="full">Source links, one per line<textarea bind:value={sourceUrls} rows="2" placeholder="https://…" ></textarea></label><p class="small muted full">Facts are editorial inputs, not independently verified claims. Clinical claims require source review.</p><button class="primary">Add to backlog</button></form></details>
+      {:else if tab === 'calendar'}
+        <div class="section-line"><h2>Weekly editorial calendar</h2><span class="muted small">Assignments only · no automatic publishing</span></div><div class="calendar-grid">{#each days as day (day)}<section class="day-column"><h3>{day}</h3>{#each backlog.filter(story => story.scheduledDay === day) as story (story.id)}<button class="calendar-story" onclick={() => openStory(story)}><span class="eyebrow">{story.category}</span><b>{story.title}</b><span class="status-tag">{story.status}</span></button>{:else}<p class="muted small">Room for a story</p>{/each}</section>{/each}</div>
+      {:else if tab === 'studio'}
+        {#if selectedStory}<div class="studio-toolbar"><div><span class="eyebrow">ACTIVE STORY</span><h2>{selectedStory.title}</h2><span class="provenance">{campaign ? provenance : 'No generated draft yet'}</span></div><div class="toolbar-actions"><button class="secondary" disabled={busy} onclick={generate}>{busy ? 'Working…' : campaign ? 'Regenerate draft' : 'Generate draft'}</button><button class="primary" disabled={busy || !campaign} onclick={exportAsset}>Export {format === 'carousel' ? 'ZIP' : format === 'reel' ? 'script' : 'PNG'} ↗</button></div></div>
+          {#if exportUrl}<p class="download"><a href={exportUrl} download={exportName}>↓ {exportName}</a><small>Actual exported artifact · scope authorization required</small></p>{/if}
+          <div class="format-tabs" aria-label="Campaign format">{#each formats as item (item.id)}<button class:active={format === item.id} onclick={() => selectFormat(item.id)}>{item.name}<small>{item.ratio}</small></button>{/each}</div>
+          {#if campaign}<div class="studio-grid"><section class="editor-panel"><div class="panel-heading"><h3>Make it yours.</h3><span class="status-tag">{pendingEdits ? 'Unsaved changes' : 'Saved draft'}</span></div><p class="small muted">Edit the wording, then save to update your preview and exported artwork.</p>
+            <div class="field-editor">
+            {#if format === 'infographic'}
+              <label>Headline<textarea aria-label="Headline" value={editFields.headline || ''} oninput={e => updateField('headline', e.currentTarget.value)} rows="3"></textarea></label>
+              {#each editFields.statRows || [] as row, i (i)}<label>Fact {i + 1}<textarea value={row} oninput={e => updateNested('statRows', i, null, e.currentTarget.value)} rows="3"></textarea></label>{/each}
+              <label>Takeaway<textarea value={editFields.bottomTakeaway || ''} oninput={e => updateField('bottomTakeaway', e.currentTarget.value)} rows="3"></textarea></label>
+              <label>Caption<textarea aria-label="Caption" value={editFields.caption || ''} oninput={e => updateField('caption', e.currentTarget.value)} rows="4"></textarea></label>
+            {:else if format === 'carousel'}
+              <label>Cover hook<input value={editFields.coverHook || ''} oninput={e => updateField('coverHook', e.currentTarget.value)} /></label>
+              {#each editFields.slides || [] as item, i (i)}<fieldset><legend>Slide {i + 1}</legend><label>Title<input value={item.title || ''} oninput={e => updateNested('slides', i, 'title', e.currentTarget.value)} /></label><label>Source detail<textarea value={item.bodyMetric || ''} oninput={e => updateNested('slides', i, 'bodyMetric', e.currentTarget.value)} rows="3"></textarea></label><label>Visual direction<input value={item.visualNote || ''} oninput={e => updateNested('slides', i, 'visualNote', e.currentTarget.value)} /></label></fieldset>{/each}
+            {:else if format === 'story'}
+              <label>Story hook<textarea value={editFields.hookBanner || ''} oninput={e => updateField('hookBanner', e.currentTarget.value)} rows="3"></textarea></label><label>Source highlight<textarea value={editFields.keyStatHighlight || ''} oninput={e => updateField('keyStatHighlight', e.currentTarget.value)} rows="4"></textarea></label><label>Poll question<input aria-label="Poll question" value={editFields.interactiveStickerPrompt || ''} oninput={e => updateField('interactiveStickerPrompt', e.currentTarget.value)} /></label>
             {:else}
-              <div style="text-align: center; padding: 48px 24px;">
-                <h3 style="font-size: 22px; margin-bottom: 8px;">Select a story to format across all 4 channels</h3>
-                <button onclick={() => createCampaignForStory(selectedStory)} style="background: #c5d86d; color: #141513; border: none; padding: 14px 28px; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer;">
-                  {loading ? 'Formatting All 4 Channels...' : "Let's go — Generate 4-Format Campaign Pack"}
-                </button>
-              </div>
+              <label>Spoken hook<textarea value={editFields.spokenHook0to3s || ''} oninput={e => updateField('spokenHook0to3s', e.currentTarget.value)} rows="3"></textarea></label>{#each editFields.beats || [] as item, i (i)}<fieldset><legend>Beat {i + 1}</legend>{#each ['timecode', 'voiceover', 'onScreenText', 'bRollDirection'] as field (field)}<label>{field}<textarea value={item[field] || ''} oninput={e => updateNested('beats', i, field, e.currentTarget.value)} rows={field === 'timecode' ? 1 : 3}></textarea></label>{/each}</fieldset>{/each}<label>Closing call to action<input value={editFields.closingCta || ''} oninput={e => updateField('closingCta', e.currentTarget.value)} /></label>
             {/if}
-          {/if}
-        </div>
-      </div>
-
-      <!-- KRUG-002: Real Interactive Studio Agent Sidebar -->
-      <aside style="background: #182018; border: 1px solid #2b3829; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; height: fit-content;">
-        <div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <div style="font-weight: 800; font-size: 15px; color: #c5d86d;">🚀 Liquidity Studio Agent</div>
-            <span style="font-size: 11px; background: #2a3a28; color: #a8c5a0; padding: 2px 8px; border-radius: 999px;">Live</span>
-          </div>
-          <!-- KRUG-007: Concise live contextual status cue -->
-          <div style="background: #202820; border: 1px solid #2b3829; border-radius: 10px; padding: 10px 12px; font-size: 12px; color: #d5d8d0; margin-bottom: 14px;">
-            <strong>Active:</strong> {selectedStory ? selectedStory.title.slice(0, 24) + '...' : 'Angel City FC'} • 4 formats ready
-          </div>
-          <div style="font-size: 12px; color: #a9ada4; margin-bottom: 8px; font-weight: 600;">QUICK ACTIONS</div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <button onclick={() => createCampaignForStory(selectedStory)} style="background: #253024; color: #f4f1ea; border: 1px solid #3d4f39; padding: 9px 14px; border-radius: 10px; text-align: left; cursor: pointer; font-size: 13px; font-weight: 600;">✨ Format 4 Channels</button>
-            <button onclick={() => (marketerTab = 'calendar')} style="background: #253024; color: #f4f1ea; border: 1px solid #3d4f39; padding: 9px 14px; border-radius: 10px; text-align: left; cursor: pointer; font-size: 13px; font-weight: 600;">📅 View Mon–Sun Calendar</button>
-            <button onclick={() => (marketerTab = 'brand_profile')} style="background: #253024; color: #f4f1ea; border: 1px solid #3d4f39; padding: 9px 14px; border-radius: 10px; text-align: left; cursor: pointer; font-size: 13px; font-weight: 600;">🎨 View Brand Kit</button>
-          </div>
-        </div>
-
-        <!-- Working Input Form -->
-        <div style="margin-top: 20px; border-top: 1px solid #2b3829; padding-top: 16px;">
-          <form onsubmit={(e) => { e.preventDefault(); executeAgentCommand(); }}>
-            <div style="font-size: 12px; color: #a9ada4; margin-bottom: 6px; font-weight: 600;">COMMAND COPILOT</div>
-            <div style="display: flex; gap: 6px;">
-              <input type="text" placeholder="Ask Studio Agent... (e.g. Schedule for Friday)" bind:value={agentCommand} style="flex: 1; padding: 10px 12px; background: #141513; border: 1px solid #3d4f39; border-radius: 8px; color: #f4f1ea; font-size: 12px;" />
-              <button type="submit" style="background: #c5d86d; color: #141513; border: none; border-radius: 8px; padding: 0 14px; font-weight: 700; font-size: 12px; cursor: pointer;">Send</button>
-            </div>
-          </form>
-          {#if agentFeedback}
-            <div style="margin-top: 8px; font-size: 11px; color: #c5d86d; background: #202820; padding: 6px 10px; border-radius: 6px;">
-              {agentFeedback}
-            </div>
-          {/if}
-        </div>
-      </aside>
-    </div>
-  {:else}
-    <!-- FOUNDER ADMIN SURFACE -->
-    <div style="max-width: 1420px; margin: 0 auto; padding: 32px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin: 0;">Founder Admin: DI Ports, Silent Evals, Backprop JSONL & Context Graph</h2>
-        <div style="display: flex; gap: 10px;">
-          <a href="/api/admin/backprop-jsonl" download="backprop-preferences.jsonl" style="background: #212320; color: #a8c5a0; border: 1px solid #a8c5a0; padding: 10px 16px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 13px;">⬇️ Download Backprop JSONL</a>
-          <button onclick={loadStudioBootstrap} style="background: #c5d86d; color: #141513; border: none; padding: 10px 18px; border-radius: 999px; font-weight: 700; cursor: pointer;">⚡ Run Weekly Batch Draft Job</button>
-        </div>
-      </div>
-      {#if contextGraphData}
-        <div style="background: #212320; border: 1px solid #2b2e29; border-radius: 16px; padding: 24px;">
-          <h3 style="margin-top: 0;">Context Graph & QA Topology ({contextGraphData.topologyValidation.valid ? '✅ 100% VALID' : '❌ INVALID'})</h3>
-          <p style="font-size: 13px; color: #a9ada4;">
-            Nodes: {contextGraphData.topologyValidation.stats.nodesCount} | Edges: {contextGraphData.topologyValidation.stats.edgesCount} | Schemas: {contextGraphData.topologyValidation.stats.schemasCount} | Prior Art & Doc Links: {contextGraphData.topologyValidation.stats.referencesCount}
-          </p>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
-            <div>
-              <h4>Prior Art, GCP Docs & Reference Links</h4>
-              {#each contextGraphData.graph.references as ref}
-                <div style="background: #181a17; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 12px;">
-                  <strong style="color: #c5d86d;">[{ref.type}] {ref.title}</strong>
-                  <div style="color: #a8c5a0;">{ref.url || ref.artifactPath}</div>
-                  <div style="color: #a9ada4; margin-top: 4px;">{ref.summary}</div>
-                </div>
-              {/each}
-            </div>
-            <div>
-              <h4>Directed Graph Edges (Screen → Route → Service → Port → Adapter)</h4>
-              {#each contextGraphData.graph.edges.slice(0, 14) as edge}
-                <div style="background: #181a17; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; font-family: monospace;">
-                  {edge.from} ──[{edge.relation}]──► {edge.to}
-                </div>
-              {/each}
-            </div>
-          </div>
-        </div>
+            </div><details class="advanced-editor"><summary>Advanced format JSON</summary><label>Format content<textarea class="json-editor" aria-label="Format content" bind:value={editJson} oninput={() => { pendingEdits = true; try { editFields = JSON.parse(editJson); } catch {} }} spellcheck="false"></textarea></label></details>
+            <button class="primary" disabled={!pendingEdits || busy} onclick={saveEdit}>Save changes</button><div class="schedule-box"><label>Assigned day<select aria-label="Assigned day" bind:value={scheduledDay}>{#each days as day (day)}<option>{day}</option>{/each}</select></label><button class="secondary" onclick={updateSchedule}>Assign to calendar</button><p class="small muted">Assigning a day does not publish or export.</p></div><details class="sources"><summary>Review source claims</summary><p class="small muted">Approve a claim only after reviewing its linked source and meaning. Clinical claims require a separate clinical review.</p>{#each reviewClaims as claim, i (claim.id)}<fieldset><legend>Claim {i + 1}</legend><label>Claim text<textarea bind:value={claim.text} rows="3"></textarea></label><label>HTTPS source URL<input type="url" bind:value={claim.sourceUrl} placeholder="https://…" /></label><label>Review status<select bind:value={claim.status}><option value="unreviewed">Unreviewed</option><option value="approved">Approved after source review</option><option value="rejected">Rejected</option></select></label>{#if claim.kind === 'clinical'}<p class="small error">Clinical review must be recorded by an authorized reviewer.</p>{/if}</fieldset>{/each}<button class="secondary" onclick={saveSourceClaims}>Save source review</button></details>{#if preflight?.error}<p class="small error">Preflight could not be recorded: {preflight.error}</p>{:else if preflight}<p class="small muted">Preflight recorded for this brand. Editorial review required.</p>{/if}</section>{#key organizationId + brandId + selectedStory.id + format}<Emulator {campaign} {brandProfile} {format} {backlog} onpreflight={recordPreflight} />{/key}</div>{:else}<section class="panel"><h3>Review sources before generation</h3><p class="muted">Add a source link to each claim and choose its review status. Unreviewed claims cannot enter a campaign.</p><div class="field-editor">{#each reviewClaims as claim, i (claim.id)}<fieldset><legend>Claim {i + 1}</legend><label>Claim text<textarea bind:value={claim.text} rows="3"></textarea></label><label>HTTPS source URL<input type="url" bind:value={claim.sourceUrl} placeholder="https://…" /></label><label>Review status<select bind:value={claim.status}><option value="unreviewed">Unreviewed</option><option value="approved">Approved after source review</option><option value="rejected">Rejected</option></select></label></fieldset>{/each}</div><button class="secondary" onclick={saveSourceClaims}>Save source review</button></section><div class="empty"><span class="empty-symbol">◧</span><h2>A story ready to take shape.</h2><p>Generate a draft from the supplied facts, then review every format.</p><button class="primary" disabled={busy} onclick={generate}>{busy ? 'Generating…' : 'Generate four-format draft'}</button></div>{/if}
+        {:else}<div class="empty"><h2>Choose a story to begin.</h2><p>Every campaign starts with supplied facts and a source review.</p><button class="primary" onclick={() => tab = 'backlog'}>Open story backlog</button></div>{/if}
+      {:else if tab === 'brand' && brandProfile}
+        <form class="panel brand-form form-grid" onsubmit={saveProfile}><label>Brand name<input bind:value={brandProfile.brandName} required /></label><label>Website<input bind:value={brandProfile.websiteUrl} /></label><label class="full">Tagline<input bind:value={brandProfile.tagline} /></label><label class="full">Editorial mission<textarea bind:value={brandProfile.mission} rows="4" ></textarea></label><label>Wordmark / monogram<input bind:value={brandProfile.logoText} /></label><label>Heading font<input bind:value={brandProfile.fonts.heading} /></label><label>Body font<input bind:value={brandProfile.fonts.body} /></label><div class="full color-list">{#each brandProfile.colors || [] as color (color.name)}<label>{color.name}<div><input aria-label="{color.name} color" type="color" bind:value={color.hex} /><input aria-label="{color.name} hex" bind:value={color.hex} /></div></label>{/each}</div><button class="primary">Save Brand Kit</button></form>
+      {:else if tab === 'admin' && canAdmin}
+        <div class="admin-grid"><section class="panel"><div class="panel-heading"><h2>Health & readiness</h2><button class="secondary" onclick={loadAdmin}>Refresh</button></div><p class="muted">Repository readiness does not establish provider connectivity.</p><pre>{JSON.stringify(readiness, null, 2)}</pre></section><section class="panel"><h2>Scoped operations</h2><button class="secondary" disabled={busy} onclick={runBatch}>Run this brand’s batch</button><p><a href={'/api/admin/backprop-dataset?' + scopeQuery()}>Download scoped feedback JSONL</a></p><p class="small muted">Jobs use this organization and brand. Export is separate from publishing.</p></section><section class="panel"><h2>Organization management</h2><form onsubmit={createOrganization}><label>New organization name<input bind:value={newOrganization} required /></label><button class="secondary">Create organization</button></form><form onsubmit={createBrand}><label>New brand in {currentOrganization?.name}<input bind:value={newBrand} required /></label><button class="secondary">Create brand</button></form></section><section class="panel"><h2>Telemetry & generation</h2><pre>{JSON.stringify(adminData, null, 2)}</pre></section><details class="panel"><summary>Architecture reference</summary><pre>{JSON.stringify(graph, null, 2)}</pre></details></div>
       {/if}
-    </div>
-  {/if}
-</div>
+    </main>
+  </div>
+{/if}
