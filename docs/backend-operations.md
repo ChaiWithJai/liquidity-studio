@@ -43,3 +43,9 @@ Admin `/backprop-jsonl` exports every feedback record, beyond the 25-row display
 ## Verification
 
 Run `node --test server/*.test.js` from liquidity-studio. Platform integration covers both roles, all scoped route denials, durable drafts/real downloads, complete feedback export, optimistic conflicts, conservative quotas, asynchronous storage, broken dependency/error persistence, HTTPS origins and bounded readiness. Contract scripts use named synthetic source fixtures with explicit trustedTestMode injection; production startup has no test bypass. The existing port-3000 process is outside this implementation's deployment scope.
+
+### Public Cloud Run health paths
+
+Use `GET /api/live` for process liveness and `GET /api/ready` for repository readiness when monitoring the public Cloud Run URL. Cloud Run [reserves some paths ending in `z` and recommends avoiding them](https://docs.cloud.google.com/run/docs/known-issues#reserved_url_paths); the deployed `/healthz` was intercepted with404 even while the application was reachable. Existing `/healthz` and `/readyz` paths remain compatible for internal/container probes.
+
+Both aliases are intentionally anonymous and return the same minimal JSON as their existing counterparts. Liveness does not wait for startup/storage. Readiness keeps its bounded repository check and reports generation provider `not_checked`; it does not prove paid inference, user login or full artifact delivery. A failed dependency returns503 without its exception text. Protected session and workspace APIs still require authentication and return401 anonymously. This change needs no data migration; rollback removes only the new aliases, so update external monitors before reverting.
