@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install the locked application and test dependencies
-        run: npm ci --no-fund
+        run: npm ci --engine-strict --no-fund
       - name: Build the canonical served Svelte UI
         run: npm run build
       - name: Verify all Node unit and HTTP integration contracts
@@ -59,7 +59,7 @@ jobs:
           cache: npm
           cache-dependency-path: liquidity-studio/package-lock.json
       - name: Install the locked dependencies
-        run: npm ci --no-fund
+        run: npm ci --engine-strict --no-fund
       - name: Install real Chromium and its Linux dependencies
         run: npx playwright install --with-deps chromium
       - name: Build the actual browser application
@@ -98,7 +98,7 @@ jobs:
         with:
           install_components: cloud-firestore-emulator
       - name: Install the locked SDK and test dependencies
-        run: npm ci --no-fund
+        run: npm ci --engine-strict --no-fund
       - name: Verify real Firestore transactions and restart behavior locally
         run: bash ../scripts/test-firestore-emulator.sh
 
@@ -130,7 +130,7 @@ jobs:
           cache: npm
           cache-dependency-path: liquidity-studio/package-lock.json
       - name: Install locked app and browser dependencies
-        run: npm ci --no-fund
+        run: npm ci --engine-strict --no-fund
       - name: Install real Chromium
         run: npx playwright install --with-deps chromium
       - name: Build the actual Google sign-in UI
