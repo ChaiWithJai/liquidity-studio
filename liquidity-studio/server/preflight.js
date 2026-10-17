@@ -23,15 +23,20 @@ export function computePreflight({ format, canvas, textBoxes = [], foreground, b
   const overflowElementsCount = textBoxes.filter(box => box.x < -1 || box.y < -1 || box.x + box.width > width + 1 || box.y + box.height > height + 1).length;
   const base = colorLuminance(background);
   const contrasts = textBoxes.map(box => colorLuminance(box.foreground || foreground)).filter(value => value !== null).map(value => base === null ? null : (Math.max(value, base) + .05) / (Math.min(value, base) + .05)).filter(value => value !== null);
+  const unmeasuredColorCount = textBoxes.filter(box => colorLuminance(box.foreground || foreground) === null || base === null).length;
   const contrastRatio = contrasts.length ? Math.round(Math.min(...contrasts) * 100) / 100 : null;
   const firstLookCharacters = Math.min(captionLimit, caption.length);
   const firstLookContainsHardNumber = /\$\d|\d%/.test(caption.slice(0, captionLimit));
   const measurable = textBoxes.length > 0;
-  const metrics = { artworkWidth: width, artworkHeight: height, textElementsCount: textBoxes.length, occludedElementsCount, overflowElementsCount, contrastRatio, captionCharacters: caption.length, firstLookCharacters, firstLookContainsHardNumber, safeZoneRegions: { top: vertical ? .14 : 0, bottom: vertical ? .18 : 0, right: format === 'reel' ? .18 : 0 } };
+  const expectedRatio = vertical ? 9 / 16 : 4 / 5;
+  const actualRatio = width / height;
+  const aspectRatioDeviation = Math.abs(actualRatio - expectedRatio) / expectedRatio;
+  const metrics = { unmeasuredColorCount, expectedAspectRatio: vertical ? '9:16' : '4:5', actualAspectRatio: Math.round(actualRatio * 10000) / 10000, aspectRatioDeviation, artworkWidth: width, artworkHeight: height, textElementsCount: textBoxes.length, occludedElementsCount, overflowElementsCount, contrastRatio, captionCharacters: caption.length, firstLookCharacters, firstLookContainsHardNumber, safeZoneRegions: { top: vertical ? .14 : 0, bottom: vertical ? .18 : 0, right: format === 'reel' ? .18 : 0 } };
   return { simulation: true, measurementMethod: 'client-svg-text-rectangles', requiresReview: true, metrics, checks: [
+    { id: 'aspect-ratio', status: aspectRatioDeviation <= .01 ? 'pass' : 'warning', measured: actualRatio, limit: expectedRatio, message: 'Rendered artwork ratio compared with the intended 4:5 or 9:16 export; 1% layout tolerance.' },
     { id: 'safe-zones', status: measurable ? occludedElementsCount ? 'warning' : 'pass' : 'unmeasured', measured: measurable ? occludedElementsCount : null, limit: 0, message: 'Text rectangles intersecting approximate chrome zones; actual Instagram layout can vary.' },
     { id: 'artwork-overflow', status: measurable ? overflowElementsCount ? 'warning' : 'pass' : 'unmeasured', measured: measurable ? overflowElementsCount : null, limit: 0, message: 'Text rectangles outside the rendered artwork.' },
-    { id: 'contrast', status: contrastRatio === null ? 'unmeasured' : contrastRatio >= 4.5 ? 'pass' : 'warning', measured: contrastRatio, limit: 4.5, message: 'Minimum text fill contrast against the supplied base background, without image/gradient analysis.' },
+    { id: 'contrast', status: contrastRatio === null || unmeasuredColorCount > 0 ? 'unmeasured' : contrastRatio >= 4.5 ? 'pass' : 'warning', measured: contrastRatio, limit: 4.5, message: 'Minimum text fill contrast against the supplied base background, without image/gradient analysis.' },
     { id: 'caption-fold', status: caption.length > captionLimit ? 'warning' : 'pass', measured: caption.length, limit: captionLimit, message: 'Configurable approximate caption fold; not an official platform guarantee.' }
   ] };
 }
