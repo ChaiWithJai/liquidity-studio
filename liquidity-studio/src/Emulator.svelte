@@ -43,9 +43,6 @@
       return '<div class="artwork-error">Artwork exceeds its layout. Shorten the copy and save before export.</div>';
     }
   }
-  let artifactHtml = $derived(
-    artwork({ campaign, brandProfile, format, slideIndex: slide }),
-  );
   let handle = $derived(
     (brandProfile?.handle || brandProfile?.brandName || "studio")
       .replace(/[^a-zA-Z0-9_.]/g, "")
@@ -63,6 +60,14 @@
     }
     return 0;
   });
+  let artifactHtml = $derived(
+    artwork({
+      campaign,
+      brandProfile,
+      format,
+      slideIndex: format === "reel" ? beat : slide,
+    }),
+  );
   let reelBeats = $derived(campaign?.reel?.beats || []);
   let carouselSlides = $derived(campaign?.carousel?.slides || []);
   let gridItems = $derived([
@@ -80,6 +85,15 @@
     zoom;
     slide;
     captionThreshold;
+    beat;
+    storyFrame;
+    poll;
+    expanded;
+    liked;
+    saved;
+    following;
+    comments.length;
+    // Track discrete frames and interactions, not the quarter-second playback clock.
     const timer = setTimeout(() => {
       measure();
     }, 160);
@@ -147,9 +161,7 @@
     }
     const rect = artworkElement.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    const texts = [
-      ...artworkElement.querySelectorAll("svg [data-preflight-text]"),
-    ];
+    const texts = [...artworkElement.querySelectorAll("svg text")];
     const background = rgbToHex(
       artworkElement.querySelector("svg rect")?.getAttribute("fill") ||
         "#141513",
@@ -169,15 +181,27 @@
       mode === "instagram"
         ? [
             ...stage.querySelectorAll(
-              ".poll-sticker,.reel-rail,.reel-meta,.story-chrome,.story-reply",
+              ".poll-sticker,.reel-rail,.reel-meta,.reel-top,.story-chrome,.story-reply,.slide-count,.previous,.next,.floating-heart",
             ),
           ].map((node) => {
             const box = node.getBoundingClientRect();
+            // Include the actual caption gradient's pseudo-element, not only its text box.
+            const before = node.classList.contains("reel-meta")
+              ? getComputedStyle(node, "::before")
+              : null;
+            const inset = (key) =>
+              before && before.content !== "none"
+                ? Math.min(0, parseFloat(before[key]) || 0)
+                : 0;
+            const left = inset("left"),
+              right = inset("right"),
+              top = inset("top"),
+              bottom = inset("bottom");
             return {
-              x: box.x - rect.x,
-              y: box.y - rect.y,
-              width: box.width,
-              height: box.height,
+              x: box.x - rect.x + left,
+              y: box.y - rect.y + top,
+              width: box.width - left - right,
+              height: box.height - top - bottom,
             };
           })
         : [];
@@ -189,6 +213,13 @@
       background,
       caption,
       captionLimit: Number(captionThreshold),
+      viewContext: {
+        mode,
+        frameIndex: format === "reel" ? beat : slide,
+        storyFrame,
+        pollVote: poll,
+        measuredAt: new Date().toISOString(),
+      },
     };
     const result = computePreflight(payload);
     evidence = result.metrics;
@@ -412,13 +443,6 @@
             <div class="reel-top">
               <b>Reels</b><span>Storyboard simulation</span>
             </div>
-            <div class="beat-text" data-testid="active-beat">
-              <small>BEAT {beat + 1} · {reelBeats[beat]?.timecode || ""}</small
-              ><strong
-                >{reelBeats[beat]?.onScreenText ||
-                  reelBeats[beat]?.voiceover}</strong
-              >
-            </div>
             <div class="reel-rail">
               <button
                 aria-label="Like reel"
@@ -477,7 +501,9 @@
               max="30"
               step=".25"
               bind:value={reelTime}
-            /><output>{Math.floor(reelTime)} / 30s</output>
+            /><output data-testid="active-beat"
+              >BEAT {beat + 1} · {Math.floor(reelTime)} / 30s</output
+            >
           </div>{/if}
         {#if mode === "instagram" && !["story", "reel"].includes(format)}
           <div class="engagement">

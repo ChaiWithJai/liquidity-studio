@@ -158,6 +158,38 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
   await page.mouse.move(bounds.x + 20, bounds.y + 100);
   await page.mouse.up();
   await expect(page.locator(".slide-count")).toHaveText("4/4");
+  await page.locator(".asset-stage").evaluate((stage) => {
+    const svg = stage.querySelector("svg");
+    const svgBounds = svg.getBoundingClientRect();
+    const button = stage.querySelector(".next").getBoundingClientRect();
+    const scale = svg.viewBox.baseVal.width / svgBounds.width;
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", String((button.x - svgBounds.x) * scale));
+    text.setAttribute(
+      "y",
+      String((button.y + button.height * 0.7 - svgBounds.y) * scale),
+    );
+    text.setAttribute("font-size", "26");
+    text.setAttribute("fill", "#ffffff");
+    text.textContent = "Navigation occlusion fixture";
+    svg.append(text);
+  });
+  await page
+    .getByRole("button", { name: "Measure again", exact: true })
+    .click();
+  await expect
+    .poll(async () => {
+      const dump = await (
+        await page.request.get(base + "/api/admin/eject" + scope)
+      ).json();
+      const check = dump.data.preflights.at(-1);
+      return (
+        check.format === "carousel" &&
+        check.metrics.obstructionElementsCount >= 3 &&
+        check.metrics.occludedElementsCount > 0
+      );
+    })
+    .toBe(true);
   console.log("Carousel mouse/keyboard/swipe verified");
   await page.getByRole("button", { name: "Story 9:16", exact: true }).click();
   await page.getByRole("button", { name: "Investigate", exact: true }).click();
@@ -172,12 +204,29 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
   await page.getByLabel("Safe zones", { exact: true }).check();
   await expect(page.getByLabel("Simulated safe-zone overlay")).toBeVisible();
   await page.getByRole("button", { name: "Reel 30s script" }).click();
+  await page.getByText("Advanced format JSON", { exact: true }).click();
+  const reel = JSON.parse(
+    await page.getByLabel("Format content", { exact: true }).inputValue(),
+  );
+  reel.beats[0].onScreenText = "FIRST BEAT VISUAL";
+  reel.beats[1].onScreenText = "SECOND BEAT VISUAL";
+  reel.beats[2].onScreenText = "THIRD BEAT VISUAL";
+  await page
+    .getByLabel("Format content", { exact: true })
+    .fill(JSON.stringify(reel));
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.locator(".artwork svg")).toContainText("FIRST BEAT VISUAL");
   await page.getByRole("button", { name: "Play reel", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Pause reel", exact: true }),
   ).toBeVisible();
   await page.getByLabel("Reel scrubber").fill("21");
   await expect(page.getByTestId("active-beat")).toContainText("BEAT 3");
+  await expect(page.locator(".artwork svg")).toContainText("THIRD BEAT VISUAL");
+  await expect(page.locator(".artwork svg")).not.toContainText(
+    "FIRST BEAT VISUAL",
+  );
+  await expect(page.locator(".beat-text")).toHaveCount(0);
   await page
     .getByRole("button", { name: "3×3 Profile Grid", exact: true })
     .click();
