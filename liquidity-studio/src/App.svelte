@@ -376,6 +376,18 @@
       busy = false;
     }
   }
+  function addSourceClaim() {
+    reviewClaims = [
+      ...reviewClaims,
+      {
+        id: crypto.randomUUID(),
+        text: "",
+        sourceUrl: "",
+        kind: "",
+        status: "unreviewed",
+      },
+    ];
+  }
   async function saveSourceClaims() {
     if (!selectedStory) return;
     try {
@@ -1042,7 +1054,9 @@
                         </p>{/if}
                     </fieldset>{/each}<button
                     class="secondary"
-                    onclick={saveSourceClaims}>Save source review</button
+                    onclick={addSourceClaim}>Add source claim</button
+                  ><button class="secondary" onclick={saveSourceClaims}
+                    >Save source review</button
                   >
                 </details>
                 {#if preflight?.error}<p class="small error">
@@ -1109,6 +1123,9 @@
                     >
                   </fieldset>{/each}
               </div>
+              <button class="secondary" onclick={addSourceClaim}
+                >Add source claim</button
+              >
               <button class="secondary" onclick={saveSourceClaims}
                 >Save source review</button
               >
@@ -1174,6 +1191,82 @@
           </div>
           <button class="primary">Save Brand Kit</button>
         </form>
+        {#if brandProfile.strategy}<section
+            class="panel"
+            style="margin-top:24px"
+            aria-label="Brand positioning reference"
+          >
+            <span class="eyebrow">OWNER POSITIONING · READ-ONLY REFERENCE</span>
+            <h2>Proposed editorial positioning</h2>
+            <p class="muted">
+              These audiences and pillars describe editorial intent. They are
+              not verified factual or clinical claims. Source review is required
+              for every campaign.
+            </p>
+            <span class="status-tag"
+              >{brandProfile.strategy.status || "Proposed positioning"}</span
+            >
+            <div class="admin-grid" style="margin-top:24px">
+              <section>
+                <h3>Audience value groups</h3>
+                {#each brandProfile.strategy.valueGroups || [] as group, i (typeof group === "string" ? group : group.id || i)}<article
+                    class="panel"
+                    style="margin-bottom:12px"
+                  >
+                    <h3>{typeof group === "string" ? group : group.name}</h3>
+                    {#if typeof group === "object"}<p class="small muted">
+                        {group.ageRange || ""}
+                      </p>
+                      <p>{group.motivation || ""}</p>{/if}
+                  </article>{:else}<p class="muted">
+                    Audience groups need owner review.
+                  </p>{/each}
+              </section>
+              <section>
+                <h3>Editorial pillars</h3>
+                <ol>
+                  {#each brandProfile.strategy.pillars || [] as pillar (pillar)}<li
+                    >
+                      <p>{pillar}</p>
+                    </li>{:else}<li class="muted">
+                      Editorial pillars need owner review.
+                    </li>{/each}
+                </ol>
+              </section>
+            </div>
+            {#if brandProfile.strategy.clinicalClaimsQuarantined}<p
+                class="small error"
+              >
+                Clinical claims remain quarantined until explicit source and
+                clinical review are recorded.
+              </p>{/if}
+          </section>{/if}
+        <section
+          class="panel"
+          style="margin-top:24px"
+          aria-label="Unreviewed research topics"
+        >
+          <h2>Research queue · unreviewed</h2>
+          <p class="muted">
+            Research prompts are starting points, not approved claims. Open a
+            topic to add sourced claims for review.
+          </p>
+          {#each backlog.filter((story) => story.category === "Source research") as story (story.id)}<article
+              class="story-row"
+            >
+              <div class="story-copy">
+                <h3>{story.title}</h3>
+                <span class="status-tag"
+                  >{story.reviewStatus || "Unreviewed research"}</span
+                >
+              </div>
+              <button class="secondary" onclick={() => openStory(story)}
+                >Review sources</button
+              >
+            </article>{:else}<p class="small muted">
+              No research prompts in this brand.
+            </p>{/each}
+        </section>
       {:else if tab === "admin" && canAdmin}
         <div class="admin-grid">
           <section class="panel">
