@@ -84,3 +84,10 @@ test('password-era acceptance cannot authorize Google deployment', () => {
  const result=fixture({reportPatch:{authMode:'password'}});
  assert.equal(result.status,1);assert.equal(mutations(result).length,0);
 });
+
+test('rollback cannot restore a password-era or unverified Google image', () => {
+  for(const reportPatch of [{authMode:'password'}, {checks:{docker:'passed',browser:'passed',isolation:'passed',restore:'passed',googleAuth:'passed',anonymousApi:'failed'}}]) {
+    const result=fixture({mode:'rollback',reportPatch});
+    assert.equal(result.status,1);assert.equal(mutations(result).length,0);
+  }
+});

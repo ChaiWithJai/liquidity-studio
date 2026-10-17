@@ -54,6 +54,7 @@ try {
     const targetImage = image || (mode === 'rollback' ? report.image : undefined);
     validateConfig({ project, region, budget, service, database, bucket, image: targetImage });
     validateReport(report, { project, region, image: targetImage, commit: process.env.PILOT_TESTED_COMMIT });
+    if (report.authMode !== 'google' || report.checks?.anonymousApi !== 'passed' || report.checks?.googleAuth !== 'passed') throw new Error('Google-mode image acceptance must prove anonymous API denial and managed sign-in before deployment');
     requireValue(process.env.PILOT_BUDGET_ID, 'PILOT_BUDGET_ID', /^[a-zA-Z0-9_-]{1,128}$/);
     requireValue(process.env.PILOT_BILLING_ACCOUNT, 'PILOT_BILLING_ACCOUNT', /^[a-fA-F0-9]{6}-[a-fA-F0-9]{6}-[a-fA-F0-9]{6}$/);
     // Verify authentication and the actual project before checking any budget or
@@ -72,7 +73,6 @@ try {
       command(['run', 'services', 'update-traffic', service, `--project=${project}`, `--region=${region}`, `--to-revisions=${revision}=100`], { execute: true });
     } else {
       requireValue(image, 'PILOT_IMAGE with immutable sha256 digest', /@sha256:[a-f0-9]{64}$/);
-      if (report.authMode !== 'google' || report.checks?.anonymousApi !== 'passed' || report.checks?.googleAuth !== 'passed') throw new Error('Google-mode image acceptance must prove anonymous API denial and managed sign-in before deployment');
       const googleEnv = googleDeploymentEnv(process.env, project);
       const tokenResult = spawnSync('gcloud', ['auth', 'print-access-token', `--project=${project}`], { encoding: 'utf8', stdio: 'pipe' });
       if (tokenResult.status !== 0) throw new Error('Google provider verification requires authenticated project access');
