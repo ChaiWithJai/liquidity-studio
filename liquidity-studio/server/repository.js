@@ -2,6 +2,7 @@ import { randomUUID, createHash } from "node:crypto";
 import {
   DEFAULT_BRAND_PROFILE,
   INITIAL_CONTENT_BACKLOG,
+  normalizeLegacyResearch,
   BRAND_PRESETS,
 } from "./domain.js";
 import { fail } from "./auth.js";
@@ -36,14 +37,7 @@ export class ScopedRepository {
                 }),
               )
             : INITIAL_CONTENT_BACKLOG.map((story, index) => ({
-                ...story,
-                sourceClaims: story.verifiedFacts.map((text, i) => ({
-                  id: `legacy_${i}`,
-                  text,
-                  status: "unreviewed",
-                  sourceUrl: null,
-                })),
-                verifiedFacts: [],
+                ...normalizeLegacyResearch(story),
                 scheduledDay: [
                   "Monday",
                   "Tuesday",

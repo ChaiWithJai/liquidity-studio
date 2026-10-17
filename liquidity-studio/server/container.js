@@ -15,6 +15,7 @@ import { CONTEXT_GRAPH, verifyContextGraphTopology } from "./context-graph.js";
 import {
   DEFAULT_BRAND_PROFILE,
   INITIAL_CONTENT_BACKLOG,
+  normalizeLegacyResearch,
   generateMultiFormatCampaign,
 } from "./domain.js";
 
@@ -23,17 +24,12 @@ export class InMemoryGCPFirestoreAdapter {
     this.brandProfile = structuredClone(DEFAULT_BRAND_PROFILE);
     this.assets = [];
     this.backlog = INITIAL_CONTENT_BACKLOG.map((item, idx) => ({
-      ...item,
+      ...normalizeLegacyResearch(item),
       scheduledDay: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"][
         idx % 5
       ],
       campaignDraft: null,
-      sourceClaims: item.verifiedFacts.map((text, index) => ({
-        id: `legacy_${index}`,
-        text,
-        sourceUrl: null,
-        status: "unreviewed",
-      })),
+
     }));
   }
 

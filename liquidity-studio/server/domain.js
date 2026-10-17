@@ -31,6 +31,24 @@ export const DEFAULT_BRAND_PROFILE = {
   ExportFormats: ['Infographic (4:5)', 'Carousel (5-Slide)', 'IG Story (9:16)', 'Reel Storyboard (9:16)']
 };
 
+// Legacy research is never a reviewed source merely because it ships with the app.
+export function normalizeLegacyResearch(story) {
+  return {
+    ...story,
+    status: 'In Backlog', reviewStatus: 'unreviewed', trendBadge: 'Source Review Required',
+    verifiedFacts: [],
+    sourceClaims: story.verifiedFacts.map((text, index) => ({
+      id: `legacy_${index}`, kind: 'financial', status: 'unreviewed',
+      text: story.id === 'story_angel_city' && index === 0
+        ? 'In July 2024, Angel City FC announced an agreement for Willow Bay and Bob Iger to acquire a controlling stake at a $250 million enterprise value, subject to closing conditions.'
+        : text,
+      sourceUrl: story.id === 'story_angel_city' && index === 0
+        ? 'https://angelcity.com/acfc-post/angel-city-ownership-agreement-announcement'
+        : null
+    }))
+  };
+}
+
 export const INITIAL_CONTENT_BACKLOG = [
   {
     id: 'story_angel_city',

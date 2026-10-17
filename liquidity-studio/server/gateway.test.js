@@ -161,3 +161,19 @@ test('provider prompts exclude internal source reviewer identity', async () => {
   const mock = { async generateStructured({ prompt }) { assert.doesNotMatch(prompt, /private-reviewer-id|clinicalReview/); return {}; } };
   await run(mock, clinical);
 });
+
+
+test('financial research seed cites the club announcement without approving legacy claims', async () => {
+  const { INITIAL_CONTENT_BACKLOG, normalizeLegacyResearch } = await import('./domain.js');
+  const seed = normalizeLegacyResearch(INITIAL_CONTENT_BACKLOG[0]);
+  assert.equal(seed.status, 'In Backlog');
+  assert.equal(seed.reviewStatus, 'unreviewed');
+  assert.equal(seed.trendBadge, 'Source Review Required');
+  assert.deepEqual(seed.verifiedFacts, []);
+  assert.equal(seed.sourceClaims[0].sourceUrl, 'https://angelcity.com/acfc-post/angel-city-ownership-agreement-announcement');
+  assert.match(seed.sourceClaims[0].text, /enterprise value, subject to closing conditions/);
+  assert.ok(seed.sourceClaims.every(claim => claim.status === 'unreviewed' && claim.kind === 'financial'));
+  assert.ok(seed.sourceClaims.slice(1).every(claim => claim.sourceUrl === null));
+  assert.throws(() => getApprovedClaims(seed), /Approve at least/);
+  assert.ok(INITIAL_CONTENT_BACKLOG.map(normalizeLegacyResearch).every(item => item.status === 'In Backlog'));
+});
