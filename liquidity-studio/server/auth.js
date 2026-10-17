@@ -13,6 +13,7 @@ const digest = (token) => createHash("sha256").update(token).digest("hex");
 export class IdentityService {
   constructor(store) {
     this.store = store;
+    this.mode = "password";
     this.ready = store.update(
       "identity",
       (value) =>
@@ -108,7 +109,7 @@ export class IdentityService {
     );
     const hash = scryptSync(password, user?.salt || this.dummySalt, 64);
     if (
-      !user ||
+      !user?.passwordHash ||
       !timingSafeEqual(hash, Buffer.from(user.passwordHash, "hex"))
     ) {
       await this.store.update(`login:${username}`, (old) => ({

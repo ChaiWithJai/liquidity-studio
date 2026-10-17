@@ -14,15 +14,17 @@ const runtimeId = 'liquidity-runtime';
 const runtime = `${runtimeId}@${project}.iam.gserviceaccount.com`;
 const member = `serviceAccount:${runtime}`;
 const roleDefinitions = [
+  { id: 'liquidityAuthReader', permissions: ['firebaseauth.users.get'] },
   { id: 'liquidityVertexPredictor', permissions: ['aiplatform.endpoints.predict', 'serviceusage.services.use'] },
   { id: 'liquidityArtifactAccess', permissions: ['storage.buckets.get', 'storage.objects.create', 'storage.objects.delete', 'storage.objects.get'] }
 ];
 const users = [process.env.PILOT_FOUNDER_EMAIL, process.env.PILOT_MARKETER_EMAIL];
-const secrets = [
+const legacyPasswords = process.env.PILOT_AUTH_MODE === 'legacy-password-iap';
+const secrets = legacyPasswords ? [
   { id: 'liquidity-founder-password', variable: 'PILOT_FOUNDER_PASSWORD' },
   { id: 'liquidity-marketer-password', variable: 'PILOT_MARKETER_PASSWORD' }
-];
-const apis = ['run.googleapis.com', 'firestore.googleapis.com', 'storage.googleapis.com', 'secretmanager.googleapis.com', 'artifactregistry.googleapis.com', 'iap.googleapis.com', 'aiplatform.googleapis.com', 'iam.googleapis.com', 'cloudscheduler.googleapis.com'];
+] : [];
+const apis = ['run.googleapis.com', 'firestore.googleapis.com', 'storage.googleapis.com', 'secretmanager.googleapis.com', 'artifactregistry.googleapis.com', 'iap.googleapis.com', 'aiplatform.googleapis.com', 'iam.googleapis.com', 'cloudscheduler.googleapis.com', 'identitytoolkit.googleapis.com', 'firebase.googleapis.com'];
 const requireMatch = (value, pattern, name) => { if (typeof value !== 'string' || !pattern.test(value)) throw new Error(`Set a valid ${name}`); return value; };
 const globalFlags = [`--project=${project}`, '--quiet', '--verbosity=error'];
 
@@ -74,20 +76,21 @@ try {
     cli(['iam', 'service-accounts', 'create', runtimeId, ...globalFlags]);
     cli(['artifacts', 'repositories', 'create', registry, '--repository-format=docker', `--location=${region}`, ...globalFlags]);
     for (const role of roleDefinitions) cli(['iam', 'roles', 'create', role.id, `--permissions=${role.permissions.join(',')}`, '--stage=GA', ...globalFlags]);
-    for (const role of ['roles/datastore.user', `projects/${project}/roles/liquidityVertexPredictor`]) cli(['projects', 'add-iam-policy-binding', project, `--member=${member}`, `--role=${role}`, '--condition=None', ...globalFlags]);
+    for (const role of ['roles/datastore.user', `projects/${project}/roles/liquidityVertexPredictor`, `projects/${project}/roles/liquidityAuthReader`]) cli(['projects', 'add-iam-policy-binding', project, `--member=${member}`, `--role=${role}`, '--condition=None', ...globalFlags]);
     cli(['storage', 'buckets', 'add-iam-policy-binding', `gs://${bucket}`, `--member=${member}`, `--role=projects/${project}/roles/liquidityArtifactAccess`, ...globalFlags]);
     for (const secret of secrets) {
       cli(['secrets', 'create', secret.id, '--replication-policy=user-managed', `--locations=${region}`, ...globalFlags]);
       cli(['secrets', 'versions', 'add', secret.id, '--data-file=-', ...globalFlags], { input: '<redacted>' });
       cli(['secrets', 'add-iam-policy-binding', secret.id, `--member=${member}`, '--role=roles/secretmanager.secretAccessor', ...globalFlags]);
     }
-    cli(['run', 'services', 'add-iam-policy-binding', service, `--region=${region}`, '--member=serviceAccount:service-<verified-project-number>@gcp-sa-iap.iam.gserviceaccount.com', '--role=roles/run.invoker', ...globalFlags]);
-    for (const user of users) cli([...iapBinding(user), ...globalFlags]);
+    if (legacyPasswords) cli(['run', 'services', 'add-iam-policy-binding', service, `--region=${region}`, '--member=serviceAccount:service-<verified-project-number>@gcp-sa-iap.iam.gserviceaccount.com', '--role=roles/run.invoker', ...globalFlags]);
+    if (legacyPasswords) for (const user of users) cli([...iapBinding(user), ...globalFlags]);
   } else {
     // Validate local inputs before starting a partially provisioned prerequisite set.
     if (mode === 'apply') for (const secret of secrets) requireMatch(process.env[secret.variable], /^[^\r\n]{16,256}$/, secret.variable);
     const info = verifyGate();
     if (mode === 'access') {
+      if (!legacyPasswords) throw new Error('Google managed mode uses application token authorization; IAP access stage is disabled');
       if (users.some(user => user.split('@')[1].toLowerCase() !== 'chaiwithjai.com')) {
         const settings = json(['iap', 'settings', 'get', '--resource-type=cloud-run', `--service=${service}`, `--region=${region}`, ...globalFlags]);
         const clientId = settings.accessSettings?.oauthSettings?.clientId ?? settings.access_settings?.oauth_settings?.client_id;
@@ -122,9 +125,9 @@ try {
         if (details && JSON.stringify([...(details.includedPermissions || [])].sort()) !== JSON.stringify([...role.permissions].sort())) throw new Error('Existing runtime role permissions differ; automatic permission replacement is refused');
         if (!existing) mutate(['iam', 'roles', 'create', role.id, `--title=${role.id}`, `--permissions=${role.permissions.join(',')}`, '--stage=GA']);
       }
-      for (const role of ['roles/datastore.user', `projects/${project}/roles/liquidityVertexPredictor`]) mutate(['projects', 'add-iam-policy-binding', project, `--member=${member}`, `--role=${role}`, '--condition=None']);
+      for (const role of ['roles/datastore.user', `projects/${project}/roles/liquidityVertexPredictor`, `projects/${project}/roles/liquidityAuthReader`]) mutate(['projects', 'add-iam-policy-binding', project, `--member=${member}`, `--role=${role}`, '--condition=None']);
       mutate(['storage', 'buckets', 'add-iam-policy-binding', `gs://${bucket}`, `--member=${member}`, `--role=projects/${project}/roles/liquidityArtifactAccess`]);
-      const knownSecrets = list(['secrets', 'list', ...globalFlags]);
+      const knownSecrets = secrets.length ? list(['secrets', 'list', ...globalFlags]) : [];
       const versions = {};
       for (const secret of secrets) {
         if (!knownSecrets.some(item => item.name?.endsWith(`/secrets/${secret.id}`))) mutate(['secrets', 'create', secret.id, '--replication-policy=user-managed', `--locations=${region}`]);
@@ -138,7 +141,7 @@ try {
         versions[secret.id] = `${secret.id}:${version}`;
         mutate(['secrets', 'add-iam-policy-binding', secret.id, `--member=${member}`, '--role=roles/secretmanager.secretAccessor']);
       }
-      console.log(JSON.stringify({ stage: 'prerequisites-ready', project, region, database, bucket, runtime, registry, secretVersions: versions, access: 'not granted until private IAP-enabled service deployment and separate access stage' }));
+      console.log(JSON.stringify({ stage: 'prerequisites-ready', project, region, database, bucket, runtime, registry, secretVersions: versions, access: legacyPasswords ? 'not granted until private IAP-enabled service deployment and separate access stage' : 'application Google allowlist and token authorization; live sign-in and tenant isolation remain unverified' }));
     }
   }
 } catch (error) { console.error(error.message); process.exitCode = 1; }

@@ -15,6 +15,7 @@ jobs:
     env:
       AI_PROVIDER: gcp-gemini
       AI_ALLOW_SYNTHETIC: 'true'
+      NODE_ENV: test
       npm_config_cache: /tmp/npm-contracts
     steps:
       - uses: actions/checkout@v4
@@ -27,9 +28,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install the locked application and test dependencies
-        run: npm ci --no-fund
+        run: npm ci --engine-strict --no-fund
       - name: Build the canonical served Svelte UI
-        run: npm run build
+        run: NODE_ENV=production npm run build
       - name: Verify all Node unit and HTTP integration contracts
         run: node --test server/*.test.js
       - name: Verify project budget and deployment evidence guards
@@ -48,6 +49,7 @@ jobs:
       run:
         working-directory: liquidity-studio
     env:
+      NODE_ENV: test
       npm_config_cache: /tmp/npm-browser
     steps:
       - uses: actions/checkout@v4
@@ -57,11 +59,11 @@ jobs:
           cache: npm
           cache-dependency-path: liquidity-studio/package-lock.json
       - name: Install the locked dependencies
-        run: npm ci --no-fund
+        run: npm ci --engine-strict --no-fund
       - name: Install real Chromium and its Linux dependencies
         run: npx playwright install --with-deps chromium
       - name: Build the actual browser application
-        run: npm run build
+        run: NODE_ENV=production npm run build
       - name: Verify operator workflows in Chromium against authenticated APIs
         run: npm run test:browser -- --project=chromium
       - uses: actions/upload-artifact@v4
@@ -96,7 +98,7 @@ jobs:
         with:
           install_components: cloud-firestore-emulator
       - name: Install the locked SDK and test dependencies
-        run: npm ci --no-fund
+        run: npm ci --engine-strict --no-fund
       - name: Verify real Firestore transactions and restart behavior locally
         run: bash ../scripts/test-firestore-emulator.sh
 
@@ -110,3 +112,36 @@ jobs:
           node-version: '22'
       - name: Build and recreate the authenticated persistent local container
         run: bash scripts/docker-smoke.sh
+
+  google-signin-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: liquidity-studio
+    env:
+      NODE_ENV: test
+      npm_config_cache: /tmp/npm-google-signin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: liquidity-studio/package-lock.json
+      - name: Install locked app and browser dependencies
+        run: npm ci --engine-strict --no-fund
+      - name: Install real Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Build the actual Google sign-in UI
+        run: NODE_ENV=production npm run build
+      - name: Verify Google popup and bearer authorization against the official Auth Emulator
+        run: bash ../scripts/test-google-auth-emulator.sh
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: google-signin-failure-evidence
+          path: |
+            liquidity-studio/test-results/
+          retention-days: 7
+          if-no-files-found: ignore

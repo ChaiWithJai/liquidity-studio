@@ -9,7 +9,7 @@ import { createHttpServer } from "./index.js";
 const password = "test-only-password-482!";
 async function fixture(t, filename = ":memory:") {
   const store = new DurableStore(filename);
-  const platform = createPlatform({ store });
+  const platform = createPlatform({ store, authMode: "password" });
   await platform.identity.provision({
     username: "founder",
     password,
@@ -171,7 +171,7 @@ test("scoped drafts, edits, feedback, calendar and real downloads survive restar
     404,
   );
   const reopened = new DurableStore(path.join(directory, "data.sqlite"));
-  const platform = createPlatform({ store: reopened });
+  const platform = createPlatform({ store: reopened, authMode: "password" });
   const repo = (
     await platform.forScope({
       organizationId: "org_default",
@@ -326,7 +326,7 @@ test("concurrent idempotent jobs and discovery imports remain single execution, 
 });
 test("liveness ignores failed startup dependencies; readiness is bounded; HTTPS cookie mode accepts same origin", async (t) => {
   const store = new DurableStore(":memory:");
-  const identityPlatform = createPlatform({ store });
+  const identityPlatform = createPlatform({ store, authMode: "password" });
   await identityPlatform.ready;
   const platform = {
     ...identityPlatform,
@@ -366,7 +366,7 @@ test("all platform boundaries await genuinely asynchronous transactional storage
       },
     ]),
   );
-  const platform = createPlatform({ store });
+  const platform = createPlatform({ store, authMode: "password" });
   await platform.ready;
   await platform.identity.provision({
     username: "async-founder",
@@ -567,12 +567,16 @@ test("actual CWJ profile round trips with structured strategy and quarantined re
   assert.equal(bootstrap.brandProfile.strategy.valueGroups.length, 4);
   assert.equal(bootstrap.brandProfile.strategy.pillars.length, 5);
   assert.equal(bootstrap.backlog.length, 5);
-  assert.ok(bootstrap.backlog.slice(0, 4).every((story) => story.sourceClaims.length === 0));
+  assert.ok(
+    bootstrap.backlog
+      .slice(0, 4)
+      .every((story) => story.sourceClaims.length === 0),
+  );
   const culturalTask = bootstrap.backlog[4];
   assert.match(culturalTask.title, /Yoga Sutras/);
   assert.equal(culturalTask.sourceClaims.length, 1);
-  assert.equal(culturalTask.sourceClaims[0].kind, 'cultural');
-  assert.equal(culturalTask.sourceClaims[0].status, 'unreviewed');
+  assert.equal(culturalTask.sourceClaims[0].kind, "cultural");
+  assert.equal(culturalTask.sourceClaims[0].status, "unreviewed");
   assert.equal(culturalTask.verifiedFacts.length, 0);
   assert.equal(bootstrap.brandProfile.researchBacklog, undefined);
   const response = await f.api(

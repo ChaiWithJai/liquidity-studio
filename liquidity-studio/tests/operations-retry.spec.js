@@ -6,7 +6,7 @@ import { createHttpServer } from "../server/index.js";
 let platform, server, base, failedJob;
 const password = randomBytes(20).toString("base64url");
 test.beforeAll(async () => {
-  platform = createPlatform({ store: new DurableStore(":memory:") });
+  platform = createPlatform({authMode: "password", store: new DurableStore(":memory:") });
   await platform.ready;
   await platform.identity.provision({
     username: "retry-founder",

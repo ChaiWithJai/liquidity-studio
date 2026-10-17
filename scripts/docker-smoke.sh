@@ -2,25 +2,30 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 umask 077
+# Isolated legacy persistence contract, not Google provider readiness.
+export STUDIO_AUTH_MODE=password
+export STUDIO_NODE_ENV=test
+export NODE_ENV=test
 export COMPOSE_PROJECT_NAME="liquidity-smoke-${GITHUB_RUN_ID:-$$}"
 export STUDIO_LOCAL_PORT="${STUDIO_LOCAL_PORT:-3002}"
 export STUDIO_FOUNDER_PASSWORD="$(node -e "process.stdout.write(require('node:crypto').randomBytes(24).toString('base64url'))")"
 export STUDIO_MARKETER_PASSWORD="$(node -e "process.stdout.write(require('node:crypto').randomBytes(24).toString('base64url'))")"
+compose() { docker compose -f compose.yaml -f compose.test-password.yaml "$@"; }
 record_dir=$(mktemp -d)
 cleanup() {
-  docker compose logs --no-color studio || true
-  docker compose down --volumes --timeout 15
+  compose logs --no-color studio || true
+  compose down --volumes --timeout 15
   rm -rf "$record_dir"
 }
 trap cleanup EXIT
-AI_ALLOW_SYNTHETIC=true docker compose up --build --detach --wait --wait-timeout 120
+AI_ALLOW_SYNTHETIC=true compose up --build --detach --wait --wait-timeout 120
 node scripts/container-acceptance.mjs prepare "$record_dir/record.json"
-container_id=$(docker compose ps --quiet studio)
+container_id=$(compose ps --quiet studio)
 [ "$(docker inspect --format '{{.Config.User}}' "$container_id")" = node ]
 [ "$(docker exec "$container_id" id -u)" != 0 ]
 font_family=$(docker exec "$container_id" fc-match -f '%{family}' ':charset=0950')
 [[ "$font_family" == *"Noto Sans Devanagari"* ]]
-docker compose stop --timeout 15 studio
+compose stop --timeout 15 studio
 [ "$(docker inspect --format '{{.State.ExitCode}}' "$container_id")" = 0 ]
-docker compose up --detach --force-recreate --wait --wait-timeout 90
+compose up --detach --force-recreate --wait --wait-timeout 90
 node scripts/container-acceptance.mjs after-restart "$record_dir/record.json"
