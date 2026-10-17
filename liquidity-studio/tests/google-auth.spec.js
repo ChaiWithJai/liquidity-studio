@@ -56,6 +56,11 @@ test('invalid Google config fails closed without password fallback', async ({pag
 
 test('real Auth Emulator Google popup verifies backend access, persistence, export, roles and signout', async ({page}) => {
   test.skip(!emulatorHost, 'Requires explicit local Firebase Auth Emulator; no production-token forgery.');
+  // The official emulator loads optional Material cosmetics from a third-party CDN.
+  // A stalled parser-blocking script leaves visible controls without handlers.
+  // Auth itself remains the real local emulator; no identity/API responses are mocked.
+  await page.context().route('https://unpkg.com/material-components-web@10/**', route => route.abort());
+  await page.context().route('https://fonts.googleapis.com/**', route => route.abort());
   let bearer;
   page.on('request', request => {
     if (request.url().startsWith(base + '/api/')) bearer = request.headers().authorization || bearer;
@@ -64,6 +69,8 @@ test('real Auth Emulator Google popup verifies backend access, persistence, expo
     const popupPromise = page.waitForEvent('popup');
     await page.getByRole('button',{name:'Continue with Google'}).click();
     const popup = await popupPromise;
+    await popup.waitForLoadState('domcontentloaded');
+    await expect(popup.locator('#title')).toContainText('Sign-in with Google.com');
     await popup.getByRole('button',{name:'Add new account'}).click();
     await popup.getByLabel('Email').fill(email);
     await popup.getByRole('button',{name:'Sign in with Google.com'}).click();
@@ -74,6 +81,8 @@ test('real Auth Emulator Google popup verifies backend access, persistence, expo
   const canceledPopupPromise = page.waitForEvent('popup');
   await page.getByRole('button',{name:'Continue with Google'}).click();
   const canceledPopup = await canceledPopupPromise;
+  await canceledPopup.waitForLoadState('domcontentloaded');
+  await expect(canceledPopup.locator('#title')).toContainText('Sign-in with Google.com');
   await expect(canceledPopup.getByRole('button',{name:'Add new account'})).toBeVisible();
   await canceledPopup.close();
   await expect(page.getByRole('alert')).toContainText('Google sign-in was closed', {timeout:15000});
