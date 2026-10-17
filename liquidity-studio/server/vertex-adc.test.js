@@ -13,7 +13,7 @@ function configure(t, patch={}) {
   Object.assign(process.env,patch);
   t.after(() => {for (const key of keys) original[key] === undefined ? delete process.env[key] : process.env[key] = original[key];});
 }
-const gateway = (options={}) => new AIGateway({provider:'gcp-vertex',projectId:'pilot-project',location:'us',model:'gemini-2.5-flash',allowSynthetic:false,...options});
+const gateway = (options={}) => new AIGateway({provider:'gcp-vertex',projectId:'pilot-project',location:'us',model:'gemini-3.5-flash-lite',allowSynthetic:false,...options});
 const run = client => generateMultiFormatCampaign({gateway:client,story});
 
 test('local ADC is off by default, and missing explicit ADC fails closed without provider fetch', async t => {

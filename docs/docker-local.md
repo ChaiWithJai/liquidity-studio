@@ -84,7 +84,7 @@ export AI_PROVIDER=gcp-vertex
 export AI_VERTEX_USE_ADC=true
 export AI_ALLOW_SYNTHETIC=false
 export GOOGLE_CLOUD_LOCATION=us
-export AI_MODEL=gemini-2.5-flash
+export AI_MODEL=gemini-3.5-flash-lite
 # STUDIO_FIREBASE_PROJECT_ID and STUDIO_LOCAL_ADC_PATH must already be set explicitly.
 docker compose --env-file .env.local -f compose.yaml -f compose.google-adc.yaml up --build -d
 ```
