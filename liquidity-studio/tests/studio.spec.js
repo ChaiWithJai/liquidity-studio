@@ -231,7 +231,7 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
     .getByRole("button", { name: "3×3 Profile Grid", exact: true })
     .click();
   await expect(page.locator(".grid-cell")).toHaveCount(9);
-  await expect(page.getByText("No saved post").first()).toBeVisible();
+  await expect(page.getByText("No scheduled or exported post").first()).toBeVisible();
   await page
     .getByRole("button", { name: "In-Situ Instagram", exact: true })
     .click();
@@ -432,4 +432,46 @@ test("CWJ positioning is labeled and an empty research topic can acquire reviewe
     .getByRole("button", { name: "Generate four-format draft" })
     .click();
   await expect(page.getByLabel("Headline", { exact: true })).toBeVisible();
+});
+
+
+test("profile grid uses real scheduled/exported records and excludes ordinary drafts", async ({ page }) => {
+  await signIn(page);
+  const make = async (title, day, status) => {
+    const created = await page.request.post(base + "/api/studio/backlog" + scope, {data:{
+      title, scheduledDay:day, sourceClaims:[{id:"grid-source",text:"The source describes a signed media agreement.",sourceUrl:"https://example.org/source",status:"approved",kind:"general"}]
+    }});
+    expect(created.status()).toBe(201);
+    const {story} = await created.json();
+    const generated = await page.request.post(base + "/api/studio/generate-campaign" + scope, {data:{storyId:story.id}});
+    expect(generated.status()).toBe(200);
+    if (status === "Scheduled") {
+      const scheduled = await page.request.post(base + "/api/studio/schedule" + scope, {data:{storyId:story.id,status,scheduledDay:day}});
+      expect(scheduled.status()).toBe(200);
+    }
+    if (status === "Exported") {
+      const exported = await page.request.post(base + "/api/studio/export-asset" + scope, {data:{storyId:story.id,format:"infographic"}});
+      expect(exported.status()).toBe(201);
+    }
+    return story;
+  };
+  await make("Grid Thursday scheduled", "Thursday", "Scheduled");
+  await make("Grid Tuesday scheduled", "Tuesday", "Scheduled");
+  await make("Grid actual export", "Monday", "Exported");
+  await make("Grid ordinary draft excluded", "Monday", "Draft Ready");
+  await make("Grid active draft", "Monday", "Draft Ready");
+  await page.reload();
+  await page.locator(".story-row").filter({hasText:"Grid active draft"}).getByRole("button",{name:"Open draft"}).click();
+  await page.getByRole("button",{name:"3×3 Profile Grid",exact:true}).click();
+  const cells = page.locator(".grid-cell");
+  await expect(cells).toHaveCount(9);
+  await expect(cells.nth(0)).toContainText("Active");
+  await expect(cells.nth(1)).toContainText("Scheduled · Tuesday");
+  await expect(cells.nth(2)).toContainText("Scheduled · Thursday");
+  await expect(cells.nth(3)).toContainText("Exported");
+  await expect(cells.nth(1)).toHaveAttribute("title", "Grid Tuesday scheduled");
+  await expect(cells.nth(3)).toHaveAttribute("title", "Grid actual export");
+  await expect(page.locator('.grid-cell[title="Grid ordinary draft excluded"]')).toHaveCount(0);
+  await expect(page.locator(".profile-grid")).not.toContainText("ordinary draft excluded");
+  await expect(cells.nth(4)).toContainText("No scheduled or exported post");
 });

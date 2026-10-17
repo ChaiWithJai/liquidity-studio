@@ -1097,6 +1097,7 @@
                   {brandProfile}
                   {format}
                   {backlog}
+                  activeStoryId={selectedStory.id}
                   onpreflight={recordPreflight}
                 />{/key}
             </div>{:else}<section class="panel">

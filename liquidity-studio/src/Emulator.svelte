@@ -8,6 +8,7 @@
     brandProfile,
     format = "infographic",
     backlog = [],
+    activeStoryId,
     onpreflight = () => {},
   } = $props();
   let mode = $state("instagram");
@@ -70,11 +71,21 @@
   );
   let reelBeats = $derived(campaign?.reel?.beats || []);
   let carouselSlides = $derived(campaign?.carousel?.slides || []);
+  const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   let gridItems = $derived([
-    { id: "active", campaignDraft: campaign, title: "Active campaign" },
+    { id: "active", campaignDraft: campaign, title: "Active campaign", gridLabel: "Active" },
     ...backlog
-      .filter((s) => s.campaignDraft && s.campaignDraft !== campaign)
-      .slice(0, 8),
+      .filter((story) => story.id !== activeStoryId && story.campaignDraft &&
+        ["Scheduled", "Exported"].includes(story.status))
+      .sort((a, b) => {
+        if (a.status !== b.status) return a.status === "Scheduled" ? -1 : 1;
+        if (a.status === "Scheduled") return weekDays.indexOf(a.scheduledDay) - weekDays.indexOf(b.scheduledDay);
+        return (Date.parse(b.exportedAt) || 0) - (Date.parse(a.exportedAt) || 0);
+      })
+      .slice(0, 8)
+      .map((story) => ({ ...story, gridLabel: story.status === "Scheduled"
+        ? `Scheduled · ${story.scheduledDay}`
+        : `Exported${story.exportedAt ? ` · ${new Date(story.exportedAt).toLocaleString()}` : " · time unavailable"}` })),
   ]);
 
   $effect(() => {
@@ -312,25 +323,26 @@
           <span class="avatar large"
             >{brandProfile?.logoText?.slice(0, 2) || handle.slice(0, 2)}</span
           ><span
-            ><b>{backlog.filter((s) => s.campaignDraft).length}</b> drafts</span
+            ><b>{gridItems.length}</b> preview posts</span
           ><span>Private<br />preview</span>
         </div>
         <div class="profile-bio">
           <b>{brandProfile?.brandName}</b>
           <p>{brandProfile?.tagline}</p>
-          <small>Draft grid · empty cells are unscheduled space</small>
+          <small>Local preview · active first, weekly schedule Monday–Sunday, then newest exports. Not a live Instagram feed.</small>
         </div>
         <div class="profile-grid">
           {#each Array(9) as _, i (i)}<div
               class="grid-cell"
+              title={gridItems[i]?.title || "Empty slot"}
               class:current={i === 0}
             >
               {#if gridItems[i]}{@html artwork({
                   campaign: gridItems[i].campaignDraft,
                   brandProfile,
                   format: "infographic",
-                })}<span>{i === 0 ? "Active" : "Saved"}</span>{:else}<span
-                  class="empty-cell">No saved post</span
+                })}<span>{gridItems[i].gridLabel}</span>{:else}<span
+                  class="empty-cell">No scheduled or exported post</span
                 >{/if}
             </div>{/each}
         </div>
