@@ -599,3 +599,79 @@ test("both preset brand profiles round trip their own strategy schemas", async (
     assert.equal(response.status, 200, brandId);
   }
 });
+
+test("real generated assets and feedback eject and import with authorized scope lineage", async (t) => {
+  const previous = process.env.AI_ALLOW_SYNTHETIC;
+  process.env.AI_ALLOW_SYNTHETIC = "true";
+  t.after(() => {
+    if (previous === undefined) delete process.env.AI_ALLOW_SYNTHETIC;
+    else process.env.AI_ALLOW_SYNTHETIC = previous;
+  });
+  const f = await fixture(t);
+  const scope = {
+    organizationId: "org_default",
+    brandId: "brand_default",
+    preset: "liquidity_desk",
+  };
+  const app = await f.platform.forScope(scope);
+  const story = await app.ports.repo.addBacklogStory({
+    title: "Portable generated fixture",
+    sourceClaims: [
+      {
+        id: "source",
+        text: "A sourced editorial excerpt.",
+        sourceUrl: "https://example.org/portable-fixture",
+        kind: "general",
+        status: "approved",
+      },
+    ],
+  });
+  const generated =
+    await app.services.multiFormatFormatterService.generateCampaignForStory(
+      story.id,
+    );
+  await app.services.multiFormatFormatterService.saveInlineEdit({
+    storyId: story.id,
+    format: "reel",
+    expectedRevision: generated.story.revision,
+    content: {
+      ...generated.campaign.reel,
+      closingCta: "Human-reviewed final ending",
+    },
+  });
+  const exported =
+    await app.services.multiFormatFormatterService.exportFormattedAsset({
+      storyId: story.id,
+      format: "reel",
+    });
+  const bundle = await app.ports.repo.exportData();
+  assert.equal(bundle.data.telemetry.traces[0].brandId, "brand_default");
+  assert.equal(
+    bundle.data.telemetry.traces[0].contentPresetId,
+    "liquidity_desk",
+  );
+  const target = (
+    await f.platform.forScope({
+      organizationId: "org_default",
+      brandId: "brand_vedic",
+      preset: "vedic_dharma",
+    })
+  ).ports.repo;
+  await target.importData(bundle, { remapScope: true });
+  assert.match(
+    Buffer.from(
+      (await target.getAsset(exported.exportId)).base64,
+      "base64",
+    ).toString(),
+    /Human-reviewed final ending/,
+  );
+  const restored = await target.read();
+  assert.ok(restored.telemetry.backpropDataset.length >= 3);
+  assert.ok(
+    restored.telemetry.backpropDataset.every(
+      (record) => record.brandId === "brand_vedic",
+    ),
+  );
+  assert.equal(restored.telemetry.traces[0].brandId, "brand_vedic");
+  assert.equal(restored.telemetry.traces[0].contentPresetId, "liquidity_desk");
+});

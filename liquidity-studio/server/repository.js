@@ -274,7 +274,12 @@ export class ScopedRepository {
   async recordUsage(event) {
     await this.mutate((state) => {
       if (!state.usage.some((row) => row.id === event.id))
-        state.usage.push({ ...event, timestamp: new Date().toISOString() });
+        state.usage.push({
+          ...event,
+          organizationId: this.scope.organizationId,
+          brandId: this.scope.brandId,
+          timestamp: new Date().toISOString(),
+        });
       return state;
     });
   }
@@ -302,6 +307,8 @@ export class ScopedRepository {
         }
         job = {
           jobId: randomUUID(),
+          organizationId: this.scope.organizationId,
+          brandId: this.scope.brandId,
           idempotencyKey,
           status: "RUNNING",
           leaseExpiresAt: Date.now() + 1800000,
@@ -330,6 +337,8 @@ export class ScopedRepository {
     const record = {
       id: randomUUID(),
       ...asset,
+      organizationId: this.scope.organizationId,
+      brandId: this.scope.brandId,
       sha256: createHash("sha256")
         .update(Buffer.from(asset.base64, "base64"))
         .digest("hex"),
@@ -385,6 +394,8 @@ export class ScopedRepository {
       id: randomUUID(),
       createdAt: new Date().toISOString(),
       ...record,
+      organizationId: this.scope.organizationId,
+      brandId: this.scope.brandId,
     };
     await this.mutate((state) => {
       const story = state.backlog.find((story) => story.id === value.storyId);
@@ -397,10 +408,42 @@ export class ScopedRepository {
   }
   async exportData() {
     const data = await this.read();
+    const rows = [
+      ...data.telemetry.traces,
+      ...data.telemetry.backpropDataset,
+      ...data.telemetry.batchJobs,
+      ...data.jobs,
+      ...data.assets,
+      ...data.preflights,
+      ...data.usage,
+      ...(data.operationalEvents || []),
+    ];
+    for (const row of rows) {
+      if (
+        row.organizationId &&
+        row.organizationId !== this.scope.organizationId
+      )
+        throw fail(
+          409,
+          "Stored organization lineage does not match this scope",
+        );
+      if (row.brandId && row.brandId !== this.scope.brandId) {
+        if (
+          row.brandId !== this.scope.preset &&
+          row.brandId !== data.brandProfile.id
+        )
+          throw fail(409, "Stored brand lineage does not match this scope");
+        row.contentPresetId = row.brandId;
+      }
+      row.organizationId = this.scope.organizationId;
+      row.brandId = this.scope.brandId;
+    }
     data.assets = await Promise.all(
       data.assets.map(async (asset) => {
         const complete = await this.getAsset(asset.id);
         delete complete.artifactRef;
+        complete.organizationId = this.scope.organizationId;
+        complete.brandId = this.scope.brandId;
         return complete;
       }),
     );
@@ -474,6 +517,10 @@ export class ScopedRepository {
       ...bundle.data.preflights,
       ...bundle.data.telemetry.traces,
       ...bundle.data.telemetry.backpropDataset,
+      ...bundle.data.telemetry.batchJobs,
+      ...bundle.data.jobs,
+      ...bundle.data.usage,
+      ...(bundle.data.operationalEvents || []),
     ];
     if (
       records.some(
@@ -536,6 +583,7 @@ export class ScopedRepository {
       "usage",
       "gatewayConfig",
       "discovery",
+      "operationalEvents",
     ];
     const data = Object.fromEntries(
       allowed

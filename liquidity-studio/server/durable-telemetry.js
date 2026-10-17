@@ -5,10 +5,32 @@ export class DurableTelemetry extends ObservabilityEngine {
     this.repo = repo;
   }
   async record(method, args) {
+    const scope = {
+      organizationId: this.repo.scope.organizationId,
+      brandId: this.repo.scope.brandId,
+    };
+    if (method === "recordGenerationTrace") {
+      const payload = args[0];
+      args = [
+        {
+          ...payload,
+          trace: {
+            ...payload.trace,
+            contentPresetId:
+              payload.trace.brandId || this.repo.scope.preset || null,
+            ...scope,
+          },
+        },
+      ];
+    }
     let result;
     await this.repo.mutate((state) => {
       Object.assign(this, state.telemetry);
       result = super[method](...args);
+      Object.assign(result, scope);
+      if (method === "recordGenerationTrace") {
+        Object.assign(this.backpropDataset[0], scope);
+      }
       state.telemetry = {
         traces: this.traces,
         batchJobs: this.batchJobs,
