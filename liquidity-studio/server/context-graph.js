@@ -197,7 +197,7 @@ export const CONTEXT_GRAPH = {
         provider: { type: 'string' },
         model: { type: 'string' },
         latencyMs: { type: 'number', minimum: 0 },
-        status: { type: 'string', enum: ['success', 'error'] },
+        status: { type: 'string', enum: ['success', 'degraded', 'error'] },
         evalScore: { type: 'number', minimum: 0, maximum: 100 },
         evalPass: { type: 'boolean' }
       }

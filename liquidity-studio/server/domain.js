@@ -100,7 +100,7 @@ export const INITIAL_CONTENT_BACKLOG = [
 export async function generateMultiFormatCampaign({ gateway, story, brandProfile = DEFAULT_BRAND_PROFILE }) {
   const systemInstruction = `You are a creative marketing director for "${brandProfile.brandName}".
 Brand voice: "${brandProfile.tagline}" — crisp, insider, empowering, hard-number driven, zero academic jargon.
-Every asset must highlight concrete financial figures ($, %, or x multiples) and explain what the founder/creator OWNS.`;
+Use only the supplied facts. Never invent numbers, ownership claims, or conclusions. Preserve the meaning of financial metrics. Use neutral fact labels when the source does not specify a metric. All output requires editorial source review.`;
 
   const prompt = `Create a complete 4-format social media campaign pack for this backlog story:
 Story Title: ${story.title}
@@ -111,7 +111,7 @@ ${story.verifiedFacts.map((f, i) => `${i + 1}. ${f}`).join('\n')}
 Return a JSON object containing all 4 ready-to-export marketing formats:
 1. "infographic": Single 1080x1350 pinned breakdown card:
    - "headline": <= 8 words, punchy uppercase hook
-   - "statRows": array of 3 concise hard-number bullet strings (each <= 90 chars, must include $, %, or x)
+   - "statRows": array of 3 concise hard-number bullet strings (each <= 90 chars, preserve supplied facts; do not force numbers)
    - "bottomTakeaway": 1 sentence (<= 130 chars) on ownership, margins, or deal mechanics
    - "caption": Engaging Instagram caption with 3 hashtags
 2. "carousel": 4-slide swipe deck:
@@ -122,7 +122,7 @@ Return a JSON object containing all 4 ready-to-export marketing formats:
    - "keyStatHighlight": 1 massive hero number + 1-line explanation
    - "interactiveStickerPrompt": Poll or slider question to drive audience engagement
 4. "reel": 30-second vertical Reel script & visual storyboard:
-   - "spokenHook0to3s": Exact 3-second spoken opening line with a hard dollar figure
+   - "spokenHook0to3s": Short opening line grounded in supplied facts
    - "beats": array of 3 objects { "timecode", "voiceover", "onScreenText", "bRollDirection" }
    - "closingCta": Final 1-line call to action`;
 
