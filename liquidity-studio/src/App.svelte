@@ -51,6 +51,7 @@
       selectedStory = backlog[0];
       campaign = selectedStory.campaignDraft || null;
       selectedScheduleDay = selectedStory.scheduledDay || 'Thursday';
+      if (campaign) statusPill = campaignStatus(campaign);
     }
   }
 
@@ -95,13 +96,19 @@
     await saveBrandProfile();
   }
 
+  function campaignStatus(draft) {
+    if (draft?.provenance?.mode === 'synthetic') return 'Synthetic draft · Degraded mode · Source review required';
+    if (draft?.provenance?.mode === 'provider') return 'Provider draft · Source review required';
+    return 'Draft provenance unavailable · Source review required';
+  }
+
   function openStoryInStudio(story) {
     selectedStory = story;
     selectedScheduleDay = story.scheduledDay || 'Thursday';
     campaign = story.campaignDraft || null;
     marketerTab = 'campaign_studio';
     if (campaign) {
-      statusPill = 'Saved campaign loaded';
+      statusPill = campaignStatus(campaign);
     } else {
       return createCampaignForStory(story);
     }
@@ -121,12 +128,14 @@
         body: JSON.stringify({ storyId: story.id })
       });
       const data = await res.json();
+      if (!res.ok || !data.story || !data.campaign) throw new Error('Generation failed');
       campaign = data.campaign;
       selectedStory = data.story || story;
       backlog = data.backlog || backlog;
       calendar = data.calendar || calendar;
-      statusPill = '✨ 100% Complete — 4 Formats Ready';
-      await loadAdminOverview();
+      statusPill = campaignStatus(campaign);
+    } catch {
+      statusPill = 'Generation failed. Check provider configuration and retry. Existing draft preserved.';
     } finally {
       loading = false;
     }
@@ -445,6 +454,7 @@
             <!-- KRUG-001 & KRUG-005: Campaign Studio with 1-Click Schedule & Export + 4 Visual Previews -->
             {#if campaign && selectedStory}
               <div>
+                <p role="status" style="color: #c5d86d;">{campaignStatus(campaign)}</p>
                 <div style="display: flex; justify-content: space-between; align-items: center; background: #1a1c19; padding: 16px 20px; border-radius: 14px; border: 1px solid #353933; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                   <div>
                     <span style="font-size: 11px; color: #a8c5a0; font-weight: 700;">ACTIVE STORY:</span>

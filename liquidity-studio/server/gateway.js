@@ -14,6 +14,7 @@ export class AIGateway {
       gatewayUrl: config.gatewayUrl || process.env.AI_GATEWAY_URL || 'https://generativelanguage.googleapis.com/v1beta',
       projectId: config.projectId || process.env.GOOGLE_CLOUD_PROJECT || 'liquidity-media-gcp',
       location: config.location || process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
+      allowSynthetic: config.allowSynthetic ?? process.env.AI_ALLOW_SYNTHETIC === 'true',
       temperature: config.temperature ?? 0.4
     };
   }
@@ -60,7 +61,7 @@ export class AIGateway {
         parsedOutput = JSON.parse(data.choices?.[0]?.message?.content || '{}');
       } else if (apiKey) {
         // Default Off-The-Shelf GCP Gemini / Vertex AI Path with API key
-        const candidates = [model, 'gemini-3.8-flash', 'gemini-2.5-pro', 'gemini-2.5-flash'];
+        const candidates = [model];
         let res;
         let lastErr = '';
         for (const candidate of candidates) {
@@ -92,44 +93,57 @@ export class AIGateway {
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
         parsedOutput = JSON.parse(rawText);
       } else {
-        // Zero-configuration local development & offline fallback
+        // Synthetic generation requires explicit operator opt-in.
+        if (!this.config.allowSynthetic) throw new Error('AI credentials are missing; synthetic generation is disabled');
         parsedOutput = synthesizeFallbackCampaign(prompt, traceMeta);
         resolvedModel = `${model}-offline-synthetic`;
       }
 
+      validateCampaign(parsedOutput, traceMeta.story);
+      const synthetic = resolvedModel.endsWith('-offline-synthetic');
+      const provenance = { mode: synthetic ? 'synthetic' : 'provider', requiresReview: true, source: 'supplied-story-facts', reason: synthetic ? 'missing-credentials' : null };
+      parsedOutput.provenance = provenance;
       const latencyMs = Date.now() - startedAt;
       return {
         output: parsedOutput,
         trace: {
           traceId: `tr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
           timestamp: new Date().toISOString(),
-          provider: apiKey ? provider : 'offline-synthetic',
+          provider: synthetic ? 'offline-synthetic' : provider,
           model: resolvedModel,
           latencyMs,
-          status: 'success',
+          status: synthetic ? 'degraded' : 'success',
+          provenance,
           promptChars: (prompt || '').length,
           ...traceMeta
         }
       };
     } catch (err) {
       // If external call failed and we can fall back to synthetic output
-      if (prompt && responseSchema) {
-        const parsedOutput = synthesizeFallbackCampaign(prompt, traceMeta);
-        const latencyMs = Date.now() - startedAt;
-        return {
-          output: parsedOutput,
-          trace: {
-            traceId: `tr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-            timestamp: new Date().toISOString(),
-            provider: 'fallback-synthetic',
-            model: `${model}-fallback`,
-            latencyMs,
-            status: 'success',
-            fallbackReason: err.message,
-            promptChars: (prompt || '').length,
-            ...traceMeta
-          }
-        };
+      if (this.config.allowSynthetic && prompt && responseSchema) {
+        try {
+          const parsedOutput = synthesizeFallbackCampaign(prompt, traceMeta);
+          const provenance = { mode: 'synthetic', requiresReview: true, source: 'supplied-story-facts', reason: 'provider-failure' };
+          parsedOutput.provenance = provenance;
+          const latencyMs = Date.now() - startedAt;
+          return {
+            output: parsedOutput,
+            trace: {
+              traceId: `tr_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+              timestamp: new Date().toISOString(),
+              provider: 'fallback-synthetic',
+              model: `${model}-fallback`,
+              latencyMs,
+              status: 'degraded',
+              provenance,
+              fallbackReason: 'Provider request or output validation failed',
+              promptChars: (prompt || '').length,
+              ...traceMeta
+            }
+          };
+        } catch (fallbackError) {
+          err = fallbackError;
+        }
       }
 
       const latencyMs = Date.now() - startedAt;
@@ -155,71 +169,51 @@ function synthesizeFallbackCampaign(prompt = '', traceMeta = {}) {
   const rawFacts = story.verifiedFacts || [];
 
   let facts = rawFacts.length ? [...rawFacts] : [];
-  if (!facts.length) {
+  if (!facts.length && !traceMeta.story) {
     const factsBlock = prompt.match(/Verified Facts:\s*([\s\S]+?)(?=\n\nReturn|$)/)?.[1];
     if (factsBlock) {
       facts = factsBlock.split('\n').map((l) => l.replace(/^\d+\.\s*/, '').trim()).filter(Boolean);
     }
   }
-  if (!facts.length) {
-    facts = [
-      '$250M record controlling valuation acquired with equity upside',
-      '72% gross margins via direct-to-consumer and retail distribution',
-      '100% IP rights and licensing control retained in holding company'
-    ];
-  }
-
-  const ensureFinancialAngle = (str, fallback) => {
-    let s = str || fallback;
-    if (!/(\$\d+|\d+(\.\d+)?%|\d+(\.\d+)?x|\b\d+\s*(million|billion|m|b|k)\b)/i.test(s)) {
-      s = `$100M+ valuation & ${s}`;
-    }
-    if (!/\b(margin|equity|stake|valuation|buyback|royalt|backend|distribution|multiple|take-rate|cogs|ownership|cap table|upside|cash flow|rights|yield|control)\b/i.test(s)) {
-      s = `${s} with 100% equity ownership`;
-    }
-    return s.length > 90 ? s.slice(0, 87) + '...' : s;
-  };
-
-  const f1 = ensureFinancialAngle(facts[0], '$250M record controlling valuation acquired with equity upside');
-  const f2 = ensureFinancialAngle(facts[1], '72% gross margins via direct-to-consumer distribution');
-  const f3 = ensureFinancialAngle(facts[2], '100% IP rights and licensing control retained in holding company');
-
-  const cleanTitle = rawTitle.replace(/[^\w\s$]/g, '').trim();
-  const headlineWords = cleanTitle.split(/\s+/).slice(0, 6).join(' ').toUpperCase();
-  const headline = headlineWords.length >= 3 ? headlineWords : 'OWNERSHIP AND VALUATION REWRITE';
-  const storyHook = headline.split(/\s+/).slice(0, 5).join(' ');
-  const dollarMatch = (f1 + ' ' + f2 + ' ' + f3).match(/\$\d+(\.\d+)?[BMK]?/i);
-  const spokenHook = `Inside the ${dollarMatch ? dollarMatch[0] : '$100M'} valuation and equity deal mechanics.`;
-
+  if (!facts.length) throw new Error('At least one supplied fact is required');
+  const [f1, f2 = f1, f3 = f1] = facts;
+  const headline = rawTitle.toUpperCase();
   return {
-    infographic: {
-      headline,
-      statRows: [f1, f2, f3],
-      bottomTakeaway: 'Ownership equity and cap table control always generate superior liquidity.',
-      caption: `Inside the numbers behind ${rawTitle}. Follow the liquidity. #equity #ownership #capital`
-    },
-    carousel: {
-      coverHook: headline,
-      slides: [
-        { slideNumber: 1, title: 'The Valuation', bodyMetric: f1, visualNote: 'Hero portrait with valuation callout' },
-        { slideNumber: 2, title: 'The Gross Margin', bodyMetric: f2, visualNote: 'Gross margin breakdown chart' },
-        { slideNumber: 3, title: 'The Cap Table', bodyMetric: f3, visualNote: 'Equity holding structure diagram' },
-        { slideNumber: 4, title: 'The Multiple', bodyMetric: '3x multiple on retained equity', visualNote: 'Summary card with key takeaways' }
-      ]
-    },
-    story: {
-      hookBanner: storyHook,
-      keyStatHighlight: f1,
-      interactiveStickerPrompt: 'Equity or Cash? Vote below'
-    },
-    reel: {
-      spokenHook0to3s: spokenHook,
-      beats: [
-        { timecode: '0:00-0:05', voiceover: f1, onScreenText: f1.slice(0, 24), bRollDirection: 'Founder archive footage' },
-        { timecode: '0:05-0:15', voiceover: f2, onScreenText: f2.slice(0, 24), bRollDirection: 'Distribution and retail footage' },
-        { timecode: '0:15-0:30', voiceover: f3, onScreenText: f3.slice(0, 24), bRollDirection: 'Cap table and equity visual' }
-      ],
-      closingCta: 'Follow The Liquidity Desk for weekly media rights and valuation breakdowns.'
-    }
+    infographic: { headline, statRows: [f1, f2, f3], bottomTakeaway: 'Review the supplied facts and their sources before publishing.', caption: rawTitle },
+    carousel: { coverHook: headline, slides: [f1, f2, f3, 'Review the original sources before publishing.'].map((fact, i) => ({ slideNumber: i + 1, title: i === 3 ? 'Source review' : 'Reported fact', bodyMetric: fact, visualNote: 'Source fact text card' })) },
+    story: { hookBanner: headline, keyStatHighlight: f1, interactiveStickerPrompt: 'Which detail would you investigate next?' },
+    reel: { spokenHook0to3s: rawTitle, beats: [f1, f2, f3].map((fact, i) => ({ timecode: ['0:00-0:05', '0:05-0:15', '0:15-0:30'][i], voiceover: fact, onScreenText: fact, bRollDirection: 'Source fact text card' })), closingCta: 'Read the original sources before sharing.' }
   };
+}
+
+// Check the shared shape and reject unsupported numeric claims before saving.
+// This is a conservative guard, not a substitute for editorial fact checking.
+function validateCampaign(output, story) {
+  if (!output || !Array.isArray(output.infographic?.statRows) || output.infographic.statRows.length !== 3 ||
+      !Array.isArray(output.carousel?.slides) || output.carousel.slides.length !== 4 ||
+      !output.story || !Array.isArray(output.reel?.beats) || output.reel.beats.length !== 3) {
+    throw new Error('Invalid campaign structure');
+  }
+  const textFields = (value, fields) => value && fields.every(field => typeof value[field] === 'string' && value[field].trim());
+  if (!textFields(output.infographic, ['headline', 'bottomTakeaway', 'caption']) ||
+      !output.infographic.statRows.every(value => typeof value === 'string' && value.trim()) ||
+      !textFields(output.carousel, ['coverHook']) ||
+      !output.carousel.slides.every((slide, i) => slide?.slideNumber === i + 1 && textFields(slide, ['title', 'bodyMetric', 'visualNote'])) ||
+      !textFields(output.story, ['hookBanner', 'keyStatHighlight', 'interactiveStickerPrompt']) ||
+      !textFields(output.reel, ['spokenHook0to3s', 'closingCta']) ||
+      !output.reel.beats.every(beat => textFields(beat, ['timecode', 'voiceover', 'onScreenText', 'bRollDirection']))) {
+    throw new Error('Invalid campaign field types');
+  }
+  if (!story) return;
+  const facts = story.verifiedFacts || [];
+  const allowed = new Set((facts.join(' ') + ' ' + story.title).match(/\d+(?:[.,]\d+)*/g) || []);
+  const copy = [output.infographic, output.story, output.carousel.slides.map(({ title, bodyMetric }) => ({ title, bodyMetric })), output.reel.spokenHook0to3s, output.reel.beats.map(({ voiceover, onScreenText }) => ({ voiceover, onScreenText })), output.reel.closingCta];
+  for (const number of JSON.stringify(copy).match(/\d+(?:[.,]\d+)*/g) || []) {
+    if (!allowed.has(number)) throw new Error('Campaign contains an unsupported numeric claim');
+  }
+  for (const slide of output.carousel.slides) {
+    if (/gross margin/i.test(slide.title) && !facts.some(f => /gross margin/i.test(f) && f === slide.bodyMetric)) {
+      throw new Error('Gross margin label lacks a matching source fact');
+    }
+  }
 }

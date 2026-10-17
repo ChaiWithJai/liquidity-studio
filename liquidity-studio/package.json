@@ -8,6 +8,7 @@
     "build": "node scripts/build-dist.js",
     "start": "node server/index.js",
     "eval:smoke": "node server/eval-smoke.js",
+    "test:gateway": "node --test server/gateway.test.js",
     "test:backwards": "node server/backwards-test.js",
     "qa:loop": "node server/qa-loop.js"
   },

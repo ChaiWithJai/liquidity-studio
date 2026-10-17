@@ -39,6 +39,7 @@ async function bootstrap() {
   state.selectedStory = state.backlog[0] || null;
   state.campaign = state.selectedStory?.campaignDraft || null;
   state.selectedScheduleDay = state.selectedStory?.scheduledDay || 'Thursday';
+  if (state.campaign) state.statusPill = campaignStatus(state.campaign);
   state.adminData = adminRes;
   state.contextGraphData = graphRes;
   render();
@@ -58,27 +59,38 @@ window.setSearch = (q) => { state.searchQuery = q; render(); };
 window.setStatusFilter = (st) => { state.statusFilter = st; render(); };
 window.setScheduleDay = (day) => { state.selectedScheduleDay = day; };
 
+function campaignStatus(campaign) {
+  if (campaign?.provenance?.mode === 'synthetic') return 'Synthetic draft · Degraded mode · Source review required';
+  if (campaign?.provenance?.mode === 'provider') return 'Provider draft · Source review required';
+  return 'Draft provenance unavailable · Source review required';
+}
+
 window.generateCampaign = async (storyId) => {
   const id = storyId || state.selectedStory?.id;
   if (!id) return;
   state.loading = true;
-  state.statusPill = '✨ Gathering financial facts & formatting 4 channels...';
+  state.statusPill = 'Generating campaign...';
   state.marketerTab = 'campaign_studio';
   render();
-  const res = await fetch('/api/studio/generate-campaign', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ storyId: id })
-  }).then(r => r.json());
-  state.selectedStory = res.story;
-  state.campaign = res.campaign;
-  state.selectedScheduleDay = res.story.scheduledDay || 'Thursday';
-  state.backlog = res.backlog || state.backlog;
-  state.calendar = res.calendar || state.calendar;
-  state.loading = false;
-  state.statusPill = '✨ 100% Complete — 4 Formats Ready';
-  state.adminData = await fetch('/api/admin/overview').then(r => r.json());
-  render();
+  try {
+    const response = await fetch('/api/studio/generate-campaign', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ storyId: id })
+    });
+    const res = await response.json();
+    if (!response.ok || !res.story || !res.campaign) throw new Error('Generation failed');
+    state.selectedStory = res.story;
+    state.campaign = res.campaign;
+    state.selectedScheduleDay = res.story.scheduledDay || 'Thursday';
+    state.backlog = res.backlog || state.backlog;
+    state.calendar = res.calendar || state.calendar;
+    state.statusPill = campaignStatus(state.campaign);
+  } catch {
+    state.statusPill = 'Generation failed. Check provider configuration and retry. Existing draft preserved.';
+  } finally {
+    state.loading = false;
+    render();
+  }
 };
 
 window.openStoryInStudio = (storyId) => {
@@ -89,7 +101,7 @@ window.openStoryInStudio = (storyId) => {
     state.selectedScheduleDay = story.scheduledDay || 'Thursday';
     state.campaign = story.campaignDraft || null;
     if (state.campaign) {
-      state.statusPill = 'Saved campaign loaded';
+      state.statusPill = campaignStatus(state.campaign);
       render();
     } else {
       return window.generateCampaign(storyId);
@@ -521,6 +533,7 @@ function renderCampaignStudio() {
 
   return `
     <div>
+      <p role="status" style="color:#c5d86d;">${campaignStatus(campaign)}</p>
       <!-- KRUG-005: 1-Click Schedule & Export Header -->
       <div style="display:flex;justify-content:space-between;align-items:center;background:#1a1c19;padding:16px 20px;border-radius:14px;border:1px solid #353933;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <div>

@@ -27,6 +27,8 @@ jobs:
         run: npm run build
       - name: Verify saved draft navigation and schedule selection
         run: node server/navigation-test.js
+      - name: Verify gateway integrity contracts
+        run: npm run test:gateway
       - name: Verify HTTP and service contracts with synthetic data
         run: npm run test:backwards
       - name: Verify operational probes and truthful telemetry
