@@ -213,9 +213,9 @@ export function createHttpServer(
         throw fail(400, "Invalid path");
       const url = new URL(req.url, "http://localhost");
       const route = url.pathname;
-      if (req.method === "GET" && route === "/healthz")
+      if (req.method === "GET" && ["/healthz", "/api/live"].includes(route))
         return json(200, { status: "alive" });
-      if (req.method === "GET" && route === "/readyz") {
+      if (req.method === "GET" && ["/readyz", "/api/ready"].includes(route)) {
         if (trustedTestMode) {
           const result = await checkReadiness(appContainer);
           return json(result.status === "ready" ? 200 : 503, result);
