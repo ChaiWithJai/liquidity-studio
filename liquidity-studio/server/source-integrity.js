@@ -12,9 +12,10 @@ export function getApprovedClaims(story) {
   for (const claim of claims) {
     let url;
     try { url = new URL(claim.sourceUrl); } catch { /* rejected below */ }
-    if (!claim.id || typeof claim.text !== 'string' || !claim.text.trim() || claim.text.length > 2000 || !url || url.protocol !== 'https:' || url.username || url.password) {
+    if (typeof claim.id !== 'string' || !claim.id.trim() || typeof claim.text !== 'string' || !claim.text.trim() || claim.text.length > 2000 || !url || url.protocol !== 'https:' || url.username || url.password) {
       throw new ContentIntegrityError('INVALID_SOURCE_CLAIM', 'Approved claims require an ID, text and HTTPS source URL');
     }
+    if (!['financial', 'cultural', 'clinical', 'general'].includes(claim.kind)) throw new ContentIntegrityError('SOURCE_KIND_REQUIRED', 'Classify each approved source claim before generation');
     if (claim.kind === 'clinical' && (!claim.clinicalReview?.reviewerId || !Number.isFinite(Date.parse(claim.clinicalReview?.reviewedAt)))) {
       throw new ContentIntegrityError('CLINICAL_REVIEW_REQUIRED', 'Clinical claims remain quarantined until clinical source review is recorded');
     }
