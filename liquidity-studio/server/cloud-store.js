@@ -32,7 +32,7 @@ export class FirestoreStore {
     if (parts.some(part => !part.exists)) throw failure('STORE_CORRUPT', 'Stored record is incomplete');
     const encoded = Buffer.concat(parts.map(part => Buffer.from(part.data().bytes)));
     if (encoded.byteLength !== data.bytes || hash(encoded) !== data.sha256) throw failure('STORE_CORRUPT', 'Stored record checksum mismatch');
-    return { value: JSON.parse(encoded.toString('utf8')), chunkCount: data.chunkCount, revision: data.revision };
+    return { value: JSON.parse(encoded.toString('utf8')), chunkCount: data.chunkCount, revision: data.revision, sha256: data.sha256 };
   }
 
   async get(key) {
@@ -50,10 +50,14 @@ export class FirestoreStore {
       let encoded;
       try { encoded = Buffer.from(JSON.stringify(next)); } catch { throw failure('INVALID_UPDATE', 'Storage callback must return JSON'); }
       if (encoded.byteLength > MAX_VALUE_BYTES) throw failure('STORE_CAPACITY', 'Record exceeds the four MiB transaction capacity; archive content before adding more');
+      const digest = hash(encoded);
+      // Repository initialization can run for every request; unchanged data must
+      // not rewrite all chunks or count as a new persisted revision.
+      if (current.sha256 === digest) return JSON.parse(encoded.toString('utf8'));
       const chunks = Math.ceil(encoded.byteLength / CHUNK_BYTES);
       for (let i = 0; i < chunks; i++) transaction.set(ref.collection('chunks').doc(String(i)), { bytes: encoded.subarray(i * CHUNK_BYTES, (i + 1) * CHUNK_BYTES) });
       for (let i = chunks; i < current.chunkCount; i++) transaction.delete(ref.collection('chunks').doc(String(i)));
-      transaction.set(ref, { schemaVersion: 1, key, revision: current.revision + 1, chunkCount: chunks, bytes: encoded.byteLength, sha256: hash(encoded) });
+      transaction.set(ref, { schemaVersion: 1, key, revision: current.revision + 1, chunkCount: chunks, bytes: encoded.byteLength, sha256: digest });
       return JSON.parse(encoded.toString('utf8'));
     }, { maxAttempts: 5 });
   }

@@ -133,3 +133,12 @@ test('overlapping readiness checks share one underlying dependency operation', a
   await Promise.all([first, second]);
   assert.equal(store.healthRequest, null);
 });
+
+test('unchanged repository initialization does not rewrite chunks or increment the stored revision', async () => {
+  const firestore = fakeFirestore();
+  const store = new FirestoreStore({ firestore });
+  await store.update('scope:org:brand', () => ({ count: 1 }));
+  const before = structuredClone([...firestore.records.entries()]);
+  await store.update('scope:org:brand', current => current || { count: 0 });
+  assert.deepEqual([...firestore.records.entries()], before);
+});
