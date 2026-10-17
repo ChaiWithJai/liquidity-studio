@@ -32,17 +32,10 @@ export function computePreflight({ format, canvas, textBoxes = [], obstructionBo
   const expectedRatio = vertical ? 9 / 16 : 4 / 5;
   const actualRatio = width / height;
   const aspectRatioDeviation = Math.abs(actualRatio - expectedRatio) / expectedRatio;
-<<<<<<< HEAD
-  const metrics = { unmeasuredColorCount, expectedAspectRatio: vertical ? '9:16' : '4:5', actualAspectRatio: Math.round(actualRatio * 10000) / 10000, aspectRatioDeviation, artworkWidth: width, artworkHeight: height, textElementsCount: textBoxes.length, occludedElementsCount, overflowElementsCount, contrastRatio, captionCharacters: caption.length, firstLookCharacters, firstLookContainsHardNumber, safeZoneRegions: { top: vertical ? .14 : 0, bottom: vertical ? .18 : 0, right: format === 'reel' ? .18 : 0 } };
-  return { simulation: true, measurementMethod: 'client-svg-text-rectangles', requiresReview: true, metrics, checks: [
-    { id: 'aspect-ratio', status: aspectRatioDeviation <= .01 ? 'pass' : 'warning', measured: actualRatio, limit: expectedRatio, message: 'Rendered artwork ratio compared with the intended 4:5 or 9:16 export; 1% layout tolerance.' },
-    { id: 'safe-zones', status: measurable ? occludedElementsCount ? 'warning' : 'pass' : 'unmeasured', measured: measurable ? occludedElementsCount : null, limit: 0, message: 'Text rectangles intersecting approximate chrome zones; actual Instagram layout can vary.' },
-=======
   const metrics = { obstructionElementsCount: obstructionBoxes.length, unmeasuredColorCount, expectedAspectRatio: vertical ? '9:16' : '4:5', actualAspectRatio: Math.round(actualRatio * 10000) / 10000, aspectRatioDeviation, artworkWidth: width, artworkHeight: height, textElementsCount: textBoxes.length, occludedElementsCount, overflowElementsCount, contrastRatio, captionCharacters: caption.length, firstLookCharacters, firstLookContainsHardNumber, safeZoneRegions: { top: vertical ? .14 : 0, bottom: vertical ? .18 : 0, right: format === 'reel' ? .18 : 0 } };
   return { simulation: true, measurementMethod: 'client-svg-text-rectangles', requiresReview: true, metrics, checks: [
     { id: 'aspect-ratio', status: aspectRatioDeviation <= .01 ? 'pass' : 'warning', measured: actualRatio, limit: expectedRatio, message: 'Rendered artwork ratio compared with the intended 4:5 or 9:16 export; 1% layout tolerance.' },
     { id: 'safe-zones', status: measurable ? occludedElementsCount ? 'warning' : 'pass' : 'unmeasured', measured: measurable ? occludedElementsCount : null, limit: 0, message: 'Text rectangles intersecting measured native chrome/stickers or approximate chrome zones; actual Instagram layout can vary.' },
->>>>>>> dc03b8a
     { id: 'artwork-overflow', status: measurable ? overflowElementsCount ? 'warning' : 'pass' : 'unmeasured', measured: measurable ? overflowElementsCount : null, limit: 0, message: 'Text rectangles outside the rendered artwork.' },
     { id: 'contrast', status: contrastRatio === null || unmeasuredColorCount > 0 ? 'unmeasured' : contrastRatio >= 4.5 ? 'pass' : 'warning', measured: contrastRatio, limit: 4.5, message: 'Minimum text fill contrast against the supplied base background, without image/gradient analysis.' },
     { id: 'caption-fold', status: caption.length > captionLimit ? 'warning' : 'pass', measured: caption.length, limit: captionLimit, message: 'Configurable approximate caption fold; not an official platform guarantee.' }

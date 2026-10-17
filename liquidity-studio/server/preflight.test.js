@@ -23,11 +23,8 @@ test('aspect ratio and partial color evidence cannot silently pass', () => {
   assert.equal(result.metrics.unmeasuredColorCount, 1);
   assert.equal(result.checks.find(check => check.id === 'contrast').status, 'unmeasured');
 });
-<<<<<<< HEAD
-=======
 
 test('a measured poll obstruction can block text inside the nominal clear zone', () => {
   const result = computePreflight({ ...input, obstructionBoxes: [{ x: 20, y: 130, width: 240, height: 80 }] });
   assert.equal(result.metrics.occludedElementsCount, 1); assert.equal(result.metrics.obstructionElementsCount, 1);
 });
->>>>>>> dc03b8a
