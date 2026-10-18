@@ -118,6 +118,7 @@ test('calendar UI captures explicit revisions; campaign and format placement, cr
     await expect.poll(async () => (await state()).workspace.assignments.filter(a => a.storyId === id && !a.deletedAt && a.unit === 'format' && a.format === 'reel').length).toBe(1);
     await helper.reload();
     await expect(helper.getByLabel('Headline', { exact: true })).toBeVisible();
+    await helper.locator('.workflow-more-actions > summary').click();
     await helper.getByRole('button', { name: 'Return to backlog', exact: true }).click();
     await openFixture(helper);
     await expect(helper.getByRole('heading', { name: /Proposal · applied/ })).toHaveCount(7);
