@@ -43,6 +43,18 @@
   );
   let measurementStatus = $state(null);
   let measurementSequence = 0;
+  let completedMeasurements = 0;
+  let formatLabel = $derived(
+    {
+      infographic: "Feed infographic",
+      carousel: "Carousel",
+      story: "Story",
+      reel: "Reel",
+    }[format],
+  );
+  let pageLabel = $derived(
+    format === "reel" ? `board ${beat + 1}` : `page ${slide + 1}`,
+  );
   let disposed = false;
   let artifactIdentity = $derived(
     `${activeStoryId || "unassigned"} · generation ${campaign?.provenance?.generationId || "unavailable"} · saved revision ${storyRevision ?? "unavailable"}`,
@@ -336,6 +348,8 @@
       violations: result.violations,
       renderKey: key,
       revision: payload.viewContext.measurementRevision,
+      number: ++completedMeasurements,
+      label: `${formatLabel} · ${pageLabel}`,
       artworkId: payload.viewContext.artworkId,
     };
     onpreflight(payload, isCurrent);
@@ -343,13 +357,17 @@
 
   function issueMessage(issue) {
     return {
-      "chrome-zone":
-        "Overlaps simulated app controls or safe zones. Shorten or reposition this text, then save and measure again.",
-      "artwork-overflow":
-        "Extends outside the artwork. Shorten or reposition this text, then save and measure again.",
-      "low-contrast":
-        "Low contrast against the base background. Review the text and brand colors, then measure again.",
+      "chrome-zone": "Overlaps simulated app controls or safe zones.",
+      "artwork-overflow": "Extends outside the artwork.",
+      "low-contrast": "Low contrast against the base background.",
     }[issue];
+  }
+  function violationAction(violation) {
+    if (violation.issues.includes("low-contrast"))
+      return "Review the text and background colors in Brand Kit, save, and measure again.";
+    if (/-brand$|-provenance$/.test(violation.artworkElementId))
+      return "Fixed renderer label: this form has no direct copy edit for it. Review the highlighted layout before export.";
+    return "Shorten the related copy in the editor, save, and measure again.";
   }
   function locateViolation(violation) {
     if (!currentEvidence) return;
@@ -362,7 +380,12 @@
     ))
       text.removeAttribute("data-preflight-highlight");
     node.setAttribute("data-preflight-highlight", "true");
-    focusedTarget = { key: renderKey, id: violation.artworkElementId };
+    focusedTarget = {
+      key: renderKey,
+      id: violation.artworkElementId,
+      text: violation.text,
+      action: violationAction(violation),
+    };
     node.focus({ preventScroll: true });
     node.scrollIntoView({ block: "center", behavior: "instant" });
   }
@@ -398,9 +421,14 @@
     >
   </div>
   <div class="artifact-identity" aria-label="Preview artifact identity">
-    <b>{brandProfile?.brandName} · Selected: {format}</b>
-    <p>{mode === "grid" ? "Showing: feed infographic projection (4:5), not the selected format. No carousel, Story or Reel verification in this grid." : `Showing: ${format} · ${format === "reel" ? `board ${beat + 1}` : `page ${slide + 1}`} · ${mode === "design" ? "design surface" : "simulated Instagram surface"}`}</p>
-    <p>{artifactIdentity} · {pendingEdits ? "Editor has unsaved changes; saved artwork shown. Save before measuring." : "Saved artwork"}</p>
+    <b>{brandProfile?.brandName} · Selected: {formatLabel}</b>
+    <p>{mode === "grid" ? "Showing: feed infographic projection (4:5), not the selected format. No carousel, Story or Reel verification in this grid." : `Showing: ${formatLabel} · ${pageLabel} · ${mode === "design" ? "design surface" : "simulated Instagram surface"}`}</p>
+    <p>Saved revision {storyRevision ?? "unavailable"} · {pendingEdits ? "Editor has unsaved changes; saved artwork shown. Save before measuring." : "Saved artwork"}</p>
+    <details data-testid="artifact-details"><summary>Artifact details</summary>
+      <p>{artifactIdentity}</p>
+      {#if currentEvidence}<p>Artwork {currentEvidence.artworkId} · measurement {currentEvidence.revision}</p><p>Text elements: {currentEvidence.violations.map(item => item.artworkElementId).join(", ") || "No measured violations"}</p>{/if}
+      {#if mode === "grid"}<ul>{#each gridItems as item (item.id)}<li>{item.title} · story {item.id} · saved revision {item.revision ?? "unavailable"} · generation {item.campaignDraft?.provenance?.generationId || "unavailable"} · feed infographic</li>{/each}</ul>{/if}
+    </details>
   </div>
   <div class="preview-controls">
     <label
@@ -469,7 +497,10 @@
           {#each Array(9) as _, i (i)}<div
               class="grid-cell"
               aria-label={gridItems[i] ? `${gridItems[i].title} · feed infographic projection` : "Empty slot"}
-              title={gridItems[i] ? `${gridItems[i].title} · feed infographic · story ${gridItems[i].id} · revision ${gridItems[i].revision ?? "unavailable"} · generation ${gridItems[i].campaignDraft?.provenance?.generationId || "unavailable"}` : "Empty slot"}
+              title={gridItems[i] ? `${gridItems[i].title} · feed infographic · saved revision ${gridItems[i].revision ?? "unavailable"}` : "Empty slot"}
+              data-story-id={gridItems[i]?.id}
+              data-generation-id={gridItems[i]?.campaignDraft?.provenance?.generationId}
+              data-story-revision={gridItems[i]?.revision}
               class:current={i === 0}
             >
               {#if gridItems[i]}{@html artwork({
@@ -738,7 +769,7 @@
     <div class="evidence-title">
       <b>Measured preflight</b><button disabled={pendingEdits || mode === "grid"} onclick={measure}>Measure again</button>
     </div>
-    {#if currentEvidence}<p class="small">Measured {currentEvidence.artworkId} · {currentEvidence.revision}</p><div class="measurements">
+    {#if currentEvidence}<p class="small">Measured {currentEvidence.label} · saved revision {storyRevision ?? "unavailable"} · measurement {currentEvidence.number}</p><div class="measurements">
         <span
           ><b>{currentEvidence.occludedElementsCount}</b> text boxes in chrome zones</span
         ><span
@@ -765,10 +796,10 @@
       </div>
       <ul class="violation-list" aria-label="Artwork issues">
         {#each currentEvidence.violations as violation (violation.artworkElementId)}
-          <li><button aria-label={`Locate ${violation.artworkElementId}`} onclick={() => locateViolation(violation)}>Locate text</button><span>“{violation.text}” · {violation.issues.map(issueMessage).join(" ")} Element {violation.artworkElementId} · {currentEvidence.revision}</span></li>
+          <li><button aria-label={`Locate text: ${violation.text.slice(0, 80)}`} data-artwork-target={violation.artworkElementId} onclick={() => locateViolation(violation)}>Locate text</button><span>“{violation.text}” · {violation.issues.map(issueMessage).join(" ")} {violationAction(violation)} Measurement {currentEvidence.number} · saved revision {storyRevision ?? "unavailable"}</span></li>
         {/each}
       </ul>
-      {#if focusedElement}<p role="status">Highlighted {focusedElement}. Review its copy or layout in the editor; this preview does not modify artwork.</p>{/if}
+      {#if focusedElement}<p role="status">Highlighted “{focusedTarget?.text}”. {focusedTarget?.action} This preview does not modify artwork.</p>{/if}
       <p class="small muted">
         Measured SVG text boxes and fill contrast against the base background;
         images, glyph shapes and all native app variations are not covered.

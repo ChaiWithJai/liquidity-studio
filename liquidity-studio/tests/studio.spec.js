@@ -152,6 +152,7 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
     .click();
   await page.keyboard.press("ArrowRight");
   await expect(page.locator(".slide-count")).toHaveText("3/4");
+  await page.locator(".asset-stage").scrollIntoViewIfNeeded();
   const bounds = await page.locator(".asset-stage").boundingBox();
   await page.mouse.move(bounds.x + bounds.width * 0.8, bounds.y + 100);
   await page.mouse.down();

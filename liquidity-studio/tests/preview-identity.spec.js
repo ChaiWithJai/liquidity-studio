@@ -8,7 +8,7 @@ import { DurableStore } from "../server/storage.js";
 let platform, server, base;
 const password = randomBytes(24).toString("base64url");
 const scope = "?organizationId=org_default&brandId=brand_default";
-const evidence = resolve("../docs/design-review/issue-68/after-v1");
+const evidence = resolve("../docs/design-review/issue-68/after-v2");
 test.beforeAll(async () => {
   process.env.AI_ALLOW_SYNTHETIC = "true";
   platform = createPlatform({
@@ -86,6 +86,9 @@ async function shot(page, id) {
             "new controlled source-backed synthetic campaign, not the baseline recovery story",
           capturedAt: new Date().toISOString(),
           identity: await page.locator(".artifact-identity").innerText(),
+          artifactDetails: await page
+            .getByTestId("artifact-details")
+            .textContent(),
           preflight: await page.locator(".evidence").innerText(),
         },
         null,
@@ -101,18 +104,20 @@ test("S17–S21 identifies projection and locates measured text with current per
   await page.getByRole("button", { name: "Carousel 4 slides" }).click();
   await page.getByRole("button", { name: "Design Mode", exact: true }).click();
   await expect(page.getByLabel("Preview artifact identity")).toContainText(
-    "Selected: carousel",
+    "Selected: Carousel",
   );
   await expect(page.locator(".evidence")).toContainText(
-    "Measured carousel-page-1",
+    "Measured Carousel · page 1",
   );
+  await expect(page.getByTestId("artifact-details")).not.toHaveAttribute("open");
+  expect(await page.locator('.artifact-identity').innerText()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
   await shot(page, "S17");
   await page.getByRole("button", { name: "3×3 Profile Grid" }).click();
   await expect(page.getByLabel("Preview artifact identity")).toContainText(
     "Showing: feed infographic projection",
   );
   await expect(page.getByLabel("Preview artifact identity")).toContainText(
-    "Selected: carousel",
+    "Selected: Carousel",
   );
   await expect(page.locator(".evidence")).toContainText(
     "Grid projection is not measured",
@@ -125,18 +130,18 @@ test("S17–S21 identifies projection and locates measured text with current per
     .click();
   await page.getByLabel("Safe zones", { exact: true }).check();
   await expect(page.locator(".evidence")).toContainText(
-    "Measured story-page-1",
+    "Measured Story · page 1",
   );
   await shot(page, "S19");
   await page.getByRole("button", { name: "Reel 30s script" }).click();
-  await expect(page.locator(".evidence")).toContainText("Measured reel-page-1");
+  await expect(page.locator(".evidence")).toContainText(
+    "Measured Reel · board 1",
+  );
   await shot(page, "S20");
   await page.getByLabel("Reel scrubber").focus();
-  const locate = page
-    .getByRole("button", { name: /Locate reel-page-1-/ })
-    .first();
+  const locate = page.getByRole("button", { name: /Locate text:/ }).first();
   await expect(locate).toBeVisible();
-  const id = (await locate.getAttribute("aria-label")).replace("Locate ", "");
+  const id = await locate.getAttribute("data-artwork-target");
   await locate.click();
   await expect(
     page.locator(".artwork [data-preflight-highlight]"),
@@ -144,6 +149,8 @@ test("S17–S21 identifies projection and locates measured text with current per
   await expect(
     page.locator(".artwork [data-preflight-highlight]"),
   ).toBeFocused();
+  expect(await page.locator('.evidence').innerText()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
+  await expect(page.locator('.evidence')).toContainText('Fixed renderer label');
   await shot(page, "S21");
   const records = await (
     await page.request.get(base + "/api/admin/eject" + scope)
@@ -263,16 +270,16 @@ test("late font and API work cannot restore preflight after view invalidation", 
   await expect.poll(() => held).toBe(true);
   await page.getByRole("button", { name: "Story 9:16", exact: true }).click();
   await expect(page.locator(".evidence")).toContainText(
-    "Measured story-page-1",
+    "Measured Story · page 1",
   );
   release();
   await finished;
   await page.unroute("**/api/studio/preflight?*");
   await expect(page.locator(".evidence")).not.toContainText(
-    "Measured carousel-page",
+    "Measured Carousel",
   );
   await expect(page.locator(".evidence")).toContainText(
-    "Measured story-page-1",
+    "Measured Story · page 1",
   );
   await expect(page.getByTestId("recorded-preflight")).toContainText(
     "Recorded story",

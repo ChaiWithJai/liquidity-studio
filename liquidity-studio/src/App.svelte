@@ -1379,7 +1379,7 @@
                     required.
                   </p>{/if}
                 {#if preflight?.artifact}
-                  <p class="small muted" data-testid="recorded-preflight">Recorded {preflight.artifact.format} · saved revision {preflight.artifact.storyRevision} · {preflight.artifact.viewContext?.measurementRevision}</p>
+                  <p class="small muted" data-testid="recorded-preflight">Recorded {preflight.artifact.format} · saved revision {preflight.artifact.storyRevision}</p>
                 {/if}
               </section>
               {#key organizationId + brandId + selectedStory.id + format}<Emulator

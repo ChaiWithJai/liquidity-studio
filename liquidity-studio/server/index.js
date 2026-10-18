@@ -785,6 +785,10 @@ export function createHttpServer(
           throw fail(400, "Invalid preflight measurements");
         }
         const context = viewContext(body.viewContext);
+        const lastFrame =
+          body.format === "carousel" ? 3 : body.format === "reel" ? 2 : 0;
+        if (context && context.frameIndex > lastFrame)
+          throw fail(400, "Preflight frame does not exist for this format");
         if (
           context?.artworkId &&
           context.artworkId !== `${body.format}-page-${context.frameIndex + 1}`
