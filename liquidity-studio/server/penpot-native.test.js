@@ -142,3 +142,35 @@ test("palette revisions preserve native layer identity but update bound resolved
   assert.equal(now.obj["applied-tokens"].fill, "studio.color1");
   assert.equal(b.provenance.brandRevision, "new-approval-revision");
 });
+
+test("coherent imported bundle tampering cannot replace source-approved copy or approval/generation checks", () => {
+  const forged = structuredClone(fixture());
+  forged.sourceCampaign.infographic.headline = "Invented unsupported claim";
+  for (const page of forged.formats.infographic.pages) {
+    page.semanticContent.format = structuredClone(
+      forged.sourceCampaign.infographic,
+    );
+    page.semanticContent.page = structuredClone(
+      forged.sourceCampaign.infographic,
+    );
+    page.layers.find((l) => l.id === "headline_layer").text =
+      forged.sourceCampaign.infographic.headline;
+  }
+  assert.throws(() => compilePenpotNative(forged, { fileId, fonts }));
+  const layerForged = structuredClone(fixture());
+  layerForged.formats.infographic.pages[0].layers[2].text =
+    "Invented layer claim";
+  assert.throws(
+    () => compilePenpotNative(layerForged, { fileId, fonts }),
+    /SOURCE_LAYER_MISMATCH/,
+  );
+  const unreviewed = structuredClone(fixture());
+  unreviewed.sourceApprovals[0].status = "unreviewed";
+  assert.throws(() => compilePenpotNative(unreviewed, { fileId, fonts }));
+  const wrongGeneration = structuredClone(fixture());
+  wrongGeneration.sourceCampaign.provenance.generationId = "foreign";
+  assert.throws(
+    () => compilePenpotNative(wrongGeneration, { fileId, fonts }),
+    /GENERATION_MISMATCH/,
+  );
+});

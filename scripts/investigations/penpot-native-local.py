@@ -1,5 +1,5 @@
 """Fixed-loopback QA reproducer. Credentials and full native data remain private."""
-import argparse, collections, hashlib, json, os, pathlib, stat, uuid
+import argparse, collections, hashlib, json, os, pathlib, stat, struct, uuid
 from urllib.parse import urlparse
 import requests
 parser=argparse.ArgumentParser()
@@ -10,6 +10,7 @@ parser.add_argument('--create-name')
 parser.add_argument('--compiled')
 parser.add_argument('--archive')
 parser.add_argument('--export-file')
+parser.add_argument('--png-matrix')
 args=parser.parse_args()
 credential_path=pathlib.Path(args.account_file)
 if stat.S_IMODE(credential_path.stat().st_mode)&0o077:raise SystemExit('QA credentials must be private0600')
@@ -27,17 +28,46 @@ def save(name,payload):
  p=out/name;p.write_text(json.dumps(payload,indent=2));p.chmod(0o600)
 rpc('login-with-password',{'email':account['email'],'password':account['password']})
 anchor=rpc('get-file',{'id':args.anchor_file})
-if sum(bool(v) for v in [args.create_name,args.compiled,args.archive,args.export_file])!=1:raise SystemExit('Select exactly one local QA operation')
+if sum(bool(v) for v in [args.create_name,args.compiled,args.archive,args.export_file,args.png_matrix])!=1:raise SystemExit('Select exactly one local QA operation')
 def end_value(response):
  if response.status_code!=200 or 'event: error' in response.text:raise SystemExit('Native archive RPC failed; response omitted')
  try:return json.loads(response.text.split('event: end\ndata: ')[1].split('\n')[0])
  except (ValueError,IndexError):raise SystemExit('Native archive RPC did not report completion') from None
+if args.png_matrix:
+ class Keyword(str):pass
+ class UUID(str):pass
+ def transit(value):
+  if isinstance(value,Keyword):return '~:'+value
+  if isinstance(value,UUID):return '~u'+value
+  if isinstance(value,dict):return ['^ ']+sum((['~:'+k,transit(v)] for k,v in value.items()),[])
+  if isinstance(value,list):return [transit(v) for v in value]
+  return value
+ payload=json.loads(pathlib.Path(args.png_matrix).read_text());pages=payload['pages']
+ if not 1<=len(pages)<=9:raise SystemExit('Bounded QA matrix requires1-9pages')
+ profile=rpc('get-profile',{});rows=[]
+ for index,page in enumerate(pages):
+  objects=anchor['data']['pagesIndex'].get(page['id'],{}).get('objects',{})
+  frame=objects.get(page['frameId'],{})
+  if frame.get('type')!='frame' or frame.get('width')!=page['width'] or frame.get('height')!=page['height'] or page['width']!=1080 or page['height'] not in [1350,1920]:raise SystemExit('Native page/frame dimensions do not match the bounded compiled fixture')
+  name='native-board-'+str(index+1)
+  parameters={'cmd':Keyword('export-shapes'),'profile-id':UUID(profile['id']),'wait':True,'exports':[{'file-id':UUID(anchor['id']),'page-id':UUID(page['id']),'object-id':UUID(page['frameId']),'type':Keyword('png'),'suffix':'','scale':1,'name':name}]}
+  response=s.post(base+'/api/export',data=json.dumps(transit(parameters)),headers={'Content-Type':'application/transit+json','Accept':'application/transit+json','Origin':base},timeout=60,allow_redirects=False)
+  if response.status_code!=200:raise SystemExit('Native exporter request failed')
+  url=response.json().get('~:uri',{}).get('~#uri','');parsed=urlparse(url)
+  if parsed.scheme!='http' or parsed.hostname!='localhost' or parsed.port!=39008 or not parsed.path.startswith('/assets/by-id/') or parsed.query or parsed.fragment or parsed.username is not None or parsed.password is not None:raise SystemExit('Unexpected PNG download target')
+  response=s.get(url,timeout=30,allow_redirects=False)
+  if response.status_code!=200 or not response.content.startswith(b'\x89PNG\r\n\x1a\n'):raise SystemExit('Native exporter did not return PNG')
+  dimensions=struct.unpack('>II',response.content[16:24])
+  if dimensions!=(page['width'],page['height']):raise SystemExit('Native PNG dimensions differ')
+  p=out/(name+'.png');p.write_bytes(response.content);p.chmod(0o600)
+  rows.append({'filename':p.name,'format':page['format'],'width':dimensions[0],'height':dimensions[1],'sha256':hashlib.sha256(response.content).hexdigest(),'bytes':len(response.content),'renderer':'Actual authenticated local Penpot exporter on saved native frame'})
+ save('png-matrix.json',rows);print('Actual native PNG matrix complete',len(rows));raise SystemExit(0)
 if args.export_file:
  file=rpc('get-file',{'id':args.export_file})
  if file['projectId']!=anchor['projectId']:raise SystemExit('Export requires the owned QA project')
  response=s.post(base+'/api/rpc/command/export-binfile',json={'file-id':file['id'],'include-libraries':True,'embed-assets':False},headers={'Accept':'text/event-stream','Origin':base},timeout=60,allow_redirects=False)
  url=end_value(response).get('~#uri','');parsed=urlparse(url)
- if parsed.scheme!='http' or parsed.hostname!='localhost' or parsed.port!=39008 or not parsed.path.startswith('/assets/by-id/') or parsed.query or parsed.fragment or parsed.username:raise SystemExit('Unexpected archive download target')
+ if parsed.scheme!='http' or parsed.hostname!='localhost' or parsed.port!=39008 or not parsed.path.startswith('/assets/by-id/') or parsed.query or parsed.fragment or parsed.username is not None or parsed.password is not None:raise SystemExit('Unexpected archive download target')
  response=s.get(url,timeout=30,allow_redirects=False)
  if response.status_code!=200:raise SystemExit('Native archive download failed')
  p=out/'native-export.penpot';p.write_bytes(response.content);p.chmod(0o600)

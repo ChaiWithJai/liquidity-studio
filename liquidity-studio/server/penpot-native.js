@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
+import { getApprovedClaims, validateCampaign } from "./source-integrity.js";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const ZERO = "00000000-0000-0000-0000-000000000000";
@@ -62,7 +63,13 @@ function fontBinding(fonts, requested, weight) {
     binding.license !== "OFL-1.1"
   )
     reject("FONT_NOT_VERIFIED");
-  return binding;
+  return {
+    family: binding.family,
+    weight: binding.weight,
+    fontId: binding.fontId,
+    sha256: binding.sha256,
+    license: binding.license,
+  };
 }
 function textShape({
   id,
@@ -139,6 +146,14 @@ export function compilePenpotNative(
     !bundle.sourceApprovals?.length
   )
     reject("MISSING_CONTRACT_PROVENANCE");
+  const sourceStory = {
+    id: bundle.storyId,
+    sourceClaims: bundle.sourceApprovals,
+  };
+  getApprovedClaims(sourceStory);
+  validateCampaign(bundle.sourceCampaign, sourceStory);
+  if (bundle.sourceCampaign.provenance?.generationId !== bundle.generationId)
+    reject("GENERATION_MISMATCH");
   if (
     bundle.tokens?.authority !== "studio" ||
     bundle.tokens.externalChanges !== "proposal_requires_studio_approval"
@@ -240,6 +255,39 @@ export function compilePenpotNative(
         )
           reject("INVALID_REEL_TIMING");
       }
+      const pageIndex = pages.filter((p) => p.format === format).length;
+      const originalFormat = bundle.sourceCampaign[format];
+      const originalPage =
+        format === "carousel"
+          ? originalFormat.slides[pageIndex]
+          : format === "reel"
+            ? originalFormat.beats[pageIndex]
+            : originalFormat;
+      if (!isDeepStrictEqual(page.semanticContent.page, originalPage))
+        reject("SOURCE_PAGE_MISMATCH");
+      const expectedHeadline =
+        format === "infographic"
+          ? originalPage.headline
+          : format === "carousel"
+            ? originalPage.title
+            : format === "story"
+              ? originalPage.hookBanner
+              : originalPage.onScreenText;
+      const expectedMetrics =
+        format === "infographic"
+          ? originalPage.statRows
+          : format === "carousel"
+            ? [originalPage.bodyMetric]
+            : format === "story"
+              ? [originalPage.keyStatHighlight]
+              : [originalPage.voiceover];
+      if (
+        page.layers[2].text !== expectedHeadline ||
+        [0, 1, 2].some(
+          (i) => page.layers[i + 3].text !== (expectedMetrics[i] || ""),
+        )
+      )
+        reject("SOURCE_LAYER_MISMATCH");
       const pageId = uuid(`${seed}/${page.id}`),
         frameId = uuid(`${seed}/${page.id}/frame`),
         componentId = uuid(`${seed}/${page.id}/component`);
