@@ -1,0 +1,61 @@
+{
+  "sourceCommit": "bc9b6b1d0d7f60593323ea647e2d25dff7dee951",
+  "js": "index-C2cHj710.js",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "dpr": 1
+  },
+  "capture": "Original BrowserOS screenshots, isolated controlled QA fixture; no production or Google-identity assertion",
+  "files": [
+    {
+      "file": "S03.png",
+      "bytes": 121475,
+      "sha256": "d77edba39f4e7521086fee2ed8cab8229c00fe6cb81b78b1ed89f90cc5946286",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "S04.png",
+      "bytes": 104852,
+      "sha256": "fd5ad072600cdc42a9bf51bb7a7c606b5fc068efebd472b04d84975794561522",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "S08.png",
+      "bytes": 127588,
+      "sha256": "3f0b29d5fb87ee8edbfd509cc8a826577701e9f9d89c1d7f29e1fc0c93e6e622",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "S19.png",
+      "bytes": 136224,
+      "sha256": "5b2f5bcdb487272f3db72e02e2bb2369918f7844ca9a7f1945d0853115205a29",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "S21-labels.png",
+      "bytes": 116062,
+      "sha256": "912e9845dcbede4e428e1f2de0ec80c6b1855ab347920178b269c944d4681327",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "S21.png",
+      "bytes": 139549,
+      "sha256": "0e5d6c517e2e1bf051856d72febf75f8afabb520ef6adba44b0d11ef6b76adae",
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "file": "S23.png",
+      "bytes": 117495,
+      "sha256": "cae6ac53e07bd8f2de840faca2e7045064a78eb41d9496fe97a97cae8bef08a4",
+      "width": 1280,
+      "height": 720
+    }
+  ]
+}
