@@ -1,6 +1,6 @@
 // Deliberate draft destinations and report handoff; never changes publishing defaults.
 import {createHash} from 'node:crypto';
-import {neutralBrandKit} from '../src/lib/neutral-brand-kit.js';
+import {neutralBrandKit} from './neutral-brand-kit.js';
 import {fail} from './auth.js';
 import {exact} from './defiant-strategy-notes.js';
 import {scopeKey} from './repository.js';
