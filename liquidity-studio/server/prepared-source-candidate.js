@@ -4,7 +4,7 @@ import { fail } from "./auth.js";
 import { brandRevision } from "./multimodal-contract.js";
 import { renderSvg, sourcePrefixForLines } from "./artwork.js";
 import { storyContentDigest } from "./story-content-revision.js";
-import { catalogForStory, SOURCE_CATALOG_REVISION, sourceCopySelection } from "./source-catalog.js";
+import { catalogForStory, SOURCE_CATALOG_REVISION, sourceCopySelection, clinicalCopyBindings } from "./source-catalog.js";
 export const PREPARATION_PURPOSE = "source-preparation";
 export function preparationInput(story, scope) {
   return {
@@ -166,10 +166,23 @@ export function candidateArtworkV2(excerpts) {
   return {artwork,sourceFieldMappings};
 }
 
+/** Reject classification or projection downgrades for newly introduced clinical sources. */
+export function assertClinicalSelectionBinding(sourceSelection,evidence,version) {
+ const pointers=Array.isArray(sourceSelection)?sourceSelection:[];
+ for(const bound of clinicalCopyBindings()) {
+  const used=pointers.some(p=>p?.id===bound.catalogId||p?.artworkSelectionId===bound.id||p?.sourceUrl===bound.sourceUrl)||
+    (Array.isArray(evidence)&&evidence.some(e=>e?.sourceUrl===bound.sourceUrl));
+  if(!used)continue;
+  if(version!==3||pointers.length!==1||pointers[0]?.id!==bound.catalogId||pointers[0]?.artworkSelectionId!==bound.id||pointers[0]?.sourceUrl!==bound.sourceUrl||pointers[0]?.kind!=='clinical'||pointers[0]?.publisher!==bound.publisher)
+   throw fail(422,'Pinned clinical source classification and projection required');
+ }
+}
+
 /** Version3 selects useful, pinned exact clauses/sentences; never truncates to fit. */
 export function candidateArtworkV3(evidence, sourceSelection, preset) {
   if (!Array.isArray(sourceSelection) || sourceSelection.length !== 1 || evidence.length !== 1)
     throw fail(422, "Exact copy requires one pinned source selection");
+  assertClinicalSelectionBinding(sourceSelection,evidence,3);
   const pointer=sourceSelection[0],selection=sourceCopySelection(pointer?.artworkSelectionId);
   const snapshot=evidence[0];
   if (!selection || pointer.id!==selection.catalogId || pointer.sourceUrl!==selection.sourceUrl ||
@@ -184,9 +197,14 @@ export function candidateArtworkV3(evidence, sourceSelection, preset) {
   };
   const heading=span(selection.headline,'label'),facts=selection.facts.map(item=>span(item.text,item.form));
   const overlays=selection.overlays.map(text=>span(text,'label'));
-  const paragraphs=snapshot.text.split('\n').filter(text=>text.startsWith(selection.captionPrefix+' '));
-  if(paragraphs.length!==1)throw fail(422,"Source context paragraph is missing or ambiguous");
-  const caption=span(paragraphs[0],'context'),context=span(selection.contextText,'label');
+  let caption;
+  if(selection.captionText!==undefined)caption=span(selection.captionText,'context');
+  else {
+   const paragraphs=snapshot.text.split('\n').filter(text=>text.startsWith(selection.captionPrefix+' '));
+   if(paragraphs.length!==1)throw fail(422,"Source context paragraph is missing or ambiguous");
+   caption=span(paragraphs[0],'context');
+  }
+  const context=span(selection.contextText,'label');
   const sourceFieldMappings=[];
   const value=(fieldPath,item)=>{sourceFieldMappings.push({fieldPath,evidenceId:item.evidenceId,startOffset:item.startOffset,textLength:item.text.length,copyForm:item.form});return item.text;};
   const editorial='Review the full source context before using this draft.';
@@ -237,6 +255,7 @@ export function buildPreparedCandidate({
   if (![1,2,3].includes(version)) throw fail(422,"Unknown retained copy projection");
   const priorExcerpts=version===3?null:excerptsFor(evidence);
   if (priorExcerpts && !priorExcerpts.length) throw fail(422, "No usable source excerpts were retrieved");
+  assertClinicalSelectionBinding(sourceSelection,evidence,version);
   const projection=version===3?candidateArtworkV3(evidence,sourceSelection,scope.preset):version===2?candidateArtworkV2(priorExcerpts):{artwork:candidateArtwork(priorExcerpts)};
   const excerpts=version===3?projection.excerpts:priorExcerpts;
   return {
@@ -281,6 +300,7 @@ export function validatePreparedCandidate(candidate, evidence) {
   if (!Array.isArray(evidence) || !evidence.length || evidence.length > 2 ||
       evidence.some(snapshot => !snapshot || typeof snapshot.text !== "string"))
     throw fail(422, "Invalid candidate evidence shape");
+  assertClinicalSelectionBinding(candidate.sourceSelection,evidence,version);
   let excerpts = version===3?null:excerptsFor(evidence);
   if (excerpts && !excerpts.length) throw fail(422, "Candidate source excerpts required");
   let projection;

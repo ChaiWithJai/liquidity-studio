@@ -10,6 +10,7 @@ import { brandRevision } from "./multimodal-contract.js";
 import { getApprovedClaims, validateCampaign } from "./source-integrity.js";
 import {
   preparationFingerprint,
+  assertClinicalSelectionBinding,
   buildPreparedCandidate,
   validateCandidateLayout,
 } from "./prepared-source-candidate.js";
@@ -56,6 +57,7 @@ export class PreparedPromotionService {
     return entry;
   }
   current(state, entry) {
+    assertClinicalSelectionBinding(entry.candidate.sourceSelection,entry.evidence,entry.candidate.artworkProjectionVersion===undefined?1:entry.candidate.artworkProjectionVersion);
     if (entry.restoredHistorical)
       throw fail(
         409,

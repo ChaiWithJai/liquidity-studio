@@ -7,7 +7,7 @@ import {
   existingPreparationPlan,
 } from "./run-source-preparation-bootstrap.js";
 process.env.NODE_ENV = "test";
-test("existing 10-story plan selects seven nonclinical pointers, reports three clinical research topics and performs no writes/dispatch", async (t) => {
+test("existing 10-story plan selects seven nonclinical and three quarantined clinical pointers and performs no writes/dispatch", async (t) => {
   const store = new DurableStore(":memory:"),
     platform = createPlatform({ store, authMode: "password" });
   await platform.ready;
@@ -33,11 +33,11 @@ test("existing 10-story plan selects seven nonclinical pointers, reports three c
   }
   assert.equal(
     results.reduce((sum, plan) => sum + plan.eligible.length, 0),
-    7,
+    10,
   );
   assert.equal(
     results.reduce((sum, plan) => sum + plan.attention.length, 0),
-    3,
+    0,
   );
   assert.ok(
     results[0].eligible.some((story) => story.storyId === "story_huda_buyback"),

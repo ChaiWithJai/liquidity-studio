@@ -1,5 +1,5 @@
 import { fail } from './auth.js';
-import { validatePreparedCandidate } from './prepared-source-candidate.js';
+import { validatePreparedCandidate, assertClinicalSelectionBinding } from './prepared-source-candidate.js';
 import { digest, exact, scanPortable } from './editor-pack.js';
 const copy = value => structuredClone(value);
 const hash = value => /^[a-f0-9]{64}$/.test(value);
@@ -66,6 +66,7 @@ export function projectPreparedHistory(entries, scope) {
         throw fail(422, 'Historical excerpt does not match retained evidence');
       return {...copy(excerpt),status:'unreviewed',clinicalReview:null};
     });
+    assertClinicalSelectionBinding(candidate.sourceSelection,evidence,candidate.artworkProjectionVersion===undefined?1:candidate.artworkProjectionVersion);
     if (candidate.artworkProjectionVersion >= 2)
       validatePreparedCandidate({...candidate,excerpts},evidence);
     const {jobId,itemId,attemptId,...historicalCandidate} = copy(candidate);
