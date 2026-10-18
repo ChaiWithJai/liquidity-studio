@@ -1,6 +1,6 @@
 {
-  "sourceSha": "83e52530f6399c99b2b98a41b569c9f19b481ab5",
-  "runId": "39147995308",
+  "sourceSha": "85203dc24aeef8fb755b0213984f05322c7d63cf",
+  "runId": "39148350588",
   "nodeVersion": "v22.23.3",
   "packageLockSha256": "596ffb87c61d33239977777768f787bc0c2fe9b6dd923145fedc5c1418be8c97",
   "sourceFiles": [
@@ -26,7 +26,7 @@
       "path": ".github/workflows/penpot-native-hook-verification.yml",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "b689f8f3cbd79fc52e5587cc2eb819a9c9958d5b"
+      "gitObject": "94a30123c57d3b87dfb9e05d49ed1d38deb00ef7"
     },
     {
       "path": ".github/workflows/verify.yml",
@@ -2465,6 +2465,12 @@
       "gitObject": "1e1932f998247c2e4c20ae863ee96239683fa416"
     },
     {
+      "path": "docs/investigations/native-shared-design/hosted-build.json",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "12bd4898d4912f3063ae4befcf5adac412704e38"
+    },
+    {
       "path": "docs/investigations/nonclinical-seed-sources/README.md",
       "mode": "100644",
       "type": "blob",
@@ -2900,7 +2906,7 @@
       "path": "docs/specs/identity-tenant-access-native-editor.md",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "afde74b5ff51b9098b155e0273c7662148e9c6f2"
+      "gitObject": "2d1ff1e1cf2302ad2acf7b6e2b3e4c2ed0a171fa"
     },
     {
       "path": "docs/specs/locked-brand-recovery-ui.md",
@@ -2981,16 +2987,16 @@
       "gitObject": "af74af0074aa714da0ea5e6fd85cc3be716c61f8"
     },
     {
-      "path": "liquidity-studio/dist/assets/index-CpiKNAvd.css",
+      "path": "liquidity-studio/dist/assets/index-C6DCGnmK.js",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "9958d214a034a5d0bc30edecaa1631aa9b15e9c7"
+      "gitObject": "bab5a690eb773d03bccc7c15d87864532cfa21e8"
     },
     {
-      "path": "liquidity-studio/dist/assets/index-DpcOaK3C.js",
+      "path": "liquidity-studio/dist/assets/index-DH2uRHQn.css",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "4a04f47c0c3045fb47f3fd2f151043cc750c8415"
+      "gitObject": "e6d65122a2025075f58f92c20667cf288bcbc293"
     },
     {
       "path": "liquidity-studio/dist/fonts/DejaVuSans-Bold.ttf",
@@ -3068,7 +3074,7 @@
       "path": "liquidity-studio/dist/index.html",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "3c20ef2f346a077cd3333d23877bf0cab31a7007"
+      "gitObject": "cd46b39a91acaca6f13060ab7e7496b467f05551"
     },
     {
       "path": "liquidity-studio/docs/decisions/local-first-pilot.md",
@@ -4640,7 +4646,7 @@
       "path": "liquidity-studio/src/components/PenpotConnection.svelte",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "6e2cc68e9d0145d32ca9693d4a605317f20a75e3"
+      "gitObject": "197321f4e3611b2e7a2e2a88a793a85fedac10a3"
     },
     {
       "path": "liquidity-studio/src/components/PenpotDesignAction.svelte",
@@ -5672,19 +5678,19 @@
       "path": "tools/penpot-native-access-bootstrap/README.md",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "fd2b9c791ffed57e282431cc93d584bf3d7fbbfd"
+      "gitObject": "a98c27c83d0763f73039da3d247af95a9a53451b"
     },
     {
       "path": "tools/penpot-native-access-bootstrap/configuration.clj",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "ca22fff04e9d1d2c84b6ce5a6f8363f73f1b6ee4"
+      "gitObject": "46c821e8091623d10ffc1cbafc9a849ce13e5b31"
     },
     {
       "path": "tools/penpot-native-access-bootstrap/configuration_test.clj",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "72584e6b96829f08156f19b64a08be96d6276a96"
+      "gitObject": "02cc8e3d323c4488ad2c46d6e393a5eb343cf4c8"
     },
     {
       "path": "tools/penpot-native-access-bootstrap/main.patch",
@@ -5696,7 +5702,7 @@
       "path": "tools/penpot-native-access-bootstrap/upstream-source.json",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "84e11ab6f34b0985005192c7e35f5241452f38aa"
+      "gitObject": "d98292ccbbe6b68e19749d84d78e65705fcaf713"
     },
     {
       "path": "tools/penpot-native-connect/README.md",
@@ -5714,7 +5720,7 @@
       "path": "tools/penpot-native-hook-verification/README.md",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "03d161a2981391eb77855789aace429178f8acf2"
+      "gitObject": "27e8b93084ade58899ce440d0cdbb2784f035fdc"
     },
     {
       "path": "tools/penpot-native-hook-verification/kaocha.edn",
@@ -5726,7 +5732,7 @@
       "path": "tools/penpot-native-hook-verification/verify.sh",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "70ea2c7e5be29ab75f5c506f102a66894d14f9e0"
+      "gitObject": "c892f1570a55f2e3a15c704bbfd22a65033be326"
     },
     {
       "path": "tools/penpot-private-asset-access/README.md",
@@ -5744,13 +5750,13 @@
       "path": "tools/penpot-private-asset-access/assets.clj",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "f7c90c068dff923b5856f4d2871774383c6f771b"
+      "gitObject": "fd2b54e921a56095f7b46ded565bde071b3ae28a"
     },
     {
       "path": "tools/penpot-private-asset-access/assets.patch",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "790e88b423c1110e16e429b1236e713e16505f20"
+      "gitObject": "ed4f646a919ef1a06cfdb3c5668b07a340a349ec"
     },
     {
       "path": "tools/penpot-private-asset-access/assets_test.clj",
@@ -5762,7 +5768,7 @@
       "path": "tools/penpot-private-asset-access/upstream-source.json",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "3f5fb847c1afcba37f3904ebc085fa0b54f14442"
+      "gitObject": "53e133f57b799187edc4c5934bda22c304231cb3"
     },
     {
       "path": "tools/penpot-private-ingress/server.conf",
@@ -5773,14 +5779,14 @@
   ],
   "files": [
     {
-      "path": "assets/index-C6DCGnmK.js",
-      "bytes": 457651,
-      "sha256": "c683312442d6111b6353488fc5f8b9c4cf4b1a25d4677702eac3774f0f020b4b"
+      "path": "assets/index-BYHZzEcG.js",
+      "bytes": 457802,
+      "sha256": "d8515f640eb8bd2e686ba1d35d5d57cb0ac4088bc19fe9894ac1ad64ba9f695d"
     },
     {
-      "path": "assets/index-DH2uRHQn.css",
-      "bytes": 49442,
-      "sha256": "1da60ab7c2d424ab87088d1a706d31ac3d9f472a35ba453551067cf9469945ed"
+      "path": "assets/index-CM2IsFxW.css",
+      "bytes": 49587,
+      "sha256": "6f5d5617602473c421ba110bd6142a7a5c10a91e95d66bcd57c10975e6c9a511"
     },
     {
       "path": "fonts/DejaVuSans-Bold.ttf",
@@ -5845,7 +5851,7 @@
     {
       "path": "index.html",
       "bytes": 455,
-      "sha256": "44082cb0007ef5dbfd0c7e43fd2645f9ccf84ee98ecf11f0f06d0dad47df5202"
+      "sha256": "f162e0336a67fa6677bc721e5d4a5e8df48a1bde28585bc6d8b112023ba6a706"
     }
   ],
   "scope": "Build artifact only; required Verify checks must pass on the final PR head."
