@@ -35,3 +35,10 @@ test('one native identity cannot connect two Studio people; explicit owner disco
 test('current identity and session are checked inside the final transaction, not just preflight authorize',async t=>{
  const f=await setup(t),request=await issue(f);await proof(f,request);const authorize=f.identity.authorize.bind(f.identity);f.identity.authorize=async(...args)=>{const result=await authorize(...args);f.store.update('identity',state=>{state.users.find(x=>x.id===f.founder.user.id).authVersion=1;return state;});return result;};await assert.rejects(f.service.complete(f.founder.user,scope,digest(f.founder.token),{challengeId:request.id}),{status:401});assert.equal(f.store.get(f.service.pairKey(f.founder.user.id)).connection,null);
 });
+
+test('issuer descriptor comes from current identity and scope without consuming or activating challenge',async t=>{
+ const f=await setup(t),request=await issue(f),input={challenge:request.token,nativeInstanceId};f.store.update('identity',state=>{state.users.find(x=>x.id===f.founder.user.id).username='Founder <tag>';return state;});
+ const description=await f.service.describeChallenge(pairingKey,input);assert.equal(description.studioActorLabel,'Founder <tag>');assert.equal(description.brandLabel,'Chai With Jai');assert.equal(description.expiresAt,request.expiresAt);assert.equal((await f.service.status(f.founder.user,scope,digest(f.founder.token))).state,'pending');
+ await assert.rejects(f.service.describeChallenge('b'.repeat(43),input),{status:403});await assert.rejects(f.service.describeChallenge(pairingKey,{...input,nativeInstanceId:otherProfile}),{status:400});await assert.rejects(f.service.describeChallenge(pairingKey,{...input,challenge:'B'.repeat(43)}),{status:410});
+ f.tick(120000);await assert.rejects(f.service.describeChallenge(pairingKey,input),{status:410});
+});

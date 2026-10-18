@@ -45,6 +45,19 @@ export class PenpotProfilePairing {
    pair.pending=[...active,structuredClone(record)];result={id,expiresAt,nativeConnectUrl:`${this.nativeOrigin}/studio-connect?challenge=${challenge}`};return [identity,pair,record,...values.slice(3)];
   });return result;
  }
+ async describeChallenge(presentedKey,input){
+  if(typeof presentedKey!=='string'||!SECRET.test(presentedKey)||!timingSafeEqual(Buffer.from(presentedKey),Buffer.from(this.pairingKey)))throw fail(403,'Private native pairing request required');
+  if(!input||Object.keys(input).sort().join(',')!=='challenge,nativeInstanceId'||typeof input.challenge!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(input.challenge)||input.nativeInstanceId!==this.nativeInstanceId)throw fail(400,'Connection request invalid');
+  const digest=hash(input.challenge),key=this.challengeKey(digest),prior=await this.store.get(key);if(!prior)throw fail(410,'Connection request expired or unavailable');let result;
+  await this.store.transact(this.keys(prior.actorId,prior.sessionDigest,[key]),values=>{
+   const [identity,pair,record]=values;const actor=this.check(identity,prior.actorId,prior.scope,prior.sessionDigest,values.at(-1),prior.authVersion);this.live(record,pair,prior.actorId,prior.scope,prior.sessionDigest,digest);
+   if(!['pending','native-confirmed'].includes(record.status))throw fail(409,'Connection request is no longer pending');
+   const organization=identity.organizations.find(x=>x.id===record.scope.organizationId),brand=organization.brands.find(x=>x.id===record.scope.brandId);
+   const label=value=>typeof value==='string'&&value.trim()&&value.length<=200&&!/[\x00-\x1f\x7f]/.test(value)?value.trim():null;
+   const studioActorLabel=label(actor.username);if(!studioActorLabel)throw fail(409,'Studio account label unavailable');
+   result={studioActorLabel,...(label(organization.name)?{organizationLabel:label(organization.name)}:{}),...(label(brand.name)?{brandLabel:label(brand.name)}:{}),expiresAt:record.expiresAt};return values;
+  });return result;
+ }
  async receiveProof(presentedKey,input){
   if(typeof presentedKey!=='string'||!SECRET.test(presentedKey)||!timingSafeEqual(Buffer.from(presentedKey),Buffer.from(this.pairingKey)))throw fail(403,'Private native pairing proof required');
   if(!input||Object.keys(input).some(k=>!['challenge','nativeInstanceId','nativeProfileId','nativeProfileName'].includes(k))||typeof input.challenge!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(input.challenge)||input.nativeInstanceId!==this.nativeInstanceId||!UUID.test(input.nativeProfileId||'')||input.nativeProfileId==='00000000-0000-0000-0000-000000000000'||(input.nativeProfileName!==undefined&&(typeof input.nativeProfileName!=='string'||!input.nativeProfileName.trim()||input.nativeProfileName.length>120||/[\x00-\x1f\x7f]/.test(input.nativeProfileName))))throw fail(400,'Native profile proof invalid');

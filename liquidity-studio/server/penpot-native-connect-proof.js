@@ -27,8 +27,8 @@ function privateGateway(req,key){const actual=req.headers['x-studio-native-gatew
 function page(content){return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect native editor</title><style>body{font:17px system-ui;line-height:1.5;max-width:34rem;margin:12vh auto;padding:24px;color:#202020}button,a{font:inherit}button{padding:10px 18px}</style><main>${content}</main></html>`;}
 async function form(req){if(req.headers['content-type']!=='application/x-www-form-urlencoded')throw fail(415,'Connection form required');let size=0;const chunks=[];const timer=setTimeout(()=>req.destroy(),5000);try{for await(const chunk of req){size+=chunk.length;if(size>128)throw fail(413,'Connection request too large');chunks.push(chunk);}}finally{clearTimeout(timer);}const body=new URLSearchParams(Buffer.concat(chunks).toString('utf8'));if([...body.keys()].join(',')!=='challenge')throw fail(400,'Connection request invalid');return nativeConnectChallenge(body.get('challenge'));}
 /** Gateway key and proof sink are server-only constructor dependencies. Never mount publicly without the gateway. */
-export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOrigin,recordProof,readProfile=createNativeProfileProof()}={}){
- if(typeof gatewayKey!=='string'||!/^[a-f0-9]{64}$/.test(gatewayKey)||!UUID.test(nativeInstanceId||'')||typeof recordProof!=='function')throw Error('Private native connection dependencies required');
+export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOrigin,recordProof,describeChallenge,readProfile=createNativeProfileProof()}={}){
+ if(typeof gatewayKey!=='string'||!/^[a-f0-9]{64}$/.test(gatewayKey)||!UUID.test(nativeInstanceId||'')||typeof recordProof!=='function'||typeof describeChallenge!=='function')throw Error('Private native connection dependencies required');
  const studio=new URL(studioOrigin);if(!['http:','https:'].includes(studio.protocol)||studio.origin!==studioOrigin||studio.username||studio.password)throw Error('Fixed Studio origin required');
  return async(req,res)=>{
   res.setHeader('Cache-Control','private, no-store');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
@@ -36,8 +36,10 @@ export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOr
    privateGateway(req,gatewayKey);const url=new URL(req.url,ORIGINS.loopback);
    let html;
    if(req.method==='GET'&&url.pathname==='/studio-connect'&&[...url.searchParams.keys()].join(',')==='challenge'){
-    const challenge=nativeConnectChallenge(url.searchParams.get('challenge'));
-    html=page(`<h1>Connect your native editor</h1><p>Connect the native account currently signed in here to your pending Studio request. This establishes identity only. It does not grant access to brand designs.</p><form method="post" action="/studio-connect/prove"><input type="hidden" name="challenge" value="${escape(challenge)}"><button type="submit">Connect this native account</button></form><p>You will finish the connection in the same Studio session where you started.</p>`);
+    const challenge=nativeConnectChallenge(url.searchParams.get('challenge')),issuer=await describeChallenge(challenge);
+    if(typeof issuer?.studioActorLabel!=='string'||!issuer.studioActorLabel.trim()||issuer.studioActorLabel.length>200||!Number.isFinite(issuer.expiresAt))throw fail(502,'Studio connection identity unavailable');
+    const scopeLabel=[issuer.organizationLabel,issuer.brandLabel].filter(x=>typeof x==='string'&&x.length<=200).map(escape).join(' · ');
+    html=page(`<h1>Connect your native editor</h1><p>Connect your Penpot account to Studio account <strong>${escape(issuer.studioActorLabel)}</strong>.</p>${scopeLabel?`<p>${scopeLabel}</p>`:''}<p>This request expires at ${escape(new Date(issuer.expiresAt).toISOString())}.</p><p>Connect the native account currently signed in here to this Studio request. This establishes identity only. It does not grant access to brand designs.</p><form method="post" action="/studio-connect/prove"><input type="hidden" name="challenge" value="${escape(challenge)}"><button type="submit">Connect this native account</button></form><p>You will finish the connection in the same Studio session where you started.</p>`);
    }else if(req.method==='POST'&&url.pathname==='/studio-connect/prove'&&!url.search){
     if(req.headers['x-studio-native-origin']!==ORIGINS.loopback)throw fail(403,'Use the native connection page');
     const challenge=await form(req),profile=await readProfile(req.headers['x-studio-native-session']);
@@ -61,5 +63,18 @@ export function createNativePairingProofSink({callbackUrl,pairingKey,fetchImpl=f
   try{for(;;){const part=await reader.read();if(part.done){done=true;break;}size+=part.value.byteLength;if(size>4096)throw fail(502,'Studio connection acknowledgement exceeded its bound');chunks.push(part.value);}}
   finally{if(!done)await reader.cancel().catch(()=>{});reader.releaseLock();}
   let result;try{result=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw fail(502,'Studio connection acknowledgement invalid');}if(result?.recorded!==true)throw fail(502,'Studio connection was not recorded');return {recorded:true};
+ };
+}
+
+/** Private read-only issuer lookup. No native cookie, browser label or activation. */
+export function createNativePairingChallengeReader({callbackUrl,pairingKey,nativeInstanceId,fetchImpl=fetch}={}){
+ const url=new URL(callbackUrl);if(url.pathname!=='/api/native/penpot/pairing/challenge'||url.search||url.hash||url.username||url.password||!(url.protocol==='https:'||(url.protocol==='http:'&&['localhost','127.0.0.1'].includes(url.hostname)))||!UUID.test(nativeInstanceId||'')||typeof pairingKey!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(pairingKey))throw Error('Fixed private Studio challenge callback required');
+ return async challenge=>{
+  nativeConnectChallenge(challenge);
+  const response=await fetchImpl(url.href,{method:'POST',headers:{'Content-Type':'application/json','X-Studio-Native-Pairing-Key':pairingKey},body:JSON.stringify({challenge,nativeInstanceId}),redirect:'error',signal:AbortSignal.timeout(4000)});
+  if(response.status!==200){await response.body?.cancel().catch(()=>{});throw fail([400,403,409,410,429].includes(response.status)?response.status:502,'Studio connection request unavailable');}
+  const reader=response.body?.getReader();if(!reader)throw fail(502,'Studio connection identity missing');let size=0,done=false;const chunks=[];
+  try{for(;;){const part=await reader.read();if(part.done){done=true;break;}size+=part.value.byteLength;if(size>4096)throw fail(502,'Studio connection identity exceeds its bound');chunks.push(part.value);}}finally{if(!done)await reader.cancel().catch(()=>{});reader.releaseLock();}
+  let result;try{result=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw fail(502,'Studio connection identity invalid');}return result;
  };
 }
