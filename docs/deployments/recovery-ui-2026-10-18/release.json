@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "source": "825120ee71ac6d81b6bb37cceed548b27252b975",
+  "localImage": "sha256:1bec4e60638b808581be653f9dcd3954112862231277267bd2fd487088b852b5",
+  "registryDigest": "sha256:d633d58ebd34a9de493017e6ba45546a569a772874c797ad582f22801cc1943a",
+  "cloudRevision": "liquidity-studio-00027-wel",
+  "trafficPercent": 100,
+  "pilotAliasRevision": "liquidity-studio-00027-wel",
+  "frontend": "/assets/index-C-vjj5Qf.js",
+  "observations": [
+    {
+      "origin": "http://localhost:3001",
+      "readiness": 200,
+      "anonymousWorkspace": 401,
+      "authMode": "google"
+    },
+    {
+      "origin": "https://liquidity-studio-x4fdad2sga-uk.a.run.app",
+      "readiness": 200,
+      "anonymousWorkspace": 401,
+      "authMode": "google"
+    }
+  ],
+  "localBackup": {
+    "bytes": 434176,
+    "sha256": "7aeacf546e33dc02d220d1e910461c624391b5f327718fcf4636938b11fde54d",
+    "integrity": "ok"
+  },
+  "firestoreBackup": {
+    "done": true,
+    "state": "SUCCESSFUL",
+    "endTime": "2026-10-18T08:33:01.039976Z"
+  },
+  "configurationChanges": "image only; private canonical Compose reconciled after deployed configuration equality check"
+}

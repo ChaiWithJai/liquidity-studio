@@ -1,4 +1,5 @@
 import { fail } from "./auth.js";
+import { penpotRasterProof } from "./penpot-raster-proof.js";
 const ENDPOINTS = Object.freeze({
   loopback: "http://localhost:39008/api/rpc/command/",
   "docker-host": "http://host.docker.internal:39008/api/rpc/command/",
@@ -13,7 +14,7 @@ export function createPenpotLocalSnapshot({
   if (!Object.hasOwn(ENDPOINTS, transportMode))
     throw new Error("Unsupported fixed native transport mode");
   const BASE = ENDPOINTS[transportMode];
-  return async (input, { manifest, colors }) => {
+  return async (input, { manifest, colors, raster = null }) => {
     const session = sessions.get(input.binding.ownerPrincipal);
     if (
       !session ||
@@ -65,6 +66,41 @@ export function createPenpotLocalSnapshot({
     const tokenValues = [0, 1, 2, 3].map((i) =>
       file.data.tokensLib?.Studio?.studio?.["color" + i]?.$value?.toLowerCase(),
     );
+    const imageBoards = [
+      ...new Map(
+        (manifest.layers || []).flatMap((layer) => {
+          const page = file.data.pagesIndex[layer.pageId];
+          const frameId = page?.objects?.[layer.nativeId]?.frameId;
+          const frame = page?.objects?.[frameId];
+          return frame?.type === "frame"
+            ? [
+                [
+                  `${layer.pageId}:${frameId}`,
+                  {
+                    pageId: layer.pageId,
+                    frameId,
+                    name: frame.name,
+                    x: frame.x,
+                    y: frame.y,
+                    width: frame.width,
+                    height: frame.height,
+                  },
+                ],
+              ]
+            : [];
+        }),
+      ).values(),
+    ];
+    if (
+      input.command?.operation === "import-private-raster" &&
+      !manifest.layers.some(
+        (layer) =>
+          layer.pageId === input.command.pageId &&
+          file.data.pagesIndex[layer.pageId]?.objects?.[layer.nativeId]
+            ?.frameId === input.command.frameId,
+      )
+    )
+      throw fail(403, "Image board is outside the registered source layout");
     let boundPaintsMatch =
       Array.isArray(manifest.layers) && manifest.layers.length > 0;
     for (const layer of manifest.layers || []) {
@@ -113,6 +149,10 @@ export function createPenpotLocalSnapshot({
       revision: file.revn,
       tokenValues,
       boundPaintsMatch,
+      imageBoards,
+      ...(input.command?.operation === "import-private-raster"
+        ? penpotRasterProof(file, input.command, raster)
+        : {}),
     };
   };
 }

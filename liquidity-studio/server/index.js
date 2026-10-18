@@ -1,3 +1,4 @@
+import { readPenpotExportBody } from "./penpot-native-export.js";
 import { editorRestoreStatus } from "./editor-recovery.js";
 import {
   EditorPackService,
@@ -336,6 +337,126 @@ export function createHttpServer(
         return stream.pipe(res);
       }
       if (platform?.ready) await platform.ready;
+      if (
+        route === "/api/internal/penpot-asset-authorize" &&
+        req.method === "GET"
+      ) {
+        if (
+          !penpotEnabled ||
+          trustedTestMode ||
+          process.env.K_SERVICE ||
+          process.env.STUDIO_PENPOT_PRIVATE_INGRESS !== "true" ||
+          platform.identity.configuration?.mode !== "google" ||
+          url.search
+        )
+          throw fail(404, "Not found");
+        const runtime = await platform.getPenpotRuntime();
+        try {
+          await runtime.authorizeMediaRead({
+            path: req.headers["x-studio-native-path"],
+            cookie: req.headers["x-studio-native-session"],
+          });
+        } catch (error) {
+          // nginx auth_request accepts only 2xx/401/403. Unknown failures stay
+          // unavailable; expected missing/foreign media is an explicit denial.
+          if ([400, 401, 403, 404, 409].includes(error.status))
+            throw fail(403, "Native asset access denied");
+          throw error;
+        }
+        res.writeHead(204, {
+          "Cache-Control": "private, no-store",
+          Vary: "Cookie",
+        });
+        return res.end();
+      }
+      const embeddedPenpotSvg =
+        /^\/api\/internal\/penpot-embedded-svg\/([a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})$/.exec(
+          route,
+        );
+      if (embeddedPenpotSvg) {
+        if (
+          !penpotEnabled ||
+          trustedTestMode ||
+          process.env.K_SERVICE ||
+          process.env.STUDIO_PENPOT_PRIVATE_INGRESS !== "true" ||
+          platform.identity.configuration?.mode !== "google" ||
+          url.search
+        )
+          throw fail(404, "Not found");
+        if (req.method !== "GET")
+          throw fail(405, "Native SVG method unsupported");
+        const runtime = await platform.getPenpotRuntime();
+        const result = await runtime.nativeExports.readEmbedded({
+          id: embeddedPenpotSvg[1],
+          cookie: req.headers["x-studio-native-session"],
+        });
+        res.writeHead(200, {
+          "Content-Type": "image/svg+xml",
+          "Content-Disposition": `attachment; filename="${result.filename.replace(/[^a-zA-Z0-9._ -]/g, "_")}"`,
+          "Cache-Control": "private, no-store",
+          "Content-Length": result.bytes.length,
+        });
+        return res.end(result.bytes);
+      }
+      if (
+        [
+          "/api/internal/penpot-native-export",
+          "/api/internal/penpot-export-relay-authorize",
+        ].includes(route)
+      ) {
+        if (
+          !penpotEnabled ||
+          trustedTestMode ||
+          process.env.K_SERVICE ||
+          process.env.STUDIO_PENPOT_PRIVATE_INGRESS !== "true" ||
+          platform.identity.configuration?.mode !== "google" ||
+          url.search
+        )
+          throw fail(404, "Not found");
+        const runtime = await platform.getPenpotRuntime();
+        if (
+          route === "/api/internal/penpot-export-relay-authorize" &&
+          req.method === "GET"
+        ) {
+          let result;
+          try {
+            result = await runtime.nativeExports.authorizeRelay({
+              capability: req.headers["x-studio-export-relay"],
+              cookie: req.headers["x-studio-native-session"],
+              method: req.headers["x-studio-export-method"],
+              path: req.headers["x-studio-export-path"],
+              contentType: req.headers["x-studio-export-content-type"],
+              bodyHash: req.headers["x-studio-export-body-sha256"],
+            });
+          } catch (error) {
+            if (error.status >= 400 && error.status < 500)
+              throw fail(403, "Native export relay denied");
+            throw error;
+          }
+          res.writeHead(204, {
+            "Cache-Control": "private, no-store",
+            ...(result.body ? { "X-Studio-Export-Body": result.body } : {}),
+          });
+          return res.end();
+        }
+        if (
+          route === "/api/internal/penpot-native-export" &&
+          req.method === "POST"
+        ) {
+          const result = await runtime.nativeExports.execute({
+            body: await readPenpotExportBody(req),
+            contentType: req.headers["content-type"],
+            cookie: req.headers["x-studio-native-session"],
+            origin: req.headers["x-studio-native-origin"],
+          });
+          res.writeHead(200, {
+            "Content-Type": result.contentType,
+            "Cache-Control": "private, no-store",
+          });
+          return res.end(result.body);
+        }
+        throw fail(405, "Native export method unsupported");
+      }
       if (route === "/api/internal/operator-job" && req.method === "POST") {
         const configuration = jobDispatcherConfiguration();
         if (
@@ -571,10 +692,12 @@ export function createHttpServer(
                       route,
                     )
                   ? 6 * 1024 * 1024
-                  : nativeEditorEnabled &&
-                      route.startsWith("/api/studio/native-editor/")
+                  : penpotEnabled && route === "/api/studio/penpot/assets"
                     ? 768 * 1024
-                    : 262144,
+                    : nativeEditorEnabled &&
+                        route.startsWith("/api/studio/native-editor/")
+                      ? 768 * 1024
+                      : 262144,
               portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
@@ -976,7 +1099,10 @@ export function createHttpServer(
           /^\/api\/studio\/native-editor\/assets\/([a-f0-9]{32})\/resolve$/,
         );
         if (nativeAssetResolve && req.method === "POST")
-          return json(200, await service.resolveAsset(user, nativeAssetResolve[1], body));
+          return json(
+            200,
+            await service.resolveAsset(user, nativeAssetResolve[1], body),
+          );
         const nativeAssetMatch = route.match(
           /^\/api\/studio\/native-editor\/assets\/([a-f0-9]{32})$/,
         );
@@ -1073,8 +1199,14 @@ export function createHttpServer(
             200,
             await service.refreshBrandTokens(user, brandTokensMatch[1], body),
           );
-        const rebindMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/(rebind-plan|rebind)$/);
-        if (rebindMatch && rebindMatch[2] === "rebind-plan" && req.method === "GET")
+        const rebindMatch = route.match(
+          /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/(rebind-plan|rebind)$/,
+        );
+        if (
+          rebindMatch &&
+          rebindMatch[2] === "rebind-plan" &&
+          req.method === "GET"
+        )
           return json(200, await service.rebindPlan(user, rebindMatch[1]));
         if (rebindMatch && rebindMatch[2] === "rebind" && req.method === "POST")
           return json(201, await service.rebind(user, rebindMatch[1], body));
@@ -1216,6 +1348,51 @@ export function createHttpServer(
           throw fail(404, "Not found");
         const runtime = await platform.getPenpotRuntime();
         const service = runtime.forScope(scope);
+        const imageContext = () => {
+          const value = url.searchParams.get("context");
+          if (!value || value.length > 4096)
+            throw fail(400, "Current registered image context required");
+          try {
+            return JSON.parse(value);
+          } catch {
+            throw fail(400, "Invalid registered image context");
+          }
+        };
+        if (route === "/api/studio/penpot/assets" && req.method === "GET") {
+          const context = imageContext();
+          await service.imageContext(user, context);
+          const catalog = await service.assets.listAssets(user);
+          const assets = await Promise.all(
+            catalog.results.map((asset) =>
+              service.assets.assetForNativeTransfer(user, asset.id, false),
+            ),
+          );
+          await service.imageContext(user, context);
+          return json(200, { assets });
+        }
+        if (route === "/api/studio/penpot/assets" && req.method === "POST") {
+          if (!body || Object.keys(body).sort().join() !== "asset,context")
+            throw fail(400, "Saved image and registered context required");
+          await service.imageContext(user, body.context);
+          const asset = await service.assets.uploadAsset(user, body.asset);
+          return json(
+            201,
+            await service.assets.assetForNativeTransfer(user, asset.id, false),
+          );
+        }
+        const privateAsset = route.match(
+          /^\/api\/studio\/penpot\/assets\/([a-f0-9]{32})$/,
+        );
+        if (privateAsset && req.method === "GET") {
+          const context = imageContext();
+          await service.imageContext(user, context);
+          const asset = await service.assets.assetForNativeTransfer(
+            user,
+            privateAsset[1],
+          );
+          await service.imageContext(user, context);
+          return json(200, asset);
+        }
         if (route === "/api/studio/penpot/bindings" && req.method === "GET")
           return json(200, await runtime.bindings(user, scope));
         if (route === "/api/studio/penpot/bindings" && req.method === "POST")
