@@ -1,3 +1,4 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { createPlatform } from "./platform.js";
@@ -33,6 +34,7 @@ export async function runWorker({
   platform = createPlatform(),
   once = false,
   signal,
+  idleMs = 1000,
 } = {}) {
   const configuration = jobDispatcherConfiguration();
   if (
@@ -42,6 +44,7 @@ export async function runWorker({
     throw new Error(
       "Explicit local durable worker mode required; Cloud Run uses Cloud Tasks",
     );
+  if (signal?.aborted) return;
   // A restored SQLite file cannot distinguish pending work from an old installation.
   // Pause preexisting queued work on each process start unless an operator opts in.
   if (process.env.STUDIO_JOB_RESUME_PENDING !== "true") {
@@ -64,21 +67,17 @@ export async function runWorker({
         return state;
       });
   }
+  if (signal?.aborted) return;
   const workerId = randomUUID();
   do {
     await workerTick(platform, workerId);
-    if (!once && !signal?.aborted)
-      await new Promise((resolve) => {
-        const timer = setTimeout(resolve, 1000);
-        signal?.addEventListener(
-          "abort",
-          () => {
-            clearTimeout(timer);
-            resolve();
-          },
-          { once: true },
-        );
-      });
+    if (!once && !signal?.aborted) {
+      try {
+        await delay(idleMs, undefined, { signal });
+      } catch (error) {
+        if (error.name !== "AbortError") throw error;
+      }
+    }
   } while (!once && !signal?.aborted);
 }
 if (
