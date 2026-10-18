@@ -6,6 +6,14 @@ on:
         description: Exact reviewed Studio source commit
         required: true
         type: string
+      recipient_public_key_base64:
+        description: Operator RSA public PEM encoded base64 (private key stays local)
+        required: true
+        type: string
+      recipient_sha256:
+        description: SHA256 of recipient public SPKI DER, verified locally
+        required: true
+        type: string
       confirmation:
         description: Type PRIVATE_LOCAL_REVIEW (no model, publication or deployment)
         required: true
@@ -61,9 +69,17 @@ jobs:
         run: |
           node liquidity-studio/scripts/record-local-native-assets.mjs "$GITHUB_WORKSPACE/liquidity-studio/dist"
           node liquidity-studio/scripts/package-native-editor-artifact.mjs "$GITHUB_WORKSPACE/private-native-artifact" "$SOURCE_SHA"
+      - name: Encrypt native delivery for the explicit operator recipient
+        env:
+          NATIVE_RECIPIENT_PUBLIC_KEY_BASE64: ${{ inputs.recipient_public_key_base64 }}
+          NATIVE_RECIPIENT_SHA256: ${{ inputs.recipient_sha256 }}
+        run: |
+          mkdir encrypted-native-artifact
+          tar -czf "$RUNNER_TEMP/native-editor.tar.gz" -C private-native-artifact .
+          node liquidity-studio/scripts/native-artifact-envelope.mjs seal "$RUNNER_TEMP/native-editor.tar.gz" encrypted-native-artifact/native-editor.tar.gz.enc encrypted-native-artifact/envelope.json
       - uses: actions/upload-artifact@v4
         with:
-          name: private-native-editor-${{ inputs.source_sha }}
-          path: private-native-artifact/
+          name: encrypted-native-editor-${{ inputs.source_sha }}
+          path: encrypted-native-artifact/
           retention-days: 3
           if-no-files-found: error
