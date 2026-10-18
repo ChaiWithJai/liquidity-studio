@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createPenpotFontPack, validatePenpotFontPack } from './penpot-font-pack.js';
-import { PenpotFontRecovery, createPenpotFontRecoveryTransport } from './penpot-font-recovery.js';
+import { PenpotFontRecovery, createPenpotFontRecoveryTransport, fontRecoveryEndpoints } from './penpot-font-recovery.js';
 
 const ids = {
   profile: '11111111-1111-4111-8111-111111111111', team: '22222222-2222-4222-8222-222222222222',
@@ -129,4 +129,63 @@ test('fixed transport sends official chunked multipart and rejects unrecognized 
   assert.equal(await r.options.body.get('content').text(), 'owned');
   await assert.rejects(t.rpc('delete-font', {}), /Unsupported/);
   await assert.rejects(t.readAsset('../foreign'), /Invalid/);
+});
+
+
+test('private loopback destination and operator endpoints retain defaults and reject public or ambiguous origins',()=>{
+  assert.deepEqual(fontRecoveryEndpoints(),{nativeOrigin:'http://localhost:39008',operatorPort:39045,operatorOrigin:'http://127.0.0.1:39045'});
+  assert.deepEqual(fontRecoveryEndpoints({nativeOrigin:'http://127.0.0.1:39046',operatorPort:39049}),{nativeOrigin:'http://127.0.0.1:39046',operatorPort:39049,operatorOrigin:'http://127.0.0.1:39049'});
+  for(const nativeOrigin of ['https://localhost:39046','http://remote.example:39046','http://127.0.0.2:39046','http://127.1:39046','http://localhost','http://localhost:80','http://localhost:39046/','http://localhost:39046/path','http://localhost:39046?next=other','http://localhost:39046#fragment','http://user:secret@localhost:39046','http://[::1]:39046',null,46])assert.throws(()=>fontRecoveryEndpoints({nativeOrigin}),{status:422});
+  for(const operatorPort of [0,80,1023,65536,39049.5,'39049',null])assert.throws(()=>fontRecoveryEndpoints({operatorPort}),{status:422});
+});
+
+test('configured native origin binds every official RPC, multipart and asset request without changing defaults',async()=>{
+  const calls=[],nativeOrigin='http://127.0.0.1:39046';
+  const transport=createPenpotFontRecoveryTransport({cookie:'private-owned-session',nativeOrigin,fetchImpl:async(url,options)=>{calls.push({url,options});assert.equal(options.headers.Origin,nativeOrigin);assert.equal(options.headers.Cookie,'private-owned-session');assert.equal(options.redirect,'error');return new Response(url.includes('/assets/')?Buffer.from('original'):'{}');}});
+  await transport.rpc('get-profile',{});await transport.rpc('upload-chunk',{'session-id':ids.session,index:0,content:Buffer.from('owned'),filename:'font.ttf',mime:'font/ttf'});await transport.readAsset(ids.font);
+  assert.deepEqual(calls.map(x=>x.url),[nativeOrigin+'/api/rpc/command/get-profile',nativeOrigin+'/api/rpc/command/upload-chunk',nativeOrigin+'/assets/by-id/'+ids.font]);
+  assert.equal(calls[1].options.body.get('session-id'),ids.session);
+  assert.throws(()=>createPenpotFontRecoveryTransport({cookie:'private-owned-session',nativeOrigin:'https://public.example'}),{status:422});
+});
+
+test('operator CLI uses configured port and binds Host/Origin to it while targeting only the configured native instance', {timeout:30000}, async t=>{
+  // Hosted-only actual HTTP/CLI fixture. No native server or account is created.
+  const {createServer,request}=await import('node:http');
+  const {spawn}=await import('node:child_process');
+  const {mkdtemp,writeFile,rm}=await import('node:fs/promises');
+  const {tmpdir}=await import('node:os');const {join}=await import('node:path');const {fileURLToPath}=await import('node:url');
+  const directory=await mkdtemp(join(tmpdir(),'font-recovery-operator-')),nativeCalls=[],nativeErrors=[];
+  const native=createServer(async(req,res)=>{
+    try{
+      for await(const ignored of req){} // Fully consume each request before replying.
+      nativeCalls.push(req.url);assert.equal(req.headers.cookie,'owned-fixture-native-cookie');
+      assert.equal(req.headers.origin,nativeOrigin);
+      const body=req.url.endsWith('/get-profile')?{id:ids.profile}:req.url.endsWith('/get-project')?{id:ids.project,teamId:ids.team}:req.url.endsWith('/get-font-variants')?[]:null;
+      assert.notEqual(body,null);res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(body));
+    }catch(error){nativeErrors.push(error.message);res.writeHead(500);res.end('{}');}
+  });
+  await new Promise(resolve=>native.listen(0,'127.0.0.1',resolve));const nativeOrigin=`http://127.0.0.1:${native.address().port}`;
+  const reservation=createServer();await new Promise(resolve=>reservation.listen(0,'127.0.0.1',resolve));const operatorPort=reservation.address().port;await new Promise(resolve=>reservation.close(resolve));
+  const operatorOrigin=`http://127.0.0.1:${operatorPort}`,packPath=join(directory,'pack.json'),cookieFile=join(directory,'cookie.txt'),configPath=join(directory,'config.json');
+  await writeFile(packPath,JSON.stringify(pack()),{mode:0o600});await writeFile(cookieFile,'owned-fixture-native-cookie',{mode:0o600});
+  await writeFile(configPath,JSON.stringify({packPath,cookieFile,journalPath:join(directory,'journal.json'),profileId:ids.profile,teamId:ids.team,projectId:ids.project,nativeOrigin,operatorPort}),{mode:0o600});
+  const env={...process.env};delete env.K_SERVICE;
+  const child=spawn(process.execPath,[fileURLToPath(new URL('../scripts/penpot-font-recovery.mjs',import.meta.url)),'--config',configPath],{env,stdio:['ignore','pipe','pipe']});
+  const exited=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal})));let stderr='';child.stderr.on('data',chunk=>{stderr=(stderr+chunk).slice(-4096);});
+  t.after(async()=>{if(child.exitCode===null&&child.signalCode===null)child.kill('SIGTERM');await exited;await new Promise(resolve=>native.close(resolve));await rm(directory,{recursive:true,force:true});});
+  await new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>{child.kill('SIGTERM');reject(Error('Operator readiness timed out'));},15000);let output='';
+    child.stdout.on('data',chunk=>{output+=chunk;if(output.includes(`Font recovery operator: ${operatorOrigin}`)){clearTimeout(timer);resolve();}});
+    child.once('error',error=>{clearTimeout(timer);reject(error);});exited.then(result=>{clearTimeout(timer);reject(Error(`Operator exited before readiness: ${result.code}; ${stderr}`));});
+  });
+  const send=(path,{method='GET',headers={},body=''}={})=>new Promise((resolve,reject)=>{
+    const req=request(operatorOrigin+path,{method,headers},res=>{const chunks=[];res.on('data',chunk=>chunks.push(chunk));res.on('end',()=>resolve({status:res.statusCode,body:Buffer.concat(chunks).toString()}));});req.once('error',reject);req.end(body);
+  });
+  const page=await send('/');assert.equal(page.status,200);assert.match(page.body,/Restore Penpot fonts/);
+  const status=await send('/status');assert.equal(status.status,200);assert.equal(JSON.parse(status.body).target.teamId,ids.team);assert.deepEqual(nativeErrors,[]);assert.equal(nativeCalls.length,3);
+  const count=nativeCalls.length,wrongPort=operatorPort===39045?39044:39045;
+  assert.equal((await send('/status',{headers:{Host:`127.0.0.1:${wrongPort}`}})).status,403);
+  assert.equal((await send('/restore',{method:'POST',headers:{Origin:`http://127.0.0.1:${wrongPort}`,'Content-Type':'application/json'},body:'{}'})).status,403);
+  assert.equal((await send('/status',{headers:{'X-Forwarded-Host':`127.0.0.1:${operatorPort}`}})).status,403);
+  assert.equal(nativeCalls.length,count); // All three replies fully handled before teardown.
 });

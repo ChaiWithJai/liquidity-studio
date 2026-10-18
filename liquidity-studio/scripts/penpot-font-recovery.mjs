@@ -4,7 +4,7 @@ import { lstat, readFile, writeFile, rename, open, unlink } from 'node:fs/promis
 import { dirname, isAbsolute } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { createPenpotFontPack, validatePenpotFontPack } from '../server/penpot-font-pack.js';
-import { PenpotFontRecovery, createPenpotFontRecoveryTransport } from '../server/penpot-font-recovery.js';
+import { PenpotFontRecovery, createPenpotFontRecoveryTransport, fontRecoveryEndpoints } from '../server/penpot-font-recovery.js';
 
 // Explicit operator process. Never imported by the production server or normal dev launcher.
 if (process.env.K_SERVICE || process.argv.length !== 4 || process.argv[2] !== '--config' || !isAbsolute(process.argv[3])) {
@@ -25,12 +25,13 @@ async function sourceFile(path, limit) {
   return readFile(path);
 }
 const config = JSON.parse((await privateFile(process.argv[3], 64 * 1024)).toString('utf8'));
-const allowed = ['packPath', 'archivePath', 'fonts', 'profileId', 'teamId', 'projectId', 'cookieFile', 'journalPath'];
+const allowed = ['packPath', 'archivePath', 'fonts', 'profileId', 'teamId', 'projectId', 'cookieFile', 'journalPath', 'nativeOrigin', 'operatorPort'];
 if (Object.keys(config).some(k => !allowed.includes(k)) ||
     (config.packPath ? (config.archivePath !== undefined || config.fonts !== undefined) :
       (!Array.isArray(config.fonts) || config.fonts.length > 8))) {
   throw new Error('Invalid fixed recovery configuration');
 }
+const {nativeOrigin,operatorPort,operatorOrigin}=fontRecoveryEndpoints(config);
 const fonts = [];
 for (const font of config.fonts || []) {
   if (Object.keys(font).some(k => !['sourcePath', 'licensePath', 'family', 'weight', 'style', 'oldFontId', 'sourceName'].includes(k))) {
@@ -53,7 +54,7 @@ const lockHandle = await open(lock, 'wx', 0o600); // No two operator processes m
 let server;
 try {
   const cookie = (await privateFile(config.cookieFile, 8192)).toString('utf8').trim();
-  const transport = createPenpotFontRecoveryTransport({ cookie });
+  const transport = createPenpotFontRecoveryTransport({ cookie, nativeOrigin });
   const service = new PenpotFontRecovery({ pack, profileId: config.profileId, teamId: config.teamId,
     projectId: config.projectId, ...transport,
     async readJournal() {
@@ -69,7 +70,7 @@ try {
       try { await directory.sync(); } finally { await directory.close(); }
     },
   });
-  const origin = 'http://127.0.0.1:39045';
+  const origin = operatorOrigin;
   const nonce = randomBytes(24).toString('base64');
   const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Restore Penpot fonts</title>
 <style nonce="${nonce}">body{font:17px system-ui;max-width:760px;margin:48px auto;padding:0 24px;color:#17212b}button,a{font:inherit;margin:8px 12px 8px 0}pre{white-space:pre-wrap;background:#f3f5f7;padding:16px}label{display:block;margin:20px 0}#message{white-space:pre-wrap}</style>
@@ -84,7 +85,7 @@ ack.onchange=enabled;document.querySelector('#check').onclick=check;restore.oncl
     res.setHeader('Cache-Control', 'no-store'); res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'`);
     const allowedPeer = ['127.0.0.1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
-    if (!allowedPeer || req.headers.host !== '127.0.0.1:39045' ||
+    if (!allowedPeer || req.headers.host !== `127.0.0.1:${operatorPort}` ||
         Object.keys(req.headers).some(k => k.startsWith('x-forwarded-') || k === 'forwarded') ||
         (req.headers.origin && req.headers.origin !== origin) ||
         (req.headers['sec-fetch-site'] && !['same-origin', 'none'].includes(req.headers['sec-fetch-site']))) {
@@ -118,8 +119,8 @@ ack.onchange=enabled;document.querySelector('#check').onclick=check;restore.oncl
     }
   });
   server.requestTimeout = 90000; server.headersTimeout = 10000; server.maxConnections = 4;
-  await new Promise((yes, no) => { server.once('error', no); server.listen(39045, '127.0.0.1', yes); });
-  console.log('Font recovery operator: http://127.0.0.1:39045 (fixed private destination; no archive import)');
+  await new Promise((yes, no) => { server.once('error', no); server.listen(operatorPort, '127.0.0.1', yes); });
+  console.log(`Font recovery operator: ${origin} (fixed private destination; no archive import)`);
   await new Promise(resolve => { process.once('SIGINT', resolve); process.once('SIGTERM', resolve); });
   await new Promise(resolve => server.close(resolve));
 } finally {
