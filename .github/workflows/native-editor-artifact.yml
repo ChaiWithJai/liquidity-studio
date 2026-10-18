@@ -1,0 +1,69 @@
+name: Private native editor artifact
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact reviewed Studio source commit
+        required: true
+        type: string
+      confirmation:
+        description: Type PRIVATE_LOCAL_REVIEW (no model, publication or deployment)
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      NODE_OPTIONS: --max-old-space-size=1536
+      npm_config_cache: /tmp/npm-private-native
+    steps:
+      - name: Validate the explicit private build request
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$CONFIRMATION" = PRIVATE_LOCAL_REVIEW
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: shaongitbd/doory
+          ref: 27b6f68221fdbf1ef1bedc182e303210ca9e39f5
+          path: upstream-doory
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: liquidity-studio/package-lock.json
+      - name: Verify immutable inputs and prepare the licensed source
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git diff --exit-code
+          node liquidity-studio/scripts/prepare-native-editor.mjs "$GITHUB_WORKSPACE/upstream-doory"
+      - name: Install only the existing locked dependencies
+        working-directory: liquidity-studio
+        run: npm ci --engine-strict --no-fund
+      - name: Build the private editor and worker (no model or inference)
+        working-directory: liquidity-studio
+        run: STUDIO_NATIVE_EDITOR_LOCAL_BUILD=true NODE_ENV=production npm run build
+      - name: Record the launcher manifest and complete provenance
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          node liquidity-studio/scripts/record-local-native-assets.mjs "$GITHUB_WORKSPACE/liquidity-studio/dist"
+          node liquidity-studio/scripts/package-native-editor-artifact.mjs "$GITHUB_WORKSPACE/private-native-artifact" "$SOURCE_SHA"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: private-native-editor-${{ inputs.source_sha }}
+          path: private-native-artifact/
+          retention-days: 3
+          if-no-files-found: error
