@@ -88,7 +88,7 @@ jobs:
             -w /work/frontend -e CI=true -e PNPM_HOME=/review-tools/home -e JAVA_TOOL_OPTIONS=-Xmx4096m \
             -e NODE_OPTIONS=--max-old-space-size=1536 \
             -e SHADOWCLJS_EXTRA_PARAMS='' --entrypoint bash "$DEVENV" \
-            -lc 'export PATH=/review-tools/bin:$PATH; test "$(pnpm --version)" = 12.5.1; ./scripts/build 2.18.3-font-ui-qa' 2>&1 | tee evidence/build.log
+            -lc 'export PATH=/review-tools/bin:$PATH; test "$(pnpm --version)" = 12.5.1; ./scripts/build 2.18.3' 2>&1 | tee evidence/build.log
           # The exact pnpm wrapper appends explicit --frozen-lockfile to every install/i call.
           # Preserve the independent post-build tracked-lock/dependency diff gate.
           git -C upstream diff --exit-code -- '**/*lock*' '**/deps.edn' '**/package.json'
