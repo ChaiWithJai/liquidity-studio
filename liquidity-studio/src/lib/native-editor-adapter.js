@@ -99,7 +99,7 @@ export function createNativeEditorAdapter({
         onSaved(saved);
         return { savedAt: Date.parse(saved.updatedAt), revision };
       } catch (error) {
-        if (error.status) pending = null;
+        if (error.status >= 400 && error.status < 500) pending = null;
         if (error.status === 409) error.name = "RevisionConflictError";
         throw error;
       }

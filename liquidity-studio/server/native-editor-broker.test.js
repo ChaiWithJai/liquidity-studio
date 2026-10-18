@@ -160,3 +160,28 @@ test("adapter preserves uncertain save intent and maps real409 to upstream confl
   await assert.rejects(conflict.save(value), { name: "RevisionConflictError" });
   conflict.dispose();
 });
+test("adapter retains identical save key after ambiguous HTTP5xx and rejects a different intent", async () => {
+  const bodies = [];
+  const adapter = createNativeEditorAdapter({
+    request: async (_, options) => {
+      bodies.push(JSON.parse(options.body));
+      if (bodies.length === 1)
+        throw Object.assign(new Error("Post-commit response unavailable"), {
+          status: 503,
+        });
+      return { revision: 2, updatedAt: new Date().toISOString() };
+    },
+    scopeKey: "A",
+    getScopeKey: () => "A",
+    record: { id: crypto.randomUUID(), revision: 1 },
+  });
+  const value = { document: { pages: [] }, title: "Same reviewed save" };
+  await assert.rejects(adapter.save(value), { status: 503 });
+  await assert.rejects(
+    adapter.save({ ...value, title: "Another save" }),
+    /uncertain result/,
+  );
+  await adapter.save(value);
+  assert.deepEqual(bodies[0], bodies[1]);
+  adapter.dispose();
+});
