@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const [mode, recordFile] = process.argv.slice(2);
@@ -22,8 +23,13 @@ if (mode === 'prepare') {
   const generated = await request('/api/studio/generate-campaign' + scope, { storyId: story.id });
   assert.equal(generated.status, 200); const draft = await generated.json(); assert.equal(draft.campaign.provenance.mode, 'synthetic');
   const content = { ...draft.campaign.infographic, headline: 'A PERSISTED CONTAINER DRAFT' };
-  assert.equal((await request('/api/studio/save-edit' + scope, { storyId: story.id, format: 'infographic', content, expectedRevision: draft.story.revision })).status, 200);
-  assert.equal((await request('/api/studio/schedule' + scope, { storyId: story.id, scheduledDay: 'Friday', status: 'Scheduled' })).status, 200);
+  const edited = await request('/api/studio/save-edit' + scope, { storyId: story.id, format: 'infographic', content, expectedRevision: draft.story.revision });
+  assert.equal(edited.status, 200);
+  const saved = await edited.json();
+  assert.equal((await request('/api/studio/schedule' + scope, {
+    storyId: story.id, scheduledDay: 'Friday', status: 'Scheduled',
+    expectedRevision: saved.story.revision, idempotencyKey: randomUUID(),
+  })).status, 200);
   const exported = await request('/api/studio/export-asset' + scope, { storyId: story.id, format: 'infographic' });
   assert.equal(exported.status, 201); const asset = await exported.json();
   const download = await request(asset.downloadUrl); assert.equal(download.status, 200); const bytes = Buffer.from(await download.arrayBuffer());
