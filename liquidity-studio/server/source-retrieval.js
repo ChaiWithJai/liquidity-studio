@@ -13,6 +13,8 @@ export function validateSourceUrl(
   value,
   hosts = process.env.STUDIO_SOURCE_HOSTS || "",
 ) {
+  if (typeof value !== "string" || value.length > 2048)
+    throw fail(400, "Invalid source URL");
   let url;
   try {
     url = new URL(value);

@@ -178,3 +178,53 @@ test("cancel during retrieval prevents late candidate; default-off rejects prepa
   );
   process.env.STUDIO_SOURCE_PREPARATION_ENABLED = "true";
 });
+test("candidate edits retain immutable source provenance and optimistic base without approval or campaign mutation", async (t) => {
+  const f = await fixture(t),
+    job = await f.jobs.create(f.user, f.input);
+  await f.jobs.runNext("worker", job.id, job.items[0].id, 1);
+  const state = await f.repo.read(),
+    id = state.preparedSourceCandidates[0].candidate.id,
+    original = await f.jobs.candidate(f.user, id),
+    artwork = structuredClone(original.candidate.artwork);
+  artwork.infographic.headline = "An operator edited this unreviewed candidate";
+  const input = { idempotencyKey: randomUUID(), expectedRevision: 1, artwork },
+    saved = await f.jobs.editCandidate(f.user, id, input);
+  assert.equal(saved.revision, 2);
+  assert.equal(
+    saved.workingArtwork.infographic.headline,
+    artwork.infographic.headline,
+  );
+  assert.equal(
+    saved.candidate.artwork.infographic.headline,
+    original.candidate.artwork.infographic.headline,
+  );
+  assert.equal(saved.exportable, false);
+  assert.equal(saved.approval, "none");
+  assert.equal((await f.jobs.editCandidate(f.user, id, input)).revision, 2);
+  await assert.rejects(
+    f.jobs.editCandidate(f.user, id, {
+      ...input,
+      idempotencyKey: randomUUID(),
+    }),
+    { status: 409 },
+  );
+  await f.repo.mutate((state) => {
+    state.backlog.find((row) => row.id === f.story.id).sourceClaims[0].text =
+      "New external content";
+    return state;
+  });
+  assert.equal((await f.jobs.candidate(f.user, id)).stale, true);
+  await assert.rejects(
+    f.jobs.editCandidate(f.user, id, {
+      ...input,
+      idempotencyKey: randomUUID(),
+      expectedRevision: 2,
+    }),
+    { status: 409 },
+  );
+  assert.equal(
+    (await f.repo.read()).backlog.find((row) => row.id === f.story.id)
+      .campaignDraft,
+    null,
+  );
+});

@@ -566,6 +566,30 @@ export function createHttpServer(
         adminObservabilityService: admin,
       } = activeContainer.services;
       if (route.startsWith("/api/admin/")) founder();
+      if (route.startsWith("/api/studio/preparations/")) {
+        if (
+          trustedTestMode ||
+          process.env.STUDIO_SOURCE_PREPARATION_ENABLED !== "true"
+        )
+          throw fail(404, "Not found");
+        const jobs = platform.operatorJobs(scope, activeContainer);
+        const candidateRoute = route.match(
+          /^\/api\/studio\/preparations\/([a-f0-9-]{36})(?:\/(edit))?$/,
+        );
+        if (candidateRoute && req.method === "GET" && !candidateRoute[2])
+          return json(200, await jobs.candidate(user, candidateRoute[1]));
+        if (
+          candidateRoute &&
+          req.method === "POST" &&
+          candidateRoute[2] === "edit"
+        )
+          return json(
+            200,
+            await jobs.editCandidate(user, candidateRoute[1], body),
+          );
+        throw fail(404, "Not found");
+      }
+
       if (
         route === "/api/studio/jobs" ||
         route.startsWith("/api/studio/jobs/")

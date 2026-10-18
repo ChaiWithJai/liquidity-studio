@@ -147,6 +147,126 @@ export class DurableJobService {
       canControl: job.actorId === user.id || user.role === "founder",
     };
   }
+  async candidate(user, id) {
+    await this.authorize(user);
+    const state = await this.repo.read(),
+      entry = state.preparedSourceCandidates?.find(
+        (entry) => entry.candidate.id === id,
+      );
+    if (!entry) throw fail(404, "Prepared candidate not found");
+    const story = state.backlog.find(
+      (story) => story.id === entry.candidate.storyId,
+    );
+    const stale =
+      !story ||
+      preparationFingerprint(story) !== entry.candidate.inputFingerprint ||
+      brandRevision(state.brandProfile) !== entry.candidate.brandRevision;
+    return {
+      ...structuredClone(entry),
+      revision: entry.revision || 1,
+      stale,
+      approval: "none",
+      exportable: false,
+    };
+  }
+  async editCandidate(user, id, input) {
+    user = await this.authorize(user);
+    exact(input, ["idempotencyKey", "expectedRevision", "artwork"]);
+    uuid(input.idempotencyKey);
+    if (
+      !Number.isInteger(input.expectedRevision) ||
+      input.expectedRevision < 1 ||
+      Buffer.byteLength(JSON.stringify(input.artwork || {})) > 32768
+    )
+      throw fail(400, "Invalid candidate edit");
+    const fingerprint = hash(input);
+    await this.repo.mutate((state) => {
+      const entry = state.preparedSourceCandidates?.find(
+        (entry) => entry.candidate.id === id,
+      );
+      if (!entry) throw fail(404, "Prepared candidate not found");
+      entry.edits ||= [];
+      const prior = entry.edits.find(
+        (edit) => edit.id === input.idempotencyKey,
+      );
+      if (prior) {
+        if (prior.hash !== fingerprint || prior.actorId !== user.id)
+          throw fail(409, "Candidate edit key already used");
+        return state;
+      }
+      if ((entry.revision || 1) !== input.expectedRevision)
+        throw fail(409, "Candidate changed; preserve local edits and reload");
+      const story = state.backlog.find(
+        (story) => story.id === entry.candidate.storyId,
+      );
+      if (
+        !story ||
+        preparationFingerprint(story) !== entry.candidate.inputFingerprint ||
+        brandRevision(state.brandProfile) !== entry.candidate.brandRevision
+      )
+        throw fail(
+          409,
+          "Prepared source or brand changed; prepare again before editing",
+        );
+      function check(value, template, key = "") {
+        if (typeof template === "string") {
+          if (
+            typeof value !== "string" ||
+            value.length > 2000 ||
+            (["timecode"].includes(key) && value !== template)
+          )
+            throw fail(400, "Invalid candidate text or timing");
+          return;
+        }
+        if (typeof template === "number") {
+          if (value !== template)
+            throw fail(400, "Candidate structure cannot change");
+          return;
+        }
+        if (Array.isArray(template)) {
+          if (!Array.isArray(value) || value.length !== template.length)
+            throw fail(400, "Candidate structure cannot change");
+          value.forEach((child, i) => check(child, template[i]));
+          return;
+        }
+        if (
+          !value ||
+          typeof value !== "object" ||
+          Object.keys(value).sort().join("|") !==
+            Object.keys(template).sort().join("|")
+        )
+          throw fail(400, "Candidate fields do not match");
+        for (const key of Object.keys(template))
+          check(value[key], template[key], key);
+      }
+      check(input.artwork, entry.candidate.artwork);
+      if (entry.edits.length >= 30)
+        throw fail(
+          409,
+          "Candidate edit retention reached; preserve work before preparing again",
+        );
+      entry.workingArtwork = structuredClone(input.artwork);
+      entry.revision = (entry.revision || 1) + 1;
+      entry.edits.push({
+        id: input.idempotencyKey,
+        hash: fingerprint,
+        actorId: user.id,
+        at: stamp(),
+        revision: entry.revision,
+      });
+      entry.editorialStatus = "unreviewed";
+      if (
+        Buffer.byteLength(JSON.stringify(state.preparedSourceCandidates)) >
+        192 * 1024
+      )
+        throw fail(
+          409,
+          "Prepared evidence storage limit reached; preserve work before preparing again",
+        );
+      return state;
+    });
+    return this.candidate(user, id);
+  }
   async create(user, input) {
     user = await this.authorize(user);
     exact(input, [
@@ -663,10 +783,21 @@ export class DurableJobService {
             409,
             "Prepared candidate retention limit reached; preserve or remove an old candidate first",
           );
-        state.preparedSourceCandidates.push({
+        const entry = {
           candidate: prepared.candidate,
           evidence: prepared.evidence,
-        });
+        };
+        if (
+          Buffer.byteLength(
+            JSON.stringify([...state.preparedSourceCandidates, entry]),
+          ) >
+          192 * 1024
+        )
+          throw fail(
+            409,
+            "Prepared evidence storage limit reached; preserve or remove an old candidate first",
+          );
+        state.preparedSourceCandidates.push(entry);
         story.preparationStatus = "ready";
         story.preparationJobId = job.id;
         story.preparedCandidateId = prepared.candidate.id;
