@@ -615,6 +615,8 @@ export function createHttpServer(
             return json(200, await control.list(user));
           if (route === base + "/control/grants" && req.method === "POST")
             return json(201, await control.createGrant(user, body));
+          if (route === base + "/control/presence" && req.method === "POST")
+            return json(200, await control.heartbeat(user, body));
           if (route === base + "/control/proposals" && req.method === "POST")
             return json(201, await control.propose(user, body));
           const grant = route.match(/^\/api\/studio\/workspace\/control\/grants\/([^/]+)\/(pause|stop|takeover|resume)$/);

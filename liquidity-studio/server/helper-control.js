@@ -4,8 +4,17 @@ import { exact, text, revision, hash } from "./workspace-schema.js";
 import { idempotencyKey, storyRow } from "./workspace-query.js";
 const KINDS = ["story.patch", "assignment.place", "assignment.remove"];
 const controls = (state) =>
-  (state.operatorControl ||= { schemaVersion: 1, grants: [], proposals: [] });
+  (state.operatorControl ||= {
+    schemaVersion: 1,
+    grants: [],
+    proposals: [],
+    presence: [],
+  });
 const copy = (value) => structuredClone(value);
+function bounded(data) {
+  if (Buffer.byteLength(JSON.stringify(data)) > 512 * 1024)
+    throw fail(409, "Helper control retention capacity reached");
+}
 export class HelperControlService {
   constructor({ workspace, clock = Date.now }) {
     this.workspace = workspace;
@@ -46,10 +55,52 @@ export class HelperControlService {
       );
     return copy({
       grants,
+      presence: (data.presence || []).map((p) => ({
+        ...p,
+        connected: this.clock() - p.lastSeenAt < 30000,
+      })),
       proposals: data.proposals.filter((p) =>
         grants.some((g) => g.id === p.grantId),
       ),
     });
+  }
+  async heartbeat(actor, input) {
+    actor = await this.principal(actor);
+    exact(input, ["clientId", "clientKind", "storyId", "observedRevision"]);
+    idempotencyKey(input.clientId);
+    if (
+      !["human", "scripted-helper", "model-helper"].includes(input.clientKind)
+    )
+      throw fail(400, "Unknown advisory client kind");
+    if (input.storyId !== null) {
+      text(input.storyId, "story", 100);
+      revision(input.observedRevision);
+    } else if (input.observedRevision !== null)
+      throw fail(400, "No story revision without a story");
+    const now = this.clock();
+    let result;
+    await this.workspace.repo.mutate((state) => {
+      const data = controls(state);
+      data.presence ||= [];
+      const prior = data.presence.find((p) => p.clientId === input.clientId);
+      if (prior && prior.actorId !== actor.id)
+        throw fail(409, "Presence client belongs to another actor");
+      if (
+        input.storyId !== null &&
+        !state.backlog.some((s) => s.id === input.storyId)
+      )
+        throw fail(404, "Presence story not found");
+      data.presence = data.presence.filter(
+        (p) => p.clientId !== input.clientId && now - p.lastSeenAt < 300000,
+      );
+      if (data.presence.length >= 100)
+        throw fail(409, "Presence capacity reached");
+      result = { ...input, actorId: actor.id, lastSeenAt: now };
+      data.presence.push(result);
+      bounded(data);
+      return state;
+    });
+    return copy(result);
   }
   async createGrant(actor, input) {
     actor = await this.principal(actor);
@@ -100,6 +151,7 @@ export class HelperControlService {
         if (!state.backlog.some((s) => s.id === id))
           throw fail(404, "Grant story not found");
       data.grants.push(grant);
+      bounded(data);
       return state;
     });
     return copy(grant);
@@ -225,6 +277,7 @@ export class HelperControlService {
         preview,
       };
       data.proposals.push(result);
+      bounded(data);
       return state;
     });
     return copy(result);

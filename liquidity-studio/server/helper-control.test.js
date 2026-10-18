@@ -275,3 +275,33 @@ test("malformed helper observations fail as explicit client errors", async (t) =
   }
   assert.equal((await f.repo.read()).backlog[0].revision, f.story.revision);
 });
+test("advisory presence expires and cannot claim another actor client or confer proposal rights", async (t) => {
+  const f = await fixture(t),
+    clientId = randomUUID();
+  await f.control.heartbeat(f.owner, {
+    clientId,
+    clientKind: "model-helper",
+    storyId: f.story.id,
+    observedRevision: f.story.revision,
+  });
+  await assert.rejects(
+    f.control.heartbeat(f.helper, {
+      clientId,
+      clientKind: "human",
+      storyId: f.story.id,
+      observedRevision: f.story.revision,
+    }),
+    (error) => error.status === 409,
+  );
+  assert.equal((await f.control.list(f.helper)).presence[0].connected, true);
+  f.control.clock = () => Date.parse("2026-10-18T03:00:31Z");
+  assert.equal((await f.control.list(f.helper)).presence[0].connected, false);
+  await assert.rejects(
+    f.control.propose(f.owner, {
+      grantId: f.grant.id,
+      epoch: 1,
+      changes: f.changes,
+    }),
+    (error) => error.status === 403,
+  );
+});
