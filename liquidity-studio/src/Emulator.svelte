@@ -765,7 +765,7 @@
       {#if notice}<p class="local-notice" role="status">{notice}</p>{/if}
     </div>
   </div>
-  <div class="evidence">
+  <div class="evidence workflow-target" id="workflow-validation" role="region" aria-label="Measured validation results" tabindex="-1">
     <div class="evidence-title">
       <b>Measured preflight</b><button disabled={pendingEdits || mode === "grid"} onclick={measure}>Measure again</button>
     </div>
