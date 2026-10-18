@@ -20,3 +20,8 @@ pdftoppm -f 1 -singlefile -scale-to-x 1080 -scale-to-y 1920 -png vedic_dharma-re
 ```
 
 This is local export acceptance evidence, not a deployed integration. Native editable-layer portability, licensed original portrait cutout inference, transparent-asset fidelity, animation/transitions, sound rights, GIF, full MP4/WebM matrix and separate performance targets remain unfinished under #55. The already decoded CWJ MP4 and the WebM duration defect are separate evidence. The three rendered Reel boards do not by themselves prove motion or sound. No paid provider, GCP resource or live Studio data was changed by this export pass.
+
+
+## Separate actual CWJ GIF checkpoint
+
+After the static matrix, the native browser generated and downloaded the three-page CWJ Reel as GIF using 720p,15fps, all pages, as-set durations and forever-loop settings. The original file is included unchanged:73,835 bytes, SHA256 `944947dfd3e24238245203e3e8a800ea65feb14e55455ac8d3ca74ef5d74e43b`. Pillow independently decoded all three coalesced frames at **720×1280** pixels with durations3000/12000/15000 milliseconds, total30000 and loop0. The 15fps render setting does not mean the static file must retain450 duplicate frames. Mean absolute RGB comparison against scaled original PNG boards identifies pages1,2,3 in order; quantization prevents byte equality. Full comparison evidence is in cwj-gif-evidence.json. This proves this one static-board GIF and its timing, not transitions, audio, transparent cutout, full-size GIF or the second brand. GIF remains outside the24-download static manifest above.
