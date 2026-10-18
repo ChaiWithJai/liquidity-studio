@@ -1,12 +1,14 @@
-# Spec: container-runtime
+# Spec: identity-tenant-access
 
-Status: proposed, awaiting specification approval. Module ID: `container-runtime` in [CAPABILITY-MAP.md](CAPABILITY-MAP.md). The module order is approved; this specification is not yet approved. Companion [pathway](docs/TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](docs/TENANCY-EVIDENCE.md) separates actual implementation from requests.
+Historical proposal, retained from the 2026-10-17 planning baseline. Its status and implementation descriptions below are historical, not current release claims or new approval gates. See the [current system map](../../architecture/system-map.md) and [documentation index](../../README.md).
+
+Status: proposed, awaiting specification approval. Module ID: `identity-tenant-access` in [CAPABILITY-MAP.md](../../architecture/capability-map.md). The module order is approved; this specification is not yet approved. Companion [pathway](../../TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](../../TENANCY-EVIDENCE.md) separates actual implementation from requests.
 
 ## Objective
 
-Deliver a portable local Docker runtime that the founder can start, stop, back up and restore without losing approved data.
+Allow founder and marketer to collaborate across authorized brands without cross-organization or cross-brand access.
 
-Dependencies: None. Establish the serving/build and persistence attachment contracts before the next module.
+Dependencies: durable-storage; supplies authenticated scoped context to operator-workflow.
 
 ## Tech stack and project structure
 
@@ -46,9 +48,9 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Success criteria
 
-- One documented image build and loopback local start command succeeds from a clean checkout, with configured port, health/readiness and graceful shutdown.
-- Restart and image replacement preserve a mounted test dataset once the durable-storage module is integrated; no credentials are baked into layers.
-- Validate container probes, nonzero bind failure and request drain. Document non-root execution, volume ownership, restore and image rollback.
+- Organization owns brands; organization membership and narrower brand grants are distinct. Brand presets cannot authorize a request.
+- Every protected API/object/asset/cache/export/job uses server-authorized immutable context; absent, foreign or revoked grants deny with no side effects.
+- Pass negative API and browser tests with two organizations and two brands each; no first-story fallback, process-global selected brand or unaudited platform override.
 
 ## Boundaries
 
@@ -58,6 +60,6 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Open questions
 
-Image build path, dependency lock strategy, supported host architectures and local storage attachment contract. Docker itself was not executed by this spec audit.
+Approve role/export/invite matrix, owner recovery and revocation semantics. Verify Clerk integration/exit requirements from official docs before selecting its SDK or billing features.
 
 Review of this specification is the next gate. No implementation tasks or architecture code are authorized by this document alone.

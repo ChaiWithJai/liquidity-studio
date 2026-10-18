@@ -1,6 +1,6 @@
 # Organization and brand isolation pathway
 
-Status: proposed specification supporting the approved [capability map](../CAPABILITY-MAP.md). See [evidence audit](TENANCY-EVIDENCE.md). This document defines acceptance and boundaries; it does not authorize implementation, deployment or billing activation. The sequence is container-runtime → durable-storage → identity-tenant-access → operator-workflow → gcp-pilot → managed-billing-exit.
+Status: proposed specification supporting the approved [capability map](architecture/capability-map.md). See [evidence audit](TENANCY-EVIDENCE.md). This document defines acceptance and boundaries; it does not authorize implementation, deployment or billing activation. The sequence is container-runtime → durable-storage → identity-tenant-access → operator-workflow → gcp-pilot → managed-billing-exit.
 
 ## Ownership and authority
 

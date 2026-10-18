@@ -1,8 +1,10 @@
 # Phase1 specification: native editor identity and tenant access
 
-Status: Phase 1 specification approved by the human on 2026-10-18. Phase 2 plan proposed for review; no implementation, migration or runtime enablement authorized. Module: `identity-tenant-access` in [CAPABILITY-MAP.md](../../CAPABILITY-MAP.md). This is the remaining native-editor scope of #52, not a new capability/module and not a reopening of completed Studio identity work. Original Studio Google authentication, scoped grants, durable data and delivery evidence remain valid within their recorded bounds.
+Navigation note (2026-10-18): the Phase 2 plan and implementation were subsequently authorized under [#190](https://github.com/ChaiWithJai/liquidity-studio/issues/190). The original approval/status text below is retained as recorded; implementation and actual native acceptance remain tracked by [#52](https://github.com/ChaiWithJai/liquidity-studio/issues/52). See the [current capability map](../architecture/capability-map.md).
 
-The early [module specification](../../SPEC-identity-tenant-access.md) contains historical pre-implementation descriptions. Current native evidence and pinned source analysis are in [the boundary audit](../../liquidity-studio/docs/investigations/52-native-command-boundary-audit.md). PR140 provides bounded asset/export protection; it does not implement all native commands or live collaboration authorization.
+Status: Phase 1 specification approved by the human on 2026-10-18. Phase 2 plan proposed for review; no implementation, migration or runtime enablement authorized. Module: `identity-tenant-access` in [CAPABILITY-MAP.md](../architecture/capability-map.md). This is the remaining native-editor scope of #52, not a new capability/module and not a reopening of completed Studio identity work. Original Studio Google authentication, scoped grants, durable data and delivery evidence remain valid within their recorded bounds.
+
+The early [module specification](modules/identity-tenant-access.md) contains historical pre-implementation descriptions. Current native evidence and pinned source analysis are in [the boundary audit](../../liquidity-studio/docs/investigations/52-native-command-boundary-audit.md). PR140 provides bounded asset/export protection; it does not implement all native commands or live collaboration authorization.
 
 Approved defaults (2026-10-18):
 

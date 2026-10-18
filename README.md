@@ -1,28 +1,31 @@
 # Liquidity Studio
 
-Content campaign workspace for The Liquidity Desk and Chai With Jai.
+A brand-scoped content workspace for The Liquidity Desk and Chai With Jai. Start with a story, prepare a sourced preview, edit saved copy, plan it on the calendar, and create or reopen its linked design. Source review, native layout approval and publication are separate actions.
 
-## Local development without SSO
+## Start locally without SSO
 
-Use Node.js 22+ and the project's installed dependencies. Start the API and live Svelte UI together:
+With Node.js 22+ and the project's installed dependencies:
 
 ```sh
 cd liquidity-studio
 npm run dev:studio -- --profile development
 ```
 
-Open the loopback URL printed by the launcher and choose Founder or Marketer. No Google sign-in or password entry is needed. `--profile staging` and `--profile production` select separate **local emulations**, with separate persistent SQLite data. They never select the deployed cloud environment. See [local development](docs/local-development.md) for boundaries, profile switching and recovery.
+Open the printed loopback URL and choose Founder or Marketer. `staging` and `production` are separate **local SQLite emulations**, not deployed services. [Local development](docs/local-development.md) explains profiles, permissions, jobs and optional Penpot configuration. Native editors and paid providers are not implicitly started.
 
-The deployed application continues to use managed Google identity. Its configured SQLite or Firestore/GCS repository persists work; the development launcher does not read or replace that data. Cloud operation is documented in [the deployment guide](docs/gcp-first-deployment.md).
+## Understand and change the system
 
-## Verification
+- [Documentation index](docs/README.md): operator instructions, architecture, specs and runbooks.
+- [System and change-impact map](docs/architecture/system-map.md): follow a request/job and find affected code.
+- [Capability map](docs/architecture/capability-map.md): module boundaries and current delivery trackers.
+- [Architecture decisions](docs/decisions/README.md): a few implementation choices and their trade-offs.
 
-Use BrowserOS neo for local acceptance under the current memory constraint. Automated checks run in hosted CI. Svelte source is canonical: the developer launcher serves it through Vite, while `npm run build` creates the deployable UI. Synthetic generation and engineering checks do not establish factual accuracy, clinical review or real-user usability.
+The canonical UI is Svelte in `liquidity-studio/src/`; Node API/services and workers are in `liquidity-studio/server/`. `scripts/` and `.github/workflows/` contain operator and delivery tooling; `tools/` contains reviewed native integration source. [Hosted frontend artifacts](docs/development/hosted-frontend-artifact.md) describe canonical distribution assembly.
 
-## History
+## Current boundaries
 
-The source was imported on 2026-10-17 from an untracked local prototype. The pre-existing initial Git commit contained no application files. Introduction dates before this import are unknown. Raw conversation files, duplicate archives, credentials, and local state are excluded.
+The deployed pilot uses managed Google identity and configured durable storage; local profiles use existing password sessions and their own SQLite data. Preparation produces unreviewed evidence/copy, not factual or clinical approval. Native Penpot pairing, shared-team enforcement and licensed embedded editor features have separate configuration and acceptance boundaries. A local founder demo or successful native compilation does not establish marketer access, publication readiness or measured revocation. See [#52](https://github.com/ChaiWithJai/liquidity-studio/issues/52), [#57](https://github.com/ChaiWithJai/liquidity-studio/issues/57), [#58](https://github.com/ChaiWithJai/liquidity-studio/issues/58) and [#162](https://github.com/ChaiWithJai/liquidity-studio/issues/162) for remaining work.
 
-## Delivery
+Use BrowserOS neo for local acceptance under the current memory constraint; automated checks run in hosted CI. Commands in this README were reviewed against source, not rerun for this documentation change. Follow the [product delivery loop](docs/product-engineering-workflow.md) and [engineering workflow](docs/ENGINEERING-WORKFLOW.md).
 
-GitHub Issues is the work queue. Changes use one issue branch/worktree and a pull request, with dependency analysis, acceptance criteria, regression evidence, and independent review before merge. Re-read issue comments before implementation because requirements may change.
+The application source was imported on 2026-10-17 from an untracked local prototype. Earlier introduction dates are unknown. Historical proposals and dated acceptance evidence are retained under `docs/`; credentials, local state and raw private conversations are excluded.

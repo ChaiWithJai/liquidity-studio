@@ -1,12 +1,14 @@
-# Spec: managed-billing-exit
+# Spec: container-runtime
 
-Status: proposed, awaiting specification approval. Module ID: `managed-billing-exit` in [CAPABILITY-MAP.md](CAPABILITY-MAP.md). The module order is approved; this specification is not yet approved. Companion [pathway](docs/TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](docs/TENANCY-EVIDENCE.md) separates actual implementation from requests.
+Historical proposal, retained from the 2026-10-17 planning baseline. Its status and implementation descriptions below are historical, not current release claims or new approval gates. See the [current system map](../../architecture/system-map.md) and [documentation index](../../README.md).
+
+Status: proposed, awaiting specification approval. Module ID: `container-runtime` in [CAPABILITY-MAP.md](../../architecture/capability-map.md). The module order is approved; this specification is not yet approved. Companion [pathway](../../TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](../../TENANCY-EVIDENCE.md) separates actual implementation from requests.
 
 ## Objective
 
-Offer managed accounts and portable self-hosted delivery with explicit entitlements, usage accounting and customer exit.
+Deliver a portable local Docker runtime that the founder can start, stop, back up and restore without losing approved data.
 
-Dependencies: gcp-pilot; consumes established organization/account identity and scoped export contracts.
+Dependencies: None. Establish the serving/build and persistence attachment contracts before the next module.
 
 ## Tech stack and project structure
 
@@ -46,10 +48,9 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Success criteria
 
-- Define signed/idempotent usage and billing events; replay never double-charges, and reconciliation separates cost from billable consumption.
-- Demonstrate scoped export/import/ejection into a clean container without managed credentials, including data/assets/config/provenance and validated manifests.
-- Resolve license/IP, upstream redistribution obligations, commercial duration/inclusions and cancellation/retention before onboarding paying customers.
-- Treat agency-client organization delegation as an explicit future capability; do not introduce recursive arbitrary tenancy.
+- One documented image build and loopback local start command succeeds from a clean checkout, with configured port, health/readiness and graceful shutdown.
+- Restart and image replacement preserve a mounted test dataset once the durable-storage module is integrated; no credentials are baked into layers.
+- Validate container probes, nonzero bind failure and request drain. Document non-root execution, volume ownership, restore and image rollback.
 
 ## Boundaries
 
@@ -59,6 +60,6 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Open questions
 
-Clerk/payment/metering fit, billable units, synthetic/failure charging, self-hosted identity adapter, license, support terms and $6,000 upfront duration/entitlements.
+Image build path, dependency lock strategy, supported host architectures and local storage attachment contract. Docker itself was not executed by this spec audit.
 
 Review of this specification is the next gate. No implementation tasks or architecture code are authorized by this document alone.

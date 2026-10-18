@@ -1,5 +1,7 @@
 # Proposed spec: gcp-pilot
 
+Historical proposal, retained from the 2026-10-17 planning baseline. Its status and implementation descriptions below are historical, not current release claims or new approval gates. See the [current system map](../../architecture/system-map.md) and [documentation index](../../README.md).
+
 Status: **Specify, pending founder review**. Module `gcp-pilot` in the founder-approved capability map. Related: #19, #18, #12. Evidence date: 2026-10-17. Agent-skills workflow pinned at `aeac41d4d005999432bb7312f7ff06383a91d59d`.
 
 ## Objective and assumptions
