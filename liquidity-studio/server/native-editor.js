@@ -1,4 +1,4 @@
-import {inspectPcmWav,validateAudioTracks,audioSource} from './native-audio.js';
+import {AUDIO_LIMITS,inspectPcmWav,validateAudioTracks,audioSource} from './native-audio.js';
 import { planHistoricalRebind, rebindHistorical } from './native-historical-rebind.js';
 import { assertRestoreAvailable } from "./restore-gate.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -490,12 +490,12 @@ export class NativeEditorService {
     const bytes = Buffer.from(input.base64, "base64");
     if (
       !bytes.length ||
-      bytes.length > 512 * 1024 ||
+      bytes.length > (input.contentType==="audio/wav"?AUDIO_LIMITS.bytes:512*1024) ||
       bytes.toString("base64") !== input.base64
     )
       throw fail(
         413,
-        "Native uploads must be at most 512 KiB of canonical base64-decoded bytes",
+        input.contentType==="audio/wav"?"PCM WAV audio must be at most 6 MiB":"Images must be at most 512 KiB",
       );
     let metadata;
     if(input.contentType==='audio/wav')metadata={...inspectPcmWav(bytes),width:0,height:0};

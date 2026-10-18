@@ -1,4 +1,4 @@
-import {inspectPcmWav,audioSource} from '../../server/native-audio.js';
+import {AUDIO_LIMITS,inspectPcmWav,audioSource} from '../../server/native-audio.js';
 const emptyPage = () => ({ count: 0, next: null, previous: null, results: [] });
 const unavailable = () => {
   throw new Error(
@@ -201,16 +201,16 @@ export function createNativeEditorAdapter({
           "Confirm the upload rights and consent declaration before uploading.",
         );
       const audio=/^(audio\/|video\/webm)/.test(file.type)||/\.(wav|mp3|ogg|oga|opus|m4a|weba|webm|aac)$/i.test(file.name||""),mime=audio?"audio/wav":file.type;
-      if(audio&&!(["audio/wav","audio/x-wav","audio/wave","audio/vnd.wave"].includes(file.type)||!file.type&&/\.wav$/i.test(file.name||"")))throw new Error("Use an uncompressed 16-bit PCM WAV file, at most 512 KiB and 30 seconds. MP3/OGG/recording uploads are not supported in Studio yet.");
+      if(audio&&!(["audio/wav","audio/x-wav","audio/wave","audio/vnd.wave"].includes(file.type)||!file.type&&/\.wav$/i.test(file.name||"")))throw new Error("Use an uncompressed 16-bit PCM WAV file, at most 6 MiB and 30 seconds. MP3/OGG/recording uploads are not supported in Studio yet.");
       if (
         !["image/png", "image/jpeg", "image/webp","audio/wav"].includes(mime) ||
-        file.size > 512 * 1024
+        file.size > (audio?AUDIO_LIMITS.bytes:512*1024)
       )
-        throw new Error("Use a PNG, JPEG, WebP or PCM WAV file of at most 512 KiB.");
+        throw new Error(audio?"Use a PCM WAV file of at most 6 MiB.":"Use a PNG, JPEG or WebP image of at most 512 KiB.");
       const bytes = new Uint8Array(await file.arrayBuffer());
       current();
       if(audio)inspectPcmWav(bytes);
-      const uploaded = await call("assets", {
+      const uploaded = await call(audio?"assets?kind=audio":"assets", {
         name: options.name || file.name || "Native image",
         contentType: mime,
         base64: encode(bytes),

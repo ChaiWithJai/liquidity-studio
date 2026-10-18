@@ -1,3 +1,4 @@
+import {AUDIO_LIMITS} from '../../server/native-audio.js';
 const uuid = (value) =>
   typeof value === "string" && /^[a-f0-9-]{36}$/i.test(value);
 const bounded = (value) => JSON.stringify(value).length <= 768 * 1024;
@@ -111,8 +112,8 @@ export function createNativeEditorBroker({
         generationId: record.origin.generationId,
       }) };
     }
-    else if (operation === "asset.upload" && payload && bounded(payload)) {
-      path = "/api/studio/native-editor/assets";
+    else if (operation === "asset.upload" && payload && JSON.stringify(payload).length<=(payload.contentType==="audio/wav"?AUDIO_LIMITS.requestBytes:768*1024)) {
+      path = "/api/studio/native-editor/assets"+(payload.contentType==="audio/wav"?"?kind=audio":"");
       options = { method: "POST", body: JSON.stringify(payload) };
     } else if (operation === "document.save" && payload && bounded(payload)) {
       const prior = savedIntents.get(payload.idempotencyKey);
@@ -206,9 +207,9 @@ export function createNativeEditorBroker({
         operation: message.operation,
         payload: message.payload,
       });
-      if (fingerprint.length > (message.operation === 'export.stage' ? 6*1024*1024 : 768*1024)) throw new Error("Message too large");
+      if (fingerprint.length > (message.operation==='asset.upload'&&message.payload?.contentType==='audio/wav'?AUDIO_LIMITS.requestBytes:message.operation === 'export.stage' ? 6*1024*1024 : 768*1024)) throw new Error("Message too large");
       // Large PNG requests retain a fixed-size digest, not many copies of base64.
-      if(message.operation === 'export.stage')fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(fingerprint))),byte=>byte.toString(16).padStart(2,'0')).join('');
+      if(message.operation === 'export.stage'||message.operation==='asset.upload'&&message.payload?.contentType==='audio/wav')fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(fingerprint))),byte=>byte.toString(16).padStart(2,'0')).join('');
     } catch {
       reply(message.requestId, {
         error: {
@@ -368,7 +369,7 @@ export function createNativeFrameRequest({
         operation = "asset.read";
         payload = { id: path.split("/").at(-1) };
       } else if (
-        path === "/api/studio/native-editor/assets" &&
+        ["/api/studio/native-editor/assets","/api/studio/native-editor/assets?kind=audio"].includes(path) &&
         options.method === "POST"
       ) {
         operation = "asset.upload";

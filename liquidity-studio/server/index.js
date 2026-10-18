@@ -727,7 +727,9 @@ export function createHttpServer(
                 ? (route === "/api/admin/editor-pack/install" ? 49 : 32) *
                     1024 *
                     1024
-                : nativeEditorEnabled &&
+                : nativeEditorEnabled && route === "/api/studio/native-editor/assets" && url.searchParams.get("kind")==="audio"
+                  ? 9 * 1024 * 1024
+                  : nativeEditorEnabled &&
                     /^\/api\/studio\/native-editor\/documents\/[a-f0-9-]{36}\/exports$/.test(
                       route,
                     )
@@ -1173,7 +1175,7 @@ export function createHttpServer(
           route === "/api/studio/native-editor/assets" &&
           req.method === "POST"
         )
-          return json(201, await service.uploadAsset(user, body));
+          {if(url.searchParams.get("kind")==="audio"&&body.contentType!=="audio/wav")throw fail(422,"Audio uploads require PCM WAV");return json(201, await service.uploadAsset(user, body));}
         const nativeAssetResolve = route.match(
           /^\/api\/studio\/native-editor\/assets\/([a-f0-9]{32})\/resolve$/,
         );

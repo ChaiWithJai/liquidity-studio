@@ -203,7 +203,7 @@ export class EditorPackService {
       assets.push({
         id: asset.id,
         metadata: pick(asset, portableAssetFields),
-        file: addFile(files, Buffer.from(asset.base64, "base64"), "image"),
+        file: addFile(files, Buffer.from(asset.base64, "base64"), asset.kind==="audio"?"audio":"image"),
       });
     }
     for (const key of documentKeys) {

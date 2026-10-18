@@ -1,11 +1,11 @@
 // Original bounded PCM-WAV host support. The existing native engine owns playback,
 // undoable timing and AAC/Opus export; this module never transcodes audio.
-export const AUDIO_LIMITS=Object.freeze({bytes:512*1024,durationMs:30000,tracks:4});
+export const AUDIO_LIMITS=Object.freeze({bytes:6*1024*1024,requestBytes:9*1024*1024,durationMs:30000,tracks:4});
 export const audioSource=id=>`/__studio_native_audio/${id}`;
 const reject=message=>{throw Object.assign(new Error(message),{status:422});};
 export function inspectPcmWav(input){
  const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
- if(bytes.length<44||bytes.length>AUDIO_LIMITS.bytes)reject('Use a PCM WAV file of at most 512 KiB and 30 seconds.');
+ if(bytes.length<44||bytes.length>AUDIO_LIMITS.bytes)reject('Use a PCM WAV file of at most 6 MiB and 30 seconds.');
  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength),tag=offset=>String.fromCharCode(...bytes.subarray(offset,offset+4));
  if(tag(0)!=='RIFF'||tag(8)!=='WAVE'||view.getUint32(4,true)+8!==bytes.length)reject('Use an uncompressed 16-bit PCM WAV file.');
  let format=null,data=null,offset=12,chunks=0;
@@ -17,7 +17,7 @@ export function inspectPcmWav(input){
   if(name==='data'){if(data!==null)reject('Use one PCM WAV data stream.');data=length;}
   offset=end+(length%2);if(offset>bytes.length)reject('Invalid WAV padding.');
  }
- if(!format||!data||format.encoding!==1||format.bits!==16||![1,2].includes(format.channels)||format.sampleRate<8000||format.sampleRate>48000||format.blockAlign!==format.channels*2||format.byteRate!==format.sampleRate*format.blockAlign||data%format.blockAlign)reject('Use 16-bit PCM WAV, mono or stereo, at 8–48 kHz.');
+ if(!format||!data||format.encoding!==1||format.bits!==16||format.channels!==2||![44100,48000].includes(format.sampleRate)||format.blockAlign!==format.channels*2||format.byteRate!==format.sampleRate*format.blockAlign||data%format.blockAlign)reject('Use 16-bit stereo PCM WAV at 44.1 or 48 kHz.');
  const durationMs=data/format.byteRate*1000;
  if(durationMs<50||durationMs>AUDIO_LIMITS.durationMs)reject('Audio must be between 50 milliseconds and 30 seconds.');
  return {durationMs,channels:format.channels,sampleRate:format.sampleRate};
