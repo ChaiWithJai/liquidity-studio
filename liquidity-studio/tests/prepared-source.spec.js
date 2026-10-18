@@ -255,10 +255,7 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
     panel.getByText("Preview edits saved.", { exact: false }),
   ).toBeVisible();
   await page.reload();
-  await page.locator('[data-open-story="story_huda_buyback"]').click();
-  await page
-    .getByRole("button", { name: "Edit reviewed copy", exact: true })
-    .click();
+  await expect(page).toHaveURL(/story=story_huda_buyback.*editor=prepared/);
   panel = page.getByRole("region", {
     name: "Prepared source draft",
     exact: true,
