@@ -76,3 +76,25 @@ test('ACK aggregate revision chains across record kinds while record revisions s
  const refreshed=await f.service.refreshReport(f.actor,report.report.id,{expectedRevision:report.revision,idempotencyKey:randomUUID(),expectedReportRevision:report.report.revision,planIds:report.report.planIds});
  assert.equal(refreshed.revision,report.revision+1);assert.equal(refreshed.report.revision,2);assert.equal((await f.service.read(f.actor)).revision,refreshed.revision);
 });
+
+test('named working groups preserve domain facts and historical report membership',async t=>{
+ const f=await fixture(t),before=f.store.get(f.service.key).graph;
+ const command=f.command({cluster:{name:'Potential bridge',nodeIds:['yt_sig_lagos_01','node_london']}}),saved=await f.service.saveCluster(f.actor,command),cluster=saved.cluster;
+ assert.equal(cluster.kind,'cluster');assert.equal(cluster.authorId,f.actor.id);assert.equal(cluster.revision,1);assert.deepEqual(await f.service.saveCluster(f.actor,command),saved);
+ assert.deepEqual(f.store.get(f.service.key).graph.nodes,before.nodes);assert.deepEqual(f.store.get(f.service.key).graph.edges,before.edges);
+ const graph=await f.service.graph(f.actor,{focusId:cluster.id,selectedId:cluster.id});assert.deepEqual(graph.nodes.map(n=>n.id),cluster.nodeIds);assert.equal(graph.selectedItem.id,cluster.id);
+ const annotation=(await f.service.annotate(f.actor,f.command({annotation:{target:{kind:'cluster',id:cluster.id},kind:'hypothesis',text:'Compare these references'}}))).annotation;assert.equal(annotation.targetId,cluster.id);
+ const report=(await f.service.saveReport(f.actor,f.command({report:{title:'Working group report',thesis:'',planIds:[cluster.id]}}))).report;
+ assert.deepEqual(report.findings[0].members.map(n=>n.id),cluster.nodeIds);assert.equal(report.findings[0].notes[0].id,annotation.id);assert.ok(report.findings[0].evidence.length);
+ await f.service.saveCluster(f.actor,f.command({cluster:{id:cluster.id,name:'Revised group',nodeIds:['node_london']}}));
+ const reopened=(await f.service.read(f.actor)).reports[0];assert.deepEqual(reopened.findings,report.findings);
+ const refreshed=(await f.service.refreshReport(f.actor,report.id,f.command({expectedReportRevision:1,planIds:[cluster.id]}))).report;assert.deepEqual(refreshed.findings[0].members.map(n=>n.id),['node_london']);assert.deepEqual(refreshed.history[0].findings,report.findings);
+ const stored=f.store.get(f.service.key);await assert.rejects(f.service.saveCluster(f.actor,f.command({cluster:{name:'Foreign',nodeIds:['not-in-this-organization']}})),{status:409});assert.deepEqual(f.store.get(f.service.key),stored);
+ await assert.rejects(f.service.graph(f.actor,{focusId:'edge_lagos_to_london'}),{status:422});
+});
+
+test('unlocated artist suggestions do not leak into unrelated person or overview focus',async t=>{
+ const f=await fixture(t);await f.service.import(f.actor,f.command({kind:'owned',data:{nodes:[{id:'unlocated-artist',kind:'artist',name:'Unlocated artist',relatedResourceIds:['unlocated-resource-details']},{id:'unlocated-person',kind:'person',name:'Independent person'},{id:'unlocated-resource',kind:'resource',name:'Possible studio'}],resources:[{id:'unlocated-resource-details',nodeId:'unlocated-resource'}]}}));
+ assert.deepEqual((await f.service.graph(f.actor,{})).relatedResources,[]);assert.deepEqual((await f.service.graph(f.actor,{focusId:'unlocated-person'})).relatedResources,[]);
+ assert.equal((await f.service.graph(f.actor,{focusId:'unlocated-artist'})).relatedResources[0].id,'unlocated-resource');
+});
