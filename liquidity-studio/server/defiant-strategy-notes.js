@@ -49,5 +49,5 @@ export function clusterRecord(state,input,actor,at){
  exact(input,['id','name','nodeIds']);const nodeIds=ids(input.nodeIds);if(!nodeIds.length)throw fail(422,'Choose at least one node for the working group');
  for(const id of nodeIds)if(!state.graph.nodes.some(n=>n.id===id))throw fail(409,'A working group member is unavailable');
  const old=input.id?state.graph.clusters.find(c=>c.id===input.id):null;if(input.id&&!old)throw fail(404,'Working group is unavailable');if(!old&&state.graph.clusters.length>=64)throw fail(429,'Working group capacity reached');
- return {id:old?.id||randomUUID(),kind:'cluster',name:text(input.name,'working group name',200),nodeIds,revision:(old?.revision||0)+1,sourceRevision:state.revision,authorId:old?.authorId||actor.id,updatedBy:actor.id,createdAt:old?.createdAt||at,updatedAt:at};
+ return {id:old?.id||randomUUID(),kind:'cluster',verification:'working-selection',name:text(input.name,'working group name',200),nodeIds,revision:(old?.revision||0)+1,sourceRevision:state.revision,authorId:old?.authorId||actor.id,updatedBy:actor.id,createdAt:old?.createdAt||at,updatedAt:at};
 }
