@@ -271,10 +271,10 @@
       );
       if (action === "delete") {
         viewId = "";
-        message = "View deleted. Story content was retained.";
+        message = "View deleted.";
       } else {
         viewId = view.id;
-        message = "View saved with its sharing scope and revision.";
+        message = "View saved.";
       }
     } catch (error) {
       fail(error);
@@ -403,7 +403,7 @@
     localError = "";
     try {
       await client.undo(id);
-      message = "Undo recorded at new revisions. Newer work was not overwritten.";
+      message = "Undo saved.";
     } catch (error) {
       fail(error);
     }
@@ -418,12 +418,17 @@
 
 <svelte:window onkeydown={onKey}/>
 <section bind:this={host} tabindex="-1" class="workspace-table-surface" aria-label="Story work table" data-scope-key={scopeKey}>
-  <div class="projection-switch" role="group" aria-label="Story projection"><button class="secondary" aria-pressed={($client.ui.viewKind||"table")==="table"} onclick={()=>client.setUi({viewKind:"table"})}>Table view</button><button class="secondary" aria-pressed={$client.ui.viewKind==="board"} onclick={()=>client.setUi({viewKind:"board"})}>Board view</button><span>Both show the same filtered stories and saved revisions.</span>{#if !selected.length}<span>0 selected · active brand only</span><button class="secondary" disabled={!rows.length||$client.mutationPending} onclick={selectLoaded}>Select loaded rows</button>{/if}</div>
+  <div class="table-primary">
+    <div class="projection-switch" role="group" aria-label="Story projection"><button class="secondary" aria-pressed={($client.ui.viewKind||"table")==="table"} onclick={()=>client.setUi({viewKind:"table"})}>Table view</button><button class="secondary" aria-pressed={$client.ui.viewKind==="board"} onclick={()=>client.setUi({viewKind:"board"})}>Board view</button></div>
+    <label class="view-picker">View <select aria-label="Saved workspace view" bind:value={viewId} onchange={applyView}><option value="">Current view</option>{#each $client.views as view (view.id)}<option value={view.id}>{view.name} · {view.sharing==="brand"?"Shared":"Personal"}</option>{/each}</select></label>
+  </div>
   <div class="table-tools">
+    <details class="display-controls"><summary>Display options</summary><div class="display-options">
     <label>Sort by <select aria-label="Sort stories" value={$client.query.definition.sort?.[0]?.field||"title"} onchange={event=>runQuery({sort:[{field:event.currentTarget.value,direction:$client.query.definition.sort?.[0]?.direction||"asc"}]})}>{#each ["title","category","status","revision","plannedDate","assigneeId","exportedAt"] as field (field)}<option value={field}>{labels[field]||"Export date"}</option>{/each}</select></label>
     <label>Direction <select aria-label="Sort direction" value={$client.query.definition.sort?.[0]?.direction||"asc"} onchange={event=>runQuery({sort:[{field:$client.query.definition.sort?.[0]?.field||"title",direction:event.currentTarget.value}]})}><option value="asc">Ascending</option><option value="desc">Descending</option></select></label>
     <label>Group <select aria-label="Group stories" value={$client.query.definition.groupBy||""} onchange={event=>runQuery({groupBy:event.currentTarget.value||null})}><option value="">None</option>{#each ["status","sourceReadiness","assigneeId","plannedDate"] as field (field)}<option value={field}>{labels[field]}</option>{/each}</select></label>
     <details><summary>Columns</summary><div class="column-options">{#each Object.entries(labels) as [key,label] (key)}<label><input type="checkbox" checked={columns.includes(key)} disabled={columns.length===1&&columns.includes(key)} onchange={event=>runQuery({columns:event.currentTarget.checked?[...columns,key]:columns.filter(value=>value!==key)})}/>{label}</label>{/each}</div></details>
+    </div></details>
     <details><summary>More filters</summary><div class="advanced-filters">
       <label>Source review <select aria-label="Filter source review" value={$client.query.definition.filters.sourceReadiness||"any"} onchange={event=>runQuery({}, {sourceReadiness:event.currentTarget.value})}><option value="any">Any review state</option><option value="ready">Ready for generation</option><option value="blocked">Review needed</option></select></label>
       <label>Assignee <select aria-label="Filter assignee" value={$client.query.definition.filters.assigneeIds?.[0]??"any"} onchange={event=>runQuery({}, {assigneeIds:event.currentTarget.value==="any"?[]:[event.currentTarget.value||null]})}><option value="any">Any assignee</option><option value="">Unassigned</option>{#each $client.members as member (member.id)}<option value={member.id}>{member.displayName}</option>{/each}</select></label>
@@ -433,20 +438,20 @@
       <button class="secondary" onclick={resetFilters}>Reset table filters</button>
     </div></details>
     <details class="view-controls"><summary>Saved views</summary><div class="advanced-filters">
-      <label>View <select aria-label="Saved workspace view" bind:value={viewId} onchange={applyView}><option value="">Choose a view</option>{#each $client.views as view (view.id)}<option value={view.id}>{view.name} · {view.sharing==="brand"?"shared brand":"personal"}</option>{/each}</select></label>
+
       <label>View name <input aria-label="Workspace view name" bind:value={viewName} maxlength="120"/></label>
       <label>Sharing <select aria-label="Workspace view sharing" bind:value={sharing}><option value="personal">Personal · only you</option><option value="brand">Shared · current brand members</option></select></label>
       <button class="secondary" disabled={!viewName.trim()} onclick={()=>saveView("create")}>Create saved view</button>
       <button class="secondary" disabled={!canEditView||!viewName.trim()} onclick={()=>saveView("update")}>Update selected view</button>
       <button class="secondary" disabled={!canEditView} onclick={()=>saveView("delete")}>Delete selected view</button>
       {#if $client.deletedView}<button class="secondary" onclick={restoreView}>Restore deleted view</button>{/if}
-      <p class="small">Views save filters, sort, grouping and columns. Sharing a view never grants brand access or approves sources.</p>
+      <p class="small">Save this layout and its filters. Shared views are visible to this brand’s members.</p>
     </div></details>
   </div>
   {#if localError||$client.error}<div role="alert" class="table-error">{localError||$client.error}<button aria-label="Dismiss table error" onclick={()=>{localError="";client.clearError();}}>×</button></div>{/if}
   {#if message}<p role="status">{message}</p>{/if}
   {#if selected.length}<div class="selection-toolbar">
-    <span>{selected.length} selected · active brand only</span><button class="secondary" disabled={!rows.length||$client.mutationPending} onclick={selectLoaded}>Select loaded rows</button><button class="secondary" disabled={!selected.length} onclick={()=>client.setUi({selectedIds:[]})}>Clear selection</button>
+    <span>{selected.length} selected</span><button class="secondary" disabled={!selected.length} onclick={()=>client.setUi({selectedIds:[]})}>Clear selection</button>
     {#if selected.length}
     <label>Bulk field <select aria-label="Bulk metadata field" bind:value={bulkField} onchange={()=>bulkValue=""}><option value="category">Category</option><option value="assigneeId">Assignee</option><option value="status">Status</option></select></label>
     {#if bulkField==="status"}<select aria-label="Bulk metadata value" bind:value={bulkValue}><option value="">Choose status</option>{#each statuses as status (status)}<option>{status}</option>{/each}</select>{:else if bulkField==="assigneeId"}<select aria-label="Bulk metadata value" bind:value={bulkValue}><option value="">Unassigned</option>{#each $client.members as member (member.id)}<option value={member.id}>{member.displayName}</option>{/each}</select>{:else}<input aria-label="Bulk metadata value" bind:value={bulkValue} placeholder="Category" maxlength="300"/>{/if}
@@ -476,7 +481,7 @@
   </div>
   {:else}
   <div class="table-scroll" bind:this={scroller} onscroll={event=>{if(client.snapshot.ui.scrollTop!==event.currentTarget.scrollTop)client.setUi({scrollTop:event.currentTarget.scrollTop});}} aria-busy={$client.query.loading}>
-    <table aria-label="Scoped story table"><thead><tr><th scope="col">Select</th>{#each columns as column (column)}<th scope="col">{labels[column]}</th>{/each}<th scope="col">Open</th></tr></thead>
+    <table aria-label="Scoped story table"><thead><tr><th scope="col" class="selection-column"><button class="select-page" aria-label="Select loaded rows" disabled={!rows.length||$client.mutationPending} onclick={selectLoaded}>Select</button></th>{#each columns as column (column)}<th scope="col">{labels[column]}</th>{/each}<th scope="col">Open</th></tr></thead>
     <tbody>{#each groups as group (group.key)}
       {#if group.key}<tr class="group-row"><th colspan={columns.length+2} scope="rowgroup">{groupName(group.key)} · {$client.query.groups.find(item=>item.key===group.key)?.count||group.rows.length} matching, {group.rows.length} loaded</th></tr>{/if}
       {#each group.rows as row (row.id)}<tr class="story-row" data-story-id={row.id} data-story-revision={row.revision}>
@@ -493,7 +498,7 @@
         <td><button class="secondary" disabled={$client.mutationPending} data-open-story={row.id} onclick={()=>openEditor(row.id)}>{row.formats.length?"Open draft":"Open story"} ↗</button></td>
       </tr>{/each}
     {/each}</tbody></table>
-    {#if $client.query.loaded&&!$client.query.loading&&!rows.length&&!$client.query.error}<div class="table-empty">{#if $client.query.total}<h3>No stories match these filters.</h3><p>Your stories are still in this brand. Clear filters to show them.</p>{:else}<h3>No stories here yet.</h3><p>Add supplied facts below. The studio will not invent them.</p>{/if}</div>{/if}
+    {#if $client.query.loaded&&!$client.query.loading&&!rows.length&&!$client.query.error}<div class="table-empty">{#if $client.query.total}<h3>No stories match these filters.</h3><p>Your stories are still in this brand. Clear filters to show them.</p>{:else}<h3>No stories here yet.</h3><p>Add a story and its sources below.</p>{/if}</div>{/if}
   </div>
   {/if}
   <div class="pagination"><p>{rows.length} loaded of {$client.query.filteredTotal} matching · {$client.query.total} in this brand</p><label>Rows per page <select aria-label="Rows per page" value={$client.query.definition.limit||25} onchange={event=>runQuery({limit:Number(event.currentTarget.value)})}><option value={10}>10</option><option value={25}>25</option><option value={50}>50</option><option value={100}>100</option></select></label><button class="secondary" disabled={!$client.query.nextCursor||$client.query.loading} onclick={()=>client.query(client.snapshot.query.definition,{append:true}).catch(fail)}>Load more rows</button></div>
@@ -502,10 +507,10 @@
     <header><h3>Story details</h3><button aria-label="Close story details" onclick={closeDetails}>×</button></header>
     {#if !detailsLoading&&drawerLoadedId===$client.ui.drawerStoryId}<p>Editing metadata from revision {drawerBaseRevision} · current saved revision {drawer.revision}. Source review is separate from artwork approval.</p>{#if drawerBaseRevision!==drawer.revision}<p role="alert">The saved story changed. This form keeps its original revision; save will report a conflict instead of overwriting newer metadata.</p><button class="secondary" onclick={()=>openDetails({id:drawer.id},{currentTarget:opener})}>Discard detail edits and reload</button>{/if}
       <form onsubmit={event=>{event.preventDefault();saveDetails();}}><label>Queue title <input aria-label="Detail queue title" bind:value={drawerTitle} maxlength="300"/></label><label>Category <input aria-label="Detail category" bind:value={drawerCategory} maxlength="300"/></label><button class="primary" disabled={$client.mutationPending}>Save detail metadata</button></form>
-      <p>Current queue status: {drawer?.row?.status || "Refresh required"}. Review supplied source claims in the campaign editor.</p><p>Queue metadata edits do not rewrite generated artwork or approve claims.</p>
+      <p>Current queue status: {drawer?.row?.status || "Refresh required"}. Review supplied source claims in the campaign editor.</p><p>Artwork and source review are unchanged by these metadata edits.</p>
       <button class="secondary" onclick={()=>openEditor(drawer.id)}>Open campaign editor</button><details><summary>Story identity</summary><p>{drawer.id}</p></details>
     {:else}<p role="status">Loading current story details…</p><button class="secondary" onclick={()=>openDetails({id:$client.ui.drawerStoryId},{currentTarget:opener})}>Retry story details</button>{/if}
-    <p class="small">Closing this panel returns to the same work surface, filters and focused row. Escape closes it.</p>
+    <p class="small">Press Escape to close and return to the story row.</p>
   </div>{/if}
 </section>
 
@@ -515,7 +520,7 @@
   .status-column { flex:0 0 260px;background:#eef1e8;padding:10px;border-radius:10px; }
   .board-card { display:grid;gap:8px;background:white;padding:12px;border:1px solid #d2d9c9;border-radius:8px;margin-top:10px; }
   .board-card p {margin:0;font-size:12px;}
-  .workspace-table-surface { position: relative; }
+  .workspace-table-surface { position: relative; min-width:0; }
   .table-tools,.selection-toolbar,.pagination { display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0; }
   label { display:flex;gap:6px;align-items:center;font-size:12px; }
   select,input { max-width:200px;padding:7px;border:1px solid #cbd3c5;border-radius:6px;background:white; }
@@ -528,8 +533,8 @@
   thead { position:sticky;top:0;background:#eef1e8;z-index:1; }
   tr.story-row { display:table-row;box-shadow:none;border-radius:0; }
   .title-button,.cell-button { text-align:left;padding:0;background:none;border:0;color:inherit;font:inherit; }
-  .title-button { font-weight:650;min-width:140px;max-width:230px;white-space:normal; }
-  .cell-button { text-decoration:underline dotted;max-width:140px;white-space:normal; }
+  .title-button { font-weight:650;min-width:220px;max-width:none;white-space:normal; }
+  .cell-button { text-decoration:none;max-width:140px;white-space:normal; }
   .group-row { background:#f0f3e9; }
   .selection-toolbar { padding:6px;background:#e7eddf;border-radius:8px;font-size:12px; }
   .selection-toolbar button,.pagination button,td button { font-size:12px;white-space:nowrap; }
@@ -541,4 +546,32 @@
   .context-drawer form,.context-drawer form label { display:grid;gap:10px;margin:14px 0; }
   .context-drawer input { max-width:none; }
   .context-drawer:focus { outline:2px solid #536b41; }
+
+  .table-primary {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+  .projection-switch {gap:0;border:1px solid #bdc6b7;border-radius:8px;overflow:hidden;}
+  .projection-switch button {border:0;border-radius:0;margin:0;padding:8px 12px;min-height:36px;}
+  .projection-switch button[aria-pressed="true"] {background:#dfe8d2;color:#25371d;font-weight:650;}
+  .view-picker {margin-left:auto;}
+  .view-picker select {width:220px;max-width:100%;}
+  .table-tools {align-items:flex-start;padding-bottom:10px;border-bottom:1px solid #d2d9c9;gap:8px;}
+  .table-tools > details {min-width:0;}
+  .table-tools > details[open] {flex-basis:100%;order:1;}
+  .table-tools summary {padding:8px 10px;border:1px solid #cbd3c5;border-radius:6px;min-height:36px;box-sizing:border-box;}
+  .display-options,.advanced-filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(185px,100%),1fr));max-width:none;gap:12px;padding:14px;margin-top:6px;}
+  .display-options label,.advanced-filters label {align-items:start;flex-direction:column;min-width:0;}
+  .display-options select,.advanced-filters select,.advanced-filters input {width:100%;max-width:100%;box-sizing:border-box;}
+  .column-options {display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));}
+  .column-options label {flex-direction:row;align-items:center;}
+  .selection-column {width:44px;}
+  .select-page {font:inherit;background:none;border:0;padding:0;color:inherit;cursor:pointer;}
+  .title-button {line-height:1.45;}
+  .cell-button {padding:5px 6px;border-radius:4px;line-height:1.4;}
+  .cell-button:hover {background:#eef2e7;}
+  .cell-button:focus-visible,.title-button:focus-visible,.select-page:focus-visible {outline:2px solid #536b41;outline-offset:3px;}
+  th,td {padding:10px 12px;}
+  .pagination {font-size:12px;justify-content:space-between;}
+  .pagination p {margin:0;}
+  @media(max-width:1000px) {.view-picker select {width:170px;} .title-button {min-width:190px;} th,td {padding:10px;}}
+  @media(max-width:600px) {.view-picker {margin-left:0;flex:1;} .view-picker select {width:100%;} .table-tools > details[open] {width:100%;}}
+  td:last-child button {max-width:76px;white-space:normal;padding:6px 8px;line-height:1.35;}
 </style>

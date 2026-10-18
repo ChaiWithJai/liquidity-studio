@@ -85,7 +85,7 @@ async function login(page) {
   ).toBe(200);
   await page.goto(base + "/tests/fixtures/jobs-host.html");
   await expect(
-    page.getByRole("heading", { name: "Operator jobs", exact: true }),
+    page.getByRole("heading", { name: "Campaign generation", exact: true }),
   ).toBeVisible();
 }
 async function source(title) {
@@ -142,7 +142,7 @@ test("reviewed job survives closed browser; independent workers commit one item 
     .click();
   const job = (await (await queued).json()).job;
   await expect(
-    page.getByRole("heading", { name: `Job ${job.id}`, exact: true }),
+    page.getByRole("heading", { name: "Job details", exact: true }),
   ).toBeVisible();
   await page.close();
   await repo.updateStory(b.id, (story) => {
@@ -152,7 +152,7 @@ test("reviewed job survives closed browser; independent workers commit one item 
   await worker();
   const rejoined = await context.newPage();
   await rejoined.goto(base + "/tests/fixtures/jobs-host.html");
-  await rejoined.getByRole("button", { name: new RegExp(job.id) }).click();
+  await rejoined.locator(`[data-job-id="${job.id}"]`).click();
   await expect(
     rejoined.getByRole("region", { name: "Job details" }),
   ).toContainText("partial");
@@ -182,7 +182,7 @@ test("reviewed job survives closed browser; independent workers commit one item 
   await rejoined.getByRole("button", { name: "Switch fixture brand" }).click();
   await expect(
     rejoined.getByRole("region", { name: "Job history" }),
-  ).toContainText("No durable jobs");
+  ).toContainText("No jobs yet");
   await expect(
     rejoined.getByRole("region", { name: "Job details" }),
   ).toHaveCount(0);
@@ -225,9 +225,7 @@ test("lost queue response retries identical plan key and browser reload resolves
   ).jobs;
   expect(jobs).toHaveLength(before + 1);
   await page.reload();
-  await expect(page.getByRole("region", { name: "Job history" })).toContainText(
-    jobs.at(-1).id,
-  );
+  await expect(page.getByRole("region", { name: "Job history" }).locator(`[data-job-id="${jobs.at(-1).id}"]`)).toBeVisible();
 });
 
 test('pending queue and same-key retry show progress; only a lost response offers recovery', async ({ page }) => {

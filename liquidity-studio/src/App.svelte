@@ -1018,8 +1018,8 @@
   <main class="login-shell">
     <div class="login-card">
       <span class="wordmark">◈ LIQUIDITY STUDIO</span>
-      <h1>Good work starts<br />with a clear view.</h1>
-      <p>Sign in to your private brand workspace.</p>
+      <h1>Sign in to Studio</h1>
+      <p>Use your studio account.</p>
       {#if authMode === "google"}<button class="primary" disabled={busy} onclick={loginGoogle}>{busy ? "Signing in…" : "Continue with Google"}</button>
       {:else if authMode === "password"}<form onsubmit={login}>
         <label
@@ -1049,13 +1049,12 @@
     </div>
     <div class="login-art">
       <span class="eyebrow">YOUR EDITORIAL WORKSPACE</span>
-      <h2>From a good story.<br />To a considered campaign.</h2>
+      <h2>Review sources. Edit campaigns.</h2>
       <div class="login-cards">
         <span>SOURCE</span><span>SHAPE</span><span>PREVIEW</span>
       </div>
       <p>
-        One place to edit, inspect and export.<br />Every brand keeps its own
-        context.
+        Choose a brand after signing in.
       </p>
     </div>
   </main>
@@ -1116,24 +1115,8 @@
             >{currentOrganization?.name || "ORGANIZATION"} / {currentBrand?.name ||
               "BRAND"}</span
           >
-          <h1>
-            {tab === "backlog"
-              ? "Good stories, next up."
-              : tab === "calendar"
-                ? "Make room for the week."
-                : tab === "studio"
-                  ? "Campaign Studio"
-                  : tab === "brand"
-                    ? "Your brand, clearly."
-                    : tab === "jobs" ? "Work in progress." : "Studio operations"}
-          </h1>
-          <p>
-            {tab === "studio"
-              ? "Edit the substance. Inspect the surface. Export with context."
-              : "A focused workspace for source-backed editorial work."}
-          </p>
+          <h1>{tab === "backlog" ? "Story backlog" : tab === "calendar" ? "Content calendar" : tab === "studio" ? "Campaign Studio" : tab === "brand" ? "Brand Kit" : tab === "jobs" ? "Jobs" : "Operations"}</h1>
         </div>
-        <span class="private-badge">● Private workspace</span>
       </header>
       {#if error}<div class="error banner" role="alert">
           {error}<button aria-label="Dismiss error" onclick={() => (error = "")}
@@ -1156,9 +1139,8 @@
       {:else if tab === "backlog"}
         <div class="section-line">
           <div>
-            <h2>Story backlog <span class="count">{workspaceState?.query.loaded ? workspaceState.query.filteredTotal : filteredStories.length} of {workspaceState?.query.loaded ? workspaceState.query.total : backlog.length}</span></h2>
+            
             <p id="backlog-results" class="muted" role="status" aria-live="polite" aria-atomic="true">Showing {workspaceState?.query.loaded ? workspaceState.query.filteredTotal : filteredStories.length} of {workspaceState?.query.loaded ? workspaceState.query.total : backlog.length} stories.{searchQuery ? ` Search: ${searchQuery}.` : ""}{statusFilter !== "All" ? ` Status: ${statusFilter}.` : ""}</p>
-            <p class="muted">Opening a saved story keeps your edits.</p>
           </div>
           <div class="filters">
             <input
@@ -1285,10 +1267,10 @@
           <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
           {#if exportUrl}<p class="download">
               <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
-                >Actual exported artifact · scope authorization required</small
+                >Download ready</small
               >
             </p>{/if}
-          <p class="small muted workflow-boundaries">Saving updates the private draft. Calendar placement plans work; export downloads a file for handoff. Neither publishes. The optional native editor opens a separate proposal. Save or discard native changes before leaving it. Original artwork edits stay in this tab when you visit the calendar or backlog; return via Campaign Studio. Reloading discards unsaved changes.</p>
+          <details class="small muted workflow-boundaries"><summary>Saving, export and unsaved work</summary><p>Save before exporting. Calendar placement sets a date; export downloads a file. Neither publishes. Unsaved artwork stays in this tab when you visit the calendar or backlog; reloading discards it. Save or discard native editor changes before leaving that editor.</p></details>
           <div class="format-tabs" aria-label="Campaign format">
             {#each formats as item (item.id)}<button
                 class:active={format === item.id}
@@ -1306,7 +1288,7 @@
           {#if campaign}<div class="studio-grid">
               <section class="editor-panel workflow-target" id="workflow-editor" aria-label="Campaign wording" tabindex="-1">
                 <div class="panel-heading">
-                  <h3>Make it yours.</h3>
+                  <h3>Edit artwork text</h3>
                   <span class="status-tag"
                     >{pendingEdits ? "Unsaved changes" : "Saved draft"}</span
                   >
@@ -1636,10 +1618,9 @@
             </section>
             <div class="empty">
               <span class="empty-symbol">◧</span>
-              <h2>A story ready to take shape.</h2>
+              <h2>Generate a campaign draft</h2>
               <p>
-                Generate a draft from the supplied facts, then review every
-                format.
+                Review the sources below before generating all four formats.
               </p>
               <SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} />
               <button class="primary" disabled={busy || !generationReview.ready} onclick={generate}
@@ -1647,9 +1628,9 @@
               >
             </div>{/if}
         {:else}<div class="empty">
-            <h2>Choose a story to begin.</h2>
+            <h2>No story selected</h2>
             <p>
-              Every campaign starts with supplied facts and a source review.
+              Open a story to review its sources or edit a saved draft.
             </p>
             <button class="primary" onclick={() => (tab = "backlog")}
               >Open story backlog</button
@@ -1715,9 +1696,7 @@
             <span class="eyebrow">OWNER POSITIONING · READ-ONLY REFERENCE</span>
             <h2>Proposed editorial positioning</h2>
             <p class="muted">
-              These audiences and pillars describe editorial intent. They are
-              not verified factual or clinical claims. Source review is required
-              for every campaign.
+              These are proposed audiences and topics, not verified claims. Review campaign sources separately.
             </p>
             <span class="status-tag"
               >{brandProfile.strategy.status || "Proposed positioning"}</span
@@ -1764,8 +1743,7 @@
         >
           <h2>Research queue · unreviewed</h2>
           <p class="muted">
-            Research prompts are starting points, not approved claims. Open a
-            topic to add sourced claims for review.
+            Open a topic to add sources. These prompts are not approved claims.
           </p>
           {#each backlog.filter((story) => story.category === "Source research") as story (story.id)}<article
               class="story-row"
@@ -1791,7 +1769,7 @@
               <button class="secondary" onclick={loadAdmin}>Refresh</button>
             </div>
             <p class="muted">
-              Repository readiness does not establish provider connectivity.
+              Provider connectivity is checked separately below.
             </p>
             <div class="ops-metrics">
               <div>
@@ -1815,7 +1793,7 @@
             </details>
           </section>
           <section class="panel">
-            <h2>Scoped operations</h2>
+            <h2>Brand batch history</h2>
             <button class="secondary" disabled={busy} onclick={() => runBatch()}
               >Run this brand’s batch</button
             >
@@ -1825,8 +1803,7 @@
               >
             </p>
             <p class="small muted">
-              Jobs use this organization and brand. Export is separate from
-              publishing.
+              Run batches only for the brand selected in the sidebar.
             </p>
             <h3>Recent batch attempts</h3>
             <ul aria-label="Recent batch attempts">
@@ -1898,8 +1875,7 @@
               </div>
             </div>
             <p class="small muted">
-              Usage records describe operations; they are not customer invoices
-              or proof of factual accuracy.
+              Usage totals are provider reports, not invoices.
             </p>
             <div class="trace-table">
               <table>

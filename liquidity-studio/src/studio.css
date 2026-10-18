@@ -1629,3 +1629,15 @@ fieldset[id^="source-claim-"] { scroll-margin-top: 36vh; }
 html:has(.workflow-context) { scroll-padding-top: var(--workflow-offset, 16px); }
 .workflow-context ~ :is(.format-tabs, .studio-toolbar) :is(button, a), .workflow-target :is(input, textarea, select, button, summary, a) { scroll-margin-top: 0; }
 @media (max-width: 760px), (max-height: 600px) { html:has(.workflow-context) { scroll-padding-top: 16px; } .workflow-context ~ :is(.format-tabs, .studio-toolbar) :is(button, a), .workflow-target :is(input, textarea, select, button, summary, a) { scroll-margin-top: 0; } }
+
+/* Task hierarchy: compact headings, one live result count, then the work surface. */
+.workspace {padding-top:24px;}
+.workspace-header {margin-bottom:20px;}
+.workspace-header h1 {font-family:"Mona Sans",sans-serif;font-size:28px;font-weight:650;line-height:1.2;letter-spacing:-.6px;margin:6px 0 0;}
+.workspace-header .eyebrow {font-size:11px;}
+.section-line {margin-bottom:12px;align-items:center;flex-wrap:wrap;}
+.section-line > div:first-child {flex:1;min-width:150px;}
+.filters {flex:1;min-width:230px;justify-content:flex-end;}
+.filters input {flex:1;min-width:120px;max-width:310px;}
+.filters select {width:135px;}
+@media(max-width:760px) {.workspace-header h1 {font-size:25px;} .section-line {gap:10px;} .filters {min-width:0;} .workspace {padding-top:20px;}}

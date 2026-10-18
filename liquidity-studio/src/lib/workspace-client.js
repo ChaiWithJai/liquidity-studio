@@ -10,8 +10,6 @@ export const DEFAULT_WORKSPACE_QUERY = Object.freeze({
     "category",
     "status",
     "sourceReadiness",
-    "assigneeId",
-    "revision",
   ],
   limit: 25,
 });

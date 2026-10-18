@@ -78,7 +78,7 @@ async function login(page, role = "founder") {
   await page.getByRole("button", { name: "Sign in →", exact: true }).click();
   await page.getByRole("button", { name: "Jobs", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Operator jobs", exact: true }),
+    page.getByRole("heading", { name: "Campaign generation", exact: true }),
   ).toBeVisible();
 }
 test("mounted App reviews a bounded job then reopens same completed job after browser close and independent worker run", async ({
@@ -101,7 +101,7 @@ test("mounted App reviews a bounded job then reopens same completed job after br
     .click();
   const job = (await (await pending).json()).job;
   await expect(
-    page.getByRole("heading", { name: `Job ${job.id}`, exact: true }),
+    page.getByRole("heading", { name: "Job details", exact: true }),
   ).toBeVisible();
   await page.close();
   await worker();
@@ -109,7 +109,7 @@ test("mounted App reviews a bounded job then reopens same completed job after br
   await next.setViewportSize({ width: 1280, height: 720 });
   await next.goto(base);
   await next.getByRole("button", { name: "Jobs", exact: true }).click();
-  await next.getByRole("button", { name: new RegExp(job.id) }).click();
+  await next.locator(`[data-job-id="${job.id}"]`).click();
   await expect(next.getByRole("region", { name: "Job details" })).toContainText(
     "completed",
   );
@@ -162,7 +162,7 @@ test("mounted App reviews a bounded job then reopens same completed job after br
   await next.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
   await next.getByRole("button", { name: "Jobs", exact: true }).click();
   await expect(next.getByRole("region", { name: "Job history" })).toContainText(
-    "No durable jobs",
+    "No jobs yet",
   );
   await expect(next.getByRole("region", { name: "Job details" })).toHaveCount(
     0,
@@ -173,7 +173,7 @@ test("marketer sees operator jobs separately from founder organization managemen
 }) => {
   await login(page, "marketer");
   await expect(
-    page.getByRole("heading", { name: "Operator jobs", exact: true }),
+    page.getByRole("heading", { name: "Campaign generation", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Admin", exact: true }),
