@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "issues": [
+    55,
+    57
+  ],
+  "method": "Actual BrowserOS Neo UI and scoped browser API readback; controlled password fixture, not Google acceptance",
+  "source": {
+    "backend": "e49dab5e2a5028071d5203c67eb831227e9f202e",
+    "publicApp": "af41c1d/index-BWJKhL1L.js",
+    "privateFrameSource": "4d1e30ee4d1690999337ed83d165d71b90abe23d",
+    "upstream": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5"
+  },
+  "inference": {
+    "count": 1,
+    "engine": "local MODNet via ORT WASM",
+    "approximateSeconds": 20,
+    "paidProviderCalls": 0,
+    "workerDisposed": true
+  },
+  "sourceAssets": [
+    {
+      "consent": "not_personal_data",
+      "contentType": "image/jpeg",
+      "createdAt": "2026-10-18T06:50:31.221Z",
+      "createdBy": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+      "height": 384,
+      "http": 200,
+      "id": "63eda2697bd659a1e01774716b9abe36",
+      "name": "actual-modnet-native-input.jpg",
+      "rightsDeclaration": "Owned generated synthetic portrait with no actual personal identity; cutout fixture.",
+      "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+      "size": 34832,
+      "width": 384
+    },
+    {
+      "consent": "not_personal_data",
+      "contentType": "image/png",
+      "createdAt": "2026-10-18T06:50:52.181Z",
+      "createdBy": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+      "height": 384,
+      "http": 200,
+      "id": "bcdc3cd1730362c6c1a0020a2d57d6e0",
+      "lineage": {
+        "actorId": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+        "documentId": "4f6e89ea-1070-0a5f-7872-cf2534af20b7",
+        "execution": "browser_reported",
+        "inputAssetId": "63eda2697bd659a1e01774716b9abe36",
+        "inputSha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+        "intentId": "e8b20bfefd36677e7ff0eb504a270ac4",
+        "kind": "background-removal",
+        "modelSha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9",
+        "nativeRevision": 3,
+        "outputPolicy": "preserve-resolution-or-reject",
+        "processorVersion": "studio-modnet-area-v1",
+        "serverValidation": "scope-source-native-input-hash-rights-dimensions-output-hash"
+      },
+      "name": "Background removed.png",
+      "rightsDeclaration": "Owned generated synthetic portrait with no actual personal identity; cutout fixture.",
+      "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+      "size": 198985,
+      "width": 384
+    }
+  ],
+  "restored": {
+    "assets": [
+      {
+        "createdBy": "42bc9313-4387-4a1f-89c0-f9610b5a8cac",
+        "http": 200,
+        "id": "63eda2697bd659a1e01774716b9abe36",
+        "portableHistory": {
+          "authority": "historical-only",
+          "restorations": [
+            {
+              "fromScope": {
+                "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+                "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+              },
+              "packSha256": "b88cc0c8cff56f7d0350436d8015ab109527fc599095f01827ef4101fa720d6e",
+              "restoredAt": "2026-10-18T06:55:29.632Z",
+              "restoredBy": "42bc9313-4387-4a1f-89c0-f9610b5a8cac",
+              "toScope": {
+                "brandId": "1f8b4e26-481e-359e-178e-db4d2b72263b",
+                "organizationId": "org_default"
+              }
+            }
+          ],
+          "sourceAssetId": "63eda2697bd659a1e01774716b9abe36",
+          "sourceCreatedBy": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+          "sourceScope": {
+            "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+            "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+          }
+        },
+        "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+        "size": 34832
+      },
+      {
+        "createdBy": "42bc9313-4387-4a1f-89c0-f9610b5a8cac",
+        "http": 200,
+        "id": "bcdc3cd1730362c6c1a0020a2d57d6e0",
+        "lineage": {
+          "actorId": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+          "documentId": "4f6e89ea-1070-0a5f-7872-cf2534af20b7",
+          "execution": "browser_reported",
+          "inputAssetId": "63eda2697bd659a1e01774716b9abe36",
+          "inputSha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+          "intentId": "e8b20bfefd36677e7ff0eb504a270ac4",
+          "kind": "background-removal",
+          "modelSha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9",
+          "nativeRevision": 3,
+          "outputPolicy": "preserve-resolution-or-reject",
+          "processorVersion": "studio-modnet-area-v1",
+          "serverValidation": "scope-source-native-input-hash-rights-dimensions-output-hash"
+        },
+        "portableHistory": {
+          "authority": "historical-only",
+          "restorations": [
+            {
+              "fromScope": {
+                "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+                "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+              },
+              "packSha256": "b88cc0c8cff56f7d0350436d8015ab109527fc599095f01827ef4101fa720d6e",
+              "restoredAt": "2026-10-18T06:55:29.632Z",
+              "restoredBy": "42bc9313-4387-4a1f-89c0-f9610b5a8cac",
+              "toScope": {
+                "brandId": "1f8b4e26-481e-359e-178e-db4d2b72263b",
+                "organizationId": "org_default"
+              }
+            }
+          ],
+          "sourceAssetId": "bcdc3cd1730362c6c1a0020a2d57d6e0",
+          "sourceCreatedBy": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+          "sourceScope": {
+            "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+            "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+          }
+        },
+        "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+        "size": 198985
+      }
+    ],
+    "currentActor": "42bc9313-4387-4a1f-89c0-f9610b5a8cac",
+    "native": {
+      "id": "4f6e89ea-1070-0a5f-7872-cf2534af20b7",
+      "revision": 4,
+      "sourceState": "current",
+      "status": "proposal"
+    }
+  },
+  "reejected": {
+    "assets": [
+      {
+        "file": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+        "id": "63eda2697bd659a1e01774716b9abe36",
+        "portableHistory": {
+          "authority": "historical-only",
+          "restorations": [
+            {
+              "fromScope": {
+                "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+                "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+              },
+              "packSha256": "b88cc0c8cff56f7d0350436d8015ab109527fc599095f01827ef4101fa720d6e",
+              "restoredAt": "2026-10-18T06:55:29.632Z",
+              "restoredBy": "42bc9313-4387-4a1f-89c0-f9610b5a8cac",
+              "toScope": {
+                "brandId": "1f8b4e26-481e-359e-178e-db4d2b72263b",
+                "organizationId": "org_default"
+              }
+            }
+          ],
+          "sourceAssetId": "63eda2697bd659a1e01774716b9abe36",
+          "sourceCreatedBy": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+          "sourceScope": {
+            "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+            "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+          }
+        }
+      },
+      {
+        "file": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+        "id": "bcdc3cd1730362c6c1a0020a2d57d6e0",
+        "lineage": {
+          "actorId": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+          "documentId": "4f6e89ea-1070-0a5f-7872-cf2534af20b7",
+          "execution": "browser_reported",
+          "inputAssetId": "63eda2697bd659a1e01774716b9abe36",
+          "inputSha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+          "intentId": "e8b20bfefd36677e7ff0eb504a270ac4",
+          "kind": "background-removal",
+          "modelSha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9",
+          "nativeRevision": 3,
+          "outputPolicy": "preserve-resolution-or-reject",
+          "processorVersion": "studio-modnet-area-v1",
+          "serverValidation": "scope-source-native-input-hash-rights-dimensions-output-hash"
+        },
+        "portableHistory": {
+          "authority": "historical-only",
+          "restorations": [
+            {
+              "fromScope": {
+                "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+                "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+              },
+              "packSha256": "b88cc0c8cff56f7d0350436d8015ab109527fc599095f01827ef4101fa720d6e",
+              "restoredAt": "2026-10-18T06:55:29.632Z",
+              "restoredBy": "42bc9313-4387-4a1f-89c0-f9610b5a8cac",
+              "toScope": {
+                "brandId": "1f8b4e26-481e-359e-178e-db4d2b72263b",
+                "organizationId": "org_default"
+              }
+            }
+          ],
+          "sourceAssetId": "bcdc3cd1730362c6c1a0020a2d57d6e0",
+          "sourceCreatedBy": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+          "sourceScope": {
+            "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+            "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+          }
+        }
+      }
+    ],
+    "fileSha256": "e32e8f111bca451089e69cfef1c77fb2a6fa9c5378154b5676d5fa349e456d80",
+    "packSha256": "f6ade7ad24060875e4e9772ffba5c947dd46b6093a8bfdd8092c05c07c387a46",
+    "scope": {
+      "brandId": "1f8b4e26-481e-359e-178e-db4d2b72263b",
+      "organizationId": "org_default"
+    },
+    "size": 2865313
+  },
+  "fixtureRepair": {
+    "required": true,
+    "reason": "Controlled deterministic campaign bootstrap omitted corresponding generation traces; ordinary import correctly rejected Orphaned generation lineage",
+    "onlyChanged": "telemetry.traces in separate operational copy",
+    "traceOperation": "controlled_fixture_campaign_bootstrap",
+    "provider": "none",
+    "model": null,
+    "modelCalls": 0,
+    "administrativeRepair": true,
+    "originalExecutionTime": null,
+    "humanReviewObserved": false,
+    "preserved": [
+      "invalid original SQLite",
+      "original rejected pack",
+      "empty rejected destination",
+      "actual cutout events/assets"
+    ],
+    "futureBootstrapCorrected": true
+  },
+  "recoveryLocator": {
+    "actualPageReloadBeforeInstall": true,
+    "status": "empty",
+    "exactPackReselectionRequired": true
+  },
+  "backup": {
+    "bytes": 425984,
+    "sha256": "2865e5226ba943ce5c37cec7f5415b2f390f2d6499fe7b4eee3792aea8e8a85f",
+    "integrity": "ok",
+    "records": 16,
+    "inlineAssets": true
+  },
+  "limits": [
+    "Source/campaign is explicitly controlled setup, not actual research or human-review evidence.",
+    "Inference execution is browser_reported; server validates scope/input/rights/dimensions/output bytes, not independent kernel execution.",
+    "No human portrait quality, commercial licensing clearance, maximum-memory bound, restored motion/audio or whole issue57 completion claim."
+  ]
+}
