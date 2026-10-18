@@ -70,3 +70,10 @@
         (is (= (str operator) (get payload "nativeOperatorProfileId")))
         (is (= (str person) (get payload "nativeProfileId")))
         (is (= (str operator) (get-in payload ["nativeSession" "profileId"])))))))
+
+(deftest private-compose-callback-is-a-finite-constructor-alias
+  (let [native-client (http/build-client {:follow-redirects :never})
+        settings {::client/client native-client :grant-key (apply str (repeat 43 "a"))}]
+    (is (fn? (authority/create (assoc settings :callback-origin "http://studio-native-connect:39044"))))
+    (doseq [origin ["http://studio-native-connect:39044/path" "http://studio-native-connect.evil:39044" "http://other:39044"]]
+      (is (thrown? IllegalArgumentException (authority/create (assoc settings :callback-origin origin)))))))

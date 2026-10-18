@@ -209,6 +209,7 @@ export function createHttpServer(
     nativeEditorEnabled = process.env.STUDIO_NATIVE_EDITOR_ENABLED === "true",
     penpotEnabled = process.env.STUDIO_PENPOT_ENABLED === "true",
     developmentPenpotStoryDesigns = null,
+    managedPenpotStoryDesigns = null,
     nativePairing = null,
     nativeAccess = null,
     editorContractEnabled = process.env.STUDIO_EDITOR_CONTRACT_ENABLED ===
@@ -231,6 +232,8 @@ export function createHttpServer(
       (typeof developmentPenpotStoryDesigns !== "function" || process.env.NODE_ENV !== "development" ||
        process.env.K_SERVICE || platform?.identity?.mode !== "password" || trustedTestMode))
     throw new Error("Developer Penpot requires the explicit local development runtime");
+  if(managedPenpotStoryDesigns&&(typeof managedPenpotStoryDesigns!=='function'||platform?.identity?.mode!=='google'||platform?.identity?.configuration?.mode!=='google'||trustedTestMode||developmentPenpotStoryDesigns))throw Error('Managed Penpot requires Google identity and one constructor-owned provider');
+  const storyDesigns=managedPenpotStoryDesigns||developmentPenpotStoryDesigns;
   // One bounded portable operation per server, including response serialization/backpressure.
   let portableOperationActive = false;
   const server = http.createServer(async (req, res) => {
@@ -1413,7 +1416,7 @@ export function createHttpServer(
               !trustedTestMode &&
               process.env.STUDIO_NATIVE_PORTABLE_ENABLED === "true",
             penpot: penpotEnabled && !trustedTestMode && !process.env.K_SERVICE,
-            penpotStoryDesigns: Boolean(developmentPenpotStoryDesigns) && (user.role === "founder" || developmentPenpotStoryDesigns.pairedAccess === true),
+            penpotStoryDesigns: Boolean(storyDesigns) && (user.role === "founder" || storyDesigns.pairedAccess === true),
             penpotPairing: Boolean(nativePairing) && !trustedTestMode,
             sourcePreparation:
               process.env.STUDIO_SOURCE_PREPARATION_ENABLED === "true" &&
@@ -1421,8 +1424,8 @@ export function createHttpServer(
               !trustedTestMode,
           },
         });
-      if (developmentPenpotStoryDesigns && (route === "/api/studio/penpot/designs" || route === "/api/studio/penpot/designs/styles" || route === "/api/studio/penpot/designs/svg" || /^\/api\/studio\/penpot\/designs\/styles\/[a-f0-9-]{36}\/reconcile$/.test(route))) {
-        const designs = await developmentPenpotStoryDesigns(scope);
+      if (storyDesigns && (route === "/api/studio/penpot/designs" || route === "/api/studio/penpot/designs/styles" || route === "/api/studio/penpot/designs/svg" || /^\/api\/studio\/penpot\/designs\/styles\/[a-f0-9-]{36}\/reconcile$/.test(route))) {
+        const designs = await storyDesigns(scope);
         const sessionContext = createHash("sha256").update(token(req, identity.mode)).digest("hex");
         if(route.endsWith("/svg")&&req.method==="POST"&&designs.svg)return json(200,await designs.svg.prepare(user,body,sessionContext));
         if(route.endsWith("/styles")&&req.method==="POST"&&designs.styles)return json(200,await designs.styles.prepare(user,body,sessionContext));
@@ -2097,6 +2100,12 @@ export function createHttpServer(
   return server;
 }
 export async function startConfiguredStudio(options = {}) {
+  if(process.env.STUDIO_PENPOT_MANAGED_CONFIG){
+    const platform=createPlatform();await platform.ready;
+    const {createManagedPenpot}=await import('./penpot-managed.js');
+    const managed=await createManagedPenpot({store:platform.store,identity:platform.identity,configurationPath:process.env.STUDIO_PENPOT_MANAGED_CONFIG});
+    return startServer(createHttpServer(null,{platform,penpotEnabled:false,managedPenpotStoryDesigns:managed.storyDesigns,nativePairing:managed.nativePairing,nativeAccess:managed.nativeAccess}),options);
+  }
   if (process.env.STUDIO_PENPOT_ENABLED !== "true")
     return startServer(createHttpServer(), options);
   if (process.env.K_SERVICE)

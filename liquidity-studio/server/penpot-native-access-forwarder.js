@@ -24,7 +24,7 @@ function readBody(req, signal) {
 /** Fixed local native→Studio authority transport, not an RPC/WS relay. */
 export function createPenpotNativeAccessForwarder({studioOrigin, grantKey, fetchImpl = fetch} = {}) {
   const studio = new URL(studioOrigin);
-  if (studio.protocol !== 'http:' || studio.hostname !== '127.0.0.1' || studio.origin !== studioOrigin || studio.username || studio.password || studio.pathname !== '/' || studio.search || studio.hash || !Number.isInteger(Number(studio.port)) || Number(studio.port) < 1024 || Number(studio.port) > 65535 || !/^[A-Za-z0-9_-]{43}$/.test(grantKey || '') || typeof fetchImpl !== 'function') throw Error('Fixed private local authority configuration required');
+  if (!(studio.protocol === 'https:' || (studio.protocol === 'http:' && studio.hostname === '127.0.0.1')) || studio.origin !== studioOrigin || studio.username || studio.password || studio.pathname !== '/' || studio.search || studio.hash || (studio.protocol==='http:'&&(!Number.isInteger(Number(studio.port)) || Number(studio.port) < 1024 || Number(studio.port) > 65535)) || !/^[A-Za-z0-9_-]{43}$/.test(grantKey || '') || typeof fetchImpl !== 'function') throw Error('Fixed private local authority configuration required');
   const expected = Buffer.from(grantKey);
   return async (req, res) => {
     if (!req.url?.startsWith('/api/native/penpot/access/')) return false;

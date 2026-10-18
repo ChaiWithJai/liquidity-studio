@@ -1,3 +1,4 @@
+import {nativePublicOrigin,nativeRpcOrigin} from './penpot-origins.js';
 // C2: current paired-human admission preparation. C3 live fencing is mandatory
 // before any governed editing can be enabled. Reconciliation changes only
 // the exact paired native membership through the private acknowledged hook.
@@ -169,11 +170,11 @@ export class PenpotBrandAccess {
 }
 
 /** Fixed private native membership transport; no caller URL or operator cookie. */
-export function createPenpotMembershipReconciler({sessions,transportMode='loopback',grantKey,fetchImpl=fetch}={}){
- const origin={loopback:'http://localhost:39008','docker-host':'http://host.docker.internal:39008'}[transportMode];if(!origin||typeof grantKey!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(grantKey))throw Error('Fixed private native grant transport required');
+export function createPenpotMembershipReconciler({sessions,transportMode='loopback',grantKey,fetchImpl=fetch,nativeOrigin='http://localhost:39008',rpcOrigin=null}={}){
+ nativeOrigin=nativePublicOrigin(nativeOrigin);const origin=rpcOrigin===null?{loopback:'http://localhost:39008','docker-host':'http://host.docker.internal:39008'}[transportMode]:nativeRpcOrigin(rpcOrigin);if(!origin||typeof grantKey!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(grantKey))throw Error('Fixed private native grant transport required');
  return async(workspace,payload)=>{
   const cookie=sessions.get(workspace.operatorProfileId||workspace.ownerPrincipal)?.cookie;if(!cookie)throw fail(403,'Administrative native session unavailable');
-  const response=await fetchImpl(origin+'/api/rpc/command/studio-reconcile-team-member',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Cookie:cookie,Origin:'http://localhost:39008','X-Studio-Native-Grant-Key':grantKey},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(10000)});
+  const response=await fetchImpl(origin+'/api/rpc/command/studio-reconcile-team-member',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Cookie:cookie,Origin:nativeOrigin,'X-Studio-Native-Grant-Key':grantKey},body:JSON.stringify(payload),redirect:'error',signal:AbortSignal.timeout(10000)});
   if(response.status!==200){await response.body?.cancel().catch(()=>{});throw fail([401,403,409].includes(response.status)?response.status:502,'Native membership was not acknowledged; preserve intent');}
   const reader=response.body?.getReader();if(!reader)throw fail(502,'Native membership acknowledgement missing');const chunks=[];let bytes=0,done=false;
   try{for(;;){const part=await reader.read();if(part.done){done=true;break;}bytes+=part.value.byteLength;if(bytes>4096)throw fail(502,'Native acknowledgement exceeds its bound');chunks.push(part.value);}}finally{if(!done)await reader.cancel().catch(()=>{});reader.releaseLock();}

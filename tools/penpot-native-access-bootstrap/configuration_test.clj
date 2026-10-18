@@ -75,3 +75,7 @@
     (is (false? (configuration/asset-hook-installed?))))
   (with-redefs [assets/deliver nil]
     (is (false? (configuration/asset-hook-installed?)))))
+
+(deftest private-compose-authority-origin-preserves-fixed-callback
+  (with-settings (assoc settings :callbackOrigin "http://studio-native-connect:39044")
+    #(is (= "http://studio-native-connect:39044" (:callback-origin (configuration/read-settings %))))))

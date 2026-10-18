@@ -1,3 +1,4 @@
+import {nativePublicOrigin} from './penpot-origins.js';
 // Native profile identity only. No native grants, editing authority or files are changed.
 import {createHash,randomBytes,randomUUID,timingSafeEqual} from 'node:crypto';
 import {fail} from './auth.js';
@@ -11,7 +12,7 @@ function sessionInput(value){if(typeof value!=='string'||!HEX.test(value))throw 
 function empty(actorId,nativeInstanceId){return {actorId,nativeInstanceId,epoch:1,connection:null,pending:[]};}
 export class PenpotProfilePairing {
  constructor({store,identity,nativeInstanceId,nativeOrigin='http://localhost:39008',pairingKey,now=()=>Date.now()}){
-  if(!UUID.test(nativeInstanceId||'')||nativeOrigin!=='http://localhost:39008'||typeof pairingKey!=='string'||!SECRET.test(pairingKey))throw Error('Fixed private native pairing configuration required');
+  if(!UUID.test(nativeInstanceId||'')||!nativePublicOrigin(nativeOrigin)||typeof pairingKey!=='string'||!SECRET.test(pairingKey))throw Error('Fixed private native pairing configuration required');
   Object.assign(this,{store,identity,nativeInstanceId,nativeOrigin,pairingKey,now});
  }
  pairKey(actorId){return `penpot-profile-pair:${hash(JSON.stringify([this.nativeInstanceId,actorId]))}`;}

@@ -1,3 +1,4 @@
+import {nativePublicOrigin,nativeRpcOrigin} from './penpot-origins.js';
 // First-party native identity proof only. This does not grant native editing.
 import {timingSafeEqual} from 'node:crypto';
 import {penpotPresentedSession} from './penpot-media-authorization.js';
@@ -8,11 +9,11 @@ const ORIGINS={loopback:'http://localhost:39008','docker-host':'http://host.dock
 const escape=x=>x.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function nativeConnectChallenge(value){if(typeof value!=='string'||!CHALLENGE.test(value))throw fail(400,'A current Studio connection request is required');return value;}
 /** The only identity input is the native server's response to its presented session. */
-export function createNativeProfileProof({transportMode='loopback',fetchImpl=fetch}={}){
- const origin=ORIGINS[transportMode];if(!origin)throw Error('Fixed native proof transport required');
+export function createNativeProfileProof({transportMode='loopback',fetchImpl=fetch,nativeOrigin='http://localhost:39008',rpcOrigin=null}={}){
+ nativeOrigin=nativePublicOrigin(nativeOrigin);const origin=rpcOrigin===null?ORIGINS[transportMode]:nativeRpcOrigin(rpcOrigin);if(!origin)throw Error('Fixed native proof transport required');
  return async cookie=>{
   const session=penpotPresentedSession(cookie);
-  const response=await fetchImpl(`${origin}/api/rpc/command/get-profile`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Cookie:session,Origin:ORIGINS.loopback},body:'{}',redirect:'error',signal:AbortSignal.timeout(10000)});
+  const response=await fetchImpl(`${origin}/api/rpc/command/get-profile`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Cookie:session,Origin:nativeOrigin},body:'{}',redirect:'error',signal:AbortSignal.timeout(10000)});
   if(response.status!==200){await response.body?.cancel().catch(()=>{});throw fail([401,403].includes(response.status)?401:502,'Sign in to the native editor before connecting');}
   const reader=response.body?.getReader();if(!reader)throw fail(502,'Native profile response unavailable');const chunks=[];let size=0,complete=false;
   try{for(;;){const {value,done}=await reader.read();if(done){complete=true;break;}size+=value.byteLength;if(size>65536)throw fail(502,'Native profile response exceeds its bound');chunks.push(value);}}
@@ -27,8 +28,9 @@ export function privateGateway(req,key){const actual=req.headers['x-studio-nativ
 function page(content){return `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connect Penpot</title><style>body{font:17px system-ui;line-height:1.5;max-width:34rem;margin:12vh auto;padding:24px;color:#202020}button,a{font:inherit}button{padding:10px 18px}</style><main>${content}</main></html>`;}
 async function form(req){if(req.headers['content-type']!=='application/x-www-form-urlencoded')throw fail(415,'Connection form required');let size=0;const chunks=[];const timer=setTimeout(()=>req.destroy(),5000);try{for await(const chunk of req){size+=chunk.length;if(size>128)throw fail(413,'Connection request too large');chunks.push(chunk);}}finally{clearTimeout(timer);}const body=new URLSearchParams(Buffer.concat(chunks).toString('utf8'));if([...body.keys()].join(',')!=='challenge')throw fail(400,'Connection request invalid');return nativeConnectChallenge(body.get('challenge'));}
 /** Gateway key and proof sink are server-only constructor dependencies. Never mount publicly without the gateway. */
-export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOrigin,recordProof,describeChallenge,readProfile=createNativeProfileProof()}={}){
+export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOrigin,nativeOrigin='http://localhost:39008',recordProof,describeChallenge,readProfile=createNativeProfileProof()}={}){
  if(typeof gatewayKey!=='string'||!/^[a-f0-9]{64}$/.test(gatewayKey)||!UUID.test(nativeInstanceId||'')||typeof recordProof!=='function'||typeof describeChallenge!=='function')throw Error('Private native connection dependencies required');
+ nativeOrigin=nativePublicOrigin(nativeOrigin);
  const studio=new URL(studioOrigin);if(!['http:','https:'].includes(studio.protocol)||studio.origin!==studioOrigin||studio.username||studio.password)throw Error('Fixed Studio origin required');
  return async(req,res)=>{
   res.setHeader('Cache-Control','private, no-store');res.setHeader('Referrer-Policy','strict-origin');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
@@ -41,7 +43,7 @@ export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOr
     const scopeLabel=[issuer.organizationLabel,issuer.brandLabel].filter(x=>typeof x==='string'&&x.length<=200).map(escape).join(' · ');
     html=page(`<h1>Connect your Penpot account</h1><p>Connect your Penpot account to Studio account <strong>${escape(issuer.studioActorLabel)}</strong>.</p>${scopeLabel?`<p>${scopeLabel}</p>`:''}<p>This request expires at ${escape(new Date(issuer.expiresAt).toISOString())}.</p><p>Connect the native account currently signed in here to this Studio request. This establishes identity only. It does not grant access to brand designs.</p><form method="post" action="/studio-connect/prove"><input type="hidden" name="challenge" value="${escape(challenge)}"><button type="submit">Connect this Penpot account</button></form><p>You will finish the connection in the same Studio session where you started.</p>`);
    }else if(req.method==='POST'&&url.pathname==='/studio-connect/prove'&&!url.search){
-    if(req.headers['x-studio-native-origin']!==ORIGINS.loopback)throw fail(403,'Use the native connection page');
+    if(req.headers['x-studio-native-origin']!==nativeOrigin)throw fail(403,'Use the native connection page');
     const challenge=await form(req),profile=await readProfile(req.headers['x-studio-native-session']);
     if(!UUID.test(profile?.nativeProfileId||''))throw fail(401,'A signed-in native profile is required');
     const proof={challenge,nativeInstanceId,nativeProfileId:profile.nativeProfileId,...(profile.nativeProfileName?{nativeProfileName:profile.nativeProfileName}:{})};
