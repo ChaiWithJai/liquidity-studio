@@ -102,7 +102,11 @@
 (defn guard-file! [conn file-id]
   (when *request-context*
     (let [team-id (file-team conn file-id)]
-      (when-not (uuid? team-id) (denied!))
+      ;; A UUID with no stored file/project ownership is still denied, using
+      ;; native not-found semantics. Pending creation can then retry its exact
+      ;; preallocated ID through the separately guarded project/create path.
+      (when-not (uuid? team-id)
+        (ex/raise :type :not-found :code :object-not-found :hint "not found"))
       (guard-team! team-id))))
 
 (defn guard-project! [conn project-id]

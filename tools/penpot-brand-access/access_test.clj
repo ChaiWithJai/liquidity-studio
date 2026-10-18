@@ -114,3 +114,21 @@
     (is (= key (yreq/get-header request "x-studio-native-grant-key")))
     (is (handler cfg (with-meta {::rpc/profile-id profile} {::http/request request})))
     (is (not (handler cfg (with-meta {::rpc/profile-id profile} {::http/request (make-request "invalid")}))))))
+
+(deftest missing-file-readback-keeps-native-not-found-without-weakening-known-team-policy
+  (let [calls (atom 0)
+        cfg {::access/governed-teams #{team}
+             ::access/session-valid? (fn [_ _] true)
+             ::access/authorize (fn [_] (swap! calls inc) {:allowed false})}
+        context {:cfg cfg :command "get-file" :resource {:native-profile-id profile}}]
+    (binding [access/*request-context* context]
+      (with-redefs [access/file-team (fn [_ _] nil)]
+        (let [error (try (access/guard-file! nil profile) nil (catch Exception e e))]
+          (is (= :not-found (:type (ex-data error))))
+          (is (= :object-not-found (:code (ex-data error))))
+          (is (zero? @calls))))
+      (with-redefs [access/file-team (fn [_ _] team)]
+        (let [error (try (access/guard-file! nil profile) nil (catch Exception e e))]
+          (is (= :authorization (:type (ex-data error))))
+          (is (= :studio-native-access-denied (:code (ex-data error))))
+          (is (= 1 @calls)))))))
