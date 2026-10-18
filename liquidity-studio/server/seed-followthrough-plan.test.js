@@ -41,3 +41,28 @@ test('unknown work, related history, assets, external records and current author
  const changed=structuredClone(f.identity);changed.users[0].role='marketer';assert.throws(()=>assertPristineSeedPlanRow({identity:changed,actorId:f.actor.id,scope:f.scope,state,externalKeys:[],row}),error=>error.status===403);
  assert.equal(seedPlanHash(state),seedPlanHash(await f.repo.read()));
 });
+
+import {applyPristineSeedFollowthrough} from './seed-followthrough-apply.js';
+const runApply=(f,plan,jobs=f.platform.operatorJobs(f.scope,{ports:{repo:f.repo}}),keys={titleIdempotencyKey:randomUUID(),jobIdempotencyKey:randomUUID()})=>applyPristineSeedFollowthrough({store:f.store,workspace:f.workspace,jobs,actor:f.actor,scope:f.scope,plan,sourceCommit:'a'.repeat(40),...keys});
+test('SQLite guarded title correction queues fixed reviewed revisions and replays the same job',async t=>{
+ process.env.STUDIO_SOURCE_PREPARATION_ENABLED='true';
+ const f=await fixture(t),plan=await planOf(f),jobs=f.platform.operatorJobs(f.scope,await f.platform.forScope(f.scope)),keys={titleIdempotencyKey:randomUUID(),jobIdempotencyKey:randomUUID()};
+ const done=await runApply(f,plan,jobs,keys);
+ assert.equal(done.job.items.length,3);
+ const state=await f.repo.read();
+ for(const row of plan.rows){const story=state.backlog.find(story=>story.id===row.storyId);assert.equal(story.title,row.desiredTitle);assert.equal(story.contentRevision,row.contentRevision+(row.disposition==='pristine-rename-eligible'?1:0));assert.equal(story.sourceClaims.some(claim=>claim.status==='approved'),false);}
+ const again=await runApply(f,plan,jobs,keys);assert.equal(again.job.id,done.job.id);assert.equal((await f.repo.read()).operatorJobs.length,1);
+});
+test('human edit after title commit cannot be silently adopted by source queue',async t=>{
+ process.env.STUDIO_SOURCE_PREPARATION_ENABLED='true';
+ const f=await fixture(t),plan=await planOf(f),jobs=f.platform.operatorJobs(f.scope,await f.platform.forScope(f.scope)),create=jobs.create.bind(jobs);
+ jobs.create=async(...args)=>{const story=(await f.repo.read()).backlog.find(story=>story.id==='story_nykaa_ipo');await f.workspace.mutate(f.actor,{idempotencyKey:randomUUID(),changes:[{kind:'story.patch',storyId:story.id,expectedRevision:story.revision,patch:{title:'Human work after guarded title commit'}}]});return create(...args);};
+ await assert.rejects(runApply(f,plan,jobs),error=>error.status===409);
+ const state=await f.repo.read();assert.equal(state.backlog.find(story=>story.id==='story_nykaa_ipo').title,'Human work after guarded title commit');assert.equal(state.operatorJobs?.length||0,0);
+});
+test('SQLite guard reads revocation from the same connection, not captured identity',async t=>{
+ const f=await fixture(t),plan=await planOf(f),mutate=f.workspace.mutate.bind(f.workspace);
+ f.workspace.mutate=async(...args)=>{await f.store.update('identity',identity=>({...identity,memberships:identity.memberships.filter(member=>member.userId!==f.actor.id)}));return mutate(...args);};
+ await assert.rejects(runApply(f,plan,f.platform.operatorJobs(f.scope,await f.platform.forScope(f.scope))),error=>error.status===403);
+ assert.equal((await f.repo.read()).backlog.find(story=>story.id==='story_nykaa_ipo').title,plan.rows.find(row=>row.storyId==='story_nykaa_ipo').currentTitle);
+});
