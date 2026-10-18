@@ -2,6 +2,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { createPlatform } from "./platform.js";
+import { hasClaimWork } from "./operator-jobs.js";
+import { assertRestoreAvailable } from "./restore-gate.js";
 import {
   CloudTasksJobDispatcher,
   jobDispatcherConfiguration,
@@ -14,6 +16,9 @@ export async function workerTick(platform, workerId = randomUUID()) {
     const state = await platform.store.get(key),
       scope = state?.operatorJobScope;
     if (!scope || !state.operatorJobs?.length) continue;
+    assertRestoreAvailable(state);
+    // forScope initializes its repository. Do not construct it for idle history.
+    if (!hasClaimWork(state)) continue;
     const container = await platform.forScope(scope);
     if (await platform.operatorJobs(scope, container).runNext(workerId))
       handled++;

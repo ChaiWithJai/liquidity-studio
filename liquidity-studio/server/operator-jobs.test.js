@@ -9,6 +9,7 @@ import { DurableStore } from "./storage.js";
 import { createPlatform } from "./platform.js";
 import { brandRevision } from "./multimodal-contract.js";
 import { DurableJobService } from "./operator-jobs.js";
+import { workerTick } from "./job-worker.js";
 import {
   jobDispatcherConfiguration,
   CloudTasksJobDispatcher,
@@ -569,10 +570,16 @@ test("idle terminal/paused/unexpired scans preserve timestamps and physical SQLi
   const before = await f.repo.read(), physical = jobStorageReceipt(f.store, f.file);
   for (let tick = 0; tick < 5; tick++) {
     t.mock.timers.tick(1000);
+    assert.equal(await workerTick(f.platform, "idle-worker-loop"), 0);
     assert.equal(await f.jobs.claim("idle"), null);
   }
   assert.deepEqual(await f.repo.read(), before);
   assert.deepEqual(jobStorageReceipt(f.store, f.file), physical);
+  await f.repo.mutate((state) => {
+    state.editorRestore = { status: "installing" };
+    return state;
+  });
+  await assert.rejects(workerTick(f.platform, "restore-guard"), { status: 423 });
 });
 test("claiming one job leaves skipped siblings untouched; targeted stale attempts are physical no-ops", async (t) => {
   t.mock.timers.enable({ apis: ["Date"], now: Date.UTC(2026, 9, 18) });
@@ -624,8 +631,9 @@ test("lease expiry settles once while real cancel/resume/retry timestamps still 
   let current = await f.jobs.detail(f.user, job.id);
   assert.equal(current.items[0].state, "unknown");
   assert.equal(current.items[0].error.code, "WORKER_INTERRUPTED");
-  assert.equal(current.items[0].fence, claimed.item.fence + 1);
-  assert.equal(current.items[0].lease, undefined);
+  const internal = (await f.repo.read()).operatorJobs.find((row) => row.id === job.id);
+  assert.equal(internal.items[0].fence, claimed.item.fence + 1);
+  assert.equal(internal.items[0].lease, undefined);
   assert.notEqual(current.updatedAt, claimed.job.updatedAt);
   const expired = structuredClone(current), physical = jobStorageReceipt(f.store, f.file);
   t.mock.timers.tick(1000);

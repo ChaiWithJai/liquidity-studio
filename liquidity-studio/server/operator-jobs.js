@@ -29,6 +29,28 @@ const stamp = () => new Date().toISOString();
 // A racing worker can consume the eligible work after our read-only admission.
 // Throwing inside the existing transaction leaves the scope entirely unwritten.
 const NO_CLAIM_CHANGE = Object.freeze({ noDurableJobClaimChange: true });
+function claimPredicates({ jobId, itemId, nextAttempt, deliveryEpoch, now = Date.now } = {}) {
+  return {
+    relevant: (job) =>
+      job.schemaVersion === 1 &&
+      (!jobId || job.id === jobId) &&
+      (!deliveryEpoch || job.deliveryEpoch === deliveryEpoch),
+    eligible: (item) =>
+      item.state === "queued" &&
+      (!itemId || item.id === itemId) &&
+      (!nextAttempt || item.attempt + 1 === nextAttempt),
+    expired: (item) =>
+      item.state === "running" && item.lease.expiresAt <= now(),
+  };
+}
+// Advisory only: a current transaction must still recheck every claim fence.
+export function hasClaimWork(state, options) {
+  const { relevant, eligible, expired } = claimPredicates(options);
+  return (state.operatorJobs || []).some(
+    (job) => relevant(job) &&
+      (job.items.some(expired) || (!job.cancelled && job.items.some(eligible))),
+  );
+}
 function uuid(value) {
   if (
     typeof value !== "string" ||
@@ -602,26 +624,10 @@ export class DurableJobService {
   }
   async claim(workerId, jobId, itemId, nextAttempt, deliveryEpoch) {
     let claimed = null;
-    const relevant = (job) =>
-      job.schemaVersion === 1 &&
-      (!jobId || job.id === jobId) &&
-      (!deliveryEpoch || job.deliveryEpoch === deliveryEpoch);
-    const eligible = (item) =>
-      item.state === "queued" &&
-      (!itemId || item.id === itemId) &&
-      (!nextAttempt || item.attempt + 1 === nextAttempt);
-    const expired = (item) =>
-      item.state === "running" && item.lease.expiresAt <= this.now();
+    const options = { jobId, itemId, nextAttempt, deliveryEpoch, now: () => this.now() };
+    const { relevant, eligible, expired } = claimPredicates(options);
     const snapshot = await this.repo.read();
-    if (
-      !(snapshot.operatorJobs || []).some(
-        (job) =>
-          relevant(job) &&
-          (job.items.some(expired) ||
-            (!job.cancelled && job.items.some(eligible))),
-      )
-    )
-      return null;
+    if (!hasClaimWork(snapshot, options)) return null;
     const attemptId = randomUUID();
     try {
       await this.repo.mutate((state) => {
