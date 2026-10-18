@@ -19,7 +19,7 @@ scores or timed human practice. They supplement the dated ledger below:
 - Reel: current native MP4 and WebM downloads have exactly 30 seconds at
   1080 × 1920 / 30 fps. The cleaned WebM opens in the browser player; these
   downloads are silent, so they do not establish audio or a learner speed target.
-  See [#55 media evidence](https://github.com/ChaiWithJai/liquidity-studio/issues/55#issuecomment-6254155924).
+  See [#55 media evidence](https://github.com/ChaiWithJai/liquidity-studio/issues/55#issuecomment-6254469763).
 - Recovery: the real downloaded ZIP and its checksums were inspected, then its
   pack was restored through Operations into a separate empty CWJ recovery QA
   brand. This proves same-installation recovery, not a fresh infrastructure
