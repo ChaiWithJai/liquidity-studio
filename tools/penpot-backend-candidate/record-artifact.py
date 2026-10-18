@@ -12,6 +12,9 @@ for path in sorted(root.iterdir()):
         for block in iter(lambda: stream.read(1024 * 1024), b''):
             digest.update(block)
     files.append({'path': path.name, 'bytes': path.stat().st_size, 'sha256': digest.hexdigest()})
+reader_proof = json.loads((root / 'data-readers-merge.json').read_text())
+if reader_proof.get('originalMappingsPreserved') is not True or reader_proof.get('readerSymbolsEvaluated') is not False:
+    raise SystemExit('Merged reader-map preservation was not verified')
 image = json.loads((root / 'candidate-image.json').read_text())[0]
 if image['Os'] != 'linux' or image['Architecture'] != 'arm64':
     raise SystemExit('Wrong candidate platform')
@@ -19,6 +22,7 @@ if image['Os'] != 'linux' or image['Architecture'] != 'arm64':
     'schemaVersion': 1, 'sourceSha': os.environ['SOURCE_SHA'],
     'upstreamSha': 'ff7a66f51938b2293260ea27a64e2c4e0833b5e3',
     'imageId': image['Id'], 'platform': 'linux/arm64',
+    'mergedDataReadersMappingsPreserved': True,
     'java26NamespaceLoadCompleted': True, 'nativeRuntimeActivated': False,
     'privateAccessConfigIncluded': False, 'publicImagePushed': False,
     'files': files,
