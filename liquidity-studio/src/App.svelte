@@ -91,6 +91,22 @@
     target?.scrollIntoView({ block: "center", behavior: "smooth" });
     (target?.querySelector("textarea, input, select") || target)?.focus();
   }
+  const reelFields = [
+    { key: "timecode", label: "Time range", hint: "Start and end time for this beat, in seconds." },
+    { key: "voiceover", label: "Voiceover", hint: "Words to speak during this beat." },
+    { key: "onScreenText", label: "On-screen text", hint: "Short text the viewer reads on the artwork." },
+    { key: "bRollDirection", label: "B-roll direction", hint: "Describe the supporting shot. This does not generate footage." },
+  ];
+  let reviewDirty = $derived(reviewSignature(reviewClaims) !== savedReviewSignature);
+  let nextWorkflowAction = $derived(editorConflictRevision ? "Resolve newer saved revision" : reviewDirty ? "Save source review" : !generationReview.ready ? "Review source prerequisites" : !campaign ? "Generate a draft" : pendingEdits ? "Save artwork changes" : "Inspect preview and validation before handoff");
+  async function focusWorkflow(id) {
+    await tick();
+    const target = document.getElementById(id);
+    if (!target) return;
+    if (target.tagName === "DETAILS") target.open = true;
+    target.scrollIntoView({ block: "start", behavior: "instant" });
+    target.focus({ preventScroll: true });
+  }
   let category = $state("Editorial");
   let newDay = $state("Monday");
   let newOrganization = $state("");
@@ -1099,7 +1115,20 @@
             <button class="secondary" onclick={discardLocalEditsAndReload}>Discard local edits and load saved story</button>
           </div>
         {/if}
-        {#if selectedStory}<div class="studio-toolbar">
+        {#if selectedStory}
+          <section class="workflow-context" aria-label="Current editorial task">
+            <div class="workflow-identity"><strong title={selectedStory.title}>{selectedStory.title}</strong><span>{currentOrganization?.name} / {currentBrand?.name} · {formats.find(item => item.id === format)?.name} · revision {selectedStory.revision}</span></div>
+            <p class="workflow-state" role="status">{pendingEdits ? "Unsaved artwork changes" : campaign ? "Artwork saved" : "No draft yet"} · {reviewDirty ? "Unsaved source review" : generationReview.ready ? "Source prerequisites saved" : `${generationReview.blockers.length} source prerequisite${generationReview.blockers.length === 1 ? "" : "s"} to review`}{editorConflictRevision ? ` · Newer saved revision ${editorConflictRevision}; resolve the conflict before saving.` : ""} · Next: {nextWorkflowAction}</p>
+            <nav aria-label="Editorial task actions">
+              <button class="secondary" onclick={() => focusWorkflow("workflow-sources")}>Review sources</button>
+              {#if campaign}<button class="secondary" onclick={() => focusWorkflow("workflow-editor")}>Edit wording</button><button class="secondary" onclick={() => focusWorkflow("workflow-preview")}>Preview & validation</button><button class="secondary" onclick={() => focusWorkflow("workflow-validation")}>Validation results</button>
+              <button class="primary" disabled={!pendingEdits || busy || Boolean(editorConflictRevision)} onclick={saveEdit}>Save artwork changes</button>
+              <button class="secondary" onclick={() => focusWorkflow("workflow-handoff")}>Export handoff</button>{/if}
+              <button class="secondary" onclick={() => navigateTab("calendar")}>Plan in calendar</button>
+              <button class="secondary" onclick={() => navigateTab("backlog")}>Return to backlog</button>
+            </nav>
+          </section>
+          <div class="studio-toolbar" id="workflow-handoff" tabindex="-1">
             <div>
               <span class="eyebrow">ACTIVE STORY</span>
               <h2>{selectedStory.title}</h2>
@@ -1126,12 +1155,13 @@
               >
             </div>
           </div>
-          <div class="generation-review-context" class:generation-review-context--sticky={!campaign}><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
+          <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
           {#if exportUrl}<p class="download">
               <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
                 >Actual exported artifact · scope authorization required</small
               >
             </p>{/if}
+          <p class="small muted workflow-boundaries">Saving updates the private draft. Calendar placement plans work; export downloads a file for handoff. Neither publishes nor opens Doory or Penpot. Unsaved changes stay in this tab when you visit the calendar or backlog; return via Campaign Studio. Reloading discards unsaved changes.</p>
           <div class="format-tabs" aria-label="Campaign format">
             {#each formats as item (item.id)}<button
                 class:active={format === item.id}
@@ -1140,7 +1170,7 @@
               >{/each}
           </div>
           {#if campaign}<div class="studio-grid">
-              <section class="editor-panel">
+              <section class="editor-panel workflow-target" id="workflow-editor" aria-label="Campaign wording" tabindex="-1">
                 <div class="panel-heading">
                   <h3>Make it yours.</h3>
                   <span class="status-tag"
@@ -1268,17 +1298,18 @@
                         rows="3"></textarea></label
                     >{#each editFields.beats || [] as item, i (i)}<fieldset>
                         <legend>Beat {i + 1}</legend
-                        >{#each ["timecode", "voiceover", "onScreenText", "bRollDirection"] as field (field)}<label
-                            >{field}<textarea
-                              value={item[field] || ""}
+                        >{#each reelFields as field (field.key)}<label
+                            >{field.label}<small class="field-guidance">{field.hint}</small><textarea
+                              aria-label={`Beat ${i + 1} ${field.label}`}
+                              value={item[field.key] || ""}
                               oninput={(e) =>
                                 updateNested(
                                   "beats",
                                   i,
-                                  field,
+                                  field.key,
                                   e.currentTarget.value,
                                 )}
-                              rows={field === "timecode" ? 1 : 3}
+                              rows={field.key === "timecode" ? 1 : 3}
                             ></textarea></label
                           >{/each}
                       </fieldset>{/each}<label
@@ -1325,7 +1356,7 @@
                     Assigning a day does not publish or export.
                   </p>
                 </div>
-                <details class="sources">
+                <details class="sources workflow-target" id="workflow-sources" tabindex="-1">
                   <summary>Review source claims</summary>
                   <div class="generation-review-context generation-review-context--editor"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
                   <p class="small muted">
@@ -1398,7 +1429,7 @@
                   <p class="small muted" data-testid="recorded-preflight">Recorded {preflight.artifact.format} · saved revision {preflight.artifact.storyRevision}</p>
                 {/if}
               </section>
-              {#key organizationId + brandId + selectedStory.id + format}<Emulator
+              <section class="preview-workspace workflow-target" id="workflow-preview" aria-label="Preview and validation" tabindex="-1">{#key organizationId + brandId + selectedStory.id + format}<Emulator
                   {campaign}
                   {brandProfile}
                   {format}
@@ -1407,8 +1438,8 @@
                   storyRevision={selectedStory.revision}
                   {pendingEdits}
                   onpreflight={recordPreflight}
-                />{/key}
-            </div>{:else}<section class="panel">
+                />{/key}</section>
+            </div>{:else}<section class="panel workflow-target" id="workflow-sources" aria-label="Source prerequisites" tabindex="-1">
               <h3>Review sources before generation</h3>
               <p class="muted">
                 Add a source link to each claim and choose its review status.
