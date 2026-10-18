@@ -11,7 +11,7 @@
  const current=$derived(graph?.selectedItem?.id===selected?graph.selectedItem:null),matches=$derived(graph?.matches||[]);
  const typeName={region:'Region',artist:'Artist',signal:'Signal',person:'Collaborator',resource:'Resource',format:'Media concept',catalog:'Catalog reference',route:'Route',external:'External reference'};
  function navigate(next){onNavigate({...location,...next});}
- function select(id){const item=state?.items.find(n=>n.id===id);navigate({view:'map',selected:id,focus:['region','artist','signal','person','resource'].includes(item?.kind)?id:focus});query='';}
+ function select(id){const repeat=id===selected;const item=state?.items.find(n=>n.id===id);navigate({view:'map',selected:id,focus:['region','artist','signal','person','resource'].includes(item?.kind)?id:focus});query='';if(repeat)void loadGraph();}
  async function loadGraph(){
   const ticket=++sequence;error='';graphLoading=true;
   try{const q=new URLSearchParams({focusId:focus,selectedId:selected,query});const value=await request('/graph?'+q);if(alive&&ticket===sequence)graph=value;}
