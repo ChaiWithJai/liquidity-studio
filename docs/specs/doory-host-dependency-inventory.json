@@ -1,0 +1,159 @@
+{
+  "status": "local installed direct runtime packages; declared licenses are not a complete transitive or legal clearance audit",
+  "packages": [
+    {
+      "name": "react",
+      "version": "19.3.0",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "react-dom",
+      "version": "19.3.0",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "fabric",
+      "version": "7.4.0",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "eda412692b7398293a049ecf913319da26eb8f7fe27f10709821dd187b517e0b"
+        }
+      ]
+    },
+    {
+      "name": "zustand",
+      "version": "5.0.15",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "c1e6e266563517467b1bf874817d23e426f3149252bd7d42758cd697514b8417"
+        }
+      ]
+    },
+    {
+      "name": "lucide-react",
+      "version": "1.57.0",
+      "declaredLicense": "ISC",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+        }
+      ]
+    },
+    {
+      "name": "fflate",
+      "version": "0.8.3",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "0a1df3a083d0c010560aa342e87959c8c1070e6fd54545741f083f22d0c8b551"
+        }
+      ]
+    },
+    {
+      "name": "gifenc",
+      "version": "1.0.3",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE.md",
+          "sha256": "47bc590c39d8ccccfc544875a9faebf44bafa828ef20315b396b5d0629f0cfd6"
+        }
+      ]
+    },
+    {
+      "name": "jspdf",
+      "version": "4.2.1",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "dc388ec35ff463288cdde3588a36fd4ed12a45deff053243b37309acc9ef583b"
+        }
+      ]
+    },
+    {
+      "name": "qrcode",
+      "version": "1.5.4",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "license",
+          "sha256": "8df47c6ad9ac2c41eb9b2a72def9908959da0ede8dadd56c7b249c1bdb0c5ce6"
+        }
+      ]
+    },
+    {
+      "name": "mp4-muxer",
+      "version": "5.2.2",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "75c54aae7ef6ad652f684f9dd3b71e4dcef86ccebd88cf441ceed7f5eec037c5"
+        }
+      ]
+    },
+    {
+      "name": "webm-muxer",
+      "version": "5.1.4",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "1619f937fa43f768d38d2bfb35d228258e0dffe1f71c4202b338df20e68ff680"
+        }
+      ]
+    },
+    {
+      "name": "lib0",
+      "version": "0.2.119",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "5446db1e43fe52faf3faab7e9959fe3762ac11bdc61c0945934c498affd52d73"
+        }
+      ]
+    },
+    {
+      "name": "y-protocols",
+      "version": "1.0.7",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "5446db1e43fe52faf3faab7e9959fe3762ac11bdc61c0945934c498affd52d73"
+        }
+      ]
+    },
+    {
+      "name": "yjs",
+      "version": "13.6.33",
+      "declaredLicense": "MIT",
+      "notices": [
+        {
+          "file": "LICENSE",
+          "sha256": "341baa53605ed85d6f95782322854cca56c655ebc7fd4712649b8e7afc6020ff"
+        }
+      ]
+    }
+  ]
+}

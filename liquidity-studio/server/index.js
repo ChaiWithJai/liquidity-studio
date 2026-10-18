@@ -627,6 +627,7 @@ export function createHttpServer(
           req.method === "POST"
         )
           return json(201, await service.create(user, body));
+        if (route === "/api/studio/native-editor/assets" && req.method === "GET") return json(200, await service.listAssets(user));
         if (
           route === "/api/studio/native-editor/assets" &&
           req.method === "POST"

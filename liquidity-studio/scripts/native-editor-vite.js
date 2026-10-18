@@ -10,13 +10,39 @@ export function nativeEditorPlugin() {
   const source = path.join(project, ".native-editor-source");
   return {
     name: "studio-native-editor-local-boundary",
+    enforce: "pre",
     async resolveId(id, importer) {
       if (id === "virtual:studio-native-editor")
         return "\0studio-native-editor";
+      if (
+        local &&
+        ((id === "./store" && importer?.includes("/lib/sizePresets/")) ||
+          id === "@/lib/sizePresets/store" ||
+          id.endsWith("/lib/sizePresets/store.ts") ||
+          id.endsWith("/lib/sizePresets/store"))
+      )
+        return path.join(project, "src/lib/native-editor-size-presets.js");
       if (id.startsWith("@/") && local)
         return this.resolve(path.join(source, id.slice(2)), importer, {
           skipSelf: true,
         });
+    },
+    configureServer(server) {
+      if (!local) return;
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.split("?")[0] !== "/native-editor-license.txt")
+          return next();
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.end(fs.readFileSync(path.join(source, "LICENSE")));
+      });
+    },
+    generateBundle() {
+      if (!local) return;
+      this.emitFile({
+        type: "asset",
+        fileName: "native-editor-license.txt",
+        source: fs.readFileSync(path.join(source, "LICENSE")),
+      });
     },
     load(id) {
       if (id !== "\0studio-native-editor") return null;

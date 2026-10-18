@@ -26,6 +26,7 @@ export function createNativeEditorAdapter({
   let revision = record.revision;
   let pending = null;
   const urls = new Map();
+  const createdUrls = new Set();
   const loadedAssets = new Map();
   function current() {
     if (!active || getScopeKey() !== scopeKey)
@@ -70,6 +71,7 @@ export function createNativeEditorAdapter({
       new Blob([bytes], { type: asset.contentType }),
     );
     urls.set(src, url);
+    createdUrls.add(url);
     loadedAssets.set(asset.id, asset);
     return url;
   }
@@ -153,7 +155,7 @@ export function createNativeEditorAdapter({
         list: async () => emptyPage(),
         get: unavailable,
       },
-      assets: { list: async () => emptyPage(), remove: unavailable },
+      assets: { list: async () => call("assets"), remove: unavailable },
       brand: null,
       stock: null,
       versions: null,
@@ -162,7 +164,8 @@ export function createNativeEditorAdapter({
     },
     dispose() {
       active = false;
-      for (const url of urls.values()) URL.revokeObjectURL(url);
+      for (const url of createdUrls) URL.revokeObjectURL(url);
+      createdUrls.clear();
       urls.clear();
       loadedAssets.clear();
     },

@@ -5,6 +5,7 @@ import {
   brandRevision,
 } from "./multimodal-contract.js";
 import { compileDooryDocument } from "./doory-native-adapter.js";
+import { getApprovedClaims } from "./source-integrity.js";
 
 const FORMATS = new Set(["infographic", "carousel", "story", "reel"]);
 const TYPES = new Set([
@@ -223,14 +224,25 @@ export class NativeEditorService {
         throw fail(500, "Native payload integrity mismatch");
       document = payload.document;
     }
-    const { receipts, documentRef, ...result } = { ...record, ...snapshot };
+    const { receipts, documentRef, initialDocumentRef, ...result } = {
+      ...record,
+      ...snapshot,
+    };
     return { ...clone(result), document: clone(document) };
   }
   async read(actor, id) {
     await this.authorize(actor);
     const value = await this.store.get(this.key(id));
     if (!value) throw fail(404, "Native document not found");
-    return this.hydrate(value);
+    const state = await this.repo.read();
+    let sourceState = "current";
+    try {
+      this.assertCurrent(state, value.origin);
+    } catch (error) {
+      if ([409, 422].includes(error.status)) sourceState = "changed";
+      else throw error;
+    }
+    return { ...(await this.hydrate(value)), sourceState };
   }
   request(actor, operation, input) {
     text(input.idempotencyKey, "idempotency key", 100);
@@ -255,7 +267,7 @@ export class NativeEditorService {
       story.generationId !== origin.generationId ||
       brandRevision(state.brandProfile) !== origin.brandRevision ||
       hash(story.campaignDraft) !== origin.sourceCampaignSha256 ||
-      hash(story.sourceClaims) !== hash(origin.sourceApprovals)
+      hash(getApprovedClaims(story)) !== hash(origin.sourceApprovals)
     )
       throw fail(409, "Native source or brand changed; review before saving");
   }
@@ -313,6 +325,7 @@ export class NativeEditorService {
         revision: 1,
         title: `${story.title || "Campaign"} — ${input.format}`,
         documentRef,
+        initialDocumentRef: documentRef,
         origin: native.manifest,
         status: "proposal",
         createdBy: actor.id,
@@ -336,6 +349,33 @@ export class NativeEditorService {
     } finally {
       if (!retained) await this.discardPayload(documentRef);
     }
+  }
+  async listAssets(actor) {
+    await this.authorize(actor);
+    const keys = await this.store.keys(`${this.prefix}asset:`);
+    if (keys.length > 1000)
+      throw fail(413, "Native image library exceeds the bounded host limit");
+    const assets = await Promise.all(keys.map((key) => this.store.get(key)));
+    await this.authorize(actor);
+    return {
+      count: assets.length,
+      next: null,
+      previous: null,
+      results: assets.map((asset) => ({
+        id: asset.id,
+        kind: "image",
+        name: asset.name,
+        url: `studio-asset:${asset.id}`,
+        thumb_url: `studio-asset:${asset.id}`,
+        width: asset.width,
+        height: asset.height,
+        size: asset.size,
+        mime: asset.contentType,
+        tags: [],
+        attribution: null,
+        created_at: asset.createdAt,
+      })),
+    };
   }
   async uploadAsset(actor, input) {
     exact(input, [
@@ -467,7 +507,8 @@ export class NativeEditorService {
     const ids = new Set();
     let count = 0;
     function visit(value, depth = 0) {
-      if (++count > 50000 || depth > 32) throw fail(422, "Native document is too complex");
+      if (++count > 50000 || depth > 32)
+        throw fail(422, "Native document is too complex");
       if (!value || typeof value !== "object") return;
       if (typeof value.assetId === "string") ids.add(value.assetId);
       for (const child of Object.values(value))
