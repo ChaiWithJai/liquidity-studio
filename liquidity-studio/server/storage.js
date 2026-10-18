@@ -1,6 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import { transactionKeys, transactionValues } from "./storage-transaction.js";
 
 export class DurableStore {
   constructor(
@@ -12,6 +13,9 @@ export class DurableStore {
         mode: 0o700,
       });
     this.db = new DatabaseSync(filename);
+    // Even the first schema-version read can contend with another process opening
+    // the same database. Install the wait policy before any schema access.
+    this.db.exec("PRAGMA busy_timeout=5000");
     if (this.db.prepare("PRAGMA user_version").get().user_version > 1) {
       this.db.close();
       throw new Error("Database schema is newer than this application");
@@ -38,6 +42,20 @@ export class DurableStore {
         .run(key, JSON.stringify(next));
       this.db.exec("COMMIT");
       return structuredClone(next);
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  transact(keys, callback) {
+    keys = transactionKeys(keys, callback);
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const encoded = transactionValues(callback(keys.map(key => this.get(key))), keys.length);
+      const write = this.db.prepare("INSERT INTO documents(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
+      encoded.forEach((value, index) => write.run(keys[index], value));
+      this.db.exec("COMMIT");
+      return encoded.map(value => JSON.parse(value));
     } catch (error) {
       this.db.exec("ROLLBACK");
       throw error;
