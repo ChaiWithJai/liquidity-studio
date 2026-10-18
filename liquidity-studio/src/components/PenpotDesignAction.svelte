@@ -55,7 +55,7 @@
   onDestroy(() => { alive = false; loadSequence++; });
   onMount(() => { void load(); });
   function nativeDesignUrl(value){
-    try{const url=new URL(value);return (url.protocol==='https:'||url.origin==='http://localhost:39008')&&!url.username&&!url.password&&url.pathname==='/'&&url.hash.startsWith('#/workspace?team-id=')?value:'';}catch{return '';}
+    try{const url=new URL(value);return (url.protocol==='https:'||(url.protocol==='http:'&&['localhost','127.0.0.1'].includes(url.hostname)&&Number(url.port)>=1024&&Number(url.port)<=65535))&&!url.username&&!url.password&&url.pathname==='/'&&url.hash.startsWith('#/workspace?team-id=')?value:'';}catch{return '';}
   }
   const nativeUrl = $derived(result?.design?.nativeUrl || '');
   const openUrl = $derived(result?.design?.status === 'ready' && nativeDesignUrl(nativeUrl) ? nativeUrl : '');

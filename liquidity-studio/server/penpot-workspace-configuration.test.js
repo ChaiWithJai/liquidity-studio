@@ -14,3 +14,11 @@ test('workspace configuration rejects manifest fields, missing operator, reused 
  }
  assert.throws(()=>validateDevelopmentPenpotConfiguration(value(),{...env,K_SERVICE:'cloud'}));
 });
+
+
+test('explicit local destination keeps workspace schema and disables auxiliary tools without changing defaults',()=>{
+ const actual=validateDevelopmentPenpotConfiguration({...value(),nativeOrigin:'http://127.0.0.1:39046',localTools:false},env);
+ assert.equal(actual.nativeOrigin,'http://127.0.0.1:39046');assert.equal(actual.localTools,false);
+ for(const nativeOrigin of ['http://remote.example:39046','http://127.0.0.1:80','http://127.1:39046','http://127.0.0.1:39046/path','https://native.example'])assert.throws(()=>validateDevelopmentPenpotConfiguration({...value(),nativeOrigin},env));
+ assert.throws(()=>validateDevelopmentPenpotConfiguration({...value(),localTools:true},env));
+});

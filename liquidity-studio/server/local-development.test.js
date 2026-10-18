@@ -7,7 +7,7 @@ import path from 'node:path';
 import http from 'node:http';
 import {
   parseLocalArguments, rejectDeployment, requestAllowed, sanitizedChildEnvironment,
-  developerCookieName, mapRequestCookie, mapResponseCookie,
+  developerCookieName, mapRequestCookie, mapResponseCookie, privateHomeSettings,
   createDevelopmentServer,
 } from '../scripts/local-development-support.mjs';
 
@@ -199,4 +199,36 @@ test('legitimate extra users, organizations, brands and changed marketer grants 
     assert.equal(nextFounder.json.user.id,founder.id);
     assert.ok(nextFounder.json.organizations.some(row=>row.id===org.id&&row.brands.some(item=>item.id===brand.id)));
   }finally{await app?.close();globalThis.fetch=beforeFetch;restoreEnvironment(before);fs.rmSync(home,{recursive:true,force:true});}
+});
+
+
+test('private homes namespace normal opaque sessions without changing default profile cookies',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'studio-private-home-'));
+ try{
+  fs.chmodSync(dir,0o700);const settings=privateHomeSettings(dir);
+  assert.equal(settings.home,fs.realpathSync(dir));assert.match(settings.cookieNamespace,/^[a-f0-9]{16}$/);
+  assert.equal(developerCookieName('production'),'studio_dev_production');
+  const own=developerCookieName('production',settings.cookieNamespace),other=developerCookieName('production','f'.repeat(16));
+  assert.notEqual(own,'studio_dev_production');
+  assert.equal(mapRequestCookie(`studio_dev_production=${token}; ${other}=${token}`,'production',settings.cookieNamespace),'');
+  assert.equal(mapRequestCookie(`${own}=${token}`,'production',settings.cookieNamespace),'studio_session='+token);
+  assert.equal(mapResponseCookie('studio_session='+token+'; HttpOnly','production',settings.cookieNamespace),own+'='+token+'; HttpOnly');
+  assert.deepEqual(parseLocalArguments(['--private-home',dir,'--port','39050']),{profile:'development',port:39050,check:false,privateHome:dir});
+  assert.throws(()=>parseLocalArguments(['--private-home','relative']));
+  fs.chmodSync(dir,0o755);assert.throws(()=>privateHomeSettings(dir),/0700/);
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('actual private-home HTTP picker and backend accept only the namespaced cookie',async()=>{
+ const before={...process.env},home=fs.mkdtempSync(path.join(os.tmpdir(),'studio-private-http-'));let app;
+ try{
+  fs.chmodSync(home,0o700);const settings=privateHomeSettings(home);
+  for(const key of ['K_SERVICE','K_REVISION','CLOUD_RUN_JOB','FUNCTION_TARGET','GAE_ENV','AWS_LAMBDA_FUNCTION_NAME'])delete process.env[key];process.env.NODE_ENV='test';
+  app=await createDevelopmentServer({profile:'production',port:0,...settings});
+  const reply=await select(app,'founder'),cookie=sessionCookie(reply);
+  assert.ok(cookie.startsWith(developerCookieName('production',settings.cookieNamespace)+'='));
+  assert.equal((await httpRequest(app.origin,'/api/auth/session',{headers:{cookie}})).status,200);
+  assert.equal((await httpRequest(app.origin,'/api/auth/session',{headers:{cookie:cookie.replace(developerCookieName('production',settings.cookieNamespace),'studio_dev_production')}})).status,401);
+  assert.equal((await httpRequest(app.origin,'/api/auth/session',{headers:{cookie:'studio_session='+cookie.split('=')[1]}})).status,401);
+ }finally{await app?.close();restoreEnvironment(before);fs.rmSync(home,{recursive:true,force:true});}
 });
