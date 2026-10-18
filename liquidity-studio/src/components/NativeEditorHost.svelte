@@ -3,11 +3,13 @@
   import { createNativeEditorBroker } from '../lib/native-editor-broker.js';
   import EditorReviewPanel from './EditorReviewPanel.svelte';
   import EditorExportPanel from './EditorExportPanel.svelte';
+  import NativeRebindPanel from './NativeRebindPanel.svelte';
   import NativeBrandRefreshPanel from './NativeBrandRefreshPanel.svelte';
 
   let {
     record, request, scopeKey, getScopeKey,
     onSaved = () => {}, onSaveStateChange = () => {}, onDirtyChange = () => {},
+    canRebind = false, canReviewSource = false, onRebound = () => {}, onReviewSource = () => {},
   } = $props();
   // A save acknowledgment replaces metadata, not the live canvas or its dirty buffer.
   let documentId = $derived(record.id);
@@ -128,6 +130,7 @@
   {#if recoveryMessage}<p role="alert">{recoveryMessage}</p>{/if}
   {#if historical}
     <p role="status">This restored layout is historical evidence. Its original source must be reviewed and adopted before creating a new editable layout. Live editing, cutout, approval and export actions are unavailable here.</p>
+    <NativeRebindPanel {record} {request} {scopeKey} {getScopeKey} {canRebind} {canReviewSource} {onRebound} {onReviewSource} />
   {:else}
   <details>
     <summary>Image rights and consent</summary>
