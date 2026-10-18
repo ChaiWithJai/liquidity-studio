@@ -54,6 +54,29 @@ export function migrateEditorContract(value, targetVersion = 1) {
     );
   return structuredClone(value);
 }
+function sourceFieldMappings(value, sourcePath, destinationPath) {
+  if (value !== null && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, child]) =>
+      sourceFieldMappings(
+        child,
+        `${sourcePath}.${key}`,
+        `${destinationPath}.${key}`,
+      ),
+    );
+  }
+  return [{ sourcePath, destinationPath }];
+}
+function frozenSnapshot(value) {
+  const copy = structuredClone(value);
+  const freeze = (item) => {
+    if (item && typeof item === "object") {
+      for (const child of Object.values(item)) freeze(child);
+      Object.freeze(item);
+    }
+    return item;
+  };
+  return freeze(copy);
+}
 function page(format, index, campaign, brandProfile) {
   const timing = [
     [0, 3],
@@ -84,6 +107,22 @@ function page(format, index, campaign, brandProfile) {
           : [item.voiceover];
   return {
     id: `${format}_page_${index + 1}`,
+    semanticContent: {
+      format: structuredClone(campaign[format]),
+      page: structuredClone(item),
+      sourcePagePath:
+        format === "carousel"
+          ? `carousel.slides.${index}`
+          : format === "reel"
+            ? `reel.beats.${index}`
+            : format,
+      executionStatus: "proposal_only",
+    },
+    sourceFieldMappings: sourceFieldMappings(
+      campaign[format],
+      format,
+      "semanticContent.format",
+    ),
     width: 1080,
     height: ["story", "reel"].includes(format) ? 1920 : 1350,
     ...(format === "reel"
@@ -211,6 +250,7 @@ export function compileMultimodalBundle({
     storyRevision: story.revision,
     generationId: story.generationId,
     sourceApprovals: structuredClone(sourceApprovals),
+    sourceCampaign: frozenSnapshot(story.campaignDraft),
     brandRevision: revision,
     tokens: {
       authority: "studio",

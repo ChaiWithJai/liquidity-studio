@@ -231,3 +231,63 @@ test("actual HTTP inspection uses authenticated scoped snapshot, supports DI, an
     injected,
   );
 });
+
+test("complete persisted campaign and every format source field survive independent immutable snapshots", () => {
+  const input = fixture();
+  const original = structuredClone(input);
+  const spec = compileMultimodalBundle(input);
+  assert.deepEqual(spec.sourceCampaign, input.story.campaignDraft);
+  assert.notEqual(spec.sourceCampaign, input.story.campaignDraft);
+  assert.equal(Object.isFrozen(spec.sourceCampaign.reel.beats[0]), true);
+  assert.throws(() => {
+    spec.sourceCampaign.reel.closingCta = "mutated";
+  }, TypeError);
+  const atPath = (root, path) =>
+    path.split(".").reduce((value, key) => value[key], root);
+  for (const [format, bundle] of Object.entries(spec.formats)) {
+    for (const page of bundle.pages) {
+      assert.deepEqual(
+        page.semanticContent.format,
+        input.story.campaignDraft[format],
+      );
+      assert.deepEqual(
+        page.semanticContent.page,
+        atPath(input.story.campaignDraft, page.semanticContent.sourcePagePath),
+      );
+      for (const mapping of page.sourceFieldMappings) {
+        assert.deepEqual(
+          atPath(input.story.campaignDraft, mapping.sourcePath),
+          atPath(page, mapping.destinationPath),
+        );
+      }
+      assert.equal(page.semanticContent.executionStatus, "proposal_only");
+    }
+  }
+  assert.equal(
+    spec.formats.infographic.pages[0].semanticContent.format.bottomTakeaway,
+    input.story.campaignDraft.infographic.bottomTakeaway,
+  );
+  assert.equal(
+    spec.formats.carousel.pages[0].semanticContent.page.visualNote,
+    input.story.campaignDraft.carousel.slides[0].visualNote,
+  );
+  assert.equal(
+    spec.formats.story.pages[0].semanticContent.format.interactiveStickerPrompt,
+    input.story.campaignDraft.story.interactiveStickerPrompt,
+  );
+  assert.equal(
+    spec.formats.reel.pages[2].semanticContent.format.spokenHook0to3s,
+    input.story.campaignDraft.reel.spokenHook0to3s,
+  );
+  assert.equal(
+    spec.formats.reel.pages[2].semanticContent.format.closingCta,
+    input.story.campaignDraft.reel.closingCta,
+  );
+  spec.formats.reel.pages[0].semanticContent.format.closingCta =
+    "external proposal";
+  assert.deepEqual(input, original);
+  assert.equal(
+    spec.sourceCampaign.reel.closingCta,
+    original.story.campaignDraft.reel.closingCta,
+  );
+});
