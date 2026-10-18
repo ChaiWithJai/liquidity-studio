@@ -65,6 +65,7 @@ test('native UUID reconciliation persists exact intent before side effect and re
 test('verified membership inspection retains native receipt and current session lease',async t=>{
  const f=await setup(t),session=await f.connect();
  await f.service.registerWorkspace(f.founder.user,{});await f.service.inspect(f.marketer.user,session);
+ assert.equal((await f.service.connectionStatus(f.marketer.user,session)).editingEnabled,false);
  // Controlled policy/receipt fixture only; not a native activation claim.
  f.store.update(f.service.key,record=>{
   record.state='current';record.sharingPolicy='disabled';record.liveFence='current';
@@ -74,7 +75,10 @@ test('verified membership inspection retains native receipt and current session 
  assert.equal((await f.service.inspect(f.marketer.user,session)).grantState,'current');
  const grant=f.store.get(f.service.key).grants[0];
  assert.equal(grant.nativeEpoch,7);assert.equal(grant.reconciliation.id,id('7'));assert.equal(grant.sessionDigest,session);
+ assert.equal((await f.service.connectionStatus(f.marketer.user,session)).editingEnabled,true);
  assert.equal((await f.service.admission(nativeRequest(human,'read'))).allowed,true);
+ assert.equal((await f.service.admission({...nativeRequest(human,'write'),nativeOperatorProfileId:operator,nativeSession:{id:id('9'),profileId:operator}})).allowed,true);
+ await assert.rejects(f.service.admission({...nativeRequest(human,'write'),nativeOperatorProfileId:otherTeam,nativeSession:{id:id('9'),profileId:otherTeam}}),{status:403});
  await f.identity.logout(f.marketer.token);
  await assert.rejects(f.service.admission(nativeRequest(human,'read')),{status:401});
 });

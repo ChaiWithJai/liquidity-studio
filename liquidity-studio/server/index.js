@@ -866,8 +866,14 @@ export function createHttpServer(
           return json(200,route.endsWith("/workspace")
             ? await service.registerWorkspace(user,{}) : await service.inspect(user,context));
         }
-        if (route === "/api/studio/penpot/access" && req.method === "GET")
-          return json(200, await nativePairing.status(user, scope, context));
+        if (route === "/api/studio/penpot/access" && req.method === "GET") {
+          const connection=await nativePairing.status(user,scope,context);
+          if(nativeAccess&&connection.state==="connected"){
+            try {const service=await nativeAccess.forScope(scope);Object.assign(connection,await service.connectionStatus(user,context));}
+            catch(error){if(![401,403,409,503].includes(error.status))throw error;connection.editingEnabled=false;connection.accessReason=error.message;}
+          }
+          return json(200,connection);
+        }
         if (req.method === "POST") {
           if (route === "/api/studio/penpot/access/challenges") {
             workspaceExact(body, []);

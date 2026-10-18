@@ -108,6 +108,18 @@ export class PenpotBrandAccess {
   });return {authorized:true};
  }
  guardKeys(snapshot){return [this.key,this.pairing.pairKey(snapshot.actorId),this.pairing.profileKey(snapshot.nativeProfileId),...(this.identity.mode==='password'?[`session:${snapshot.sessionDigest}`]:[])];}
+ snapshot(actorId,nativeProfileId,record,grant,sessionDigest){return {actorId,nativeInstanceId:this.pairing.nativeInstanceId,nativeProfileId,nativeTeamId:record.teamId,projectId:record.projectId,operatorProfileId:record.operatorProfileId,workspaceEpoch:record.epoch,grantEpoch:grant.epoch,pairingEpoch:grant.pairingEpoch,sessionDigest,scope:this.scope};}
+ async connectionStatus(actor,sessionContext){
+  const paired=await this.pairing.status(actor,this.scope,sessionContext);
+  if(!paired.connection)return {editingEnabled:false,accessReason:'Connect your Penpot account first.'};
+  const record=await this.store.get(this.key),grant=record?.grants?.find(x=>x.actorId===actor.id);
+  if(!record||!grant)return {editingEnabled:false,accessReason:'Brand access is being set up.'};
+  const snapshot=this.snapshot(actor.id,paired.connection.nativeProfileId,record,grant,sessionContext);
+  try{
+   await this.store.transact(['identity',...this.guardKeys(snapshot)],values=>{const [identity,brandAccess,pair,profileOwner,session]=values;this.assertCurrent({identity,brandAccess,pair,profileOwner,session},snapshot);return values;});
+   return {editingEnabled:true,accessReason:null};
+  }catch(error){if(![401,403,503].includes(error.status))throw error;return {editingEnabled:false,accessReason:error.message};}
+ }
  /** Synchronous guard for the caller's existing atomic write; never nests transactions. */
  assertCurrent({identity,brandAccess:record,pair,profileOwner,session},snapshot){
   if(!scopeEqual(snapshot.scope,this.scope)||snapshot.nativeInstanceId!==this.pairing.nativeInstanceId)throw fail(403,'Native grant scope changed');
@@ -121,7 +133,7 @@ export class PenpotBrandAccess {
   const paired=await this.pairing.status(actor,this.scope,sessionContext);if(!paired.connection)throw fail(409,'Connect your own native account first');
   const nativeProfileId=paired.connection.nativeProfileId,snapshot=await this.nativeWorkspace(actor),record=await this.store.get(this.key),grant=record?.grants?.find(x=>x.actorId===actor.id);
   if(!record||!sameWorkspace(record,snapshot.mapping)||!grant)throw fail(503,'Native brand admission is pending');
-  const grantSnapshot={actorId:actor.id,nativeInstanceId:this.pairing.nativeInstanceId,nativeProfileId,nativeTeamId:record.teamId,projectId:record.projectId,operatorProfileId:record.operatorProfileId,workspaceEpoch:record.epoch,grantEpoch:grant.epoch,pairingEpoch:grant.pairingEpoch,sessionDigest:sessionContext,scope:this.scope};
+  const grantSnapshot=this.snapshot(actor.id,nativeProfileId,record,grant,sessionContext);
   await this.store.transact(['identity',...this.guardKeys(grantSnapshot)],values=>{
    const [identity,brandAccess,pair,profileOwner,session]=values;
    this.assertCurrent({identity,brandAccess,pair,profileOwner,session},grantSnapshot);
