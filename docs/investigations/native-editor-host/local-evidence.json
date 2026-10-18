@@ -32,10 +32,18 @@
       "reactOrFabric": false,
       "editorFrameOrLicenseAsset": false,
       "assets": [
-        "index-D7NzBZh_.js",
-        "index-DxFD7tsP.css"
+        "index-DxFD7tsP.css",
+        "index-b5EjexDj.js"
       ],
-      "enforcedBy": "scripts/native-editor-vite.js generateBundle default-mode guard"
+      "enforcedBy": "scripts/native-editor-vite.js generateBundle default-mode guard",
+      "buildOnlyFollowupCommit": "1695cb3",
+      "legalNotices": {
+        "uniqueBefore": 8,
+        "uniqueAfter": 8,
+        "missing": 0,
+        "placement": "eof",
+        "reason": "Ubuntu/macOS differed only in placement of a duplicated notice"
+      }
     }
   },
   "nativePng": {
