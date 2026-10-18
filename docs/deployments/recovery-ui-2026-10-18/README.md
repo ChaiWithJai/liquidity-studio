@@ -1,0 +1,15 @@
+# Recovery UI release, 18 October 2026
+
+The maintained local web/worker and canonical cloud service now run source `825120ee71ac6d81b6bb37cceed548b27252b975`, which merges [PR159](https://github.com/ChaiWithJai/liquidity-studio/pull/159). The exact image, backup and browser observations are in [release.json](release.json).
+
+Read-only Cloud Run inspection confirmed revision `liquidity-studio-00027-wel` at 100% traffic and the pilot-candidate alias on the same revision. Docker inspection confirmed both `liquidity-local-studio-1` and `liquidity-local-studio-worker-1` use the recorded immutable local image; the web container is healthy. Existing volumes and configuration were preserved. The saved private canonical Compose artifact was updated only at its two image fields after its remaining configuration was compared with the deployed artifact. No additional restart or traffic change was performed during this reconciliation.
+
+An agent-owned BrowserOS Neo tab independently opened localhost:3001 and the canonical cloud URL. Both served `index-C-vjj5Qf.js`, returned readiness 200 and anonymous workspace 401, and advertised Google authentication. Anonymous checks explicitly omitted credentials and did not sign out another tab. This is artifact/readiness/access-denial verification, not a new Google sign-in or an interrupted install on maintained customer data.
+
+Before rollout, a consistent 434,176-byte SQLite snapshot passed integrity_check, and the existing Firestore export completed successfully. Private configuration, database contents, backup locations and credentials remain outside this record. Previous local image `5bd9c4a0eb2752d83439654e36e994dec5b0ebedd227762ed4f105a11de0a54f` and cloud revision `liquidity-studio-00024-fur` are retained rollback artifacts; retaining them is not a rollback drill.
+
+## Issue157 acceptance
+
+[The actual controlled Neo checkpoint](https://github.com/ChaiWithJai/liquidity-studio/pull/159#issuecomment-6247628141) committed a real first staging write, captured a consistent interrupted SQLite backup, stopped and restarted the owned service, selected/reloaded the locked brand, and recovered through the ordinary Operations rollback button. Bootstrap remained 423 while founder-authorized status returned 200; recovery-only controls were reachable without exposing stories or export/install controls. After UI rollback, normal bootstrap returned 200 with an empty destination. The interrupted and final snapshots were retained separately. This was a new controlled password fixture, not the earlier completed failover snapshot or a Google-authentication claim.
+
+The exact source gate passed all five hosted jobs, including late status replies after scope change/logout, marketer exclusion and unrelated-423 refusal. Recovery remains restricted to existing authorized status/rollback routes. This resolves the specific locked-brand UI availability defect in [issue157](https://github.com/ChaiWithJai/liquidity-studio/issues/157); it does not close the broader portable-recovery issue57, licensing hold, or other pending acceptance criteria.
