@@ -66,3 +66,16 @@ test('SQLite guard reads revocation from the same connection, not captured ident
  await assert.rejects(runApply(f,plan,f.platform.operatorJobs(f.scope,await f.platform.forScope(f.scope))),error=>error.status===403);
  assert.equal((await f.repo.read()).backlog.find(story=>story.id==='story_nykaa_ipo').title,plan.rows.find(row=>row.storyId==='story_nykaa_ipo').currentTitle);
 });
+
+test('queue projection shares repository epoch normalization for unrelated legacy stories',async t=>{
+ process.env.STUDIO_SOURCE_PREPARATION_ENABLED='true';
+ const f=await fixture(t);
+ const unrelatedId=(await f.repo.read()).backlog.find(story=>!['story_beyonce_amc','story_nykaa_ipo','story_margot_luckychap'].includes(story.id)).id;
+ await f.store.update(f.repo.key,state=>{delete state.backlog.find(story=>story.id===unrelatedId).contentRevision;return state;});
+ assert.equal((await f.repo.read()).backlog.find(story=>story.id===unrelatedId).contentRevision,undefined);
+ const plan=await planOf(f),jobs=f.platform.operatorJobs(f.scope,await f.platform.forScope(f.scope));
+ const done=await runApply(f,plan,jobs);
+ assert.equal(done.job.items.length,3);
+ assert.equal((await f.repo.read()).backlog.find(story=>story.id===unrelatedId).contentRevision,1);
+ assert.equal(done.job.items.some(item=>item.storyId===unrelatedId),false);
+});

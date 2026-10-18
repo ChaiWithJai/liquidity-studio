@@ -3,6 +3,7 @@ import {DurableStore} from './storage.js';
 import {fail} from './auth.js';
 import {brandRevision} from './multimodal-contract.js';
 import {preparationFingerprint} from './prepared-source-candidate.js';
+import {captureContentRevisions,applyContentRevisions} from './story-content-revision.js';
 import {seedPlanHash,pristineSeedPlan,assertPristineSeedPlanRow,plannedSeedQueueIds} from './seed-followthrough-plan.js';
 
 function inventory(store,scope,key){return store.keys('').filter(item=>item!==key&&(item.includes(`:${scope.organizationId}:${scope.brandId}:`)||item.endsWith(`:${scope.organizationId}:${scope.brandId}`)));}
@@ -22,6 +23,7 @@ export async function applyPristineSeedFollowthrough({store,workspace,jobs,actor
  if(seedPlanHash(body)!==planSha256)throw fail(409,'Reviewed plan fingerprint changed');
  const rows=plan.rows.filter(row=>['pristine-no-title-change','pristine-rename-eligible'].includes(row.disposition));
  if(!rows.length||rows.length>4||rows.length!==plan.rows.length)throw fail(409,'All scoped target rows must be pristine');
+ let capturedContentRevisions;
  const binding={purpose:'pristine-seed-followthrough',planSha256,sourceCommit};
  const result=await workspace.mutate(actor,{idempotencyKey:titleIdempotencyKey,changes:rows.filter(row=>row.disposition==='pristine-rename-eligible').map(row=>({kind:'story.patch',storyId:row.storyId,expectedRevision:row.revision,patch:{title:row.desiredTitle}}))},{binding,
   guard(state,prior){
@@ -31,15 +33,14 @@ export async function applyPristineSeedFollowthrough({store,workspace,jobs,actor
    same(observed.catalogModuleSha256,plan.catalogModuleSha256);same(observed.copyRegistrySourceSha256,plan.copyRegistrySourceSha256);
    if(prior){if(!prior.seedFollowthrough||prior.seedFollowthrough.planSha256!==planSha256)throw fail(409,'Earlier receipt belongs to another seed operation');return;}
    same(observed,plan);
+   capturedContentRevisions=captureContentRevisions(state);
    for(const row of rows)assertPristineSeedPlanRow({identity:store.get('identity'),actorId:actor.id,scope,state,externalKeys:inventory(store,scope,workspace.repo.key),row});
   },
   committed(state,receiptResult){
    if(receiptResult.outcomes.some(outcome=>outcome.status!=='applied'))throw fail(409,'All reviewed title changes must commit together');
    // Compute precisely the same content epoch that the repository wrapper assigns
    // after this callback, without a later read that could adopt a human edit.
-   const projected=structuredClone(state);
-   // Unchanged titles retain epoch; changed titles advance once through normal mutation.
-   for(const row of rows){const story=projected.backlog.find(item=>item.id===row.storyId);story.contentRevision=row.contentRevision+(row.disposition==='pristine-rename-eligible'?1:0);}
+   const projected=applyContentRevisions(structuredClone(state),capturedContentRevisions);
    const ids=plannedSeedQueueIds(plan,projected,scope);
    const queue={planSha256,scopeStateSha256:queueStateHash(projected),brandRevision:brandRevision(projected.brandProfile),items:ids.map(storyId=>{const story=projected.backlog.find(item=>item.id===storyId);return {storyId,storyRevision:story.revision,inputFingerprint:preparationFingerprint(story,scope),fullStorySha256:seedPlanHash(story)};})};
    if(ids.length!==rows.length)throw fail(409,'Every reviewed target must have an official bounded source selection');
