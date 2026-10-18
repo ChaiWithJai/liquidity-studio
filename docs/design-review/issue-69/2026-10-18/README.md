@@ -55,7 +55,7 @@ Issue69 remains open for the combined release/whole-sequence acceptance and any 
 
 - Actual Node22 production build succeeds.
 - Two new Chromium founder/marketer journeys pass, using real source/save/export/placement HTTP APIs and controlled synthetic drafts.
-- Thirty-five existing browser regressions pass, including source-review recovery, dirty artwork conflict, external filtered rename, uncertain operations, dated calendar, and immediate saved-view create/update.
+- Final full browser run: 42 pass, 2 explicit Google Auth Emulator skips (the emulator runs separately in CI). This includes source-review recovery, dirty artwork conflicts, external filtered rename, uncertain operations, dated calendar, immediate saved-view create/update, preview identity and Locate, and late font/API invalidation. The old nested-sticky assertion was updated to require a sticky task area, a static nested source summary and actual source-focus clearance; identity/Locate assertions remain intact.
 - Official Svelte MCP: App has no reported issues; Emulator has the same two existing canonical-SVG `@html` warnings as baseline. The single Emulator change adds a focusable validation region; SVG trust boundaries are unchanged.
 - At 390×844 the new task area is static and document width stays within the viewport. Desktop keyboard source/preview/edit targets remain below the sticky task area. Full mobile product certification is not claimed.
 

@@ -112,7 +112,15 @@ test("S17–S21 identifies projection and locates measured text with current per
     await page
       .locator(".generation-review-context--editor")
       .evaluate((node) => getComputedStyle(node).position),
-  ).toBe("sticky");
+  ).toBe("static");
+  // The task area owns persistent context; nested source review must not form a second overlay.
+  const task = page.getByRole("region", {name:"Current editorial task"});
+  expect(await task.evaluate(node=>getComputedStyle(node).position)).toBe("sticky");
+  await task.getByRole("button",{name:"Review sources",exact:true}).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("#workflow-sources")).toBeFocused();
+  const bounds=await page.evaluate(()=>({bar:document.querySelector(".workflow-context").getBoundingClientRect().bottom,target:document.querySelector("#workflow-sources").getBoundingClientRect().top}));
+  expect(bounds.target).toBeGreaterThanOrEqual(bounds.bar);
   await page.locator("details.sources > summary").click();
   await page.getByRole("button", { name: "Carousel 4 slides" }).click();
   await page.getByRole("button", { name: "Design Mode", exact: true }).click();
