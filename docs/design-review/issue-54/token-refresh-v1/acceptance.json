@@ -1,0 +1,20 @@
+{
+  "protocol": "Actual isolated Studio password/test HTTP + Penpot2.18.3 public plugin, not production Google acceptance",
+  "nativeRevisions": [3, 4],
+  "pages": 9,
+  "nativeTextShapes": 50,
+  "shapeIdsEqual": true,
+  "pageOrderEqual": true,
+  "allTextEqual": true,
+  "allGeometryEqual": true,
+  "editedHeadline": "HUMAN TEXT SURVIVES GOVERNED REFRESH",
+  "colors": ["#142837", "#D35400", "#006D77", "#FFE1AB"],
+  "allFourColorsInActualPng": true,
+  "changedPixels": 1458000,
+  "totalPixels": 1458000,
+  "pngDimensions": [1080, 1350],
+  "beforePngSha256": "394d01c502d427e581376258e4bfe0ee5b1e9c4c033955095b92e6b23ad0dce9",
+  "afterPngSha256": "bbabf8c2c4dde9e92994305f41deca38a0b982949a83f4227146006667ac338e",
+  "nativeReceipt": "native-state-verified",
+  "publicationApproved": false
+}

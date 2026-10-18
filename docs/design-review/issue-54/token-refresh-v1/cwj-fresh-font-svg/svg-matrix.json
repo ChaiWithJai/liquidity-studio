@@ -1,0 +1,74 @@
+[
+  {
+    "filename": "native-board-1.svg",
+    "format": "infographic",
+    "bytes": 8221,
+    "sha256": "432914b227af576bf3fc3259fcc0cee6e5f48bdc1efc898f633e9520ea4518e6",
+    "svgElements": 76,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  },
+  {
+    "filename": "native-board-2.svg",
+    "format": "carousel",
+    "bytes": 6040,
+    "sha256": "9e77440b79510e58a38034262011088ba9e9b2c25b488f143f4454ce8706a8a0",
+    "svgElements": 56,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  },
+  {
+    "filename": "native-board-3.svg",
+    "format": "carousel",
+    "bytes": 6040,
+    "sha256": "a94bcd59e0e3aeb1ca8958b0b32d76368f1771e0b86a37a2d143b1519eec541b",
+    "svgElements": 56,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  },
+  {
+    "filename": "native-board-4.svg",
+    "format": "carousel",
+    "bytes": 6040,
+    "sha256": "61d04abcc4cb333580febfaaef246e0f1fae64a4b4f26898e03579d6cf68efbb",
+    "svgElements": 56,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  },
+  {
+    "filename": "native-board-5.svg",
+    "format": "carousel",
+    "bytes": 6047,
+    "sha256": "e1c0b07d93878ba4153fee1b75b3f3e2fb0f1517e23eee9c448b6c72955ed7af",
+    "svgElements": 56,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  },
+  {
+    "filename": "native-board-6.svg",
+    "format": "story",
+    "bytes": 6931,
+    "sha256": "92e01d384f43ae36d7e478bec825aba5816968e8b45e28d58bdb8accfd8567cf",
+    "svgElements": 64,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  },
+  {
+    "filename": "native-board-7.svg",
+    "format": "reel",
+    "bytes": 8117,
+    "sha256": "cfa0b2c98fea112a2dd45a91135febc0ea5cfb20730edf5f44f51de643d5ec70",
+    "svgElements": 76,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  },
+  {
+    "filename": "native-board-8.svg",
+    "format": "reel",
+    "bytes": 8117,
+    "sha256": "99f4076298689e878accaddf2f40c5ef93adb656b732ce9988f6a2bb96989bff",
+    "svgElements": 76,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  },
+  {
+    "filename": "native-board-9.svg",
+    "format": "reel",
+    "bytes": 8117,
+    "sha256": "e459a5fd62d09127912f6bd8d851950bb86bed43155d9fffd1b88bf8db3e6c4e",
+    "svgElements": 76,
+    "renderer": "Actual local Penpot SVG exporter on fresh-team saved native frame"
+  }
+]

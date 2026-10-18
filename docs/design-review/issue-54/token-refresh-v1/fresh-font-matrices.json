@@ -1,0 +1,186 @@
+[
+  {
+    "brand": "cwj",
+    "pages": [
+      {
+        "filename": "native-board-1.png",
+        "format": "infographic",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "17bc04c97f54065d5b87470f772d911cd4199e64dc43d386276de2849a07b2ce",
+        "bytes": 64158,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-2.png",
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "f53e35bb1ae0d055f57e499fad03ad377492dcd3ced80e001c74078a8fd7ba41",
+        "bytes": 28165,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-3.png",
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "f53e35bb1ae0d055f57e499fad03ad377492dcd3ced80e001c74078a8fd7ba41",
+        "bytes": 28165,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-4.png",
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "f53e35bb1ae0d055f57e499fad03ad377492dcd3ced80e001c74078a8fd7ba41",
+        "bytes": 28165,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-5.png",
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "114692caab57b66c66234dadc8eb8813b99294b9e9a1e5490afef40e1159e0bf",
+        "bytes": 29661,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-6.png",
+        "format": "story",
+        "width": 1080,
+        "height": 1920,
+        "sha256": "b750c12e3631875d176d301bd998f05f238e3a94a1a62c9ee68fed84b0216aa2",
+        "bytes": 40153,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-7.png",
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "sha256": "a3bbb3de73e1edcd20683c770c68fb0244e7857002f82128420b45519411abc0",
+        "bytes": 50198,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-8.png",
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "sha256": "a3bbb3de73e1edcd20683c770c68fb0244e7857002f82128420b45519411abc0",
+        "bytes": 50198,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-9.png",
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "sha256": "a3bbb3de73e1edcd20683c770c68fb0244e7857002f82128420b45519411abc0",
+        "bytes": 50198,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      }
+    ],
+    "count": 9,
+    "sourceFontsVerified": 4,
+    "initialNativeFontVariants": 0,
+    "restoredNativeFontVariants": 4,
+    "nativeTextShapes": 50,
+    "remappedFontReferences": 100
+  },
+  {
+    "brand": "finance",
+    "pages": [
+      {
+        "filename": "native-board-1.png",
+        "format": "infographic",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "ad4e9dd5f48bf2d87636ef3a36aa2d40884011190389fd97fd46883170156be9",
+        "bytes": 68961,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-2.png",
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "1cfb1aa53b508a05d6499b8e116b9e4eee6f198116979a9bc357e1735dc95b14",
+        "bytes": 33745,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-3.png",
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "1cfb1aa53b508a05d6499b8e116b9e4eee6f198116979a9bc357e1735dc95b14",
+        "bytes": 33745,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-4.png",
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "1cfb1aa53b508a05d6499b8e116b9e4eee6f198116979a9bc357e1735dc95b14",
+        "bytes": 33745,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-5.png",
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "sha256": "f259e92e0c91a763f973cfddd1d80982ab287f51bd85a7e96aa7e976a46398ce",
+        "bytes": 32313,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-6.png",
+        "format": "story",
+        "width": 1080,
+        "height": 1920,
+        "sha256": "264e2fe0262b7c5012c1e29cbe1e5a45b34f06cff33af073cc73fe0cdb62e196",
+        "bytes": 45883,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-7.png",
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "sha256": "6d4f52d9584c0828434145a625a18c37d9b7ee6128848f2545dd741fc33c5691",
+        "bytes": 64306,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-8.png",
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "sha256": "6d4f52d9584c0828434145a625a18c37d9b7ee6128848f2545dd741fc33c5691",
+        "bytes": 64306,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      },
+      {
+        "filename": "native-board-9.png",
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "sha256": "6d4f52d9584c0828434145a625a18c37d9b7ee6128848f2545dd741fc33c5691",
+        "bytes": 64306,
+        "renderer": "Actual authenticated local Penpot exporter on saved native frame"
+      }
+    ],
+    "count": 9,
+    "sourceFontsVerified": 4,
+    "initialNativeFontVariants": 0,
+    "restoredNativeFontVariants": 4,
+    "nativeTextShapes": 50,
+    "remappedFontReferences": 100
+  }
+]
