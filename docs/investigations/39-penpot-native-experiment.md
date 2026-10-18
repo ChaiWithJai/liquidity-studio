@@ -50,7 +50,13 @@ The operator used File → Download .penpot, then the dashboard's Import Penpot 
 
 Independent read-only original/restored RPC comparison found all 24 shape IDs, type counts, page order and token data preserved. Raw SVG `content`, attributes and nested tspan strings were equal; headline strings also existed in the archive. After excluding the expected file ID, added per-shape `pageId` and the operator's later PNG export preset, the complete JSON document data was equal. The evidence therefore does **not** show text-data deletion. It shows a rendering failure after native archive roundtrip despite preserved JSON payload. JSON equality does not establish identical internal decoded types. The last exporter-log excerpt contained no matching error/warning/font-failure lines; that absence does not establish a cause.
 
-The pinned SVG renderer's keyword-based tag validation is a possible investigation lead, not an established diagnosis. Neither a font failure nor an exporter-only fault is proven: text is already absent in the restored editor. A separate native-text control is being tested and must be recorded independently. No upstream code repair is included in this experiment.
+The pinned SVG renderer's keyword-based tag validation is a possible investigation lead, not an established diagnosis. Neither a font failure nor an exporter-only fault is proven: text is already absent in the restored editor. A separate native-text control completed successfully, as recorded below. No upstream code repair is included in this experiment.
+
+## Native-text control narrows the failure
+
+The operator added a second page to the original document using the actual native Text tool, entering `NATIVE TEXT CONTROL` with Source Sans Pro 14 and explicit orange fill `#e85d04`. The native control exported visible orange glyphs before archiving. A second two-page native archive was downloaded and imported through the UI into a new same-owner file. Its first page still lacked the raw SVG text, while its second page retained the native text control.
+
+Independent authenticated RPC inspection of that restored file confirmed two pages and exactly one `type: text` shape containing `NATIVE TEXT CONTROL`; the unrelated fixture account still received 404. Independently reading the actual before/after PNG downloads confirmed exact byte equality: both 2,400 bytes, 280 × 75, SHA-256 `1e2bdcdc288ef001081dcf8f2bae9392a5485a6ab6f0f0b5ef2c7c14c5120191`. Thus native text save/archive/import/export works for this one control, while the raw SVG text route fails. This supports testing explicit native-text construction next; it does not establish complete native typography compatibility, all fonts, editable imported SVG text or the root cause of the raw SVG failure.
 
 ## Reproduction and evidence limits
 
