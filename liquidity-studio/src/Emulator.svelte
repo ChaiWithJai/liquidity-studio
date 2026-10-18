@@ -435,6 +435,16 @@
   }
 </script>
 
+{#snippet engagementIcon(kind,filled=false)}
+  <svg width="24" height="24" viewBox="0 0 24 24" fill={filled?'currentColor':'none'} stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="display:block">
+    {#if kind==='heart'}<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>
+    {:else if kind==='comment'}<path d="M21 11.5a9 9 0 0 1-9 9 9.4 9.4 0 0 1-4-.9L3 21l1.4-4.7a9 9 0 1 1 16.6-4.8Z"/>
+    {:else if kind==='share'}<path d="m22 2-7 20-4-9L2 9 22 2Z"/><path d="m22 2-11 11"/>
+    {:else if kind==='bookmark'}<path d="M5 3h14v18l-7-4-7 4V3Z"/>{/if}
+  </svg>
+{/snippet}
+
+
 <svelte:window onkeydown={onKey} />
 <section class="emulator" aria-label="Instagram preview simulator">
   <div class="preview-heading">
@@ -644,9 +654,9 @@
               /><button
                 aria-label="Like story"
                 aria-pressed={liked}
-                onclick={() => (liked = !liked)}>{liked ? "♥" : "♡"}</button
+                onclick={() => (liked = !liked)}>{@render engagementIcon('heart',liked)}</button
               ><button aria-label="Share story preview" onclick={share}
-                >➤</button
+                >{@render engagementIcon('share')}</button
               >
             </div>
           {/if}
@@ -659,12 +669,12 @@
                 aria-label="Like reel"
                 aria-pressed={liked}
                 onclick={() => (liked = !liked)}
-                >{liked ? "♥" : "♡"}<small>{liked ? 1 : 0}</small></button
+                >{@render engagementIcon('heart',liked)}<small>{liked ? 1 : 0}</small></button
               ><button
                 aria-label="Comment on reel"
                 onclick={() => (commentsOpen = !commentsOpen)}
-                >♧<small>{comments.length}</small></button
-              ><button aria-label="Share reel preview" onclick={share}>➤</button
+                >{@render engagementIcon('comment')}<small>{comments.length}</small></button
+              ><button aria-label="Share reel preview" onclick={share}>{@render engagementIcon('share')}</button
               ><button
                 aria-label="Reel options"
                 onclick={() =>
@@ -724,11 +734,11 @@
             <button
               aria-label="Like post"
               aria-pressed={liked}
-              onclick={() => (liked = !liked)}>{liked ? "♥" : "♡"}</button
+              onclick={() => (liked = !liked)}>{@render engagementIcon('heart',liked)}</button
             ><button
               aria-label="Comment on post"
-              onclick={() => (commentsOpen = !commentsOpen)}>♧</button
-            ><button aria-label="Share post preview" onclick={share}>➤</button
+              onclick={() => (commentsOpen = !commentsOpen)}>{@render engagementIcon('comment')}</button
+            ><button aria-label="Share post preview" onclick={share}>{@render engagementIcon('share')}</button
             >{#if format === "carousel"}<div class="dots">
                 {#each carouselSlides as _, i (i)}<button
                     aria-label="Go to slide {i + 1}"
@@ -739,7 +749,7 @@
               class="bookmark"
               aria-label="Save post locally"
               aria-pressed={saved}
-              onclick={() => (saved = !saved)}>{saved ? "▣" : "♧"}</button
+              onclick={() => (saved = !saved)}>{@render engagementIcon('bookmark',saved)}</button
             >
           </div>
           <p class="local-count">
