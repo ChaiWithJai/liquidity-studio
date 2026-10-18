@@ -53,3 +53,21 @@ No automatic deploy or runtime mutation exists here. Before a separately reviewe
 Actual manual run [39118020071](https://github.com/ChaiWithJai/liquidity-studio/actions/runs/39118020071), source6409e4c, passed source/host admission and the real pinned toolchain probe. Official self-update successfully installed pnpm12.5.1, then the recipe failed because it assumed the executable was PNPM_HOME/pnpm. No frontend compilation or font acceptance occurred; partial evidence uploaded. This was a build recipe path failure, not OOM or native parser repair proof.
 
 Primary [pnpm globalBinDir](https://pnpm.io/settings/other#globalbindir) documents that v11+ global binaries live in a bin subdirectory. The correction uses supported [pnpm bin --global](https://pnpm.io/cli/bin), strictly requires the owned /review-tools/home/bin path, records installed/resolved paths, and validates the real resolved executable stays under the owned home. Native SRI verification now runs inside the same pinned container namespace, avoiding a host-side absolute-symlink assumption, before executing the installed binary's version probe. The frozen-lock wrapper uses that exact admitted bin path. Versions, integrity pins, source patch, official build, memory/swap/CPU/deadline and no-deploy bounds remain unchanged. No rerun is authorized by this source change alone.
+
+### Observed official version-manager launcher
+
+The exact diagnostic run [39119793724](https://github.com/ChaiWithJai/liquidity-studio/actions/runs/39119793724)
+proved that the global bin entry was a 2,888-byte shell launcher. Two package
+aliases resolved to the same 52,367,944-byte ELF executable, whose SHA256 matched
+the SRI-verified native package. That failed run remains preserved; it compiled
+no frontend and established no font UI acceptance.
+
+The verifier now selects exactly one unique resolved native executable from
+`/review-tools/home/global/v11/*/node_modules/pnpm/pnpm`, with at most32 roots,
+owned-home containment, regular-file/64MiB/ELF checks and the unchanged exact
+native-package hash. Zero/multiple unique binaries or an escaping/mismatched
+candidate fail closed. Only after verification are path/hash receipts emitted.
+The frozen wrapper uses that verified path and rechecks its bytes before the
+existing exact-version and immutable-lock behavior. The generated global launcher
+is never executed. This source change still requires normal CI and independent
+review before a separate manual candidate dispatch.

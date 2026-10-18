@@ -90,10 +90,33 @@ for key in ('package', 'nativePackage'):
             if len(members) != 1 or members[0].size > 64 * 1024 * 1024:
                 raise ValueError('Unexpected native pnpm package layout; stop for review')
             native = archive.extractfile(members[0]).read()
-        installed = Path(sys.argv[1]).resolve(strict=True).read_bytes()
-        if hashlib.sha256(native).digest() != hashlib.sha256(installed).digest():
+        # The official global entry is an observed generated shell launcher.
+        # Select only fixed package-relative binaries; never execute that launcher.
+        roots = sorted(Path('/review-tools/home/global/v11').iterdir())
+        if len(roots) > 32:
+            raise ValueError('Native pnpm root inventory exceeds bound')
+        unique = {}
+        expected_hash = hashlib.sha256(native).hexdigest()
+        for root in roots:
+            if not root.resolve(strict=True).is_relative_to(Path('/review-tools/home')):
+                raise ValueError('Native pnpm global root escaped owned home')
+            candidate = root / 'node_modules/pnpm/pnpm'
+            if not candidate.exists() and not candidate.is_symlink():
+                continue
+            descriptor = describe_owned(candidate)
+            if descriptor['type'] != 'ELF' or descriptor['sha256'] != expected_hash:
+                preserve_mismatch(sys.argv[1], native)
+                raise ValueError('Installed package native executable integrity mismatch')
+            unique[descriptor['resolvedPath']] = descriptor
+        if len(unique) != 1:
             preserve_mismatch(sys.argv[1], native)
-            raise ValueError('Version-manager installed executable differs from pinned native package')
-        item['nativeExecutableSha256'] = hashlib.sha256(native).hexdigest()
+            raise ValueError('Expected one unique verified native pnpm executable')
+        descriptor = next(iter(unique.values()))
+        with Path('/review-tools/verified-pnpm.path').open('x') as stream:
+            stream.write(descriptor['resolvedPath'] + '\n')
+        with Path('/review-tools/verified-pnpm.sha256').open('x') as stream:
+            stream.write(expected_hash + '\n')
+        item['nativeExecutableSha256'] = expected_hash
+        item['verifiedNative'] = descriptor
     report.append(item)
 print(json.dumps(report, indent=2))
