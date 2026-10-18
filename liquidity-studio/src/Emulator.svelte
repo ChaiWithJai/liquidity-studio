@@ -1,4 +1,5 @@
 <script>
+  import AudioMarquee from "./components/AudioMarquee.svelte";
   import { onMount, tick } from "svelte";
   import { renderSvg } from "../server/artwork.js";
   import { computePreflight } from "../server/preflight.js";
@@ -651,9 +652,7 @@
                   ? "…"
                   : ""}
               </p>
-              <div class="audio">
-                ♫ Original audio · storyboard, no audio playback
-              </div>
+              <AudioMarquee />
             </div>
           {/if}
           {#if safeZones && ["story", "reel"].includes(format)}<div
