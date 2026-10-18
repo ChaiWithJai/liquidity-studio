@@ -40,12 +40,14 @@ export function checkRestoreCapacity(
   while (!fs.existsSync(directory)) {
     const parent = path.dirname(directory);
     if (parent === directory)
-      throw fail(507, "Restore capacity cannot be established");
+      throw Object.assign(fail(507, "Restore capacity cannot be established"), {code:"RESTORE_CAPACITY_UNAVAILABLE"});
     directory = parent;
   }
-  const stats = fs.statfsSync(directory, { bigint: true });
+  let stats;
+  try { stats = fs.statfsSync(directory, { bigint: true }); }
+  catch { throw Object.assign(fail(507, "Restore capacity cannot be established"), {code:"RESTORE_CAPACITY_UNAVAILABLE"}); }
   if (stats.bavail * stats.bsize < BigInt(requiredBytes + 64 * 1024 * 1024))
-    throw fail(507, "Insufficient restore disk headroom");
+    throw Object.assign(fail(507, "Insufficient restore disk headroom"), {code:"RESTORE_CAPACITY_INSUFFICIENT"});
 }
 const copy = (value) => structuredClone(value);
 const portableAssetFields = [
@@ -111,12 +113,14 @@ export class EditorPackService {
   constructor({
     native,
     now = () => new Date().toISOString(),
-    capacityCheck = checkRestoreCapacity,
+    capacityCheck = null,
     createFiles = createPackFileCollection,
   }) {
     Object.assign(this, { native, now, capacityCheck, createFiles });
     this.repo = native.repo;
     this.store = native.store;
+    this.capacityCheck = capacityCheck || ((bytes) =>
+      checkRestoreCapacity(bytes, this.store.filesystemDirectory || undefined));
     this.scope = native.scope;
     this.identity = native.identity;
     this.journalKey = `editor-restore:${this.scope.organizationId}:${this.scope.brandId}`;

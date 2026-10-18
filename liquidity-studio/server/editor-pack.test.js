@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
 import { DurableStore } from "./storage.js";
 import { ScopedRepository } from "./repository.js";
 import { NativeEditorService } from "./native-editor.js";
@@ -14,8 +17,9 @@ async function fixture(
   preset = "liquidity_desk",
   empty = false,
   brandId = "brand",
+  databaseFilename = ":memory:",
 ) {
-  const store = new DurableStore(":memory:");
+  const store = new DurableStore(databaseFilename);
   t.after(() => store.close());
   const scope = { organizationId: "organization", brandId, preset };
   await store.update("identity", () => ({ users: [actor], memberships: [] }));
@@ -213,6 +217,33 @@ test("capacity failure and populated destination refuse mutation", async (t) => 
   await assert.rejects(source.service.install(actor, pack, input), {
     status: 409,
   });
+});
+test("default restore admission measures the constructor-selected database filesystem before any writes", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor);
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "restore-capacity-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const target = await fixture(t, "liquidity_desk", true, "brand", path.join(directory, "data", "studio.sqlite"));
+  const before = Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)]));
+  const original = fs.statfsSync, previous = process.env.STUDIO_DATABASE_PATH, calls = [];
+  process.env.STUDIO_DATABASE_PATH = path.join(directory, "wrong-host-filesystem", "studio.sqlite");
+  fs.statfsSync = (location, options) => {
+    calls.push(location);
+    assert.equal(options.bigint, true);
+    // Real capacity arithmetic, not a substituted service capacity callback.
+    return { bavail: location === path.join(directory, "data") ? 1n : 1000000000n, bsize: 4096n };
+  };
+  try {
+    await assert.rejects(target.service.install(actor, pack, input), {status: 507, message: "Insufficient restore disk headroom"});
+  } finally {
+    fs.statfsSync = original;
+    if (previous === undefined) delete process.env.STUDIO_DATABASE_PATH;
+    else process.env.STUDIO_DATABASE_PATH = previous;
+  }
+  assert.deepEqual(calls, [path.join(directory, "data")]);
+  assert.deepEqual(Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)])), before);
+  assert.equal(target.store.get(target.service.journalKey), null);
 });
 test("revoked owner cannot activate or continue an interrupted installation; current founder can roll it back", async (t) => {
   const source = await fixture(t);

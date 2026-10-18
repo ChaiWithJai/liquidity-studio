@@ -1,0 +1,426 @@
+{
+  "sourceSha": "881af7c89fc8eb41c803f187c0dfa889cb359c9e",
+  "runId": 39177479995,
+  "artifactId": 12155365520,
+  "artifactName": "generated-frontend-mismatch-evidence",
+  "qualification": "All preceding hosted contracts passed; expected canonical comparison mismatch. Final head must pass all five checks. No local build.",
+  "sourceFiles": [
+    {
+      "path": "liquidity-studio/index.html",
+      "bytes": 356,
+      "sha256": "370e5717fa68f816fa43d1fecda158bac1ff2d32513fad9b4c48357428963bae"
+    },
+    {
+      "path": "liquidity-studio/package-lock.json",
+      "bytes": 220356,
+      "sha256": "596ffb87c61d33239977777768f787bc0c2fe9b6dd923145fedc5c1418be8c97"
+    },
+    {
+      "path": "liquidity-studio/package.json",
+      "bytes": 1608,
+      "sha256": "eeeaa09c96f52fba604d59e3e612cdd00b33d5a91f431d17a99facf5eb732b64"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/DejaVuSans-Bold.ttf",
+      "bytes": 708920,
+      "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/DejaVuSans.ttf",
+      "bytes": 759720,
+      "sha256": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/InstrumentSerif-OFL.txt",
+      "bytes": 4405,
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/InstrumentSerif-Regular.ttf",
+      "bytes": 70012,
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/Inter-LICENSE.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/InterVariable.ttf",
+      "bytes": 879708,
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/LICENSE.txt",
+      "bytes": 3859,
+      "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/MonaSans-Bold.otf",
+      "bytes": 116248,
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/MonaSans-OFL.txt",
+      "bytes": 4419,
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/MonaSans-Regular.otf",
+      "bytes": 113784,
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/NotoSansDevanagari-OFL.txt",
+      "bytes": 4386,
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/NotoSansDevanagari.ttf",
+      "bytes": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "path": "liquidity-studio/src/App.svelte",
+      "bytes": 111989,
+      "sha256": "7ffcc297a831cda79fba81b33fe2d92cfacca8a21ffa01aa3da6501041253d0e"
+    },
+    {
+      "path": "liquidity-studio/src/Emulator.svelte",
+      "bytes": 34456,
+      "sha256": "cfaf871545824153feefa3264dd7675125d3180135efabaaab5a837c18015fbd"
+    },
+    {
+      "path": "liquidity-studio/src/SourceReviewSummary.svelte",
+      "bytes": 1191,
+      "sha256": "4aa6902a6301f9b30d265ef1314a434a35ec2add92d7bfa7f5ff00a9bb644647"
+    },
+    {
+      "path": "liquidity-studio/src/WorkspaceTable.svelte",
+      "bytes": 34818,
+      "sha256": "09fd7f131c7799e373961498a70d965f0dbaaf34037f70c959e1c9146450ec6a"
+    },
+    {
+      "path": "liquidity-studio/src/components/AudioMarquee.svelte",
+      "bytes": 1515,
+      "sha256": "15b7877f9d415f755aa61d6673745a1b19515ed16fe11f53a0860e78097f0e46"
+    },
+    {
+      "path": "liquidity-studio/src/components/EditorExportPanel.svelte",
+      "bytes": 4916,
+      "sha256": "26d63c93856282d5da51b867e842079ccb56215a7f7f06ba5d942549888fd9cc"
+    },
+    {
+      "path": "liquidity-studio/src/components/EditorReviewPanel.svelte",
+      "bytes": 5854,
+      "sha256": "f801201b9a9f2ffd6b92b44cb6315f81d132825dedcc6090f011a5db8e28a87a"
+    },
+    {
+      "path": "liquidity-studio/src/components/HelperControlPane.svelte",
+      "bytes": 23560,
+      "sha256": "0b5c071f96049833de2e58b488918db038cdf2378c66adfd049b3815f4cd4f85"
+    },
+    {
+      "path": "liquidity-studio/src/components/JobsPane.svelte",
+      "bytes": 11294,
+      "sha256": "48a193d9ea25faf1dccef081e43052746d001ac7c2aadfbfe93781568372d67b"
+    },
+    {
+      "path": "liquidity-studio/src/components/NativeBrandRefreshPanel.svelte",
+      "bytes": 5390,
+      "sha256": "badb8bd9b3c9d14bafc630bea9ae1a6dbee19c29a81e2e19c04313fd56df8e17"
+    },
+    {
+      "path": "liquidity-studio/src/components/NativeEditorHost.svelte",
+      "bytes": 10947,
+      "sha256": "b7707e21e419e51d943dec1e9eae07e45463ef185b248c2f825465365271af0b"
+    },
+    {
+      "path": "liquidity-studio/src/components/NativeLayoutHistory.svelte",
+      "bytes": 1925,
+      "sha256": "00b23ca6c46302520afc02386c835398af26ca1739fd63a56f06a886cbf0313d"
+    },
+    {
+      "path": "liquidity-studio/src/components/NativeRebindPanel.svelte",
+      "bytes": 4162,
+      "sha256": "b5e444b15a2b374d11e80ef4d9b2e9a449b2063a38a27bfd00bb774aed8dae4d"
+    },
+    {
+      "path": "liquidity-studio/src/components/OperatorRecoveryPanel.svelte",
+      "bytes": 14571,
+      "sha256": "46eec1063abb00e7e78a36bdce4238ceeab7beb652c75786af654c0d5edfa388"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotConnection.svelte",
+      "bytes": 7485,
+      "sha256": "012bec904e5b901bae1b61c90da73cd5c57a83a31b8864e4d8645563b033ad00"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotDesignAction.svelte",
+      "bytes": 13730,
+      "sha256": "296aa5926c2589f313cdf9e31b8d4f10e5987ce16563202a5b9e7c288a1b761b"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotImagePicker.svelte",
+      "bytes": 8103,
+      "sha256": "6482622091183bdd8fe3f53f147bf57ce82c67c4b22aeaa43bdce80d9de06a54"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotPanel.svelte",
+      "bytes": 10048,
+      "sha256": "e6f53c2765351dd155dc618be41903691038560109dc59dd6263faa915f8dff3"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotReconnect.svelte",
+      "bytes": 3563,
+      "sha256": "e601da8bf47f3c2a905ed11a0965ba846711388f1fc4f241e36ccb6bb83bc8f1"
+    },
+    {
+      "path": "liquidity-studio/src/components/PreparedSourcePanel.svelte",
+      "bytes": 16748,
+      "sha256": "6779333566eb465df53905558ed7e000935bc34d0fb51bc9ff7bf03e1de15852"
+    },
+    {
+      "path": "liquidity-studio/src/components/WorkspaceCalendar.svelte",
+      "bytes": 26865,
+      "sha256": "816e5989f2da0a7b2412dbf3ac0c1f089d6cb855b49475c3731308476a18c072"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/DefiantPlanning.svelte",
+      "bytes": 21397,
+      "sha256": "33dc37db0dcd32a2e0351ac5788a4be9cc5e620f9a95e22aaeddd42ceb890037"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/DefiantWorkspace.svelte",
+      "bytes": 21363,
+      "sha256": "de184402de4972ac89626b271520b4e5cb0db51396803355fa7343e4e08d1d11"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/DraftBrief.svelte",
+      "bytes": 5199,
+      "sha256": "81ff12a4870a1253778203805b86d98b52e4bce8885ed541678dd5cc6d69317e"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/EvidenceConstraints.svelte",
+      "bytes": 3380,
+      "sha256": "64b4ca7f46a0f5978ff5f3b4bd78a1640557a04120bf7cbbe293e04c7e388a68"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/GraphCanvas.svelte",
+      "bytes": 6990,
+      "sha256": "a11e48c63bea1979d245b444d6b952be5dc53328b195f9f1cbfd3495db2dc284"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/Icon.svelte",
+      "bytes": 1348,
+      "sha256": "3632ef34940051e86b4343f07ada70431cc51d06bd0abec87477d3bd171c60bd"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/ResourceConfirmation.svelte",
+      "bytes": 4977,
+      "sha256": "046cec87fb93b73e9df5ae261662acae975d318fcd32c1ba9628f2376d13c15b"
+    },
+    {
+      "path": "liquidity-studio/src/lib/calendar-model.js",
+      "bytes": 4365,
+      "sha256": "b1bf667956cd5c6d39d4fba9a12d5ade57e1214cc31458d29feaa4e1b2c3ebf2"
+    },
+    {
+      "path": "liquidity-studio/src/lib/calendar-optimistic.js",
+      "bytes": 2913,
+      "sha256": "9e9978065778a567a1088a5944548bb24fe8402049147dbacf5580907a488183"
+    },
+    {
+      "path": "liquidity-studio/src/lib/defiant-location.js",
+      "bytes": 2675,
+      "sha256": "612f9bf1e2317b5ec56d8af6d17b6ce3adbc3bfd70702cd127c00332ecde6ca0"
+    },
+    {
+      "path": "liquidity-studio/src/lib/editor-recovery-kit.js",
+      "bytes": 7197,
+      "sha256": "ccb23732f4048508023ca717bc6cec647288d120acdd281323b13d7759656788"
+    },
+    {
+      "path": "liquidity-studio/src/lib/google-auth.js",
+      "bytes": 1419,
+      "sha256": "88ec7b9c7186300654486e2dbaf9a0b247a195e8c8ca78010a1731bfb7dd893c"
+    },
+    {
+      "path": "liquidity-studio/src/lib/modnet-model-cache.js",
+      "bytes": 3295,
+      "sha256": "7920eaa0b361819d9bb74a3b8505701072ec3c45967e30be594b287d1c0fa7b1"
+    },
+    {
+      "path": "liquidity-studio/src/lib/modnet-processor.js",
+      "bytes": 3778,
+      "sha256": "e953bf99d16accb82083928e1136d8049e9b3798ae95c669f16ae0063f21680b"
+    },
+    {
+      "path": "liquidity-studio/src/lib/modnet-worker-client.js",
+      "bytes": 3561,
+      "sha256": "4150264a8792bdf5f5a5131692966943e34b83496cb41848ff562aa42e089a10"
+    },
+    {
+      "path": "liquidity-studio/src/lib/modnet-worker.js",
+      "bytes": 3076,
+      "sha256": "9f539812f1aa53c4b70aa51d153644f876e059f40b24477c42b33a47f737cf05"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-cutout-availability.js",
+      "bytes": 724,
+      "sha256": "ed08a62d2dfbb6874e85dba59ba7b73a453afa3823a0788bd5d8494014967d0c"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-cutout-remover.js",
+      "bytes": 3571,
+      "sha256": "03b0f691a7cfa740bc8ca9f164b5d8a8d9196728f08d1a088acc371e8dc6bcf6"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-adapter.js",
+      "bytes": 9239,
+      "sha256": "134b5ddf009f92653b65352d244cc2e024eec86be6acdfb6c33e00bef108e59c"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-broker.js",
+      "bytes": 15235,
+      "sha256": "fd8616b09c90b5bbb90eae95adb334dc9371f6ed9ff0c6162d06f3de181e7f55"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-frame.js",
+      "bytes": 2931,
+      "sha256": "05c64f9f841fa719420ddc433df976d3ae98d4e6a4a803fbcfb859c7f0e229d8"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-mount.jsx",
+      "bytes": 5791,
+      "sha256": "40c52764e6ca2b088956c2f33a604283270d3de578652ef9aee877c4fd77dac5"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-size-presets.js",
+      "bytes": 896,
+      "sha256": "fa36d627a07f6f21c62673bb4733f172653079d5d3be1b43b2349acb16cd8b3d"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-webm-duration.ts",
+      "bytes": 3548,
+      "sha256": "2ededfa85dbbd42a6b8000c36f1baa953f4dab7c40983eb74b278b043f34f079"
+    },
+    {
+      "path": "liquidity-studio/src/lib/presence-heartbeat.js",
+      "bytes": 1428,
+      "sha256": "37ff4c45f903cc6b9355c5d65a8816c9b4261ba8e87ec4ff7e81675badcbf336"
+    },
+    {
+      "path": "liquidity-studio/src/lib/scoped-request.js",
+      "bytes": 1371,
+      "sha256": "0ac691b459065eef0d994a01b6c791d8e4025f9f2a1aaf9997a52009b0f5ab92"
+    },
+    {
+      "path": "liquidity-studio/src/lib/source-review.js",
+      "bytes": 1874,
+      "sha256": "ce4f045ea5b36f67f148643185c200e171f08130e0fdbce7474f5529f015ffc2"
+    },
+    {
+      "path": "liquidity-studio/src/lib/workflow-location.js",
+      "bytes": 1901,
+      "sha256": "10224dbd7930719f7141964a36d39ac4adeaa1048eaf3c4852ce6900d948220e"
+    },
+    {
+      "path": "liquidity-studio/src/lib/workspace-client.js",
+      "bytes": 13686,
+      "sha256": "42cc639c26a7790e9b063715b8c2300178c7650064d8bc1ba7c63cd72706378d"
+    },
+    {
+      "path": "liquidity-studio/src/main.js",
+      "bytes": 156,
+      "sha256": "03c41f2aae74a330c3f841267c449e17a9ada79e972cbe800799d333961e207c"
+    },
+    {
+      "path": "liquidity-studio/src/studio.css",
+      "bytes": 33392,
+      "sha256": "9a52803b3fdeff73dbc7eeffc9aaf1d8e288e50db83b52631a25267af3281838"
+    },
+    {
+      "path": "liquidity-studio/vite.config.js",
+      "bytes": 892,
+      "sha256": "69f5af5823cb1e55df242eff14956979a8ccfc6790ddef3a7ae5eabb8f56cfb7"
+    }
+  ],
+  "files": [
+    {
+      "path": "assets/index-B8VNUpu0.css",
+      "bytes": 64644,
+      "sha256": "4cd117cba33d1eb9da1333b0ea690da0184d1cb50389aabe4535ee8a9e64ccb5"
+    },
+    {
+      "path": "assets/index-CCER4rf6.js",
+      "bytes": 576999,
+      "sha256": "a324e39018fdd45ceacb976dc041e28a7ccd10c1b7eb80f81a601a052857065a"
+    },
+    {
+      "path": "fonts/DejaVuSans-Bold.ttf",
+      "bytes": 708920,
+      "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
+    },
+    {
+      "path": "fonts/DejaVuSans.ttf",
+      "bytes": 759720,
+      "sha256": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322"
+    },
+    {
+      "path": "fonts/InstrumentSerif-OFL.txt",
+      "bytes": 4405,
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "path": "fonts/InstrumentSerif-Regular.ttf",
+      "bytes": 70012,
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "path": "fonts/Inter-LICENSE.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "fonts/InterVariable.ttf",
+      "bytes": 879708,
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf"
+    },
+    {
+      "path": "fonts/LICENSE.txt",
+      "bytes": 3859,
+      "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9"
+    },
+    {
+      "path": "fonts/MonaSans-Bold.otf",
+      "bytes": 116248,
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641"
+    },
+    {
+      "path": "fonts/MonaSans-OFL.txt",
+      "bytes": 4419,
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+    },
+    {
+      "path": "fonts/MonaSans-Regular.otf",
+      "bytes": 113784,
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari-OFL.txt",
+      "bytes": 4386,
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari.ttf",
+      "bytes": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "path": "index.html",
+      "bytes": 455,
+      "sha256": "6bb764262dcf4f878a41bf917a3c67ca26dcce5531edc36a9b0994d813211b81"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import test from "node:test";
+import fs from "node:fs";
 import assert from "node:assert/strict";
 import { createPlatform } from "./platform.js";
 import { DurableStore } from "./storage.js";
@@ -159,6 +160,29 @@ test("actual scoped HTTP ejection, explicit empty destination, owner remap and n
     ).status,
     403,
   );
+  const beforeCapacity = Object.fromEntries(store.keys("").map(key => [key, store.get(key)]));
+  const originalStatfs = fs.statfsSync;
+  try {
+    fs.statfsSync = () => ({bavail: 1n, bsize: 4096n});
+    const refused = await request(endpoint, {body:{pack, options}});
+    assert.equal(refused.status, 507);
+    const safe = await refused.json();
+    assert.equal(safe.code, "RESTORE_CAPACITY_INSUFFICIENT");
+    assert.match(safe.error, /Free space and retry this retained recovery request/);
+    fs.statfsSync = () => { throw Error("secret /private/storage/path"); };
+    const unavailable = await request(endpoint, {body:{pack, options}});
+    assert.equal(unavailable.status, 507);
+    const safeUnavailable = await unavailable.json();
+    assert.equal(safeUnavailable.code, "RESTORE_CAPACITY_UNAVAILABLE");
+    assert.doesNotMatch(JSON.stringify(safeUnavailable), /secret|private\/storage/);
+  } finally { fs.statfsSync = originalStatfs; }
+  // Only ordinary operational error telemetry may be appended by HTTP handling.
+  assert.equal(store.get(`editor-restore:${target.organizationId}:${target.brandId}`), null);
+  for (const [key,value] of Object.entries(beforeCapacity)) {
+    const actual=store.get(key);
+    if (actual && typeof actual==='object') { delete actual.operationalEvents; delete value.operationalEvents; }
+    assert.deepEqual(actual,value);
+  }
   // Hold a legacy import after it captured an available scoped container,
   // then reserve/install that destination. The old import must not overwrite it.
   const sourceBundle = JSON.parse(
