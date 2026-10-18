@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Original brand-refresh UI fixture</title>
+  </head>
+  <body>
+    <main id="app"></main>
+    <script type="module">
+      import { mount } from "svelte";
+      import Panel from "../../src/components/NativeBrandRefreshPanel.svelte";
+      const requests = [];
+      let held;
+      window.fixture = {
+        requests,
+        resolve(value) {
+          held.resolve(value);
+        },
+        reject() {
+          held.reject(new Error("Original controlled lost response"));
+        },
+      };
+      mount(Panel, {
+        target: document.getElementById("app"),
+        props: {
+          record: {
+            id: "original-document",
+            revision: 1,
+            origin: { brandRevision: "a".repeat(64) },
+          },
+          scopeKey: "original-scope",
+          getScopeKey: () => "original-scope",
+          ready: true,
+          request(path, options) {
+            requests.push({ path, options });
+            return new Promise(
+              (resolve, reject) => (held = { resolve, reject }),
+            );
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
