@@ -2,7 +2,8 @@ import {inspectPcmWav} from './native-audio.js';
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
+import { randomUUID,createHash } from "node:crypto";
+const jsonDigestBytes=bytes=>createHash("sha256").update(bytes).digest("hex");
 import sharp from "sharp";
 import { ScopedRepository, scopeKey } from "./repository.js";
 import { transactionValues } from "./storage-transaction.js";
@@ -685,13 +686,17 @@ export class EditorPackService {
       if (asset.metadata.lineage)
         metadata.lineage = copy(asset.metadata.lineage);
       metadata.portableHistory = portability(asset.metadata, "asset");
+      const original=validated.bytes(asset.file),payload={};
+      if(metadata.kind==='audio'&&original.length>512*1024){
+        payload.bytesKeys=[];
+        for(let offset=0,index=0;offset<original.length;offset+=1024*1024,index++){
+          const key=`${this.native.prefix}payload:audio-${id}-${asset.id}-${index}`,chunk=original.subarray(offset,offset+1024*1024);
+          planned.push({key,value:{kind:'native-audio-bytes',base64:chunk.toString('base64'),sha256:jsonDigestBytes(chunk)}});payload.bytesKeys.push(key);
+        }
+      }else payload.base64=original.toString('base64');
       planned.push({
         key: `${this.native.prefix}asset:${asset.id}`,
-        value: {
-          ...metadata,
-          base64: validated.bytes(asset.file).toString("base64"),
-          fingerprint: jsonDigest({ restore: id, asset: asset.id }),
-        },
+        value: {...metadata,...payload,fingerprint:jsonDigest({restore:id,asset:asset.id})},
       });
     }
     for (const doc of pack.documents) {

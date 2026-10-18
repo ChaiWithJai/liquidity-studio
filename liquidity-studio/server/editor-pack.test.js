@@ -964,7 +964,14 @@ test('portable recovery preserves exact WAV bytes, rights and native timeline in
  const sound=await source.native.uploadAsset(actor,{name:'Owned signal',contentType:'audio/wav',base64:bytes.toString('base64'),rightsDeclaration:'Original generated signal; no external music or recording.',consent:'not_personal_data',idempotencyKey:'portable_audio_source'}),document=structuredClone(reel.document);
  document.audioTracks=[{id:'portable-track',kind:'upload',name:sound.name,assetId:sound.id,src:audioSource(sound.id),scope:{type:'design'},durationMs:30000,startMs:0,trimStartMs:0,trimEndMs:30000,volume:.5,fadeInMs:500,fadeOutMs:500,loop:false,muted:false}];
  await source.native.save(actor,reel.id,{document,title:reel.title,expectedRevision:reel.revision,idempotencyKey:'portable_audio_save'});
+ const stored=await source.store.get(source.native.prefix+'asset:'+sound.id);assert.equal(stored.base64,undefined);assert.equal(stored.bytesKeys.length,6);assert.ok(Buffer.byteLength(JSON.stringify(stored))<4096);assert.ok(stored.bytesKeys.every(key=>Buffer.byteLength(JSON.stringify(source.store.get(key)))<2*1024*1024));assert.equal(sound.bytesKeys,undefined);
  const pack=await source.service.export(actor);validateEditorPack(pack);const packed=pack.assets.find(a=>a.id===sound.id);assert.equal(pack.files.find(f=>f.sha256===packed.file).kind,'audio');assert.ok(bytes.length>4*1024*1024);const {createEditorRecoveryKit}=await import('../src/lib/editor-recovery-kit.js'),kit=await createEditorRecoveryKit(pack);assert.equal(kit.manifest.contents.audio,1);assert.equal(kit.manifest.contents.images,0);assert.equal(packed.metadata.kind,'audio');assert.equal(packed.metadata.durationMs,30000);
  const target=await fixture(t,'liquidity_desk',true,'audio-destination');await target.service.install(actor,pack,{...input,target:{organizationId:'organization',brandId:'audio-destination'}});
  assert.deepEqual((await target.native.read(actor,reel.id)).document,document);assert.equal((await target.native.asset(actor,sound.id)).base64,bytes.toString('base64'));assert.equal((await target.native.asset(actor,sound.id)).rightsDeclaration,sound.rightsDeclaration);
+});
+
+test('failed audio metadata commit cleans only its own staged payload and leaves existing work intact',async t=>{
+ const {pcmWav}=await import('../tests/fixtures/native-audio.js'),source=await fixture(t),before=source.store.keys('').sort(),original=source.native.commitScoped;
+ source.native.commitScoped=async()=>{throw new Error('Injected metadata failure');};
+ await assert.rejects(source.native.uploadAsset(actor,{name:'Owned audio',contentType:'audio/wav',base64:pcmWav().toString('base64'),rightsDeclaration:'Original generated signal',consent:'not_personal_data',idempotencyKey:'failed_audio_metadata'}),/Injected metadata failure/);source.native.commitScoped=original;assert.deepEqual(source.store.keys('').sort(),before);
 });

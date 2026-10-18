@@ -577,6 +577,7 @@ export class NativeEditorService {
         bytes,
         input.contentType,
       );
+    else if(asset.kind==="audio"&&bytes.length>512*1024)asset.bytesKeys=await this.stageAudioBytes(bytes);
     else asset.base64 = input.base64;
     let retained = false;
     try {
@@ -588,14 +589,29 @@ export class NativeEditorService {
               throw fail(409, "Upload key was used for different content");
             return prior || asset;
           });
-      retained =
-        !asset.artifactRef ||
-        asset.artifactRef.object === saved.artifactRef?.object;
+      retained = asset.artifactRef
+        ? asset.artifactRef.object === saved.artifactRef?.object
+        : asset.bytesKeys ? hash(asset.bytesKeys)===hash(saved.bytesKeys) : true;
       return this.assetDto(saved);
     } finally {
       if (!retained && asset.artifactRef)
         await this.store.deleteArtifact?.(this.scope, asset.artifactRef);
+      if(!retained&&asset.bytesKeys){
+        // An ambiguous storage reply must not delete bytes referenced by a committed asset.
+        const committed=await this.store.get(key);
+        if(hash(committed?.bytesKeys||[])!==hash(asset.bytesKeys))for(const chunkKey of asset.bytesKeys)await this.discardPayload({key:chunkKey});
+      }
     }
+  }
+  async stageAudioBytes(bytes) {
+    const id=randomUUID(),keys=[];
+    try {
+      for(let offset=0,index=0;offset<bytes.length;offset+=1024*1024,index++){
+        const chunk=bytes.subarray(offset,offset+1024*1024),key=`${this.prefix}payload:audio-${id}-${index}`;
+        await this.store.update(key,prior=>{if(prior)throw fail(409,'Audio staging collision');return {kind:'native-audio-bytes',base64:chunk.toString('base64'),sha256:createHash('sha256').update(chunk).digest('hex')};});keys.push(key);
+      }
+      return keys;
+    }catch(error){for(const key of keys)await this.discardPayload({key});throw error;}
   }
   // Internal-only atomic guard, never populated from request JSON.
   async commitGuardedAsset(key, asset, guard) {
@@ -611,7 +627,7 @@ export class NativeEditorService {
     return result[0];
   }
   assetDto(asset) {
-    const { artifactRef, base64, fingerprint, ...dto } = asset;
+    const { artifactRef, base64, bytesKeys, fingerprint, ...dto } = asset;
     return clone(dto);
   }
   async asset(actor, id, withBytes = true) {
@@ -622,9 +638,15 @@ export class NativeEditorService {
     if (!asset) throw fail(404, "Native asset not found");
     const dto = this.assetDto(asset);
     if (!withBytes) return dto;
-    const bytes = asset.artifactRef
-      ? await this.store.downloadArtifact(this.scope, asset.artifactRef)
-      : Buffer.from(asset.base64, "base64");
+    let bytes;
+    if(asset.artifactRef)bytes=await this.store.downloadArtifact(this.scope,asset.artifactRef);
+    else if(asset.bytesKeys){
+      if(asset.kind!=='audio'||!Array.isArray(asset.bytesKeys)||!asset.bytesKeys.length||asset.bytesKeys.length>6||new Set(asset.bytesKeys).size!==asset.bytesKeys.length||asset.bytesKeys.some(key=>typeof key!=='string'||!key.startsWith(`${this.prefix}payload:audio-`)))throw fail(500,'Native audio payload ownership mismatch');
+      const chunks=[];
+      for(const key of asset.bytesKeys){const payload=await this.store.get(key),chunk=Buffer.from(payload?.base64||'','base64');if(payload?.kind!=='native-audio-bytes'||!chunk.length||chunk.length>1024*1024||createHash('sha256').update(chunk).digest('hex')!==payload.sha256)throw fail(500,'Native audio chunk integrity mismatch');chunks.push(chunk);}
+      bytes=Buffer.concat(chunks);
+    }else bytes=Buffer.from(asset.base64,'base64');
+    if(bytes.length!==asset.size)throw fail(500,'Native asset length mismatch');
     if (createHash("sha256").update(bytes).digest("hex") !== asset.sha256)
       throw fail(500, "Native asset integrity mismatch");
     await this.authorize(actor);
