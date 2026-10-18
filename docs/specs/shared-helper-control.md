@@ -53,3 +53,11 @@ Ship a vertical slice: scoped proposal and grant authority → actual UI diff/ap
 ## Completion evidence required
 
 The ticket remains open until a tested interaction/state implementation and bounded evaluation are published; two actors demonstrably cannot overwrite the same revision; helper work demonstrably leaves human focus/editor intact; pause/takeover and connection recovery are observable; stale screenshot/action checks work; and versioned canonical evidence preserves the original annotations. Human usability, model quality, real customer collaboration and screenshot simulation are separate claims.
+
+## Implementation checkpoint, October 18
+
+The isolated implementation adds HelperControlService and feature-flagged `/api/studio/workspace/control` routes. The scoped grant epoch, exact approved proposal and mutation receipt bind in the existing WorkspaceService transaction. Advisory presence has actor-owned client IDs and expiring connected state; it grants no permission. Control storage is bounded to 512 KiB and excluded from portable export. The proposal pane is not yet mounted in the production App.
+
+Configured Node checks: `NODE_ENV=test node --test server/helper-control.test.js server/helper-control-http.test.js server/workspace.test.js` (19 passed). Configured real Chromium component/API checks: `NODE_ENV=test node node_modules/@playwright/test/cli.js test tests/helper-control.spec.js --output=/tmp/liquidity-helper-ui-undo-verified` (2 passed). The browser checks use two independent authenticated password-fixture contexts, approved metadata proposals, unchanged human text/focus, actual committed-but-lost HTTP apply/undo responses with identical-key retry, reload recovery, and stale screenshot observation rejection after a human change. Screenshot capture is evidence, not model inference; no model benchmark or selected model is claimed.
+
+Remaining before release/closure: actual App mounting and canonical after frames; broader independent security/storage/revocation review; scope/session switching and retained uncertain-intent acceptance in the mounted editor; wider typed calendar-action evaluation; configured Google-session acceptance; immutable Docker/cloud acceptance. Feature remains disabled by default. No current operator or cloud state changes are part of this checkpoint.
