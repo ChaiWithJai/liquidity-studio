@@ -19,5 +19,5 @@
   "sourceDesignId": "68f3f407-256c-46c5-b8ae-19b292a36e17",
   "mappedDesignId": "5e89f10a-1bd0-441e-88cc-765199263c5a",
   "nativeDocumentSha256": "2648d5419e6b4fd986f892738cb974be54f9a3549394dbe37692107c4b4ac3cc",
-  "bounds": "Actual local HTTP/WebSocket API only; owners are not Studio brands. No browser hydration, self-contained archive, fonts/assets, Penpot or cloud integration proven."
+  "bounds": "This API run alone establishes local HTTP/WebSocket checks; owners are not Studio brands. Subsequent browser/native export evidence is recorded separately. No self-contained archive, font-binary, Penpot or cloud integration proof."
 }
