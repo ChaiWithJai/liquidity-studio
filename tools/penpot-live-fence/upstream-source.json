@@ -1,0 +1,39 @@
+{
+  "repository": "penpot/penpot",
+  "commit": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "retrieval": "GitHub Contents API at immutable commit, read-only",
+  "files": [
+    {
+      "path": "backend/src/app/http/websocket.clj",
+      "gitBlob": "2517b427251aceeeb3ccaf67dbbd7e671804499f",
+      "sha256": "d804c7c19bd8e377d38eee36e88f53cc22dbe6d1f01acece98edf5805bdefe06"
+    },
+    {
+      "path": "backend/src/app/util/websocket.clj",
+      "gitBlob": "d62dd6b81f24baaac06779328cf8e2d590a81709",
+      "sha256": "2f3b60b6f0c814364f975a3fd3bad6d6c813e9f49a9e9fddfb9e87164007be7c"
+    },
+    {
+      "path": "backend/src/app/http/session.clj",
+      "gitBlob": "5782b3452e3b7bdcd001eda67a2001813e70e1c0",
+      "sha256": "147a0f6b2e013b5005714c72acf58a353c4562781688daeb4bb2f87db27060a5"
+    },
+    {
+      "path": "backend/src/app/http/middleware.clj",
+      "gitBlob": "2f8793194ebb814cad1df36eceb8cb8d235a9164",
+      "sha256": "792e234e9eb850ab24201380b2d9ef53de9383fbb8e5fde03e42baade48dc74f"
+    },
+    {
+      "path": "backend/src/app/msgbus.clj",
+      "gitBlob": "85828d3f230df8af262d1dd0518359c5be8628ad",
+      "sha256": "df90c7a21af108f1a4ba40a157fb1fa483888bec526d840954846a6e76724329"
+    },
+    {
+      "path": "backend/deps.edn",
+      "gitBlob": "169fdf652914e3e3c4d1b8a70946b9441eea3d8d",
+      "sha256": "90ac9ae8fc21effaa91c5fef40a0d82d9374ddb4de2ca96a02b2dba35d6ae666"
+    }
+  ],
+  "runtimeChanged": false,
+  "localBuildOrTests": false
+}

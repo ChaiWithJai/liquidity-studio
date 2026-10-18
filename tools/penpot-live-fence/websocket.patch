@@ -1,0 +1,143 @@
+--- a/backend/src/app/http/websocket.clj
++++ b/backend/src/app/http/websocket.clj
+@@ -20,6 +20,7 @@
+    [app.msgbus :as mbus]
+    [app.rpc.commands.files :as files]
+    [app.rpc.commands.teams :as teams]
++   [app.studio.live :as studio-live]
+    [app.util.websocket :as ws]
+    [integrant.core :as ig]
+    [promesa.exec.csp :as sp]
+@@ -139,12 +140,15 @@
+   (teams/check-read-permissions! pool profile-id team-id)
+   (let [prev-subs (get @state ::team-subscription)
+         channel   (sp/chan :buf (sp/dropping-buffer 64)
+-                           :xf  (remove #(= (:session-id %) session-id)))]
++                           :xf  (comp (remove #(= (:session-id %) session-id))
++                                      (map #(cond-> %
++                                              (::studio-live/resource params)
++                                              (assoc ::studio-live/resource (::studio-live/resource params))))))]
+ 
+     (sp/pipe channel output-ch false)
+     (mbus/sub! msgbus :topic team-id :chan channel)
+ 
+-    (let [subs {:team-id team-id :channel channel :topic team-id}]
++    (let [subs {:team-id team-id :channel channel :topic team-id ::studio-live/resource (::studio-live/resource params)}]
+       (swap! state assoc ::team-subscription subs))
+ 
+     ;; Close previous subscription if exists
+@@ -160,9 +164,12 @@
+   (files/check-read-permissions! pool profile-id file-id)
+   (let [psub (::file-subscription @state)
+         fch  (sp/chan :buf (sp/dropping-buffer 64)
+-                      :xf  (remove #(= (:session-id %) session-id)))]
+-
+-    (let [subs {:file-id file-id :channel fch :topic file-id}]
++                      :xf  (comp (remove #(= (:session-id %) session-id))
++                                      (map #(cond-> %
++                                              (::studio-live/resource params)
++                                              (assoc ::studio-live/resource (::studio-live/resource params))))))]
++
++    (let [subs {:file-id file-id :channel fch :topic file-id ::studio-live/resource (::studio-live/resource params)}]
+       (swap! state assoc ::file-subscription subs))
+ 
+     ;; Close previous subscription if exists
+@@ -275,7 +282,7 @@
+             :id :websocket-messages-total
+             :labels send-labels
+             :inc 1)
+-  message)
++  (dissoc message ::studio-live/resource))
+ 
+ (defn- http-handler
+   [cfg {:keys [params ::session/profile-id] :as request}]
+@@ -306,7 +313,10 @@
+                                      ::ws/on-rcv-message (partial on-rcv-message cfg)
+                                      ::ws/on-snd-message (partial on-snd-message cfg)
+                                      ::ws/on-connect (partial on-connect cfg)
+-                                     ::ws/handler (partial handle-message cfg)
++                                     ::ws/handler (partial studio-live/handle-message cfg handle-message)
++                                     ::ws/on-check (when (studio-live/enabled? cfg) (partial studio-live/check! cfg))
++                                     ::ws/filter-output (when (studio-live/enabled? cfg) (partial studio-live/allow-output? cfg))
++                                     ::studio-live/context (studio-live/context request)
+                                      ::profile-id profile-id
+                                      ::session-id session-id)}))))
+ 
+--- a/backend/src/app/util/websocket.clj
++++ b/backend/src/app/util/websocket.clj
+@@ -64,6 +64,8 @@
+   [request & {:keys [::on-rcv-message
+                      ::on-snd-message
+                      ::on-connect
++                     ::on-check
++                     ::filter-output
+                      ::input-buff-size
+                      ::output-buff-size
+                      ::idle-timeout]
+@@ -143,18 +145,31 @@
+ 
+ (defn- start-io-loop!
+   [{:keys [::id ::close-ch ::input-ch ::output-ch ::heartbeat-ch
+-           ::channel ::handler ::beats ::on-rcv-message ::on-snd-message]
++           ::channel ::handler ::beats ::on-rcv-message ::on-snd-message
++           ::on-check ::filter-output]
+     :as wsp}]
+   (try
+     (handler wsp {:type :open})
+-    (loop [i 0]
+-      (let [ping-ch (sp/timeout-chan heartbeat-interval)
+-            [msg p] (sp/alts! [close-ch input-ch output-ch heartbeat-ch ping-ch])]
++    (loop [i 0
++           ping-ch nil
++           check-at (+ (System/nanoTime) 1000000000)
++           check-ch (when on-check (sp/timeout-chan 1000))]
++      (let [check-due? (and on-check (>= (System/nanoTime) check-at))
++            _ (when check-due? (on-check wsp))
++            check-at (if check-due? (+ (System/nanoTime) 1000000000) check-at)
++            check-ch (if check-due? (sp/timeout-chan 1000) check-ch)
++            ping-ch (or ping-ch (sp/timeout-chan heartbeat-interval))
++            [msg p] (sp/alts! (cond-> [close-ch input-ch output-ch heartbeat-ch ping-ch]
++                              check-ch (conj check-ch)))]
+         (when (yws/open? channel)
+           (cond
++            ;; A persistent check timer cannot be reset/starved by socket traffic.
++            (identical? p check-ch)
++            (recur i (when on-check ping-ch) check-at check-ch)
++
+             (identical? p ping-ch)
+             (if (handle-ping! wsp i)
+-              (recur (inc i))
++              (recur (inc i) nil check-at check-ch)
+               (do
+                 (l/trc :hint "closing" :reason "missing to many pings")
+                 (yws/close channel 8802 "missing to many pings")))
+@@ -166,7 +181,7 @@
+             (let [beat (decode-beat msg)]
+               (l/trc :hint "pong received" :beat beat :conn-id (str id))
+               (swap! beats disj beat)
+-              (recur i))
++              (recur i (when on-check ping-ch) check-at check-ch))
+ 
+             (identical? p input-ch)
+             (let [message (t/decode-str msg)
+@@ -177,13 +192,15 @@
+                          (cond-> response
+                            (some? request-id)
+                            (assoc :request-id request-id))))
+-              (recur i))
++              (recur i (when on-check ping-ch) check-at check-ch))
+ 
+             (identical? p output-ch)
+-            (let [message (on-snd-message msg)
+-                  message (t/encode-str message {:type :json-verbose})]
+-              (yws/send channel message)
+-              (recur i))))))
++            (do
++              (when (or (nil? filter-output) (filter-output wsp msg))
++                (let [message (on-snd-message msg)
++                      message (t/encode-str message {:type :json-verbose})]
++                  (yws/send channel message)))
++              (recur i (when on-check ping-ch) check-at check-ch))))))
+ 
+     (catch InterruptedException _cause
+       (l/dbg :hint "websocket thread interrumpted" :conn-id id))
