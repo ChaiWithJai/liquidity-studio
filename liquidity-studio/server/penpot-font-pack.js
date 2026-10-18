@@ -60,6 +60,7 @@ export function createPenpotFontPack({ archive, fonts }) {
     fonts: fonts.map((font) => ({
       family: font.family,
       weight: font.weight,
+      ...(font.style === undefined ? {} : { style: font.style }),
       oldFontId: font.oldFontId,
       sourceName: font.sourceName,
       sourceSha256: hash(font.bytes),
@@ -92,6 +93,7 @@ export function validatePenpotFontPack(pack) {
     exact(font, [
       "family",
       "weight",
+      "style",
       "oldFontId",
       "sourceName",
       "sourceSha256",
@@ -104,12 +106,13 @@ export function validatePenpotFontPack(pack) {
       typeof font.family !== "string" ||
       !/^[A-Za-z0-9 -]{1,80}$/.test(font.family) ||
       ![400, 700].includes(font.weight) ||
+      (font.style !== undefined && !["normal", "italic"].includes(font.style)) ||
       !UUID.test(font.oldFontId) ||
       !/^[A-Za-z0-9_-]+\.(otf|ttf)$/.test(font.sourceName) ||
       font.license !== "OFL-1.1"
     )
       reject();
-    const key = font.oldFontId + ":" + font.weight;
+    const key = font.oldFontId + ":" + font.weight + ":" + (font.style || "normal");
     if (keys.has(key)) reject();
     keys.add(key);
     const bytes = decode(font.sourceBytes, 3 * 1024 * 1024),
@@ -137,6 +140,9 @@ export function remapPenpotNativeFonts(nativeDocument, pack, verifiedUploads) {
     reject();
   const mapping = new Map();
   for (const source of pack.fonts) {
+    // This legacy pure helper predates style-aware recovery. Do not silently
+    // collapse a new italic variant onto its same-weight normal mapping.
+    if (source.style && source.style !== "normal") reject();
     const upload = verifiedUploads.find(
       (u) => u.oldFontId === source.oldFontId && u.weight === source.weight,
     );
