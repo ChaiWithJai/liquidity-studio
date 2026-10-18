@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "issue": 57,
+  "date": "2026-10-18",
+  "method": "BrowserOS Neo only; controlled password fixture, not managed Google acceptance",
+  "source": {
+    "backend": "e49dab5e2a5028071d5203c67eb831227e9f202e",
+    "publicApp": "af41c1d",
+    "publicJavaScript": "index-BWJKhL1L.js",
+    "heldFrameSource": "4d1e30ee4d1690999337ed83d165d71b90abe23d",
+    "upstream": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5"
+  },
+  "viewport": {
+    "width": 1051,
+    "height": 868,
+    "dpr": 2,
+    "screenshot": "BrowserOS viewport capture; tool may scale image"
+  },
+  "pack": {
+    "schemaVersion": 2,
+    "export": {
+      "bytes": 3583959,
+      "sha256": "9c09b90630d3aad4c917539305c92c80a8cb8627378b8b9e6b1f07ba969e46ab",
+      "nativeLayouts": 5,
+      "images": 2,
+      "files": 26
+    },
+    "reejection": {
+      "bytes": 3700771,
+      "sha256": "81d4918c5c881811cb5a8f130b9f583c07c907989f101f261e5a090d17fd7356"
+    }
+  },
+  "recovery": {
+    "differentCurrentPrincipal": true,
+    "explicitNewEmptyScope": true,
+    "bothOriginalDatabasesOffline": true,
+    "processRestart": true,
+    "newTargetSqlite": true,
+    "backup": {
+      "bytes": 1253376,
+      "sha256": "5bba3a70ec40ddc33c6a7391303f3b9d91463ac8006c8b6aa452cdcef56c011d",
+      "integrity": "ok",
+      "records": 30,
+      "assets": "all immutable bytes inline; no GCS references"
+    }
+  },
+  "current": {
+    "archivedNotes": {
+      "evidence": "https://github.com/ChaiWithJai/liquidity-studio/blob/3c7e15fc35fcfff7f19cf946f5a6fa4d5eb2f69d/docs/investigations/cutout-portrait/native-modnet/metrics.json",
+      "input": {
+        "dimensions": [
+          384,
+          384
+        ],
+        "name": "actual-modnet-native-input.jpg",
+        "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e"
+      },
+      "model": {
+        "publisherLicense": "Apache-2.0 declaration",
+        "sha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9"
+      },
+      "originalWorkerActor": "not retained in available evidence; no substitute actor asserted",
+      "output": {
+        "dimensions": [
+          384,
+          384
+        ],
+        "name": "alpha.png",
+        "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d"
+      },
+      "rights": "Owned generated synthetic portrait with no actual personal identity; cutout fixture.",
+      "status": "archived ordinary image pair; not a new cutout inference or restored native processor record"
+    },
+    "headline": "DURABLE NEW OWNER COPY",
+    "id": "d6e20172-9ce0-6390-44ac-827624ead993",
+    "image": "studio-asset:0b593099a4f629a7fcc45a29d3d07778",
+    "revision": 2,
+    "sourceState": "current",
+    "status": "proposal"
+  },
+  "historical": {
+    "headline": "HUMAN vedic_dharma infographic",
+    "id": "cdb710fa-9e8d-d612-dcb5-31773abbc382",
+    "revision": 4,
+    "sourceState": "historical"
+  },
+  "nativeReview": "Review has not started",
+  "retainedPng": {
+    "http": 200,
+    "authority": "historical-only",
+    "bytes": 170547,
+    "width": 1080,
+    "height": 1350,
+    "sha256": "a9d5cbab74a5a7c63df94b09f045d0358bfeb793c649351cbd5f1953588b0eb6",
+    "originalNativeRevision": 4,
+    "originalReviewRevision": 4
+  },
+  "assets": [
+    {
+      "name": "alpha",
+      "http": 200,
+      "returnedBase64": true,
+      "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+      "size": 198985,
+      "width": 384,
+      "height": 384,
+      "intent": "document-usage"
+    },
+    {
+      "name": "original",
+      "http": 200,
+      "returnedBase64": true,
+      "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+      "size": 34832,
+      "width": 384,
+      "height": 384,
+      "intent": "library-preview"
+    },
+    {
+      "name": "unreferenced-original",
+      "http": 422,
+      "returnedBase64": false
+    },
+    {
+      "name": "foreign-original-scope",
+      "http": 403,
+      "returnedBase64": false
+    }
+  ],
+  "additionalDenials": [
+    {
+      "error": "Sign in required",
+      "http": 401,
+      "name": "anonymous",
+      "returnedBase64": false
+    },
+    {
+      "error": "Native asset context changed; reopen explicitly",
+      "http": 409,
+      "name": "stale-revision",
+      "returnedBase64": false
+    }
+  ],
+  "limitations": [
+    "No new cutout inference; archived ordinary image pair and historical notes do not reconstruct missing original worker actor/processor record.",
+    "No restored motion/audio/media export, maximum-size memory measurement, multi-instance recovery, or full cloud pack restore.",
+    "Upstream native binary distribution hold remains; no held code or model weights published."
+  ]
+}
