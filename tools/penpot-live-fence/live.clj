@@ -3,6 +3,9 @@
 (ns app.studio.live
   (:require [app.db :as db]
             [app.http.session :as session]
+            [app.http :as-alias http]
+            [app.common.time :as ct]
+            [app.config :as cf]
             [app.common.exceptions :as ex]
             [app.msgbus :as mbus]
             [app.studio.access :as access]
@@ -16,14 +19,41 @@
             :hint "Current Studio brand access is required"))
 
 (defn context
-  "Capture only server-authenticated middleware fields, never WS query session-id."
+  "Capture authenticated middleware session and decoded token times, not query data."
   [request]
   (let [profile-id (::session/profile-id request)
-        native-session (::session/session request)]
-    (when (and (uuid? profile-id) (:id native-session)
-               (= profile-id (:profile-id native-session)))
+        native-session (::session/session request)
+        {:keys [type claims metadata]} (::http/auth-data request)
+        issued-at (if (= 1 (:ver metadata))
+                    (:iat claims)
+                    (or (:modified-at native-session) (:created-at native-session)))
+        expiry (:exp claims)]
+    (when (and (#{:cookie :bearer} type) (#{0 1} (:ver metadata))
+               (uuid? profile-id) (:id native-session)
+               (= profile-id (:profile-id native-session))
+               (ct/inst? issued-at)
+               (or (not (contains? claims :exp)) (ct/inst? expiry)))
       {:native-profile-id profile-id
+       :token-issued-at issued-at
+       :token-expires-at expiry
        :native-session (select-keys native-session [:id :profile-id :created-at :modified-at])})))
+
+(defn- current-session?
+  [{:keys [native-profile-id native-session token-issued-at token-expires-at]} current]
+  (let [now (ct/now)
+        max-age (cf/get :auth-token-cookie-max-age session/default-cookie-max-age)
+        modified-at (or (:modified-at current) (:created-at current))]
+    (and (uuid? native-profile-id)
+         (= (:id native-session) (:id current))
+         (= native-profile-id (:profile-id current))
+         (ct/duration? max-age)
+         (ct/inst? modified-at) (ct/inst? token-issued-at)
+         ;; Native cookie issuance/optional JWE expiry stays fixed for this socket,
+         ;; even if another request renews the database session row.
+         (ct/is-before? now (ct/plus token-issued-at max-age))
+         (or (nil? token-expires-at) (ct/is-before? now token-expires-at))
+         ;; Session manager reads do not apply age filtering; do it explicitly.
+         (ct/is-before? now (ct/plus modified-at max-age)))))
 
 (defn file-resource [cfg file-id]
   (when-not (uuid? file-id) (denied!))
@@ -53,9 +83,7 @@
                           (let [{:keys [native-profile-id native-session]} (::context wsp)
                                 current (when (:id native-session)
                                           (session/read-session (::session/manager cfg) (:id native-session)))]
-                            (and (uuid? native-profile-id)
-                                 (= (:id native-session) (:id current))
-                                 (= native-profile-id (:profile-id current))
+                            (and (current-session? (::context wsp) current)
                                  (true? (:allowed
                                           (access/authorize-resource cfg
                                             {:native-profile-id native-profile-id

@@ -20,7 +20,13 @@ and denies a stalled callback. This is not a new public callback endpoint or a
 caller-selected authority URL.
 
 The middleware-authenticated `::session/session` record is captured and freshly
-read through the native session manager. The browser's WS `session-id` remains
+read through the native session manager. The verified middleware token issue time
+and optional Instant-valued `exp` are retained separately. Pinned auth tokens
+are JWE/Transit claims, not assumed numeric JWT timestamps. The hook enforces
+the original token/cookie age and any explicit `exp`, plus the configured
+`auth-token-cookie-max-age` against the current row's modified/created time. A
+renewed database row cannot extend the old socket token. No session-GC delay
+is treated as continuing authority. The browser's WS `session-id` remains
 only the upstream collaboration correlation ID. It never proves authentication.
 No native cookie/token is copied into a WebSocket message or portable record.
 

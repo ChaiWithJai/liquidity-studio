@@ -1,6 +1,9 @@
 (ns app.studio.live-test
   (:require [clojure.test :refer [deftest is testing]]
             [app.http.session :as session]
+            [app.http :as-alias http]
+            [app.common.time :as ct]
+            [app.config :as cf]
             [app.studio.access :as access]
             [app.studio.live :as live]
             [app.db :as db]
@@ -24,6 +27,8 @@
              ::session/manager manager ::db/pool nil}
         wsp {::live/context (live/context {::session/profile-id profile
                                           ::session/session authenticated
+                                          ::http/auth-data {:type :cookie :metadata {:ver 1}
+                                                            :claims {:iat (:modified-at authenticated)}}
                                           :params {:session-id client-session}})
              ::ws/state (atom {})}]
     {:cfg cfg :wsp wsp :manager manager :authenticated authenticated :allowed allowed :calls calls}))
@@ -99,6 +104,45 @@
       (is (nil? (::live/resource (first @delegated))))
       (is (thrown? Exception (live/handle-message cfg delegate wsp {:type :pointer-update :file-id personal})))
       (is (= 1 (count @delegated))))))
+
+(deftest native-cookie-age-expires-even-when-another-request-renews-the-session-row
+  (let [{:keys [cfg wsp manager authenticated calls]} (fixture)
+        issued-at (:modified-at authenticated)
+        clock (atom (ct/plus issued-at (ct/duration {:seconds 9})))
+        original-get cf/get]
+    (with-redefs [ct/now (fn [] @clock)
+                  cf/get (fn [key fallback] (if (= key :auth-token-cookie-max-age)
+                                            (ct/duration {:seconds 10}) (original-get key fallback)))]
+      (is (live/allowed? cfg wsp (live/team-resource team) :read))
+      (session/update-session manager authenticated)
+      (is (= @clock (:modified-at (session/read-session manager (:id authenticated)))))
+      (reset! clock (ct/plus issued-at (ct/duration {:seconds 10})))
+      (is (some? (session/read-session manager (:id authenticated))) "The row still exists")
+      (is (false? (live/allowed? cfg wsp (live/team-resource team) :read)))
+      (is (= 1 (count @calls)) "Expiry denies before the Studio callback"))))
+
+(deftest decoded-token-expiry-and-current-row-age-are-independent-bounds
+  (let [{:keys [cfg wsp authenticated calls]} (fixture)
+        issued-at (:modified-at authenticated)
+        now (ct/plus issued-at (ct/duration {:seconds 11}))
+        context (live/context {::session/profile-id profile ::session/session authenticated
+                               ::http/auth-data {:type :bearer :metadata {:ver 1}
+                                                 :claims {:iat issued-at :exp (ct/plus issued-at (ct/duration {:seconds 5}))}}})
+        max-age (atom (ct/duration {:seconds 100}))
+        original-get cf/get]
+    (with-redefs [ct/now (constantly now)
+                  cf/get (fn [key fallback] (if (= key :auth-token-cookie-max-age)
+                                            @max-age (original-get key fallback)))]
+      (is (false? (live/allowed? cfg (assoc wsp ::live/context context) (live/team-resource team) :read)))
+      (reset! max-age (ct/duration {:seconds 10}))
+      ;; A newer token time cannot make an aged native database row current.
+      (is (false? (live/allowed? cfg (assoc wsp ::live/context
+                                     (assoc context :token-issued-at now :token-expires-at nil))
+                                (live/team-resource team) :read)))
+      (is (empty? @calls)))
+    (is (nil? (live/context {::session/profile-id profile ::session/session authenticated
+                             ::http/auth-data {:type :cookie :metadata {:ver 1}
+                                               :claims {:iat issued-at :exp "untrusted time string"}}})))))
 
 (deftest stalled-authority-denies-with-a-bounded-check
   (let [{:keys [cfg wsp]} (fixture)
