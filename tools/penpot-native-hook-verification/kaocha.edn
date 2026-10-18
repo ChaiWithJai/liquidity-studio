@@ -1,0 +1,5 @@
+#kaocha/v1
+{:tests [{:id :studio-native-hooks
+          :test-paths ["test/app/studio"]
+          :ns-patterns ["app\\.studio\\..*-test$"]
+          :kaocha/reporter [kaocha.report/dots]}]}
