@@ -34,7 +34,7 @@ async function signIn(page, name = "founder") {
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in →" }).click();
   await expect(
-    page.getByRole("heading", { name: "Good stories, next up." }),
+    page.getByRole("heading", { name: "Story backlog", exact: true }),
   ).toBeVisible();
 }
 async function seed(page, title = "Browser source fixture") {
