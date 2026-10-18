@@ -1,0 +1,19 @@
+# C2 native brand admission seam
+
+Source preparation against Penpot `ff7a66f51938b2293260ea27a64e2c4e0833b5e3` (2.18.3). No native build, runtime, ACL change or admission enablement is claimed.
+
+`PenpotBrandAccess` keeps a unique immutable native team for each Studio brand and separates `operatorProfileId` from the paired acting human. `registerWorkspace` accepts no browser IDs: its constructor-owned workspace is checked against actual `get-profile`, `get-project`, `get-team`, and `get-team-members`. A second brand cannot reuse the same team. Existing mappings cannot silently change owners/projects/teams. `inspect` requires current pairing/session/grants, reads native membership, rejects operator/owner/admin fallback and prepares only pending state. `admission` rechecks current identity/pairing/epochs; C2 always returns `allowed:false`, `editingEnabled:false`. A native membership snapshot is not a live revocation guarantee.
+
+Provider integration must supply a scope-bound **administrative workspace lookup** separately from acting-human authorization. The current founder-only story provider cannot be passed unchanged for a marketer. Keep the operator's existing design identity/hash and fonts immutable; do not replace its owner with each human. Actor admission is an additional dependency, never a mutation of editable document metadata.
+
+## Exact first native hook
+
+Install original `access.clj` as `backend/src/app/studio/access.clj`. In pinned `backend/src/app/rpc.clj`, require `[app.studio.access :as studio-access]` and insert `(studio-access/wrap cfg $ mdata)` immediately after `wrap-audit` in `wrap` and `wrap-management`. The subsequently applied validation/authentication wrappers run first. Native middleware supplies `::rpc/profile-id`; the browser cannot select it. The hook resolves file→project→team and project→team from native database rows, then invokes the constructor-only authority dependency. Native ACL checks still run inside the unchanged original command. C2's authority response denies, so this is not an editing rollout.
+
+The hook is intentionally not a complete command catalog: bootstrap only allows own `get-profile`; the finite get-file/update-file/get-project/get-team/get-team-members commands have explicit scope resolution. Share creation and unknown commands deny on the governed runtime. It remains disabled on the separate existing personal/operator surface, preserving all work. Before C4's functional enablement, exact native fragment/page/font/library/comment ownership and aggregate listing filters must be added from source and actual Neo traffic, together with C3's live fence. No wildcard forwarding or incomplete native workspace is called accepted.
+
+## Membership and C3 dependencies
+
+Pinned `teams.clj` exposes readback, role updates and removal, but adding an existing profile by UUID is internal `add-profile-to-team!`. The public invitation command sends email. Do not use an invitation as a silent identity/membership reconciliation or send email during implementation. The required narrow administrative native hook should upsert/remove only an exact registered team's paired profile, enforce editor (never owner/admin), preserve operator owner, compare the requested grant epoch, and acknowledge actual membership. This remains a native implementation deliverable, not a fabricated successful RPC.
+
+C3 must reauthorize native subscribe-file/team, pointer writes and outbound file/team events, capture the **actual authenticated native session** (the websocket query `session-id` is merely client-generated), and purge/fence affected subscriptions/queued output within the approved five seconds after durable revocation or natural expiry. Authority unavailability denies. Existing `sp/pipe` forwarding and frontend membership notifications do not satisfy that bound. No native editing may enable before those hooks and sharing/invitation/library/move policies have real acceptance evidence.

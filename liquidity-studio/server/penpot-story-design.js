@@ -91,7 +91,7 @@ export class PenpotStoryDesigns{
 export function createPenpotStoryRpc({sessions,transportMode='loopback',fetchImpl=fetch}){
  const origin=({loopback:'http://localhost:39008','docker-host':'http://host.docker.internal:39008'})[transportMode];if(!origin)throw Error('Fixed local native transport required');
  return async(workspace,operation,body)=>{
-  if(!['get-profile','get-project','get-font-variants','get-file','create-file','update-file'].includes(operation))throw fail(400,'Unsupported native design operation');
+  if(!['get-profile','get-project','get-team','get-team-members','get-font-variants','get-file','create-file','update-file'].includes(operation))throw fail(400,'Unsupported native design operation');
   const session=sessions.get(workspace.ownerPrincipal);if(!session?.cookie)throw fail(403,'Registered native owner session unavailable');
   const payload=JSON.stringify(body);if(Buffer.byteLength(payload)>2*1024*1024)throw fail(413,'Native design exceeds the bounded RPC request');
   const response=await fetchImpl(`${origin}/api/rpc/command/${operation}`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Origin:'http://localhost:39008',Cookie:session.cookie},body:payload,redirect:'error',signal:AbortSignal.timeout(15000)});
