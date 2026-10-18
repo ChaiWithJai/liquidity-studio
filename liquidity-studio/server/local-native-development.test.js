@@ -29,3 +29,14 @@ test('local native artifacts reject stale sources, escaping paths, missing graph
  process.env.NODE_ENV='production';await assert.rejects(()=>localNativeDevelopment({assetsDirectory:f.directory}),/developer launcher/);
  assert.deepEqual(parseLocalArguments(['--native-assets','/private/dist','--cutout-model','/private/model']),{profile:'development',port:3002,check:false,nativeAssetsDirectory:'/private/dist',cutoutModelPath:'/private/model'});assert.throws(()=>parseLocalArguments(['--cutout-model','/private/model']),/requires/);assert.throws(()=>parseLocalArguments(['--native-assets']),/path required/);
 });
+test('actual local wrapper requires its profile session before serving private native code',async t=>{
+ const previous={...process.env};process.env.NODE_ENV='development';t.after(()=>{for(const key of Object.keys(process.env))if(!(key in previous))delete process.env[key];Object.assign(process.env,previous);});
+ const f=await artifact(t),home=await fs.mkdtemp(path.join(tmpdir(),'native-local-home-'));t.after(()=>fs.rm(home,{recursive:true,force:true}));
+ const {createDevelopmentServer}=await import('../scripts/local-development-support.mjs');
+ const runtime=await createDevelopmentServer({profile:'development',port:0,home,nativeAssetsDirectory:f.directory});t.after(()=>runtime.close());
+ const anonymous=await fetch(runtime.origin+'/native-editor-frame.html');assert.equal(anonymous.status,401);
+ const login=await fetch(runtime.origin+'/__dev/session',{method:'POST',redirect:'manual',headers:{Origin:runtime.origin,'Content-Type':'application/x-www-form-urlencoded'},body:'persona=founder'});assert.equal(login.status,303);const cookie=login.headers.get('set-cookie').split(';')[0];
+ const frame=await fetch(runtime.origin+'/native-editor-frame.html',{headers:{Cookie:cookie}});assert.equal(frame.status,200);assert.match(frame.headers.get('content-security-policy'),/wasm-unsafe-eval/);assert.match(await frame.text(),/native-root/);
+ const bootstrap=await fetch(runtime.origin+'/api/studio/bootstrap',{headers:{Cookie:cookie}});assert.equal(bootstrap.status,200);assert.equal((await bootstrap.json()).operatorCapabilities.nativeEditor,true);
+ const hidden=await fetch(runtime.origin+'/studio-native-assets.json',{headers:{Cookie:cookie}});assert.notEqual(hidden.status,200,'the private filesystem manifest is never served');
+});
