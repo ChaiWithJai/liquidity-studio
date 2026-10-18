@@ -1,0 +1,40 @@
+# Operator jobs pilot rollout
+
+Prepared 2026-10-18 for #71 in project `liquidity-studio-pilot-261017`, region `us-east4`. This records a concrete rollout plan; resources and live acceptance are not established by the plan. The existing $100/month guide remains in force. Existing revision `liquidity-studio-00009-qof` and registry image remain rollback until the combined image passes acceptance.
+
+## Runtime and cost boundary
+
+Use the existing request-billed Cloud Run service: maximum one instance, one vCPU, 512 MiB, concurrency eight, minimum zero. Add one queue `liquidity-operator-jobs` with maximum concurrent dispatch one, rate one/second, maximum three transport attempts, minimum backoff10s, maximum backoff60s and maximum retry duration600s. Business failures/unknown provider attempts require explicit application retry, not blind paid-generation replay.
+
+Keep installation and organization generation reservations at20 per day, maximum10 campaigns per reviewed plan, provider deadline60s, task dispatch deadline120s and lease120s. Increase this new service revision's request timeout from60s to150s so normal identity/storage work around a provider request does not hit the old HTTP timeout. No minimum warm worker, GPU, VM or second model service is introduced.
+
+Planning example, not a bill guarantee: 20 items/day ×30 days ×120 active seconds =72,000 CPU-seconds and36,000 GiB-seconds at the existing resources. At published request-billed rates of $0.000024/vCPU-second and $0.0000025/GiB-second, this is about$1.82 before free-tier credits, other traffic, storage, networking, logging or model charges. Three delivery attempts plus creation for600 tasks is2,400 operations: under$0.001 at$0.40/million before the account-wide first-million allowance. These are bounds for the stated workload, not dollar metering or a hard spending cap. Existing budgets/alerts and provider attempt limits remain necessary.
+
+Sources checked on preparation date: [Cloud Run pricing](https://cloud.google.com/run/pricing), [Cloud Tasks pricing](https://cloud.google.com/tasks/pricing), [OIDC HTTP target setup](https://docs.cloud.google.com/tasks/docs/creating-http-target-tasks).
+
+## Identity and scopes
+
+Runtime identity remains `liquidity-runtime@liquidity-studio-pilot-261017.iam.gserviceaccount.com`. Its existing custom `liquidityAuthReader` role contains `firebaseauth.users.get`, verified read-only; datastore and Vertex predictor grants already exist. Do not broaden it to project Editor or Firebase Admin.
+
+Create dedicated `liquidity-job-delivery@liquidity-studio-pilot-261017.iam.gserviceaccount.com`. Grant runtime Cloud Tasks Enqueuer only on the new queue and Service Account User only on this delivery identity. Grant delivery identity Cloud Run Invoker only on this service. Retain/verify the Cloud Tasks service agent role for project number504282493214. No service-account JSON keys are created.
+
+Fixed task endpoint and OIDC audience: `https://liquidity-studio-x4fdad2sga-uk.a.run.app/api/internal/operator-job`. The application verifies genuine Google-signed OIDC and exact delivery identity, audience and configured organization/brand allowlist before resolving a persisted job actor. The public Google sign-in shell does not make this internal handler anonymous. Task payloads never choose endpoint, service identity, preset, permissions or provider.
+
+Initially configure only existing `org_default/brand_default` and `org_default/brand_vedic` after verifying these IDs against authoritative identity state; add a scoped acceptance brand only if necessary for isolated real-provider acceptance, and remove it from worker scope afterward. Do not infer IDs from displayed preset names.
+
+## Ordered execution
+
+1. Merge independently reviewed PR88 only after all five exact-head checks pass. Verify the combined PR87+88 image source/bundle identity.
+2. In isolated Docker, queue a clearly labelled nonclinical fixture, leave the application, run a separate worker against the same volume, rejoin the stable completed job and restart the web container. No paid provider is used in this local acceptance. The reviewed-fixture `STUDIO_JOB_RESUME_PENDING=true` override is explicit; normal restored queues remain quarantined.
+3. Snapshot the local operator SQLite file consistently before any update; preserve Google environment, volume, credentials mounts and rollback compose/image references.
+4. Enable Cloud Tasks API, create the bounded queue and dedicated identity/grants. Pause the queue during initial configuration. Read back settings and IAM. No generation task is enqueued by provisioning.
+5. Stage the pinned image with zero traffic and jobs disabled. Check ready200, Google mode, anonymous data401, exact frontend bytes and existing saved-data retention.
+6. Enable dispatcher configuration in a zero-traffic candidate, retain fixed canonical OIDC endpoint, set timeout150s and preserve daily limits. Verify negative internal-handler auth and malformed/foreign-scope denial.
+7. Move the accepted revision to100% and resume the queue only once its authenticated endpoint can receive actual deliveries. Execute a bounded, clearly labelled owned acceptance job through the real current identity/provider path; observe stable job/item IDs, genuine OIDC, worker receipt, output revision/usage, provider request bounds and rejoin after page closure. Never use a synthetic production override to make cloud acceptance green.
+8. Confirm unauthorized users/foreign brands/revoked input/current quota behavior without modifying real editorial stories. Capture deployed revision/config/traffic and result limits. #71 remains open until real cloud acceptance and recovery evidence satisfy its scope.
+
+For a persisted enqueue failure, a pilot operator can run the reviewed `node server/job-worker.js --dispatch` with the same configured project/store/queue identity. An automated outbox scheduler is not installed or implied by this manual recovery pathway.
+
+## Rollback
+
+Pause the queue first, disable job entry/dispatcher on the service, route traffic to the preserved prior revision and stop the owned local worker if applicable. Preserve drafts, job IDs, attempt history and consistent backups. In-flight provider work may have been billed; a cancellation or traffic rollback cannot undo that external call. Scope-local fencing protects late commits. Never delete the user volume/database to roll back UI code.
