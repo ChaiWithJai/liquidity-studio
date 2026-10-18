@@ -97,16 +97,30 @@ function validatePortability(value) {
       throw fail(422, "Invalid restoration provenance");
   }
 }
+const fileBudgets = new WeakMap();
+export function createPackFileCollection(limits = PACK_LIMITS) {
+  for (const name of ["bytes", "files", "fileBytes"])
+    if (!Number.isSafeInteger(limits[name]) || limits[name] < 1 || limits[name] > PACK_LIMITS[name])
+      throw fail(413, "Invalid portable file budget");
+  const files = [];
+  const bounded = Object.freeze({bytes:limits.bytes,files:limits.files,fileBytes:limits.fileBytes});
+  fileBudgets.set(files, { limits:bounded, encodedBytes: 2 });
+  return files;
+}
 export function addFile(files, bytes, kind) {
-  const buffer = Buffer.from(bytes),
-    sha256 = digest(buffer);
-  if (!files.some((file) => file.sha256 === sha256))
-    files.push({
-      sha256,
-      size: buffer.length,
-      kind,
-      base64: buffer.toString("base64"),
-    });
+  const length = typeof bytes === "string" ? Buffer.byteLength(bytes) : bytes.byteLength;
+  const budget = fileBudgets.get(files) || { limits: PACK_LIMITS, encodedBytes: Buffer.byteLength(JSON.stringify(files)) };
+  if (!Number.isSafeInteger(length) || length > budget.limits.fileBytes)
+    throw fail(413, "Editor pack per-file byte limit");
+  const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes), sha256 = digest(buffer);
+  if (files.some(file => file.sha256 === sha256)) return sha256;
+  if (files.length >= budget.limits.files) throw fail(413, "Editor pack file count limit");
+  // Base64 uses only ASCII: calculate its exact JSON size before allocating it.
+  const overhead = Buffer.byteLength(JSON.stringify({ sha256, size: buffer.length, kind, base64: "" }));
+  const encodedBytes = budget.encodedBytes + overhead + 4 * Math.ceil(buffer.length / 3) + (files.length ? 1 : 0);
+  if (encodedBytes > budget.limits.bytes) throw fail(413, "Editor pack encoded byte budget exceeded");
+  files.push({ sha256, size: buffer.length, kind, base64: buffer.toString("base64") });
+  fileBudgets.set(files, { limits: budget.limits, encodedBytes });
   return sha256;
 }
 /** No extraction paths, URLs, executable code, storage references, sessions or live approval grants. */

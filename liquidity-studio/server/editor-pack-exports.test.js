@@ -24,3 +24,14 @@ test('completed native PNG projection rejects missing/mismatched stages, corrupt
  await assert.rejects(validateFinalPng(f.bytes,f.receipt,{nativeId:'native',format:'story'}));
  await assert.rejects(validateFinalPng(f.bytes,{...f.receipt,nonce:'authority'},{nativeId:'native',format:'infographic'}));
 });
+
+test('completed PNG streaming stops before the next immutable payload when its consumer budget rejects',async()=>{
+ const f=await fixture(),receipts=[f.receipt,{...f.receipt,eventId:'later-event',artifactId:'b'.repeat(64)}],stages=[],downloads=[];
+ const {addFile,createPackFileCollection,PACK_LIMITS}=await import('./editor-pack.js');
+ const files=createPackFileCollection({...PACK_LIMITS,bytes:220});
+ await assert.rejects(projectFinalPngs({nativeId:'native',format:'infographic',receipts,
+  loadStage:async id=>{stages.push(id);return {...f.stage,artifactId:id};},
+  loadBytes:async stage=>{downloads.push(stage.artifactId);return f.bytes;},
+  onArtifact:artifact=>addFile(files,artifact.bytes,'final-png')}),{status:413});
+ assert.deepEqual(stages,[f.receipt.artifactId]);assert.deepEqual(downloads,[f.receipt.artifactId]);assert.equal(files.length,0);
+});

@@ -20,7 +20,7 @@ export async function validateFinalPng(bytes, receipt, {nativeId,format}) {
   return {width:1080,height};
 }
 /** Retain completed bytes, never signing keys, nonces, envelopes or resumable callbacks. */
-export async function projectFinalPngs({nativeId,format,receipts,loadStage,loadBytes}) {
+export async function projectFinalPngs({nativeId,format,receipts,loadStage,loadBytes,onArtifact}) {
   if(!Array.isArray(receipts)||receipts.length>256)throw fail(413,'Historical export receipt limit');
   const ids=new Set(),result=[];
   for(const receipt of receipts){
@@ -34,7 +34,8 @@ export async function projectFinalPngs({nativeId,format,receipts,loadStage,loadB
       throw fail(422,'Completed export is missing its exact staged bytes or signoff');
     const bytes=Buffer.from(await loadBytes(stage));
     const dimensions=await validateFinalPng(bytes,receipt,{nativeId,format});
-    result.push({authority:'historical-only',receipt:structuredClone(receipt),nativeRevision:stage.nativeRevision,...dimensions,bytes});
+    const artifact={authority:'historical-only',receipt:structuredClone(receipt),nativeRevision:stage.nativeRevision,...dimensions,bytes};
+    if(onArtifact)await onArtifact(artifact);else result.push(artifact);
   }
   return result;
 }
