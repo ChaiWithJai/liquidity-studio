@@ -1,7 +1,9 @@
 /** Operator-owned research pointers. These are source selection, never approved claims. */
+// Additive entry IDs/passages version individual selections. Keep existing entries unchanged
+// so unrelated saved candidates do not become stale merely because another topic gains a source.
 export const SOURCE_CATALOG_REVISION = "pilot-primary-v1";
 export const DEFAULT_SOURCE_HOSTS =
-  "angelcity.com,www.gutenberg.org,www.prnewswire.com";
+  "angelcity.com,www.gutenberg.org,www.prnewswire.com,investor.amctheatres.com,newsroom.hasbro.com,www.nykaa.com,explore.trin.cam.ac.uk";
 const entries = Object.freeze([
   Object.freeze({
     id: "angel-city-ownership-2024",
@@ -26,6 +28,58 @@ const entries = Object.freeze([
     kind: "financial",
     coverage:
       "The issuer release is dated June 3, 2025. The legacy 2024 buyback date and margin estimates require correction or independent evidence; this selection does not approve them.",
+  }),
+  Object.freeze({
+    id: "beyonce-amc-distribution-2023",
+    preset: "liquidity_desk",
+    storyId: "story_beyonce_amc",
+    topicTerms: ["beyonc", "amc"],
+    sourceUrl: "https://investor.amctheatres.com/news-events/press-releases/detail/10/renaissance-a-film-by-beyonc-will-take-over-movie-theaters-worldwide-this-december",
+    publisher: "Parkwood Entertainment and AMC issuer announcement, October 2, 2023",
+    kind: "financial",
+    coverage: "Historical theatrical distribution announcement only. Legacy tour revenue, revenue split, opening gross and merchandise figures are not established. Photo rights are not granted by this source selection.",
+  }),
+  Object.freeze({
+    id: "luckychap-monopoly-development-2024",
+    preset: "liquidity_desk",
+    storyId: "story_margot_luckychap",
+    topicTerms: ["luckychap"],
+    sourceUrl: "https://newsroom.hasbro.com/node/34741",
+    publisher: "Hasbro and Lionsgate issuer announcement, April 10, 2024",
+    kind: "financial",
+    coverage: "LuckyChap production and Monopoly development announcement. Does not establish Margot Robbie compensation, producer profit shares or risk-free equity returns. Box office is not producer profit.",
+  }),
+  Object.freeze({
+    id: "nykaa-online-physical-company-profile",
+    preset: "liquidity_desk",
+    storyId: "story_nykaa_ipo",
+    topicTerms: ["nykaa"],
+    sourceUrl: "https://www.nykaa.com/who_are_we",
+    publisher: "Nykaa issuer company profile",
+    passage: {
+      version: "nykaa-company-origin-platforms-v1",
+      section: "The Nykaa Story",
+      nextSection: "Our Vision",
+      paragraphPrefixes: ["Nykaa is built on", "Over the years, Nykaa"],
+    },
+    kind: "financial",
+    coverage: "Issuer account of company origin and online/physical business. Excludes undated store/customer totals and all legacy IPO valuation, market-share and causal CAC claims. Not the FY2022 PDF report.",
+  }),
+  Object.freeze({
+    id: "ramanujan-trinity-institutional-record",
+    preset: "vedic_dharma",
+    storyId: "research_1",
+    topicTerms: ["ramanujan"],
+    sourceUrl: "https://explore.trin.cam.ac.uk/assets/ramanujan/",
+    publisher: "Trinity College Cambridge institutional memorial record",
+    passage: {
+      version: "ramanujan-institutional-biography-opening-v1",
+      section: "Srinivasa Ramanujan, FRS ஸ்ரீநிவாச ராமானுஜன்",
+      nextSection: "Memorial inscription",
+      paragraphPrefixes: ["Srinivasa Ramanujan was an autodidact"],
+    },
+    kind: "cultural",
+    coverage: "Institutional biographical account only, not a theorem proof or evidence for devotional causation. Excludes the later memorial translation and its first-Indian-FRS claim. Original manuscript archive retrieval remains separate research.",
   }),
   Object.freeze({
     id: "yoga-sutras-primary-translation",
