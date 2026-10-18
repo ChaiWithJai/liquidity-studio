@@ -43,6 +43,8 @@ test('real owned intake is previewed as user-reported, invalid input has no part
  const f=await setup(t);await f.service.enable(f.founder,{});
  const data={nodes:[{id:'owned-producer',kind:'person',name:'Our imported producer'}],edges:[],evidence:[{id:'owned-evidence',sourceUrl:'https://example.com/owned-reference',title:'Manager supplied reference'}],observations:[],resources:[{id:'owned-resource',nodeId:'owned-producer',capabilities:['production'],rights:{notes:'Permission not confirmed'},availability:{timeZone:'Europe/London'}}]};
  const p=await f.service.preview(f.founder,{kind:'owned',data});assert.equal(p.data.evidence[0].method,'manual-import');const input={expectedRevision:1,idempotencyKey:randomUUID(),kind:'owned',data};await f.service.import(f.founder,input);assert.equal((await f.service.read(f.founder)).resources[0].rights.status,'unverified');
+ const initialGraph=await f.service.graph(f.founder);assert.equal(initialGraph.nodes[0].id,'owned-producer');assert.deepEqual(initialGraph.edges,[]);
+ const focused=await f.service.graph(f.founder,{focusId:'owned-producer',selectedId:'owned-producer'});assert.equal(focused.nodes[0].id,'owned-producer');assert.equal(focused.selectedItem.resource.rights.status,'unverified');assert.equal(focused.nodes[0].regionId,undefined);
  const before=f.store.get(f.service.key);await assert.rejects(f.service.import(f.founder,{...input,expectedRevision:2,idempotencyKey:randomUUID(),data:{...data,edges:[{id:'broken',kind:'route',name:'Missing',from:'owned-producer',to:'absent'}]}}),{status:422});assert.deepEqual(f.store.get(f.service.key),before);
  await assert.rejects(f.service.preview(f.founder,{kind:'owned',data:{...data,nodes:[{...data.nodes[0],organizationId:'foreign'}]}}),{status:422});
  await assert.rejects(f.service.preview(f.founder,{kind:'owned',data:{...data,nodes:Array.from({length:257},(_,i)=>({...data.nodes[0],id:'n'+i}))}}),{status:422});
@@ -58,4 +60,11 @@ test('HTTP strategy discovery works before brand bootstrap with actual existing 
  const api=async(path,body)=>{const r=await fetch(base+path,{method:body===undefined?'GET':'POST',headers:{Cookie:cookie,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json()};};
  const org=(await api('/api/admin/organizations',{name:'Separate label'})).data.organization;const path='/api/studio/strategy/'+org.id;assert.equal((await api(path)).status,404);assert.equal((await api(path+'/enable',{})).status,200);assert.equal((await api(path)).status,200);assert.equal((await api('/api/auth/session')).data.organizations.find(o=>o.id===org.id).strategy.enabled,true);assert.equal((await fetch(base+path)).status,401);
  assert.equal((await api('/api/studio/strategy/org_default/enable',{})).status,403);assert.equal((await api(path+'/import',{expectedRevision:1,idempotencyKey:randomUUID(),kind:'demo'})).status,200);assert.equal((await api(path+'/graph?focusId=node_lagos')).data.nodes[0].id,'node_lagos');
+});
+
+test('unlocated focused signal shows only real incident edges and bounded neighbors',async t=>{
+ const f=await setup(t);await f.service.enable(f.founder,{});
+ const data={nodes:[{id:'s',kind:'signal',name:'Imported session'},{id:'p',kind:'person',name:'Owned collaborator'},{id:'other',kind:'person',name:'Unrelated'}],edges:[{id:'link',kind:'relationship',name:'Manager reported collaboration',from:'s',to:'p'}]};
+ await f.service.import(f.founder,{expectedRevision:1,idempotencyKey:randomUUID(),kind:'owned',data});
+ const graph=await f.service.graph(f.founder,{focusId:'s',selectedId:'p'});assert.deepEqual(graph.nodes.map(n=>n.id),['s','p']);assert.deepEqual(graph.edges.map(e=>e.id),['link']);assert.equal(graph.edges[0].from,'s');assert.equal(graph.nodes.some(n=>n.kind==='region'),false);assert.equal(graph.selectedItem.name,'Owned collaborator');
 });
