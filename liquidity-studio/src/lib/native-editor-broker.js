@@ -25,6 +25,22 @@ export function createNativeEditorBroker({
   const nonce = crypto.randomUUID();
   let active = true;
   let revision = record.revision;
+  function assetIds(document) {
+    const ids = new Set();
+    function visit(value) {
+      if (!value || typeof value !== "object") return;
+      if (typeof value.assetId === "string") ids.add(value.assetId);
+      for (const child of Object.values(value)) {
+        if (typeof child === "string") {
+          const match = /^studio-asset:([a-f0-9]{32})$/.exec(child);
+          if (match) ids.add(match[1]);
+        } else visit(child);
+      }
+    }
+    visit(document);
+    return ids;
+  }
+  let referencedAssets = assetIds(record.document);
   const responses = new Map();
   const savedIntents = new Map();
   const cutoutIntents = new Set();
@@ -87,8 +103,14 @@ export function createNativeEditorBroker({
       typeof payload?.id === "string" &&
       /^[a-f0-9]{32}$/.test(payload.id) &&
       Object.keys(payload).length === 1
-    )
-      path = `/api/studio/native-editor/assets/${payload.id}`;
+    ) {
+      path = `/api/studio/native-editor/assets/${payload.id}/resolve`;
+      options = { method: "POST", body: JSON.stringify({
+        intent: referencedAssets.has(payload.id) ? "document-usage" : "library-preview",
+        documentId: record.id, expectedNativeRevision: revision,
+        generationId: record.origin.generationId,
+      }) };
+    }
     else if (operation === "asset.upload" && payload && bounded(payload)) {
       path = "/api/studio/native-editor/assets";
       options = { method: "POST", body: JSON.stringify(payload) };
@@ -109,6 +131,12 @@ export function createNativeEditorBroker({
       });
     const result = await request(path, options);
     if (!current()) throw changed();
+    if (operation === "asset.read") {
+      const usage = result.manifest?.usage;
+      if (result.manifest?.schemaVersion !== 1 || usage?.documentId !== record.id ||
+          usage.nativeRevision !== revision || usage.generationId !== record.origin.generationId)
+        throw changed();
+    }
     if(operation === 'export.stage')onExportStaged(result);
     if (operation === "cutout.prepare") {
       if (
@@ -128,6 +156,7 @@ export function createNativeEditorBroker({
       )
         throw new Error("Invalid native save response");
       revision = result.revision;
+      referencedAssets = assetIds(result.document);
       savedIntents.set(payload.idempotencyKey, {
         fingerprint: JSON.stringify(payload),
         result,

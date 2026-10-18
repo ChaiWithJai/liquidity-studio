@@ -495,3 +495,25 @@ test('atomic native creation uses the content epoch when a calendar edit races i
   assert.equal((await repo.read()).backlog[0].revision,3);
  }finally{store.close();}
 });
+
+test("asset resolution separates scoped library previews from saved document usage and fences context drift", async () => {
+  const f = fixture();
+  const record = await f.create("infographic");
+  const asset = { id: "a".repeat(32), sha256: "b".repeat(64), contentType: "image/png", size: 10, width: 1, height: 1, base64: "AA==" };
+  // Exercise the contextual layer independently of existing byte/decode validation tests.
+  f.service.asset = async () => structuredClone(asset);
+  const input = { intent: "library-preview", documentId: record.id, expectedNativeRevision: record.revision, generationId: record.origin.generationId };
+  const result = await f.service.resolveAsset(f.actor, asset.id, input);
+  assert.equal(result.manifest.asset.ownership, "immutable-brand-upload");
+  assert.equal(result.manifest.asset.brandId, "liquidity_desk");
+  assert.equal(result.manifest.usage.intent, "library-preview");
+  assert.equal(result.manifest.delivery.publicShare, false);
+  assert.equal(JSON.stringify(result).includes("artifactRef"), false);
+  await assert.rejects(f.service.resolveAsset(f.actor, asset.id, { ...input, intent: "document-usage" }), { status: 422 });
+  await assert.rejects(f.service.resolveAsset(f.actor, asset.id, { ...input, expectedNativeRevision: 999 }), { status: 409 });
+  await assert.rejects(f.service.resolveAsset(f.actor, asset.id, { ...input, generationId: "foreign" }), { status: 409 });
+  f.service.asset = async () => { f.state().backlog[0].generationId = "changed-during-read"; return asset; };
+  await assert.rejects(f.service.resolveAsset(f.actor, asset.id, input), { status: 409 });
+  f.revoke();
+  await assert.rejects(f.service.resolveAsset(f.actor, asset.id, input), { status: 403 });
+});

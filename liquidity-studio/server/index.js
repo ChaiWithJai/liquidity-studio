@@ -972,6 +972,11 @@ export function createHttpServer(
           req.method === "POST"
         )
           return json(201, await service.uploadAsset(user, body));
+        const nativeAssetResolve = route.match(
+          /^\/api\/studio\/native-editor\/assets\/([a-f0-9]{32})\/resolve$/,
+        );
+        if (nativeAssetResolve && req.method === "POST")
+          return json(200, await service.resolveAsset(user, nativeAssetResolve[1], body));
         const nativeAssetMatch = route.match(
           /^\/api\/studio\/native-editor\/assets\/([a-f0-9]{32})$/,
         );

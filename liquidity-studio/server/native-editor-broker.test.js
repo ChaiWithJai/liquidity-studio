@@ -20,7 +20,7 @@ function fixture(request = async () => ({ id: "a".repeat(36), revision: 2 })) {
   const frameWindow = {
     postMessage: (data, origin) => sent.push({ data, origin }),
   };
-  const record = { id: "a".repeat(36), revision: 1 };
+  const record = { id: "a".repeat(36), revision: 1, origin: { generationId: "captured-generation" }, document: { pages: [] } };
   const broker = createNativeEditorBroker({
     hostWindow,
     frameWindow,
@@ -212,4 +212,13 @@ test("ambiguous cutout upload retains the exact output and key without another i
   assert.deepEqual(bodies[0], bodies[1]);
   assert.equal(adapter.getCutoutRetry(intent.inputAssetId), null);
   adapter.dispose();
+});
+
+test("broker supplies captured library context and rejects a mismatched asset response", async () => {
+  const f = fixture(async () => ({ manifest: { schemaVersion: 1, usage: { documentId: "foreign", nativeRevision: 1, generationId: "captured-generation" } } }));
+  await f.message({ operation: "asset.read", payload: { id: "b".repeat(32) } });
+  assert.equal(f.calls[0][0], `/api/studio/native-editor/assets/${"b".repeat(32)}/resolve`);
+  assert.deepEqual(JSON.parse(f.calls[0][1].body), { intent: "library-preview", documentId: "a".repeat(36), expectedNativeRevision: 1, generationId: "captured-generation" });
+  assert.equal(f.sent.at(-1).data.error.code, "REQUEST_CONTEXT_CHANGED");
+  f.broker.dispose();
 });
