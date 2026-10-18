@@ -3,7 +3,7 @@
   import {createEditorRecoveryKit} from '../lib/editor-recovery-kit.js';
   let {actorId,organizationId,brandId,scopeKey,getScopeKey,request,onRestored=()=>{},recoveryOnly=false,initialStatus=null,onRecovered=()=>{}}=$props();
   let pack=$state.raw(null),preview=$state.raw(null),destination=$state.raw(null),journal=$state.raw(null),intent=$state.raw(null);
-  let busy=$state(false),uncertain=$state(false),error=$state(''),notice=$state(''),name=$state(''),preset=$state('liquidity_desk'),acknowledged=$state(false);
+  let busy=$state(false),uncertain=$state(false),capacityRejected=$state(false),error=$state(''),notice=$state(''),name=$state(''),preset=$state('liquidity_desk'),acknowledged=$state(false);
   let fileHash=$state(''),locator=$state.raw(null),disposed=false,sequence=0;
   const storageKey=()=>`studio-recovery:${actorId}:${organizationId}:${brandId}`;
   const current=()=>!disposed&&getScopeKey()===scopeKey;
@@ -52,7 +52,7 @@
   async function execute(){
     if(busy)return;const retained=intent||locator;if(!retained)return;
     if(retained.operation==='install'&&(!pack||pack.sha256!==retained.packSha256&&retained.packSha256)){error='Reselect the exact retained pack before retrying restoration.';return;}
-    busy=true;uncertain=false;error='';notice='';
+    busy=true;uncertain=false;capacityRejected=false;error='';notice='';
     try{
       if(retained.operation==='destination'){
         const result=await request('/api/admin/editor-pack/destinations',{method:'POST',body:JSON.stringify({organizationId,name:retained.name,preset:retained.preset,idempotencyKey:retained.idempotencyKey})});
@@ -61,7 +61,7 @@
         const result=await request('/api/admin/editor-pack/install',{method:'POST',body:JSON.stringify({pack,options:options(retained.idempotencyKey)})},destination.scope);
         if(!current())return;journal={status:'completed',result};intent=null;uncertain=false;persist({...locator,operation:'completed',idempotencyKey:retained.idempotencyKey});notice='Restored into the new brand. Native layouts and prepared evidence remain historical until current-owner review.';await onRestored(destination.scope);
       }
-    }catch(failure){if(current()){uncertain=!failure.status||failure.status>=500;if(!uncertain)intent=null;error=uncertain?'The outcome is unknown. Keep this exact pack and retry the retained request; do not create another destination.':failure.message||'Recovery was rejected. Inspect its current status.';}}
+    }catch(failure){if(current()){capacityRejected=failure.status===507&&['RESTORE_CAPACITY_INSUFFICIENT','RESTORE_CAPACITY_UNAVAILABLE'].includes(failure.data?.code);uncertain=!capacityRejected&&(!failure.status||failure.status>=500);if(!uncertain&&!capacityRejected)intent=null;error=uncertain?'The outcome is unknown. Keep this exact pack and retry the retained request; do not create another destination.':failure.message||'Recovery was rejected. Inspect its current status.';}}
     finally{if(current())busy=false;}
   }
   async function checkStatus(){
@@ -78,7 +78,7 @@
     catch(failure){if(current())error=failure.message||'Rollback was not confirmed. Check recovery status before retrying.';}
     finally{if(current())busy=false;}
   }
-  function clearCompleted(){if(busy||!['empty','completed'].includes(journal?.status))return;persist(null);pack=null;preview=null;destination=null;journal=null;intent=null;uncertain=false;acknowledged=false;fileHash='';notice='Browser recovery locator cleared. No server brand or artifact was deleted.';}
+  function clearCompleted(){if(busy||!['empty','completed'].includes(journal?.status))return;persist(null);pack=null;preview=null;destination=null;journal=null;intent=null;uncertain=false;capacityRejected=false;acknowledged=false;fileHash='';notice='Browser recovery locator cleared. No server brand or artifact was deleted.';}
   function resume(){
     if(!locator||busy)return;intent=locator;
     if(locator.operation==='install'&&!pack){error='Reselect the exact retained pack, then retry this request.';return;}
@@ -99,8 +99,8 @@
   {#if locator}<p>A recovery request is retained for this account and source brand. No pack bytes or credentials are stored in the browser.</p>{#if locator.destination}<button class="secondary" disabled={busy} onclick={checkStatus}>Check retained recovery status</button>{/if}{#if (locator.operation==='destination'||locator.operation==='install')&&journal?.originalActor!==false}<button class="secondary" disabled={busy||locator.operation==='install'&&!pack||['installing','rolling-back'].includes(journal?.status)} onclick={resume}>Retry retained recovery request</button>{/if}{/if}
   {#if pack&&!destination}<label>New recovery brand name<input bind:value={name} maxlength="160" disabled={busy||uncertain}/></label><label>Recovery brand preset<select bind:value={preset} disabled={busy||uncertain}><option value="liquidity_desk">The Liquidity Desk</option><option value="vedic_dharma">Chai With Jai</option></select></label><button disabled={busy||uncertain||!name.trim()} onclick={createDestination}>Create new empty recovery brand</button>{/if}
   {#if destination}<p>New destination: <strong>{destination.brand.name}</strong></p>{/if}
-  {#if pack&&destination&&(!journal||journal.status==='empty')}<label class="attestation"><input type="checkbox" bind:checked={acknowledged} disabled={busy||uncertain}/>I reviewed this exact pack and explicitly map its retained owners to my current account. I attest to approved nonclinical sources only. Prepared-copy and native approvals remain historical; clinical sources require their separate review.</label><button disabled={busy||uncertain||!acknowledged} onclick={install}>Restore into this new brand</button>{/if}
-  {#if uncertain}<p role="status">The request outcome is uncertain.</p><button class="secondary" disabled={busy||intent?.operation==='install'&&!pack} onclick={()=>execute()}>Retry same recovery request</button>{/if}
+  {#if pack&&destination&&!capacityRejected&&(!journal||journal.status==='empty')}<label class="attestation"><input type="checkbox" bind:checked={acknowledged} disabled={busy||uncertain}/>I reviewed this exact pack and explicitly map its retained owners to my current account. I attest to approved nonclinical sources only. Prepared-copy and native approvals remain historical; clinical sources require their separate review.</label><button disabled={busy||uncertain||!acknowledged} onclick={install}>Restore into this new brand</button>{/if}
+  {#if uncertain||capacityRejected}{#if uncertain}<p role="status">The request outcome is uncertain.</p>{:else}<p role="status">Recovery stopped before writing restore data. Keep this pack and destination, free disk space or restore storage access, then retry the retained request.</p>{/if}<button class="secondary" disabled={busy||intent?.operation==='install'&&!pack} onclick={()=>execute()}>Retry same recovery request</button>{/if}
   {/if}
   {#if journal}<p aria-label="Recovery status">Recovery status: {journal.status}</p>{#if journal.canRollback}<button class="secondary" disabled={busy} onclick={rollback}>Recover interrupted empty destination</button>{/if}{#if !recoveryOnly && ['empty','completed'].includes(journal.status)}<button class="secondary" disabled={busy} onclick={clearCompleted}>Clear finished recovery locator</button>{/if}{/if}
   {#if notice}<p role="status">{notice}</p>{/if}{#if error}<p role="alert">{error}</p>{/if}

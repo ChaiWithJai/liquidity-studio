@@ -40,12 +40,14 @@ export function checkRestoreCapacity(
   while (!fs.existsSync(directory)) {
     const parent = path.dirname(directory);
     if (parent === directory)
-      throw fail(507, "Restore capacity cannot be established");
+      throw Object.assign(fail(507, "Restore capacity cannot be established"), {code:"RESTORE_CAPACITY_UNAVAILABLE"});
     directory = parent;
   }
-  const stats = fs.statfsSync(directory, { bigint: true });
+  let stats;
+  try { stats = fs.statfsSync(directory, { bigint: true }); }
+  catch { throw Object.assign(fail(507, "Restore capacity cannot be established"), {code:"RESTORE_CAPACITY_UNAVAILABLE"}); }
   if (stats.bavail * stats.bsize < BigInt(requiredBytes + 64 * 1024 * 1024))
-    throw fail(507, "Insufficient restore disk headroom");
+    throw Object.assign(fail(507, "Insufficient restore disk headroom"), {code:"RESTORE_CAPACITY_INSUFFICIENT"});
 }
 const copy = (value) => structuredClone(value);
 const portableAssetFields = [

@@ -464,3 +464,23 @@ test('Operations recovery kit downloads readable instructions/fonts and its exac
  const panel=await enter(page),pending=page.waitForEvent('download');await panel.getByRole('button',{name:'Download recovery kit (ZIP)',exact:true}).click();const download=await pending;expect(download.suggestedFilename()).toBe('studio-recovery-kit.zip');const target=testInfo.outputPath('private-recovery-kit.zip');await download.saveAs(target);const entries=unzipSync(readFileSync(target));expect(strFromU8(entries['RESTORE.md'])).toContain('Penpot is a separate export');expect(Object.keys(entries).some(name=>name.startsWith('fonts/')&&name.endsWith('.ttf'))).toBe(true);expect(Object.keys(entries).some(name=>name.startsWith('fonts/')&&name.endsWith('.txt'))).toBe(true);
  await panel.getByLabel('Choose private editor pack (up to 48 MiB)',{exact:true}).setInputFiles({name:'studio-editor-pack.json',mimeType:'application/json',buffer:Buffer.from(entries['studio-editor-pack.json'])});await expect(panel.getByLabel('Unvalidated pack preview',{exact:true})).toContainText('1 layouts');await expect(panel.getByRole('button',{name:'Create new empty recovery brand',exact:true})).toBeVisible();
 });
+
+ test('known capacity refusal keeps the exact restore intent and offers a safe retry',async ({page},testInfo)=>{
+ const panel=await enter(page),packPath=await downloadPack(page,panel,testInfo);
+ await panel.getByLabel('Choose private editor pack (up to 48 MiB)').setInputFiles(packPath);
+ await panel.getByLabel('New recovery brand name').fill('Capacity refusal destination');
+ await panel.getByRole('button',{name:'Create new empty recovery brand'}).click();
+ await panel.getByRole('checkbox').check();
+ const installs=[];
+ await page.route('**/api/admin/editor-pack/install?**',async route=>{
+  installs.push(route.request().postDataJSON());
+  if(installs.length===1)await route.fulfill({status:507,contentType:'application/json',body:JSON.stringify({code:'RESTORE_CAPACITY_INSUFFICIENT',error:'Not enough destination disk space. Free space and retry this retained recovery request. No restore data was written.'})});
+  else await route.continue();
+ });
+ await panel.getByRole('button',{name:'Restore into this new brand'}).click();
+ await expect(panel.getByText('Recovery stopped before writing restore data.',{exact:false})).toBeVisible();
+ await expect(panel.getByText('The request outcome is uncertain.',{exact:true})).toHaveCount(0);
+ await panel.getByRole('button',{name:'Retry same recovery request'}).click();
+ await expect(panel.getByLabel('Recovery status')).toHaveText('Recovery status: completed');
+ expect(installs).toHaveLength(2);expect(installs[1]).toEqual(installs[0]);
+});

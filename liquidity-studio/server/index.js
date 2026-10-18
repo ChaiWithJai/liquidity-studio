@@ -2073,7 +2073,11 @@ export function createHttpServer(
       ].includes(error.code);
       const status =
         error.status || (contentError ? 422 : providerError ? 502 : 500);
+      const capacityCode = req.method === "POST" && (req.url || "").split("?")[0] === "/api/admin/editor-pack/install" && status === 507 &&
+        ["RESTORE_CAPACITY_INSUFFICIENT", "RESTORE_CAPACITY_UNAVAILABLE"].includes(error.code) ? error.code : null;
       const code =
+        capacityCode === "RESTORE_CAPACITY_INSUFFICIENT" ? "Not enough destination disk space. Free space and retry this retained recovery request. No restore data was written." :
+        capacityCode === "RESTORE_CAPACITY_UNAVAILABLE" ? "Destination disk capacity could not be checked. Restore access to its storage and retry this retained recovery request. No restore data was written." :
         status < 500 || providerError ? error.message : "Request failed";
       try {
         await activeContainer?.ports.repo?.mutate?.((state) => {
@@ -2101,7 +2105,7 @@ export function createHttpServer(
           code: status >= 500 ? "INTERNAL_ERROR" : code,
         }),
       );
-      return json(status, { error: code, requestId });
+      return json(status, { error: code, requestId, ...(capacityCode ? {code:capacityCode} : {}) });
     } finally {
       portableOperationSettled?.();
     }
