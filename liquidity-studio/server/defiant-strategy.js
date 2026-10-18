@@ -1,5 +1,7 @@
+import {createDraftDestination,handoffReport} from './defiant-draft-handoff.js';
 import {createHash} from 'node:crypto';
 import {fail} from './auth.js';
+import {exact as planningExact,annotationRecord,viewRecord,reportRecord,clusterRecord} from './defiant-strategy-notes.js';
 import {demoData,normalizeIntake,assertReferences,projectGraph} from './defiant-strategy-data.js';
 const clone=value=>structuredClone(value),hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const keyFor=id=>`defiant-strategy:${id}`;
@@ -28,7 +30,7 @@ export class DefiantStrategyService {
  }
  async read(actor){
   const {state,organization,membership}=await this.raw(actor),{receipts,...publicState}=clone(state),nodes=publicState.graph.nodes.map(n=>({...n,sourceId:n.seedRef||n.id})),edges=publicState.graph.edges.map(e=>({...e,sourceId:e.seedRef||e.id}));
-  return {...publicState,items:[...nodes,...edges],regions:nodes.filter(n=>n.kind==='region'),artists:nodes.filter(n=>n.kind==='artist'),corridors:edges.filter(e=>e.kind==='route'),resources:publicState.resources.map(r=>({...nodes.find(n=>n.id===r.nodeId),...r})),destinations:organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(({id,name})=>({id,name,socialConnectionVerified:false}))};
+  return {...publicState,items:[...nodes,...edges,...publicState.graph.clusters],regions:nodes.filter(n=>n.kind==='region'),artists:nodes.filter(n=>n.kind==='artist'),corridors:edges.filter(e=>e.kind==='route'),resources:publicState.resources.map(r=>({...nodes.find(n=>n.id===r.nodeId),...r})),destinations:organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(({id,name})=>({id,name,socialConnectionVerified:false}))};
  }
 
  async graph(actor,input={}){
@@ -45,6 +47,44 @@ export class DefiantStrategyService {
  combine(state,incoming){
   const before=dataOf(state),result={};for(const name of Object.keys(before)){const seen=new Map(before[name].map(row=>[row.id,row]));for(const row of incoming[name]){const old=seen.get(row.id);if(old&&hash(old)!==hash(row))throw fail(409,`Existing ${name} record changed; preserve its saved interpretation`);if(!old)seen.set(row.id,row);}result[name]=[...seen.values()];}return result;
  }
+ async createDestination(actor,input){return createDraftDestination(this,actor,input);}
+ async handoff(actor,reportId,input){return handoffReport(this,actor,reportId,input);}
+ async saveCluster(actor,input){
+  planningExact(input,['expectedRevision','idempotencyKey','cluster']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'cluster',input});let result;
+  await this.store.transact(['identity',this.key],([identity,state])=>{
+   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
+   const record=clusterRecord(state,input.cluster,actor,this.now());state.graph.clusters=state.graph.clusters.filter(c=>c.id!==record.id);state.graph.clusters.push(record);result=planningAck(state,actor,input,requestHash,{cluster:record});return [identity,state];
+  });return result;
+ }
+ async annotate(actor,input){
+  planningExact(input,['expectedRevision','idempotencyKey','annotation']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'annotation',input});let result;
+  await this.store.transact(['identity',this.key],([identity,state])=>{
+   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
+   const record=annotationRecord(state,input.annotation,actor,this.now());state.annotations=state.annotations.filter(a=>a.id!==record.id);state.annotations.push(record);result=planningAck(state,actor,input,requestHash,{annotation:record});return [identity,state];
+  });return result;
+ }
+ async saveView(actor,input){
+  planningExact(input,['expectedRevision','idempotencyKey','view']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'view',input});let result;
+  await this.store.transact(['identity',this.key],([identity,state])=>{
+   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
+   const record=viewRecord(state,input.view,actor,this.now());state.views=state.views.filter(v=>v.id!==record.id);state.views.push(record);result=planningAck(state,actor,input,requestHash,{view:record});return [identity,state];
+  });return result;
+ }
+ async saveReport(actor,input){
+  planningExact(input,['expectedRevision','idempotencyKey','report']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'report',input});let result;
+  await this.store.transact(['identity',this.key],([identity,state])=>{
+   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
+   const record=reportRecord(state,input.report,actor,this.now());state.reports=state.reports.filter(r=>r.id!==record.id);state.reports.push(record);result=planningAck(state,actor,input,requestHash,{report:record});return [identity,state];
+  });return result;
+ }
+ async refreshReport(actor,reportId,input){
+  planningExact(input,['expectedRevision','idempotencyKey','expectedReportRevision','planIds','annotationIds','viewId']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'refresh-report',reportId,input});let result;
+  await this.store.transact(['identity',this.key],([identity,state])=>{
+   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
+   const {expectedRevision,idempotencyKey,...selection}=input,record=reportRecord(state,selection,actor,this.now(),{refreshId:reportId});state.reports=state.reports.filter(r=>r.id!==record.id);state.reports.push(record);result=planningAck(state,actor,input,requestHash,{report:record});return [identity,state];
+  });return result;
+ }
+
  async import(actor,input){
   exact(input,['kind','data','expectedRevision','idempotencyKey']);if(!Number.isSafeInteger(input.expectedRevision)||input.expectedRevision<1||typeof input.idempotencyKey!=='string'||!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(input.idempotencyKey))throw fail(400,'Saved revision and import request key required');
   await this.authority(actor);const incoming=this.intake(input),requestHash=hash(input);let result;
@@ -62,3 +102,15 @@ export async function strategyOrganizations({store,identity,actor,organizations}
  for(const org of organizations){const {user,organization}=current(currentIdentity,actor,org.id);const state=await store.get(keyFor(org.id));result.push({...org,strategy:{enabled:!protectedOrganization(organization)&&state?.organizationId===org.id&&state.enabled===true,canEnable:user.role==='founder'&&!protectedOrganization(organization)}});}
  const final=await store.get('identity');for(const org of result)current(final,actor,org.id);return result;
 }
+
+function validatePlanningIntent(input){if(!Number.isSafeInteger(input.expectedRevision)||input.expectedRevision<1||typeof input.idempotencyKey!=='string'||!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(input.idempotencyKey))throw fail(400,'Saved revision and planning request key required');}
+function planningReceipt(state,actor,input,requestHash,organizationId){
+ if(!state?.enabled||state.organizationId!==organizationId)throw fail(404,'Strategy is not enabled');
+ const prior=state.receipts.find(r=>r.id===input.idempotencyKey);if(prior){if(prior.actorId!==actor.id||prior.requestHash!==requestHash)throw fail(409,'Planning request key belongs to different content');return clone(prior.result);}
+ if(state.revision!==input.expectedRevision)throw fail(409,'Strategy changed; keep your text and compare the latest saved version');if(state.receipts.length>=128)throw fail(429,'Planning receipt capacity reached; prior intents are preserved');return null;
+}
+function planningAck(state,actor,input,requestHash,record){
+ state.revision++;const result={organizationId:state.organizationId,revision:state.revision,...clone(record)};state.receipts.push({id:input.idempotencyKey,actorId:actor.id,requestHash,result:clone(result)});if(Buffer.byteLength(JSON.stringify(state))>2*1024*1024)throw fail(413,'Strategy workspace capacity reached; prior work is preserved');return result;
+}
+
+function planningMember(identity,actor,organizationId){const context=current(identity,actor,organizationId);if(protectedOrganization(context.organization))throw fail(403,'Publishing organizations cannot save Defiant planning records');return context;}
