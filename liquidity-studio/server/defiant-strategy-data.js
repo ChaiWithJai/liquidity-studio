@@ -666,7 +666,7 @@ export function projectGraph(state,{focusId='',selectedId='',query=''}={}){
  if(focus&&allEdges.some(e=>e.id===focus.id))throw fail(422,'Focus a node or working group; select a relationship for its details');if(focusId&&!focus)throw fail(404,'Selected graph focus no longer exists');if(selectedId&&!find(selectedId))throw fail(404,'Selected finding no longer exists');
  const ring=nodes=>nodes.map((n,i)=>({...n,x:50+32*Math.cos(i*2*Math.PI/Math.max(1,nodes.length)),y:50+32*Math.sin(i*2*Math.PI/Math.max(1,nodes.length))}));
  let nodes=ring(regions.length?regions:all.slice(0,24)),visible=new Set(nodes.map(n=>n.id)),edges=allEdges.filter(e=>visible.has(e.from)&&visible.has(e.to));
- const city=focus?.kind==='region'?focus:all.find(n=>n.id===focus?.regionId),artist=['artist','signal'].includes(focus?.kind)?focus:all.find(n=>n.kind==='artist'&&n.regionId===city?.id);
+ const city=focus?.kind==='region'?focus:all.find(n=>n.id===focus?.regionId),artist=focus?.kind==='cluster'?null:['artist','signal'].includes(focus?.kind)?focus:all.find(n=>n.kind==='artist'&&n.regionId===city?.id);
  const related=(artist?.relatedResourceIds||[]).map(resourceId=>{const resource=state.resources.find(r=>r.id===resourceId);const node=resource&&find(resource.nodeId);return node?{...resource,...node,resourceId:resource.id,suggestion:true}:null;}).filter(Boolean);
  if(focus&&focus.kind!=='cluster'&&focus.kind!=='route'&&!city){
   // A real imported person/signal need not have a geographic association. Show
