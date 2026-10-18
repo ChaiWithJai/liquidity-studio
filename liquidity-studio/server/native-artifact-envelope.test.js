@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {generateKeyPairSync,createHash} from 'node:crypto';
-import {seal,open} from './native-artifact-envelope.mjs';
+import {seal,open} from '../scripts/native-artifact-envelope.mjs';
 const keys=()=>generateKeyPairSync('rsa',{modulusLength:3072,publicKeyEncoding:{type:'spki',format:'pem'},privateKeyEncoding:{type:'pkcs8',format:'pem'}});
 test('recipient envelope preserves exact archive and rejects tampering without retaining plaintext',async()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'native-envelope-'));try{
