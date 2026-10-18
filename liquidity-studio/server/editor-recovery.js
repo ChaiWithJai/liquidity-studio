@@ -32,9 +32,18 @@ export async function editorRestoreStatus({ store, identity, actor, scope }) {
     canRollback: ["installing", "rolling-back"].includes(journal.status),
     ...(originalActor ? { idempotencyKey: journal.key } : {}),
     ...(journal.status === "completed"
-      ? { result: {restored: journal.result?.restored === true, packSha256: journal.packSha256,
-          documents: journal.result?.documents, assets: journal.result?.assets,
-          scope:{organizationId:scope.organizationId,brandId:scope.brandId}} }
+      ? {
+          result: {
+            restored: journal.result?.restored === true,
+            packSha256: journal.packSha256,
+            documents: journal.result?.documents,
+            assets: journal.result?.assets,
+            scope: {
+              organizationId: scope.organizationId,
+              brandId: scope.brandId,
+            },
+          },
+        }
       : {}),
     scope: { organizationId: scope.organizationId, brandId: scope.brandId },
   };

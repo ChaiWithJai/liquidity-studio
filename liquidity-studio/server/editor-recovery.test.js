@@ -1,5 +1,5 @@
 import test from "node:test";
-import http from 'node:http';
+import http from "node:http";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { DurableStore } from "./storage.js";
@@ -190,14 +190,62 @@ test("HTTP status is founder scoped, feature gated and never initializes a missi
   );
 });
 
-
-test('status remains available while another portable request occupies admission',async t=>{
- const f=await fixture(t),old=process.env.STUDIO_NATIVE_PORTABLE_ENABLED;process.env.STUDIO_NATIVE_PORTABLE_ENABLED='true';t.after(()=>{if(old===undefined)delete process.env.STUDIO_NATIVE_PORTABLE_ENABLED;else process.env.STUDIO_NATIVE_PORTABLE_ENABLED=old;});
- const server=createHttpServer(null,{platform:f.platform,nativeEditorEnabled:true});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>{server.closeAllConnections();return new Promise(resolve=>server.close(resolve));});
- const base=`http://127.0.0.1:${server.address().port}`,login=await fetch(base+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'recovery-founder',password:'disposable-recovery-password-390!'})}),cookie=login.headers.get('set-cookie').split(';')[0];
- let inbound;server.on('request',req=>{if(req.method==='POST'&&req.url.includes('/editor-pack/install'))inbound=req;});
- const held=http.request(base+'/api/admin/editor-pack/install?organizationId=org_default&brandId=brand_default',{method:'POST',headers:{Cookie:cookie,'Content-Type':'application/json','Content-Length':'100'}});held.on('error',()=>{});held.write('{');t.after(()=>held.destroy());
- for(let i=0;i<100&&!(inbound?.listenerCount('data')>0);i++)await new Promise(resolve=>setTimeout(resolve,5));assert.ok(inbound?.listenerCount('data')>0);
- const response=await fetch(base+'/api/admin/editor-pack/status?organizationId=org_default&brandId=brand_default',{headers:{Cookie:cookie}});assert.equal(response.status,200);assert.equal((await response.json()).status,'empty');
- held.destroy();
+test("status remains available while another portable request occupies admission", async (t) => {
+  const f = await fixture(t),
+    old = process.env.STUDIO_NATIVE_PORTABLE_ENABLED;
+  process.env.STUDIO_NATIVE_PORTABLE_ENABLED = "true";
+  t.after(() => {
+    if (old === undefined) delete process.env.STUDIO_NATIVE_PORTABLE_ENABLED;
+    else process.env.STUDIO_NATIVE_PORTABLE_ENABLED = old;
+  });
+  const server = createHttpServer(null, {
+    platform: f.platform,
+    nativeEditorEnabled: true,
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(() => {
+    server.closeAllConnections();
+    return new Promise((resolve) => server.close(resolve));
+  });
+  const base = `http://127.0.0.1:${server.address().port}`,
+    login = await fetch(base + "/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: "recovery-founder",
+        password: "disposable-recovery-password-390!",
+      }),
+    }),
+    cookie = login.headers.get("set-cookie").split(";")[0];
+  let inbound;
+  server.on("request", (req) => {
+    if (req.method === "POST" && req.url.includes("/editor-pack/install"))
+      inbound = req;
+  });
+  const held = http.request(
+    base +
+      "/api/admin/editor-pack/install?organizationId=org_default&brandId=brand_default",
+    {
+      method: "POST",
+      headers: {
+        Cookie: cookie,
+        "Content-Type": "application/json",
+        "Content-Length": "100",
+      },
+    },
+  );
+  held.on("error", () => {});
+  held.write("{");
+  t.after(() => held.destroy());
+  for (let i = 0; i < 100 && !(inbound?.listenerCount("data") > 0); i++)
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  assert.ok(inbound?.listenerCount("data") > 0);
+  const response = await fetch(
+    base +
+      "/api/admin/editor-pack/status?organizationId=org_default&brandId=brand_default",
+    { headers: { Cookie: cookie } },
+  );
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).status, "empty");
+  held.destroy();
 });
