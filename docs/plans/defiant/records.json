@@ -1,0 +1,236 @@
+{
+  "status": "illustrative proposed records only; not imported, measured, rights-cleared or executed",
+  "scope": {
+    "organizationId": "example_defiant_org"
+  },
+  "workspace": {
+    "id": "strategy_example",
+    "organizationId": "example_defiant_org",
+    "enabled": true,
+    "revision": 1,
+    "destinationBrandIds": [
+      "example_defiant_release_brand"
+    ]
+  },
+  "artist": {
+    "id": "artist_example_lagos",
+    "kind": "artist",
+    "displayName": "Example Lagos artist",
+    "seedRef": "yt_sig_lagos_01",
+    "verification": "example",
+    "revision": 1
+  },
+  "evidence": {
+    "id": "evidence_example",
+    "artistId": "artist_example_lagos",
+    "seedRef": "yt_sig_lagos_01",
+    "sourceUrl": "https://www.youtube.com/watch?v=lagos_surulere_01",
+    "method": "supplied-issue-seed",
+    "verification": "unverified-example",
+    "publishedAt": null,
+    "observedAt": null,
+    "retrievedAt": null,
+    "importedAt": null,
+    "permittedExcerpt": null
+  },
+  "observation": {
+    "id": "observation_example",
+    "evidenceId": "evidence_example",
+    "metric": "views",
+    "unit": "count",
+    "value": null,
+    "state": "unknown",
+    "window": {
+      "start": null,
+      "end": null
+    },
+    "reason": "No compatible timestamped counters were collected",
+    "inputObservationIds": []
+  },
+  "corridor": {
+    "id": "corridor_example",
+    "seedRef": "edge_lagos_to_london",
+    "sourceId": "node_lagos",
+    "targetId": "node_london",
+    "relationshipType": "regional-opportunity",
+    "state": "hypothesis",
+    "revision": 1,
+    "bridgeRequirements": [
+      "London producer relationship",
+      "documented recording/remix permissions"
+    ],
+    "evidenceIds": [],
+    "scenario": {
+      "projectedListeners": null,
+      "transferProbability": null,
+      "reason": "Uncalibrated supplied examples are not forecasts"
+    }
+  },
+  "resource": {
+    "id": "resource_import_example",
+    "kind": "producer",
+    "displayName": "User-imported producer example",
+    "recordOwnership": "organization-record-only",
+    "sourceSystem": "manual-import",
+    "sourceRecordId": "row_1",
+    "capabilities": [
+      "production"
+    ],
+    "location": "London",
+    "availability": {
+      "start": null,
+      "end": null,
+      "timeZone": "Europe/London",
+      "verifiedAt": null,
+      "state": "unknown"
+    },
+    "rights": {
+      "use": "recording or remix",
+      "state": "unverified",
+      "evidenceIds": []
+    },
+    "revision": 1
+  },
+  "match": {
+    "id": "match_example",
+    "artistId": "artist_example_lagos",
+    "routeId": "corridor_example",
+    "resourceId": "resource_import_example",
+    "scoringVersion": "feasibility-v1-proposed",
+    "state": "needs-information",
+    "components": [
+      {
+        "criterion": "production capability",
+        "result": "matches-user-import"
+      },
+      {
+        "criterion": "time window",
+        "result": "unknown"
+      },
+      {
+        "criterion": "permissions for proposed use",
+        "result": "unverified"
+      }
+    ],
+    "score": null,
+    "calibratedProbability": null
+  },
+  "annotation": {
+    "id": "annotation_example",
+    "target": {
+      "kind": "edge",
+      "id": "corridor_example",
+      "revision": 1
+    },
+    "kind": "question",
+    "text": "Who can verify the London bridge and recording permissions?",
+    "authorId": "example_strategist",
+    "createdAt": null,
+    "revision": 1,
+    "evidenceIds": [
+      "evidence_example"
+    ]
+  },
+  "view": {
+    "id": "view_example",
+    "name": "Lagos to London working view",
+    "revision": 1,
+    "focusId": "artist_example_lagos",
+    "expandedIds": [
+      "node_lagos",
+      "corridor_example"
+    ],
+    "selectedIds": [
+      "artist_example_lagos",
+      "resource_import_example"
+    ],
+    "filters": {
+      "showExamples": true
+    },
+    "layout": {
+      "node_lagos": {
+        "x": 0,
+        "y": 0
+      },
+      "node_london": {
+        "x": 220,
+        "y": 0
+      }
+    }
+  },
+  "opportunity": {
+    "id": "opportunity_example",
+    "revision": 1,
+    "thesis": "Investigate an example Lagos–London collaboration",
+    "status": "researching",
+    "selectedArtistId": "artist_example_lagos",
+    "selectedPathIds": [
+      "corridor_example"
+    ],
+    "selectedResourceIds": [
+      "resource_import_example"
+    ],
+    "ownerId": "example_strategist"
+  },
+  "report": {
+    "id": "report_example",
+    "revision": 1,
+    "opportunityId": "opportunity_example",
+    "opportunityRevision": 1,
+    "viewId": "view_example",
+    "viewRevision": 1,
+    "sourceRefs": [
+      {
+        "kind": "edge",
+        "id": "corridor_example",
+        "revision": 1
+      },
+      {
+        "kind": "annotation",
+        "id": "annotation_example",
+        "revision": 1
+      }
+    ],
+    "snapshot": {
+      "thesis": "Investigate an example Lagos–London collaboration",
+      "route": [
+        "node_lagos",
+        "node_london"
+      ],
+      "openQuestions": [
+        "Availability",
+        "Recording/remix rights",
+        "Bridge evidence"
+      ],
+      "status": "planning-only"
+    },
+    "updatePolicy": "explicit-refresh-with-new-revision"
+  },
+  "handoff": {
+    "id": "handoff_example",
+    "status": "proposed-not-executed",
+    "opportunityId": "opportunity_example",
+    "opportunityRevision": 1,
+    "reportId": "report_example",
+    "reportRevision": 1,
+    "destination": {
+      "organizationId": "example_defiant_org",
+      "brandId": "example_defiant_release_brand",
+      "socialAccountId": null,
+      "socialConnectionVerified": false
+    },
+    "objective": "Prepare a reviewed collaboration brief",
+    "deliverables": [
+      "infographic",
+      "carousel",
+      "story",
+      "reel"
+    ],
+    "idempotencyKey": "11111111-1111-4111-8111-111111111111",
+    "actorId": "example_strategist",
+    "requestHash": null,
+    "resultStoryId": null,
+    "publicationApproved": false,
+    "outreachAuthorized": false
+  }
+}

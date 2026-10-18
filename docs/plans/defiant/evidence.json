@@ -1,0 +1,205 @@
+{
+  "baselineCommit": "52b610b9cb4056b16a9ba091af22f4c9fbe50c60",
+  "investigatedAt": "2026-10-18",
+  "task": 210,
+  "directions": [
+    209,
+    214
+  ],
+  "implementationChildren": [
+    211,
+    214
+  ],
+  "applicationChanged": false,
+  "localTestsOrBuildsRun": false,
+  "providerCallsOrSeedingPerformed": false,
+  "sourceFiles": [
+    {
+      "path": "liquidity-studio/server/auth.js",
+      "sha256": "853b808b21370d7a2f0d57a615fc568c576629ceef9496e2842c786a8573a7e5"
+    },
+    {
+      "path": "liquidity-studio/server/repository.js",
+      "sha256": "52e858de19ee3559567e423f1b778f2481c63acd1c13bb9fe96cad3f4b73efa1"
+    },
+    {
+      "path": "liquidity-studio/server/storage-transaction.js",
+      "sha256": "1e86f50041f5f20fc2b3d4b7c3e140e8a03eb50dd2129cc5baf366be256204bd"
+    },
+    {
+      "path": "liquidity-studio/server/source-catalog.js",
+      "sha256": "6a32f20fd664ee94767a27f5325067c01b9ab8f1ae59d02fcf2f474c45457f90"
+    },
+    {
+      "path": "liquidity-studio/server/source-retrieval.js",
+      "sha256": "45e00ec78196a03742d8d9afd8d9e793cc08e5a4f153869ecddd7c1625f0a867"
+    },
+    {
+      "path": "liquidity-studio/server/prepared-promotion.js",
+      "sha256": "06f2e844b6a29a0b639563c369512868264678453000c5300f200a72eb1de3e1"
+    },
+    {
+      "path": "liquidity-studio/server/source-integrity.js",
+      "sha256": "62111c0d22e67ae6bd163dff36abc9ffd7ffdb32094b1555524cf125701688f3"
+    },
+    {
+      "path": "liquidity-studio/server/domain.js",
+      "sha256": "9b3661211366fb1b37b95b07811acfb8b24bcde4004d5667f0e56271c47cd019"
+    },
+    {
+      "path": "liquidity-studio/server/container.js",
+      "sha256": "00dcd93a9e90b77a2dbd15f15cd67b13f62d0c74cc23f4063ba829135af83b17"
+    },
+    {
+      "path": "liquidity-studio/server/index.js",
+      "sha256": "73addfbe22bf3a67c1dd2c9010b57b80a6de574661c795a12c411fb0e94e029a"
+    },
+    {
+      "path": "liquidity-studio/server/discovery.js",
+      "sha256": "763054b1d220713756ab99f626f7d00ae194f85020a2c7af422fdc089cf3a476"
+    },
+    {
+      "path": "liquidity-studio/src/lib/workflow-location.js",
+      "sha256": "bb657d78bf7521863ec85033b8bc5d9b524a81b31b49bbce7410d14cd60c41af"
+    },
+    {
+      "path": "liquidity-studio/src/components/PreparedSourcePanel.svelte",
+      "sha256": "6779333566eb465df53905558ed7e000935bc34d0fb51bc9ff7bf03e1de15852"
+    },
+    {
+      "path": "liquidity-studio/src/Emulator.svelte",
+      "sha256": "89ba753fbf1fb31ec0414d51af6423326dbe0db9d2f51d83117c8941d5a8cfd4"
+    }
+  ],
+  "claimedPathsNotFoundInTrackedBaselineOrFetchedRefHistory": [
+    "**/anr-network-engine.js",
+    "**/defiant-xxl-seed.js"
+  ],
+  "searchLimit": "Tracked baseline and locally fetched Git refs only; not inaccessible external prototypes or unavailable conversations.",
+  "suppliedSeed": {
+    "issue": 214,
+    "exactCodeFenceSha256": "39d0ed52c4efd34bcd17351f88b4c6a1fd4b2c5c5de1bb3183541f2089b2da52",
+    "hashConvention": "UTF-8 JSON code fence body, without final newline",
+    "collections": {
+      "tenants": {
+        "count": 3,
+        "ids": [
+          "tenant_defiant_records",
+          "tenant_xxl_media",
+          "tenant_marathon_nipsey_catalog"
+        ]
+      },
+      "city_nodes": {
+        "count": 6,
+        "ids": [
+          "node_lagos",
+          "node_london",
+          "node_atlanta",
+          "node_toronto",
+          "node_mumbai",
+          "node_kingston"
+        ]
+      },
+      "corridor_edges": {
+        "count": 8,
+        "ids": [
+          "edge_lagos_to_london",
+          "edge_london_to_toronto",
+          "edge_london_to_atlanta",
+          "edge_lagos_to_atlanta",
+          "edge_kingston_to_london",
+          "edge_kingston_to_toronto",
+          "edge_mumbai_to_london",
+          "edge_mumbai_to_toronto"
+        ]
+      },
+      "step1_youtube_scout_signals_6_regions": {
+        "count": 6,
+        "ids": [
+          "yt_sig_lagos_01",
+          "yt_sig_london_01",
+          "yt_sig_atlanta_01",
+          "yt_sig_toronto_01",
+          "yt_sig_mumbai_01",
+          "yt_sig_kingston_01"
+        ]
+      },
+      "step2_emerging_artist_cross_system_simulations": {
+        "count": 3,
+        "ids": [
+          "sim_click_lagos_teniola",
+          "sim_click_mumbai_raghav",
+          "sim_click_kingston_zahara"
+        ]
+      },
+      "step3_premade_connectors": {
+        "count": 9,
+        "ids": [
+          "conn_cat_nipsey_succa_proof_konshens",
+          "conn_cat_nipsey_toronto_murda_pnd",
+          "conn_cat_nipsey_london_marsha_real_big",
+          "conn_cat_nipsey_hussle_and_motivate",
+          "conn_xxl_2010_nipsey_freshman_vault",
+          "conn_xxl_global_freshman_cypher",
+          "conn_xxl_inside_track_co_sign",
+          "conn_studio_kofi_mensah_ldn",
+          "conn_studio_rohan_varma_bom_ldn"
+        ]
+      },
+      "hitl_benchmarks_and_seed_tickets": {
+        "count": 3,
+        "ids": [
+          "ticket_defiant_seed_001",
+          "ticket_defiant_seed_002",
+          "ticket_defiant_seed_003"
+        ]
+      }
+    },
+    "totalRecords": 38,
+    "missingChildTenants": [
+      "tenant_liquidity_desk",
+      "tenant_vedic_dharma"
+    ],
+    "undefinedPlaybooks": [
+      "carless_pb_01_the_gift_lagos_bridge",
+      "carless_pb_02_kingston_kartel_corridor",
+      "carless_pb_03_defiant_presents_collision"
+    ],
+    "simulationCoverage": [
+      "yt_sig_lagos_01",
+      "yt_sig_mumbai_01",
+      "yt_sig_kingston_01"
+    ],
+    "signalsWithoutSimulation": [
+      "yt_sig_london_01",
+      "yt_sig_atlanta_01",
+      "yt_sig_toronto_01"
+    ],
+    "endpointReferencesResolve": true,
+    "simulationSignalReferencesResolve": true,
+    "externalUrlsFetched": false,
+    "claimsVerified": false
+  },
+  "primarySourceDocumentation": [
+    {
+      "url": "https://developers.google.com/youtube/data/reference/rest/v3/videos#statistics",
+      "purpose": "Counter fields, not arbitrary seven-day history/replay"
+    },
+    {
+      "url": "https://developers.google.com/youtube/data/reference/rest/v3/channels#statistics",
+      "purpose": "Subscriber precision/missingness"
+    },
+    {
+      "url": "https://developers.google.com/youtube/analytics/metrics",
+      "purpose": "Analytics metric definitions"
+    },
+    {
+      "url": "https://developers.google.com/youtube/analytics/channel_reports",
+      "purpose": "Authorized channel-report context"
+    },
+    {
+      "url": "https://ai.google.dev/gemini-api/docs/google-search",
+      "purpose": "Cited web grounding, not direct metric measurement"
+    }
+  ]
+}
