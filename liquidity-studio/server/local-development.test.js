@@ -25,6 +25,13 @@ test('local CLI parsing refuses ambiguous profiles, duplicate flags and privileg
   ])assert.throws(()=>parseLocalArguments(args),undefined,JSON.stringify(args));
 });
 
+test('portable recovery is an explicit local option requiring the private native editor',async()=>{
+ assert.throws(()=>parseLocalArguments(['--portable-recovery']),/requires --native-assets/);
+ assert.deepEqual(parseLocalArguments(['--native-assets','/private/current-native','--portable-recovery']),{profile:'development',port:3002,check:false,nativeAssetsDirectory:'/private/current-native',portableRecovery:true});
+ assert.throws(()=>parseLocalArguments(['--native-assets','/private/current-native','--portable-recovery','--portable-recovery']),/Duplicate/);
+ await assert.rejects(createDevelopmentServer({portableRecovery:true}),/requires --native-assets/);
+});
+
 test('deployed production cannot activate the developer wrapper',()=>{
   for(const marker of ['K_SERVICE','K_REVISION','CLOUD_RUN_JOB','FUNCTION_TARGET','GAE_ENV','AWS_LAMBDA_FUNCTION_NAME']){
     assert.throws(()=>rejectDeployment({NODE_ENV:'development',[marker]:'present'}),undefined,marker);
