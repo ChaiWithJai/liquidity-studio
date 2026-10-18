@@ -92,7 +92,7 @@
     <button class="secondary" disabled={busy} onclick={checkStatus}>Refresh recovery status</button>
   {:else}
   <p>Download this brand’s private editor pack, or restore a pack into a new empty brand. Existing brands are never replaced.</p>
-  <button class="primary" disabled={busy||uncertain} onclick={()=>exportPack(true)}>Download recovery kit (ZIP)</button><p>The kit includes your exact editor pack, readable licensed fonts/notices, checksums and a restore guide. Extract it first, then choose studio-editor-pack.json below. Registered Penpot archives remain a separate export.</p>
+  <button class="primary" disabled={busy||uncertain} onclick={()=>exportPack(true)}>Download recovery kit (ZIP)</button><p>The kit includes your exact editor pack, readable licensed fonts/notices, checksums and a restore guide. Extract it first, then choose studio-editor-pack.json below. For each registered Penpot design, open its saved campaign and use Download Penpot recovery kit when available; keep both kits.</p>
   <button class="secondary" disabled={busy||uncertain} onclick={()=>exportPack()}>Download current brand pack</button>
   <label>Choose private editor pack (up to 48 MiB)<input type="file" accept="application/json,.json" disabled={busy||uncertain} onchange={selectFile}/></label>
   {#if preview}<div aria-label="Unvalidated pack preview"><strong>Unvalidated file preview</strong><p>{preview.documents} layouts · {preview.assets} images · {preview.files} files · schema {preview.schemaVersion}. These are untrusted file claims; server validation happens before installation.</p></div>{/if}

@@ -9,9 +9,10 @@ source = pathlib.Path(__file__).resolve().parent
 manifest = json.loads((source / 'upstream-source.json').read_text())
 if subprocess.check_output(['git', '-C', str(root), 'rev-parse', 'HEAD'], text=True, timeout=10).strip() != manifest['commit']:
     raise SystemExit('Native source pin mismatch')
-original = root / manifest['files'][0]['path']
-if original.is_symlink() or hashlib.sha256(original.read_bytes()).hexdigest() != manifest['files'][0]['sha256']:
-    raise SystemExit('Native assets source changed')
+for entry in manifest['files']:
+    original = root / entry['path']
+    if original.is_symlink() or hashlib.sha256(original.read_bytes()).hexdigest() != entry['sha256']:
+        raise SystemExit('Native assets/export source changed')
 mapping = {'assets.clj': 'backend/src/app/studio/assets.clj',
            'assets_test.clj': 'backend/test/app/studio/assets_test.clj'}
 for name, destination in mapping.items():
@@ -25,12 +26,17 @@ patch = source / 'assets.patch'
 if hashlib.sha256(patch.read_bytes()).hexdigest() != manifest['patchSha256']:
     raise SystemExit('Asset patch changed')
 subprocess.run(['git', '-C', str(root), 'apply', '--check', str(patch)], check=True, timeout=10)
-subprocess.run(['git', '-C', str(root), 'apply', str(patch)], check=True, timeout=10)
+export_patch = source / 'export.patch'
+if hashlib.sha256(export_patch.read_bytes()).hexdigest() != manifest['exportPatchSha256']:
+    raise SystemExit('Native export patch changed')
+subprocess.run(['git', '-C', str(root), 'apply', '--check', str(export_patch)], check=True, timeout=10)
+subprocess.run(['git', '-C', str(root), 'apply', str(patch), str(export_patch)], check=True, timeout=10)
 for name, destination in mapping.items():
     target = root / destination
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes((source / name).read_bytes())
-if hashlib.sha256(original.read_bytes()).hexdigest() != manifest['files'][0]['patchedSha256']:
-    raise SystemExit('Patched assets source mismatch')
+for entry in manifest['files']:
+    if hashlib.sha256((root / entry['path']).read_bytes()).hexdigest() != entry['patchedSha256']:
+        raise SystemExit('Patched assets/export source mismatch')
 print(json.dumps({'sourcePin': manifest['commit'], 'installed': mapping,
                   'nativeRuntimeChanged': False, 'compiled': False}))

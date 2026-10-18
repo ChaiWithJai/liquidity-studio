@@ -1,0 +1,60 @@
+--- a/backend/src/app/rpc/commands/binfile.clj
++++ b/backend/src/app/rpc/commands/binfile.clj
+@@ -29,6 +29,7 @@
+    [app.rpc.doc :as-alias doc]
+    [app.storage :as sto]
+    [app.storage.tmp :as tmp]
++   [app.studio.assets :as studio-assets]
+    [app.tasks.file-gc]
+    [app.util.services :as sv]
+    [app.worker :as-alias wrk]
+@@ -43,10 +44,13 @@
+   [:map {:title "export-binfile"}
+    [:file-id ::sm/uuid]
+    [:include-libraries ::sm/boolean]
+-   [:embed-assets ::sm/boolean]])
++   [:embed-assets ::sm/boolean]
++   [:studio-recovery {:optional true} ::sm/boolean]])
+ 
+ (defn- export-binfile
+-  [{:keys [::sto/storage] :as cfg} {:keys [file-id include-libraries embed-assets]}]
++  [{:keys [::sto/storage] :as cfg} {:keys [file-id include-libraries embed-assets studio-recovery]}]
++  (when (and studio-recovery (not (studio-assets/enabled? cfg)))
++    (throw (ex-info "Private recovery export is unavailable" {:type :authorization})))
+   (let [output  (tmp/tempfile*)]
+     (try
+       (-> cfg
+@@ -57,14 +61,18 @@
+ 
+       (let [data   (sto/content output)
+             object (sto/put-object! storage
+-                                    {::sto/content data
++                                    (merge {::sto/content data
+                                      ::sto/touched-at (ct/in-future {:minutes 60})
+                                      :content-type "application/zip"
+-                                     :bucket sto/tempfile-bucket})]
++                                     :bucket sto/tempfile-bucket}
++                                           (studio-assets/export-metadata cfg file-id)))]
+ 
+-        (-> (cf/get :public-uri)
+-            (u/join "/assets/by-id/")
+-            (u/join (str (:id object)))))
++        (let [uri (-> (cf/get :public-uri)
++                      (u/join "/assets/by-id/")
++                      (u/join (str (:id object))))]
++          (if studio-recovery
++            {:uri (str uri) :studio-export-version "v1" :file-id file-id}
++            uri)))
+ 
+       (finally
+         (fs/delete output)))))
+--- a/backend/src/app/storage/gc_touched.clj
++++ b/backend/src/app/storage/gc_touched.clj
+@@ -165,6 +165,7 @@
+     (= bucket "file-thumbnail")        (process-objects! conn has-file-thumbnails-refs? bucket objects)
+     (= bucket "profile")               (process-objects! conn has-profile-refs? bucket objects)
+     (= bucket "file-data")             (process-objects! conn has-file-data-refs? bucket objects)
++    (= bucket "studio-file-export")    (process-objects! conn (constantly false) sto/tempfile-bucket objects)
+     (= bucket sto/tempfile-bucket)     (process-objects! conn (constantly false) sto/tempfile-bucket objects)
+     (= bucket "organization")          (process-objects! conn (constantly false) bucket objects)
+     :else
