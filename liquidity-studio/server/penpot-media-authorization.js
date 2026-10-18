@@ -46,7 +46,6 @@ export function parsePenpotMediaPath(path) {
 export function createPenpotNativeReader({
   transportMode = "loopback",
   fetchImpl = fetch,
-  runAuthorityPhase = (work) => work(),
 } = {}) {
   const origin = ORIGINS[transportMode];
   if (!origin) throw Error("Fixed native reader transport required");
@@ -95,6 +94,7 @@ export function createPenpotMediaAuthorizer({
   authorize,
   transportMode = "loopback",
   fetchImpl = fetch,
+  runAuthorityPhase = (work) => work(),
 }) {
   if (
     !Object.hasOwn(ORIGINS, transportMode) ||
