@@ -308,7 +308,7 @@ export class PenpotTokenRefreshTransport {
       if (
         snapshot.revision !== row.input.command.expectedNativeRevision ||
         fileId !== current.manifest.fileId ||
-        ownerPrincipal !== current.manifest.ownerPrincipal
+        ownerPrincipal !== (current.manifest.pluginPrincipal || current.manifest.ownerPrincipal)
       )
         throw fail(409, "Native context changed");
       await row.input.reauthorize();

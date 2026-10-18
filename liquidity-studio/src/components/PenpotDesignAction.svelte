@@ -3,6 +3,8 @@
   let {request, storyId, format, storyRevision, generationId, onStateChange = () => {}, compact = false} = $props();
   let loading = $state(true), busy = $state(false), error = $state(''), rejected = $state(false);
   let result = $state(null), attempt = $state(null);
+  let styleAttempt=$state(null),styleReceipt=$state(null),styleCapability=$state(''),styleError=$state(''),styleNotice=$state(''),styleRejected=$state(false);
+  const savedStyleAction=$derived(styleReceipt||result?.design?.styles?.action);
   let alive = true, refreshPending = false, loadSequence = 0;
   export function refreshAccess() {
     if (!alive) return;
@@ -25,6 +27,19 @@
     } catch (failure) { if (alive && ticket === loadSequence) error = failure.message; }
     finally { if (alive && ticket === loadSequence) loading = false; }
   }
+  async function prepareStyles(){
+    if(busy||loading||!result?.design?.styles?.needsRefresh)return;
+    styleAttempt ||= (!styleRejected&&savedStyleAction?.status!=='native-state-verified'?savedStyleAction?.retry:null)||{storyId,format,expectedRevision:storyRevision,generationId,expectedBrandRevision:result.design.styles.currentBrandRevision,expectedNativeRevision:result.design.nativeRevision,idempotencyKey:crypto.randomUUID()};
+    busy=true;styleError='';styleNotice='';
+    try{const value=await request('/api/studio/penpot/designs/styles',{method:'POST',body:JSON.stringify(styleAttempt)});if(!alive)return;styleReceipt=value;styleCapability=value.nativeActionCapability||'';styleRejected=false;styleNotice=value.status==='native-state-verified'?'Saved native colors were verified.':'Color update prepared. Apply the one-use code in the linked Penpot design, then check saved colors.';if(value.status==='native-state-verified'){styleAttempt=null;await load();}}
+    catch(failure){if(alive){styleError=failure.message;styleRejected=Number.isInteger(failure.status)&&failure.status>=400&&failure.status<500;if(styleRejected){styleAttempt=null;styleCapability='';}else styleNotice='The reply was interrupted. Retry this same color update or check its saved outcome.';}}
+    finally{if(alive)busy=false;}
+  }
+  async function checkStyles(){
+    if(busy||loading)return;busy=true;styleError='';
+    try{if(savedStyleAction){const value=await request(`/api/studio/penpot/designs/styles/${savedStyleAction.id}/reconcile`,{method:'POST',body:'{}'});if(!alive)return;styleReceipt=value;if(value.status==='native-state-verified'){styleAttempt=null;styleCapability='';styleNotice='Saved native colors were verified. Your design remains the same file.';}else styleNotice='The new colors are not saved yet. Apply the pending update in Penpot before checking again.';}await load();}
+    catch(failure){if(alive)styleError=failure.message;}finally{if(alive)busy=false;}
+  }
   async function create() {
     if (busy || loading) return;
     attempt ||= {storyId, format, expectedRevision: storyRevision, generationId, idempotencyKey: crypto.randomUUID()};
@@ -42,9 +57,11 @@
 <section class={["penpot-design-action", {compact}]} aria-label="Campaign design in Penpot">
   {#if !compact}<h3>Design your campaign</h3>{/if}
   {#if loading}<p role="status">Finding this campaign’s design…</p>
-  {:else if !error && openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>{#if result.design.styles?.needsRefresh}<p>Brand Kit styles changed. This existing design and your Penpot edits are preserved.</p>{/if}
+  {:else if !error && openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>{#if result.design.styles?.needsRefresh}<p>Brand Kit styles changed. This existing design and your Penpot edits are preserved.</p>{#if result.design.styles.refreshAvailable}<button class="secondary" disabled={busy||loading} onclick={prepareStyles}>{busy?'Preparing colors…':styleRejected?'Prepare a new color update':styleAttempt?'Retry same color update':'Refresh Brand Kit colors'}</button><button class="secondary" disabled={busy||loading} onclick={checkStyles}>Check saved colors</button>{/if}{/if}
   {:else if !error && (result?.available || attempt || result?.design)}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Create an editable design from the saved copy and brand.</p>
   {:else if result?.reason}<p>{result.reason}</p>{/if}
+  {#if styleCapability}<section aria-label="Apply saved Brand Kit colors"><label>One-use Penpot code<input readonly value={styleCapability} aria-label="One-use Penpot code"/></label><p>In this design’s Penpot Plugins menu, add the local Studio plugin using <code>http://localhost:39039/manifest.json</code>. Paste this code and apply it. The plugin changes bound colors in the current editor; it does not replace text or layout.</p><p>Then return here and choose Check saved colors. Codes expire after one minute.</p></section>{/if}
+  {#if styleError}<p role="alert">{styleError}</p>{/if}{#if styleNotice}<p role="status">{styleNotice}</p>{/if}
   {#if error}<p role="alert">{error}</p>{#if rejected}<button onclick={()=>window.location.reload()}>Reload saved campaign</button>{:else}<button disabled={loading||busy} onclick={load}>Check design again</button>{/if}{/if}
 </section>
 <style>

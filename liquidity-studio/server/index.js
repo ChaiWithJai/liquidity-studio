@@ -1411,9 +1411,12 @@ export function createHttpServer(
               !trustedTestMode,
           },
         });
-      if (developmentPenpotStoryDesigns && route === "/api/studio/penpot/designs") {
+      if (developmentPenpotStoryDesigns && (route === "/api/studio/penpot/designs" || route === "/api/studio/penpot/designs/styles" || /^\/api\/studio\/penpot\/designs\/styles\/[a-f0-9-]{36}\/reconcile$/.test(route))) {
         const designs = await developmentPenpotStoryDesigns(scope);
         const sessionContext = createHash("sha256").update(token(req, identity.mode)).digest("hex");
+        if(route.endsWith("/styles")&&req.method==="POST"&&designs.styles)return json(200,await designs.styles.prepare(user,body,sessionContext));
+        if(route.endsWith("/reconcile")&&req.method==="POST"&&designs.styles){workspaceExact(body,[]);return json(200,await designs.styles.reconcile(user,route.split("/").at(-2),sessionContext));}
+        if(route!=="/api/studio/penpot/designs")throw fail(404,"Not found");
         if (req.method === "GET") return json(200, await designs.designs(user, {
           storyId: url.searchParams.get("storyId"), format: url.searchParams.get("format"),
         }, sessionContext));
