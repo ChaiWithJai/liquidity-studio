@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { fail } from './auth.js';
 // Only explicitly non-content fields are omitted. New/unknown fields invalidate
 // content conservatively until their semantics are deliberately classified.
-const metadata=new Set(['revision','contentRevision','status','scheduledDay','assigneeId','exportedAt','exportedRevision',
+const metadata=new Set(['revision','contentRevision','status','scheduledDay','scheduleSchemaVersion','updatedAt','assigneeId','exportedAt','exportedRevision',
  'preparationStatus','preparationJobId','preparedCandidateId','preparationUpdatedAt','preparationErrorCode']);
 function sorted(value) {
  if(Array.isArray(value))return value.map(sorted);

@@ -5,7 +5,7 @@ import {ScopedRepository} from './repository.js';
 import {DurableStore} from './storage.js';
 const seed=()=>({backlog:[{id:'story',revision:3,title:'Original',generationId:'generation',sourceClaims:[{text:'Actual claim',status:'approved'}],campaignDraft:{headline:'Saved layout'}}]});
 test('planning, assignment and preparation progress do not invalidate content; forged counters are ignored',()=>{
- const state=seed(),before=captureContentRevisions(state);Object.assign(state.backlog[0],{revision:4,contentRevision:999,status:'Scheduled',scheduledDay:'Tuesday',assigneeId:'marketer',preparationStatus:'ready',preparedCandidateId:'candidate'});
+ const state=seed(),before=captureContentRevisions(state);Object.assign(state.backlog[0],{revision:4,contentRevision:999,status:'Scheduled',scheduledDay:'Tuesday',scheduleSchemaVersion:1,updatedAt:'2026-10-18T04:00:00Z',assigneeId:'marketer',preparationStatus:'ready',preparedCandidateId:'candidate'});
  applyContentRevisions(state,before);assert.equal(state.backlog[0].contentRevision,1);
 });
 test('actual content changes advance monotonically, including reverting to an older payload',()=>{

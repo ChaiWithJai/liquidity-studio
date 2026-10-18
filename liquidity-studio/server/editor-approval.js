@@ -38,7 +38,7 @@ export class EditorApprovalService {
   binding(native) {
     const documentSha256=native.documentRef?.artifact?.sha256 || native.documentRef?.sha256;
     if (!/^[a-f0-9]{64}$/.test(documentSha256 || '')) throw fail(422,'Native content integrity is unavailable');
-    return { storyId:native.storyId, storyRevision:native.origin.storyRevision, generationId:native.origin.generationId, brandRevision:native.origin.brandRevision, nativeRevision:native.revision, documentSha256 };
+    return { storyId:native.storyId, storyRevision:native.origin.storyRevision, ...(native.origin.sourceContentRevision === undefined ? {} : {sourceContentRevision:native.origin.sourceContentRevision}), generationId:native.origin.generationId, brandRevision:native.origin.brandRevision, nativeRevision:native.revision, documentSha256 };
   }
   stale(source,native,review) {
     try { this.native.assertCurrent(source,native.origin); }

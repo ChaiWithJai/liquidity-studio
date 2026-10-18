@@ -267,6 +267,7 @@ export class NativeEditorService {
           title: record.title,
           updatedAt: record.updatedAt,
           storyRevision: record.origin.storyRevision,
+          ...(record.origin.sourceContentRevision === undefined ? {} : { sourceContentRevision: record.origin.sourceContentRevision }),
           generationId: record.origin.generationId,
           brandRevision: record.origin.brandRevision,
         })),
@@ -311,7 +312,10 @@ export class NativeEditorService {
     const story = state.backlog.find((item) => item.id === origin.storyId);
     if (
       !story ||
-      story.revision !== origin.storyRevision ||
+      (origin.sourceContentRevision === undefined
+        ? story.revision !== origin.storyRevision
+        : !Number.isSafeInteger(origin.sourceContentRevision) || origin.sourceContentRevision < 1 ||
+          (story.contentRevision || 1) !== origin.sourceContentRevision) ||
       story.generationId !== origin.generationId ||
       brandRevision(state.brandProfile) !== origin.brandRevision ||
       hash(story.campaignDraft) !== origin.sourceCampaignSha256 ||
@@ -358,11 +362,12 @@ export class NativeEditorService {
       format: input.format,
       availableFonts: this.availableFonts,
     });
+    const origin = { ...native.manifest, sourceContentRevision: story.contentRevision || 1 };
     const documentRef = await this.persistDocument(native.document);
     let retained = false;
     try {
       await this.authorize(actor);
-      this.assertCurrent(await this.repo.read(), native.manifest);
+      this.assertCurrent(await this.repo.read(), origin);
       const record = {
         schemaVersion: 1,
         id,
@@ -374,7 +379,7 @@ export class NativeEditorService {
         title: `${story.title || "Campaign"} — ${input.format}`,
         documentRef,
         initialDocumentRef: documentRef,
-        origin: native.manifest,
+        origin,
         status: "proposal",
         createdBy: actor.id,
         updatedBy: actor.id,

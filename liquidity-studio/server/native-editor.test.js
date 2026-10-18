@@ -212,7 +212,7 @@ test("native resource validator rejects foreign fetches and accepts only owned i
 
 test("source and palette drift do not silently replace or rebase native proposals", async () => {
   for (const change of [
-    (s) => s.backlog[0].revision++,
+    (s) => { s.backlog[0].revision++; s.backlog[0].contentRevision = (s.backlog[0].contentRevision || 1) + 1; },
     (s) => (s.brandProfile.colors[0].hex = "#123456"),
     (s) => (s.backlog[0].sourceClaims[0].text = "Changed approval"),
   ]) {
@@ -458,4 +458,18 @@ test("native pattern source and URL fields reject same-origin and relative resou
       );
     }
   }
+});
+
+
+test("planning metadata preserves content-bound proposals while legacy origins remain strict", async () => {
+  const f = fixture();
+  const native = await f.create("story");
+  Object.assign(f.state().backlog[0], {revision:3,status:"Scheduled",scheduledDay:"Tuesday",scheduleSchemaVersion:1,updatedAt:"2026-10-18T04:00:00Z"});
+  assert.equal((await f.service.read(f.actor,native.id)).sourceState,"current");
+  const legacy = {...native.origin}; delete legacy.sourceContentRevision;
+  assert.throws(()=>f.service.assertCurrent(f.state(),legacy),{status:409});
+  const saved = await f.service.save(f.actor,native.id,{expectedRevision:1,title:native.title,document:native.document,idempotencyKey:"metadata_preserves_native"});
+  assert.equal(saved.revision,2);assert.equal(saved.origin.storyRevision,2);assert.equal(saved.origin.sourceContentRevision,1);
+  f.state().backlog[0].contentRevision=2;
+  assert.equal((await f.service.read(f.actor,native.id)).sourceState,"changed");
 });
