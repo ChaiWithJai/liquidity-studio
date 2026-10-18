@@ -1,13 +1,16 @@
 <script>
   import {onDestroy,onMount} from 'svelte';
-  let {actorId,organizationId,brandId,scopeKey,getScopeKey,request,onRestored=()=>{}}=$props();
+  let {actorId,organizationId,brandId,scopeKey,getScopeKey,request,onRestored=()=>{},recoveryOnly=false,initialStatus=null,onRecovered=()=>{}}=$props();
   let pack=$state.raw(null),preview=$state.raw(null),destination=$state.raw(null),journal=$state.raw(null),intent=$state.raw(null);
   let busy=$state(false),uncertain=$state(false),error=$state(''),notice=$state(''),name=$state(''),preset=$state('liquidity_desk'),acknowledged=$state(false);
   let fileHash=$state(''),locator=$state.raw(null),disposed=false,sequence=0;
   const storageKey=()=>`studio-recovery:${actorId}:${organizationId}:${brandId}`;
   const current=()=>!disposed&&getScopeKey()===scopeKey;
   onDestroy(()=>{disposed=true;sequence++;pack=null;});
-  onMount(()=>{try{const saved=JSON.parse(localStorage.getItem(storageKey())||'null');if(saved?.actorId===actorId&&saved?.sourceOrganizationId===organizationId&&saved?.sourceBrandId===brandId){locator=saved;destination=saved.destination||null;}}catch{}});
+  onMount(()=>{
+    if(recoveryOnly){journal=initialStatus;destination={scope:{organizationId,brandId}};return;}
+    try{const saved=JSON.parse(localStorage.getItem(storageKey())||'null');if(saved?.actorId===actorId&&saved?.sourceOrganizationId===organizationId&&saved?.sourceBrandId===brandId){locator=saved;destination=saved.destination||null;}}catch{}
+  });
   function persist(value){locator=value;try{if(value)localStorage.setItem(storageKey(),JSON.stringify(value));else localStorage.removeItem(storageKey());}catch{notice='Browser recovery storage is unavailable. Keep this page and the pack file until recovery is confirmed.';}}
   const sha=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
   async function selectFile(event){
@@ -68,7 +71,9 @@
   }
   async function rollback(){
     if(busy||!journal?.canRollback)return;busy=true;error='';
-    try{await request('/api/admin/editor-pack/rollback',{method:'POST',body:JSON.stringify({installationId:journal.installationId})},destination?.scope||locator.destination.scope);if(!current())return;journal={status:'empty'};uncertain=false;notice='The interrupted installation was rolled back to its empty recovery destination. Reselect the same pack and retry the retained installation.';}
+    try{await request('/api/admin/editor-pack/rollback',{method:'POST',body:JSON.stringify({installationId:journal.installationId})},destination?.scope||locator.destination.scope);if(!current())return;journal={status:'empty'};uncertain=false;notice='The interrupted installation was rolled back to its empty recovery destination.';
+      if(recoveryOnly){try{await onRecovered();}catch{if(current())error='Rollback was recorded, but the workspace could not reload. Retry loading this brand.';}}
+      else notice+=' Reselect the same pack and retry the retained installation.';}
     catch(failure){if(current())error=failure.message||'Rollback was not confirmed. Check recovery status before retrying.';}
     finally{if(current())busy=false;}
   }
@@ -81,6 +86,10 @@
 </script>
 <section class="panel recovery" aria-label="Portable brand recovery" aria-busy={busy}>
   <h2>Portable brand recovery</h2>
+  {#if recoveryOnly}
+    <p>Only recovery controls are available while this brand is reserved.</p>
+    <button class="secondary" disabled={busy} onclick={checkStatus}>Refresh recovery status</button>
+  {:else}
   <p>Download this brand’s private editor pack, or restore a pack into a new empty brand. Existing brands are never replaced.</p>
   <button class="secondary" disabled={busy||uncertain} onclick={exportPack}>Download current brand pack</button>
   <label>Choose private editor pack (up to 48 MiB)<input type="file" accept="application/json,.json" disabled={busy||uncertain} onchange={selectFile}/></label>
@@ -90,7 +99,8 @@
   {#if destination}<p>New destination: <strong>{destination.brand.name}</strong></p>{/if}
   {#if pack&&destination&&(!journal||journal.status==='empty')}<label class="attestation"><input type="checkbox" bind:checked={acknowledged} disabled={busy||uncertain}/>I reviewed this exact pack and explicitly map its retained owners to my current account. I attest to approved nonclinical sources only. Prepared-copy and native approvals remain historical; clinical sources require their separate review.</label><button disabled={busy||uncertain||!acknowledged} onclick={install}>Restore into this new brand</button>{/if}
   {#if uncertain}<p role="status">The request outcome is uncertain.</p><button class="secondary" disabled={busy||intent?.operation==='install'&&!pack} onclick={()=>execute()}>Retry same recovery request</button>{/if}
-  {#if journal}<p aria-label="Recovery status">Recovery status: {journal.status}</p>{#if journal.canRollback}<button class="secondary" disabled={busy} onclick={rollback}>Recover interrupted empty destination</button>{/if}{#if ['empty','completed'].includes(journal.status)}<button class="secondary" disabled={busy} onclick={clearCompleted}>Clear finished recovery locator</button>{/if}{/if}
+  {/if}
+  {#if journal}<p aria-label="Recovery status">Recovery status: {journal.status}</p>{#if journal.canRollback}<button class="secondary" disabled={busy} onclick={rollback}>Recover interrupted empty destination</button>{/if}{#if !recoveryOnly && ['empty','completed'].includes(journal.status)}<button class="secondary" disabled={busy} onclick={clearCompleted}>Clear finished recovery locator</button>{/if}{/if}
   {#if notice}<p role="status">{notice}</p>{/if}{#if error}<p role="alert">{error}</p>{/if}
 </section>
 <style>
