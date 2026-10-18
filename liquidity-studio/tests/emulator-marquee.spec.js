@@ -154,7 +154,14 @@ test("saved Reel motion and simulated waveform share a pausable scrubber; only p
   await expect(page.getByTestId('active-beat')).toContainText('BEAT 3');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await title.evaluate(el => getComputedStyle(el).transform)).toBe('none');
-  expect(await bars.locator('i').first().evaluate(el => getComputedStyle(el).height)).toBe('8px');
+  // The phone zoom can round an 8px CSS bar to fractional used pixels.
+  const reducedHeight = await bars.locator('i').first().evaluate(el => parseFloat(getComputedStyle(el).height));
+  expect(reducedHeight).toBeCloseTo(8, 1);
+  await page.getByRole('button', { name: 'Play reel', exact: true }).click();
+  await page.waitForTimeout(150);
+  expect(await bars.locator('i').first().evaluate(el => parseFloat(getComputedStyle(el).height))).toBe(reducedHeight);
+  expect(await title.evaluate(el => getComputedStyle(el).transform)).toBe('none');
+  await page.getByRole('button', { name: 'Pause reel', exact: true }).click();
   expect(await page.locator('audio,video').count()).toBe(0);
   await page.getByText('Advanced format JSON', { exact: true }).click();
   const reel = JSON.parse(await page.getByLabel('Format content', { exact: true }).inputValue());
