@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import {createNativeProfileProof,createNativeConnectHandler,createNativePairingProofSink} from './penpot-native-connect-proof.js';
-const challenge='A'.repeat(43),gatewayKey='a'.repeat(64),pairingKey='b'.repeat(64),nativeInstanceId='11111111-1111-4111-8111-111111111111',nativeProfileId='22222222-2222-4222-8222-222222222222';
+const challenge='A'.repeat(43),gatewayKey='a'.repeat(64),pairingKey='b'.repeat(43),nativeInstanceId='11111111-1111-4111-8111-111111111111',nativeProfileId='22222222-2222-4222-8222-222222222222';
 test('native identity comes only from the presented native session and exact get-profile',async()=>{
  let call;const read=createNativeProfileProof({fetchImpl:async(url,options)=>{call={url,options};return Response.json({id:nativeProfileId,fullname:'Native Person',email:'private@example.test'});}});
  assert.deepEqual(await read('studio_session=ignore; auth-token=actual; studio_dev_production=ignore'),{nativeProfileId,nativeProfileName:'Native Person'});

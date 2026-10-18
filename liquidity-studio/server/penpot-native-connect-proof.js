@@ -53,7 +53,7 @@ export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOr
 
 /** Separate callback credential: native cookie never leaves the native reader. */
 export function createNativePairingProofSink({callbackUrl,pairingKey,fetchImpl=fetch}={}){
- const url=new URL(callbackUrl);if(url.pathname!=='/api/native/penpot/pairing/proof'||url.search||url.hash||url.username||url.password||!(['https:'].includes(url.protocol)||(url.protocol==='http:'&&['localhost','127.0.0.1'].includes(url.hostname)))||typeof pairingKey!=='string'||!/^[a-f0-9]{64}$/.test(pairingKey))throw Error('Fixed private Studio pairing callback required');
+ const url=new URL(callbackUrl);if(url.pathname!=='/api/native/penpot/pairing/proof'||url.search||url.hash||url.username||url.password||!(['https:'].includes(url.protocol)||(url.protocol==='http:'&&['localhost','127.0.0.1'].includes(url.hostname)))||typeof pairingKey!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(pairingKey))throw Error('Fixed private Studio pairing callback required');
  return async proof=>{
   const response=await fetchImpl(url.href,{method:'POST',headers:{'Content-Type':'application/json','X-Studio-Native-Pairing-Key':pairingKey},body:JSON.stringify(proof),redirect:'error',signal:AbortSignal.timeout(4000)});
   if(response.status!==200){await response.body?.cancel().catch(()=>{});throw fail([400,403,409,410,429].includes(response.status)?response.status:502,'Studio could not acknowledge this connection; preserve the current request');}
