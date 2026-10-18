@@ -1,0 +1,4 @@
+.env
+private/
+studio-connect.conf
+*.private.json

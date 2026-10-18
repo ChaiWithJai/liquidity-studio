@@ -1,0 +1,7 @@
+# Exact hostname supplied by operator; no Studio auth or proxy to private DBs.
+{$NATIVE_HOST} {
+  reverse_proxy penpot-frontend:8080
+  log {
+    output discard
+  }
+}

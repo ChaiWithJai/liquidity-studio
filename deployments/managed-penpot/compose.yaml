@@ -1,0 +1,128 @@
+# REVIEW TEMPLATE ONLY. No image defaults or builds; all pins must be verified
+# linux/amd64 artifacts before the costed E2 VM can run this configuration.
+name: liquidity-native
+x-native: &native
+  PENPOT_PUBLIC_URI: https://${NATIVE_HOST:?Exact public native hostname required}
+  PENPOT_SECRET_KEY: ${PENPOT_SECRET_KEY:?Existing persistent native secret required}
+  PENPOT_FLAGS: enable-login-with-password disable-registration disable-email-verification disable-smtp disable-telemetry disable-google-fonts-provider disable-dashboard-templates-section
+  PENPOT_TELEMETRY_ENABLED: "false"
+services:
+  gateway:
+    image: ${TLS_GATEWAY_IMAGE:?Verified linux/amd64 TLS gateway digest required}
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      NATIVE_HOST: ${NATIVE_HOST:?required}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - tls-data:/data
+      - tls-config:/config
+    networks: [edge, native]
+    mem_limit: 128m
+    cpus: 0.25
+  penpot-frontend:
+    image: ${PENPOT_FRONTEND_IMAGE:?Verified compatible linux/amd64 frontend digest required}
+    restart: unless-stopped
+    environment:
+      <<: *native
+      PENPOT_BACKEND_URI: http://penpot-backend:6060
+      PENPOT_EXPORTER_URI: http://penpot-exporter:6061
+      PENPOT_HTTP_SERVER_MAX_BODY_SIZE: "10485760"
+    volumes:
+      - assets:/opt/data/assets:ro
+      - ./studio-connect.conf:/etc/nginx/overrides/server.d/studio-connect.conf:ro
+      - ./private/gateway-header.conf:/run/studio-native-connect-gateway-header.conf:ro
+    networks: [native]
+    mem_limit: 384m
+    cpus: 0.25
+    depends_on: [penpot-backend, penpot-exporter, studio-native-connect]
+  penpot-backend:
+    image: ${PENPOT_BACKEND_IMAGE:?Verified hook-bearing linux/amd64 backend digest required}
+    restart: unless-stopped
+    environment:
+      <<: *native
+      PENPOT_DATABASE_URI: postgresql://penpot-postgres/penpot
+      PENPOT_DATABASE_USERNAME: penpot
+      PENPOT_DATABASE_PASSWORD: ${PENPOT_DB_PASSWORD:?Persistent private DB password required}
+      PENPOT_REDIS_URI: redis://:${PENPOT_REDIS_PASSWORD:?Dedicated Redis credential required}@penpot-valkey:6379/0
+      PENPOT_OBJECTS_STORAGE_BACKEND: fs
+      PENPOT_OBJECTS_STORAGE_FS_DIRECTORY: /opt/data/assets
+      STUDIO_NATIVE_ACCESS_CONFIG: /run/studio-native/access.json
+      PENPOT_HTTP_SERVER_MAX_BODY_SIZE: "10485760"
+    volumes:
+      - assets:/opt/data/assets
+      - ./private/access.json:/run/studio-native/access.json:ro
+    networks: [native]
+    mem_limit: 2g
+    cpus: 1.5
+    depends_on:
+      penpot-postgres: {condition: service_healthy}
+      penpot-valkey: {condition: service_healthy}
+  penpot-exporter:
+    image: ${PENPOT_EXPORTER_IMAGE:?Verified compatible linux/amd64 exporter digest required}
+    restart: unless-stopped
+    environment:
+      <<: *native
+      PENPOT_INTERNAL_URI: http://penpot-frontend:8080
+      PENPOT_REDIS_URI: redis://:${PENPOT_REDIS_PASSWORD:?required}@penpot-valkey:6379/0
+    networks: [native]
+    mem_limit: 1g
+    cpus: 1.5
+    shm_size: 256m
+  penpot-postgres:
+    image: ${POSTGRES_IMAGE:?Verified existing-compatible linux/amd64 Postgres digest required}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: penpot
+      POSTGRES_USER: penpot
+      POSTGRES_PASSWORD: ${PENPOT_DB_PASSWORD:?required}
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes: ["database:/var/lib/postgresql/data"]
+    networks: [native]
+    mem_limit: 384m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U penpot"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    stop_signal: SIGINT
+  penpot-valkey:
+    image: ${VALKEY_IMAGE:?Verified compatible linux/amd64 Valkey digest required}
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${PENPOT_REDIS_PASSWORD:?required}
+    command: [sh, -ec, 'exec valkey-server --requirepass "$$REDIS_PASSWORD" --maxmemory 128mb --maxmemory-policy volatile-lfu']
+    networks: [native]
+    mem_limit: 192m
+    cpus: 0.25
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" valkey-cli ping']
+      interval: 10s
+      timeout: 3s
+      retries: 12
+  studio-native-connect:
+    image: ${STUDIO_ADAPTER_IMAGE:?Verified Studio image containing managed-origin seam required}
+    command: [node, scripts/serve-managed-native-connect.mjs, --config, /run/studio/managed-native.json]
+    healthcheck: {disable: true} # Inherited Studio /readyz is not the proof adapter contract.
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      STUDIO_NATIVE_GATEWAY_KEY: ${STUDIO_NATIVE_GATEWAY_KEY:?Separate private gateway key required}
+    volumes:
+      - ./private/managed-native.json:/run/studio/managed-native.json:ro
+    networks: [native, edge]
+    read_only: true
+    tmpfs: [/tmp:size=16m]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.25
+networks:
+  native: {internal: true}
+  edge: {}
+volumes:
+  database: {}
+  assets: {}
+  tls-data: {}
+  tls-config: {}
