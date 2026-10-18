@@ -120,7 +120,7 @@
       const story=client.getStory(route.storyId);
       if(!story){selectedStory=null;campaign=null;tab="backlog";error="That story is no longer available in this workspace.";return;}
       selectStory(story);
-    }
+    }else if(route.hasLocation)selectStory(null);
     preparedPage=Math.min(route.page,format==="carousel"?3:format==="reel"?2:0);
     tab=route.tab==="admin"&&!canAdmin?"backlog":route.tab;
     if(route.editor==="prepared"&&sourcePreparationEnabled&&selectedStory)preparedEditingStoryId=selectedStory.id;
