@@ -1,5 +1,7 @@
 # Editor architecture decision and investigation disposition
 
+> Historical checkpoint: current shipped-versus-open status and all four UX-round dispositions are reconciled in [Current investigation disposition](39-current-disposition.md). Retain the dated evidence below; its present-tense gaps are not a statement that later merged work is absent.
+
 Recorded 2026-10-18 against Studio main `b6b9e0c` (merged native Doory evidence). This is a reviewable architecture recommendation and delivery queue, not an implemented adapter or a provisioning decision. Issue [39](https://github.com/ChaiWithJai/liquidity-studio/issues/39) remains open. The supplied brief and all [70 instructional requirements](39-instructional-disposition.md) remain authoritative requirements; dated earlier ledgers are not silently rewritten as present-day execution claims.
 
 ## Decision
