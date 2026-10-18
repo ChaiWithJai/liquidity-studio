@@ -29,6 +29,7 @@ test.beforeEach(async () => {
     configFile: false,
     cacheDir: join(directory, "vite-cache"),
     plugins: [svelte()],
+    optimizeDeps: { entries: ["tests/fixtures/calendar-host.html"] },
     server: { middlewareMode: true, hmr: false },
     appType: "custom",
     logLevel: "error",
@@ -204,6 +205,11 @@ test("keyboard/pointer reorder persists; stale move conflicts; unassign is compe
   await expect(day(page).locator(".workspace-story-button").first()).toHaveText(
     "Calendar gamma",
   );
+  // Optimistic order is visible before reconciliation; keyboard input starts
+  // when the canonical-revision handle becomes available again.
+  await expect(day(page).getByRole("button", {
+    name: "Move Calendar gamma, Whole campaign", exact: true,
+  })).toBeEnabled();
   await day(page)
     .getByRole("button", {
       name: "Move Calendar gamma, Whole campaign",
@@ -526,4 +532,63 @@ test("legacy and unscheduled units open their real story without manufacturing a
   expect(detail.row.assignments).toHaveLength(0);
   expect(detail.story.revision).toBe(1);
   expect(detail.story.sourceClaims[0].status).toBe("unreviewed");
+});
+
+test('calendar placement appears before a held save response and reconciles without disappearing', async ({ page }) => {
+  await setup(page);
+  await page.getByRole('region', { name: 'Legacy undated weekday plans' }).getByRole('button', { name: 'Move Calendar alpha, Whole campaign', exact: true }).click();
+  await page.getByLabel('Destination date').fill('2026-03-08');
+  await page.getByLabel('Destination date').press('Tab');
+  let release, received;
+  const held = new Promise(resolve => { release = resolve; });
+  const requestReceived = new Promise(resolve => { received = resolve; });
+  await page.route('**/api/studio/workspace/mutations?*', async route => {
+    received(); await held; await route.continue();
+  });
+  const response = page.waitForResponse(result => result.url().includes('/workspace/mutations') && result.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Save dated placement', exact: true }).click();
+  await requestReceived;
+  try {
+    await expect(day(page).getByRole('button', { name: 'Calendar alpha', exact: true })).toBeVisible({ timeout: 500 });
+    await expect(day(page).getByText('Saving…', { exact: true })).toBeVisible();
+  } finally { release(); await response; }
+  await expect(day(page).getByRole('button', { name: 'Calendar alpha', exact: true })).toBeVisible();
+  await expect(day(page).getByText('Saving…', { exact: true })).toHaveCount(0);
+});
+
+test('denied optimistic placement rolls back and keeps the story available', async ({page}) => {
+  await setup(page);
+  await page.getByRole('region', {name:'Legacy undated weekday plans'}).getByRole('button',{name:'Move Calendar alpha, Whole campaign',exact:true}).click();
+  await page.getByLabel('Destination date').fill('2026-03-08');
+  await page.getByLabel('Destination date').press('Tab');
+  let release,received;
+  const held=new Promise(resolve=>{release=resolve;});
+  const requested=new Promise(resolve=>{received=resolve;});
+  await page.route('**/api/studio/workspace/mutations?*',async route=>{
+    received();await held;await route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({error:'Calendar access was removed.'})});
+  });
+  await page.getByRole('button',{name:'Save dated placement',exact:true}).click();await requested;
+  try { await expect(day(page).getByText('Saving…',{exact:true})).toBeVisible(); }
+  finally { release(); }
+  await expect(page.getByRole('alert')).toContainText('Calendar access was removed.');
+  await expect(day(page).getByRole('button',{name:'Calendar alpha',exact:true})).toHaveCount(0);
+  await expect(page.getByRole('region',{name:'Legacy undated weekday plans'}).getByRole('button',{name:'Open Calendar alpha, Whole campaign',exact:true})).toBeVisible();
+});
+
+test('lost save response retains an unconfirmed placement and retries the exact request once', async ({page}) => {
+  await setup(page);
+  await page.getByRole('region',{name:'Legacy undated weekday plans'}).getByRole('button',{name:'Move Calendar alpha, Whole campaign',exact:true}).click();
+  await page.getByLabel('Destination date').fill('2026-03-08');await page.getByLabel('Destination date').press('Tab');
+  const requests=[];
+  await page.route('**/api/studio/workspace/mutations?*',async route=>{
+    requests.push(route.request().postDataJSON());
+    if(requests.length===1){await route.fetch();await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Response lost after save.'})});}
+    else await route.continue();
+  });
+  await page.getByRole('button',{name:'Save dated placement',exact:true}).click();
+  await expect(day(page).getByText('Save unconfirmed',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Retry calendar request',exact:true}).click();
+  await expect(day(page).getByText('Save unconfirmed',{exact:true})).toHaveCount(0);
+  await expect(day(page).getByRole('button',{name:'Calendar alpha',exact:true})).toHaveCount(1);
+  expect(requests).toHaveLength(2);expect(requests[1]).toEqual(requests[0]);
 });
