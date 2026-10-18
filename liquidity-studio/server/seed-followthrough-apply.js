@@ -16,7 +16,8 @@ function currentPlan(store,scope,key,actorId,state,sourceCommit){return pristine
  * post-title revision/fingerprint, not createForIngestion's later story read.
  */
 export async function applyPristineSeedFollowthrough({store,workspace,jobs,actor,scope,plan,sourceCommit,titleIdempotencyKey,jobIdempotencyKey}){
- if(!(store instanceof DurableStore)||workspace.store!==store||jobs.repo!==workspace.repo)throw fail(400,'Same-connection SQLite operator composition required');
+ if(!(store instanceof DurableStore)||workspace.store!==store||workspace.repo?.store!==store||jobs.repo?.store!==store||jobs.repo.key!==workspace.repo.key)throw fail(400,'Same-connection SQLite operator composition required');
+ same(workspace.repo.scope,scope);same(jobs.repo.scope,scope);
  same(scope,plan.scope);
  if(sourceCommit!==plan.sourceCommit)throw fail(409,'Reviewed source commit changed');
  const {planSha256,...body}=plan;
