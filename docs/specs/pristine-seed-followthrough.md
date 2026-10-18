@@ -21,3 +21,19 @@ Before maintained writes: fresh asset-aware backup (or explicitly scoped zero-as
 The workspace guard reads current identity and the scoped key inventory on the same SQLite connection while `BEGIN IMMEDIATE` is held. It compares the entire reviewed plan, factory story/claims/revisions, source commit, catalog and copy-registry hashes before making any title change. The ordinary workspace receipt retains the fixed post-title story revisions, preparation fingerprints and a complete scoped-state hash. The job guard rechecks those exact values and current identity inside its own transaction. It does not call `createForIngestion` or substitute a later human revision. An intervening change leaves the title receipt available but refuses job creation; the operator must review that state rather than reset quotas or overwrite work. Accepted job replay uses the existing idempotency receipt.
 
 The new test cases are authored for hosted execution and have not been run locally under the BrowserOS-only constraint. No maintained apply, dispatch, or migration has occurred. A fresh selected-scope asset-aware backup (or explicit zero-asset proof plus consistent SQLite backup), current manifest, exact source review and isolated Neo concurrent-edit acceptance remain required before maintained execution. Runtime source-commit pinning belongs to the reviewed operator assembly; a caller-provided hash alone is not deployment provenance.
+
+## Concrete local operator entry
+
+After the source is shipped into the reviewed local image, the operator uses that image's existing environment and database mount. The existing local worker remains responsible for processing; this command never starts a worker or changes worker scopes/configuration.
+
+```sh
+node server/run-seed-followthrough-apply.js \
+  --database /absolute/current/studio.sqlite \
+  --plan /absolute/private/reviewed-plan.json \
+  --source-commit FULL_REVIEWED_IMAGE_SOURCE_SHA \
+  --organization EXPLICIT_ORGANIZATION_ID --brand EXPLICIT_BRAND_ID \
+  --actor CURRENT_FOUNDER_ID --title-key TITLE_OPERATION_UUID \
+  --job-key PREPARATION_JOB_UUID --out /absolute/private/new-dry-run.json
+```
+
+The default opens the database read-only and reports whether the current plan exactly matches the reviewed one. An explicitly reviewed invocation adds `--apply` and uses a separate new output filename. Apply refuses Cloud Run, Firestore, disabled jobs/preparation, or a dispatcher other than the configured local durable worker mode. It uses the same explicit scope and current founder and keeps title/job keys stable during receipt recovery. A source SHA argument is an operator binding, not independent proof of the image; the release receipt and exact image/source hashes must be reviewed separately. No unrestricted bootstrap, repository replacement, factory-title reset, approval or quota reset is part of this entry point.
