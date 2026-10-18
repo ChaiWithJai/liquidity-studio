@@ -1,4 +1,5 @@
 <script>
+ import ResourceConfirmation from './ResourceConfirmation.svelte';
  import EvidenceConstraints from './EvidenceConstraints.svelte';
  import {onMount,onDestroy,untrack} from 'svelte';
  import GraphCanvas from './GraphCanvas.svelte';
@@ -16,8 +17,8 @@
  function addRouteEdge(){const edge=selectedRoute,last=routeEdges.at(-1);if(!edge)return;if(!routeAvailable){routeMessage='Clear the unavailable route before adding another step.';return;}if(routeEdgeIds.includes(edge.id)){routeMessage='This route already includes that step.';return;}if(last&&last.to!==edge.from){routeMessage='Choose a route starting at '+itemName(last.to)+', or clear this route to start another.';return;}if(routeEdgeIds.length>=16){routeMessage='A route can contain up to 16 steps.';return;}navigate({routeEdgeIds:[...routeEdgeIds,edge.id],savedViewId:''});routeMessage='';}
  function followRouteDestination(){if(selectedRoute)navigate({view:'map',query:'',focus:selectedRoute.to,selected:selectedRoute.to});}
  function shortlistRoute(){if(!routeAvailable)return;planIds=[...new Set([...planIds,...routeEdgeIds])];routeMessage='Route steps added to your shortlist.';}
- let intakeDirty=$state(false),planningDirty=$state(false),reportRequest=$state(0);
- $effect(()=>onDirtyChange(intakeDirty||planningDirty));
+ let resourceDirty=$state(false),intakeDirty=$state(false),planningDirty=$state(false),reportRequest=$state(0);
+ $effect(()=>onDirtyChange(intakeDirty||planningDirty||resourceDirty));
  let restoredView='';
  $effect(()=>{const id=location.savedViewId;const view=state?.views.find(v=>v.id===id);untrack(()=>{if(view&&restoredView!==id){positions=view.positions||{};planIds=view.planIds||[];restoredView=id;if(!location.routeEdgeIds?.length&&view.routeEdgeIds?.length)navigate({routeEdgeIds:view.routeEdgeIds});}});});
  let alive=true,sequence=0;
@@ -91,7 +92,7 @@
    {#if current.contextual}<section aria-label="Contextual relationship"><p>This connection is shown for context. It is not a saved relationship or confirmed collaboration.</p><button onclick={()=>select(current.to)}>Open destination reference</button></section>{/if}
    <EvidenceConstraints record={current} resources={current.resource?[current.resource]:[]} observations={current.observations||[]} evidence={current.evidence||[]} />{#if !current.contextual}<button class="add-plan" onclick={()=>togglePlan(current.id)}>{planIds.includes(current.id)?'Remove from shortlist':'Add to shortlist'}</button>{/if}
    <details class="provenance"><summary>Reference details</summary>{#each current.evidence||[] as evidence(evidence.id)}<article><h3>{evidence.title}</h3>{#if evidence.sourceUrl}<a href={evidence.sourceUrl} target="_blank" rel="noopener noreferrer">Open source ↗</a>{/if}<p>{evidence.excerpt}</p><small>{evidence.method} · {evidence.verification} · Observed {evidence.observedAt||'time unknown'}</small></article>{/each}<p>Relationships and permissions must be checked before acting.</p><code>{current.sourceId||current.id}</code></details>
-  {:else}<div class="empty-inspector"><Icon name="network" size={26}/><h2>{graphLoading?'Opening selection…':selected?'Reference unavailable':'Select a region'}</h2><p>{selected?'This selection is no longer available. Choose another reference or return to all regions.':'Choose a region to find an artist, explore a route and collect what matters.'}</p></div>{/if}</aside>
+  {:else}<div class="empty-inspector"><Icon name="network" size={26}/><h2>{graphLoading?'Opening selection…':selected?'Reference unavailable':'Select a region'}</h2><p>{selected?'This selection is no longer available. Choose another reference or return to all regions.':'Choose a region to find an artist, explore a route and collect what matters.'}</p></div>{/if}<ResourceConfirmation resource={current?.resource} evidence={state.evidence} revision={state.revision} {request} onSaved={planningSaved} onDirtyChange={value=>resourceDirty=value}/></aside>
  </div><div id="strategy-planning"><DefiantPlanning {routeAvailable} {routeEdgeIds} {filters} {reportRequest} {state} {location} {planIds} {positions} {request} onSaved={planningSaved} onNavigate={navigate} onRestoreView={restoreView} onDirtyChange={value=>planningDirty=value}/></div>{/if}
 </section>
 <style>

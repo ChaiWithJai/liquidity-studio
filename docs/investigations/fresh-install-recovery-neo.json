@@ -1,0 +1,97 @@
+{
+  "kind": "actual-separate-local-installation-recovery",
+  "originalPackSha256": "3095922e444e8943728345608c048b1159b076d4047a87600bd1afc50289a4dc",
+  "reexportedPackSha256": "01e2c4ab202adad9c0e5ff436201408799515f7701873cd19d04e67e957aaaae",
+  "separateDatabase": true,
+  "startupObservedSource": "5d167f40f917c7d8276fa88064ed285c97260d66",
+  "nativeArtifactRun": "39161901990",
+  "nativeArtifactSource": "3fd5e8c68b841809c92c649630124ac17404c93d",
+  "destinationBrandId": "1f0eb0e2-6343-48b9-6a87-d7e8f52341b6",
+  "editableNativeId": "939277ec-61ab-538c-9f34-f881a998f941",
+  "historicalVersion": 7,
+  "editableSavedRevisionAfterRenameAndReload": 3,
+  "fontMetadataExact": true,
+  "resources": [
+    {
+      "kind": "image",
+      "bytes": 34832,
+      "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "image",
+      "bytes": 198985,
+      "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "font",
+      "bytes": 70012,
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "license",
+      "bytes": 4405,
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "font",
+      "bytes": 113784,
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "license",
+      "bytes": 4419,
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "font",
+      "bytes": 116248,
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "font",
+      "bytes": 879708,
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "license",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "font",
+      "bytes": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e",
+      "restoredBytesVerified": true
+    },
+    {
+      "kind": "license",
+      "bytes": 4386,
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331",
+      "restoredBytesVerified": true
+    }
+  ],
+  "png": {
+    "bytes": 531192,
+    "sha256": "a9b8af18e19054744f2f5df61974ee3aae3de6bc38b5e4bfdbcf01c45b8b9d3b",
+    "width": 1080,
+    "height": 1350,
+    "observed": "Om/title/body/transparentportrait present. Retained portrait overlaps body text and dashed placeholder remains; no aesthetic quality claim."
+  },
+  "review": "Authorized local engineering QA of retained33fields and4culturalverses; not independent human review, clinical approval or publication.",
+  "limits": [
+    "Same machine and existing installed dependencies/private native engine, separate application SQLite/home. Not fresh Penpot/Postgres infrastructure, clouddeployment or budget proof.",
+    "Retained portrait overlaps text and dashed placeholder remains; recovery identity and render proof do not imply good artwork.",
+    "No audio in this older recovery pack; audio roundtrip covered separately."
+  ],
+  "originalSessionRestored": true,
+  "freshServerKeptLive": true
+}

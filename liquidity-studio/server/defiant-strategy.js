@@ -1,3 +1,4 @@
+import {resourceConfirmation} from './defiant-resource-confirmation.js';
 import {createDraftDestination,handoffReport} from './defiant-draft-handoff.js';
 import {createHash} from 'node:crypto';
 import {fail} from './auth.js';
@@ -55,6 +56,10 @@ export class DefiantStrategyService {
    planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
    const record=clusterRecord(state,input.cluster,actor,this.now());state.graph.clusters=state.graph.clusters.filter(c=>c.id!==record.id);state.graph.clusters.push(record);result=planningAck(state,actor,input,requestHash,{cluster:record});return [identity,state];
   });return result;
+ }
+ async confirmResource(actor,resourceId,input){
+  planningExact(input,['expectedRevision','idempotencyKey','confirmation']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'resource-confirmation',resourceId,input});let result;
+  await this.store.transact(['identity',this.key],([identity,state])=>{planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}const resource=resourceConfirmation(state,resourceId,input.confirmation,actor,this.now());result=planningAck(state,actor,input,requestHash,{resource:clone(resource)});return [identity,state];});return result;
  }
  async annotate(actor,input){
   planningExact(input,['expectedRevision','idempotencyKey','annotation']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'annotation',input});let result;

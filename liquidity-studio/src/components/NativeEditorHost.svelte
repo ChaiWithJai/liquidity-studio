@@ -158,6 +158,7 @@
     </label>
     <label><input type="checkbox" bind:checked={cutoutConfirmed} /> I confirm the selected image’s recorded rights and consent permit background removal.</label>
     <p>Images support PNG, JPEG and WebP up to 512 KiB and four megapixels. Audio Uploads supports 16-bit stereo PCM WAV up to 6 MiB, 30 seconds, at 44.1 or 48 kHz, with at most four saved tracks. Other audio formats and microphone recording are not supported in Studio yet. When configured locally, background removal preserves pixel dimensions and rejects PNG output above 512 KiB. It never silently resizes or overwrites the original; native Undo restores the original reference.</p>
+    <button type="button" onclick={(event) => { const details = event.currentTarget.closest("details"); if (details) { details.open = false; details.querySelector("summary")?.focus(); } }}>Done</button>
     </div></details>
   </div>
   <iframe title="Native Doory design canvas" bind:this={frame} sandbox="allow-scripts allow-same-origin allow-downloads" referrerpolicy="no-referrer"></iframe>
@@ -174,6 +175,8 @@
   .native-tools details[open] > summary { background: #e9eef6; border-color: #69717c; }
   .native-tools summary:focus-visible { outline: 2px solid #174ba7; outline-offset: 2px; }
   .tool-panel { position: absolute; inset-inline: 0; top: 100%; z-index: 5; max-height: min(60dvh, 520px); overflow: auto; background: #fff; border: 1px solid #c9cdd4; box-shadow: 0 10px 24px #15171b20; }
+  .native-tools > details[data-native-tool="images"][open] { flex-basis: 100%; }
+  .native-tools > details[data-native-tool="images"] > .tool-panel { position: static; margin-top: .4rem; max-height: none; overflow: visible; box-shadow: none; }
   .image-rights { padding: .75rem 1rem; font: 13px/1.5 sans-serif; }
   @media(max-width:600px) { .editor-status { flex-basis: 100%; } .native-tools { gap: .3rem; } }
   .attribution a { color: #174ba7; text-decoration: underline; }

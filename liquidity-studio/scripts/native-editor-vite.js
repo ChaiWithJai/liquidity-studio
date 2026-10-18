@@ -72,6 +72,21 @@ export function fixNativeWebmContainer(code, expectedSha256, patch) {
   if (count !== 2) throw new Error("Native WebM container patch hunks mismatch");
   return code;
 }
+// Original Studio-only capability overlay. Pristine source and every replacement
+// are verified before the private build; the public/original-only graph never loads it.
+export function fixNativeAudioUi(code, relative, expectedSha256, patch) {
+  if (createHash("sha256").update(code).digest("hex") !== expectedSha256)
+    throw new Error("Native audio pristine source mismatch");
+  if (createHash("sha256").update(patch).digest("hex") !== "3a058e3f89296f5258c3cc4a72c2a55dd02960f3404172e72ddf1218a0ec5353")
+    throw new Error("Reviewed native audio UI patch mismatch");
+  const entry = JSON.parse(patch).files.find(file => file.path === relative);
+  if (!entry) throw new Error("Native audio UI patch source missing");
+  for (const {before, after} of entry.edits) {
+    if (code.split(before).length !== 2) throw new Error("Native audio UI patch anchor mismatch");
+    code = code.replace(before, after);
+  }
+  return code;
+}
 export function nativeEditorPlugin() {
   const local = process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD === "true";
   const source = path.join(project, ".native-editor-source");
@@ -120,10 +135,12 @@ export function nativeEditorPlugin() {
       if (!local) return null;
       const file = id.split("?")[0];
       const relative = path.relative(source, file).split(path.sep).join("/");
-      if (!["editor/dialogs/video/VideoResult.tsx", "editor/engine/export/video/container.ts"].includes(relative)) return null;
+      if (!["editor/dialogs/video/VideoResult.tsx", "editor/engine/export/video/container.ts", "editor/panels/AudioPanel.tsx", "editor/audio/files.ts", "editor/audio/strings.ts"].includes(relative)) return null;
       const inventory = JSON.parse(fs.readFileSync(path.resolve(project, "../docs/specs/doory-host-source-inventory.json"), "utf8"));
       const entry = inventory.files.find(item => item.path === relative);
       if (!entry) throw new Error("Native video source inventory missing");
+      if (["editor/panels/AudioPanel.tsx", "editor/audio/files.ts", "editor/audio/strings.ts"].includes(relative))
+        return {code:fixNativeAudioUi(code, relative, entry.sha256, fs.readFileSync(path.resolve(project, "../scripts/investigations/doory-audio-ui/studio-audio-ui.patch.json"), "utf8")), map:null};
       const fixed = relative.endsWith("VideoResult.tsx") ? fixNativeVideoResult(code, entry.sha256)
         : fixNativeWebmContainer(code, entry.sha256, fs.readFileSync(path.resolve(project, "../scripts/investigations/doory-webm-duration/webm-duration.patch"), "utf8"));
       return { code: fixed, map: null };

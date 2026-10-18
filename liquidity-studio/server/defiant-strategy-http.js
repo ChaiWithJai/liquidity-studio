@@ -2,6 +2,8 @@ import {DefiantStrategyService} from './defiant-strategy.js';
 import {fail} from './auth.js';
 /** Mounted only after existing authentication, before brand-required publishing. */
 export async function strategyRequest({platform,user,route,method,body,url}){
+ const confirmation=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/resources\/([^/]+)\/confirmation$/);
+ if(confirmation){if(method!=='POST')throw fail(405,'Unsupported resource action');return new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId:confirmation[1]}).confirmResource(user,decodeURIComponent(confirmation[2]),body);}
  const handoff=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/reports\/([a-f0-9-]{36})\/handoff$/);
  if(handoff){if(method!=='POST')throw fail(405,'Unsupported report action');return new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId:handoff[1]}).handoff(user,handoff[2],body);}
  const refresh=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/reports\/([a-f0-9-]{36})\/refresh$/);
