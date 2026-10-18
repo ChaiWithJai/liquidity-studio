@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "method": "Official gcloud SDK described immutable generations and downloaded every actual QA object; full SHA256/size/MIME/owner metadata verified. Bucket/object locators intentionally omitted.",
+  "objects": [
+    {
+      "artifactAlias": "qa-artifact-1",
+      "generation": "1792304965213762",
+      "sha256": "887de9726957259823bf631e0839f7156840fcd1d1c21d79cb05c5f2d5f2c9a4",
+      "size": 4263,
+      "contentType": "application/json",
+      "scopeMetadataVerified": true,
+      "ownerHashMetadataMatched": true
+    },
+    {
+      "artifactAlias": "qa-artifact-2",
+      "generation": "1792304965575329",
+      "sha256": "53400baca861d6823c2ab618aa56b184764057a38b5d1fc35844335a3fe624b8",
+      "size": 4243,
+      "contentType": "application/json",
+      "scopeMetadataVerified": true,
+      "ownerHashMetadataMatched": true
+    },
+    {
+      "artifactAlias": "qa-artifact-3",
+      "generation": "1792305096318452",
+      "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+      "size": 34832,
+      "contentType": "image/jpeg",
+      "scopeMetadataVerified": true,
+      "ownerHashMetadataMatched": true
+    },
+    {
+      "artifactAlias": "qa-artifact-4",
+      "generation": "1792305118607553",
+      "sha256": "2bae6eb4443b0da91326577c35e9634d835c5d99d5c77862549db3cbbc84ee74",
+      "size": 9065,
+      "contentType": "application/json",
+      "scopeMetadataVerified": true,
+      "ownerHashMetadataMatched": true
+    },
+    {
+      "artifactAlias": "qa-artifact-5",
+      "generation": "1792305131263760",
+      "sha256": "2bae6eb4443b0da91326577c35e9634d835c5d99d5c77862549db3cbbc84ee74",
+      "size": 9065,
+      "contentType": "application/json",
+      "scopeMetadataVerified": true,
+      "ownerHashMetadataMatched": true
+    },
+    {
+      "artifactAlias": "qa-artifact-6",
+      "generation": "1792305258855411",
+      "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+      "size": 34832,
+      "contentType": "image/jpeg",
+      "scopeMetadataVerified": true,
+      "ownerHashMetadataMatched": true
+    },
+    {
+      "artifactAlias": "qa-artifact-7",
+      "generation": "1792305275663699",
+      "sha256": "e7165ae155c8c1741b9004061e4a0665bf2873f450d75fc4cae104f2f48fa642",
+      "size": 9045,
+      "contentType": "application/json",
+      "scopeMetadataVerified": true,
+      "ownerHashMetadataMatched": true
+    },
+    {
+      "artifactAlias": "qa-artifact-8",
+      "generation": "1792305364761384",
+      "sha256": "2bae6eb4443b0da91326577c35e9634d835c5d99d5c77862549db3cbbc84ee74",
+      "size": 9065,
+      "contentType": "application/json",
+      "scopeMetadataVerified": true,
+      "ownerHashMetadataMatched": true
+    }
+  ]
+}

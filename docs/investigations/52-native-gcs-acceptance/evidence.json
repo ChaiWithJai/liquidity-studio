@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-18",
+  "scope": "Actual Neo controlled password application with NEW SQLite metadata and real existing private GCS artifact methods. Not a new managed Google or production deployment test.",
+  "sourceCommit": "b1d5080ab843fb614ba4531a49db2962404c4bde",
+  "sourceHashes": {
+    "server/cloud-store.js": "aaaa1597d56bd626dc0046ff542b5228876fb2b31eae94e47f22f0910c48bf8c",
+    "server/native-editor.js": "806df930bf392ab099b08e046106b7743cb3351003e6553936f7c56039256b26",
+    "src/lib/native-editor-broker.js": "5fe05f9482ed15013546e6ecfe18a801a8981241547c3f577df64cc3650270b4",
+    "src/lib/native-editor-adapter.js": "2c1605d109201bc861e4001e0c77d13a8a5612d3756b93ffbbbb9672616eb006"
+  },
+  "privateFrameSource": "4d1e30ee4d1690999337ed83d165d71b90abe23d",
+  "privateFrameSha256": "0a43055573a6f1f2c34a5cc7e1362fc0ef0f3d0b81a8ad12ada8d0399a519da3",
+  "upstreamPin": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "browser": {
+    "page": 130,
+    "group": "native gcs acceptance",
+    "ephemeralIdentifiers": true
+  },
+  "storage": {
+    "actualGCSObjects": 8,
+    "reservedBytes": 114410,
+    "capBytes": 5242880,
+    "capObjects": 32,
+    "sameGlobalCapNoReset": true,
+    "SDKMethods": "Unchanged production FirestoreStore artifact prototype methods; no Firestore CRUD used",
+    "privateBucket": "Existing Virginia UBLA/PAP checked; no public URL/CORS/S3 client added",
+    "independentReadback": "All eight actual object generations/full byte hashes/sizes/MIME and custom owner/hash metadata matched via official gcloud SDK"
+  },
+  "input": {
+    "kind": "previously generated non-personal portrait",
+    "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+    "bytes": 34832,
+    "dimensions": [
+      384,
+      384
+    ],
+    "consent": "not_personal_data",
+    "rightsDeclaration": "Owned generated synthetic portrait with no actual personal identity; private GCS interoperability fixture."
+  },
+  "artifacts": [
+    {
+      "file": "finance-native.png",
+      "sha256": "b252ed854c4dba504e357e94619b7f09b998c94b7195bd845554684eed83c056",
+      "bytes": 616024,
+      "dimensions": [
+        1080,
+        1350
+      ],
+      "renderer": "actual private EditorApp Menu Download PNG after save/reload",
+      "approval": "unreviewed raw native export, not final approved completion"
+    },
+    {
+      "file": "cultural-native.png",
+      "sha256": "06c5228b4032c2468e54d4ceb6b35ab413181b13db1b86bd8c7f6a58cdbfe90e",
+      "bytes": 601029,
+      "dimensions": [
+        1080,
+        1350
+      ],
+      "renderer": "actual private EditorApp Menu Download PNG after save/reload",
+      "approval": "unreviewed raw native export, not final approved completion"
+    }
+  ],
+  "NeoReadbacks": "neo-readbacks.json",
+  "limitations": [
+    "Upload used Neo ordinary DOM File/DataTransfer drop on actual upstream image handler because the file-picker ref was not a file input; no app internals or direct upload API bypass. Placement/save/reload/download used actual native UI.",
+    "Native scope selected again after page reload; this is saved asset persistence, not scope-navigation persistence evidence.",
+    "Local session expiry was explicitly advanced only in owned QA SQLite; not eight-hour wallclock or managed Google token expiry proof.",
+    "Membership revoked only for owned QA marketer; fresh reads/writes deny. No held-GCS-read fault was injected.",
+    "Room join/callback/public-share checks 404 reflect disabled/unregistered capabilities, not real multiplayer/native room proof. Comments and full token transport remain separate existing foundations.",
+    "Downloaded pixels cover some fixture copy by deliberate default placement; this verifies private media rendering, not polished marketing layout.",
+    "SDK PassThrough listener warnings appeared during initialnativeJSON upload; no warning suppression/global max-listener change. Actual requests and byte checks passed; no leak-free/stress claim.",
+    "Source fixture text/approval is controlled QA, not factual/clinical human review.",
+    "No models, paid inference, new infrastructure, livebrands or maintainedruntime changes. Public upstream distribution remains held.",
+    "No GCS object cleanup yet; retain originalDRAFTbackup and new asset-aware backup pending root evidence acceptance."
+  ],
+  "preservation": {
+    "priorRecoveryDatabase": "Untouched; consistent prior backup retained privately",
+    "newQaSQLiteBackupBytes": 106496,
+    "newQaSQLiteBackupSha256": "e410283174d8241ec774eb8db33243e9386de72600b27c15f8793cdaed8bb7b7",
+    "assetAwareBackup": "All eight actual GCS object payloads retained privately and independently checked by reviewer",
+    "ownedFixtureStopped": true,
+    "cloudQaObjects": "Retained pending public review; no cleanup performed"
+  }
+}
