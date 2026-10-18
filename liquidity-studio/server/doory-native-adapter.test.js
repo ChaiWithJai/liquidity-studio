@@ -142,6 +142,17 @@ test("missing fonts, unapproved claims, unsupported version and stale bindings r
     () => compileDooryDocument({ spec, format: "story" }),
     /Missing verified font/,
   );
+  const incompatible = structuredClone(spec);
+  incompatible.nativeTargets.doory.schemaVersion = 2;
+  assert.throws(
+    () =>
+      compileDooryDocument({
+        spec: incompatible,
+        format: "story",
+        availableFonts,
+      }),
+    /Unsupported Doory/,
+  );
   const bad = structuredClone(spec);
   bad.sourceApprovals[0].status = "unreviewed";
   assert.throws(() =>
@@ -282,4 +293,51 @@ test("registered writes reject missing target fonts and recheck membership immed
     /reauthorization required/,
   );
   assert.equal(calls, 0);
+});
+
+test("actual pinned browser serialization defaults survive token refresh without accepting nested remote paints", async () => {
+  const { readFileSync } = await import("node:fs");
+  const serialized = JSON.parse(
+    readFileSync(
+      new URL(
+        "../../scripts/investigations/doory-fabric7-textbox.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  const { spec, profile } = fixture("vedic_dharma");
+  const compiled = compileDooryDocument({
+    spec,
+    format: "story",
+    availableFonts,
+  });
+  const index = compiled.document.pages[0].objects.findIndex(
+    (o) => o.id === "headline_layer",
+  );
+  compiled.document.pages[0].objects[index] = serialized;
+  assert.deepEqual(validateDooryDocument(compiled.document), compiled.document);
+  const refreshed = applyDooryBrandTokens({
+    ...compiled,
+    tokens: profile,
+    expectedBrandRevision: spec.brandRevision,
+    brandRevision: "reviewed-new-revision",
+    availableFonts,
+  });
+  assert.deepEqual(
+    validateDooryDocument(refreshed.document),
+    refreshed.document,
+  );
+  assert.equal(
+    refreshed.document.pages[0].objects[index].text,
+    serialized.text,
+  );
+  for (const property of ["fill", "stroke", "backgroundColor"]) {
+    const nested = structuredClone(compiled.document);
+    nested.pages[0].objects[index][property] = {
+      type: "pattern",
+      source: "http://untrusted.invalid/private",
+    };
+    assert.throws(() => validateDooryDocument(nested), /solid colors/);
+  }
 });

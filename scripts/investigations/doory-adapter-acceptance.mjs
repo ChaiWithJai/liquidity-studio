@@ -365,6 +365,11 @@ for (const [preset, brandId] of [
       JSON.stringify(exported.document, null, 2),
       { mode: 0o600 },
     );
+    fs.writeFileSync(
+      path.join(evidenceDir, `adapter-${preset}-${format}-manifest.json`),
+      JSON.stringify(refreshed.manifest, null, 2),
+      { mode: 0o600 },
+    );
     native.push({
       preset,
       format,

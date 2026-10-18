@@ -70,6 +70,39 @@ export function validateDooryDocument(doc) {
         "stroke",
         "strokeWidth",
         "strokeDashArray",
+        "angle",
+        "backgroundColor",
+        "charSpacing",
+        "direction",
+        "fillRule",
+        "flipX",
+        "flipY",
+        "fontStyle",
+        "globalCompositeOperation",
+        "linethrough",
+        "minWidth",
+        "opacity",
+        "overline",
+        "paintFirst",
+        "pathAlign",
+        "pathSide",
+        "pathStartOffset",
+        "scaleX",
+        "scaleY",
+        "shadow",
+        "skewX",
+        "skewY",
+        "strokeDashOffset",
+        "strokeLineCap",
+        "strokeLineJoin",
+        "strokeMiterLimit",
+        "styles",
+        "textBackgroundColor",
+        "textDecorationThickness",
+        "underline",
+        "visible",
+        "rx",
+        "ry",
       ]);
       if (
         typeof object.id !== "string" ||
@@ -78,6 +111,100 @@ export function validateDooryDocument(doc) {
       )
         throw fail(422, "Unsupported native layer");
       ids.add(object.id);
+      const color = (value) =>
+        value === null ||
+        value === "" ||
+        value === "transparent" ||
+        (typeof value === "string" &&
+          /^(?:#[a-f0-9]{3,8}|rgba?\([0-9., %]+\))$/i.test(value));
+      for (const key of [
+        "fill",
+        "stroke",
+        "backgroundColor",
+        "textBackgroundColor",
+      ])
+        if (object[key] !== undefined && !color(object[key]))
+          throw fail(422, "Only bounded native solid colors are supported");
+      if (object.shadow !== undefined && object.shadow !== null)
+        throw fail(422, "Native shadow effects require explicit support");
+      if (
+        object.styles !== undefined &&
+        (!Array.isArray(object.styles) || object.styles.length !== 0)
+      )
+        throw fail(
+          422,
+          "Per-character native styling requires explicit support",
+        );
+      for (const key of [
+        "angle",
+        "charSpacing",
+        "minWidth",
+        "opacity",
+        "pathStartOffset",
+        "scaleX",
+        "scaleY",
+        "skewX",
+        "skewY",
+        "strokeDashOffset",
+        "strokeMiterLimit",
+        "strokeWidth",
+        "lineHeight",
+        "textDecorationThickness",
+        "rx",
+        "ry",
+      ])
+        if (
+          object[key] !== undefined &&
+          (!Number.isFinite(object[key]) || Math.abs(object[key]) > 20000)
+        )
+          throw fail(422, "Invalid native scalar");
+      if (
+        object.strokeDashArray !== undefined &&
+        object.strokeDashArray !== null &&
+        (!Array.isArray(object.strokeDashArray) ||
+          object.strokeDashArray.length > 20 ||
+          object.strokeDashArray.some(
+            (n) => !Number.isFinite(n) || n < 0 || n > 20000,
+          ))
+      )
+        throw fail(422, "Invalid native dash pattern");
+      for (const key of [
+        "flipX",
+        "flipY",
+        "linethrough",
+        "overline",
+        "splitByGrapheme",
+        "strokeUniform",
+        "underline",
+        "visible",
+      ])
+        if (object[key] !== undefined && typeof object[key] !== "boolean")
+          throw fail(422, "Invalid native flag");
+      for (const key of [
+        "originX",
+        "originY",
+        "direction",
+        "fillRule",
+        "fontStyle",
+        "globalCompositeOperation",
+        "paintFirst",
+        "pathAlign",
+        "pathSide",
+        "strokeLineCap",
+        "strokeLineJoin",
+        "textAlign",
+      ])
+        if (
+          object[key] !== undefined &&
+          (typeof object[key] !== "string" ||
+            !/^[a-z-]{1,40}$/.test(object[key]))
+        )
+          throw fail(422, "Invalid native enum");
+      if (
+        object.fontWeight !== undefined &&
+        ![400, 700, "normal", "bold"].includes(object.fontWeight)
+      )
+        throw fail(422, "Unsupported native font weight");
       for (const key of ["left", "top", "width", "height"])
         if (!Number.isFinite(object[key]) || Math.abs(object[key]) > 20000)
           throw fail(422, "Invalid native geometry");
