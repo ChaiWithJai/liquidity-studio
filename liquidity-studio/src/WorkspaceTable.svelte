@@ -420,6 +420,7 @@
 <section bind:this={host} tabindex="-1" class="workspace-table-surface" aria-label="Story work table" data-scope-key={scopeKey}>
   <div class="table-primary">
     <div class="projection-switch" role="group" aria-label="Story projection"><button class="secondary" aria-pressed={($client.ui.viewKind||"table")==="table"} onclick={()=>client.setUi({viewKind:"table"})}>Table view</button><button class="secondary" aria-pressed={$client.ui.viewKind==="board"} onclick={()=>client.setUi({viewKind:"board"})}>Board view</button></div>
+    {#if $client.ui.viewKind==="board"}<button class="secondary" disabled={!rows.length||$client.mutationPending} onclick={selectLoaded}>Select loaded rows</button>{/if}
     <label class="view-picker">View <select aria-label="Saved workspace view" bind:value={viewId} onchange={applyView}><option value="">Current view</option>{#each $client.views as view (view.id)}<option value={view.id}>{view.name} · {view.sharing==="brand"?"Shared":"Personal"}</option>{/each}</select></label>
   </div>
   <div class="table-tools">
