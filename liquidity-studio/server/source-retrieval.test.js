@@ -32,6 +32,22 @@ function transport({
   };
 }
 const publicLookup = async () => [{ address: "8.8.8.8", family: 4 }];
+test("rejected upstream status and encoding retain only fixed safe scalar diagnostics", async () => {
+  for (const [status, encoding, category] of [[302, undefined, "absent"], [403, "identity", "identity"], [200, "gzip", "gzip"], [200, "br", "br"], [200, "private-header-token", "other"]]) {
+    await assert.rejects(retrieveSource(url, {
+      hosts: "source.example", lookup: publicLookup,
+      get: transport({status, body: "private-source-body", headers: {"content-type":"text/html", ...(encoding === undefined ? {} : {"content-encoding":encoding}), location:"https://private-location.example/secret", "set-cookie":"private-cookie-token"}}),
+    }), error => {
+      assert.equal(error.status, 502);
+      assert.equal(error.message, "Source response is unavailable or unsupported");
+      assert.equal(error.upstreamStatus, status);
+      assert.equal(error.sourceEncodingCategory, category);
+      assert.deepEqual(Object.keys(error).sort(), ["sourceEncodingCategory", "status", "upstreamStatus"]);
+      assert.doesNotMatch(JSON.stringify(error), /private-source-body|private-location|private-cookie-token|private-header-token/);
+      return true;
+    });
+  }
+});
 test("source URL and DNS reject SSRF, credentials, redirects and nontext without returning remote body", async () => {
   for (const bad of [
     "http://source.example/a",

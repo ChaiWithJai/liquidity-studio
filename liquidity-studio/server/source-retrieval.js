@@ -264,7 +264,11 @@ export async function retrieveSource(
             ) {
               res.resume();
               reject(
-                fail(502, "Source response is unavailable or unsupported"),
+                Object.assign(fail(502, "Source response is unavailable or unsupported"), {
+                  upstreamStatus: Number.isInteger(res.statusCode) && res.statusCode >= 100 && res.statusCode <= 599 ? res.statusCode : 0,
+                  sourceEncodingCategory: res.headers["content-encoding"] === undefined ? "absent"
+                    : ["identity", "gzip", "deflate", "br"].includes(res.headers["content-encoding"]) ? res.headers["content-encoding"] : "other",
+                }),
               );
               return;
             }
