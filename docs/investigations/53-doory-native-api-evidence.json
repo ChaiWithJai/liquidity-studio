@@ -1,0 +1,111 @@
+{
+  "sourceCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "checks": [
+    "actual_two_owner_csrf_sessions",
+    "uploaded_font_bytes_hash_match",
+    "both_presets_four_native_formats_create_read_exact",
+    "registered_boundary_human_edit_reload",
+    "optimistic_stale_patch_409",
+    "brand_swatch_native_update_preserves_human_text",
+    "registered_native_json_copy_exact",
+    "native_outsider_owner_404",
+    "studio_other_brand_membership_denied",
+    "foreign_resource_denied",
+    "wrong_native_owner_session_denied"
+  ],
+  "fonts": [
+    {
+      "family": "Instrument Serif",
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88",
+      "license": "InstrumentSerif-OFL.txt",
+      "source": "Studio bundled licensed bytes; uploaded and hash-matched on owned local Doory"
+    },
+    {
+      "family": "Mona Sans",
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39",
+      "license": "MonaSans-OFL.txt",
+      "source": "Studio bundled licensed bytes; uploaded and hash-matched on owned local Doory"
+    },
+    {
+      "family": "Inter",
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+      "license": "Inter-LICENSE.txt",
+      "source": "Studio bundled licensed bytes; uploaded and hash-matched on owned local Doory"
+    }
+  ],
+  "native": [
+    {
+      "preset": "liquidity_desk",
+      "format": "infographic",
+      "nativeId": "1f11d702-fa7c-45cc-b9f5-6f964469e9f0",
+      "revision": 3,
+      "pageCount": 1,
+      "sha256": "7e99b5b4c41e0d96e3693fc239185ddc83248a568d403ca5272b7716f095d711",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "carousel",
+      "nativeId": "817c8904-e198-4617-b2d1-ce99094aad97",
+      "revision": 3,
+      "pageCount": 4,
+      "sha256": "6f6c24bfee82da93c648a043afca6d8861277df0cfc4de37041fce28c7089870",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "story",
+      "nativeId": "faee4669-e750-4c0c-928a-4f19ff3d32de",
+      "revision": 3,
+      "pageCount": 1,
+      "sha256": "3a11ae5c47574341bb75320ccc034b54000940259854562cf571313794f805de",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "reel",
+      "nativeId": "0840c1d5-7e5b-4264-91d3-db9f9a5e23af",
+      "revision": 3,
+      "pageCount": 3,
+      "sha256": "86b25053f6cf47ccb10f335d198449cddb41b37257b14a87784976172b7ab4c5",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "infographic",
+      "nativeId": "4580da19-5747-4d3e-a4af-b1159fab4ac3",
+      "revision": 3,
+      "pageCount": 1,
+      "sha256": "bfdfba71de846c0964b4004d6f0e36619735a1ada54c42deac6f8e2153324bf4",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "carousel",
+      "nativeId": "3243d218-8c06-40cc-8c2b-66f336b15243",
+      "revision": 3,
+      "pageCount": 4,
+      "sha256": "5bcdae9fe435b67280dedb1bee80e2022339dd5228622742d1216ecb84920602",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "story",
+      "nativeId": "9f861d08-bce7-4288-83a4-35935c5ad454",
+      "revision": 3,
+      "pageCount": 1,
+      "sha256": "97590be703da2d4bd9419fffc6388fe80bb5ce8c3dd87974667567eaf0b4f20d",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "reel",
+      "nativeId": "80b25dd7-55c0-4e27-ac58-ce5e552facda",
+      "revision": 3,
+      "pageCount": 3,
+      "sha256": "f608d20d3d63dd137b61e61d78b8cb14d678992547dc0292fffc73029ab6d6d3",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    }
+  ],
+  "limits": "Operator local bootstrap plus registered Studio boundary with actual Doory sessions. Studio identities are isolated test-mode fixtures, not managed Google. Native JSON copy is not a self-contained archive; browser hydration, pixels, media/cutouts and commercial licensing are separate acceptance."
+}
