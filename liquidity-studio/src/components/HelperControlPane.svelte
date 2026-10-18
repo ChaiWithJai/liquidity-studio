@@ -1,6 +1,6 @@
 <script>
   import { untrack } from 'svelte';
-  let { request, scopeKey, actorId, story = null, members = [] } = $props();
+  let { request, scopeKey, actorId, story = null, members = [], onContentChanged = async () => {} } = $props();
   let projection = $state({ grants: [], proposals: [], presence: [], operations: [] });
   let helperId = $state(''), category = $state(''), error = $state(''), message = $state('');
   let pending = $state(0), uncertain = $state(null);
@@ -36,6 +36,11 @@
     void beat(); const timer = setInterval(beat, 10000);
     return () => clearInterval(timer);
   });
+  async function notifyContent(receipt, owner) {
+    const storyIds = [...new Set((receipt.rows || receipt.outcomes || []).map(item => item.id || item.storyId).filter(Boolean))];
+    try { await onContentChanged({ storyIds }); }
+    catch (failure) { if (owner === lifecycle) error = `Operation is recorded; refreshing shared content failed: ${failure.message}`; }
+  }
   async function action(path, body, success) {
     const owner = lifecycle, send = request;
     pending++; error = '';
@@ -60,7 +65,7 @@
     uncertain = intent;
     try {
       const receipt = await send(`/api/studio/workspace/operations/${operationId}/undo`, { method: 'POST', body: JSON.stringify({ idempotencyKey: intent.idempotencyKey }) });
-      if (owner === lifecycle) { uncertain = null; message = `Undo recorded for ${receipt.operationId || operationId}. Newer work is protected by revision checks.`; await refresh(owner, send); }
+      if (owner === lifecycle) { uncertain = null; message = `Undo recorded for ${receipt.operationId || operationId}. Newer work is protected by revision checks.`; await refresh(owner, send); await notifyContent(receipt, owner); }
     } catch (failure) {
       if (owner !== lifecycle) return;
       if (failure.status >= 400 && failure.status < 500) uncertain = null;
@@ -79,6 +84,7 @@
       uncertain = null;
       message = `Operation ${receipt.operationId}: ${receipt.outcomes.map(outcome => `${outcome.storyId}: ${outcome.status}`).join('; ')}. Refresh the affected story when you are ready; your current editor and focus stay here.`;
       await refresh(owner, send);
+      await notifyContent(receipt, owner);
     } catch (failure) {
       if (owner !== lifecycle) return;
       if (failure.status >= 400 && failure.status < 500) uncertain = null;
