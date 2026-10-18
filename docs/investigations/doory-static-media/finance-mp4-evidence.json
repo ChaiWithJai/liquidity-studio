@@ -1,0 +1,75 @@
+{
+  "bytes": 567669,
+  "sha256": "376f2c9bfd8c61e827556e38f61ab2adb0bf5bea8c4dab1e264486297184807a",
+  "codec": "h264",
+  "width": 1080,
+  "height": 1920,
+  "fps": "30/1",
+  "durationSeconds": 30,
+  "decodedFrames": 900,
+  "audioStreams": 0,
+  "fullDecode": "ffmpeg null output passed independently",
+  "nativeBoardComparisons": [
+    {
+      "timeSeconds": 0,
+      "rgbSHA256": "0878f3ae0abd9dd9c2ae2905fcd36f767566b2d5ce77ece5c676c62a1f2e2e2a",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        1.6462668788580246,
+        4.092843846450617,
+        4.051625032150206
+      ],
+      "closestNativePage": 1
+    },
+    {
+      "timeSeconds": 2.9,
+      "rgbSHA256": "2e8ddc0468332bb1a4679186f8faf36c86ef457eb7e6c71dd2e34cebc40a9ef7",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        1.7797005208333332,
+        4.233288483796296,
+        4.192523951903293
+      ],
+      "closestNativePage": 1
+    },
+    {
+      "timeSeconds": 3,
+      "rgbSHA256": "04949a6de4398e311d076300631d2f07bda545f26690e92aa66cff54b2d3956a",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        4.21949620627572,
+        1.7992627957818932,
+        2.4497145061728394
+      ],
+      "closestNativePage": 2
+    },
+    {
+      "timeSeconds": 14.9,
+      "rgbSHA256": "83cf6937a12a36d0aba7a5620242164846c157f504826ccf9ed54e2908251153",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        4.206905060442387,
+        1.7706663130144034,
+        2.422549029063786
+      ],
+      "closestNativePage": 2
+    },
+    {
+      "timeSeconds": 15,
+      "rgbSHA256": "ca4ca273d8735d51db7dd77d3bd005985efc36e9e16e3bb07bb6ef8149737700",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        4.162466403034979,
+        2.4164694251543213,
+        1.7814523855452675
+      ],
+      "closestNativePage": 3
+    },
+    {
+      "timeSeconds": 29.9,
+      "rgbSHA256": "87134c97d7819ca54d5bc9bd23490b15d8a82a56cc1ec1d4487c76f00d15aecd",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        4.159999678497942,
+        2.414725115740741,
+        1.7760834619341563
+      ],
+      "closestNativePage": 3
+    }
+  ],
+  "limits": "Actual native static page cuts; no transitions,motion,cutout or sound rights acceptance."
+}

@@ -1,0 +1,58 @@
+{
+  "bytes": 73835,
+  "sha256": "944947dfd3e24238245203e3e8a800ea65feb14e55455ac8d3ca74ef5d74e43b",
+  "dimensions": [
+    720,
+    1280
+  ],
+  "encodedFrames": 3,
+  "loop": 0,
+  "durationMs": 30000,
+  "frames": [
+    {
+      "index": 0,
+      "durationMs": 3000,
+      "rgbSHA": "2993b59b6da371cdc82b07d1843c8506556b483da33416ec2627897d605b5ac8"
+    },
+    {
+      "index": 1,
+      "durationMs": 12000,
+      "rgbSHA": "c827fe749a5e35518f9e15951b283bb79d67e0639c54c5294f38a4f7216534fd"
+    },
+    {
+      "index": 2,
+      "durationMs": 15000,
+      "rgbSHA": "35b27de2e708f367215f04566fa2fd9ee416f0bdc0a5f2617c141690a1e0c139"
+    }
+  ],
+  "limits": "Actual native 720p/15fps GIF export; frame coalescing expected for static boards. No audio, animation or full-size GIF claim.",
+  "nativeBoardComparison": [
+    {
+      "frame": 0,
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        0.527808521412037,
+        3.441830150462963,
+        3.410608723958333
+      ],
+      "closestNativePage": 1
+    },
+    {
+      "frame": 1,
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        3.4257722077546298,
+        0.6171332465277778,
+        1.1794274450231483
+      ],
+      "closestNativePage": 2
+    },
+    {
+      "frame": 2,
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        3.3989970341435183,
+        1.1896455439814815,
+        0.7517494936342594
+      ],
+      "closestNativePage": 3
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "method": "Fresh actual native BrowserOS download after owned guest WebM duration patch; ffprobe count_frames plus full ffmpeg null decode and boundary PNG comparison",
+  "preset": "vedic_dharma",
+  "bytes": 1004663,
+  "sha256": "cc7007bb55eb855ff731f4670c224295dd2414e3c801417518e857b042262bd9",
+  "codec": "vp9",
+  "width": 1080,
+  "height": 1920,
+  "fps": "30/1",
+  "durationSeconds": 30,
+  "decodedFrames": 900,
+  "audioStreams": 0,
+  "nativeBoardComparisons": [
+    {
+      "timeSeconds": 0,
+      "rgbSHA256": "2c7ab1d0dcab8a94918c9a03cb039d218c79f3d7f835761ab1f70a387b189989",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        1.8390994727366252,
+        4.924464538323045,
+        4.889293016975309
+      ],
+      "closestNativePage": 1
+    },
+    {
+      "timeSeconds": 2.9,
+      "rgbSHA256": "36729cee9fdab0209fc4102f402da9fd6627c99b38369e9879f3dc5299292e90",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        1.7279562114197529,
+        4.850720325360082,
+        4.818329475308642
+      ],
+      "closestNativePage": 1
+    },
+    {
+      "timeSeconds": 3,
+      "rgbSHA256": "0df452e9c2040c95365a1ac25d67a3e7d4bd8d03866112f95a27c333e8aeb7eb",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        4.826216242283951,
+        1.7319085969650205,
+        2.35180362654321
+      ],
+      "closestNativePage": 2
+    },
+    {
+      "timeSeconds": 14.9,
+      "rgbSHA256": "a7ed3150f01c86fc0b1f4ea7bd0422d75c3118c3b6c82c5398f154f9c3abd469",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        4.82490306712963,
+        1.7308156507201646,
+        2.3507955568415637
+      ],
+      "closestNativePage": 2
+    },
+    {
+      "timeSeconds": 15,
+      "rgbSHA256": "a482dae96ceea2ffa439058a083a62c5491f9993f3e73b31e1e66b7281d2fbea",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        4.783498585390947,
+        2.3413437178497944,
+        1.7326630015432098
+      ],
+      "closestNativePage": 3
+    },
+    {
+      "timeSeconds": 29.9,
+      "rgbSHA256": "de7e25a60048ecb5109e2e928f601125103e32608727329dd0ec58d3aaec604f",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        4.7830039544753085,
+        2.3401896862139915,
+        1.731024787808642
+      ],
+      "closestNativePage": 3
+    }
+  ],
+  "limits": "Static page cuts; no transitions,motion,cutout or sound rights acceptance. Local QA source patch, not production Studio/editor deployment."
+}

@@ -1,0 +1,47 @@
+{
+  "bytes": 71614,
+  "sha256": "3e486bd52c0c3c19c0e06d56c6b0b16ce33ef420d0134249ee0cedf92028b35f",
+  "dimensions": [
+    720,
+    1280
+  ],
+  "encodedFrames": 3,
+  "loop": 0,
+  "durationMs": 30000,
+  "frames": [
+    {
+      "index": 0,
+      "durationMs": 3000,
+      "rgbSHA": "c4df16100012ffd987f6ec795a1982ff2550ace4c711280e3deaa2704dd7d277",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        0.5515979456018519,
+        2.8061566840277776,
+        2.7594816984953705
+      ],
+      "closestNativePage": 1
+    },
+    {
+      "index": 1,
+      "durationMs": 12000,
+      "rgbSHA": "3c5ec56dda5b9566833b201d977c54b835eb4e91c94883820f3e774d8843ba8e",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        2.7862449363425927,
+        0.5929535590277778,
+        1.1845482494212962
+      ],
+      "closestNativePage": 2
+    },
+    {
+      "index": 2,
+      "durationMs": 15000,
+      "rgbSHA": "903b3e0d2ea9d95cd3394b74abd4d730a8c5d45dc5636ed149b090cd8ae1704e",
+      "meanAbsoluteRGBErrorByNativePNGPage": [
+        2.759182581018518,
+        1.200842013888889,
+        0.731125217013889
+      ],
+      "closestNativePage": 3
+    }
+  ],
+  "limits": "Actual native720p/15fps static-board GIF, no motion/audio/cutout acceptance."
+}
