@@ -117,3 +117,35 @@ test('Firestore inventory callback rollback, selected-value budgets and current 
  await assert.rejects(b.transactWithKeyInventory(['scope'],values=>values),{code:'STORE_CORRUPT'});
  await b.collection.doc('corrupt-parent').delete();await b.collection.doc('wrong-digest').set({key:'other'});await assert.rejects(b.transactWithKeyInventory(['scope'],values=>values),{code:'STORE_CORRUPT'});
 });
+
+// Concrete command path: real SDK/emulator data, controlled principal, no cloud
+// credential lookup or provider. All acceptance runs only in hosted CI.
+import fs from 'node:fs';
+import path from 'node:path';
+import {operatorFixture} from './firestore-seed-operator-fixtures.js';
+import {runFirestoreSeedOperator} from './firestore-seed-operator.js';
+test('Firestore operator commands: zero-write snapshot, apply unknown reply, same keys and durable accepted IDs before dispatch',opts,async t=>{
+ const f=await fixture(t),cli=operatorFixture(t);
+ cli.target.collection=f.store.collection.id;cli.manifest.target.collection=cli.target.collection;
+ fs.writeFileSync(cli.source,JSON.stringify(cli.manifest),{mode:0o600});
+ const args=[...cli.args];args[args.indexOf('--collection')+1]=cli.target.collection;args[args.indexOf('--actor')+1]=f.actor.id;args[args.indexOf('--source-manifest-sha256')+1]=cli.hash(fs.readFileSync(cli.source));cli.env.STUDIO_FIRESTORE_COLLECTION=cli.target.collection;
+ const {Firestore}=await import('@google-cloud/firestore');let loseApply=false;
+ const createStore=async()=>{
+  const store=new FirestoreStore({firestore:new Firestore({projectId:'liquidity-emulator-contract'}),collection:cli.target.collection});
+  if(loseApply){loseApply=false;let phase=0;const original=store.transactWithKeyInventory.bind(store);store.transactWithKeyInventory=async(...input)=>{const result=await original(...input);if(++phase===2)throw new Error('controlled lost apply reply after commit');return result;};}
+  return store;
+ };
+ const before=await f.store.collection.get();const versions=before.docs.map(doc=>[doc.id,doc.updateTime.toMillis()]);
+ const planned=await runFirestoreSeedOperator(args,'plan',{...cli,createStore});assert.equal(planned.readOnly,true);
+ const after=await f.store.collection.get();assert.deepEqual(after.docs.map(doc=>[doc.id,doc.updateTime.toMillis()]),versions);
+ const planFile=args[args.indexOf('--out')+1],intent=path.join(cli.dir,'intent.json'),apply=[...args];apply[apply.indexOf('--out')+1]=path.join(cli.dir,'apply.json');apply.push('--plan',planFile,'--plan-sha256',cli.hash(fs.readFileSync(planFile)),'--title-key',randomUUID(),'--job-key',randomUUID(),'--intent',intent);
+ const dry=await runFirestoreSeedOperator(apply,'apply',{...cli,createStore});assert.equal(dry.exactCurrentMatch,true);assert.equal(fs.existsSync(intent),false);fs.unlinkSync(path.join(cli.dir,'apply.json'));
+ apply.push('--apply');loseApply=true;
+ await assert.rejects(runFirestoreSeedOperator(apply,'apply',{...cli,createStore,dispatch:()=>assert.fail('must not dispatch unknown apply')}),/lost apply reply/);
+ assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'apply-unknown');assert.equal((await f.repo.read()).operatorJobs.length,1);
+ let sent;
+ await assert.rejects(runFirestoreSeedOperator(apply,'apply',{...cli,createStore,dispatch:async(repo,id)=>{const receipt=JSON.parse(fs.readFileSync(intent));assert.equal(receipt.stage,'accepted');assert.equal(receipt.jobId,id);assert.ok(receipt.operationId);sent=id;throw new Error('controlled lost Cloud Tasks reply');}}),/lost Cloud Tasks reply/);
+ assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'dispatch-unknown');assert.equal((await f.repo.read()).operatorJobs.length,1);
+ const done=await runFirestoreSeedOperator(apply,'apply',{...cli,createStore,dispatch:async(repo,id)=>{assert.equal(id,sent);assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'accepted');}});
+ assert.equal(done.jobId,sent);assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'dispatched');assert.equal((await f.repo.read()).operatorJobs.length,1);
+});
