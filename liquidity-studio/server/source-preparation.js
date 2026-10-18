@@ -25,7 +25,17 @@ export class SourcePreparationService {
     try {
       const evidence = [];
       for (const url of urls)
-        evidence.push({ ...(await this.retrieve(url)), id: randomUUID() });
+        evidence.push({
+          ...(await this.retrieve(url, {
+            query: [
+              story.title,
+              ...(story.sourceClaims || [])
+                .filter((claim) => claim.sourceUrl === url)
+                .map((claim) => claim.text),
+            ].join(" "),
+          })),
+          id: randomUUID(),
+        });
       const candidate = buildPreparedCandidate({
         id: randomUUID(),
         scope: this.scope,

@@ -143,3 +143,24 @@ test("cancel during DNS ends before any HTTP request; extraction bounds and empt
     24000,
   );
 });
+test("topic selection preserves complete source paragraphs and Node22 all-address callback stays pinned", async () => {
+  const body =
+    "<html><p>Unrelated navigation and background text that should not outrank the requested topic.</p><p>29. The eight means of Yoga are: the Commandments, the Rules, right Poise,\nright Control of the life-force, Withdrawal, Attention, Meditation, Contemplation.</p></html>";
+  const extracted = extractSourceText(
+    body,
+    "text/html",
+    "Yoga eight means Commandments Meditation",
+  );
+  assert.ok(extracted.startsWith("29. The eight means"));
+  assert.ok(extracted.split("\n")[0].endsWith("Contemplation."));
+  let options;
+  await retrieveSource(url, {
+    hosts: "source.example",
+    lookup: publicLookup,
+    get: transport({ onCall: (value) => (options = value) }),
+  });
+  options.lookup("source.example", { all: true }, (error, addresses) => {
+    assert.equal(error, null);
+    assert.deepEqual(addresses, [{ address: "8.8.8.8", family: 4 }]);
+  });
+});

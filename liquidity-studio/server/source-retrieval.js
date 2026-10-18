@@ -3,6 +3,7 @@ import dns from "node:dns/promises";
 import net from "node:net";
 import { createHash } from "node:crypto";
 import { fail } from "./auth.js";
+import { pinnedLookup } from "./discovery.js";
 
 const MAX_BYTES = 512 * 1024;
 const MAX_TEXT = 24000;
@@ -83,26 +84,27 @@ function entities(text) {
 }
 
 /** Plain extractive evidence, never markup or an approved factual assertion. */
-export function extractSourceText(body, contentType) {
+export function extractSourceText(body, contentType, query = "") {
   const type = contentType.split(";")[0].trim().toLowerCase();
   if (!["text/plain", "text/html", "application/xhtml+xml"].includes(type))
     throw fail(422, "Source must return HTML or plain text");
   let text = body;
   if (type !== "text/plain") {
+    const article = text.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i);
+    const main = text.match(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/i);
+    text = article?.[1] || main?.[1] || text;
     text = text
+      .replace(/[\r\n]+/g, " ")
       .replace(/<!--[\s\S]*?-->/g, " ")
       .replace(
         /<(script|style|noscript|svg|nav|header|footer|form)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
         " ",
       )
-      .replace(
-        /<\/(p|div|section|article|li|h[1-6]|tr)\s*>|<br\s*\/?\s*>/gi,
-        "\n",
-      )
+      .replace(/<\/(p|div|section|article|li|h[1-6]|tr)\s*>/gi, "\n")
       .replace(/<[^>]*>/g, " ");
     text = entities(text);
   }
-  const paragraphs = text
+  let paragraphs = text
     .split(/\n+/)
     .map((line) =>
       line
@@ -111,6 +113,28 @@ export function extractSourceText(body, contentType) {
         .trim(),
     )
     .filter(Boolean);
+  // Retrieval selects source text, not assertions. Every selected word remains an exact excerpt.
+  const terms = [
+    ...new Set(
+      String(query)
+        .toLowerCase()
+        .match(/[a-z]{4,}/g) || [],
+    ),
+  ].slice(0, 64);
+  if (terms.length) {
+    const ranked = paragraphs.map((paragraph, index) => ({
+      paragraph,
+      index,
+      score: terms.filter((term) =>
+        new RegExp(`\\b${term.replace(/s$/, "")}s?\\b`, "i").test(paragraph),
+      ).length,
+    }));
+    ranked.sort((a, b) => b.score - a.score || a.index - b.index);
+    if (ranked[0]?.score > 0)
+      paragraphs = ranked
+        .filter((row) => row.paragraph.length >= 40)
+        .map((row) => row.paragraph);
+  }
   text = paragraphs.join("\n").slice(0, MAX_TEXT).trim();
   if (text.length < 40)
     throw fail(422, "Source returned too little readable text");
@@ -125,6 +149,7 @@ export async function retrieveSource(
     lookup = dns.lookup,
     get = https.get,
     now = () => new Date().toISOString(),
+    query = "",
   } = {},
 ) {
   const url = validateSourceUrl(value, hosts);
@@ -161,8 +186,7 @@ export async function retrieveSource(
               "Accept-Encoding": "identity",
               "User-Agent": "LiquidityStudio-SourceReview/1",
             },
-            lookup: (_host, _options, callback) =>
-              callback(null, address.address, address.family),
+            lookup: pinnedLookup(address),
           },
           (res) => {
             const type = res.headers["content-type"] || "";
@@ -199,6 +223,7 @@ export async function retrieveSource(
       const text = extractSourceText(
         response.bytes.toString("utf8"),
         response.type,
+        query,
       );
       return {
         schemaVersion: 1,
@@ -209,6 +234,10 @@ export async function retrieveSource(
         responseSha256: sha(response.bytes),
         responseBytes: response.bytes.length,
         extractionVersion: "plain-excerpts-v1",
+        selectionMethod: query
+          ? "topic-keyword-overlap-v1"
+          : "document-order-v1",
+        selectionQuerySha256: sha(String(query)),
         text,
         textSha256: sha(text),
         status: "unreviewed",

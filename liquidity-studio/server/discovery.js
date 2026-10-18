@@ -40,6 +40,13 @@ export function validateFeedUrl(value) {
     throw fail(400, "Feed host is not allowed");
   return url;
 }
+// Node22 auto-family lookup asks for an array when options.all is true.
+export function pinnedLookup(address) {
+  return (_host, options, callback) =>
+    options?.all
+      ? callback(null, [{ address: address.address, family: address.family }])
+      : callback(null, address.address, address.family);
+}
 export async function fetchFeed(value) {
   const url = validateFeedUrl(value);
   const addresses = await dns.lookup(url.hostname, { all: true });
@@ -53,8 +60,7 @@ export async function fetchFeed(value) {
     const req = https.get(
       url,
       {
-        lookup: (host, options, callback) =>
-          callback(null, address.address, address.family),
+        lookup: pinnedLookup(address),
       },
       (res) => {
         if (res.statusCode !== 200) {
