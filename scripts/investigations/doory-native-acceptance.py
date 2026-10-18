@@ -2,18 +2,27 @@ import requests,json,copy,uuid,hashlib,asyncio,time
 from pathlib import Path
 import websockets
 import os
-BASE=os.environ.get('DOORY_API_BASE','http://127.0.0.1:39007/api/v1')
+# Fixed disposable target: reject overrides before reading any QA credentials.
+BASE='http://127.0.0.1:39007/api/v1'
+if os.environ.get('DOORY_API_BASE', BASE) != BASE:
+ raise SystemExit('DOORY_API_BASE must match the fixed owned loopback API target')
 ORIGIN='http://127.0.0.1:39007'
 ROOT=Path(os.environ['DOORY_EVIDENCE_DIR'])
-secret=dict(x.split('=',1) for x in (ROOT/'private.env').read_text().splitlines())['QA_PASSWORD']
+private_lines=(line.strip() for line in (ROOT/'private.env').read_text().splitlines())
+secret=dict(line.split('=',1) for line in private_lines if line and not line.startswith('#'))['QA_PASSWORD']
 checks=[]
 def call(s,method,path,data=None,expected=200,extra=None):
  h={'Origin':ORIGIN,'X-CSRFToken':s.cookies.get('csrftoken','')};h.update(extra or {})
- r=s.request(method,BASE+path,json=data,headers=h,timeout=15)
- assert r.status_code==expected,(method,path.split('/shared/')[0],r.status_code,r.text[:600])
+ route='/shared/[redacted]/' if '/shared/' in path else path
+ try:
+  r=s.request(method,BASE+path,json=data,headers=h,timeout=15,allow_redirects=False)
+ except requests.RequestException:
+  raise SystemExit(f'HTTP transport failed: {method} {route}') from None
+ assert r.status_code==expected,(method,route,r.status_code)
  return r.json() if r.content else None
 def mark(name):checks.append(name);print('PASS',name,flush=True)
 a,b,anon=requests.Session(),requests.Session(),requests.Session()
+for session in (a,b,anon):session.trust_env=False
 for s,email in [(a,'owner-a@example.invalid'),(b,'owner-b@example.invalid')]:
  call(s,'GET','/auth/csrf/',expected=204)
  call(s,'POST','/auth/login/',{'email':email,'password':secret})
