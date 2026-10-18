@@ -1,0 +1,107 @@
+{
+  "method": "Actual download EBML metadata read plus independently reproduced public muxer metadata using900dummy chunks. Dummy bytes are not decodable media proof.",
+  "actual": {
+    "duration": 29966,
+    "timecodeScale": 1000000,
+    "durationSeconds": 29.966,
+    "durationDataOffset": 220,
+    "bytes": 1004663,
+    "sha256": "e7d0529d241d2d029845e9a63578350eb0f45e238500cddea6cfab0ffd5cd385"
+  },
+  "metadataOnly": {
+    "duration": 29966,
+    "timecodeScale": 1000000,
+    "durationSeconds": 29.966,
+    "durationDataOffset": 220,
+    "frames": 900,
+    "fps": 30,
+    "expectedEndSeconds": 30
+  },
+  "correctedCopy": {
+    "durationSeconds": 30,
+    "decodedFrames": 900,
+    "fps": "30/1",
+    "width": 1080,
+    "height": 1920,
+    "audioStreams": 0,
+    "bytes": 1004663,
+    "sha256": "cc7007bb55eb855ff731f4670c224295dd2414e3c801417518e857b042262bd9",
+    "changedOffsets": [
+      222,
+      223
+    ],
+    "durationFieldOffsetRange": [
+      220,
+      228
+    ],
+    "all900DecodedFrameChecksumsUnchanged": true,
+    "boundaryFrames": [
+      {
+        "seconds": 0,
+        "expectedPage": 1,
+        "closestNativePNGPage": 1,
+        "meanAbsoluteRGBErrorByPage": [
+          1.8390994727366252,
+          4.924464538323045,
+          4.889293016975309
+        ],
+        "decodedPNGsha256": "2ef0331818ceffa81067876ebd1e8b940566cc8b3cca49ab7d1e443f3d0f3d82"
+      },
+      {
+        "seconds": 2.9,
+        "expectedPage": 1,
+        "closestNativePNGPage": 1,
+        "meanAbsoluteRGBErrorByPage": [
+          1.7279562114197529,
+          4.850720325360082,
+          4.818329475308642
+        ],
+        "decodedPNGsha256": "b89dc61c169076e10b50a6782adb7e8b57779b2b8bc7fdcabb26f8fb269b22f1"
+      },
+      {
+        "seconds": 3,
+        "expectedPage": 2,
+        "closestNativePNGPage": 2,
+        "meanAbsoluteRGBErrorByPage": [
+          4.826216242283951,
+          1.7319085969650205,
+          2.35180362654321
+        ],
+        "decodedPNGsha256": "4dcf8023ea10e9e7b51b50f69581b0973c51c7d64deb79b477711d3654f32381"
+      },
+      {
+        "seconds": 14.9,
+        "expectedPage": 2,
+        "closestNativePNGPage": 2,
+        "meanAbsoluteRGBErrorByPage": [
+          4.82490306712963,
+          1.7308156507201646,
+          2.3507955568415637
+        ],
+        "decodedPNGsha256": "d6ab68a4b73985a15447603fb15fa2d910d9aaf734c03729f8a7ff39b729a6d4"
+      },
+      {
+        "seconds": 15,
+        "expectedPage": 3,
+        "closestNativePNGPage": 3,
+        "meanAbsoluteRGBErrorByPage": [
+          4.783498585390947,
+          2.3413437178497944,
+          1.7326630015432098
+        ],
+        "decodedPNGsha256": "c697795716174a798f5cd99e14d7853f0e8eab9d4c4b1c687884b91d4c28f02b"
+      },
+      {
+        "seconds": 29.9,
+        "expectedPage": 3,
+        "closestNativePNGPage": 3,
+        "meanAbsoluteRGBErrorByPage": [
+          4.7830039544753085,
+          2.3401896862139915,
+          1.731024787808642
+        ],
+        "decodedPNGsha256": "2fbaf192afa440f9db23e064da29255250d9c147cbaf0486db2a9d37fa8752dc"
+      }
+    ]
+  }
+}
