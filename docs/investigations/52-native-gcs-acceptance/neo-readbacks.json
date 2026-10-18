@@ -1,0 +1,182 @@
+{
+  "qa52assetReadback": {
+    "page": 130,
+    "value": [
+      {
+        "assetId": "e4749feec2df72184b14cc2d5da80d0f",
+        "crossBrandReadStatus": 404,
+        "generationId": "3b858abe-0970-438a-a1ea-b6082b00641d",
+        "manifest": {
+          "asset": {
+            "brandId": "12f73378-03eb-42fb-93ce-8fe8d603dadf",
+            "height": 384,
+            "id": "e4749feec2df72184b14cc2d5da80d0f",
+            "mime": "image/jpeg",
+            "organizationId": "503acd7e-373d-4573-a4a1-fb1d1160f863",
+            "ownership": "immutable-brand-upload",
+            "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+            "size": 34832,
+            "width": 384
+          },
+          "delivery": {
+            "authorization": "current-membership-per-retrieval",
+            "cacheLifetime": "editor-session",
+            "publicShare": false,
+            "transport": "studio-authenticated-proxy"
+          },
+          "schemaVersion": 1,
+          "usage": {
+            "documentId": "8c53f7e3-ee26-7044-a11f-007286fe08be",
+            "generationId": "3b858abe-0970-438a-a1ea-b6082b00641d",
+            "intent": "document-usage",
+            "nativeRevision": 3
+          }
+        },
+        "nativeId": "8c53f7e3-ee26-7044-a11f-007286fe08be",
+        "nativeRevision": 3,
+        "resolveStatus": 200,
+        "scope": {
+          "brandId": "12f73378-03eb-42fb-93ce-8fe8d603dadf",
+          "organizationId": "503acd7e-373d-4573-a4a1-fb1d1160f863",
+          "preset": "liquidity_desk"
+        },
+        "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+        "size": 34832,
+        "storageReferenceLeaked": false
+      },
+      {
+        "assetId": "f104240f6d13b12b9d5c472990949bbe",
+        "crossBrandReadStatus": 404,
+        "generationId": "e448c979-d12e-419c-a31d-843d8e806c92",
+        "manifest": {
+          "asset": {
+            "brandId": "63f2ee0c-0d61-4fc8-90e7-36e0af80cebb",
+            "height": 384,
+            "id": "f104240f6d13b12b9d5c472990949bbe",
+            "mime": "image/jpeg",
+            "organizationId": "503acd7e-373d-4573-a4a1-fb1d1160f863",
+            "ownership": "immutable-brand-upload",
+            "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+            "size": 34832,
+            "width": 384
+          },
+          "delivery": {
+            "authorization": "current-membership-per-retrieval",
+            "cacheLifetime": "editor-session",
+            "publicShare": false,
+            "transport": "studio-authenticated-proxy"
+          },
+          "schemaVersion": 1,
+          "usage": {
+            "documentId": "de96354a-c888-8ff9-c7ef-0738ee50777c",
+            "generationId": "e448c979-d12e-419c-a31d-843d8e806c92",
+            "intent": "document-usage",
+            "nativeRevision": 2
+          }
+        },
+        "nativeId": "de96354a-c888-8ff9-c7ef-0738ee50777c",
+        "nativeRevision": 2,
+        "resolveStatus": 200,
+        "scope": {
+          "brandId": "63f2ee0c-0d61-4fc8-90e7-36e0af80cebb",
+          "organizationId": "503acd7e-373d-4573-a4a1-fb1d1160f863",
+          "preset": "vedic_dharma"
+        },
+        "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+        "size": 34832,
+        "storageReferenceLeaked": false
+      }
+    ]
+  },
+  "qa52marketerChecks": {
+    "page": 130,
+    "value": {
+      "actor": "qa52-marketer",
+      "results": [
+        {
+          "brandId": "12f73378-03eb-42fb-93ce-8fe8d603dadf",
+          "invalidOrForeignWrite": 400,
+          "read": 200,
+          "resolve": 200
+        },
+        {
+          "brandId": "63f2ee0c-0d61-4fc8-90e7-36e0af80cebb",
+          "invalidOrForeignWrite": 403,
+          "read": 403,
+          "resolve": 403
+        }
+      ]
+    }
+  },
+  "qa52marketerSave": {
+    "page": 130,
+    "value": {
+      "actor": "qa52-marketer",
+      "nativeId": "8c53f7e3-ee26-7044-a11f-007286fe08be",
+      "revision": 4,
+      "status": 200,
+      "unchangedDocument": true
+    }
+  },
+  "qa52expiry": {
+    "page": 130,
+    "value": {
+      "actor": "qa52-marketer",
+      "assetReadStatus": 401,
+      "controlledSessionExpiry": true
+    }
+  },
+  "qa52revocation": {
+    "page": 130,
+    "value": {
+      "actor": "qa52-marketer",
+      "asset": 403,
+      "document": 403,
+      "membershipRevoked": true,
+      "write": 403
+    }
+  },
+  "qa52thirdChecks": {
+    "page": 130,
+    "value": {
+      "actor": "qa52-third-owner",
+      "results": [
+        {
+          "brandId": "12f73378-03eb-42fb-93ce-8fe8d603dadf",
+          "foreignAsset": 403,
+          "foreignDocument": 403,
+          "foreignIdInOwnScope": 404,
+          "foreignWrite": 403
+        },
+        {
+          "brandId": "63f2ee0c-0d61-4fc8-90e7-36e0af80cebb",
+          "foreignAsset": 403,
+          "foreignDocument": 403,
+          "foreignIdInOwnScope": 404,
+          "foreignWrite": 403
+        }
+      ]
+    }
+  },
+  "qa52staleDisabled": {
+    "page": 130,
+    "value": {
+      "capabilityDisabledChecks": [
+        {
+          "operation": "room-join",
+          "status": 404
+        },
+        {
+          "operation": "callbacks",
+          "status": 404
+        },
+        {
+          "operation": "public-share",
+          "status": 404
+        }
+      ],
+      "meaning": "Disabled/unregistered operation rejection, not actual external room or callback execution",
+      "staleNativeRevisionRead": 409
+    }
+  }
+}
