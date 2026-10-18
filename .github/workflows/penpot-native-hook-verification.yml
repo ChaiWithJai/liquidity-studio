@@ -69,6 +69,7 @@ jobs:
           docker image inspect "$DEVENV" > evidence/devenv-image.json
           docker run --rm --network none --memory 512m --memory-swap 512m --cpus 1 --entrypoint bash "$DEVENV" -lc '
             set -euo pipefail
+            id
             java -version 2>&1
             clojure -Sdescribe
             java -version 2>&1 | grep -q "27\."
@@ -80,8 +81,13 @@ jobs:
           set -euo pipefail
           name="penpot-native-hook-verify-$GITHUB_RUN_ID"
           trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          # Official UID/HOME stay unchanged. The cap-dropped container receives
+          # only the checkout owner's group access to these disposable mounts.
+          printf '%s\n' "$(id -u):$(id -g)" > evidence/host-checkout-owner.txt
+          chmod -R g+rwX upstream evidence
           timeout --signal=TERM --kill-after=30s 45m docker run --rm --name "$name" \
             --memory 8g --memory-swap 8g --cpus 4 --cap-drop ALL --security-opt no-new-privileges \
+            --group-add "$(id -g)" \
             --mount type=bind,src="$GITHUB_WORKSPACE/upstream",dst=/work \
             --mount type=bind,src="$GITHUB_WORKSPACE/studio/tools",dst=/hooks,readonly \
             --mount type=bind,src="$GITHUB_WORKSPACE/recipe/tools/penpot-native-hook-verification",dst=/recipe,readonly \
@@ -99,7 +105,14 @@ jobs:
           git -C upstream status --porcelain > evidence/upstream-after.status
           sha256sum -c evidence/dependencies.before.sha256
           git -C upstream diff --exit-code -- '**/deps.edn' '**/*lock*' '**/package.json'
-          find upstream/backend/src/app/studio upstream/backend/test/app/studio -type f -print0 | sort -z | xargs -0 sha256sum > evidence/installed-original-hook-sources.sha256
+          installed=()
+          for directory in upstream/backend/src/app/studio upstream/backend/test/app/studio; do
+            if [ -d "$directory" ]; then installed+=("$directory"); fi
+          done
+          : > evidence/installed-original-hook-sources.sha256
+          if [ "${#installed[@]}" -gt 0 ]; then
+            find "${installed[@]}" -type f -print0 | sort -z | xargs -0 -r sha256sum > evidence/installed-original-hook-sources.sha256
+          fi
       - name: Record bounded verification manifest
         if: always()
         shell: bash

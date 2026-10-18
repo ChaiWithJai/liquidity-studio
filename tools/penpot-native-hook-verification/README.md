@@ -56,3 +56,25 @@ Primary pinned conventions:
 
 No local compile, Docker pull, test runner or manual hosted dispatch was performed
 while preparing this recipe.
+
+## First hosted attempt: preserved failure
+
+Run [39146035625](https://github.com/ChaiWithJai/liquidity-studio/actions/runs/39146035625)
+used recipe `f2443845` and hook source `4fd78e5a`. It failed before application or
+namespace compilation: `verify.sh` could not write `/evidence/source-ownership.json`.
+The retained official image metadata reports `Config.User="0"`; Clojure's actual
+toolchain receipt identifies `/root/.clojure`. Effective GID was not recorded in
+that attempt and is not invented here. The container had all capabilities dropped
+and could not write the runner-owned 0755 bind. Missing hook directories were a
+secondary collector error because no source had been installed. All dependency
+hashes remained unchanged. This is not native compilation or test evidence.
+
+The correction preserves the official container user/HOME and resource/capability
+bounds. Only disposable `upstream` and `evidence` trees gain group read/write/search
+access, and the container receives the hosted runner's primary group as an
+additional group. No world-write permission, chown, system-directory modification
+or wildcard Git trust is added. The next toolchain/ownership receipts record actual
+UID/GID/groups. The always collector records an empty installed-source inventory
+when installation did not occur, preserving the original failure. A new manual
+run still requires review/merge and explicit dispatch; this change does not rerun
+the failed job.

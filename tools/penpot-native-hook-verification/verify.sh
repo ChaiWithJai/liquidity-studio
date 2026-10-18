@@ -5,7 +5,8 @@ set -euo pipefail
 # as a different UID. Trust only this disposable mount, only on observed drift.
 source_uid=$(stat -c %u /work/.git)
 process_uid=$(id -u)
-printf '{"checkoutUid":%s,"processUid":%s}\n' "$source_uid" "$process_uid" > /evidence/source-ownership.json
+process_gid=$(id -g)
+printf '{"checkoutUid":%s,"processUid":%s,"processGid":%s,"groups":"%s"}\n' "$source_uid" "$process_uid" "$process_gid" "$(id -G)" > /evidence/source-ownership.json
 if [ "$source_uid" != "$process_uid" ]; then
   test -z "${GIT_CONFIG_COUNT:-}"
   export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0=/work
