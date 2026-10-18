@@ -1,6 +1,6 @@
 # Editor approval and artifact receipt workflow
 
-Status: proposed for review. Module: operator-workflow in the approved managed-product capability order. Issue: #56. Depends on editor identity #52 and native adapters #53/#54. This document does not enable callbacks or claim delivery.
+Status: semantics and implementation sequence approved by the operator. Module: operator-workflow in the approved managed-product capability order. Issue: #56. Depends on editor identity #52 and native adapters #53/#54. Runtime delivery requires the acceptance evidence below.
 
 ## Objective and assumptions
 
