@@ -596,13 +596,13 @@ for (const terminalStatus of ['failed', 'cancelled']) {
     await signIn(page);
     const panel = await open(page);
     let projectedStatus = 'queued';
-    await page.route(`**/api/studio/preparations/stories/${urls.brand_default}`, async route => {
+    await page.route(url => url.pathname === `/api/studio/preparations/stories/${urls.brand_default}`, async route => {
       const response = await route.fetch();
       const body = await response.json();
       await route.fulfill({response, json: {...body, status: projectedStatus}});
     });
     const accepted = page.waitForResponse(response =>
-      response.url().endsWith('/api/studio/jobs') && response.request().method() === 'POST');
+      new URL(response.url()).pathname === '/api/studio/jobs' && response.request().method() === 'POST');
     await panel.getByRole('button', {name: 'Prepare a new source candidate', exact: true}).click();
     expect((await accepted).ok()).toBeTruthy();
     const queued = panel.getByText('Source preparation queued. You can leave and rejoin this durable job.', {exact: true});
