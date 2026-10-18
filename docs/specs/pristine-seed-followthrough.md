@@ -1,6 +1,6 @@
-# Pristine seed follow-through: read-only operator plan
+# Pristine seed follow-through: guarded SQLite operator path
 
-This increment persists the reviewed four-story audit as a reproducible read-only SQLite snapshot tool. It does not migrate titles, queue work, reset quotas, restore approvals or add an HTTP mutation API. The three clinical previews remain a separate source increment.
+This increment provides a reproducible read-only SQLite snapshot plan and an explicit internal guarded title/queue composition. No maintained migration or dispatch has been executed. It does not reset quotas, restore approvals or add an HTTP mutation API. The three clinical previews remain a separate source increment.
 
 `server/run-seed-followthrough-plan.js` requires explicit snapshot path/SHA, organization, brand, current founder actor and a new private output. It opens SQLite with `readOnly:true`, checks the file hash before/after, never constructs a ScopedRepository or platform factory, and requires an output directory mode0700/file0600. There is no `--apply` argument. Source HEAD is a full Git SHA; catalog module and immutable registry source hashes are recorded. The snapshot is not a current live fence or a full asset-aware backup.
 
@@ -10,7 +10,7 @@ The plan derives current founder/membership and brand preset from the snapshot. 
 
 `plannedSeedQueueIds` only intersects the existing official preparation dry-run with the reviewed four stable IDs. It does not dispatch. Old Nykaa framing lacks the catalog's `nykaa` topic, so it remains ineligible until an explicit neutral rename; a new source fingerprint must be computed afterward. Never run the unrestricted bootstrap apply and assume it queues only four topics.
 
-`assertPristineSeedPlanRow` is a pure guard intended for the existing WorkspaceService `control.guard` / `control.binding` seam. Hosted coverage holds a normal semantic title operation, commits a real concurrent human edit, then verifies the guard rejects the older migration intent and preserves the human title/revision. This does not implement a live apply path. Future apply must supply current identity and external collection inventory within the authoritative transaction, not captured reads. A scope-only guard cannot promise atomic membership or range/phantom protection for separately stored native records. No such authority is claimed here.
+`assertPristineSeedPlanRow` is a pure guard used through the existing WorkspaceService `control.guard` / `control.binding` seam. Hosted coverage holds a normal semantic title operation, commits a real concurrent human edit, then verifies the guard rejects the older migration intent and preserves the human title/revision. The SQLite composition below supplies current identity and the scoped collection inventory inside the same authoritative transaction. This same-connection protection is deliberately not claimed for Firestore.
 
 Before maintained writes: fresh asset-aware backup (or explicitly scoped zero-asset proof plus consistent SQLite backup), fresh live manifest/root review, exact pristine/CAS and current membership checks inside the transaction, controlled Neo concurrent-edit negative acceptance, and explicit operational handoff. Reuse existing semantic title mutation, revision/content-epoch machinery and official bounded job creation. Keep every older candidate/edit/failed job. Unknown or human-modified records require deliberate owner choice. Rollback is a new revision-aware semantic edit while no later work exists, not a whole-database overwrite.
 

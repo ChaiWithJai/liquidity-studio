@@ -1,4 +1,4 @@
-// Read-only operator planning. No apply/queue endpoint or raw repository replacement.
+// Read-only operator planning; internal SQLite apply is a separate composition.
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {fail} from './auth.js';
@@ -32,9 +32,8 @@ function relatedWork(state,id,externalKeys){
  }
  return reasons;
 }
-/** Pure guard for eventual EXISTING WorkspaceService.control.guard composition.
- * Caller must supply current identity/state/inventory from the SAME authoritative
- * transaction. This module deliberately has NO apply until that boundary exists.
+/** Pure guard for WorkspaceService.control.guard composition. Caller supplies
+ * current identity/state/inventory from the SAME authoritative transaction.
  */
 export function assertPristineSeedPlanRow({identity,actorId,scope,state,externalKeys,row}){
  assertRestoreAvailable(state);
