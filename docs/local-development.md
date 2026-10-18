@@ -57,3 +57,35 @@ Studio-to-native human identity pairing. The developer profile and native owner
 are separate identities. With no `--penpot-config`, the existing launcher behavior
 is unchanged. Restart with the same profile and private configuration to recover
 pending creation or reopen its existing saved native design.
+
+### Optional private image editor and background removal
+
+The ordinary launcher keeps the held native editor and cutout disabled. To opt
+in locally, supply an existing compatible private asset artifact and the already
+owned checkpoint. Nothing is downloaded or installed by the launcher:
+
+```sh
+npm run dev -- --profile development --port 3002 \
+  --native-assets /absolute/private/native-dist \
+  --cutout-model /absolute/private/modnet.onnx
+```
+
+The asset directory must include `studio-native-assets.json`, produced after a
+reviewed private native build with `node scripts/record-local-native-assets.mjs
+/absolute/private/native-dist`. Recording a manifest does not build assets or
+prove an old artifact is compatible. Obtain an artifact built from the current
+bridge sources and lockfile; the launcher rejects source/hash mismatches. It
+serves only the listed frame, license and JS/CSS/WASM assets to a signed-in local
+persona. Current repository fonts are served by Vite. The private asset directory
+and model path stay server-side; production/Google authentication is unchanged.
+
+The checkpoint must be the existing 25,888,640-byte MODNet with SHA-256
+`07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9`.
+The existing authenticated model loader, worker, cache and cancel behavior are
+reused. Select a saved private image and confirm its recorded rights allow
+background removal. The original remains available to Undo. Resolution is
+preserved; outputs above 512 KiB are rejected rather than silently resized.
+A generated nonpersonal fixture proves tool operation, not consenting-human
+quality or conversion provenance. Held editor distribution/license conditions
+remain unchanged. Stopping and restarting without these options disables this
+local feature and preserves profile data.
