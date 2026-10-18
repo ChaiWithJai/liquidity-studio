@@ -1,0 +1,82 @@
+{
+  "method": "Actual browser-produced MP4 independently probed and completely decoded by ffmpeg; boundary frames compared against actual native PNG exports using mean absolute RGB error. Lossy compression means PNG byte equality is not expected.",
+  "format": "mp4",
+  "codec": "h264",
+  "width": 1080,
+  "height": 1920,
+  "fps": "30/1",
+  "durationSeconds": 30,
+  "frames": 900,
+  "audioStreams": 0,
+  "bytes": 585764,
+  "sha256": "e7fcbb41203e34980e696174488b1b6afc45340cc29caaf17fa2ab589cca797d",
+  "boundaryFrames": [
+    {
+      "seconds": 0,
+      "expectedPage": 1,
+      "closestOriginalPngPage": 1,
+      "meanAbsoluteRgbErrorByPage": [
+        1.6873226916152264,
+        4.786085069444444,
+        4.750727719907407
+      ],
+      "decodedFrameSha256": "dee438ae846c0f0ba4d73c6ee985ee2bbd11d8d65449ab346a3efe1d2a7f4d6a"
+    },
+    {
+      "seconds": 2.9,
+      "expectedPage": 1,
+      "closestOriginalPngPage": 1,
+      "meanAbsoluteRgbErrorByPage": [
+        1.7720093878600824,
+        4.87881188914609,
+        4.845774176954733
+      ],
+      "decodedFrameSha256": "ba8ef898ded20eb913c695eb3a4fdf89af9deb7bceae0e073a3bb58c62b8afb1"
+    },
+    {
+      "seconds": 3,
+      "expectedPage": 2,
+      "closestOriginalPngPage": 2,
+      "meanAbsoluteRgbErrorByPage": [
+        4.857074652777778,
+        1.7924885866769547,
+        2.4078578317901234
+      ],
+      "decodedFrameSha256": "e9108e3f959c55661445e10d178a919718f0f9205ab35653f72da91666b7a5c8"
+    },
+    {
+      "seconds": 14.9,
+      "expectedPage": 2,
+      "closestOriginalPngPage": 2,
+      "meanAbsoluteRgbErrorByPage": [
+        4.841803465792181,
+        1.7610262345679013,
+        2.3792973572530864
+      ],
+      "decodedFrameSha256": "ef774dc85a544abe1eb0e61e350bf1667882d947be63dc67cc48159b4b1ee0c2"
+    },
+    {
+      "seconds": 15,
+      "expectedPage": 3,
+      "closestOriginalPngPage": 3,
+      "meanAbsoluteRgbErrorByPage": [
+        4.803118409207819,
+        2.372790316358025,
+        1.7711241319444444
+      ],
+      "decodedFrameSha256": "1ea4edaf8ce0fe8c3d62c8be3d0a4c7d34cf6d2df315488f54987ff8e16762a4"
+    },
+    {
+      "seconds": 29.9,
+      "expectedPage": 3,
+      "closestOriginalPngPage": 3,
+      "meanAbsoluteRgbErrorByPage": [
+        4.8001536779835385,
+        2.3710035686728395,
+        1.7662522505144034
+      ],
+      "decodedFrameSha256": "9c889546a90f8bf1cb9649ce9d21ef824c19f5d6955f40d9d5ac9f01eb325063"
+    }
+  ],
+  "limits": "Controlled three static timed pages. No motion presets, cutout, sound, hosted identity or portable recovery proven."
+}

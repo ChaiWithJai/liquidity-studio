@@ -1,4 +1,4 @@
-# Actual native SVG, JPEG and PDF exports
+# Native static exports and Reel artifact acceptance
 
 Issue #55 acceptance checkpoint, October 18, 2026 UTC. These are actual BrowserOS neo File → Download results from the owned local Doory preview, pinned upstream source `27b6f68221fdbf1ef1bedc182e303210ca9e39f5` with the separately attributed VideoResult lifecycle patch. No media was produced by a schema-only adapter test. Both presets used the verified-glyph native documents from the existing adapter experiment: four formats, nine pages per preset. Human text and deliberately changed accent tokens remained in these fixtures. Missing portrait cutouts remain explicit placeholders.
 
@@ -28,3 +28,8 @@ After the static matrix, the native browser generated and downloaded the three-p
 
 
 The finance Reel was subsequently exported with the same explicit GIF settings and independently decoded:71,614 bytes, SHA256 `3e486bd52c0c3c19c0e06d56c6b0b16ce33ef420d0134249ee0cedf92028b35f`,720×1280 pixels, three coalesced frames, durations3000/12000/15000ms,total30000ms,loop0. Comparison against its own original native PNGs identifies pages1,2,3. The original GIF and finance-gif-evidence.json are included. Thus both presets now have static-board GIF timing evidence; other GIF/animation/alpha assertions remain unproven.
+
+
+## Both native MP4 Reels
+
+Both presets have actual native browser-produced H.264 MP4s, included unchanged. Each independently probes at1080×1920,30/1fps,30.000000 seconds and900 decoded frames. Full ffmpeg null-output decoding passed. Boundary frames at0,2.9,3,14.9,15,29.9 seconds match their own original PNG boards1,1,2,2,3,3 by mean absolute RGB error. CWJ is585,764 bytes/SHA256 `e7fcbb41203e34980e696174488b1b6afc45340cc29caaf17fa2ab589cca797d`; finance is567,669 bytes/SHA256 `376f2c9bfd8c61e827556e38f61ab2adb0bf5bea8c4dab1e264486297184807a`. Each has zero audio streams. Full metadata/frame comparison reports are separate JSON files. These are static page cuts at3/15-second boundaries, not a certification of motion presets, transitions or sound rights.
