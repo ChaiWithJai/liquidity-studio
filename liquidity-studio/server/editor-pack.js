@@ -14,7 +14,8 @@ export const PACK_LIMITS = Object.freeze({
 });
 export const digest = (bytes) =>
   createHash("sha256").update(bytes).digest("hex");
-export const jsonDigest = (value) => digest(Buffer.from(JSON.stringify(value)));
+export const jsonDigest = (value) =>
+  createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex");
 const formats = new Set(["infographic", "carousel", "story", "reel"]);
 const secretKeys = new Set([
   "__proto__",
@@ -428,7 +429,13 @@ export function validateEditorPack(input) {
   }
   if (used.size !== files.size)
     throw fail(422, "Unreferenced editor pack bytes");
-  return { pack: structuredClone(input), files, repository, json, bytes };
+  // Metadata and containers must detach from the caller before any async use.
+  // File records have exactly these four validated primitive fields; new records
+  // can share immutable string/number values without cloning the base64 payloads.
+  // Replacing the value preserves the original top-level key order/checksum.
+  const pack = structuredClone({ ...input, files: [] });
+  pack.files = input.files.map((file) => ({ ...file }));
+  return { pack, files, repository, json, bytes };
 }
 export function sealEditorPack(content) {
   const pack = { ...content, sha256: jsonDigest(content) };
