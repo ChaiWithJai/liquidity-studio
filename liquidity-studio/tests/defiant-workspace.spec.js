@@ -1,0 +1,41 @@
+// Hosted browser contract: real existing auth/store/API, no mocked save success.
+import {test,expect} from '@playwright/test';
+import {randomBytes} from 'node:crypto';
+import {createPlatform} from '../server/platform.js';
+import {DurableStore} from '../server/storage.js';
+import {createHttpServer} from '../server/index.js';
+let platform,server,base,org,password;
+test.beforeEach(async()=>{
+ platform=createPlatform({store:new DurableStore(':memory:'),authMode:'password'});await platform.ready;
+ password=randomBytes(24).toString('base64url');
+ await platform.identity.provision({username:'strategy-founder',password,role:'founder'});
+ const actor=(await platform.identity.login('strategy-founder',password)).user;
+ org=await platform.identity.createOrganization(actor,'Controlled separate label');
+ server=createHttpServer(null,{platform});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));base='http://127.0.0.1:'+server.address().port;
+});
+test.afterEach(async()=>{server?.closeAllConnections();if(server)await new Promise(resolve=>server.close(resolve));await platform?.store.close();});
+test('brandless organization uses real enable/import/graph and restores the selected reference',async({page})=>{
+ const brandBootstraps=[];page.on('request',request=>{const url=new URL(request.url());if(url.pathname==='/api/studio/bootstrap'&&url.searchParams.get('organizationId')===org.id)brandBootstraps.push(url.href);});
+ await page.goto(base+'/?org='+org.id+'&tab=strategy&view=map');
+ await page.getByLabel('Username',{exact:true}).fill('strategy-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →',exact:true}).click();
+ const workspace=page.getByRole('region',{name:'Defiant strategy workspace',exact:true});
+ await workspace.getByRole('button',{name:'Enable strategy for this organization',exact:true}).click();
+ await workspace.getByText('Start with a real reference',{exact:true}).waitFor();
+ await workspace.getByText('Add references',{exact:true}).click();
+ const owned={nodes:[{id:'owned-producer',kind:'person',name:'Our imported producer',description:'Manager-supplied production contact'}],edges:[],evidence:[],observations:[],resources:[{id:'owned-resource',nodeId:'owned-producer',capabilities:['production'],rights:{notes:'Not confirmed'},availability:{timeZone:'Europe/London'}}]};
+ await workspace.getByLabel('Reference data',{exact:true}).fill(JSON.stringify(owned));await workspace.getByRole('button',{name:'Preview import',exact:true}).click();
+ await expect(workspace.getByRole('region',{name:'Reference import preview'})).toContainText('User-reported intake');
+ await workspace.getByRole('button',{name:'Add these references',exact:true}).click();
+ await workspace.getByRole('button',{name:'Explore Our imported producer, person',exact:true}).click();
+ await expect(workspace.getByLabel('Selection details',{exact:true})).toContainText('unverified rights');
+ await expect(page).toHaveURL(/select=owned-producer/);await page.reload();
+ await expect(page.getByLabel('Selection details',{exact:true})).toContainText('Our imported producer');
+ await expect(page.getByLabel('Selection details',{exact:true})).toContainText('User-reported reference');
+ await page.getByText('Add references',{exact:true}).click();await workspace.getByRole('button',{name:'Preview sample map',exact:true}).click();await workspace.getByRole('button',{name:'Add these references',exact:true}).click();
+ await workspace.getByRole('button',{name:'Explore Lagos, region',exact:true}).click();await expect(page).toHaveURL(/select=node_lagos/);
+ await page.goBack();await expect(page).toHaveURL(/select=owned-producer/);await expect(page.getByLabel('Selection details',{exact:true})).toContainText('Our imported producer');
+ await page.goForward();await expect(page).toHaveURL(/select=node_lagos/);
+ expect(brandBootstraps).toEqual([]);expect(platform.store.keys(`scope:${org.id}:`)).toEqual([]);
+ expect((await platform.store.get('identity')).organizations.find(x=>x.id===org.id).brands).toEqual([]);
+ await expect(workspace.getByRole('button',{name:'Build a plan',exact:true})).toBeDisabled();
+});
