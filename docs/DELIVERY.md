@@ -62,3 +62,7 @@ Read open issues and their latest comments before assigning work. Keep one issue
 ## Queue changes
 
 Add new issues freely. Priority and dependency changes should be recorded here or on the affected issue; do not silently expand an in-flight PR.
+
+## Scope transition maintenance
+
+Issue #49 records a presentation gap during slow brand bootstrap: an authorized user's new brand label could appear above the previous brand's backlog. The source fix clears old scoped datasets and renders an explicit pending workspace until the current bootstrap settles. Browser regressions hold real API responses, cover failure and settle rapid switches in both orders. This changes runtime source; the previously recorded immutable image is unchanged and a newly built combined image still needs its own release acceptance before deployment. Svelte state and conditional rendering follow the [official `$state`](https://svelte.dev/docs/svelte/$state) and [`{#if}`](https://svelte.dev/docs/svelte/if) contracts.
