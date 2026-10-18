@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "sourceCommit": "a65bf3682fa99b26970e5ac1cab144d63f3924d7",
+  "browser": {
+    "page": 141,
+    "group": "remote recovery",
+    "controlledPassword": true,
+    "notGoogle": true
+  },
+  "observations": {
+    "sourceInstall": "ordinary service bootstrap, real isolated Firestore",
+    "sourceExport": "actual Neo Operations download",
+    "targetInstall": "Neo page-context ordinary authenticated HTTP API; not panel button",
+    "targetInstallStatus": 200,
+    "targetStatus": "completed",
+    "ownedProcessRestart": true,
+    "rejoinAfterRestart": true,
+    "nativeUIHeadingFontEdit": 57,
+    "nativeRevisionAfterSave": 6,
+    "fullAppReloadNativeFont57": true,
+    "imageBrowserDecodedDimensions": [
+      384,
+      384
+    ],
+    "twelveHistoricalLineageFieldsExact": true,
+    "reviewAuthorityNotRestored": true,
+    "nativeEdit": "Actual upstream UI selected headline_layer and changed font size to57; autosave/Save now advanced version4 to6, retained after full application reload/reopening."
+  },
+  "sourceExport": {
+    "bytes": 2865990,
+    "sha256": "72a11c25721a6a0f68882ba8c307efde2721b86dc6c322d2c3445c2888a5990c"
+  },
+  "targetExport": {
+    "bytes": 2892908,
+    "sha256": "73e6a754294850e9e620d46cff04022c200175afec51272e9710ffb75d3d8eac"
+  },
+  "storage": {
+    "logicalRecords": 25,
+    "physicalParentChunkDocuments": 52,
+    "logicalBytes": 810208,
+    "gcsObjects": 2,
+    "gcsBytes": 18124,
+    "imageRestore": "inline Firestore",
+    "subsequentNativeSceneSaves": "actual GCS immutable JSON",
+    "implementation": "Unchanged production FirestoreStore in a fresh isolated collection; existing private GCS bucket. No production namespace, IAM or service mutation."
+  },
+  "backup": {
+    "manifestSha256": "b6b29f4f82751483690a8855a9c5b4f8d2aa622c0fb34e0d95b0f5039fe3c0af",
+    "allLogicalAndArtifactFileHashesVerified": true,
+    "quiescent": true,
+    "databaseWidePointInTime": false,
+    "privateLocatorsExcluded": true
+  },
+  "limits": [
+    "SDK PassThrough MaxListeners warnings observed, not suppressed",
+    "Generic 500 table request observed: private QA allowlist omitted workspace-views for exact scopes. Generic catch-path503 route/reason was not captured; it is not established as readiness failure.",
+    "No new native PNG download succeeded; do not claim a new PNG artifact",
+    "No inference, provider call, managed Google login, multi-instance, maximum-size or distribution acceptance",
+    "No cleanup performed; QA collection and two recorded object generations retained pending root review"
+  ],
+  "ownedApplicationStopped": true,
+  "neoBlank": true
+}
