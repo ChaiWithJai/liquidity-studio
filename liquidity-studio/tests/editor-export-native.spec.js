@@ -1,3 +1,4 @@
+import {setNativeTool, closeNativeTools} from './native-host-tools.js';
 import { test, expect } from "@playwright/test";
 import { createServer } from "node:http";
 import { build } from "vite";
@@ -188,6 +189,7 @@ test("actual Studio native review renders and signs the exact PNG, survives lost
   await expect(
     frame.getByRole("button", { name: "Layers", exact: true }),
   ).toBeVisible({ timeout: 30000 });
+  await setNativeTool(page, 'review');
   const review = page.getByRole("region", {
     name: "Saved layout review",
     exact: true,
@@ -207,6 +209,7 @@ test("actual Studio native review renders and signs the exact PNG, survives lost
       response.request().method() === "POST" &&
       /\/documents\/[^/]+\/exports\?/.test(response.url()),
   );
+  await closeNativeTools(page);
   await frame
     .getByRole("button", { name: "Prepare approved PNGs", exact: true })
     .click();
@@ -216,6 +219,7 @@ test("actual Studio native review renders and signs the exact PNG, survives lost
     name: "Verified PNG export",
     exact: true,
   });
+  await setNativeTool(page, 'export');
   await exports
     .getByRole("button", { name: "Review page 1", exact: true })
     .click();
@@ -232,6 +236,7 @@ test("actual Studio native review renders and signs the exact PNG, survives lost
       response.request().method() === "GET" &&
       response.url().includes(`/exports/${staged.artifactId}?`),
   );
+  await setNativeTool(page, 'export');
   await exports
     .getByRole("button", { name: "Review page 1", exact: true })
     .click();
@@ -283,6 +288,7 @@ test("actual Studio native review renders and signs the exact PNG, survives lost
   expect(envelopes).toHaveLength(2);
   expect(envelopes[1]).toEqual(envelopes[0]);
   await expect(exports.getByRole("status")).toContainText("PNG verified");
+  await setNativeTool(page, 'review');
   await review
     .getByRole("button", { name: "Reload review", exact: true })
     .click();
