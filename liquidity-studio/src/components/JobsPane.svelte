@@ -151,27 +151,27 @@
   });
 </script>
 <section class="jobs-pane" aria-label="Durable operator jobs">
-  <header><div><h2>Operator jobs</h2><p>Review source-backed campaigns, then track each item by its durable job ID. This does not publish content.</p></div><button onclick={load} disabled={pending}>Refresh jobs</button></header>
+  <header><div><h2>Campaign generation</h2><p>Select reviewed stories, then track their progress.</p></div><button onclick={load} disabled={pending}>Refresh jobs</button></header>
   {#if error}<p role="alert">{error}</p>{/if}
   {#if notice}<p role="status">{notice}</p>{/if}
   {#if retained && pending}<p role="status">Saving job request…</p>
   {:else if retained}<aside role="alert">The response may have been lost. Retry the same request before changing this plan. <button disabled={pending} onclick={()=>submit(retained.path,retained.body)}>Retry same job request</button></aside>{/if}
-  {#if !plan}{#if error}<p>Job configuration is unavailable. Refresh after the operator resolves it.</p>{:else}<p role="status">Loading current scope and review prerequisites…</p>{/if}
+  {#if !plan}{#if error}<p>Job configuration is unavailable. Refresh after the operator resolves it.</p>{:else}<p role="status">Loading campaign prerequisites…</p>{/if}
   {:else}
-    <details open={!active}><summary>Review a new campaign plan</summary><section aria-label="Reviewed job plan"><h3>Plan · up to {plan.maxItems} campaigns</h3><p>{plan.dispatcher.message}</p><p>All four content formats are prepared per campaign. Each item rechecks source review, current access, story and brand revisions, and daily quotas when it runs. Provider billing is not exactly once after an interruption.</p>
+    <details open={!active}><summary>Review a new campaign plan</summary><section aria-label="Reviewed job plan"><h3>Plan · up to {plan.maxItems} campaigns</h3><p>{plan.dispatcher.message}</p><p>Each campaign produces four formats. Sources, access and limits are rechecked before generation. Retrying an interrupted provider call may incur another charge.</p>
       <fieldset disabled={pending||!!retained}><legend>Select saved source-backed stories</legend>
         {#each plan.stories as story (story.id)}<label class="plan-story"><input type="checkbox" aria-label={`Plan ${story.title}`} checked={selected.includes(story.id)} disabled={story.sourceReadiness!=='approved'||(!selected.includes(story.id)&&selected.length>=plan.maxItems)} onchange={event=>toggle(story.id,event.currentTarget.checked)}/><span>{story.title} · revision {story.revision} · {story.sourceReadiness==='approved'?'sources approved':'source review required'}</span></label>{/each}
         {#if !plan.stories.length}<p>No stories in this brand. Add a story and review its sources first.</p>{/if}
         <label class="review-confirmation"><input type="checkbox" bind:checked={reviewed}/>I reviewed these {selected.length} campaigns and their saved input revisions.</label>
       </fieldset><button disabled={pending||!!retained||!reviewed||!selected.length||!plan.dispatcher.configured} onclick={queue}>Queue reviewed plan</button>
     </section>
-    </details><section aria-label="Job history"><h3>Job history</h3>{#if !jobs.length}<p>No durable jobs in this brand. Organization administration and legacy batch history are separate.</p>{:else}<ul>{#each jobs as job (job.id)}<li><button disabled={pending} onclick={()=>openJob(job.id)}>{job.id} · {job.state} · {job.itemCount} campaigns</button></li>{/each}</ul>{/if}</section>
+    </details><section aria-label="Job history"><h3>Job history</h3>{#if !jobs.length}<p>No jobs yet. Queue a reviewed plan above.</p>{:else}<ul>{#each jobs as job (job.id)}<li><button data-job-id={job.id} disabled={pending} onclick={()=>openJob(job.id)}>{job.itemCount} campaigns · {job.state} · {new Date(job.createdAt).toLocaleString()}</button></li>{/each}</ul>{/if}</section>
   {/if}
-  {#if active}<section aria-label="Job details"><h3>Job {active.id}</h3><p>Requested by {active.requestedBy || "a scoped operator"}. Current access is rechecked for each item.</p><p>State: {active.state} · saved {active.updatedAt}</p><p>Delivery: {active.outbox.state}. {active.outbox.state==='pending'?'A separate worker must pick up this persisted plan. Refreshing the page does not execute it.':''}</p>
+  {#if active}<section aria-label="Job details"><h3>Job details</h3><details><summary>Job identity</summary><p>Job {active.id} · Requested by {active.requestedBy || "a workspace member"}</p></details><p>State: {active.state} · saved {active.updatedAt}</p><p>Delivery: {active.outbox.state}. {active.outbox.state==='pending'?'A separate worker must pick up this persisted plan. Refreshing the page does not execute it.':''}</p>
     {#if active.accountingWarning}<p role="alert">{active.accountingWarning}</p>{/if}
     <button disabled={active.canControl===false||pending||!!retained||active.state==='completed'||active.state==='cancelled'} onclick={()=>control('cancel')}>Cancel unfinished items</button>
     {#if active.items.some(item=>['cancelled','paused'].includes(item.state))}<button disabled={active.canControl===false||pending||!!retained} onclick={()=>control('resume')}>Resume paused or cancelled items</button>{/if}
-    <ol>{#each active.items as item (item.id)}<li><p><strong>{item.storyTitle || item.storyId}</strong> · {item.state} · attempt {item.attempt} · reviewed revision {item.storyRevision}</p><p>Item ID: {item.id}</p>
+    <ol>{#each active.items as item (item.id)}<li><p><strong>{item.storyTitle || item.storyId}</strong> · {item.state} · attempt {item.attempt} · reviewed revision {item.storyRevision}</p><details><summary>Item identity</summary><p>{item.id}</p></details>
       {#if item.error}<p role="alert">{item.error.code}: {item.error.message}</p>{/if}
       {#if item.receipt}<p>Committed revision {item.receipt.storyRevision} · generation {item.receipt.generationId} · {item.receipt.mode}</p><p>Provider reported usage{item.receipt.usageProvider?` (${item.receipt.usageProvider})`:""}: {item.receipt.usage?JSON.stringify(item.receipt.usage):'not reported'}</p><button onclick={()=>onOpenStory(item.storyId)}>Open saved campaign</button>{/if}
       {#if item.attempts.some(attempt=>attempt.providerOutcome)}<details><summary>Attempt usage history</summary><ul>{#each item.attempts.filter(attempt=>attempt.providerOutcome) as attempt (attempt.id)}<li>{attempt.state} · output mode {attempt.providerOutcome.mode} · {attempt.providerOutcome.committed?'committed':'not committed'} · reported usage {attempt.providerOutcome.usage?JSON.stringify(attempt.providerOutcome.usage):'unknown or not reported'}</li>{/each}</ul></details>{/if}

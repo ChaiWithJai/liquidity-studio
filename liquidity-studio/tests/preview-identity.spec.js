@@ -36,7 +36,7 @@ async function setup(page) {
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in →" }).click();
   await expect(
-    page.getByRole("heading", { name: "Good stories, next up." }),
+    page.getByRole("heading", { name: "Story backlog", exact: true }),
   ).toBeVisible();
   const response = await page.request.post(
     base + "/api/studio/backlog" + scope,

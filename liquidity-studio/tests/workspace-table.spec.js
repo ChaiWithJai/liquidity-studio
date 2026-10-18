@@ -53,12 +53,14 @@ test.afterAll(async () => {
   platform.store.close();
   rmSync(directory, { recursive: true, force: true });
 });
+async function showDisplay(page) { if (!(await page.getByLabel("Sort stories",{exact:true}).isVisible())) await page.getByText("Display options",{exact:true}).click(); }
 async function signIn(page) {
   await page.goto(base);
   await page.getByLabel("Username", { exact: true }).fill("table-founder");
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in →" }).click();
   await expect(page.locator(".story-row")).toHaveCount(5);
+  await page.getByText("Display options", {exact:true}).click();
 }
 test("table view, detail edit, shared receipt and undo preserve canonical story identity", async ({
   page,
@@ -159,7 +161,8 @@ test("table view, detail edit, shared receipt and undo preserve canonical story 
     "Bulk category",
   );
   await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
-  await expect(page.getByText("0 selected · active brand only")).toBeVisible();
+  await expect(page.locator(".selection-toolbar")).toHaveCount(0);
+  await expect(page.locator(".story-row input:checked")).toHaveCount(0);
   await expect(
     page.getByLabel("Saved workspace view").locator("option"),
   ).not.toContainText(["Shared review queue"]);
@@ -244,7 +247,7 @@ test("large table pagination, recoverable load failure and partial bulk conflict
       });
     } else await route.continue();
   });
-  await page.getByLabel("Sort direction").selectOption("desc");
+  await showDisplay(page); await page.getByLabel("Sort direction").selectOption("desc");
   await expect(page.getByRole("button", { name: "Retry table" })).toBeVisible();
   await page.getByRole("button", { name: "Retry table" }).click();
   await expect(page.locator(".story-row")).toHaveCount(10);
@@ -294,13 +297,13 @@ test("dirty detail and inline metadata retain their opening revisions after anot
  const row=page.locator('.story-row').first();await expect(row).toBeVisible();const id=await row.getAttribute('data-story-id'),revision=Number(await row.getAttribute('data-story-revision'));
  await row.locator('[data-detail-story]').click();await page.getByLabel('Detail category').fill('Unsaved local detail');
  const response=await page.request.post(`${base}/api/studio/workspace/mutations?organizationId=org_default&brandId=brand_default`,{data:{idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:revision,patch:{title:'Externally saved detail title',category:'Newer external category'}}]}});expect(response.ok()).toBeTruthy();
- await page.getByLabel('Sort direction').selectOption('desc');await expect(page.getByRole('dialog').getByRole('alert')).toContainText('original revision');await expect(page.getByLabel('Detail category')).toHaveValue('Unsaved local detail');
+ await showDisplay(page); await page.getByLabel('Sort direction').selectOption('desc');await expect(page.getByRole('dialog').getByRole('alert')).toContainText('original revision');await expect(page.getByLabel('Detail category')).toHaveValue('Unsaved local detail');
  await page.getByRole('button',{name:'Save detail metadata'}).click();await expect(page.getByRole('status',{name:'Operation results'})).toContainText('conflict');
  const current=await (await page.request.get(`${base}/api/studio/workspace/stories/${id}?organizationId=org_default&brandId=brand_default`)).json();expect(current.story.category).toBe('Newer external category');expect(current.story.title).toBe('Externally saved detail title');await expect(page.getByLabel('Detail category')).toHaveValue('Unsaved local detail');
  await page.getByRole('button',{name:'Discard detail edits and reload'}).click();await expect(page.getByLabel('Detail category')).toHaveValue('Newer external category');await page.keyboard.press('Escape');
  const target=page.locator(`[data-story-id="${id}"]`);await target.getByRole('button',{name:/Edit Category/}).click();await target.getByRole('textbox').fill('Unsaved inline category');
  const latest=Number(await target.getAttribute('data-story-revision'));await page.request.post(`${base}/api/studio/workspace/mutations?organizationId=org_default&brandId=brand_default`,{data:{idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:latest,patch:{category:'Newest inline conflict category'}}]}});
- await page.getByLabel('Sort direction').selectOption('asc');await target.getByRole('button',{name:'Save cell',exact:true}).click();await expect(page.getByRole('status',{name:'Operation results'})).toContainText('conflict');await expect(target).toContainText('Newest inline conflict category');
+ await showDisplay(page); await page.getByLabel('Sort direction').selectOption('asc');await target.getByRole('button',{name:'Save cell',exact:true}).click();await expect(page.getByRole('status',{name:'Operation results'})).toContainText('conflict');await expect(target).toContainText('Newest inline conflict category');
 });
 
 test("immediate view create and update save visible search/status before debounce dispatch",async({page})=>{
@@ -332,7 +335,7 @@ for (const movedFocus of [false, true]) test(`delayed canonical sort ${movedFocu
     const url = new URL(response.url());
     return url.searchParams.get("brandId") === brand.id && response.request().method() === "POST" && response.request().postDataJSON()?.sort?.[0]?.field === "category";
   });
-  await page.getByLabel("Sort stories", { exact: true }).selectOption("category");
+  await showDisplay(page); await page.getByLabel("Sort stories", { exact: true }).selectOption("category");
   const sortedRows = (await (await sortedResponse).json()).rows;
   await expect(page.locator("[data-detail-story]").first()).toHaveAttribute("data-detail-story", sortedRows[0].id);
   await expect(page.locator(".table-scroll")).toHaveAttribute("aria-busy", "false");
@@ -360,4 +363,39 @@ for (const movedFocus of [false, true]) test(`delayed canonical sort ${movedFocu
   releaseQuery();
   await expect(page.locator("[data-detail-story]").last()).toHaveAttribute("data-detail-story", id);
   await expect(movedFocus ? search : rowButton).toBeFocused();
+});
+
+for (const viewport of [{width:883,height:695},{width:1280,height:720}]) test(`task hierarchy and progressive table controls remain usable at ${viewport.width}×${viewport.height}`,async({page},info)=>{
+ await page.setViewportSize(viewport);await page.goto(base);await page.getByLabel("Username",{exact:true}).fill("table-founder");await page.getByLabel("Password",{exact:true}).fill(password);await page.getByRole("button",{name:"Sign in →"}).click();await expect(page.locator(".story-row").first()).toBeVisible();await showDisplay(page);
+ const display=page.getByText('Display options',{exact:true});await display.click();
+ const capture=async name=>{if(process.env.STUDIO_CAPTURE_TASK_HIERARCHY){const {mkdirSync}=await import('node:fs');mkdirSync(process.env.STUDIO_CAPTURE_TASK_HIERARCHY,{recursive:true});await page.screenshot({path:`${process.env.STUDIO_CAPTURE_TASK_HIERARCHY}/${viewport.width}-${name}.png`});}};
+ const noOverflow=async()=>expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
+ await expect(page.getByRole('heading',{level:1,name:'Story backlog',exact:true})).toBeVisible();
+ await expect(page.getByText('Private workspace',{exact:false})).toHaveCount(0);await expect(page.locator('.selection-toolbar')).toHaveCount(0);
+ await expect(page.getByLabel('Sort stories')).not.toBeVisible();await expect(page.getByLabel('Saved workspace view')).toBeVisible();
+ await expect(page.getByRole('columnheader',{name:'Assignee',exact:true})).toHaveCount(0);await expect(page.getByRole('columnheader',{name:'Revision',exact:true})).toHaveCount(0);
+ const tableBounds=await page.locator('.table-scroll').boundingBox(),openBounds=await page.locator('.story-row [data-open-story]').first().boundingBox(),titleBounds=await page.locator('.story-row [data-detail-story]').first().boundingBox();expect(openBounds.x+openBounds.width).toBeLessThanOrEqual(tableBounds.x+tableBounds.width+1);expect(titleBounds.width).toBeGreaterThanOrEqual(180);
+ await noOverflow();await capture('backlog');
+ for(const label of ['Display options','More filters','Saved views']){await page.getByText(label,{exact:true}).click();await noOverflow();await capture(label.toLowerCase().replaceAll(' ','-'));}
+ await page.getByText('Columns',{exact:true}).click();await page.locator('.column-options').getByLabel('Assignee',{exact:true}).check();await page.locator('.column-options').getByLabel('Revision',{exact:true}).check();
+ await expect(page.getByRole('columnheader',{name:'Assignee',exact:true})).toBeVisible();await expect(page.getByRole('columnheader',{name:'Revision',exact:true})).toBeVisible();await noOverflow();await capture('optional-columns');
+ const tools=page.locator('.table-tools');for(const box of await tools.locator('input:not([type=checkbox]),select').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {left:r.left,right:r.right,visible:r.width>0};}))){if(box.visible){expect(box.left).toBeGreaterThanOrEqual(0);expect(box.right).toBeLessThanOrEqual(viewport.width);}}
+ await page.getByRole('button',{name:'Board view',exact:true}).click();await expect(page.locator('.status-board')).toBeVisible();await noOverflow();await capture('board');
+ await page.getByRole('button',{name:'Select loaded rows',exact:true}).click();await expect(page.locator('.board-card input:checked')).toHaveCount(Math.min(25,await page.locator('.board-card').count()));await expect(page.locator('.selection-toolbar')).toBeVisible();await capture('board-selected');
+ await page.getByLabel('Brand',{exact:true}).selectOption('brand_vedic');await expect(page.locator('.story-row')).toHaveCount(5);await page.getByRole('button',{name:'Board view',exact:true}).click();await expect(page.locator('.board-card input:checked')).toHaveCount(0);await page.getByRole('button',{name:'Select loaded rows',exact:true}).click();await expect(page.locator('.board-card input:checked')).toHaveCount(5);
+ for(const [tab,title] of [['Campaign Studio','Campaign Studio'],['Brand Kit','Brand Kit'],['Jobs','Jobs'],['Operations','Operations']]){await page.getByRole('button',{name:tab,exact:true}).click();await expect(page.getByRole('heading',{level:1,name:title,exact:true})).toBeVisible();await noOverflow();await capture(tab.toLowerCase().replaceAll(' ','-'));}
+ await info.attach('viewport',{body:JSON.stringify({...viewport,deviceScaleFactor:1}),contentType:'application/json'});
+});
+
+for(const viewport of[{width:883,height:695},{width:1280,height:720}])test(`task status copy stays actionable for pending empty and failed rows at ${viewport.width}×${viewport.height}`,async({page})=>{
+ await page.setViewportSize(viewport);await page.request.post(base+'/api/auth/login',{data:{username:'table-founder',password}});
+ const capture=async name=>{if(process.env.STUDIO_CAPTURE_TASK_HIERARCHY)await page.screenshot({path:`${process.env.STUDIO_CAPTURE_TASK_HIERARCHY}/${viewport.width}-${name}.png`});};
+ let enter,release;const seen=new Promise(r=>enter=r),held=new Promise(r=>release=r);let first=true;
+ const pattern='**/api/studio/workspace/query?*';await page.route(pattern,async route=>{if(!first)return route.continue();first=false;const response=await route.fetch();enter();await held;await route.fulfill({response});});
+ try{await page.goto(base);await seen;await expect(page.getByText('Loading current story rows…',{exact:true})).toBeVisible();await capture('rows-pending');release();await expect(page.locator('.story-row').first()).toBeVisible();}finally{release?.();await page.unroute(pattern);}
+ await page.getByLabel('Search stories',{exact:true}).fill('No match for this controlled fixture');await expect(page.getByRole('heading',{name:'No stories match these filters.',exact:true})).toBeVisible();await capture('no-match');await page.getByRole('button',{name:'Clear filters',exact:true}).click();await expect(page.locator('.story-row').first()).toBeVisible();
+ await page.getByLabel('Brand',{exact:true}).selectOption(emptyBrand.id);await expect(page.getByRole('heading',{name:'No stories here yet.',exact:true})).toBeVisible();await capture('empty-brand');
+ await page.getByLabel('Brand',{exact:true}).selectOption('brand_default');await expect(page.locator('.story-row').first()).toBeVisible();
+ await page.route(pattern,route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Controlled query outage'})}));await page.getByLabel('Search stories',{exact:true}).fill('Trigger controlled outage');await expect(page.getByRole('button',{name:'Retry table',exact:true})).toBeVisible();await capture('rows-failed');await page.unroute(pattern);await page.getByRole('button',{name:'Retry table',exact:true}).click();await expect(page.getByRole('heading',{name:'No stories match these filters.',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'Clear filters',exact:true}).click();await expect(page.locator('.story-row').first()).toBeVisible();await expect(page.getByRole('button',{name:'Retry table',exact:true})).toHaveCount(0);
 });
