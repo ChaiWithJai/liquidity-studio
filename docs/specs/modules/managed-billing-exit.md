@@ -1,12 +1,14 @@
-# Spec: operator-workflow
+# Spec: managed-billing-exit
 
-Status: proposed, awaiting specification approval. Module ID: `operator-workflow` in [CAPABILITY-MAP.md](CAPABILITY-MAP.md). The module order is approved; this specification is not yet approved. Companion [pathway](docs/TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](docs/TENANCY-EVIDENCE.md) separates actual implementation from requests.
+Historical proposal, retained from the 2026-10-17 planning baseline. Its status and implementation descriptions below are historical, not current release claims or new approval gates. See the [current system map](../../architecture/system-map.md) and [documentation index](../../README.md).
+
+Status: proposed, awaiting specification approval. Module ID: `managed-billing-exit` in [CAPABILITY-MAP.md](../../architecture/capability-map.md). The module order is approved; this specification is not yet approved. Companion [pathway](../../TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](../../TENANCY-EVIDENCE.md) separates actual implementation from requests.
 
 ## Objective
 
-Provide source-backed multi-brand editing, generation, calendar assignment and real exports for founder and marketer.
+Offer managed accounts and portable self-hosted delivery with explicit entitlements, usage accounting and customer exit.
 
-Dependencies: identity-tenant-access; produces pilot acceptance workflows for gcp-pilot.
+Dependencies: gcp-pilot; consumes established organization/account identity and scoped export contracts.
 
 ## Tech stack and project structure
 
@@ -46,10 +48,10 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Success criteria
 
-- Both approved brand presets coexist with separate brand revisions, strategies, value groups/pillars and source records; CWJ identity follows the pathway document.
-- No fabricated source defaults or unreviewed clinical assertions enter generation/publication. Provenance and degraded/provider failure states remain visible.
-- Saved edits survive navigation, reload and restart; actual downloadable artifacts are authorized and calendar assignment is visibly distinct from publishing.
-- Run real browser scenarios, negative scope tests, complete feedback export and idempotent authorized batch tests before operator acceptance.
+- Define signed/idempotent usage and billing events; replay never double-charges, and reconciliation separates cost from billable consumption.
+- Demonstrate scoped export/import/ejection into a clean container without managed credentials, including data/assets/config/provenance and validated manifests.
+- Resolve license/IP, upstream redistribution obligations, commercial duration/inclusions and cancellation/retention before onboarding paying customers.
+- Treat agency-client organization delegation as an explicit future capability; do not introduce recursive arbitrary tenancy.
 
 ## Boundaries
 
@@ -59,6 +61,6 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Open questions
 
-Exact approved CWJ strategy/source text, export formats, publishing integrations if any, conflict resolution and editorial approval responsibilities.
+Clerk/payment/metering fit, billable units, synthetic/failure charging, self-hosted identity adapter, license, support terms and $6,000 upfront duration/entitlements.
 
 Review of this specification is the next gate. No implementation tasks or architecture code are authorized by this document alone.
