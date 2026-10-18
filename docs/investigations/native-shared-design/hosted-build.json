@@ -1,6 +1,6 @@
 {
-  "sourceSha": "85203dc24aeef8fb755b0213984f05322c7d63cf",
-  "runId": "39148350588",
+  "sourceSha": "1773694bd3a3fa94112bd177a679a0b177826fc5",
+  "runId": "39151521432",
   "nodeVersion": "v22.23.3",
   "packageLockSha256": "596ffb87c61d33239977777768f787bc0c2fe9b6dd923145fedc5c1418be8c97",
   "sourceFiles": [
@@ -15,6 +15,12 @@
       "mode": "100644",
       "type": "blob",
       "gitObject": "ee7b367de1bb7205592b57b491c352b8f1ed863d"
+    },
+    {
+      "path": ".github/workflows/penpot-backend-candidate-artifact.yml",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "1264c4a4b114dadaf2083bc87df6a1e1ec2866a8"
     },
     {
       "path": ".github/workflows/penpot-font-ui-candidate.yml",
@@ -41,52 +47,10 @@
       "gitObject": "0f8329f9326552e267f67b60a6632d2444e5123d"
     },
     {
-      "path": "CAPABILITY-MAP.md",
-      "mode": "100644",
-      "type": "blob",
-      "gitObject": "d5dac860be77c6ccdb2145f284c664d63c11fa7c"
-    },
-    {
       "path": "README.md",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "f4d51d88b0997a03ccdc00c21833aaca23d90b8c"
-    },
-    {
-      "path": "SPEC-container-runtime.md",
-      "mode": "100644",
-      "type": "blob",
-      "gitObject": "06242891dae5f28c3ff6942a167d789b7a33d834"
-    },
-    {
-      "path": "SPEC-durable-storage.md",
-      "mode": "100644",
-      "type": "blob",
-      "gitObject": "9fc290a0b943b5ff2da5ee0be236b4b390d2da00"
-    },
-    {
-      "path": "SPEC-gcp-pilot.md",
-      "mode": "100644",
-      "type": "blob",
-      "gitObject": "10bc5667e07d439796c3b7b856ee689f5f4ac6b9"
-    },
-    {
-      "path": "SPEC-identity-tenant-access.md",
-      "mode": "100644",
-      "type": "blob",
-      "gitObject": "a9cb19ee3e9c1a79b06ba3db5a47dea2fea6b224"
-    },
-    {
-      "path": "SPEC-managed-billing-exit.md",
-      "mode": "100644",
-      "type": "blob",
-      "gitObject": "b22285e0ee764a59026c7819289f5dee4c121e05"
-    },
-    {
-      "path": "SPEC-operator-workflow.md",
-      "mode": "100644",
-      "type": "blob",
-      "gitObject": "492e45540770b6d0437293befc695d4e4215af6b"
+      "gitObject": "c14de1283520a0569127ed7f8fa502c861eacc6e"
     },
     {
       "path": "compose.google-adc.yaml",
@@ -137,6 +101,12 @@
       "gitObject": "7924448c71742e0d466393823804e933ea7539b8"
     },
     {
+      "path": "docs/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "4cad821a90bee34acca808b71202572d340f133b"
+    },
+    {
       "path": "docs/SPRINT-EXECUTION.md",
       "mode": "100644",
       "type": "blob",
@@ -152,7 +122,19 @@
       "path": "docs/TENANCY-PATHWAY.md",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "71e1da34a13b077a745c775c19cb48addb5093e6"
+      "gitObject": "017bd27b4f219ffe24c35e936e551cd91bbe3698"
+    },
+    {
+      "path": "docs/architecture/capability-map.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "dd58724110b6f44e9c4da0167d76d5fdde431a87"
+    },
+    {
+      "path": "docs/architecture/system-map.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "976d25ce8039d119b57cc36e706cb69310723565"
     },
     {
       "path": "docs/backend-operations.md",
@@ -165,6 +147,30 @@
       "mode": "100644",
       "type": "blob",
       "gitObject": "658e5573700200a0232c592a6e4b9ef76370ce5c"
+    },
+    {
+      "path": "docs/decisions/001-canonical-frontend.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "befb137a594ab1a5d6727317f9d1d08f86a0cc69"
+    },
+    {
+      "path": "docs/decisions/002-scoped-storage.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "ce416f612b8bf51bebba9ba57adb0aacacc297b1"
+    },
+    {
+      "path": "docs/decisions/003-source-review-and-design.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "8b5e6c1dde5c926d89ede8f4ab774e64ea5ed1ed"
+    },
+    {
+      "path": "docs/decisions/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "1127e7ff8bc36bea95d510f4d3d59bb6e770e259"
     },
     {
       "path": "docs/deployment-evidence-contract.md",
@@ -1715,6 +1721,12 @@
       "gitObject": "73596d15133db3e244f55a6fd5c5b62f4466f676"
     },
     {
+      "path": "docs/development/penpot-workspace-bootstrap.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "3b67660e1b261b490350ab954f33718442f2fd38"
+    },
+    {
       "path": "docs/docker-local.md",
       "mode": "100644",
       "type": "blob",
@@ -1761,6 +1773,12 @@
       "mode": "100644",
       "type": "blob",
       "gitObject": "104b3b70e6b54dfbc14ee94232d91ff4994784a8"
+    },
+    {
+      "path": "docs/history/capability-map-2026-10-17.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "6abe4519b9ffa88cdffc90d221547c932209a448"
     },
     {
       "path": "docs/investigations/103-prepared-source-evidence.md",
@@ -2468,7 +2486,13 @@
       "path": "docs/investigations/native-shared-design/hosted-build.json",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "12bd4898d4912f3063ae4befcf5adac412704e38"
+      "gitObject": "eb2cb6fc6502777aa17a560b5156d5393d89424f"
+    },
+    {
+      "path": "docs/investigations/native-shared-design/native-verification.json",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "ed3f48b5f355db61dc2d5ee03f1fe3a04edc9349"
     },
     {
       "path": "docs/investigations/nonclinical-seed-sources/README.md",
@@ -2741,6 +2765,12 @@
       "gitObject": "867e7053c009f84e6b36e056f69d7433b3770fec"
     },
     {
+      "path": "docs/investigations/presence-session/hosted-build.json",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "1994e62755907b27cef3a55e72dcfc147b17d8b0"
+    },
+    {
       "path": "docs/investigations/remote-portable-recovery/README.md",
       "mode": "100644",
       "type": "blob",
@@ -2813,6 +2843,30 @@
       "gitObject": "66ea5a0f05d1c43518a89c2d93a81f9d216e9b32"
     },
     {
+      "path": "docs/plans/defiant/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "81523e2c89d70b1bf171a930ab12a6d14b55ff06"
+    },
+    {
+      "path": "docs/plans/defiant/evidence.json",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "e69a68f1dee73a3717e41ef3464166f5ef6e5044"
+    },
+    {
+      "path": "docs/plans/defiant/model.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "9043c443f2f58d24ce4d1e3f25c05fbdefad32ff"
+    },
+    {
+      "path": "docs/plans/defiant/records.json",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "bb78f6866de2f99582820a2e6ccb223dfce6a0b3"
+    },
+    {
       "path": "docs/plans/identity-tenant-access-native-editor/tasks/plan.md",
       "mode": "100644",
       "type": "blob",
@@ -2847,6 +2901,12 @@
       "mode": "100644",
       "type": "blob",
       "gitObject": "6b22ead35078752a965726dfee692217739f6328"
+    },
+    {
+      "path": "docs/specs/defiant-strategy-workspace.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "e60610d51b7cfc770da0792310babd0e76ad388e"
     },
     {
       "path": "docs/specs/doory-host-dependency-inventory.json",
@@ -2906,13 +2966,49 @@
       "path": "docs/specs/identity-tenant-access-native-editor.md",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "2d1ff1e1cf2302ad2acf7b6e2b3e4c2ed0a171fa"
+      "gitObject": "7e5a8fffe2aa3a869e8b0cff8f57da6247636e9e"
     },
     {
       "path": "docs/specs/locked-brand-recovery-ui.md",
       "mode": "100644",
       "type": "blob",
       "gitObject": "b53d2c68c2224dbb5ea034a23d54d114086c43ad"
+    },
+    {
+      "path": "docs/specs/modules/container-runtime.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "fdd0a3a762fd1b1a338a14cda39a21be0c271480"
+    },
+    {
+      "path": "docs/specs/modules/durable-storage.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "eb0773b27eba25835de56353f234275ded6b2cc5"
+    },
+    {
+      "path": "docs/specs/modules/gcp-pilot.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "047aa7c54c81263eec290403a5809a232d98e461"
+    },
+    {
+      "path": "docs/specs/modules/identity-tenant-access.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "3b64112e8333743eca2d0e878a1496db0f7249a9"
+    },
+    {
+      "path": "docs/specs/modules/managed-billing-exit.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "cd00225a81189d0d77b635319685ec73e1cc12b1"
+    },
+    {
+      "path": "docs/specs/modules/operator-workflow.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "d5610b74202e5486842b8f62e9dacd0d54ccf16a"
     },
     {
       "path": "docs/specs/native-cutout-processing.md",
@@ -2987,16 +3083,22 @@
       "gitObject": "af74af0074aa714da0ea5e6fd85cc3be716c61f8"
     },
     {
-      "path": "liquidity-studio/dist/assets/index-C6DCGnmK.js",
+      "path": "liquidity-studio/dist/assets/index-BYHZzEcG.js",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "bab5a690eb773d03bccc7c15d87864532cfa21e8"
+      "gitObject": "7683d2caf183d6168603484f4098d79a29e6b95d"
     },
     {
-      "path": "liquidity-studio/dist/assets/index-DH2uRHQn.css",
+      "path": "liquidity-studio/dist/assets/index-CM2IsFxW.css",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "e6d65122a2025075f58f92c20667cf288bcbc293"
+      "gitObject": "a17b933ee45797c5dd1d6949e4aa191f7e2a629a"
+    },
+    {
+      "path": "liquidity-studio/dist/assets/index-CPuZSXPG.js",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "0586c9ca37d222caf77aa7963c7700a716babfe3"
     },
     {
       "path": "liquidity-studio/dist/fonts/DejaVuSans-Bold.ttf",
@@ -3074,7 +3176,7 @@
       "path": "liquidity-studio/dist/index.html",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "cd46b39a91acaca6f13060ab7e7496b467f05551"
+      "gitObject": "b5a0113c9df7e083b2f69e49ccd259554a036e23"
     },
     {
       "path": "liquidity-studio/docs/decisions/local-first-pilot.md",
@@ -4067,6 +4169,18 @@
       "gitObject": "bdbbf8e606c9cb6391e816633257093f4054e561"
     },
     {
+      "path": "liquidity-studio/server/penpot-policy-readiness.js",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "6321f0a11d16b183e5d015419d7d614688335708"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-policy-readiness.test.js",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "2f6123617ef6d72331346feadeb8a8d7e89761c9"
+    },
+    {
       "path": "liquidity-studio/server/penpot-private-media.js",
       "mode": "100644",
       "type": "blob",
@@ -4094,7 +4208,7 @@
       "path": "liquidity-studio/server/penpot-story-design.js",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "40e42dc7321bf81b9bd312b183a976ae07049225"
+      "gitObject": "82cb6a3a38ca1ba9a998a666d95e97cad87c5cfd"
     },
     {
       "path": "liquidity-studio/server/penpot-story-design.test.js",
@@ -4106,13 +4220,13 @@
       "path": "liquidity-studio/server/penpot-story-development.js",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "1700cd14946ecd138060d4414fbb262c8b4f6d2c"
+      "gitObject": "1dcf24678a7227571b54e22974b002b10dc09855"
     },
     {
       "path": "liquidity-studio/server/penpot-story-development.test.js",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "3d89c0bb09c746c21ae300e939a9fc45254659b0"
+      "gitObject": "881ef46a56b60adfb78f40320fb96f848d63656c"
     },
     {
       "path": "liquidity-studio/server/penpot-studio-actions.js",
@@ -4173,6 +4287,18 @@
       "mode": "100644",
       "type": "blob",
       "gitObject": "8d6dd2f04334755292bc41e14751358241829e97"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-workspace-configuration.js",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "aaf49ebba88b036146c22c32e1a770d142ff2853"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-workspace-configuration.test.js",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "da40ae11d4c7ea8685c0b7ee5be69c91bb0bb6c1"
     },
     {
       "path": "liquidity-studio/server/platform.js",
@@ -4257,6 +4383,12 @@
       "mode": "100644",
       "type": "blob",
       "gitObject": "f60038e98a32c6182b898a0f155b4216ddf579f7"
+    },
+    {
+      "path": "liquidity-studio/server/presence-heartbeat.test.js",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "c27b03f78108f90c898d6473409eeb6d39bcd32d"
     },
     {
       "path": "liquidity-studio/server/public-health.test.js",
@@ -4604,7 +4736,7 @@
       "path": "liquidity-studio/src/components/HelperControlPane.svelte",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "4d0f19dcf79b1917984c99212ac1e230197b4f5a"
+      "gitObject": "5f81b8fa8050942fac120cc958557477a8f2406f"
     },
     {
       "path": "liquidity-studio/src/components/JobsPane.svelte",
@@ -4755,6 +4887,12 @@
       "mode": "100644",
       "type": "blob",
       "gitObject": "2afe031ee14619ce6e0fd45f94efbdecffd55736"
+    },
+    {
+      "path": "liquidity-studio/src/lib/presence-heartbeat.js",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "b52837c888ee529187475447995e848b82127c24"
     },
     {
       "path": "liquidity-studio/src/lib/scoped-request.js",
@@ -5549,6 +5687,48 @@
       "gitObject": "38c23397bfbcd5b922ed3270e1fe00cc7c563c24"
     },
     {
+      "path": "tools/penpot-backend-candidate/Dockerfile",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "15b5ca50e84f30ac238ad552cac36431a70b1508"
+    },
+    {
+      "path": "tools/penpot-backend-candidate/README.md",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "69373f8b187095da9200d558a6e3807fdae73ac4"
+    },
+    {
+      "path": "tools/penpot-backend-candidate/build-jar.sh",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "52ca5ad1fbb9cf2ea5364cbddd159c31d306ed69"
+    },
+    {
+      "path": "tools/penpot-backend-candidate/check-jar.py",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "897ad020a3ce041e7f5fd4493fa3e91fc2a99571"
+    },
+    {
+      "path": "tools/penpot-backend-candidate/check-readers.clj",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "1b0567b985493beda4e140b4a5ff5b1eabe91b8b"
+    },
+    {
+      "path": "tools/penpot-backend-candidate/record-artifact.py",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "aeb199b249f4549a9a9c62d2b49244926e1c8b1c"
+    },
+    {
+      "path": "tools/penpot-backend-candidate/verify-proof.py",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "5b68962d741d1a3abf764dfb1474f8297e2629de"
+    },
+    {
       "path": "tools/penpot-brand-access/README.md",
       "mode": "100644",
       "type": "blob",
@@ -5779,14 +5959,14 @@
   ],
   "files": [
     {
-      "path": "assets/index-BYHZzEcG.js",
-      "bytes": 457802,
-      "sha256": "d8515f640eb8bd2e686ba1d35d5d57cb0ac4088bc19fe9894ac1ad64ba9f695d"
-    },
-    {
       "path": "assets/index-CM2IsFxW.css",
       "bytes": 49587,
       "sha256": "6f5d5617602473c421ba110bd6142a7a5c10a91e95d66bcd57c10975e6c9a511"
+    },
+    {
+      "path": "assets/index-CS5c4ORd.js",
+      "bytes": 458704,
+      "sha256": "077955edf00f32163dcf7c7e73230ccd356c1720efa862ace67dfa954822539c"
     },
     {
       "path": "fonts/DejaVuSans-Bold.ttf",
@@ -5851,7 +6031,7 @@
     {
       "path": "index.html",
       "bytes": 455,
-      "sha256": "f162e0336a67fa6677bc721e5d4a5e8df48a1bde28585bc6d8b112023ba6a706"
+      "sha256": "b83ce0b32758802e049e8a0de272bba91ba67728b7ee9a1c5ff624a248669419"
     }
   ],
   "scope": "Build artifact only; required Verify checks must pass on the final PR head."
