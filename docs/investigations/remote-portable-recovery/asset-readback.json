@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "actualNeoReadback": true,
+  "assets": [
+    {
+      "bytes": 34832,
+      "height": 384,
+      "id": "63eda2697bd659a1e01774716b9abe36",
+      "portableHistory": {
+        "authority": "historical-only",
+        "restorations": [
+          {
+            "fromScope": {
+              "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+              "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+            },
+            "packSha256": "857e1fce742d3015fd9448bcdd92d1f3c5392a216329b4c4fc0bb057a9145470",
+            "restoredAt": "2026-10-18T07:16:31.321Z",
+            "restoredBy": "1b27368e-fbad-477f-b57c-2725deebaa9f",
+            "toScope": {
+              "brandId": "2b118503-3930-49df-8c4a-3a5ef59d8d97",
+              "organizationId": "f2e21fa3-47eb-4a68-a416-ac0a2e9ba30e"
+            }
+          },
+          {
+            "fromScope": {
+              "brandId": "2b118503-3930-49df-8c4a-3a5ef59d8d97",
+              "organizationId": "f2e21fa3-47eb-4a68-a416-ac0a2e9ba30e"
+            },
+            "packSha256": "8cbe9e6bf32b466c9494fb1b35154cc51bdf71cc4692e2f5083741e078af9c6b",
+            "restoredAt": "2026-10-18T07:18:42.367Z",
+            "restoredBy": "d910ea8c-c950-42cc-b047-d4792092db7d",
+            "toScope": {
+              "brandId": "103934a8-9ed0-4bfc-ba43-2eaaf6c51e7f",
+              "organizationId": "f2e21fa3-47eb-4a68-a416-ac0a2e9ba30e"
+            }
+          }
+        ],
+        "sourceAssetId": "63eda2697bd659a1e01774716b9abe36",
+        "sourceCreatedBy": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+        "sourceScope": {
+          "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+          "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+        }
+      },
+      "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+      "status": 200,
+      "width": 384
+    },
+    {
+      "bytes": 198985,
+      "height": 384,
+      "id": "bcdc3cd1730362c6c1a0020a2d57d6e0",
+      "lineage": {
+        "actorId": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+        "documentId": "4f6e89ea-1070-0a5f-7872-cf2534af20b7",
+        "execution": "browser_reported",
+        "inputAssetId": "63eda2697bd659a1e01774716b9abe36",
+        "inputSha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+        "intentId": "e8b20bfefd36677e7ff0eb504a270ac4",
+        "kind": "background-removal",
+        "modelSha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9",
+        "nativeRevision": 3,
+        "outputPolicy": "preserve-resolution-or-reject",
+        "processorVersion": "studio-modnet-area-v1",
+        "serverValidation": "scope-source-native-input-hash-rights-dimensions-output-hash"
+      },
+      "portableHistory": {
+        "authority": "historical-only",
+        "restorations": [
+          {
+            "fromScope": {
+              "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+              "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+            },
+            "packSha256": "857e1fce742d3015fd9448bcdd92d1f3c5392a216329b4c4fc0bb057a9145470",
+            "restoredAt": "2026-10-18T07:16:31.321Z",
+            "restoredBy": "1b27368e-fbad-477f-b57c-2725deebaa9f",
+            "toScope": {
+              "brandId": "2b118503-3930-49df-8c4a-3a5ef59d8d97",
+              "organizationId": "f2e21fa3-47eb-4a68-a416-ac0a2e9ba30e"
+            }
+          },
+          {
+            "fromScope": {
+              "brandId": "2b118503-3930-49df-8c4a-3a5ef59d8d97",
+              "organizationId": "f2e21fa3-47eb-4a68-a416-ac0a2e9ba30e"
+            },
+            "packSha256": "8cbe9e6bf32b466c9494fb1b35154cc51bdf71cc4692e2f5083741e078af9c6b",
+            "restoredAt": "2026-10-18T07:18:42.367Z",
+            "restoredBy": "d910ea8c-c950-42cc-b047-d4792092db7d",
+            "toScope": {
+              "brandId": "103934a8-9ed0-4bfc-ba43-2eaaf6c51e7f",
+              "organizationId": "f2e21fa3-47eb-4a68-a416-ac0a2e9ba30e"
+            }
+          }
+        ],
+        "sourceAssetId": "bcdc3cd1730362c6c1a0020a2d57d6e0",
+        "sourceCreatedBy": "2053ea8d-5700-4c97-b16b-1c4b57970f2f",
+        "sourceScope": {
+          "brandId": "d382e3ef-39e5-4b4e-97de-fabc8e0e3e4e",
+          "organizationId": "97fbc63a-da2b-47e0-8be9-48d6fbc9c68b"
+        }
+      },
+      "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+      "status": 200,
+      "width": 384
+    }
+  ]
+}
