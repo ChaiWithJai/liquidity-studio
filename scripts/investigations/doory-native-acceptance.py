@@ -49,17 +49,17 @@ assert call(anon,'GET','/shared/'+locked['token']+'/',extra={'X-Share-Password':
 mark('password_share_requires_password')
 async def socket_checks():
  uri='ws://127.0.0.1:39009/ws/designs/'+ident+'/'
- async with websockets.connect(uri,origin=ORIGIN) as w:
+ async with websockets.connect(uri,origin=ORIGIN,proxy=None) as w:
   try:await asyncio.wait_for(w.recv(),5);raise AssertionError('anonymous accepted')
   except websockets.ConnectionClosed as e:assert e.code==4401
  mark('anonymous_room_rejected_4401')
  cookie='; '.join(k+'='+v for k,v in b.cookies.get_dict().items())
- async with websockets.connect(uri,origin=ORIGIN,additional_headers={'Cookie':cookie}) as w:
+ async with websockets.connect(uri,origin=ORIGIN,proxy=None,additional_headers={'Cookie':cookie}) as w:
   await w.send(json.dumps({'type':'auth','token':'not-a-valid-token'}))
   try:await asyncio.wait_for(w.recv(),5);raise AssertionError('outsider accepted')
   except websockets.ConnectionClosed as e:assert e.code==4403
  mark('outsider_room_invalid_share_rejected_4403')
- async with websockets.connect(uri,origin=ORIGIN,additional_headers={'Cookie':cookie}) as w:
+ async with websockets.connect(uri,origin=ORIGIN,proxy=None,additional_headers={'Cookie':cookie}) as w:
   await w.send(json.dumps({'type':'auth','token':share['token']}))
   ready=json.loads(await asyncio.wait_for(w.recv(),10));assert ready['type']=='ready' and ready['canWrite']==False
   call(a,'PATCH',path+'share-links/'+share['id']+'/',{'is_active':False})
