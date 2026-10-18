@@ -8,4 +8,6 @@ The developer provider enables this route only with the existing private grant k
 
 The upstream native Export SVG button remains separate: its raw download currently contains protected font URLs. An attempted render-embed query compatibility patch failed actual rendering and was withdrawn. This Studio path does not claim that upstream native export is repaired.
 
-Source changes and hosted regressions are prepared here. Actual ordinary Studio download and standalone-font acceptance must be performed in Neo after integration. No local functional test, build, native restart or export was run for this slice.
+Actual BrowserOS Neo acceptance on 2026-10-18 downloaded the saved CWJ board through the ordinary Studio action. The standalone 1080×1350 SVG is 1,133,093 bytes, SHA-256 `7aa720f6f0af7db59b0fe7e8214f5a172d3e89c4e41a35de30ae807ddfb554a8`. It preserves the human-edited headline and Om glyph. Inter, Noto Sans Devanagari and Mona Sans loaded from three embedded faces, with no external HTTP resource requests. XML parsing and actual browser rendering passed. Font notices are preserved in escaped metadata. The walkthrough corrected the structural root-frame selection and XML-comment handling of license separator hyphens. Receipt: `/tmp/liquidity-media-neo-20261018/saved-svg-receipt.json`.
+
+This is one saved format board acceptance, not a claim that arbitrary image/font imports or all native archive recovery cases are complete. Local application checks used BrowserOS Neo; builds and automated checks ran hosted.
