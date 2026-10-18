@@ -1,5 +1,7 @@
 # Cultural fresh-owner font recovery
 
+This is the historical Inter recovery/system-fallback checkpoint. A later [explicit Noto Om binding](../om-binding/README.md) removes the observed system-font dependency in the same owned copy; the original evidence below is unchanged.
+
 On 2026-10-18, the restored cultural file rendered with the fresh owner's installed Inter Variable and Mona Sans fonts in the original Penpot 2.18.3 frontend. One normal native PNG export reproduced the earlier original output exactly: **138103 bytes, 1080 × 1350, SHA256 `87257a42a362e184dcc9e703101ddfb1825dbd54ef315a8bc80963d7739d4c49`**. The headline, three body lines, footer and controlled fictional portrait are visible. Root independently inspected the actual PNG and native snapshots. No aesthetic or real-person quality assessment is claimed.
 
 ![Fresh-owner cultural first frame](first-frame.png)

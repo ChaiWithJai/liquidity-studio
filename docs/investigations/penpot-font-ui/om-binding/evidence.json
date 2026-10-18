@@ -1,0 +1,119 @@
+{
+  "date": "2026-10-18",
+  "nativeVersion": "2.18.3",
+  "upstreamCommit": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "frontend": "Original baseline; no derivative, callback or ingress activation",
+  "fixture": "Owned cultural native archive copy on same server, fresh native owner",
+  "sourceFont": {
+    "file": "NotoSansDevanagari.ttf",
+    "bytes": 641944,
+    "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e",
+    "license": "SIL Open Font License 1.1",
+    "licenseFile": "NotoSansDevanagari-OFL.txt",
+    "licenseSha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331",
+    "unicodeCmapOmGlyphId": 126,
+    "unicodeCmapCount": 4,
+    "nameRecordsWindowsOnly": 41
+  },
+  "nativeUpload": {
+    "normalFontsUi": true,
+    "uploadCount": 1,
+    "family": "Noto Sans Devanagari",
+    "weight": 400,
+    "style": "normal",
+    "reloadPersistence": true,
+    "existingFourVariantsUnchanged": true,
+    "originalTtfExact": true,
+    "verticalMetricsWarningObserved": true,
+    "noConversionOrRename": true
+  },
+  "storedFormats": [
+    {
+      "format": "TTF",
+      "bytes": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "format": "OTF",
+      "bytes": 416876,
+      "sha256": "0d6e41cfbb291e1c6247c10a667e3132ea42a4eaf05240d4f729171f6e044aba"
+    },
+    {
+      "format": "WOFF",
+      "bytes": 331252,
+      "sha256": "222901c3d58032063d83798f9ebc27c1af42c50c6dfc5ce346afa1d7c58cf036"
+    }
+  ],
+  "nativeBinding": {
+    "beforeRevision": 14,
+    "afterRevision": 24,
+    "pages": 9,
+    "badgeText": "CWJ // ॐ",
+    "selectedTextEachAction": "ॐ",
+    "oneCharacterSelected": true,
+    "allNineLatinLeavesEveryPriorAttributePreserved": true,
+    "omLeafChangedKeysOnly": [
+      "text",
+      "fontId",
+      "fontFamily"
+    ],
+    "newNativeParagraphKeys": 8,
+    "ownedComponentTimestamps": 9,
+    "nativePositionDataRecordedSeparately": true,
+    "otherDataDeeplyEqual": true,
+    "rootIndependentComparison": true,
+    "privateAuditSha256": "bee071150fcdec8305e46dd00260642f179e492611e64020275d1c6bd08f56e5"
+  },
+  "glyphObservation": {
+    "method": "Neo CDP CSS.getPlatformFontsForNode on first-frame Om",
+    "family": "Noto Sans Devanagari",
+    "postScriptName": "NotoSansDevanagari-Regular",
+    "glyphCount": 1,
+    "isCustomFont": true,
+    "systemFallbackReported": false
+  },
+  "png": {
+    "file": "first-frame.png",
+    "bytes": 137952,
+    "width": 1080,
+    "height": 1350,
+    "sha256": "f8bdb85be782a912839e98217e409bb4e48aa4c95542ddb62f045765b0a954ed",
+    "normalNativeExportCount": 1,
+    "headlineBodyFooterPortraitOmVisible": true,
+    "rootIndependentVisualInspection": true,
+    "differenceBoundingBoxVersusHistoricalFallbackPng": [
+      81,
+      72,
+      191,
+      96
+    ],
+    "allPixelsOutsideBadgeBoundingBoxEqual": true,
+    "onlyOmPixelsChanged": false,
+    "latinPixelChangeCauseIsolated": false
+  },
+  "preservation": {
+    "consistentBackupBytes": 536787,
+    "consistentBackupSha256": "c01b68292829229882405a09adafad7019ce6aa76d347ff0ab03f172301665d9",
+    "originalFinanceRevision": 17,
+    "originalCulturalRevision": 9,
+    "financeCopyRevision": 18,
+    "threeStoredDataFingerprintsUnchanged": true,
+    "qa1NormalUiRestored": true,
+    "freshProfileConfirmed": true,
+    "maintainedStudioCloudUnchanged": true
+  },
+  "laterArtifactCleanup": {
+    "removedOwnedBuildZipBytes": 336114582,
+    "removedZipSha256": "48e6616349c1f654dbe567d0ca47e6fb77a975395cca8cb1d05851adbaed4885",
+    "hostedArtifactId": 12133458817,
+    "remoteExpiredAtCleanup": false,
+    "remoteExpiresAt": "2026-10-25T10:50:55Z",
+    "noRunningMountReferences": true,
+    "patchesLicensesManifestsBackupsScreenshotsRetained": true
+  },
+  "limits": [
+    "Same-server fresh-owner proof; not fresh-installation font packaging.",
+    "PNG difference includes Latin badge pixels; cause not isolated.",
+    "No complete asset recovery, private native authority or issues54/57 closure claim."
+  ]
+}
