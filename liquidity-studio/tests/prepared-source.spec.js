@@ -235,9 +235,9 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
       exact: true,
     }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "Edit reviewed copy", exact: true })
-    .click();
+  await page.locator('#workflow-sources > summary').click();
+  await expect(page.locator('#workflow-sources').getByRole('button', {name:'Save source review', exact:true})).toHaveCount(0);
+  await page.locator('#workflow-sources').getByRole('button', {name:'Review this saved copy', exact:true}).click();
   panel = page.getByRole("region", {
     name: "Prepared source draft",
     exact: true,
