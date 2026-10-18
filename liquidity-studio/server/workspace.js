@@ -144,7 +144,7 @@ export class WorkspaceService {
         .filter((s) => s.legacyWeekday),
     };
   }
-  async mutate(actor, input) {
+  async mutate(actor, input, control) {
     await this.authorize(actor);
     exact(input, ["idempotencyKey", "changes"]);
     idempotencyKey(input.idempotencyKey);
@@ -190,7 +190,7 @@ export class WorkspaceService {
     const memberIds = new Set(
       (await this.members(actor)).map((member) => member.id),
     );
-    const requestHash = hash(input),
+    const requestHash = hash(control ? { input, binding: control.binding } : input),
       operationId = randomUUID(),
       eventId = randomUUID(),
       now = new Date().toISOString(),
@@ -201,6 +201,9 @@ export class WorkspaceService {
         prior = data.receipts.find(
           (r) => r.idempotencyKey === input.idempotencyKey,
         );
+      // Internal control hooks execute inside the same scoped transaction. They
+      // are never accepted from the public mutation HTTP envelope.
+      control?.guard(state, prior);
       if (prior) {
         if (prior.actorId !== actor.id || prior.requestHash !== requestHash)
           throw fail(409, "Idempotency key already used");
@@ -297,6 +300,7 @@ export class WorkspaceService {
         Buffer.byteLength(JSON.stringify(active.receipts)) > 1024 * 1024
       )
         active.receipts.shift();
+      control?.committed(state, result);
       return state;
     });
     return result;
