@@ -107,6 +107,9 @@ test("both brands all formats preserve full source, native text/stableIDs and th
           JSON.parse(page.notes).semanticContent.format,
           spec.sourceCampaign[format],
         );
+        const index = result.document.pages.indexOf(page);
+        const direction = format === "reel" ? spec.sourceCampaign.reel.beats[index].bRollDirection : format === "carousel" ? spec.sourceCampaign.carousel.slides[index].visualNote : null;
+        if (direction) assert.ok(!page.objects.find(object => object.id === "source_context_layer").text.includes(direction), "Art direction must stay in page notes rather than exported copy");
       }
       if (format === "reel")
         assert.deepEqual(
