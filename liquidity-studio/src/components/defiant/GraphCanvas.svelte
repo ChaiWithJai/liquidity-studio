@@ -19,7 +19,7 @@
         {#if a&&b}
           {@const d=`M${a.x*10},${a.y*6.5} C${(a.x+b.x)*5},${a.y*6.5} ${(a.x+b.x)*5},${b.y*6.5} ${b.x*10},${b.y*6.5}`}
           <path class="edge-line" class:chosen={selectedId===edge.id} class:match={edge.kind==='match'} d={d} marker-end={selectedId===edge.id?'url(#arrow-active)':'url(#arrow)'}/>
-          <path class="edge-hit" data-edge={edge.id} d={d} role="button" tabindex="0" aria-label={`Inspect ${edge.kind} ${edge.name}`} onclick={()=>onselect(edge.id)} onkeydown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onselect(edge.id);}}}/>
+          <path class="edge-hit" data-edge={edge.id} d={d} role="button" tabindex="0" aria-label={`Inspect ${edge.kind} ${edge.name||`${edge.label||'Relationship'}: ${a.name} → ${b.name}`}`} onclick={()=>onselect(edge.id)} onkeydown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onselect(edge.id);}}}/>
         {/if}
       {/each}
     </svg>
