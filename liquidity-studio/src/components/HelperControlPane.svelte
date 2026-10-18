@@ -1,9 +1,18 @@
 <script>
   import { untrack } from 'svelte';
+  import { canonicalZone, validDate, captureIntent, placeCommand, removeCommand, unitLabel } from '../lib/calendar-model.js';
   let { request, scopeKey, actorId, story = null, members = [], onContentChanged = async () => {} } = $props();
   let projection = $state({ grants: [], proposals: [], presence: [], operations: [] });
   let helperId = $state(''), category = $state(''), error = $state(''), message = $state('');
   let pending = $state(0), uncertain = $state(null);
+  let permission = $state('metadata'), proposalKind = $state('story.patch');
+  let calendarUnit = $state('campaign'), calendarFormat = $state('infographic');
+  let calendarDate = $state(''), calendarZone = $state('America/New_York');
+  let observation = $state.raw(null), observing = $state(false);
+  let calendarReads = 0;
+  const settings = () => JSON.stringify([story?.id, proposalKind, calendarUnit, calendarFormat, calendarDate, calendarZone]);
+  const ready = () => observation && observation.settings === settings() && observation.base === story?.revision;
+  const actionLabel = kind => ({ 'story.patch': 'Category changes', 'assignment.place': 'Calendar placement or move', 'assignment.remove': 'Calendar removal' })[kind] || kind;
   let clientId = $state(crypto.randomUUID());
   let lifecycle = 0, reads = 0, observedReceiptState = '';
   // This effect owns an external scoped subscription; its reset state is not derived content.
@@ -31,7 +40,7 @@
     actorId;
     untrack(() => {
       lifecycle++; reads++; observedReceiptState = ''; projection = { grants: [], proposals: [], presence: [], operations: [] };
-      error = ''; message = ''; helperId = ''; category = ''; uncertain = null; pending = 0; clientId = crypto.randomUUID();
+      error = ''; message = ''; helperId = ''; category = ''; permission = 'metadata'; proposalKind = 'story.patch'; calendarUnit = 'campaign'; calendarFormat = 'infographic'; calendarDate = ''; calendarZone = 'America/New_York'; observation = null; observing = false; calendarReads++; uncertain = null; pending = 0; clientId = crypto.randomUUID();
       void refresh(lifecycle, send);
     });
     const owner = lifecycle;
@@ -61,11 +70,43 @@
   }
   function createGrant() {
     if (!story || !helperId) return;
-    return action('/grants', { helperId, storyIds: [story.id], kinds: ['story.patch'], expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() }, 'Granted metadata proposals for this story for 10 minutes. Each proposal still needs your approval.');
+    const kinds = permission === 'metadata' ? ['story.patch'] : permission === 'calendar' ? ['assignment.place', 'assignment.remove'] : ['story.patch', 'assignment.place', 'assignment.remove'];
+    return action('/grants', { helperId, storyIds: [story.id], kinds, expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() }, 'Granted the selected proposals for 10 minutes. Each still needs your approval.');
+  }
+  async function observeCalendar() {
+    const owner = lifecycle, read = ++calendarReads, send = request, key = settings(), selected = story ? { id: story.id, revision: story.revision } : null;
+    const config = { kind: proposalKind, unit: calendarUnit, format: calendarFormat, date: calendarDate, zone: calendarZone };
+    if (!selected) return;
+    observation = null; observing = true; error = '';
+    try {
+      const zone = canonicalZone(config.zone);
+      if (config.kind === 'assignment.place' && !validDate(config.date)) throw new Error('Choose a valid calendar date.');
+      const { row } = await send(`/api/studio/workspace/stories/${encodeURIComponent(selected.id)}`);
+      const assignment = row.assignments.find(item => item.unit === config.unit && (config.unit === 'campaign' || item.format === config.format));
+      if (config.kind === 'assignment.remove' && !assignment) throw new Error('This unit has no dated placement to remove.');
+      const days = new Map();
+      if (config.kind === 'assignment.place') days.set(`${zone}|${config.date}`, { date: config.date, zone });
+      if (assignment) days.set(`${assignment.timeZone}|${assignment.date}`, { date: assignment.date, zone: assignment.timeZone });
+      const snapshots = await Promise.all([...days.values()].map(({ date, zone: timeZone }) => send('/api/studio/workspace/calendar?' + new URLSearchParams({ startDate: date, endDate: date, timeZone }))));
+      const assignments = [...new Map(snapshots.flatMap(item => item.assignments).map(item => [item.id, item])).values()];
+      const buckets = Object.assign({}, ...snapshots.map(item => item.buckets));
+      const intent = captureIntent({ storyId: row.id, unit: config.unit, format: config.format, assignmentId: assignment?.id }, new Map([[row.id, { row }]]), { assignments, buckets });
+      if (owner !== lifecycle || read !== calendarReads || key !== settings() || selected.revision !== story?.revision) return;
+      observation = { settings: key, base: selected.revision, intent, assignment, zone };
+    } catch (failure) { if (owner === lifecycle && read === calendarReads) error = failure.message; }
+    finally { if (owner === lifecycle && read === calendarReads) observing = false; }
   }
   function propose(grant) {
-    if (!story || !category.trim()) return;
-    return action('/proposals', { grantId: grant.id, epoch: grant.epoch, changes: [{ kind: 'story.patch', storyId: story.id, expectedRevision: story.revision, patch: { category: category.trim() } }] }, 'Proposal submitted for the owner to review. Story content has not changed.');
+    if (!story) return;
+    let change;
+    if (proposalKind === 'story.patch') {
+      if (!category.trim()) return;
+      change = { kind: 'story.patch', storyId: story.id, expectedRevision: story.revision, patch: { category: category.trim() } };
+    } else {
+      if (!ready()) return;
+      change = proposalKind === 'assignment.remove' ? removeCommand(observation.intent) : placeCommand(observation.intent, calendarDate, observation.zone);
+    }
+    return action('/proposals', { grantId: grant.id, epoch: grant.epoch, changes: [change] }, 'Proposal submitted for the owner to review. Shared content has not changed.');
   }
   async function undo(operationId) {
     if (uncertain && uncertain.operationId !== operationId) return;
@@ -103,22 +144,38 @@
 </script>
 <section aria-label="Shared control" class="helper-control">
   <h2>Shared control</h2>
-  <p>Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.</p>
+  <p>Review bounded proposals before another operator or helper changes shared metadata or calendar plans. Navigation and unsaved editing stay personal.</p>
   <button class="secondary" onclick={() => refresh()}>Refresh shared control</button>
   {#if error}<p role="alert">{error}</p>{/if}
   {#if message}<p role="status">{message}</p>{/if}
   {#if story}
     <p>Current story: {story.title} · revision {story.revision}</p>
     <label>Proposal operator<select aria-label="Proposal operator" bind:value={helperId}><option value="">Choose a current brand member</option>{#each members as member (member.id)}<option value={member.id}>{member.displayName}</option>{/each}</select></label>
-    <button disabled={pending > 0 || !helperId} onclick={createGrant}>Grant metadata proposals for 10 minutes</button>
-    <label>Proposed category<input bind:value={category} maxlength="100" /></label>
-  {:else}<p>Open a story to create a bounded metadata grant or proposal.</p>{/if}
+    <label>Allowed proposal types<select aria-label="Allowed proposal types" bind:value={permission}><option value="metadata">Category changes only</option><option value="calendar">Calendar plans only</option><option value="both">Category changes and calendar plans</option></select></label>
+    <button disabled={pending > 0 || !helperId} onclick={createGrant}>{permission === 'metadata' ? 'Grant metadata proposals for 10 minutes' : permission === 'calendar' ? 'Grant calendar proposals for 10 minutes' : 'Grant metadata and calendar proposals for 10 minutes'}</button>
+    <label>Proposal action<select aria-label="Proposal action" bind:value={proposalKind}><option value="story.patch">Change category</option><option value="assignment.place">Place or move a calendar plan</option><option value="assignment.remove">Remove a calendar plan</option></select></label>
+    {#if proposalKind === 'story.patch'}
+      <label>Proposed category<input bind:value={category} maxlength="100" /></label>
+    {:else}
+      <p>Calendar plans are dated assignments, not publication. A format plan does not imply an exported asset exists. Placement appends to the chosen date.</p>
+      <label>Planning unit<select aria-label="Planning unit" bind:value={calendarUnit}><option value="campaign">Whole campaign</option><option value="format">Individual format</option></select></label>
+      {#if calendarUnit === 'format'}<label>Planning format<select aria-label="Planning format" bind:value={calendarFormat}><option value="infographic">Infographic</option><option value="carousel">Carousel</option><option value="story">Story</option><option value="reel">Reel</option></select></label>{/if}
+      {#if proposalKind === 'assignment.place'}
+        <label>Proposed date<input type="date" bind:value={calendarDate} /></label>
+        <label>Calendar timezone<input bind:value={calendarZone} /></label>
+      {/if}
+      <button class="secondary" disabled={observing || pending > 0} onclick={observeCalendar}>Load calendar observation</button>
+      {#if ready()}
+        <p role="status">Observed {unitLabel(observation.intent)} at saved story revision {observation.intent.expectedRevision}. {observation.assignment ? `Current placement: ${observation.assignment.date} (${observation.assignment.timeZone}), revision ${observation.assignment.revision}.` : 'No current dated placement.'} Calendar order revisions are captured; newer work requires a fresh observation.</p>
+      {:else}<p>Load saved story and calendar revisions before proposing. Changed settings or story revisions require a new observation.</p>{/if}
+    {/if}
+  {:else}<p>Open a story to create a bounded grant or proposal.</p>{/if}
   {#if uncertain}<p role="status">An operation result is unknown. Its request key is retained for retry.</p>{#if uncertain.operationId}<button disabled={pending > 0} onclick={() => undo(uncertain.operationId)}>Retry same undo</button>{/if}{/if}
   {#each projection.grants as grant (grant.id)}
     <article aria-label={`Grant ${grant.id}`}>
       <h3>{display(grant.ownerId)} → {display(grant.helperId)}</h3>
       <p>{active(grant) ? 'Active' : grant.status === 'active' ? 'Expired' : grant.status} · epoch {grant.epoch} · {grant.storyIds.length} stories · expires {grant.expiresAt}</p>
-      <p>Allowed actions: {grant.kinds.join(', ')}. Attempted items: {grant.attemptedItems} of 25.</p>
+      <p>Allowed actions: {grant.kinds.map(actionLabel).join(', ')}. Attempted items: {grant.attemptedItems} of 25.</p>
       {#if grant.ownerId === actorId && !['stopped', 'completed'].includes(grant.status)}
         {#if active(grant)}<button class="secondary" onclick={() => action(`/grants/${grant.id}/pause`, { expectedEpoch: grant.epoch }, 'Paused. Older helper epochs cannot apply new work.')}>Pause</button>{/if}
         {#if grant.status === 'paused'}<button class="secondary" onclick={() => action(`/grants/${grant.id}/resume`, { expectedEpoch: grant.epoch }, 'Resumed with a new epoch. A fresh proposal is required.')}>Resume</button>{/if}
@@ -126,11 +183,14 @@
         <button class="secondary" onclick={() => action(`/grants/${grant.id}/takeover`, { expectedEpoch: grant.epoch }, 'Taken over. This grant cannot execute further work.')}>Take over</button>
       {/if}
       {#if grant.helperId === actorId && active(grant) && story && grant.storyIds.includes(story.id)}
-        <button disabled={pending > 0 || !category.trim() || !!uncertain} onclick={() => propose(grant)}>Propose category change</button>
+        <button disabled={pending > 0 || !!uncertain || !grant.kinds.includes(proposalKind) || (proposalKind === 'story.patch' ? !category.trim() : !ready())} onclick={() => propose(grant)}>{proposalKind === 'story.patch' ? 'Propose category change' : proposalKind === 'assignment.remove' ? 'Propose calendar removal' : 'Propose calendar placement'}</button>
       {/if}
       {#each projection.proposals.filter(proposal => proposal.grantId === grant.id) as proposal (proposal.id)}
         <section aria-label={`Proposal ${proposal.id}`}>
           <h4>Proposal · {proposal.status} · revision {proposal.revision}</h4>
+          {#each proposal.changes.filter(change => change.kind !== 'story.patch') as change (change.storyId)}
+            <p>{actionLabel(change.kind)} · {change.unit ? unitLabel(change) : 'Existing dated plan'}{change.date ? ` · ${change.date} (${change.timeZone})` : ''}. Exact revisions are checked again when applied.</p>
+          {/each}
           {#each proposal.preview as item (item.storyId)}
             <p>Story {item.storyId}: revision {item.before.revision} → {item.after.revision}</p>
             <pre>{JSON.stringify({ before: item.before, proposed: item.after }, null, 2)}</pre>
