@@ -507,7 +507,7 @@ test("seeded finance claims can be reduced to one supported reviewed source", as
 test("scope loading hides previous brand data and actions until real bootstrap completes", async ({ page }) => {
   await signIn(page);
   await expect(page.locator(".story-row").first()).toBeVisible();
-  const oldTitle = await page.locator(".story-row h3").first().textContent();
+  const oldTitle = await page.locator(".story-row [data-detail-story]").first().textContent();
   const targetResponse = await page.request.get(base + "/api/studio/bootstrap?organizationId=org_default&brandId=brand_vedic");
   expect(targetResponse.status()).toBe(200);
   const target = await targetResponse.json();
@@ -545,7 +545,7 @@ test("failed scope bootstrap leaves an error without previous brand data", async
 test("reversed scope responses cannot replace the latest brand or clear its loading state", async ({ page }) => {
   await signIn(page);
   await expect(page.locator(".story-row").first()).toBeVisible();
-  const oldTitle = await page.locator(".story-row h3").first().textContent();
+  const oldTitle = await page.locator(".story-row [data-detail-story]").first().textContent();
   const pending = [];
   await page.route("**/api/studio/bootstrap?*", async route => {
     const response = await route.fetch();

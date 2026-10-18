@@ -255,10 +255,10 @@ test("loading and failed scopes never masquerade as empty, and stale scope respo
 test("status, selected story and backlog scroll survive navigation; organization and sign-out boundaries are intentional", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ width: 1280, height: 560 });
   await signIn(page);
   const rows = page.locator(".story-row");
-  const selectedTitle = await rows.last().getByRole("heading").innerText();
+  const selectedTitle = await rows.last().locator("[data-detail-story]").innerText();
   await rows.last().scrollIntoViewIfNeeded();
   const scroll = await page.evaluate(() => window.scrollY);
   expect(scroll).toBeGreaterThan(0);
@@ -298,6 +298,7 @@ test("status, selected story and backlog scroll survive navigation; organization
     .selectOption("org_default");
   await expect(page.getByLabel("Search stories")).toHaveValue("Huda");
   await expect(page.getByLabel("Filter by status")).toHaveValue("In Backlog");
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await signIn(page);
   await expect(page.getByLabel("Search stories")).toHaveValue("");

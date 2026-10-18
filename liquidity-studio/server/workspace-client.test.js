@@ -198,15 +198,74 @@ test("late scoped results are discarded and newer canonical rows cannot be overw
 });
 
 test("explicit detail refresh reconciles an external revision instead of trusting matching cached snapshots", async (t) => {
-  const {client,request}=await fixture(t);
+  const { client, request } = await fixture(t);
   await client.query();
-  const id=client.snapshot.pageIds[0];
+  const id = client.snapshot.pageIds[0];
   await client.ensureStories([id]);
-  const before=client.getStory(id);
-  await request('/api/studio/workspace/mutations',{method:'POST',body:JSON.stringify({idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:before.revision,patch:{category:'External revision'}}]})});
-  assert.equal(client.getStory(id).revision,before.revision);
-  await client.ensureStories([id],{force:true});
-  assert.equal(client.getStory(id).category,'External revision');
-  assert.ok(client.getStory(id).revision>before.revision);
-  assert.equal(client.snapshot.entities.get(id).row.revision,client.getStory(id).revision);
+  const before = client.getStory(id);
+  await request("/api/studio/workspace/mutations", {
+    method: "POST",
+    body: JSON.stringify({
+      idempotencyKey: crypto.randomUUID(),
+      changes: [
+        {
+          kind: "story.patch",
+          storyId: id,
+          expectedRevision: before.revision,
+          patch: { category: "External revision" },
+        },
+      ],
+    }),
+  });
+  assert.equal(client.getStory(id).revision, before.revision);
+  await client.ensureStories([id], { force: true });
+  assert.equal(client.getStory(id).category, "External revision");
+  assert.ok(client.getStory(id).revision > before.revision);
+  assert.equal(
+    client.snapshot.entities.get(id).row.revision,
+    client.getStory(id).revision,
+  );
+});
+
+test("lost mutation response retries the identical retained key without applying the write twice", async (t) => {
+  const { request } = await fixture(t);
+  let drop = true;
+  const keys = [];
+  const client = createWorkspaceClient({
+    scopeKey: "org_default:brand_default",
+    request: async (path, options) => {
+      const result = await request(path, options);
+      if (path.endsWith("/mutations")) {
+        keys.push(JSON.parse(options.body).idempotencyKey);
+        if (drop) {
+          drop = false;
+          throw Error("Controlled lost response");
+        }
+      }
+      return result;
+    },
+  });
+  t.after(() => client.dispose());
+  await client.query();
+  const id = client.snapshot.pageIds[0];
+  await client.ensureStories([id]);
+  const before = client.getStory(id);
+  await assert.rejects(
+    client.mutate([
+      {
+        kind: "story.patch",
+        storyId: id,
+        expectedRevision: before.revision,
+        patch: { category: "One committed write" },
+      },
+    ]),
+    /Controlled lost response/,
+  );
+  assert.ok(client.snapshot.uncertain);
+  await client.retryOperation();
+  assert.equal(keys.length, 2);
+  assert.equal(keys[0], keys[1]);
+  assert.equal(client.getStory(id).revision, before.revision + 1);
+  assert.equal(client.getStory(id).category, "One committed write");
+  assert.equal(client.snapshot.uncertain, null);
 });

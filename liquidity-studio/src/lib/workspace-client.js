@@ -22,7 +22,12 @@ const changed = () =>
   });
 
 /** One scoped entity map. Rows are projections; an older full DTO is never relabeled as current. */
-export function createWorkspaceClient({ request, scopeKey, initialQuery = DEFAULT_WORKSPACE_QUERY, initialUi = {} }) {
+export function createWorkspaceClient({
+  request,
+  scopeKey,
+  initialQuery = DEFAULT_WORKSPACE_QUERY,
+  initialUi = {},
+}) {
   let disposed = false,
     querySequence = 0,
     calendarSequence = 0;
@@ -52,8 +57,9 @@ export function createWorkspaceClient({ request, scopeKey, initialQuery = DEFAUL
       selectedIds: [],
       scrollTop: 0,
       focusStoryId: null,
-      drawerStoryId: null,
       ...copy(initialUi),
+      // A recreated scope restores row context, never an uninitialized editable panel.
+      drawerStoryId: null,
     },
     deletedView: null,
   };
@@ -113,16 +119,25 @@ export function createWorkspaceClient({ request, scopeKey, initialQuery = DEFAUL
         story: copy(story),
       });
     }
-    const changedStories = stories.some(story => !state.entities.has(story.id) || state.entities.get(story.id).revision !== story.revision);
+    const changedStories = stories.some(
+      (story) =>
+        !state.entities.has(story.id) ||
+        state.entities.get(story.id).revision !== story.revision,
+    );
     publish({ entities });
-    if (changedStories && state.query.loaded) query(state.query.definition).catch(() => {});
+    if (changedStories && state.query.loaded)
+      query(state.query.definition).catch(() => {});
   }
   async function ensureStories(ids, { force = false } = {}) {
     guard();
     const details = await Promise.all(
       [...new Set(ids)].map(async (id) => {
         const existing = state.entities.get(id);
-        if (!force && existing?.story && existing.story.revision === existing.revision)
+        if (
+          !force &&
+          existing?.story &&
+          existing.story.revision === existing.revision
+        )
           return null;
         return call("/stories/" + encodeURIComponent(id));
       }),
@@ -244,9 +259,10 @@ export function createWorkspaceClient({ request, scopeKey, initialQuery = DEFAUL
           error: "",
         },
       });
-      await ensureStories([
-        ...new Set(result.assignments.map((item) => item.storyId)),
-      ], { force: true });
+      await ensureStories(
+        [...new Set(result.assignments.map((item) => item.storyId))],
+        { force: true },
+      );
       if (sequence === calendarSequence)
         publish({ calendar: { ...state.calendar, loading: false } });
       return state.calendar.data;
