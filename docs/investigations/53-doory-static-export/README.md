@@ -1,6 +1,6 @@
 # Doory static export matrix: 2026-10-18
 
-The operator used the actual authenticated Doory browser File → Download → PNG at1×, selecting all pages, on all eight controlled native documents from the [explicit-glyph API experiment](../53-doory-native-verified-glyph-api-evidence.json). Carousel and reel-board downloads were ZIP archives. This records static PNG export across both presets and all four formats; it does not establish video, cutout execution or a portable native asset archive.
+The operator used the actual authenticated Doory browser File → Download → PNG at 1×, selecting all pages, on all eight controlled native documents from the [explicit-glyph API experiment](../53-doory-native-verified-glyph-api-evidence.json). Carousel and reel-board downloads were ZIP archives. This records static PNG export across both presets and all four formats; it does not establish video, cutout execution or a portable native asset archive.
 
 Upstream Doory is pinned to `27b6f68221fdbf1ef1bedc182e303210ca9e39f5`; Studio adapter source is merged `f0e7fb5`. The local QA session loaded the registered licensed fonts through the bounded font whitelist described in the [adapter contract](../../specs/doory-native-adapter.md). Fonts working in this session do not establish cross-machine portability or protected production asset delivery.
 
@@ -17,9 +17,9 @@ Upstream Doory is pinned to `27b6f68221fdbf1ef1bedc182e303210ca9e39f5`; Studio a
 | Chai With Jai | Story | 1 | 1080×1920 |
 | Chai With Jai | Reel storyboard | 3 | 1080×1920 |
 
-The [sanitized manifest](manifest.json) inventories18 PNG pages with original download/archive entry name, page number, byte size, SHA256 and dimensions. The operator unpacked bounded known entries and decoded every page with PIL. A separate read-only check verified all18 original signatures, dimensions, sizes, hashes, chunk CRCs and decompressed raster lengths. Identical hashes for carousel pages2/3 reflect repeated controlled source text; they are retained as recorded, not replaced with invented variation.
+The [sanitized manifest](manifest.json) inventories 18 PNG pages with original download/archive entry name, page number, byte size, SHA256 and dimensions. The operator unpacked bounded known entries and decoded every page with PIL. A separate read-only check verified all 18 original signatures, dimensions, sizes, hashes, chunk CRCs and decompressed raster lengths. Identical hashes for carousel pages 2/3 reflect repeated controlled source text; they are retained as recorded, not replaced with invented variation.
 
-Four pages were visually inspected by the operator: CWJ infographic, finance carousel page1, CWJ story and CWJ reel board3. That is not a visual fidelity review of all18 pages. Three unchanged representative PNGs are published below; the remaining15 are inventoried by hash without publishing their image bytes. The source fixtures include deliberate native heading and token changes performed by the API reproducer before browser export. This matrix does not add manual browser editing evidence beyond the earlier separately recorded native edit experiment.
+Four pages were visually inspected by the operator: CWJ infographic, finance carousel page 1, CWJ story and CWJ reel board 3. That is not a visual fidelity review of all 18 pages. Three unchanged representative PNGs are published below; the remaining 15 are inventoried by hash without publishing their image bytes. The source fixtures include deliberate native heading and token changes performed by the API reproducer before browser export. This matrix does not add manual browser editing evidence beyond the earlier separately recorded native edit experiment.
 
 ## Original representative exports
 
@@ -31,15 +31,15 @@ Preserves the intentional native heading edit, Sanskrit Om, three metric rows, s
 
 ![Original CWJ infographic PNG](representatives/vedic_dharma-infographic-1.png)
 
-### Finance carousel page1
+### Finance carousel page 1
 
 Preserves the serif heading, bound accent color, source excerpt and editorial notes.
 
 ![Original finance carousel first-page PNG](representatives/liquidity_desk-carousel-1.png)
 
-### CWJ reel board3
+### CWJ reel board 3
 
-A static1080×1920 board with its source excerpt, B-roll direction and closing CTA. Three exported PNG boards do not prove a30-second animation, encoded video, audio or runtime timing.
+A static 1080×1920 board with its source excerpt, B-roll direction and closing CTA. Three exported PNG boards do not prove a 30-second animation, encoded video, audio or runtime timing.
 
 ![Original CWJ third reel-board PNG](representatives/vedic_dharma-reel-3.png)
 

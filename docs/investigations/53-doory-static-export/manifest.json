@@ -4,7 +4,7 @@
   "studioAdapterSource": "f0e7fb5",
   "renderer": "Actual authenticated Doory browser PNG1x download, all pages; pinned native source27b6f682 and Studio native adapterf0e7fb5",
   "boundary": "Static PNG pages only. Reel boards are not video; fonts were loaded in the same local QA session, not proved portable. Original disposable source fixtures include deliberate native human text and token changes. No production rollout.",
-  "verification": "All18 original PNG signatures, dimensions, sizes, SHA256, chunk CRCs and decompressed raster lengths independently checked; operator additionally decoded all with PIL. Four selected pages visually reviewed by operator, not all18.",
+  "verification": "All 18 original PNG signatures, dimensions, sizes, SHA256, chunk CRCs and decompressed raster lengths independently checked; operator additionally decoded all with PIL. Four selected pages visually reviewed by operator, not all 18.",
   "publishedRepresentatives": [
     "liquidity_desk-carousel-1.png",
     "vedic_dharma-infographic-1.png",
