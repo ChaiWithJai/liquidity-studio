@@ -1,0 +1,39 @@
+# Pristine seed follow-through: guarded SQLite operator path
+
+This increment provides a reproducible read-only SQLite snapshot plan and an explicit internal guarded title/queue composition. No maintained migration or dispatch has been executed. It does not reset quotas, restore approvals or add an HTTP mutation API. The three clinical previews remain a separate source increment.
+
+`server/run-seed-followthrough-plan.js` requires explicit snapshot path/SHA, organization, brand, current founder actor and a new private output. It opens SQLite with `readOnly:true`, checks the file hash before/after, never constructs a ScopedRepository or platform factory, and requires an output directory mode0700/file0600. There is no `--apply` argument. Source HEAD is a full Git SHA; catalog module and immutable registry source hashes are recorded. The snapshot is not a current live fence or a full asset-aware backup.
+
+The registry pins the exact legacy normalized factory stories, claim hashes and neutral desired titles. AMC already has an acceptable title. Nykaa, LuckyChap and Ramanujan need a neutral title only if every original field/revision/content epoch still matches. Unknown fields or related human work mean owner choice, never a lossy automatic normalization. Source approvals and unsupported legacy claims remain untouched.
+
+The plan derives current founder/membership and brand preset from the snapshot. It records full identity/principal/scope/story/title/claim hashes, exact revision/content epoch, catalog and copy-registry hashes. Other scopes with the same stable story IDs are excluded. It rejects related candidates, failed/active/uncertain jobs, assignments, receipts, feedback and unknown scope extensions. Existing scoped assets or external native/review records conservatively prevent automatic eligibility, even if a loose reference cannot associate them to a story.
+
+`plannedSeedQueueIds` only intersects the existing official preparation dry-run with the reviewed four stable IDs. It does not dispatch. Old Nykaa framing lacks the catalog's `nykaa` topic, so it remains ineligible until an explicit neutral rename; a new source fingerprint must be computed afterward. Never run the unrestricted bootstrap apply and assume it queues only four topics.
+
+`assertPristineSeedPlanRow` is a pure guard used through the existing WorkspaceService `control.guard` / `control.binding` seam. Hosted coverage holds a normal semantic title operation, commits a real concurrent human edit, then verifies the guard rejects the older migration intent and preserves the human title/revision. The SQLite composition below supplies current identity and the scoped collection inventory inside the same authoritative transaction. This same-connection protection is deliberately not claimed for Firestore.
+
+Before maintained writes: fresh asset-aware backup (or explicitly scoped zero-asset proof plus consistent SQLite backup), fresh live manifest/root review, exact pristine/CAS and current membership checks inside the transaction, controlled Neo concurrent-edit negative acceptance, and explicit operational handoff. Reuse existing semantic title mutation, revision/content-epoch machinery and official bounded job creation. Keep every older candidate/edit/failed job. Unknown or human-modified records require deliberate owner choice. Rollback is a new revision-aware semantic edit while no later work exists, not a whole-database overwrite.
+
+## SQLite apply composition (source checkpoint, not maintained execution)
+
+`applyPristineSeedFollowthrough` composes the existing workspace title mutation and durable source-preparation job creation. It is an internal operator function, with no HTTP mutation route. It requires the actual `DurableStore` instance shared by the workspace and jobs repository; Firestore is deliberately unsupported.
+
+The workspace guard reads current identity and the scoped key inventory on the same SQLite connection while `BEGIN IMMEDIATE` is held. It compares the entire reviewed plan, factory story/claims/revisions, source commit, catalog and copy-registry hashes before making any title change. The ordinary workspace receipt retains the fixed post-title story revisions, preparation fingerprints and a complete scoped-state hash. The job guard rechecks those exact values and current identity inside its own transaction. It does not call `createForIngestion` or substitute a later human revision. An intervening change leaves the title receipt available but refuses job creation; the operator must review that state rather than reset quotas or overwrite work. Accepted job replay uses the existing idempotency receipt.
+
+The new test cases are authored for hosted execution and have not been run locally under the BrowserOS-only constraint. No maintained apply, dispatch, or migration has occurred. A fresh selected-scope asset-aware backup (or explicit zero-asset proof plus consistent SQLite backup), current manifest, exact source review and isolated Neo concurrent-edit acceptance remain required before maintained execution. Runtime source-commit pinning belongs to the reviewed operator assembly; a caller-provided hash alone is not deployment provenance.
+
+## Concrete local operator entry
+
+After the source is shipped into the reviewed local image, the operator uses that image's existing environment and database mount. The existing local worker remains responsible for processing; this command never starts a worker or changes worker scopes/configuration.
+
+```sh
+node server/run-seed-followthrough-apply.js \
+  --database /absolute/current/studio.sqlite \
+  --plan /absolute/private/reviewed-plan.json \
+  --source-commit FULL_REVIEWED_IMAGE_SOURCE_SHA \
+  --organization EXPLICIT_ORGANIZATION_ID --brand EXPLICIT_BRAND_ID \
+  --actor CURRENT_FOUNDER_ID --title-key TITLE_OPERATION_UUID \
+  --job-key PREPARATION_JOB_UUID --out /absolute/private/new-dry-run.json
+```
+
+The default opens the database read-only and reports whether the current plan exactly matches the reviewed one. An explicitly reviewed invocation adds `--apply` and uses a separate new output filename. Apply refuses Cloud Run, Firestore, disabled jobs/preparation, or a dispatcher other than the configured local durable worker mode. It uses the same explicit scope and current founder and keeps title/job keys stable during receipt recovery. A source SHA argument is an operator binding, not independent proof of the image; the release receipt and exact image/source hashes must be reviewed separately. No unrestricted bootstrap, repository replacement, factory-title reset, approval or quota reset is part of this entry point.

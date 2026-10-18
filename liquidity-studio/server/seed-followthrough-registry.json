@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "meaning": "Explicit legacy factory hashes, not current-maintained-state approval. Unknown or edited work is ineligible.",
+  "legacyFactoryCommit": "825120ee71ac6d81b6bb37cceed548b27252b975",
+  "legacyDomainSha256": "9bf61f1066e2d0668297ca3eaf2c85d69e250f4cf209661dfbacf498141aae80",
+  "rows": [
+    {
+      "storyId": "story_beyonce_amc",
+      "expectedFactorySha256": "293b2b5880dc0145e30be659770cfb1840bee4e602f4d45b92df334ecbe6685a",
+      "sourceClaimsSha256": "7392f92d5ffaa661504f81742f7425019fde84872edbc68334b48c11e9d6d3b3",
+      "desiredTitle": "Beyonc\u00e9\u2019s Direct-to-AMC Concert Film Distribution Play",
+      "preset": "liquidity_desk",
+      "brandId": "brand_default"
+    },
+    {
+      "storyId": "story_nykaa_ipo",
+      "expectedFactorySha256": "dc830a1fbd0eeb8849a4b816fc9ad800f04763c42649cf521164aed3dfe9e504",
+      "sourceClaimsSha256": "3846772c1daea50d4a3b6441a0c34ea6f7d168c356c23fe51b6f6d63c1daf85e",
+      "desiredTitle": "Nykaa\u2019s 2022 Plan for a GCC Omnichannel Alliance",
+      "preset": "liquidity_desk",
+      "brandId": "brand_default"
+    },
+    {
+      "storyId": "story_margot_luckychap",
+      "expectedFactorySha256": "116b5e612a5cdb907ccc671a2ec91184b63202013e69b60f35b42e2756a43cd3",
+      "sourceClaimsSha256": "7635c51b080c41905c628bbc91c8e5d16658c973b8de54fa4bb2c278aafdad9c",
+      "desiredTitle": "Margot Robbie & LuckyChap: Film Production and IP Development",
+      "preset": "liquidity_desk",
+      "brandId": "brand_default"
+    },
+    {
+      "storyId": "research_1",
+      "expectedFactorySha256": "241c1fd55dacd9d3a24ee80391ace5c16a7af8dc7b4b3e38ca48ea2154bab8dd",
+      "sourceClaimsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "desiredTitle": "Ramanujan: Trinity\u2019s Record of Mathematical Work",
+      "preset": "vedic_dharma",
+      "brandId": "brand_vedic"
+    }
+  ]
+}
