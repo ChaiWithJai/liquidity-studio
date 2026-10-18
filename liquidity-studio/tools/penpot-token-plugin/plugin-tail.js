@@ -13,7 +13,10 @@ penpot.ui.onMessage(async (message) => {
   } else if (message?.type === "apply" && !busy) {
     busy = true;
     try {
-      const result = await applyRegisteredPenpotTokens(penpot, message.intent);
+      const result =
+        message.intent?.operation === "import-private-raster"
+          ? await applyRegisteredPenpotRaster(penpot, message.intent)
+          : await applyRegisteredPenpotTokens(penpot, message.intent);
       penpot.ui.sendMessage({ type: "applied", result });
     } catch (error) {
       penpot.ui.sendMessage({ type: "failed", error: String(error.message) });

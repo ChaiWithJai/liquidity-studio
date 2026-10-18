@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import PenpotImagePicker from "./PenpotImagePicker.svelte";
   let { request, storyId, role } = $props();
   let bindings = $state([]), targets = $state([]), actions = $state([]);
   let selected = $state(""), capability = $state(""), actionId = $state("");
@@ -50,13 +51,25 @@
       if (alive && current === sequence) { error = failure.message; notice = "The outcome may be unknown. Recover this exact attempt before starting another."; }
     } finally { if (alive) busy = false; }
   }
+  function prepareImage(command) {
+    if (busy || loading || attempt || !chosen?.available) return;
+    attempt = { bindingId: chosen.id, resourceId: chosen.resourceId,
+      command, idempotencyKey: crypto.randomUUID() };
+    void prepare();
+  }
+  function recoverImage(action) {
+    if (busy || loading || attempt) return;
+    attempt = { bindingId: action.bindingId, resourceId: action.resourceId,
+      command: structuredClone(action.command), idempotencyKey: action.idempotencyKey };
+    void prepare();
+  }
   async function reconcile(id) {
     const current = sequence;
     busy = true; error = "";
     try {
       const result = await request(`/api/studio/penpot/actions/${id}/reconcile`, {method: "POST", body: "{}"});
       if (!alive || current !== sequence) return;
-      notice = result.status === "native-state-verified" ? "Saved native token values and registered paints were verified. Editorial approval remains separate." : "Matching saved native paint was not observed. No native change was reapplied. Refresh the registered context before a new attempt.";
+      notice = result.status === "native-state-verified" ? (result.command.operation === "import-private-raster" ? "Saved image and existing native content were checked. Review the layout and export before approval." : "Saved native token values and registered paints were verified. Editorial approval remains separate.") : "Matching saved native state was not observed. No native change was reapplied. Refresh the registered context before a new attempt.";
       if (result.status === "native-state-verified") capability = "";
       await refresh();
     } catch (failure) { if (alive && current === sequence) error = failure.message; }
@@ -91,6 +104,9 @@
       {#if chosen.available}
         <p>Source revision {chosen.command.expectedRevision}; native revision {chosen.command.expectedNativeRevision}. Current brand revision is checked on every action.</p>
         {#if !attempt}<button disabled={busy || loading} onclick={prepare}>Prepare color refresh</button>{/if}
+        {#if chosen.imageTransfer?.supported === true}
+          {#key `${chosen.id}:${storyId}`}<PenpotImagePicker {request} binding={chosen} disabled={busy || loading || !!attempt} onPrepare={prepareImage} />{/key}
+        {:else if chosen.imageTransfer}<p>{chosen.imageTransfer.reason}</p>{/if}
       {:else}<p>{chosen.reason}</p>{/if}
     {/if}
   {/if}
@@ -108,6 +124,10 @@
         <strong>{action.status}</strong> · source revision {action.command.expectedRevision}
         {#if action.verification}<span>Native revision {action.verification.nativeRevision}, observed {action.verification.observedAt}. {action.verification.method === "read-only-reconciliation" ? "Recovered by read-only comparison; action attribution is not inferred." : "Native acknowledgement recorded."}</span>{/if}
         {#if action.status !== "native-state-verified"}<button disabled={busy} onclick={() => reconcile(action.id)}>Reconcile saved state</button>{/if}
+        {#if action.command.operation === "import-private-raster" && action.status !== "native-state-verified"}
+          <button disabled={busy || loading || !!attempt || (action.expiresAt && action.expiresAt > Date.now())} onclick={() => recoverImage(action)}>Recover same image action</button>
+          <p>Check saved state first. Recovery retains the same image upload and placement; an active one-use action must expire before recovery.</p>
+        {/if}
       </li>
     {/each}
   </ul>

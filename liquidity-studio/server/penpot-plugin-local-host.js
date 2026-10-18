@@ -36,7 +36,7 @@ export function createPenpotPluginLocalHost(transport) {
           type = "application/json";
         } else if (req.url === "/plugin.js") {
           bytes =
-            (await readFile(new URL("action.js", ROOT), "utf8")).replace(
+            (await readFile(new URL("action.js", ROOT), "utf8")).replaceAll(
               "export async function",
               "async function",
             ) +

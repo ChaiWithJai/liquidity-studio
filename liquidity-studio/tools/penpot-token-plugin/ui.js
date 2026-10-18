@@ -50,7 +50,9 @@ window.addEventListener("message", async (event) => {
       send({ type: "apply", intent });
     } else if (message?.type === "applied" && active.intent) {
       status.textContent =
-        "Native action applied; verifying saved token values and bound paint…";
+        active.intent.operation === "import-private-raster"
+          ? "Image added; checking saved image and existing content…"
+          : "Native action applied; verifying saved token values and bound paint…";
       let receipt;
       for (let attempt = 0; attempt < 10; attempt++) {
         try {

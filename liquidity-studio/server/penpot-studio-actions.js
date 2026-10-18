@@ -6,11 +6,21 @@ import {
 
 /** Durable projection and read-only reconciliation. Native capabilities remain ephemeral. */
 export class PenpotStudioActions {
-  constructor({ store, scope, identity, transport, boundaryFactory }) {
+  constructor({
+    store,
+    scope,
+    identity,
+    transport,
+    boundaryFactory,
+    assets,
+    assertPrivateDelivery,
+  }) {
     this.scope = scope;
     this.identity = identity;
     this.transport = transport;
     this.boundaryFactory = boundaryFactory;
+    this.assets = assets;
+    this.assertPrivateDelivery = assertPrivateDelivery;
     this.ledger = new PenpotActionLedger({
       store,
       scope,
@@ -86,7 +96,12 @@ export class PenpotStudioActions {
       await this.transport.context(input);
     }
     const result = await this.ledger.create(actor, intent);
-    if (!result.created)
+    const recoverRaster =
+      !result.created &&
+      result.action.command.operation === "import-private-raster" &&
+      result.action.status !== "native-state-verified" &&
+      (!result.action.expiresAt || result.action.expiresAt <= Date.now());
+    if (!result.created && !recoverRaster)
       return {
         action: await this.get(actor, result.action.id),
         requiresReconciliation:
@@ -170,12 +185,23 @@ export class PenpotStudioActions {
       input,
       context.manifest,
       context.colors,
+      action.media?.descriptor
+        ? {
+            media: action.media.descriptor,
+            protectedObjects: action.media.protectedObjects,
+            receiptId: action.id,
+          }
+        : null,
     );
+    const raster = action.command.operation === "import-private-raster";
+    if (raster) await this.revalidateRaster(input, action.media);
     if (
       snapshot.revision <= action.command.expectedNativeRevision ||
-      snapshot.boundPaintsMatch !== true ||
-      JSON.stringify(snapshot.tokenValues) !==
-        JSON.stringify(context.colors.map((color) => color.hex))
+      (raster
+        ? snapshot.imageMatches !== true || snapshot.originalsPreserved !== true
+        : snapshot.boundPaintsMatch !== true ||
+          JSON.stringify(snapshot.tokenValues) !==
+            JSON.stringify(context.colors.map((color) => color.hex)))
     ) {
       return this.ledger.transition(actor, id, "reconciliation-required");
     }
@@ -192,17 +218,60 @@ export class PenpotStudioActions {
       method: "read-only-reconciliation",
     });
   }
+  async revalidateRaster(input, reservation) {
+    if (typeof this.assertPrivateDelivery !== "function")
+      throw fail(422, "Private native delivery is unsupported");
+    await this.assertPrivateDelivery();
+    await this.ledger.permitted(input.actor);
+    await this.identity.authorizeJobActor(input.actor.id, input.authorizedAt);
+    const asset = await this.assets.assetForNativeTransfer(
+      input.actor,
+      input.command.assetId,
+    );
+    const retained = reservation?.media || reservation?.descriptor;
+    if (
+      !reservation ||
+      asset.sha256 !== reservation.sha256 ||
+      asset.generation !== reservation.generation ||
+      !asset.rightsDeclaration?.trim() ||
+      !["confirmed", "not_personal_data"].includes(asset.consent) ||
+      (retained &&
+        (retained.width !== asset.width ||
+          retained.height !== asset.height ||
+          retained.mtype !== asset.contentType ||
+          retained.provenance?.rightsDeclaration !== asset.rightsDeclaration ||
+          retained.provenance?.consent !== asset.consent))
+    )
+      throw fail(409, "Current private image generation changed");
+    return asset;
+  }
+  async prepareRaster(input, context, snapshot, upload) {
+    const reservation = await this.ledger.reserveMedia(
+      input.actor,
+      input.durableActionId,
+      snapshot,
+    );
+    await this.revalidateRaster(input, reservation);
+    const media = await upload(input, reservation);
+    await this.ledger.retainMedia(input.actor, input.durableActionId, media);
+    return {
+      media,
+      protectedObjects: reservation.protectedObjects,
+      sha256: reservation.sha256,
+      generation: reservation.generation,
+    };
+  }
   async checkExecution(input, context) {
     const action = await this.ledger.get(input.actor, input.durableActionId);
     if (action.execution?.manifestHash !== penpotActionDigest(context.manifest))
       throw fail(409, "Durable native registration snapshot changed");
   }
-  async issued({ input, context }) {
+  async issued({ input, context, receipt }) {
     await this.checkExecution(input, context);
-    await this.ledger.transition(
+    await this.ledger.issued(
       input.actor,
       input.durableActionId,
-      "pending-native-action",
+      receipt.expiresAt,
     );
   }
   async verified({ input, nativeRevision, context }) {

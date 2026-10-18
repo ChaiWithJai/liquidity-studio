@@ -1,0 +1,33 @@
+# Penpot private raster transfer checkpoint
+
+This is an implementation checkpoint for #54 and the private-delivery requirement in #52. It is not completed private raster acceptance. The prepared Studio transfer remains disabled. A separate NEW disposable native file received only the existing controlled portrait through the native Image chooser to inspect upstream delivery; existing registered human-edited files were not changed.
+
+The earlier native compiler introduced `ASSET_IMPORT_UNSUPPORTED` in `4490a40`. Native text, tokens and vector geometry can be compiled without transferring a private external image. Adding image bytes introduces a second authorization boundary: native media delivery after the authorized upload.
+
+## Original controlled image
+
+The proposed disposable fixture is the existing [original fictional portrait cutout](cutout-portrait/native-modnet/alpha.png), SHA256 `be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d`, 198,985 bytes, 384 × 384 RGBA. It contains no identified person. Its earlier input, processor and publisher-checkpoint evidence remains in the [cutout investigation](cutout-portrait/README.md) and [metrics](cutout-portrait/native-modnet/metrics.json). This change does not run another model or infer new rights. A scoped saved-image record must retain an explicit rights and consent declaration; earlier fixture provenance does not grant access to any other asset.
+
+## Source contract and delivery blocker
+
+Inspected official source is Penpot 2.18.3, commit `ff7a66f51938b2293260ea27a64e2c4e0833b5e3`:
+
+- [Media upload RPC](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/rpc/commands/media.clj) accepts a file ID, caller-reserved media UUID and multipart bytes. Upload checks file editing permissions. Reusing the UUID preserves the existing media row; it is not evidence of exactly-once storage processing.
+- [Plugin image parser](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/frontend/src/app/plugins/parser.cljs) accepts an image descriptor in a rectangle fill. No caller URL is necessary. [Public plugin types](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/plugins/libs/plugin-types/index.d.ts) expose current-page rectangle creation, image fills and board parenting.
+- Crucially, [asset delivery](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/http/assets.clj) puts `file-media-object` and `team-font-variant` in `public-buckets`. `objects-handler` skips authentication for these buckets. The file-scoped media handler does check file read permissions. File/project upload authorization therefore does not establish private delivery through every alternate path.
+
+BrowserOS neo corroborated this on the original controlled PNG. With `credentials: 'omit'`, `cache: 'no-store'` and redirects rejected, the file-media route returned 404/zero bytes while the underlying object route returned HTTP 200, `image/png`, 198,985 bytes and the exact fixture SHA above. The literal observed cache header was `max-age=86400000`; this report does not reinterpret it as 24 hours. Three identical controlled-image uploads in the new file were used to observe the native response format and underlying object ID. No authentication cookie or token was read. This is an anonymous-access failure, not private-delivery acceptance. Foreign-principal denial is not yet observed.
+
+By default the runtime consequently reports private image delivery as unsupported and rejects raster commands before reserving or uploading media. The uploader has a second fail-closed gate. The candidate adds an explicitly disabled ingress switch, fixed marker check and presented-session authorization callback; none has been enabled on a runtime. The [review/rollout plan](../specs/penpot-private-media.md) requires complete inventory and actual positive/negative evidence before use. A UUID, CORS rule, hidden URL, scoped Studio upload route or successful authenticated image readback cannot substitute for native delivery authorization.
+
+A further controlled same-origin Neo HTTP probe verified the upload RPC's `Accept: application/json` contract: HTTP200/application-json, caller-reserved UUID retained, exact file ID, underlying object ID,384×384 and `image/png`. This used only the same already owned PNG, normal browser-native authentication, and a new unreferenced protocol-probe media row. It was not a Studio upload or native image insertion. The native Image chooser itself used Transit; it is not relabeled as JSON.
+
+## Prepared implementation, not runtime proof
+
+The optional adapter source prepares scoped Studio asset resolution, explicit rights/consent, immutable byte hash and storage generation, fixed local native endpoints, stable durable upload IDs, one-use native actions and an additive image-fill action. Existing native text/content/geometry hashes and page order are compared during saved-state verification; renderer-owned text layout caches are not fabricated. No old document snapshot is written over an open human buffer.
+
+An unknown upload outcome retains its reserved UUID. It must not become another independently identified media row on retry. Unreferenced media is not deleted speculatively: upstream documents touched-object garbage collection, while this change has no proven exact-owned-object deletion contract. A saved native acknowledgement is distinct from pixel review, native archive portability and publication approval.
+
+Ordinary production Vite compilation and static server bundling succeeded during preparation. Official Svelte MCP reported no component issues. No local Node tests, Playwright, headless browser, new dependency installation or Docker build was run. Browser acceptance must use BrowserOS neo under the current operator constraint.
+
+Before enabling transfer, the native delivery path must authenticate the intended principal on every read, enforce current file/scope ownership and revocation, avoid an anonymous alternate asset path, and establish appropriate cache behavior. Actual controlled-image add/render/export/archive recovery and foreign/anonymous denial remain required. A governed bridge must also account for the separate Studio actor and external native owner; granting one owner session does not prove per-actor isolation. #52 and #54 remain open.
