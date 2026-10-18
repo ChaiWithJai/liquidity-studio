@@ -459,6 +459,7 @@ export class DurableJobService {
           storyRevision: story.revision,
           mode: prepared.campaign.provenance?.mode || "unknown",
           usage: prepared.trace.usage || null,
+          usageProvider: prepared.trace.usageProvider || null,
           committedAt: stamp(),
         };
         live.state = "completed";
@@ -511,6 +512,15 @@ export class DurableJobService {
             traceId: prepared.trace.traceId,
             mode: prepared.campaign.provenance?.mode || "unknown",
             usage: prepared.trace.usage || null,
+            usageProvider: prepared.trace.usageProvider || null,
+            committed: false,
+          };
+        if (attempt && !prepared && error.trace)
+          attempt.providerOutcome = {
+            traceId: error.trace.traceId || null,
+            mode: "failed",
+            usage: error.trace.usage || null,
+            usageProvider: error.trace.usageProvider || null,
             committed: false,
           };
         if (live.state === "running" && live.fence === item.fence) {

@@ -494,3 +494,35 @@ test("a lease expiring during generation is unknown rather than a false content-
     null,
   );
 });
+test("failed item retains sanitized actual reported provider attempt usage without a draft receipt", async (t) => {
+  const f = await fixture(t),
+    story = await f.add(),
+    job = await f.jobs.create(f.user, await f.plan([story]));
+  const usage = { inputTokens: 11, outputTokens: 5, totalTokens: 16 };
+  const jobs = new DurableJobService({
+    repo: f.repo,
+    identity: f.platform.identity,
+    scope: f.scope,
+    formatter: {
+      prepareCampaignForStory: async () => {
+        throw Object.assign(Error("discarded output"), {
+          code: "PROVIDER_RESPONSE_INVALID",
+          trace: {
+            traceId: "test-failed-usage",
+            usage,
+            usageProvider: "openai-gateway",
+          },
+        });
+      },
+    },
+  });
+  const result = await jobs.runNext("usage-fixture", job.id);
+  assert.equal(result.items[0].state, "failed");
+  assert.deepEqual(result.items[0].attempts[0].providerOutcome.usage, usage);
+  assert.equal(result.items[0].receipt, undefined);
+  assert.equal(
+    (await f.repo.read()).backlog.find((row) => row.id === story.id)
+      .campaignDraft,
+    null,
+  );
+});

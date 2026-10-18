@@ -213,7 +213,8 @@ export class AIGateway {
           provider: mode === "synthetic" ? "offline-synthetic" : provider,
           status: mode === "synthetic" ? "degraded" : "success",
           provenance,
-          usage: mode === "provider" ? providerUsage : null,
+          usage: providerUsage,
+          usageProvider: providerUsage ? provider : null,
         },
       };
     };
@@ -425,7 +426,13 @@ export class AIGateway {
             : "AI generation failed; check provider configuration or retry";
       throw Object.assign(new Error(message), {
         code,
-        trace: { ...baseTrace(), status: "error", error: code },
+        trace: {
+          ...baseTrace(),
+          status: "error",
+          error: code,
+          usage: providerUsage,
+          usageProvider: providerUsage ? provider : null,
+        },
       });
     } finally {
       clearTimeout(timer);
