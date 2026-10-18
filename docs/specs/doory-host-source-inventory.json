@@ -895,6 +895,11 @@
       "sha256": "8cc01d19db017a91648369a0a20f7cc5d8163091cadde16a07ed9f3b732ab914"
     },
     {
+      "path": "editor/engine/export/video/gifWorker.ts",
+      "bytes": 1891,
+      "sha256": "f1c57db970ab1f9af7298d6d6e97780df701fdd45ef7f0a64d1544bc67921306"
+    },
+    {
       "path": "editor/engine/export/video/options.ts",
       "bytes": 6253,
       "sha256": "3b222dd2e3444f2764b96560052e5fe2c27c9fc9376576a67997197c340e83c7"

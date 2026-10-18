@@ -13,7 +13,7 @@ while queue:
     if path in seen:
         continue
     seen.add(path)
-    for value in re.findall(r'''(?:from\s*|import\s*\(\s*|import\s*)['"]([^'"]+)['"]''', path.read_text()):
+    for value in re.findall(r'''(?:from\s*|import\s*\(\s*|import\s*|new\s+URL\s*\(\s*)['"]([^'"]+)['"]''', path.read_text()):
         if value.startswith('.') or value.startswith('@/'):
             base = root / value[2:] if value.startswith('@/') else path.parent / value
             candidates = [base] + [pathlib.Path(str(base) + suffix) for suffix in ['.ts', '.tsx', '.js', '.json', '.css']] + [base / 'index.ts', base / 'index.tsx']

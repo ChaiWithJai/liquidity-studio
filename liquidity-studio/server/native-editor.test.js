@@ -35,7 +35,18 @@ function fixture(preset = "liquidity_desk") {
     assets: [],
   };
   let allowed = true;
+  const records = new Map();
+  const store = {
+    get: async (key) => structuredClone(records.get(key) || null),
+    update: async (key, fn) => {
+      const next = fn(structuredClone(records.get(key) || null));
+      records.set(key, structuredClone(next));
+      return structuredClone(next);
+    },
+    delete: async (key) => records.delete(key),
+  };
   const repo = {
+    store,
     read: async () => structuredClone(state),
     mutate: async (fn) => {
       const next = fn(structuredClone(state));
@@ -140,9 +151,15 @@ test("stale and uncertain writes preserve opening revision and idempotency inten
     { status: 409 },
   );
   const second = await f.create("story");
-  await assert.rejects(f.service.save(f.actor, second.id, input), {
-    status: 409,
-  });
+  assert.equal(
+    (
+      await f.service.save(f.actor, second.id, {
+        ...input,
+        document: second.document,
+      })
+    ).revision,
+    2,
+  );
 });
 
 test("revoked membership and another scoped repository cannot read native records", async () => {

@@ -58,7 +58,7 @@ export function validateHostedDocument(
     "meta",
   ]);
   if (
-    Buffer.byteLength(JSON.stringify(document)) > 1024 * 1024 ||
+    Buffer.byteLength(JSON.stringify(document)) > 512 * 1024 ||
     document.schemaVersion !== 1 ||
     document.width !== 1080 ||
     ![1350, 1920].includes(document.height) ||
@@ -166,6 +166,8 @@ export class NativeEditorService {
     now = () => new Date().toISOString(),
   }) {
     Object.assign(this, { repo, identity, scope, availableFonts, now });
+    this.store = repo.store;
+    this.prefix = `native-editor:${scope.organizationId}:${scope.brandId}:`;
   }
   async authorize(actor) {
     if (!actor?.id) throw fail(401, "Sign in required");
@@ -175,41 +177,87 @@ export class NativeEditorService {
       this.scope.brandId,
     );
   }
+  key(id) {
+    if (typeof id !== "string" || !/^[a-f0-9-]{36}$/.test(id))
+      throw fail(404, "Native document not found");
+    return `${this.prefix}document:${id}`;
+  }
+  async persistDocument(document) {
+    const bytes = Buffer.from(JSON.stringify(document));
+    const id = randomUUID();
+    if (this.store.uploadArtifact)
+      return {
+        artifact: await this.store.uploadArtifact(
+          this.scope,
+          id,
+          bytes,
+          "application/json",
+        ),
+      };
+    const key = `${this.prefix}payload:${id}`;
+    await this.store.update(key, () => ({
+      document: clone(document),
+      sha256: hash(document),
+    }));
+    return { key, sha256: hash(document) };
+  }
+  async discardPayload(reference) {
+    if (reference.artifact)
+      await this.store.deleteArtifact?.(this.scope, reference.artifact);
+    else await this.store.delete(reference.key);
+  }
+  async hydrate(record, snapshot = record) {
+    const reference = snapshot.documentRef;
+    let document;
+    if (reference.artifact)
+      document = JSON.parse(
+        (
+          await this.store.downloadArtifact(this.scope, reference.artifact)
+        ).toString("utf8"),
+      );
+    else {
+      if (!reference.key?.startsWith(`${this.prefix}payload:`))
+        throw fail(500, "Native payload ownership mismatch");
+      const payload = await this.store.get(reference.key);
+      if (!payload || hash(payload.document) !== reference.sha256)
+        throw fail(500, "Native payload integrity mismatch");
+      document = payload.document;
+    }
+    const { receipts, documentRef, ...result } = { ...record, ...snapshot };
+    return { ...clone(result), document: clone(document) };
+  }
   async read(actor, id) {
     await this.authorize(actor);
-    const value = (await this.repo.read()).nativeEditor?.documents?.find(
-      (item) => item.id === id,
-    );
+    const value = await this.store.get(this.key(id));
     if (!value) throw fail(404, "Native document not found");
-    return clone(value);
+    return this.hydrate(value);
   }
-  async write(actor, operation, input, apply) {
-    await this.authorize(actor);
+  request(actor, operation, input) {
     text(input.idempotencyKey, "idempotency key", 100);
     if (!/^[a-zA-Z0-9_-]{16,100}$/.test(input.idempotencyKey))
       throw fail(400, "Invalid idempotency key");
-    const fingerprint = hash({ operation, input });
-    let result;
-    await this.repo.mutate((state) => {
-      const editor = (state.nativeEditor ||= {
-        schemaVersion: 1,
-        documents: [],
-        receipts: [],
-      });
-      const key = `${actor.id}:${input.idempotencyKey}`;
-      const receipt = editor.receipts.find((item) => item.key === key);
-      if (receipt) {
-        if (receipt.fingerprint !== fingerprint)
-          throw fail(409, "Idempotency key was used for different content");
-        result = clone(receipt.result);
-        return state;
-      }
-      result = apply(state, editor);
-      editor.receipts.push({ key, fingerprint, result: clone(result) });
-      editor.receipts = editor.receipts.slice(-100);
-      return state;
-    });
-    return clone(result);
+    return {
+      key: `${actor.id}:${input.idempotencyKey}`,
+      fingerprint: hash({ operation, input }),
+    };
+  }
+  replay(record, intent) {
+    const receipt = record?.receipts?.find((item) => item.key === intent.key);
+    if (receipt && receipt.fingerprint !== intent.fingerprint)
+      throw fail(409, "Idempotency key was used for different content");
+    return receipt?.snapshot;
+  }
+  assertCurrent(state, origin) {
+    const story = state.backlog.find((item) => item.id === origin.storyId);
+    if (
+      !story ||
+      story.revision !== origin.storyRevision ||
+      story.generationId !== origin.generationId ||
+      brandRevision(state.brandProfile) !== origin.brandRevision ||
+      hash(story.campaignDraft) !== origin.sourceCampaignSha256 ||
+      hash(story.sourceClaims) !== hash(origin.sourceApprovals)
+    )
+      throw fail(409, "Native source or brand changed; review before saving");
   }
   async create(actor, input) {
     exact(input, [
@@ -222,22 +270,39 @@ export class NativeEditorService {
     ]);
     if (!FORMATS.has(input.format)) throw fail(400, "Invalid native format");
     revision(input.expectedRevision);
-    const id = randomUUID();
-    return this.write(actor, "create", input, (state, editor) => {
-      const story = state.backlog.find((item) => item.id === input.storyId);
-      if (!story) throw fail(404, "Story not found");
-      const spec = compileMultimodalBundle({
-        scope: this.scope,
-        brandProfile: state.brandProfile,
-        story,
-        request: { schemaVersion: 1, ...input, requiredCapabilities: [] },
-      });
-      const native = compileDooryDocument({
-        spec,
-        brandProfile: state.brandProfile,
-        format: input.format,
-        availableFonts: this.availableFonts,
-      });
+    await this.authorize(actor);
+    const intent = this.request(actor, "create", input);
+    // Deterministic scoped ID makes a lost create response safely retryable without a global index.
+    const digest = hash({
+      scope: this.scope,
+      actor: actor.id,
+      key: input.idempotencyKey,
+    });
+    const id = `${digest.slice(0, 8)}-${digest.slice(8, 12)}-${digest.slice(12, 16)}-${digest.slice(16, 20)}-${digest.slice(20, 32)}`;
+    const key = this.key(id);
+    const prior = await this.store.get(key);
+    const replay = this.replay(prior, intent);
+    if (replay) return this.hydrate(prior, replay);
+    const state = await this.repo.read();
+    const story = state.backlog.find((item) => item.id === input.storyId);
+    if (!story) throw fail(404, "Story not found");
+    const spec = compileMultimodalBundle({
+      scope: this.scope,
+      brandProfile: state.brandProfile,
+      story,
+      request: { schemaVersion: 1, ...input, requiredCapabilities: [] },
+    });
+    const native = compileDooryDocument({
+      spec,
+      brandProfile: state.brandProfile,
+      format: input.format,
+      availableFonts: this.availableFonts,
+    });
+    const documentRef = await this.persistDocument(native.document);
+    let retained = false;
+    try {
+      await this.authorize(actor);
+      this.assertCurrent(await this.repo.read(), native.manifest);
       const record = {
         schemaVersion: 1,
         id,
@@ -247,7 +312,7 @@ export class NativeEditorService {
         format: input.format,
         revision: 1,
         title: `${story.title || "Campaign"} — ${input.format}`,
-        document: native.document,
+        documentRef,
         origin: native.manifest,
         status: "proposal",
         createdBy: actor.id,
@@ -255,41 +320,79 @@ export class NativeEditorService {
         createdAt: this.now(),
         updatedAt: this.now(),
       };
-      editor.documents.push(record);
-      return record;
-    });
+      let snapshot;
+      const saved = await this.store.update(key, (current) => {
+        snapshot = this.replay(current, intent);
+        if (snapshot) return current;
+        if (current) throw fail(409, "Native create collision");
+        const { origin, ...receiptSnapshot } = record;
+        snapshot = receiptSnapshot;
+        return { ...record, receipts: [{ ...intent, snapshot }] };
+      });
+      retained =
+        saved.documentRef.key === documentRef.key &&
+        saved.documentRef.artifact?.object === documentRef.artifact?.object;
+      return await this.hydrate(saved, snapshot);
+    } finally {
+      if (!retained) await this.discardPayload(documentRef);
+    }
   }
   async save(actor, id, input) {
     exact(input, ["expectedRevision", "title", "document", "idempotencyKey"]);
     revision(input.expectedRevision);
     text(input.title, "native title");
-    return this.write(actor, `save:${id}`, input, (state, editor) => {
-      const record = editor.documents.find((item) => item.id === id);
-      if (!record) throw fail(404, "Native document not found");
-      if (record.revision !== input.expectedRevision)
-        throw fail(
-          409,
-          "Native document changed; preserve local work and reload explicitly",
-        );
-      const story = state.backlog.find((item) => item.id === record.storyId);
-      if (
-        !story ||
-        story.revision !== record.origin.storyRevision ||
-        story.generationId !== record.origin.generationId ||
-        brandRevision(state.brandProfile) !== record.origin.brandRevision ||
-        hash(story.campaignDraft) !== record.origin.sourceCampaignSha256 ||
-        hash(story.sourceClaims) !== hash(record.origin.sourceApprovals)
-      )
-        throw fail(409, "Native source or brand changed; review before saving");
-      record.document = validateHostedDocument(input.document, {
-        assets: state.assets,
-        pageIds: record.origin.pageIds,
-      });
-      record.title = input.title;
-      record.revision++;
-      record.updatedBy = actor.id;
-      record.updatedAt = this.now();
-      return record;
+    await this.authorize(actor);
+    const intent = this.request(actor, `save:${id}`, input);
+    const key = this.key(id);
+    const original = await this.store.get(key);
+    if (!original) throw fail(404, "Native document not found");
+    const replay = this.replay(original, intent);
+    if (replay) return this.hydrate(original, replay);
+    const state = await this.repo.read();
+    this.assertCurrent(state, original.origin);
+    if (original.revision !== input.expectedRevision)
+      throw fail(
+        409,
+        "Native document changed; preserve local work and reload explicitly",
+      );
+    const document = validateHostedDocument(input.document, {
+      assets: state.assets,
+      pageIds: original.origin.pageIds,
     });
+    const documentRef = await this.persistDocument(document);
+    let retained = false;
+    try {
+      await this.authorize(actor);
+      this.assertCurrent(await this.repo.read(), original.origin);
+      let snapshot;
+      const saved = await this.store.update(key, (current) => {
+        if (!current) throw fail(404, "Native document not found");
+        snapshot = this.replay(current, intent);
+        if (snapshot) return current;
+        if (current.revision !== input.expectedRevision)
+          throw fail(
+            409,
+            "Native document changed; preserve local work and reload explicitly",
+          );
+        snapshot = {
+          documentRef,
+          title: input.title,
+          revision: current.revision + 1,
+          updatedBy: actor.id,
+          updatedAt: this.now(),
+        };
+        return {
+          ...current,
+          ...snapshot,
+          receipts: [...current.receipts, { ...intent, snapshot }].slice(-100),
+        };
+      });
+      retained =
+        saved.documentRef.key === documentRef.key &&
+        saved.documentRef.artifact?.object === documentRef.artifact?.object;
+      return await this.hydrate(saved, snapshot);
+    } finally {
+      if (!retained) await this.discardPayload(documentRef);
+    }
   }
 }
