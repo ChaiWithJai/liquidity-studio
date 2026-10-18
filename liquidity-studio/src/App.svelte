@@ -2,6 +2,7 @@
   import { onMount, tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
   import Emulator from "./Emulator.svelte";
+  import { scopedRequest } from "./lib/scoped-request.js";
   import SourceReviewSummary from "./SourceReviewSummary.svelte";
   import { sourceReviewSummary, reviewSignature } from "./lib/source-review.js";
   import { createGoogleAuth } from "./lib/google-auth.js";
@@ -36,6 +37,7 @@
   let authMode = $state("unavailable");
   let googleAuth;
   let authSequence = 0;
+  let requestSessionEpoch = 0;
   let googleLoginSequence = 0;
   let googleLoginTimer;
   let user = $state(null);
@@ -126,34 +128,18 @@
   function scopeQuery() {
     return new URLSearchParams({ organizationId, brandId }).toString();
   }
-  async function request(path, options = {}, scoped = true) {
-    const requestScopeToken = lastScopeToken;
-    const authHeaders = authMode === "google"
-      ? { Authorization: `Bearer ${await googleAuth.getToken()}` } : {};
-    const response = await fetch(
-      path + (scoped ? (path.includes("?") ? "&" : "?") + scopeQuery() : ""),
-      {
-        ...options,
-        credentials: "same-origin",
-        headers: {
-          ...(options.body ? { "Content-Type": "application/json" } : {}),
-          ...options.headers,
-          ...authHeaders,
-        },
-      },
-    );
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      if (response.status === 401) clearWorkspace();
-      throw new Error(
-        data.error || data.message || `Request failed (${response.status})`,
-      );
-    }
-    if (scoped && requestScopeToken !== lastScopeToken)
-      throw new Error(
-        "Workspace changed while the request was running; retry in the current brand",
-      );
-    return data;
+  function requestContext() {
+    return { sessionEpoch: requestSessionEpoch, scopeToken: lastScopeToken, query: scopeQuery() };
+  }
+  function request(path, options = {}, scoped = true) {
+    const context = requestContext();
+    const auth = googleAuth;
+    const google = authMode === "google";
+    return scopedRequest({
+      path, options, scoped, context, getContext: requestContext,
+      authorize: async () => google ? { Authorization: `Bearer ${await auth.getToken()}` } : {},
+      onUnauthorized: clearWorkspace,
+    });
   }
   function post(path, body = {}, scoped = true) {
     return request(
@@ -163,6 +149,7 @@
     );
   }
   function applySession(session) {
+    requestSessionEpoch++;
     user = session.user;
     organizations = session.organizations || [];
     permissions = session.permissions || {};
@@ -179,6 +166,7 @@
     googleLoginTimer = undefined;
   }
   function clearWorkspace() {
+    requestSessionEpoch++;
     lastScopeToken++;
     scopeLoading = false;
     scopeLoadError = "";
