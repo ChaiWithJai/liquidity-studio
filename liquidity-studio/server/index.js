@@ -160,6 +160,8 @@ export function createHttpServer(
     platform = appContainer ? null : createPlatform(),
     trustedTestMode = false,
     distDir = DIST_DIR,
+    editorContractEnabled = process.env.STUDIO_EDITOR_CONTRACT_ENABLED ===
+      "true",
   } = {},
 ) {
   if (appContainer && !trustedTestMode && !platform)
@@ -452,6 +454,64 @@ export function createHttpServer(
           ...(trustedTestMode ? {} : await session()),
           activeScope: scope,
         });
+      if (route === "/api/studio/multimodal-spec" && req.method === "GET") {
+        if (!editorContractEnabled) throw fail(404, "Not found");
+        const allowed = [
+          "organizationId",
+          "brandId",
+          "schemaVersion",
+          "storyId",
+          "expectedRevision",
+          "generationId",
+          "expectedBrandRevision",
+          "format",
+          "nativeTargets",
+          "requiredCapabilities",
+        ];
+        for (const key of url.searchParams.keys()) {
+          if (
+            !allowed.includes(key) ||
+            url.searchParams.getAll(key).length !== 1
+          )
+            throw fail(400, "Unknown or duplicate editor query field");
+        }
+        const state = await repo.read();
+        const story = state.backlog.find(
+          (item) => item.id === url.searchParams.get("storyId"),
+        );
+        if (!story) throw fail(404, "Story not found");
+        const parse = (key, fallback) => {
+          const value = url.searchParams.get(key);
+          if (value === null) return fallback;
+          try {
+            return JSON.parse(value);
+          } catch {
+            throw fail(400, "Invalid editor query JSON");
+          }
+        };
+        return json(
+          200,
+          await activeContainer.ports.multimodalCanvas.compileMultimodalBundle({
+            scope,
+            brandProfile: state.brandProfile,
+            story,
+            request: {
+              schemaVersion: Number(url.searchParams.get("schemaVersion")),
+              storyId: story.id,
+              expectedRevision: Number(
+                url.searchParams.get("expectedRevision"),
+              ),
+              generationId: url.searchParams.get("generationId"),
+              expectedBrandRevision: url.searchParams.get(
+                "expectedBrandRevision",
+              ),
+              format: url.searchParams.get("format") || undefined,
+              nativeTargets: parse("nativeTargets", undefined),
+              requiredCapabilities: parse("requiredCapabilities", []),
+            },
+          }),
+        );
+      }
       if (route === "/api/studio/brand-profile" && req.method === "POST") {
         const fields = [
           "brandName",
