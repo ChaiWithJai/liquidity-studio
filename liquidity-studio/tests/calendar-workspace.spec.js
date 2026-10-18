@@ -495,3 +495,35 @@ test("the full dated week stays within desktop viewport and narrow space becomes
     second = await day(page, "2026-03-03").boundingBox();
   expect(second.y).toBeGreaterThan(first.y + first.height - 1);
 });
+
+test("legacy and unscheduled units open their real story without manufacturing a dated assignment", async ({
+  page,
+}) => {
+  const ids = await setup(page);
+  await page
+    .getByRole("region", { name: "Legacy undated weekday plans" })
+    .getByRole("button", {
+      name: "Open Calendar alpha, Whole campaign",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByText("Selected story: Calendar alpha", { exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Calendar planning unit").selectOption("format");
+  await page
+    .getByRole("region", { name: "Unscheduled planning units" })
+    .getByRole("button", {
+      name: "Open Calendar alpha, Reel plan",
+      exact: true,
+    })
+    .click();
+  const detail = await (
+    await page.request.get(
+      base + "/api/studio/workspace/stories/" + ids[0] + scope,
+    )
+  ).json();
+  expect(detail.row.assignments).toHaveLength(0);
+  expect(detail.story.revision).toBe(1);
+  expect(detail.story.sourceClaims[0].status).toBe("unreviewed");
+});

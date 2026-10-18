@@ -432,6 +432,26 @@
   }
 </script>
 
+{#snippet poolUnit(item, legacy = false)}
+  <li>
+    <button type="button" class="calendar-pool-open"
+      aria-label={`Open ${row(item.storyId)?.title || "story"}, ${unitLabel(item)}`}
+      onclick={() => onOpenStory(item.storyId)}>
+      {row(item.storyId)?.title || "story"}
+      <small>{legacy ? `${row(item.storyId)?.legacyWeekday} · undated whole campaign` : unitLabel(item)}</small>
+    </button>
+    <button type="button" class="calendar-pool-move"
+      aria-label={`Move ${row(item.storyId)?.title || "story"}, ${unitLabel(item)}`}
+      data-calendar-unit={unitKey(item)} disabled={blocked}
+      onpointerdown={event => pointerDown(event,item)} onpointermove={pointerMove}
+      onpointerup={pointerUp} onpointercancel={cancelPointer}
+      onkeydown={event => handleKey(event,item)}
+      onclick={event => { if(event.detail===0 || Date.now()-lastDragAt>500)openMove(item); }}>
+      Move to date
+    </button>
+  </li>
+{/snippet}
+
 <section class="workspace-calendar" aria-label="Dated content calendar">
   <div class="calendar-heading"><div><h2>Plan the work.</h2><p>Dates arrange campaign or format plans. They do not export or publish content.</p></div><button type="button" onclick={reloadCalendar} disabled={blocked}>Reload calendar</button></div>
   <div class="calendar-controls">
@@ -465,8 +485,8 @@
       {/each}
     </div>
     <div class="calendar-pools">
-      <section aria-label="Unscheduled planning units"><h3>Unscheduled units</h3><p>No dated placement. A format plan does not mean its artwork exists.</p><ul>{#each visibleUnits as item (unitKey(item))}<li><button type="button" aria-label={`Move ${row(item.storyId)?.title || "story"}, ${unitLabel(item)}`} data-calendar-unit={unitKey(item)} onclick={() => openMove(item)} disabled={blocked}>Move {row(item.storyId)?.title || "story"}<small>{unitLabel(item)}</small></button></li>{:else}<li>No unscheduled units in this view.</li>{/each}</ul></section>
-      <section aria-label="Legacy undated weekday plans"><h3>Undated weekday plans</h3><p>Existing Monday–Sunday plans have no calendar date. Moving one to a date is explicit.</p><ul>{#each legacyIds as id (id)}<li><button type="button" data-calendar-unit={unitKey({storyId:id,unit:'campaign'})} onclick={() => openMove({storyId:id,unit:'campaign',format:null})} disabled={blocked}>Move {row(id)?.title || "story"}<small>{row(id)?.legacyWeekday} · undated whole campaign</small></button></li>{:else}<li>No undated weekday plans in this view.</li>{/each}</ul></section>
+      <section aria-label="Unscheduled planning units"><h3>Unscheduled units</h3><p>No dated placement. A format plan does not mean its artwork exists.</p><ul>{#each visibleUnits as item (unitKey(item))}{@render poolUnit(item)}{:else}<li>No unscheduled units in this view.</li>{/each}</ul></section>
+      <section aria-label="Legacy undated weekday plans"><h3>Undated weekday plans</h3><p>Existing Monday–Sunday plans have no calendar date. Moving one to a date is explicit.</p><ul>{#each legacyIds as id (id)}{@render poolUnit({storyId:id,unit:'campaign',format:null},true)}{:else}<li>No undated weekday plans in this view.</li>{/each}</ul></section>
     </div>
   {/if}
   {#if dialog}
@@ -637,6 +657,21 @@
     border: 1px solid var(--line, #dedfd5);
     border-radius: 8px;
     padding: 1rem;
+  }
+  .calendar-pools li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.35rem 0;
+  }
+  .calendar-pools .calendar-pool-move {
+    width: auto;
+    text-align: center;
+    touch-action: none;
+    padding: 0.4rem;
+    border: 1px solid var(--line, #dedfd5);
+    border-radius: 6px;
   }
   .calendar-pools li button {
     width: 100%;
