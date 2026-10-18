@@ -193,9 +193,8 @@ for (const brand of ["brand_default", "brand_vedic"])
       panel.getByText("Preview edits saved.", { exact: false }),
     ).toBeVisible();
     await page.reload();
-    if (brand !== "brand_default")
-      await page.getByLabel("Brand", { exact: true }).selectOption(brand);
-    await page.locator(`[data-open-story="${ids[brand]}"]`).click();
+    await expect(page.getByLabel("Brand", { exact: true })).toHaveValue(brand);
+    await expect(page).toHaveURL(new RegExp(`story=${ids[brand]}`));
     panel = page.getByRole("region", {
       name: "Prepared source draft",
       exact: true,

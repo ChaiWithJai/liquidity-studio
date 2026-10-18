@@ -584,6 +584,7 @@ export async function createPenpotStudioRuntime({
           bindings.push({
             id: row.id,
             targetId: row.targetId,
+            storyId: entry.manifest.storyId,
             resourceId: resource.id,
             nativeUrl,
             command,
@@ -600,6 +601,7 @@ export async function createPenpotStudioRuntime({
           bindings.push({
             id: row.id,
             targetId: row.targetId,
+            storyId: entry.manifest.storyId,
             resourceId: resource.id,
             nativeUrl,
             available: false,
@@ -614,6 +616,7 @@ export async function createPenpotStudioRuntime({
         bindings,
         targets: targets.map((target) => ({
           id: target.id,
+          storyId: configuration.manifests.get(target.id)?.manifest.storyId,
           registered: rows.some((row) => row.targetId === target.id),
         })),
         actions: await service.list(actor),

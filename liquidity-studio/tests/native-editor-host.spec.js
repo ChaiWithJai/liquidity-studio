@@ -481,7 +481,7 @@ test("actual Studio mounts and resumes native proposal without mutating original
   await page.goto(`${base}/tests/fixtures/native-studio-host.html`);
   await page.getByRole("button", { name: /Campaign Studio/ }).click();
   await page
-    .getByRole("button", { name: "Open native design editor", exact: true })
+    .getByRole("button", { name: "Edit layout in Studio", exact: true })
     .click();
   const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
   await expect(
@@ -526,7 +526,7 @@ test("actual Studio mounts and resumes native proposal without mutating original
   ).toContainText("Native proposal saved", { timeout: 15000 });
   await page
     .getByRole("button", {
-      name: "Return to original campaign and exporter",
+      name: "Return to saved copy and preview",
       exact: true,
     })
     .click();
@@ -534,7 +534,7 @@ test("actual Studio mounts and resumes native proposal without mutating original
     page.locator('iframe[title="Native Doory design canvas"]'),
   ).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Open native design editor", exact: true })
+    .getByRole("button", { name: "Edit layout in Studio", exact: true })
     .click();
   await expect(
     frame.getByRole("button", { name: "Layers", exact: true }),

@@ -7,7 +7,8 @@
   let loading = $state(true), busy = $state(false), error = $state(""), notice = $state("");
   let attempt = $state(null);
   let alive = false, sequence = 0;
-  const choices = $derived(bindings.filter(item => item.command?.storyId === storyId || !item.available));
+  const choices = $derived(bindings.filter(item => (item.storyId || item.command?.storyId) === storyId));
+  const connectionTargets = $derived(targets.filter(target => target.storyId === storyId));
   const chosen = $derived(choices.find(item => item.id === selected));
   const history = $derived(actions.filter(item => item.command.storyId === storyId));
   onMount(() => {
@@ -89,32 +90,38 @@
 </script>
 
 <section aria-labelledby="penpot-panel-title" class="penpot-panel">
-  <h3 id="penpot-panel-title">Registered Penpot design</h3>
-  <p>Private local integration. Refresh current Brand Kit colors without replacing native human text or geometry. Native checks do not approve a post.</p>
-  {#if loading}<p role="status">Checking registered native context…</p>{/if}
+  <h3 id="penpot-panel-title">Linked Penpot design</h3>
+  <p>Edit the linked document in Penpot. It is separate from the layout saved in Studio.</p>
+  {#if loading}<p role="status">Loading linked design…</p>{/if}
   {#if error}<p role="alert">{error}</p>{/if}
   {#if notice}<p role="status">{notice}</p>{/if}
-  <button disabled={busy || loading} onclick={refresh}>Refresh native context</button>
-  {#if !loading && !choices.length}<p>No registered native document is available for this saved story. An operator must configure the source and native owner mapping.</p>{/if}
-  {#if role === "founder"}
-    {#each targets.filter(target => !target.registered) as target (target.id)}
-      <button disabled={busy || loading} onclick={() => register(target.id)}>Register configured target {target.id}</button>
+  <button disabled={busy || loading} onclick={refresh}>Refresh connection</button>
+  {#if !loading && !choices.length}<p>This story has no linked Penpot design. Creating a new Penpot document from this campaign is not available yet.</p>{/if}
+  {#if role === "founder" && connectionTargets.some(target => !target.registered)}
+    <details><summary>Connect an existing design</summary>
+    <p>These designs were configured for this story. Connecting one does not create a new document or copy this campaign into it.</p>
+    {#each connectionTargets.filter(target => !target.registered) as target (target.id)}
+      <button disabled={busy || loading} onclick={() => register(target.id)}>Connect {target.id}</button>
     {/each}
+    </details>
   {/if}
   {#if choices.length}
-    <label>Registered native document
+    <label>Linked document
       <select bind:value={selected} disabled={busy || !!attempt} onchange={() => { capability = ""; actionId = ""; }}>
         {#each choices as binding (binding.id)}<option value={binding.id}>{binding.targetId}</option>{/each}
       </select>
     </label>
     {#if chosen}
-      {#if nativeUrl(chosen.nativeUrl)}<a href={nativeUrl(chosen.nativeUrl)} target="_blank" rel="noopener noreferrer">Open registered native document</a>{/if}
+      {#if nativeUrl(chosen.nativeUrl)}<a href={nativeUrl(chosen.nativeUrl)} target="_blank" rel="noopener noreferrer">Open in Penpot ↗</a>{/if}
       {#if chosen.available}
+        <details class="penpot-sync"><summary>Update colors or send an image</summary>
+        <p>Use the Studio plugin in the open Penpot document to apply an update.</p>
         <p>Source revision {chosen.command.expectedRevision}; native revision {chosen.command.expectedNativeRevision}. Current brand revision is checked on every action.</p>
         {#if !attempt}<button disabled={busy || loading} onclick={prepare}>Prepare color refresh</button>{/if}
         {#if chosen.imageTransfer?.supported === true}
           {#key `${chosen.id}:${storyId}`}<PenpotImagePicker {request} binding={chosen} disabled={busy || loading || !!attempt} onPrepare={prepareImage} />{/key}
         {:else if chosen.imageTransfer}<p>{chosen.imageTransfer.reason}</p>{/if}
+        </details>
       {:else}<p>{chosen.reason}</p>{/if}
     {/if}
   {/if}
@@ -124,8 +131,8 @@
     <p>Copy into the local Studio plugin in the registered Penpot document. This code expires within one minute and is never saved in browser storage. Leaving this story clears it.</p>
     <button disabled={busy} onclick={() => reconcile(actionId)}>Check saved native state</button>
   {/if}
-  <h4>Recent durable action history</h4>
-  {#if !history.length}<p>No action history for this story.</p>{/if}
+  <details class="penpot-history"><summary>Update history</summary>
+  {#if !history.length}<p>No updates for this story.</p>{/if}
   <ul>
     {#each history as action (action.id)}
       <li>
@@ -139,11 +146,14 @@
       </li>
     {/each}
   </ul>
+  </details>
 </section>
 
 <style>
   .penpot-panel { border: 1px solid #58636d; border-radius: 10px; padding: 1rem; margin-block: 1rem; display: grid; gap: 0.7rem; overflow-wrap: anywhere; }
-  h3,h4,p { margin: 0; }
+  h3,p { margin: 0; }
+  summary { cursor: pointer; font-weight: 600; padding-block: .4rem; }
+  details > p, details > button { margin-block: .5rem; }
   label,li { display: grid; gap: 0.4rem; }
   input,select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 42px; }
   button,a { min-height: 42px; align-content: center; }

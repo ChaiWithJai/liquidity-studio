@@ -182,7 +182,7 @@ test("actual Studio native review renders and signs the exact PNG, survives lost
   await page.goto(`${base}/tests/fixtures/native-studio-host.html`);
   await page.getByRole("button", { name: /Campaign Studio/ }).click();
   await page
-    .getByRole("button", { name: "Open native design editor", exact: true })
+    .getByRole("button", { name: "Edit layout in Studio", exact: true })
     .click();
   const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
   await expect(
@@ -222,7 +222,7 @@ test("actual Studio native review renders and signs the exact PNG, survives lost
   await page.reload();
   await page.getByRole("button", { name: /Campaign Studio/ }).click();
   await page
-    .getByRole("button", { name: "Open native design editor", exact: true })
+    .getByRole("button", { name: "Edit layout in Studio", exact: true })
     .click();
   await expect(
     frame.getByRole("button", { name: "Layers", exact: true }),

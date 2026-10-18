@@ -103,11 +103,7 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
     "AN EDITED SOURCE NOTE",
   );
   await page.reload();
-  await page
-    .locator(".story-row")
-    .filter({ hasText: "Browser source fixture" })
-    .getByRole("button", { name: "Open draft" })
-    .click();
+  await expect(page.locator(".workflow-context")).toContainText("Browser source fixture");
   await expect(page.getByLabel("Headline", { exact: true })).toHaveValue(
     "AN EDITED SOURCE NOTE",
   );
