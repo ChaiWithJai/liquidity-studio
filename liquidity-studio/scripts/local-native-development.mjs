@@ -8,7 +8,7 @@ export const nativeBridgeSources = [
  'src/lib/native-editor-frame.js','src/lib/native-editor-mount.jsx','src/lib/native-editor-adapter.js',
  'src/lib/native-editor-broker.js','src/lib/native-cutout-availability.js','src/lib/native-editor-size-presets.js','src/lib/native-cutout-remover.js','src/lib/modnet-worker.js',
  'src/lib/modnet-worker-client.js','src/lib/modnet-model-cache.js','src/lib/modnet-processor.js',
- 'server/native-audio.js','server/native-cutout-contract.js','vite.config.js','native-editor-frame.html','scripts/build-dist.js','package.json','scripts/native-editor-vite.js','src/lib/native-webm-duration.ts','../docs/specs/doory-host-source-inventory.json','../scripts/investigations/doory-webm-duration/webm-duration.patch','package-lock.json',
+ 'server/native-audio.js','server/native-cutout-contract.js','vite.config.js','native-editor-frame.html','scripts/build-dist.js','package.json','scripts/native-editor-vite.js','src/lib/native-webm-duration.ts','../docs/specs/doory-host-source-inventory.json','../scripts/investigations/doory-webm-duration/webm-duration.patch','../scripts/investigations/doory-audio-ui/studio-audio-ui.patch.json','package-lock.json',
 ];
 const app=fileURLToPath(new URL('../',import.meta.url));
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');

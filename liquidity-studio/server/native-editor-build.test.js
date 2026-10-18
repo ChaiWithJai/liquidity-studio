@@ -6,6 +6,7 @@ import {
   canonicalizeLegalFooter,
   fixNativeVideoResult,
   fixNativeWebmContainer,
+  fixNativeAudioUi,
 } from "../scripts/native-editor-vite.js";
 test("original-only build blocks upstream source, dependencies and emitted frame assets", () => {
   assert.doesNotThrow(() =>
@@ -139,4 +140,37 @@ test("reviewed WebM duration helper repairs the actual 900-frame muxer metadata 
   const changed=[...b.keys()].filter(i=>b[i]!==new Uint8Array(fixed)[i]);
   assert.ok(changed.length>0&&changed.every(i=>i>=at&&i<at+8));
   assert.throws(()=>correctMuxedWebmDuration(original,0),/positive actual chunk end/);
+});
+
+
+test("private audio overlay presents only supported uploads without loading unavailable source components", async () => {
+  const {readFile}=await import('node:fs/promises');
+  const {transformWithEsbuild}=await import('vite');
+  const patch=await readFile(new URL('../../scripts/investigations/doory-audio-ui/studio-audio-ui.patch.json',import.meta.url),'utf8');
+  const entries=JSON.parse(patch).files;
+  const panel=entries.find(file=>file.path==='editor/panels/AudioPanel.tsx');
+  const original=panel.edits.slice(0,2).map(edit=>edit.before).join('')+
+    "type TabId = 'library' | 'uploads' | 'record';\n"+panel.edits[2].before+
+    "\nexport function Audio(){const tab=memory.tab;return <div>"+panel.edits[3].before+"</div>;}";
+  const digest=createHash('sha256').update(original).digest('hex');
+  const fixed=fixNativeAudioUi(original,panel.path,digest,patch);
+  assert.match(fixed,/tab: 'uploads'/);
+  assert.doesNotMatch(fixed,/import.*Audio(?:Library|Record)Tab/);
+  assert.match(fixed,/role="status"/);
+  assert.match(fixed,/Studio does not provide a music library/);
+  assert.match(fixed,/Microphone recording is not available in Studio/);
+  const compiled=await transformWithEsbuild(fixed,'AudioPanel.tsx',{loader:'tsx'});
+  assert.match(compiled.code,/AudioUploadsTab/);
+  assert.doesNotMatch(compiled.code,/AudioRecordTab|AudioLibraryTab/);
+  assert.throws(()=>fixNativeAudioUi(original+' ',panel.path,digest,patch),/pristine source mismatch/);
+  assert.throws(()=>fixNativeAudioUi(original,panel.path,digest,patch+' '),/patch mismatch/);
+  const duplicate=original+panel.edits[2].before;
+  assert.throws(()=>fixNativeAudioUi(duplicate,panel.path,createHash('sha256').update(duplicate).digest('hex'),patch),/anchor mismatch/);
+  for(const entry of entries.filter(file=>file!==panel)){
+    const source=entry.edits.map(edit=>edit.before).join('\n');
+    const result=fixNativeAudioUi(source,entry.path,createHash('sha256').update(source).digest('hex'),patch);
+    assert.doesNotMatch(result,/25 MB|MP3, OGG, WAV, M4A|MAX_AUDIO_BYTES/);
+    if(entry.path.endsWith('files.ts')){assert.match(result,/AUDIO_ACCEPT = 'audio\/wav,audio\/x-wav,audio\/wave,audio\/vnd.wave,\.wav'/);assert.match(result,/maxBytes = 6 \* 1024 \* 1024/);}
+    else assert.match(result,/16-bit stereo PCM WAV, 44.1 or 48 kHz, up to 6 MiB and 30 seconds/);
+  }
 });

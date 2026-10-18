@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "upstreamCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "scope": "Private Studio audio capability UI; original upstream files remain unchanged.",
+  "files": [
+    {
+      "path": "editor/panels/AudioPanel.tsx",
+      "edits": [
+        {
+          "before": "import { AudioLibraryTab } from './AudioLibraryTab'\n",
+          "after": ""
+        },
+        {
+          "before": "import { AudioRecordTab } from './AudioRecordTab'\n",
+          "after": ""
+        },
+        {
+          "before": "const memory: { tab: TabId } = { tab: 'library' }",
+          "after": "const memory: { tab: TabId } = { tab: 'uploads' }"
+        },
+        {
+          "before": "{tab === 'library' ? <AudioLibraryTab /> : tab === 'uploads' ? <AudioUploadsTab /> : <AudioRecordTab />}",
+          "after": "{tab === 'uploads' ? <AudioUploadsTab /> : <p role=\"status\">{tab === 'library' ? 'Studio does not provide a music library. Use Uploads for audio you have permission to use.' : 'Microphone recording is not available in Studio. Upload an original 16-bit stereo PCM WAV at 44.1 or 48 kHz, up to 6 MiB and 30 seconds.'}</p>}"
+        }
+      ]
+    },
+    {
+      "path": "editor/audio/files.ts",
+      "edits": [
+        {
+          "before": "export const AUDIO_ACCEPT = 'audio/mpeg,audio/mp3,audio/ogg,audio/wav,audio/x-wav,audio/wave,audio/mp4,audio/x-m4a,audio/aac,audio/webm,.mp3,.ogg,.oga,.opus,.wav,.m4a,.webm,.weba'",
+          "after": "export const AUDIO_ACCEPT = 'audio/wav,audio/x-wav,audio/wave,audio/vnd.wave,.wav'"
+        },
+        {
+          "before": "maxBytes = MAX_AUDIO_BYTES",
+          "after": "maxBytes = 6 * 1024 * 1024"
+        },
+        {
+          "before": "import { MAX_AUDIO_BYTES } from './model'\n",
+          "after": ""
+        }
+      ]
+    },
+    {
+      "path": "editor/audio/strings.ts",
+      "edits": [
+        {
+          "before": "hint: 'MP3, OGG, WAV, M4A or WebM, up to 25 MB'",
+          "after": "hint: '16-bit stereo PCM WAV, 44.1 or 48 kHz, up to 6 MiB and 30 seconds'"
+        },
+        {
+          "before": "none: 'No audio uploaded yet. Files you upload or record appear here.'",
+          "after": "none: 'No audio uploaded yet. Upload a WAV file you have permission to use.'"
+        }
+      ]
+    }
+  ]
+}
