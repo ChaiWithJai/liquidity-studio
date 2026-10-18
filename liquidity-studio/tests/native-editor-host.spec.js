@@ -152,7 +152,8 @@ test.beforeAll(async () => {
   }
 });
 test.afterAll(async () => {
-  if (previousLocalBuildFlag === undefined) delete process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD;
+  if (previousLocalBuildFlag === undefined)
+    delete process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD;
   else process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD = previousLocalBuildFlag;
   await new Promise((resolve) => server?.close(resolve));
   if (buildDirectory) rmSync(buildDirectory, { recursive: true, force: true });
@@ -496,12 +497,10 @@ test("actual Studio mounts and resumes native proposal without mutating original
   ).toContainText("Unsaved native work");
   await page.getByRole("button", { name: /Story backlog/ }).click();
   await expect(
-    page
-      .getByRole("alert")
-      .filter({
-        hasText:
-          "Save native changes or explicitly discard them before leaving the native editor.",
-      }),
+    page.getByRole("alert").filter({
+      hasText:
+        "Save native changes or explicitly discard them before leaving the native editor.",
+    }),
   ).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Native proposal workspace" }),
@@ -548,4 +547,80 @@ test("actual Studio mounts and resumes native proposal without mutating original
   expect(bootstrap.backlog[0].campaignDraft.infographic.headline).toBe(
     "SOURCE NOTES",
   );
+});
+
+test("iframe reload disposes its previous parent broker before mounting a replacement", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const add = window.addEventListener.bind(window),
+      remove = window.removeEventListener.bind(window);
+    window.__messageListeners = new Set();
+    window.addEventListener = (type, listener, options) => {
+      if (type === "message") window.__messageListeners.add(listener);
+      return add(type, listener, options);
+    };
+    window.removeEventListener = (type, listener, options) => {
+      if (type === "message") window.__messageListeners.delete(listener);
+      return remove(type, listener, options);
+    };
+  });
+  await page.request.post(`${base}/api/auth/login`, {
+    data: { username: "native-host-fixture", password },
+  });
+  await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
+  const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
+  await expect(
+    frame.getByRole("button", { name: "Layers", exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  const art = await frame.locator("[data-artboard]").first().boundingBox();
+  await page.mouse.dblclick(
+    art.x + art.width * 0.5,
+    art.y + (art.height * 365) / 1350,
+  );
+  await expect(
+    frame.locator('textarea[data-fabric="textarea"]'),
+  ).toBeAttached();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("SAVED BEFORE FRAME RELOAD");
+  await page.keyboard.press("Escape");
+  const fixture = fixtures[0];
+  const endpoint = `${base}/api/studio/native-editor/documents/${fixture.id}?organizationId=org_default&brandId=${fixture.brandId}`;
+  await expect
+    .poll(
+      async () =>
+        (
+          await (await page.request.get(endpoint)).json()
+        ).document.pages[0].objects.find(
+          (object) => object.id === "headline_layer",
+        ).text,
+    )
+    .toBe("SAVED BEFORE FRAME RELOAD");
+  const before = await page.evaluate(() => window.__messageListeners.size);
+  await page.evaluate(() => {
+    const frame = document.querySelector("iframe");
+    window.__nextLoad = new Promise((resolve) =>
+      frame.addEventListener("load", resolve, { once: true }),
+    );
+    frame.contentWindow.location.reload();
+  });
+  await page.evaluate(() => window.__nextLoad.then(() => null));
+  await expect(
+    frame.getByRole("button", { name: "Layers", exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  const after = await page.evaluate(() => window.__messageListeners.size);
+  console.log(JSON.stringify({ before, after }));
+  expect(after).toBe(before);
+  const restoredArt = await frame
+    .locator("[data-artboard]")
+    .first()
+    .boundingBox();
+  await page.mouse.dblclick(
+    restoredArt.x + restoredArt.width * 0.5,
+    restoredArt.y + (restoredArt.height * 365) / 1350,
+  );
+  await expect(frame.locator('textarea[data-fabric="textarea"]')).toHaveValue(
+    "SAVED BEFORE FRAME RELOAD",
+  );
+  await page.keyboard.press("Escape");
 });

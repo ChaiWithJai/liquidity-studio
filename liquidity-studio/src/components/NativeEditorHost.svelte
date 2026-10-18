@@ -22,7 +22,6 @@
     const openingScope = scopeKey;
     const openingId = documentId;
     const epoch = reloadEpoch;
-    const openingRecord = untrack(() => localRecord?.id === record.id ? localRecord : record);
     const capturedRequest = untrack(() => request);
     loading = true;
     let activeBroker;
@@ -32,13 +31,19 @@
 
     function loaded() {
       if (!current()) return;
+      clearTimeout(watchdog);
+      activeBroker?.dispose();
+      loading = true;
       activeBroker = createNativeEditorBroker({
         frameWindow: frame.contentWindow,
         request: capturedRequest,
         scopeKey: openingScope,
         getScopeKey,
-        record: openingRecord,
-        onSaved,
+        record: untrack(() => localRecord?.id === openingId ? localRecord : record),
+        onSaved(saved) {
+          localRecord = saved;
+          onSaved(saved);
+        },
         onReady() { clearTimeout(watchdog); loading = false; },
         async onConflictResolve(action) {
           if (action !== 'reload') {
