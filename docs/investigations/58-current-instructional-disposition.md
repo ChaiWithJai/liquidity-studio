@@ -8,6 +8,34 @@ The [content-work walkthrough](58-native-operator-practice.md#current-content-wo
 
 ## Evidence index
 
+### Latest product walkthroughs (2026-10-18)
+
+These are engineering observations in the ordinary BrowserOS neo UI, not learner
+scores or timed human practice. They supplement the dated ledger below:
+
+- Cutout: actual model output has inspectable alpha; the original image remains
+  available through native Undo. Undo, Redo, Save and reload were exercised on
+  the saved CWJ layout. See [#55 cutout evidence](https://github.com/ChaiWithJai/liquidity-studio/issues/55#issuecomment-6253935226).
+- Reel: current native MP4 and WebM downloads have exactly 30 seconds at
+  1080 × 1920 / 30 fps. The cleaned WebM opens in the browser player; these
+  downloads are silent, so they do not establish audio or a learner speed target.
+  See [#55 media evidence](https://github.com/ChaiWithJai/liquidity-studio/issues/55#issuecomment-6254155924).
+- Recovery: the real downloaded ZIP and its checksums were inspected, then its
+  pack was restored through Operations into a separate empty CWJ recovery QA
+  brand. This proves same-installation recovery, not a fresh infrastructure
+  restore. See [#57 recovery evidence](https://github.com/ChaiWithJai/liquidity-studio/issues/57#issuecomment-6254149553).
+- Campaign transfer: a saved Defiant report became an explicitly chosen campaign
+  destination, retaining its source brief and return link. The campaign created
+  a design in its separate Penpot workspace; a native headline edit survived
+  reload. See [#220 handoff evidence](https://github.com/ChaiWithJai/liquidity-studio/issues/220#issuecomment-6254408141).
+- Brand changes: a CWJ color changed through Brand Kit, updated the same native
+  file through the supported plugin, and was restored. Saved verification and
+  the human headline were retained. See [#54 color evidence](https://github.com/ChaiWithJai/liquidity-studio/issues/54#issuecomment-6254220575).
+
+Consenting founder/marketer example, explanation, modification and independent
+practice, with actual feedback and retakes, remain unobserved. No invitation or
+account-acceptance task is a prerequisite for shipping the product features.
+
 | Key | Bounded merged source/evidence |
 | --- | --- |
 | K | [Canonical native contracts](../specs/doory-native-adapter.md), PR61/62/72; source-preserving complete semantic copy. |
