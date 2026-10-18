@@ -75,6 +75,7 @@ jobs:
             -lc '
               set -euo pipefail
               /opt/node/bin/pnpm self-update 12.5.1 --registry=https://registry.npmjs.org
+              export PATH="$PNPM_HOME/bin:$PATH"
               bin_dir="$(/opt/node/bin/pnpm bin --global)"
               test "$bin_dir" = /review-tools/home/bin
               test -x "$bin_dir/pnpm"
