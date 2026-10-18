@@ -1,3 +1,5 @@
+import {strategyOrganizations} from './defiant-strategy.js';
+import {strategyRequest} from './defiant-strategy-http.js';
 import { readPenpotExportBody } from "./penpot-native-export.js";
 import { editorRestoreStatus } from "./editor-recovery.js";
 import {
@@ -595,7 +597,7 @@ export function createHttpServer(
         ? { id: "test", username: "test", role: "founder" }
         : await identity.authenticate(token(req, identity.mode));
       const session = async () => {
-        const organizations = await identity.organizations(user);
+        const organizations = await strategyOrganizations({store:platform.store,identity,actor:user,organizations:await identity.organizations(user)});
         return {
           user,
           organizations,
@@ -722,6 +724,10 @@ export function createHttpServer(
               portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
+      if (route.startsWith("/api/studio/strategy/")) {
+        if (trustedTestMode) throw fail(404, "Strategy requires current organization identity");
+        return json(200, await strategyRequest({platform,user,route,method:req.method,body,url}));
+      }
       if (route === "/api/admin/organizations" && req.method === "POST") {
         founder();
         return json(201, {
