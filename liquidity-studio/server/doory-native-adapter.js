@@ -284,6 +284,9 @@ export function compileDooryDocument({
         id: "subject_cutout_layer",
         type: "rect",
         name: "Missing subject asset · not a cutout",
+        // Upstream renderableObjects omits unfilled placeholders from static/video output.
+        // Keep this editing aid visible/selectable and serializable in the native canvas.
+        isPlaceholder: true,
         originX: "center",
         originY: "center",
         left: 540,

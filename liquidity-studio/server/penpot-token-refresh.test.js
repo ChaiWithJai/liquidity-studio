@@ -438,3 +438,8 @@ test("acknowledgement rejects operator manifest drift from the claimed action", 
     (error) => error.status === 409,
   );
 });
+
+test('constructor-resolved paired plugin principal does not replace the administrative readback owner',async()=>{
+ const f=fixture();f.manifest.pluginPrincipal='paired-native-human';const prepared=await f.transport.execute(f.input),intent=await f.transport.claim(prepared.nativeActionCapability,{fileId:'file',ownerPrincipal:'paired-native-human'});assert.equal(intent.ownerPrincipal,'paired-native-human');assert.equal(f.snapshot.ownerPrincipal,'owner');assert.equal(f.manifest.ownerPrincipal,'owner');
+ const other=fixture();other.manifest.pluginPrincipal='paired-native-human';const next=await other.transport.execute(other.input);await assert.rejects(other.transport.claim(next.nativeActionCapability,{fileId:'file',ownerPrincipal:'owner'}),{status:409});
+});

@@ -77,3 +77,15 @@ test('graph filters preserve the selection and facts while filtering visible ref
  const routes=await f.service.graph(f.founder,{kinds:'route'});assert.ok(routes.edges.length>0);assert.ok(routes.edges.every(e=>e.kind==='route'));
  await assert.rejects(f.service.graph(f.founder,{kinds:'not-a-type'}),{status:400});assert.deepEqual(await f.service.read(f.founder),before);
 });
+
+
+test('contextual graph edges resolve only in the projected neighborhood and never become saved findings',async t=>{
+ const f=await setup(t);await f.service.enable(f.founder,{});await f.service.import(f.founder,{expectedRevision:1,idempotencyKey:randomUUID(),kind:'demo'});
+ const state=await f.service.read(f.founder),graph=await f.service.graph(f.founder,{focusId:'node_lagos'}),edge=graph.edges.find(item=>item.kind==='discovery');
+ const selected=(await f.service.graph(f.founder,{focusId:'node_lagos',selectedId:edge.id})).selectedItem;
+ assert.equal(selected.contextual,true);assert.equal(selected.from,edge.from);assert.equal(selected.to,edge.to);assert.ok(!selected.name.includes('undefined'));
+ const sourceIds=new Set(state.graph.nodes.filter(node=>[edge.from,edge.to].includes(node.id)).flatMap(node=>node.evidenceIds||[]));assert.deepEqual(selected.evidence,state.evidence.filter(item=>sourceIds.has(item.id)));
+ await assert.rejects(f.service.graph(f.founder,{focusId:'node_mumbai',selectedId:edge.id}),{status:404});
+ const before=f.store.get(f.service.key);await assert.rejects(f.service.annotate(f.founder,{expectedRevision:state.revision,idempotencyKey:randomUUID(),annotation:{targetId:edge.id,text:'Must attach this to a real reference',kind:'note'}}),{status:409});
+ await assert.rejects(f.service.saveReport(f.founder,{expectedRevision:state.revision,idempotencyKey:randomUUID(),report:{title:'No synthetic finding',thesis:'',planIds:[edge.id]}}),{status:409});assert.deepEqual(f.store.get(f.service.key),before);
+});

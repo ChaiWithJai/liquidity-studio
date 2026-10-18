@@ -96,6 +96,13 @@ test("both brands all formats preserve full source, native text/stableIDs and th
           "textbox",
         );
         assert.equal(page.objects.length, 7);
+        const placeholder = page.objects.find(object => object.id === "subject_cutout_layer");
+        assert.equal(placeholder.isPlaceholder, true);
+        assert.equal(placeholder.type, "rect");
+        assert.ok(page.objects.filter(object => object.id !== placeholder.id).every(object => object.isPlaceholder === undefined));
+        const invalid = structuredClone(result.document);
+        invalid.pages[0].objects[0].isPlaceholder = "true";
+        assert.throws(() => validateDooryDocument(invalid), /placeholder marker/);
         assert.deepEqual(
           JSON.parse(page.notes).semanticContent.format,
           spec.sourceCampaign[format],

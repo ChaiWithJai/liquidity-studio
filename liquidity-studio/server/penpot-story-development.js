@@ -1,3 +1,5 @@
+import {PenpotStoryStyles,storyStylePluginTransport} from './penpot-story-styles.js';
+import {createPenpotPluginLocalHost} from './penpot-plugin-local-host.js';
 // Explicit developer launcher integration, never production identity or pairing.
 import {EditorBoundary} from './editor-boundary.js';
 import {ScopedRepository} from './repository.js';
@@ -11,7 +13,7 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
  if(configuration.transportMode!=='loopback')throw Error('Developer Penpot requires fixed loopback transport');
  const rpc=createPenpotStoryRpc({sessions:configuration.sessions,transportMode:'loopback',grantKey,fetchImpl});
  const services=new Map();
- return async scope=>{
+ const provider=async scope=>{
   const key=JSON.stringify([scope.organizationId,scope.brandId]);
   if(services.has(key))return services.get(key);
   const targets=configuration.targets.filter(t=>t.organizationId===scope.organizationId&&t.brandId===scope.brandId);
@@ -48,6 +50,8 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
   // Only the constructor chooses paired access. The actor never selects an
   // operator identity, project, session, or alternate workspace in HTTP input.
   const brandAccess=brandAccessFor?await brandAccessFor({scope,workspaceFor:administrativeWorkspaceFor,rpc,repo,boundary,nativeSessions:configuration.sessions}):null;
-  const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess});services.set(key,service);return service;
+  const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess});service.styles=new PenpotStoryStyles({designs:service,sessions:configuration.sessions,grantKey,fetchImpl});services.set(key,service);return service;
  };
+ provider.createStylePluginHost=()=>createPenpotPluginLocalHost(storyStylePluginTransport(services),{port:39039});
+ return provider;
 }

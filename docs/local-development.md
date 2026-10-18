@@ -109,3 +109,24 @@ Operations. Follow its included `RESTORE.md`; fonts are already available from
 the current repository's `liquidity-studio/public/fonts` in this local launcher.
 The restore service still compares the exact font and OFL bytes from the pack.
 Source, image/cutout and approval/review semantics are unchanged.
+
+### Refresh colors in an existing Penpot design
+
+With `--penpot-config`, changing a Brand Kit keeps the saved campaign’s existing
+Penpot link. **Refresh Brand Kit colors** prepares a one-use action for that same
+file. The launcher also serves the existing local Studio token plugin at
+`http://localhost:39039/manifest.json` and stops it with the launcher. Add that
+manifest through Penpot’s Plugins menu, paste the displayed one-use code and
+apply it, then choose **Check saved colors** in Studio. The code expires after
+one minute. An interrupted Studio reply retains the same request; after reload,
+checking saved colors reconciles the actual native tokens and bound paints.
+
+This updates color tokens through Penpot’s supported current-editor setters; it
+does not deserialize campaign text or replace the human layout. A new or unknown
+font is not automatically rebound. Color refresh uses the saved design’s binding
+map, so a new unsupported Brand Kit font does not block its color update. Older
+designs recover that map from their existing native token bindings.
+Native saved-state verification is separate from visual export approval. The
+plugin uses the currently paired native principal when paired access is enabled;
+server readback retains the real administrative native account and current
+acting-profile checks. No Google authentication mode is fabricated.

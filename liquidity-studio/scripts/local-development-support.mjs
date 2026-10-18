@@ -28,7 +28,7 @@ function privateFile(file){const st=fs.lstatSync(file);if(!st.isFile()||st.isSym
 for(const name of ['studio.sqlite','studio.sqlite-wal','studio.sqlite-shm','profile.json'])if(fs.existsSync(path.join(root,name)))privateFile(path.join(root,name));
 if(fs.existsSync(database)&&!fs.existsSync(marker))throw Error('Refusing an unmarked existing database');
 const lock=path.join(root,'launcher.lock');const lockFd=fs.openSync(lock,'wx',0o600);fs.writeFileSync(lockFd,String(process.pid));fs.closeSync(lockFd);
-let settings,server,vite,store,closing=false,workerPromise;const signals=[],workerStop=new AbortController();
+let settings,server,vite,store,stylePluginHost,closing=false,workerPromise;const signals=[],workerStop=new AbortController();
 async function close(){
  if(closing)return;closing=true;for(const [name,handler]of signals)process.removeListener(name,handler);
  server?.close();server?.closeAllConnections();workerStop.abort();
@@ -36,6 +36,7 @@ async function close(){
  try{if(workerPromise)await Promise.race([workerPromise.catch(()=>{}),new Promise((_,reject)=>{deadline=setTimeout(()=>reject(Error('Local worker did not drain within10seconds; preserve profile for reviewed recovery')),10000);})]);}
  catch(error){console.error(error.message);process.exitCode=1;if(process.env.LOCAL_STUDIO_DEVELOPMENT_CHILD==='1')process.exit(1);throw error;}
  finally{clearTimeout(deadline);}
+ if(stylePluginHost?.listening){stylePluginHost.closeAllConnections();await new Promise(resolve=>stylePluginHost.close(resolve));}
  await vite?.close();store?.close();if(globalThis.fetch===offlineFetch)globalThis.fetch=originalFetch;
  if(fs.existsSync(lock)&&fs.readFileSync(lock,'utf8')===String(process.pid))fs.unlinkSync(lock);
 }
@@ -56,6 +57,7 @@ try {
  const {localNativePairing}=await import('./local-native-pairing.mjs');
  const nativePairing=localNativePairing({configurationPath:nativePairingConfigurationPath,store,identity:platform.identity,origin});
  const developmentPenpotStoryDesigns=await localPenpotDevelopment({configurationPath:penpotConfigurationPath,platform,nativePairing,nativePairingConfigurationPath});
+ if(developmentPenpotStoryDesigns?.createStylePluginHost){stylePluginHost=developmentPenpotStoryDesigns.createStylePluginHost();await new Promise((resolve,reject)=>{stylePluginHost.once('error',reject);stylePluginHost.listen(39039,'127.0.0.1',resolve);});}
  const api=createHttpServer(null,{platform,nativeEditorEnabled:!!nativeAssets,penpotEnabled:false,helperControlEnabled:true,developmentPenpotStoryDesigns,nativePairing,nativeAccess:developmentPenpotStoryDesigns?.nativeAccess});
  server=http.createServer({requestTimeout:30000,headersTimeout:10000,maxHeaderSize:8192},async(req,res)=>{try{
   if(!requestAllowed(req,origin))throw Object.assign(Error('Loopback origin required'),{status:403});

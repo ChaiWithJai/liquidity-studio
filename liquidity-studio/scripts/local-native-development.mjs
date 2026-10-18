@@ -34,7 +34,7 @@ export async function localNativeDevelopment({assetsDirectory,modelPath}={}) {
   // Recheck each immutable file before sending, so changed assets fail without fallback.
   regular(entry.file,64*1024*1024);const bytes=fs.readFileSync(entry.file);if(bytes.length!==entry.size||digest(bytes)!==entry.sha256)throw Error('Private native asset changed');
   const types={'.html':'text/html; charset=utf-8','.txt':'text/plain; charset=utf-8','.js':'application/javascript','.mjs':'application/javascript','.css':'text/css','.wasm':'application/wasm'};
-  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'self'");
+  res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob:; worker-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'self'");
   res.writeHead(200,{'Content-Type':types[path.extname(entry.file)],'Cache-Control':'no-store'});res.end(bytes);return true;
  }};
 }

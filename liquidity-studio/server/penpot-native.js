@@ -20,6 +20,10 @@ function uuid(seed) {
   const h = createHash("sha256").update(seed).digest("hex");
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
 }
+export function penpotColorIdentity(bundle) {
+  const scope = `${bundle.scope.organizationId}/${bundle.scope.brandId}`;
+  return {themeId:uuid(`${scope}/theme`),tokens:bundle.tokens.colors.map((_,i)=>({id:uuid(`${scope}/color/${i}`),setId:uuid(`${scope}/tokens`),name:`studio.color${i}`}))};
+}
 function geometry(x, y, width, height) {
   return {
     x,
