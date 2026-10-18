@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import { getApprovedClaims, validateCampaign } from "./source-integrity.js";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
+export const PENPOT_OM_FONT = Object.freeze({family:"Noto Sans Devanagari",weight:400,sha256:"14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e",license:"OFL-1.1"});
 const ZERO = "00000000-0000-0000-0000-000000000000";
 const MATRIX = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 const FORMATS = new Set(["infographic", "carousel", "story", "reel"]);
@@ -85,6 +86,7 @@ function textShape({
   color,
   token,
   parent,
+  omFont = null,
 }) {
   const style = {
     "font-id": font.fontId,
@@ -101,6 +103,9 @@ function textShape({
     "letter-spacing": "0",
     fills: [{ "fill-color": color, "fill-opacity": 1 }],
   };
+  const runs = omFont && text.includes("ॐ")
+    ? text.split(/(ॐ)/u).filter(Boolean).map(run=>({...style,text:run,...(run==="ॐ"?{"font-id":omFont.fontId,"font-family":omFont.family}:{})}))
+    : [{...style,text}];
   return {
     id,
     name,
@@ -116,7 +121,7 @@ function textShape({
         {
           type: "paragraph-set",
           children: [
-            { type: "paragraph", ...style, children: [{ ...style, text }] },
+            { type: "paragraph", ...style, children: runs },
           ],
         },
       ],
@@ -126,7 +131,7 @@ function textShape({
 /** Pure native changes. Caller must authorize target file separately; document metadata grants nothing. */
 export function compilePenpotNative(
   bundle,
-  { fileId, fonts, requiredCapabilities = [] } = {},
+  { fileId, fonts, requiredCapabilities = [], explicitOm = false } = {},
 ) {
   if (bundle?.schemaVersion !== 1 || bundle.kind !== "multimodal-spec")
     reject("UNSUPPORTED_SCHEMA_VERSION");
@@ -165,6 +170,13 @@ export function compilePenpotNative(
   )
     reject("UNSUPPORTED_CAPABILITY");
   if (!Array.isArray(fonts)) reject("FONT_NOT_VERIFIED");
+  if(typeof explicitOm!=="boolean")reject("INVALID_OM_BINDING_MODE");
+  let omUsed=false,omFont=null;
+  const bindOm=()=>{
+    const supplied=fonts.find(f=>f.family===PENPOT_OM_FONT.family&&f.weight===400&&f.sha256===PENPOT_OM_FONT.sha256&&f.license===PENPOT_OM_FONT.license);
+    if(!supplied)reject("OM_FONT_NOT_VERIFIED");
+    omUsed=true;return omFont ||= fontBinding([supplied],PENPOT_OM_FONT.family,400);
+  };
   const colors = bundle.tokens.colors;
   if (
     !Array.isArray(colors) ||
@@ -346,6 +358,8 @@ export function compilePenpotNative(
             opacity: 0,
           };
         } else {
+          if(explicitOm&&layer.text.includes("ॐ")&&index!==1)reject("OM_GLYPH_OUTSIDE_BADGE");
+          const badgeOm=explicitOm&&index===1&&layer.text.includes("ॐ")?bindOm():null;
           const headline = index === 2,
             font = headline ? heading : body,
             weight = headline ? headingWeight : 400;
@@ -363,6 +377,7 @@ export function compilePenpotNative(
             color: tokens[index === 1 ? 1 : 3].value,
             token: tokens[index === 1 ? 1 : 3].name,
             parent: frameId,
+            omFont: badgeOm,
           });
         }
         changes.push({
@@ -387,6 +402,7 @@ export function compilePenpotNative(
                   .filter(Boolean)
                   .join(" | ")
               : "";
+      if (explicitOm && supplemental.includes("ॐ")) reject("OM_GLYPH_OUTSIDE_BADGE");
       if (supplemental) {
         const id = uuid(`${seed}/${page.id}/supplemental_copy`);
         const shape = textShape({
@@ -468,6 +484,6 @@ export function compilePenpotNative(
       "Badge is native straight text; curved text proposal is not executed.",
       "Reel pages are static timecoded boards, not rendered video.",
     ],
-    fontBindings: [heading, body],
+    fontBindings: [heading, body, ...(omUsed?[omFont]:[])],
   };
 }

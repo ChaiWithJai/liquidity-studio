@@ -490,16 +490,9 @@ export function createPenpotActorAuthorizer(identity) {
 }
 
 export function penpotNativeFontBindings(compiled) {
-  const entries = compiled.changes
-    .filter((change) => change.obj?.type === "text")
-    .map((change) => {
-      const style = change.obj.content.children[0].children[0];
-      return {
-        fontId: style["font-id"],
-        family: style["font-family"],
-        weight: style["font-weight"],
-      };
-    });
+  const entries=[];
+  const visit=value=>{if(!value||typeof value!=="object")return;if(value["font-id"]&&value["font-family"]&&value["font-weight"])entries.push({fontId:value["font-id"],family:value["font-family"],weight:value["font-weight"]});for(const item of Object.values(value))if(item&&typeof item==="object"){if(Array.isArray(item))item.forEach(visit);else visit(item);}};
+  for(const change of compiled.changes.filter(c=>c.obj?.type==="text"))visit(change.obj.content);
   return [
     ...new Map(entries.map((entry) => [JSON.stringify(entry), entry])).values(),
   ].sort((a, b) =>
