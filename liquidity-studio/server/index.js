@@ -81,8 +81,18 @@ function viewContext(value) {
           "storyFrame",
           "pollVote",
           "measuredAt",
+          "measurementRevision",
+          "artworkId",
         ].includes(key),
     ) ||
+    (value.measurementRevision !== undefined &&
+      (typeof value.measurementRevision !== "string" ||
+        value.measurementRevision.length > 200)) ||
+    (value.artworkId !== undefined &&
+      (typeof value.artworkId !== "string" ||
+        !/^(infographic|carousel|story|reel)-page-[1-4]$/.test(
+          value.artworkId,
+        ))) ||
     !["instagram", "design"].includes(value.mode) ||
     !Number.isInteger(value.frameIndex) ||
     value.frameIndex < 0 ||
@@ -768,8 +778,27 @@ export function createHttpServer(
         )
           throw fail(409, "Draft changed; rerun preflight");
         if (!formats.includes(body.format)) throw fail(400, "Invalid format");
-        const measured = computePreflight(body);
+        let measured;
+        try {
+          measured = computePreflight(body);
+        } catch {
+          throw fail(400, "Invalid preflight measurements");
+        }
         const context = viewContext(body.viewContext);
+        if (
+          context?.artworkId &&
+          context.artworkId !== `${body.format}-page-${context.frameIndex + 1}`
+        )
+          throw fail(400, "Preflight artifact does not match format/frame");
+        if (
+          context?.artworkId &&
+          body.textBoxes?.some(
+            (box) =>
+              box.artworkElementId &&
+              !box.artworkElementId.startsWith(context.artworkId + "-"),
+          )
+        )
+          throw fail(400, "Preflight element belongs to another artwork");
         const record = await repo.savePreflight({
           storyId,
           format: body.format,
@@ -782,7 +811,17 @@ export function createHttpServer(
           },
           ...measured,
         });
-        return json(200, { ...measured, evidenceId: record.id });
+        return json(200, {
+          ...measured,
+          evidenceId: record.id,
+          artifact: {
+            storyId,
+            storyRevision: story.revision,
+            generationId: story.generationId || null,
+            format: body.format,
+            viewContext: context,
+          },
+        });
       }
       if (route === "/api/studio/export-asset" && req.method === "POST") {
         const result = await formatter.exportFormattedAsset({

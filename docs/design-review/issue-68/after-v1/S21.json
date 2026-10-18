@@ -1,0 +1,10 @@
+{
+  "stepId": "S21",
+  "canonicalAnnotationIds": [
+    "review-13"
+  ],
+  "fixture": "new controlled source-backed synthetic campaign, not the baseline recovery story",
+  "capturedAt": "2026-10-18T01:26:01.478Z",
+  "identity": "The Liquidity Desk · Selected: reel\n\nShowing: reel · board 1 · simulated Instagram surface\n\n11117c30-32a2-4674-809b-65d1ae8c2787 · generation 598c456b-c9fe-47b4-b4bd-f6f3de9c825c · saved revision 2 · Saved artwork",
+  "preflight": "Measured preflight\nMeasure again\n\nMeasured reel-page-1 · 11117c30-32a2-4674-809b-65d1ae8c2787:2:1b1238e5-71ce-4610-ada1-6afc702c341e\n\n1\ntext boxes in chrome zones\n0\ntext boxes outside artwork\n9.73:1\nminimum text/background contrast\n9:16\ntarget ratio · matched\n41\ncaption characters before simulated fold\nLocate text\n“SYNTHETIC DRAFT · REVIEW REQUIRED” · Overlaps simulated app controls or safe zones. Shorten or reposition this text, then save and measure again. Element reel-page-1-provenance · 11117c30-32a2-4674-809b-65d1ae8c2787:2:1b1238e5-71ce-4610-ada1-6afc702c341e\n\nHighlighted reel-page-1-provenance. Review its copy or layout in the editor; this preview does not modify artwork.\n\nMeasured SVG text boxes and fill contrast against the base background; images, glyph shapes and all native app variations are not covered. Review required. No confidence score is inferred."
+}

@@ -40,6 +40,11 @@ export function computePreflight({
     textBoxes.some(
       (box) =>
         !box ||
+        (box.artworkElementId !== undefined &&
+          (typeof box.artworkElementId !== "string" ||
+            !/^[a-z0-9-]{1,120}$/.test(box.artworkElementId))) ||
+        (box.text !== undefined &&
+          (typeof box.text !== "string" || box.text.length > 240)) ||
         ["x", "y", "width", "height"].some(
           (key) => !Number.isFinite(box[key]),
         ) ||
@@ -48,6 +53,11 @@ export function computePreflight({
     )
   )
     throw new Error("Invalid preflight text rectangles");
+  const elementIds = textBoxes
+    .map((box) => box.artworkElementId)
+    .filter(Boolean);
+  if (new Set(elementIds).size !== elementIds.length)
+    throw new Error("Duplicate preflight artwork element identity");
   if (
     !Array.isArray(obstructionBoxes) ||
     obstructionBoxes.length > 40 ||
@@ -81,6 +91,42 @@ export function computePreflight({
           : []),
       ]
     : [];
+  const overlaps = (box, zone) =>
+    box.x < zone.x + zone.width &&
+    box.x + box.width > zone.x &&
+    box.y < zone.y + zone.height &&
+    box.y + box.height > zone.y;
+  const violations = textBoxes.flatMap((box) => {
+    const issues = [];
+    if ([...zones, ...obstructionBoxes].some((zone) => overlaps(box, zone)))
+      issues.push("chrome-zone");
+    if (
+      box.x < -1 ||
+      box.y < -1 ||
+      box.x + box.width > width + 1 ||
+      box.y + box.height > height + 1
+    )
+      issues.push("artwork-overflow");
+    const luminance = colorLuminance(box.foreground || foreground),
+      base = colorLuminance(background);
+    if (
+      luminance !== null &&
+      base !== null &&
+      (Math.max(luminance, base) + 0.05) / (Math.min(luminance, base) + 0.05) <
+        4.5
+    )
+      issues.push("low-contrast");
+    return issues.length && box.artworkElementId
+      ? [
+          {
+            artworkElementId: box.artworkElementId,
+            text: box.text || "Artwork text",
+            issues,
+            box: { x: box.x, y: box.y, width: box.width, height: box.height },
+          },
+        ]
+      : [];
+  });
   const occludedElementsCount = textBoxes.filter((box) =>
     [...zones, ...obstructionBoxes].some(
       (zone) =>
@@ -145,6 +191,7 @@ export function computePreflight({
     },
   };
   return {
+    violations,
     simulation: true,
     measurementMethod: "client-svg-text-rectangles",
     requiresReview: true,

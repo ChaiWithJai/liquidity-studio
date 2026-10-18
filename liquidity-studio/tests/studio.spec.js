@@ -469,9 +469,9 @@ test("profile grid uses real scheduled/exported records and excludes ordinary dr
   await expect(cells.nth(1)).toContainText("Scheduled · Tuesday");
   await expect(cells.nth(2)).toContainText("Scheduled · Thursday");
   await expect(cells.nth(3)).toContainText("Exported");
-  await expect(cells.nth(1)).toHaveAttribute("title", "Grid Tuesday scheduled");
-  await expect(cells.nth(3)).toHaveAttribute("title", "Grid actual export");
-  await expect(page.locator('.grid-cell[title="Grid ordinary draft excluded"]')).toHaveCount(0);
+  await expect(cells.nth(1)).toHaveAttribute("title", /^Grid Tuesday scheduled · feed infographic/);
+  await expect(cells.nth(3)).toHaveAttribute("title", /^Grid actual export · feed infographic/);
+  await expect(page.locator('.grid-cell[title^="Grid ordinary draft excluded"]')).toHaveCount(0);
   await expect(page.locator(".profile-grid")).not.toContainText("ordinary draft excluded");
   await expect(cells.nth(4)).toContainText("No scheduled or exported post");
 });

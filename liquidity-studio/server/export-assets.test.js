@@ -58,3 +58,12 @@ test('brand typography uses bundled approved families and never injects arbitrar
   const unsafe = renderSvg({ brandProfile: { fonts: { heading: '\" onload=\"alert(1)' } }, campaign });
   assert.doesNotMatch(unsafe, /onload/);
 });
+
+ test('artwork element IDs are stable, unique and cannot interpolate an untrusted page index', () => {
+  const svg = renderSvg({campaign,format:'infographic'});
+  const ids = [...svg.matchAll(/data-artwork-id="([^"]+)"/g)].map(match=>match[1]);
+  assert.equal(ids.length,7);assert.equal(new Set(ids).size,ids.length);
+  assert.ok(ids.includes('infographic-page-1-heading'));
+  assert.deepEqual([...renderSvg({campaign,format:'infographic'}).matchAll(/data-artwork-id="([^"]+)"/g)].map(match=>match[1]),ids);
+  for (const slideIndex of ['0', '\" onload=\"alert(1)', -1, 1.5, 99]) assert.throws(()=>renderSvg({campaign,format:'infographic',slideIndex}), /Invalid artwork page index/);
+});
