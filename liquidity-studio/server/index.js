@@ -181,6 +181,7 @@ export function createHttpServer(
     editorBoundaryEnabled = process.env.STUDIO_EDITOR_BOUNDARY_ENABLED ===
       "true",
     nativeEditorEnabled = process.env.STUDIO_NATIVE_EDITOR_ENABLED === "true",
+    penpotEnabled = process.env.STUDIO_PENPOT_ENABLED === "true",
     editorContractEnabled = process.env.STUDIO_EDITOR_CONTRACT_ENABLED ===
       "true",
   } = {},
@@ -684,9 +685,19 @@ export function createHttpServer(
           /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/review$/,
         );
         if (reviewMatch && req.method === "GET")
-          return json(200, await platform.editorApproval(scope, repo).read(user, reviewMatch[1]));
+          return json(
+            200,
+            await platform
+              .editorApproval(scope, repo)
+              .read(user, reviewMatch[1]),
+          );
         if (reviewMatch && req.method === "POST")
-          return json(200, await platform.editorApproval(scope, repo).transition(user, reviewMatch[1], body));
+          return json(
+            200,
+            await platform
+              .editorApproval(scope, repo)
+              .transition(user, reviewMatch[1], body),
+          );
         const nativeMatch = route.match(
           /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})$/,
         );
@@ -804,8 +815,39 @@ export function createHttpServer(
           operatorCapabilities: {
             helperControl: helperControlEnabled && !trustedTestMode,
             nativeEditor: nativeEditorEnabled && !trustedTestMode,
+            penpot: penpotEnabled && !trustedTestMode && !process.env.K_SERVICE,
           },
         });
+      if (route.startsWith("/api/studio/penpot/")) {
+        if (
+          !penpotEnabled ||
+          trustedTestMode ||
+          process.env.K_SERVICE ||
+          platform.identity.configuration?.mode !== "google"
+        )
+          throw fail(404, "Not found");
+        const runtime = await platform.getPenpotRuntime();
+        const service = runtime.forScope(scope);
+        if (route === "/api/studio/penpot/bindings" && req.method === "GET")
+          return json(200, await runtime.bindings(user, scope));
+        if (route === "/api/studio/penpot/bindings" && req.method === "POST")
+          return json(201, await runtime.register(user, scope, body));
+        if (route === "/api/studio/penpot/actions" && req.method === "GET")
+          return json(200, { actions: await service.list(user) });
+        if (route === "/api/studio/penpot/actions" && req.method === "POST")
+          return json(201, await service.create(user, body));
+        const action = route.match(
+          /^\/api\/studio\/penpot\/actions\/([\w-]+)(\/reconcile)?$/,
+        );
+        if (action && req.method === "GET" && !action[2])
+          return json(200, await service.get(user, action[1]));
+        if (action && req.method === "POST" && action[2]) {
+          if (Object.keys(body || {}).length)
+            throw fail(400, "Reconciliation accepts no client snapshot");
+          return json(200, await service.reconcile(user, action[1]));
+        }
+        throw fail(404, "Not found");
+      }
       if (route.startsWith("/api/studio/editor-bindings")) {
         if (!editorBoundaryEnabled || trustedTestMode)
           throw fail(404, "Not found");
