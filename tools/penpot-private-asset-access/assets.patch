@@ -1,0 +1,64 @@
+--- a/backend/src/app/http/assets.clj
++++ b/backend/src/app/http/assets.clj
+@@ -16,6 +16,7 @@
+    [app.http.session :as session]
+    [app.rpc.permissions :as perms]
+    [app.storage :as sto]
++   [app.studio.assets :as studio-assets]
+    [integrant.core :as ig]
+    [yetti.response :as-alias yres]))
+ 
+@@ -124,7 +125,8 @@
+   [{:keys [::sto/storage] :as cfg} request]
+   (let [id  (get-id request)
+         obj (sto/get-object storage id)]
+-    (cond
++    (studio-assets/deliver cfg request obj
++      #(cond
+       (nil? obj)
+       {::yres/status 404}
+ 
+@@ -137,27 +139,29 @@
+       {::yres/status 404}
+ 
+       :else
+-      (serve-object cfg obj))))
++      (serve-object cfg obj)))))
+ 
+ (defn- generic-handler
+   "A generic handler helper/common code for file-media based handlers."
+   [{:keys [::sto/storage] :as cfg} request kf]
+-  (let [pool       (::db/pool storage)
+-        id         (get-id request)
+-        mobj       (get-file-media-object pool id)]
++  (let [pool (::db/pool storage)
++        id (get-id request)
++        mobj (get-file-media-object pool id)]
+     (if (nil? mobj)
+       {::yres/status 404}
+-      (let [file-id    (:file-id mobj)
+-            profile-id (or (::session/profile-id request)
+-                           (::actoken/profile-id request))
+-            share-id   (get-share-id request)
+-            perms      (perms/get-file-read-permissions pool profile-id file-id share-id)]
+-        (if-not (:can-read perms)
++      (let [sobj (sto/get-object storage (kf mobj))]
++        (if (nil? sobj)
+           {::yres/status 404}
+-          (let [sobj (sto/get-object storage (kf mobj))]
+-            (if sobj
+-              (serve-object cfg sobj)
+-              {::yres/status 404})))))))
++          (studio-assets/deliver cfg request sobj
++            (fn []
++              (let [file-id (:file-id mobj)
++                    profile-id (or (::session/profile-id request)
++                                   (::actoken/profile-id request))
++                    share-id (get-share-id request)
++                    perms (perms/get-file-read-permissions pool profile-id file-id share-id)]
++                (if-not (:can-read perms)
++                  {::yres/status 404}
++                  (serve-object cfg sobj))))))))))
+ 
+ (defn file-objects-handler
+   "Handler that serves storage objects by file media id."

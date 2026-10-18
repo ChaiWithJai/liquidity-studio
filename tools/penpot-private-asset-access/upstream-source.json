@@ -1,0 +1,19 @@
+{
+  "repository": "penpot/penpot",
+  "commit": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "files": [
+    {
+      "path": "backend/src/app/http/assets.clj",
+      "gitBlob": "b0adb45b13df7f336067a117ffc6578539d69ff9",
+      "sha256": "ca3f1f723c447dcd9fbfb43eed5dc1ea2f394fa86916b56e719d019957ccaeda",
+      "patchedSha256": "6f854571da5824f4c97e5f10a61cc546bd38a4282104af73c1d695694b9efd9b"
+    }
+  ],
+  "localBuildOrTests": false,
+  "runtimeChanged": false,
+  "originalSources": {
+    "assets.clj": "764df9caf70cc29df98959f1cb2f1cf4f210bfd850144a2a2f16f28a403262e7",
+    "assets_test.clj": "47599a43c0d9a994caf3b673263363a98db802fd91238e0388f6df4a25f8de2f"
+  },
+  "patchSha256": "50b6e5d8a9f990c1c5ca59915c46d8e8b690ac43b60072f390c5c7cfce73bec7"
+}
