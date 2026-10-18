@@ -476,3 +476,22 @@ test("a delayed old-brand placement cannot restore its receipt or story into the
   );
   expect(foreign.status()).toBe(404);
 });
+
+test("the full dated week stays within desktop viewport and narrow space becomes an agenda", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await setup(page);
+  const grid = page.getByLabel("Dated plans", { exact: true });
+  expect(
+    await grid.evaluate(
+      (element) => element.scrollWidth <= element.clientWidth + 1,
+    ),
+  ).toBe(true);
+  const last = await day(page).boundingBox();
+  expect(last.x + last.width).toBeLessThanOrEqual(1024);
+  await page.setViewportSize({ width: 900, height: 768 });
+  const first = await day(page, "2026-03-02").boundingBox(),
+    second = await day(page, "2026-03-03").boundingBox();
+  expect(second.y).toBeGreaterThan(first.y + first.height - 1);
+});

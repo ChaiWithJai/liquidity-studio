@@ -484,6 +484,7 @@
 
 <style>
   .workspace-calendar {
+    container-type: inline-size;
     color: var(--ink, #19251c);
     min-width: 0;
   }
@@ -546,9 +547,9 @@
   }
   .workspace-date-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(150px, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 0.65rem;
-    overflow-x: auto;
+    overflow-x: visible;
     padding: 0.2rem 0.2rem 1rem;
   }
   .calendar-day {
@@ -680,6 +681,27 @@
   select:focus-visible {
     outline: 3px solid var(--accent, #e85d04);
     outline-offset: 3px;
+  }
+  @container (max-width: 900px) {
+    .workspace-date-grid {
+      grid-template-columns: 1fr;
+    }
+    .calendar-pools {
+      grid-template-columns: 1fr;
+    }
+    .calendar-day {
+      min-height: 100px;
+    }
+    .calendar-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .calendar-controls label {
+      min-width: 0;
+    }
+    .calendar-card-actions button {
+      min-height: 44px;
+    }
   }
   @media (max-width: 700px) {
     .workspace-date-grid {
