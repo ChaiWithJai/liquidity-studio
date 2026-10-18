@@ -25,6 +25,7 @@
   }
   async function prepareRecovery(){
     if(busy||loading||!openUrl)return;busy=true;recoveryUrl='';recoveryError='';
+    const savedContext=currentRecoveryContext;
     const saved={storyId,format,expectedRevision:storyRevision,generationId,fileId:result.design.fileId,nativeUrl:openUrl};
     try{
       const fresh=await request(`/api/studio/penpot/designs?storyId=${encodeURIComponent(saved.storyId)}&format=${encodeURIComponent(saved.format)}`);
@@ -34,7 +35,7 @@
       if(design?.status!=='ready'||design.fileId!==saved.fileId||design.storyId!==saved.storyId||design.generationId!==saved.generationId||design.nativeUrl!==saved.nativeUrl||!Number.isSafeInteger(design.nativeRevision)||design.nativeRevision<0)throw Error(fresh.reason||'The saved design is unavailable. Reopen it before downloading its recovery kit.');
       result=fresh;
       const value=await request('/api/studio/penpot/designs/recovery',{method:'POST',body:JSON.stringify({storyId:saved.storyId,format:saved.format,expectedRevision:saved.expectedRevision,generationId:saved.generationId,expectedNativeRevision:design.nativeRevision})});
-      if(alive&&value.downloadUrl?.startsWith('http://localhost:39008/studio-recovery-kit?permit=')){recoveryUrl=value.downloadUrl;recoveryContext=currentRecoveryContext;}
+      if(alive&&currentRecoveryContext===savedContext&&openUrl===saved.nativeUrl&&value.downloadUrl?.startsWith('http://localhost:39008/studio-recovery-kit?permit=')){recoveryUrl=value.downloadUrl;recoveryContext=savedContext;}
     }
     catch(failure){if(alive)recoveryError=failure.message;}finally{if(alive){busy=false;if(refreshPending){refreshPending=false;void load();}}}
   }
@@ -109,8 +110,8 @@
   {/if}
   {#if !loading && openUrl && result?.recoveryAvailable}
     <button class="secondary" disabled={busy} onclick={prepareRecovery}>{busy?'Preparing download…':'Download Penpot recovery kit'}</button>
-    <p>Saved native file, embedded media, original licensed fonts and restore guide. Save changes in Penpot first. Keep the separate Studio recovery kit from Operations too.</p>
-    {#if recoveryUrl && recoveryContext===currentRecoveryContext}<a href={recoveryUrl} target="_blank" rel="noopener noreferrer">Download prepared Penpot kit ↗</a><p>One use within two minutes, through your connected Penpot account. Import and Studio reconnection are separate steps.</p>{/if}
+    <p>Native design, media and fonts. Save Penpot changes first.</p>
+    {#if recoveryUrl && recoveryContext===currentRecoveryContext}<a href={recoveryUrl} target="_blank" rel="noopener noreferrer">Download prepared Penpot kit ↗</a><p>One use · expires in two minutes.</p>{/if}
     {#if recoveryError}<p role="alert">{recoveryError}</p>{/if}
   {/if}
   {#if styleCapability}<section class="style-handoff" aria-label="Apply saved Brand Kit colors">
