@@ -192,6 +192,9 @@ test("lost queue response retries identical plan key and browser reload resolves
 }) => {
   await source("Lost response campaign");
   await login(page);
+  const before = (
+    await (await page.request.get(base + "/api/studio/jobs" + scope)).json()
+  ).jobs.length;
   await page.getByLabel("Plan Lost response campaign", { exact: true }).check();
   await page.getByLabel(/I reviewed these 1 campaigns/).check();
   let lose = true;
@@ -220,9 +223,9 @@ test("lost queue response retries identical plan key and browser reload resolves
   const jobs = (
     await (await page.request.get(base + "/api/studio/jobs" + scope)).json()
   ).jobs;
-  expect(jobs).toHaveLength(2);
+  expect(jobs).toHaveLength(before + 1);
   await page.reload();
   await expect(page.getByRole("region", { name: "Job history" })).toContainText(
-    jobs[1].id,
+    jobs.at(-1).id,
   );
 });

@@ -1,5 +1,5 @@
 <script>
-  import { onDestroy } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   let { request, scopeKey, onOpenStory = () => {} } = $props();
   let plan = $state(null),
     jobs = $state([]),
@@ -122,9 +122,12 @@
       ...(itemIds ? { itemIds } : {}),
     });
   }
+  // Scope/session-owned async projections reset only when their owner changes.
+  // Reads inside load() must not become effect dependencies and erase active jobs.
   $effect(() => {
     scopeKey;
     request;
+    untrack(()=>{
     epoch++;
     plan = null;
     jobs = [];
@@ -136,6 +139,7 @@
     notice = "";
     retained = null;
     void load();
+    });
     const timer = setInterval(() => {
       if (!pending) void load();
     }, 3000);
