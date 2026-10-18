@@ -5,12 +5,13 @@
   let connectUrl = $state(''), pollingStopped = $state(false);
   let alive = true, sequence = 0, timer, pollUntil = 0;
   const states = new Set(['not-connected', 'pending', 'native-confirmed', 'connected', 'expired']);
+  function validExpiry(value) { return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= 8640000000000000; }
   function stopPolling() { clearTimeout(timer); timer = undefined; }
   function schedule() {
     stopPolling();
     if (!alive || info?.state !== 'pending') return;
-    const expiry = Date.parse(info.challenge?.expiresAt || '');
-    if (!Number.isFinite(expiry)) { error = 'Connection expiry is unavailable. Check the connection or start again.'; return; }
+    const expiry = info.challenge?.expiresAt;
+    if (!validExpiry(expiry)) { error = 'Connection expiry is unavailable. Check the connection or start again.'; return; }
     pollUntil = Math.min(pollUntil || Date.now() + 10 * 60 * 1000, expiry);
     if (Date.now() >= pollUntil) { pollingStopped = true; connectUrl = ''; return; }
     timer = setTimeout(() => void load(false), Math.min(2000, pollUntil - Date.now()));
@@ -40,7 +41,7 @@
       const challenge = await request('/api/studio/penpot/access/challenges', { method: 'POST', body: '{}' });
       if (!alive || ticket !== sequence) return;
       const url = checkedUrl(challenge.nativeConnectUrl);
-      if (typeof challenge.id !== 'string' || !Number.isFinite(Date.parse(challenge.expiresAt))) throw new Error('The connection request is incomplete. Check its status before starting again.');
+      if (typeof challenge.id !== 'string' || !validExpiry(challenge.expiresAt)) throw new Error('The connection request is incomplete. Check its status before starting again.');
       info = { state: 'pending', connection: null, challenge: { id: challenge.id, expiresAt: challenge.expiresAt, status: 'pending' } };
       connectUrl = url; schedule();
     } catch (failure) { if (alive && ticket === sequence) error = failure.message; }
