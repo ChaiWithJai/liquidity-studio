@@ -154,7 +154,8 @@
   <header><div><h2>Operator jobs</h2><p>Review source-backed campaigns, then track each item by its durable job ID. This does not publish content.</p></div><button onclick={load} disabled={pending}>Refresh jobs</button></header>
   {#if error}<p role="alert">{error}</p>{/if}
   {#if notice}<p role="status">{notice}</p>{/if}
-  {#if retained}<aside role="alert">The response may have been lost. Retry the same request before changing this plan. <button disabled={pending} onclick={()=>submit(retained.path,retained.body)}>Retry same job request</button></aside>{/if}
+  {#if retained && pending}<p role="status">Saving job request…</p>
+  {:else if retained}<aside role="alert">The response may have been lost. Retry the same request before changing this plan. <button disabled={pending} onclick={()=>submit(retained.path,retained.body)}>Retry same job request</button></aside>{/if}
   {#if !plan}{#if error}<p>Job configuration is unavailable. Refresh after the operator resolves it.</p>{:else}<p role="status">Loading current scope and review prerequisites…</p>{/if}
   {:else}
     <details open={!active}><summary>Review a new campaign plan</summary><section aria-label="Reviewed job plan"><h3>Plan · up to {plan.maxItems} campaigns</h3><p>{plan.dispatcher.message}</p><p>All four content formats are prepared per campaign. Each item rechecks source review, current access, story and brand revisions, and daily quotas when it runs. Provider billing is not exactly once after an interruption.</p>
