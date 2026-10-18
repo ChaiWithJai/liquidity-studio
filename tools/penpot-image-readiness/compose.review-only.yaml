@@ -1,0 +1,10 @@
+# Source-only template. Root must review exact generated patch receipt first.
+# Apply only to existing owned penpot-native39, never a maintained service.
+services:
+  penpot-exporter:
+    image: penpotapp/exporter@sha256:418232d6ca3120b1c2bfde298a56a05a1f41f567cd8494deac3fe7fbc186cfbd
+    volumes:
+      - type: bind
+        source: ${PENPOT_QA_IMAGE_READINESS_APP:?reviewed private app.private.js required}
+        target: /opt/penpot/exporter/app.js
+        read_only: true
