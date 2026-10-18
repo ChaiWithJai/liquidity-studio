@@ -19,7 +19,7 @@ pdftotext vedic_dharma-reel.pdf -
 pdftoppm -f 1 -singlefile -scale-to-x 1080 -scale-to-y 1920 -png vedic_dharma-reel.pdf inspected-page
 ```
 
-This is local export acceptance evidence, not a deployed integration. Native editable-layer portability, licensed original portrait cutout inference, transparent-asset fidelity, animation/transitions, sound rights, GIF, full MP4/WebM matrix and separate performance targets remain unfinished under #55. The already decoded CWJ MP4 and the WebM duration defect are separate evidence. The three rendered Reel boards do not by themselves prove motion or sound. No paid provider, GCP resource or live Studio data was changed by this export pass.
+This is local export acceptance evidence, not a deployed integration. Native editable-layer portability, licensed original portrait cutout inference, transparent-asset fidelity, animation/transitions, sound rights, other GIF settings, full animated MP4/WebM acceptance and separate performance targets remain unfinished under #55. The already decoded CWJ MP4 and the WebM duration defect are separate evidence. The three rendered Reel boards do not by themselves prove motion or sound. No paid provider, GCP resource or live Studio data was changed by this export pass.
 
 
 ## Separate actual CWJ GIF checkpoint
@@ -33,3 +33,8 @@ The finance Reel was subsequently exported with the same explicit GIF settings a
 ## Both native MP4 Reels
 
 Both presets have actual native browser-produced H.264 MP4s, included unchanged. Each independently probes at1080×1920,30/1fps,30.000000 seconds and900 decoded frames. Full ffmpeg null-output decoding passed. Boundary frames at0,2.9,3,14.9,15,29.9 seconds match their own original PNG boards1,1,2,2,3,3 by mean absolute RGB error. CWJ is585,764 bytes/SHA256 `e7fcbb41203e34980e696174488b1b6afc45340cc29caaf17fa2ab589cca797d`; finance is567,669 bytes/SHA256 `376f2c9bfd8c61e827556e38f61ab2adb0bf5bea8c4dab1e264486297184807a`. Each has zero audio streams. Full metadata/frame comparison reports are separate JSON files. These are static page cuts at3/15-second boundaries, not a certification of motion presets, transitions or sound rights.
+
+
+## Fresh native WebM downloads after the duration repair
+
+Merged PR83 records the attributed muxer-duration repair, its pinned red/green reproducer and independent review. After that patch was served by the owned local guest, the operator generated and downloaded fresh WebMs for both brand Reels through the actual browser UI. Both independently probe and fully decode as VP9,1080×1920,30/1fps,900frames,30.000000seconds with zero audio streams. Six boundary frames again identify native PNG boards1,1,2,2,3,3. Original downloads and separate per-brand JSON reports are included. Finance:1,217,849 bytes/SHA256 `b9a1d024d1988d857e7b3f183652633d86fadb1bddce472cc46f10dafe6d396f`. CWJ:1,004,663 bytes/SHA256 `cc7007bb55eb855ff731f4670c224295dd2414e3c801417518e857b042262bd9`. The fresh CWJ file differs from its original29.966-second browser export only at offsets222/223 inside the existing8-byteDuration, with identical file size. This is fresh native export proof, not merely a corrected-copy metadata test. Only the owned local QA source was patched; the live Studio image and GCP service do not embed Doory.
