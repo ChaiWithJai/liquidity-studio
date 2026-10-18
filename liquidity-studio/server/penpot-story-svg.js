@@ -26,7 +26,7 @@ export class PenpotStorySvg {
   if(design?.status!=='ready'||design.nativeRevision!==input.expectedNativeRevision)throw fail(409,'Save and reopen the current native design before saving SVG');
   const pageId=new URLSearchParams(new URL(design.nativeUrl).hash.split('?')[1]||'').get('page-id');
   const file=await this.designs.rpc(context.workspace,'get-file',{id:design.fileId});
-  const frames=Object.values(file.data?.pagesIndex?.[pageId]?.objects||{}).filter(shape=>shape.type==='frame'&&shape.parentId==='00000000-0000-0000-0000-000000000000');
+  const frames=Object.values(file.data?.pagesIndex?.[pageId]?.objects||{}).filter(shape=>shape.type==='frame'&&shape.id!=='00000000-0000-0000-0000-000000000000'&&shape.parentId==='00000000-0000-0000-0000-000000000000');
   if(file.id!==design.fileId||frames[0]?.width<=0||frames[0]?.height<=0||file.projectId!==context.workspace.projectId||file.revn!==input.expectedNativeRevision||!UUID.test(pageId||'')||frames.length!==1||!UUID.test(frames[0].id)||!Number.isFinite(frames[0].width)||!Number.isFinite(frames[0].height)||frames[0].width*frames[0].height>16*1024*1024)throw fail(422,'This saved page needs one supported board for SVG export');
   return {context,file,pageId,objectId:frames[0].id,fingerprint:digest({source:context.identity,file:file.data,revision:file.revn})};
  }

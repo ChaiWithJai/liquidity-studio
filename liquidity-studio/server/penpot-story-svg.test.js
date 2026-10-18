@@ -10,7 +10,7 @@ const sha=b=>createHash('sha256').update(b).digest('hex');
 function fixture(){
  let revision=3,sourceRevision=2,profile=id(7),calls=[],wrongOriginal=false,changeDuringExport=false;
  const workspace={projectId:id(1),teamId:id(2),actingNativeProfileId:id(7),ownerPrincipal:id(8),fonts:[{family:'Mona Sans',weight:400,fontId:'custom-'+id(9),sha256:sha(original),license:'OFL-1.1'}]};
- const file=()=>({id:id(3),projectId:id(1),revn:revision,data:{pagesIndex:{[id(4)]:{objects:{[id(5)]:{id:id(5),type:'frame',parentId:'00000000-0000-0000-0000-000000000000',width:1080,height:1350},[id(6)]:{id:id(6),type:'text',content:{fontId:'custom-'+id(9),text:'HUMAN ॐ & text'}}}}}}});
+ const file=()=>({id:id(3),projectId:id(1),revn:revision,data:{pagesIndex:{[id(4)]:{objects:{['00000000-0000-0000-0000-000000000000']:{id:'00000000-0000-0000-0000-000000000000',type:'frame',parentId:'00000000-0000-0000-0000-000000000000',width:0.01,height:0.01},[id(5)]:{id:id(5),type:'frame',parentId:'00000000-0000-0000-0000-000000000000',width:1080,height:1350},[id(6)]:{id:id(6),type:'text',content:{fontId:'custom-'+id(9),text:'HUMAN ॐ & text'}}}}}}});
  const designs={context:async()=>({story:{revision:sourceRevision,generationId:'generation'},workspace,identity:{storyId:'story',revision:sourceRevision}}),designs:async()=>({design:{status:'ready',nativeRevision:revision,fileId:id(3),nativeUrl:`http://localhost:39008/#/workspace?team-id=${id(2)}&file-id=${id(3)}&page-id=${id(4)}`}}),rpc:async()=>file()};
  const fetchImpl=async(url,options)=>{
   calls.push({url,options});assert.equal(options.headers.Cookie,cookie);assert.equal(options.headers['X-Studio-Acting-Profile'],undefined);assert.equal(options.redirect,'error');
