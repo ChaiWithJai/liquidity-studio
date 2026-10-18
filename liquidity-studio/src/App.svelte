@@ -1334,12 +1334,12 @@
       </div>
       <nav aria-label="Main navigation">
         {#if currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable}<button class:active={tab==='strategy'} onclick={()=>navigateTab('strategy')}><span aria-hidden="true">◎</span>Strategy</button>{/if}
-        {#each [{ id: "backlog", label: "Story backlog", icon: "▤" }, { id: "calendar", label: "Content calendar", icon: "▦" }, { id: "studio", label: "Campaign Studio", icon: "◧" }, { id: "brand", label: "Brand Kit", icon: "◉" }, { id: "jobs", label: "Jobs", icon: "◷" }] as item (item.id)}<button
+        {#if brandId}{#each [{ id: "backlog", label: "Story backlog", icon: "▤" }, { id: "calendar", label: "Content calendar", icon: "▦" }, { id: "studio", label: "Campaign Studio", icon: "◧" }, { id: "brand", label: "Brand Kit", icon: "◉" }, { id: "jobs", label: "Jobs", icon: "◷" }] as item (item.id)}<button
             class:active={tab === item.id}
             disabled={!brandId}
             onclick={() => navigateTab(item.id)}
             ><span aria-hidden="true">{item.icon}</span>{item.label}</button
-          >{/each}{#if canAdmin}<button
+          >{/each}{/if}{#if canAdmin}<button
             class:active={tab === "admin"}
             disabled={scopeLoading}
             onclick={loadAdmin}
