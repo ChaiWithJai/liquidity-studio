@@ -88,3 +88,35 @@ Ejection rejects a file above four MiB before encoding it. The file collection c
 The service checks combined retained/live history counts before hydrating that document. Completed PNGs are validated and handed to the file budget individually, so rejection stops before reading a later artifact. Mutable source/native/review/export metadata is fingerprinted sequentially. Immutable inline export payloads are excluded from that metadata pass and read only when their completed receipt is consumed; collection-key fences remain, and exact bytes still must match the stage/receipt hash and full PNG decode. This does not weaken current scoped authorization or restore export completion authority.
 
 Controlled Node/SQLite regressions verify that exhausted file/byte budgets stop later scene hydration, 101 combined history entries stop before any scene read, and an artifact budget failure stops before the next payload. Whole-store snapshots before and after rejected ejection remain equal. A completed PNG is loaded once, rather than three times across capture/read/final capture. These are bounded-behavior checks, not a claimed measured peak-heap or production capacity benchmark.
+
+### Explicit historical-layout source rebind (implementation increment)
+
+After importing reviewed prepared copy, its native layouts remain historical and
+read-only. A current founder can deliberately create a **new proposal** from a
+selected historical layout only after completing a fresh current-scope whole-copy
+review and promotion. An imported approval, a client acknowledgement, and an
+unfinished candidate are insufficient. The original historical record, immutable
+payloads, review history, and completed PNGs remain unchanged.
+
+The server provides a bounded binding plan naming the historical version, current
+story/content epoch, generation, brand version, and reviewed candidate. Confirmation
+binds the exact plan and an idempotency key. Membership, restore reservation,
+historical record, source, brand, registered fonts, and owned assets are fenced
+again during atomic creation. A lost response retries the same new-copy intent.
+No caller-supplied source, document, identity, or approval is accepted.
+
+The new copy preserves human text, geometry, page/object IDs, notes, and timing.
+Only registered brand-token properties may adopt the current Brand Kit. Incompatible
+page/token bindings, unsupported fonts, foreign/missing assets, or changed inputs
+require explicit reconciliation. Historical human text may differ from freshly
+reviewed campaign copy: it stays a native **proposal requiring new exact-version
+layout review**, never silently overwrites the campaign, and inherits no old native
+approval/export authority. The Studio exposes saved-layout selection and this
+explicit confirmation through its existing native entry, with scope/session and
+dirty-buffer protection.
+
+Acceptance for this increment includes both presets and all four formats, a
+fresh-owner source-review-to-new-copy path, unchanged original history, same-key
+recovery, authority/concurrency negatives, and actual native edit/save/reload/PNG
+proof when the private licensed acceptance environment is available. Maintained
+runtime rollout and the upstream distribution hold remain separate.
