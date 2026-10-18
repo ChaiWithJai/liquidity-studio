@@ -8,7 +8,7 @@ import { DurableStore } from "../server/storage.js";
 let platform, server, base;
 const password = randomBytes(24).toString("base64url");
 const scope = "?organizationId=org_default&brandId=brand_default";
-const evidence = resolve("../docs/design-review/issue-68/after-v2");
+const evidence = resolve("../docs/design-review/issue-68/after-v3");
 test.beforeAll(async () => {
   process.env.AI_ALLOW_SYNTHETIC = "true";
   platform = createPlatform({
@@ -101,6 +101,19 @@ test("S17–S21 identifies projection and locates measured text with current per
   page,
 }) => {
   await setup(page);
+  expect(
+    await page
+      .locator(".generation-review-context")
+      .first()
+      .evaluate((node) => getComputedStyle(node).position),
+  ).toBe("static");
+  await page.locator("details.sources > summary").click();
+  expect(
+    await page
+      .locator(".generation-review-context--editor")
+      .evaluate((node) => getComputedStyle(node).position),
+  ).toBe("sticky");
+  await page.locator("details.sources > summary").click();
   await page.getByRole("button", { name: "Carousel 4 slides" }).click();
   await page.getByRole("button", { name: "Design Mode", exact: true }).click();
   await expect(page.getByLabel("Preview artifact identity")).toContainText(
@@ -109,8 +122,12 @@ test("S17–S21 identifies projection and locates measured text with current per
   await expect(page.locator(".evidence")).toContainText(
     "Measured Carousel · page 1",
   );
-  await expect(page.getByTestId("artifact-details")).not.toHaveAttribute("open");
-  expect(await page.locator('.artifact-identity').innerText()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
+  await expect(page.getByTestId("artifact-details")).not.toHaveAttribute(
+    "open",
+  );
+  expect(await page.locator(".artifact-identity").innerText()).not.toMatch(
+    /[0-9a-f]{8}-[0-9a-f]{4}-/,
+  );
   await shot(page, "S17");
   await page.getByRole("button", { name: "3×3 Profile Grid" }).click();
   await expect(page.getByLabel("Preview artifact identity")).toContainText(
@@ -149,8 +166,20 @@ test("S17–S21 identifies projection and locates measured text with current per
   await expect(
     page.locator(".artwork [data-preflight-highlight]"),
   ).toBeFocused();
-  expect(await page.locator('.evidence').innerText()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/);
-  await expect(page.locator('.evidence')).toContainText('Fixed renderer label');
+  expect(await page.locator(".evidence").innerText()).not.toMatch(
+    /[0-9a-f]{8}-[0-9a-f]{4}-/,
+  );
+  await expect(page.locator(".evidence")).toContainText("Fixed renderer label");
+  const unobscured = await page.locator('.artwork [data-preflight-highlight]').evaluate(node => {
+    const box=node.getBoundingClientRect();
+    const top=document.elementFromPoint(box.x+box.width/2,box.y+box.height/2);
+    const summaries=[...document.querySelectorAll('.generation-review-context')].map(summary=>summary.getBoundingClientRect()).filter(rect=>rect.width&&rect.height);
+    return {hit:top?.tagName,hitClass:top?.getAttribute('class'),inViewport:box.y>=0&&box.bottom<=innerHeight,reviewOverlap:summaries.some(rect=>rect.x<box.right&&rect.right>box.x&&rect.y<box.bottom&&rect.bottom>box.y)};
+  });
+  console.log("Locate hit test",JSON.stringify(unobscured));
+  expect(unobscured.inViewport).toBe(true);
+  expect(unobscured.reviewOverlap).toBe(false);
+  expect(unobscured.hitClass).toBe("reel-meta");
   await shot(page, "S21");
   const records = await (
     await page.request.get(base + "/api/admin/eject" + scope)

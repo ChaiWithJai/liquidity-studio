@@ -1111,7 +1111,7 @@
               >
             </div>
           </div>
-          <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
+          <div class="generation-review-context" class:generation-review-context--sticky={!campaign}><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
           {#if exportUrl}<p class="download">
               <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
                 >Actual exported artifact · scope authorization required</small
@@ -1312,6 +1312,7 @@
                 </div>
                 <details class="sources">
                   <summary>Review source claims</summary>
+                  <div class="generation-review-context generation-review-context--editor"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
                   <p class="small muted">
                     Approve a claim only after reviewing its linked source and
                     meaning. Clinical claims require a separate clinical review.

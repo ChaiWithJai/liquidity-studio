@@ -1,0 +1,107 @@
+{
+  "evidenceVersion": "issue-68/after-v3",
+  "supersedes": "v2 cross-column sticky summary overlay; v1 and v2 preserved unchanged",
+  "baselineSourceCommit": "50b393577a2d50b30a16665d68afc0187685715f",
+  "integrationBaseCommit": "b6fd4172322d6cf2838a80b9c40b312d2a22d0a9",
+  "runtime": "isolated source build; ephemeral loopback API and in-memory SQLite; not a deployed image",
+  "fixture": "new controlled source excerpt with explicit synthetic mode; not original issue39 recovery story or v1 fixture UUID",
+  "canonicalAnnotationIds": [
+    "review-11",
+    "review-13"
+  ],
+  "verification": {
+    "baselineBrowserReproduction": {
+      "passed": 1
+    },
+    "allNormalBrowserJourneys": {
+      "passed": 22,
+      "skipped": 2,
+      "skipReason": "separate actual Auth Emulator popup/watchdog cases"
+    },
+    "node22ServerTests": {
+      "passed": 113,
+      "skipped": 1,
+      "skipReason": "separate Firestore emulator contract"
+    }
+  },
+  "sources": {
+    "liquidity-studio/src/App.svelte": "baae1551ef586ba5975ae393ec80201be1f710a630282f148645173ac016d451",
+    "liquidity-studio/src/Emulator.svelte": "e8a3e0b4219d5e29167c9cfd4f62bf81d48a5bd54c6aac6a3dcf438c0947c0fa",
+    "liquidity-studio/src/studio.css": "2b063a4b666e43fd6ccb21c549ce820b6fbadd850088f14888a93bee35f135dd",
+    "liquidity-studio/server/artwork.js": "ff77dbe8073913d118a09850a1bed7962853e765619e2ee9303999df782a8e6e",
+    "liquidity-studio/server/preflight.js": "3fd312338a6f13d6bc6212d214dcfd4c215697d5c13c5355c13dc13c306614ee",
+    "liquidity-studio/server/index.js": "31df4403302882ef7669e7ec47808a6d8f4a6d273c3d5aac58a03bc6267c7352"
+  },
+  "builtAssets": {
+    "liquidity-studio/dist/assets/index-6wKZ3Pyw.js": "9559bd0e893e44aeca9e0474ccb425c7876a9d9fdbbbc4a11c3cf9d88015bea7",
+    "liquidity-studio/dist/assets/index-DXk6JuL0.css": "68794b1b01c69a03724c43a29ae4b8af8fd954a9f4e19507ce14560f3db2e3b7"
+  },
+  "files": [
+    {
+      "file": "S17.json",
+      "sha256": "ec6f6685a0e3df2a16e3364a9fcb2036dfd6dec99937eb49f85f761f4a006228",
+      "bytes": 1155
+    },
+    {
+      "file": "S17.png",
+      "sha256": "b16b2a5721271f9cb23f5aa59336389646c5d295a329f2fce7ec9407a96cecff",
+      "bytes": 92409,
+      "width": 646,
+      "height": 1242
+    },
+    {
+      "file": "S18.json",
+      "sha256": "43be22c3a3dc1b640aaa9fbad60557d4a2e0e95b137029ba8f83275147857195",
+      "bytes": 911
+    },
+    {
+      "file": "S18.png",
+      "sha256": "df0ed4c7aa30973aea6f717430a04bddeaa139eb16a69a591a171df270ca067d",
+      "bytes": 85417,
+      "width": 646,
+      "height": 1297
+    },
+    {
+      "file": "S19.json",
+      "sha256": "c5fde7f733591e38e1aedfd3e679c6c17bae48f1bd23c74be1b4c689c947461c",
+      "bytes": 1157
+    },
+    {
+      "file": "S19.png",
+      "sha256": "4e6043a1faa0ad999ed77c19f0fb99c63288e5c10c8e655ba820f4a350782dfb",
+      "bytes": 124071,
+      "width": 646,
+      "height": 1483
+    },
+    {
+      "file": "S20.json",
+      "sha256": "6a4bb87db5443acaa04d825ecad159b72fac1bd087da11db2ad30e18ebcb4751",
+      "bytes": 1403
+    },
+    {
+      "file": "S20.png",
+      "sha256": "d3dfef3e91667c03592856260d9b9090c807b57e07639e5608a208b6dcd53d1d",
+      "bytes": 134708,
+      "width": 646,
+      "height": 1567
+    },
+    {
+      "file": "S21.json",
+      "sha256": "e3d0296eac2526b3f02c4b89bf12d76b3c8acb538855f9765298959faf973d22",
+      "bytes": 1626
+    },
+    {
+      "file": "S21.png",
+      "sha256": "67ef335aa09d3e907a46aed52e244f7b59825a15184566f67ad102d3c9480c01",
+      "bytes": 144058,
+      "width": 646,
+      "height": 1613
+    }
+  ],
+  "locateHitTest": {
+    "insideViewport": true,
+    "reviewSummaryOverlap": false,
+    "actualHitClass": "reel-meta",
+    "meaning": "Expected simulated chrome collision, not a source-review-summary overlay or a safety pass"
+  }
+}
