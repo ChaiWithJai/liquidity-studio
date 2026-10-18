@@ -1,0 +1,78 @@
+{
+  "controlledPassword": true,
+  "notGoogle": true,
+  "main": "bdb7df0ca2b43297a07c9e4e370edf6620f11a7a",
+  "sparse": {
+    "logicalBytes": 50331649,
+    "allocatedBytes": 0,
+    "actualClientMessage": "Choose a JSON pack no larger than 48 MiB.",
+    "noInstallOrDestinationPostBeforeValidPack": true
+  },
+  "rollback": {
+    "sentinelUnchanged": true,
+    "taggedStagingRecords": 0
+  },
+  "finalJournalStatuses": [
+    "completed"
+  ],
+  "completedJournalCount": 1,
+  "sentinelUnchanged": true,
+  "assetByteChecks": [
+    {
+      "sha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+      "bytes": 34832,
+      "matchesOriginal": true,
+      "lineageExact": true
+    },
+    {
+      "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+      "bytes": 198985,
+      "matchesOriginal": true,
+      "lineageExact": true
+    }
+  ],
+  "uiActions": [
+    "new destination201 on A",
+    "restore interrupted after first committed staging record",
+    "B status200; locked data423",
+    "stable-origin fixed proxy into live B",
+    "ordinary status and rollback200",
+    "same retained request retry install200",
+    "full reload status completed",
+    "A restarted and ordinary status completed"
+  ],
+  "limits": [
+    "target-brand selection after final completion was observed only loading before blanking, not claimed final artwork/rejoin",
+    "no native frame/render/model/cloud",
+    "48MiB maximum valid accepted pack memory remains unproved",
+    "locked target Operations defect #157 remains open",
+    "control.py refused path alias; manually verified owned PIDs/signals used"
+  ],
+  "processRssSamplesKiB": {
+    "initialA": 78368,
+    "initialB": 72400,
+    "barrierA": 104800,
+    "postRestoreB": 84352
+  },
+  "allOwnedProcessesStopped": true,
+  "backup": {
+    "bytes": 421888,
+    "sha256": "a7677edf1b2a419845e3e1d4055c1cc755a92eefa4c13cb8ff5cb5eb2c14cdc9",
+    "records": 15,
+    "fullDatabasePublished": false
+  },
+  "sourceHashes": {
+    "application.mjs": "b219a3f1963bb424d155ef9daf7956f36baddca1559913e3513a876b08ec7ac4",
+    "failover-proxy.mjs": "b367ad0a1b8a8a88fd3a6f98fa15d3fec461d06654bbaeb49195676ecbdfd7e5",
+    "snapshot.mjs": "9b1f92e5345ce5acefec97b580a0dc59876d72c8be4cd0056d61e8198fefeda3",
+    "control.py": "5352a16e8c2c225cf8cd1db1c7af20885d2b167915096f8dfe1226544cde3e90",
+    "sparse-file.py": "99f36635171c22687a634bcdfcc7b6bebc201ab8a9806187bfa51487270ec179"
+  },
+  "barrier": {
+    "committed": true,
+    "lockReleased": true,
+    "firstTaggedStagingRecord": true,
+    "originalProcessStoppedAfterBarrier": true,
+    "fullInterruptedDatabaseSnapshotAvailable": false
+  }
+}

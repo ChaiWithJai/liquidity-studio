@@ -1,0 +1,433 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "issue": 55,
+  "method": "Actual BrowserOS Neo UI, browser media metadata and decoded seek samples; no local test runner or external media decoder",
+  "controlledPasswordFixture": true,
+  "googleAcceptance": false,
+  "source": {
+    "backend": "7ee14a931e7231bd71af0408a5a9c9072de97ea3",
+    "publicApp": "af41c1d/index-BWJKhL1L.js",
+    "privateFrame": {
+      "studio": "4d1e30ee4d1690999337ed83d165d71b90abe23d",
+      "upstream": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+      "overlays": [
+        78,
+        83
+      ],
+      "frameSha256": "62c944c28f081841149ed0ccd157f52f49f76f98b6b57290c22c789855df45d3",
+      "licenseSha256": "677bf90df999ef9e3a7665ae146547ecb2af491b30b40c65cbf75786c7ee559d",
+      "distribution": "private held; no binary/source published"
+    }
+  },
+  "motion": {
+    "pageHoldsSeconds": [
+      2,
+      11,
+      14
+    ],
+    "pageOneHeadline": {
+      "preset": "rise",
+      "durationMs": 1000,
+      "delayMs": 0,
+      "unit": "whole-object"
+    },
+    "transitions": {
+      "preset": "fade",
+      "durationMs": 1000,
+      "firstPageIgnored": true
+    },
+    "actualSlotsSeconds": [
+      3,
+      12,
+      15
+    ],
+    "totalSeconds": 30,
+    "financeSavedRevision": 8,
+    "culturalSavedRevision": 5,
+    "fullApplicationReloadBeforeExport": true,
+    "approval": "native proposals; review not started; no verified PNG approval or publication claimed"
+  },
+  "artifacts": {
+    "financeMp4": {
+      "bytes": 684811,
+      "duration": 30,
+      "height": 1920,
+      "sha256": "d041df8c3bd700f55b07d4d48c646c488dbf6efe44985beeb9d23f86c83ed7a5",
+      "width": 1080,
+      "samples": [
+        {
+          "sha256": "28a75a391d8f3ca5a8190454ebe1159b8951965c6310fefc219612de3ea181d5",
+          "time": 0.2
+        },
+        {
+          "sha256": "dc63c93b56eb97c444af7a5fe1aea8470ee22eb79cdd08167c1f18ab2908ad69",
+          "time": 0.6
+        },
+        {
+          "sha256": "445df0ee77bfa489d88586777accd7e7a4feecf7a12a38da13ba68d6eed01bbc",
+          "time": 1.2
+        },
+        {
+          "sha256": "4f62c4943544acda4aef1e617c0eba29f9d72b400e4bb1ae12bebfda868c83aa",
+          "time": 2.9
+        },
+        {
+          "sha256": "38eb3782efe469aaae06e02fa5992587f75013b9dc4bf084565f2b74e093bdf4",
+          "time": 3.5
+        },
+        {
+          "sha256": "8ca267a4d52cee4db8603400a34916d48e654e1e79bb4452e32b8ed58be47dec",
+          "time": 4.1
+        },
+        {
+          "sha256": "10ff2ad5904d4e2be143eadcd08d3644da7be3c422fa2712699a8caef7374c0b",
+          "time": 14.9
+        },
+        {
+          "sha256": "6567cb7dab364ae7f45dc288ced03d061c6c8de413c6741c7bd28d9cb82a79cb",
+          "time": 15.5
+        },
+        {
+          "sha256": "5d6a424273f05a0a87dd401b47c0064ad8139b11d74310e4ee766f1238040b80",
+          "time": 16.1
+        }
+      ],
+      "comparisons": [
+        {
+          "from": 0.2,
+          "pixelsWithChannelDeltaAtLeast20": 2197,
+          "rms": 14.583147882418729,
+          "to": 0.6
+        },
+        {
+          "from": 0.6,
+          "pixelsWithChannelDeltaAtLeast20": 1258,
+          "rms": 11.764368567770813,
+          "to": 1.2
+        },
+        {
+          "from": 2.9,
+          "pixelsWithChannelDeltaAtLeast20": 553,
+          "rms": 4.51108374375935,
+          "to": 3.5
+        },
+        {
+          "from": 3.5,
+          "pixelsWithChannelDeltaAtLeast20": 550,
+          "rms": 4.477557778806594,
+          "to": 4.1
+        },
+        {
+          "from": 14.9,
+          "pixelsWithChannelDeltaAtLeast20": 667,
+          "rms": 4.903378674749028,
+          "to": 15.5
+        },
+        {
+          "from": 15.5,
+          "pixelsWithChannelDeltaAtLeast20": 655,
+          "rms": 5.007238330615837,
+          "to": 16.1
+        }
+      ],
+      "frame": "old123 before cleanup rebuild; valid completed file"
+    },
+    "financeWebm": {
+      "bytes": 1368415,
+      "comparisons": [
+        {
+          "from": 0.2,
+          "pixelsWithChannelDeltaAtLeast20": 2188,
+          "rms": 14.826784689833568,
+          "to": 0.6
+        },
+        {
+          "from": 0.6,
+          "pixelsWithChannelDeltaAtLeast20": 1241,
+          "rms": 12.036603873972512,
+          "to": 1.2
+        },
+        {
+          "from": 2.9,
+          "pixelsWithChannelDeltaAtLeast20": 555,
+          "rms": 4.478866125432566,
+          "to": 3.5
+        },
+        {
+          "from": 3.5,
+          "pixelsWithChannelDeltaAtLeast20": 550,
+          "rms": 4.490571970864559,
+          "to": 4.1
+        },
+        {
+          "from": 14.9,
+          "pixelsWithChannelDeltaAtLeast20": 665,
+          "rms": 4.94962067798807,
+          "to": 15.5
+        },
+        {
+          "from": 15.5,
+          "pixelsWithChannelDeltaAtLeast20": 656,
+          "rms": 4.967710812855818,
+          "to": 16.1
+        }
+      ],
+      "duration": 30,
+      "height": 1920,
+      "sampleResolution": [
+        270,
+        480
+      ],
+      "samples": [
+        {
+          "sha256": "0f9b14ab8ab348886307f3f241e32ecbf9b3c989d98d50962a37458f8af3e3b1",
+          "time": 0.2
+        },
+        {
+          "sha256": "e47d73de39ea48e3b2b613bcabc83737adde76ddc4f2c3caa440aeaed44e665a",
+          "time": 0.6
+        },
+        {
+          "sha256": "4ea9a015a505901dbb7cb1f7c3c48eb99b847914d605846a5a89a1fbfd63c420",
+          "time": 1.2
+        },
+        {
+          "sha256": "8236139c36b7c05ee5a7f26db3c71acc607f3a775fd29ec1123db5fc6c3de664",
+          "time": 2.9
+        },
+        {
+          "sha256": "f43b5eac69f8cc293534a9a9af8da101c6db314bb7e086cfa5d824f6375933f7",
+          "time": 3.5
+        },
+        {
+          "sha256": "0173643c173c35c7277aaca730585eb9bbb3afbac8f90174f1083903e18a2938",
+          "time": 4.1
+        },
+        {
+          "sha256": "43a9b5f21e8bd742fd5713287d389ded632a754a4502c07b7aaba4d39bafec35",
+          "time": 14.9
+        },
+        {
+          "sha256": "1baf979184160dbc4e8b3cef85629f353835369a60d4498c8dbd170768899dbd",
+          "time": 15.5
+        },
+        {
+          "sha256": "56f8bb26ece31e738dc7b338415a014b768ba384f09eaa791a9c371760d22f60",
+          "time": 16.1
+        }
+      ],
+      "sha256": "ff56f90bc6126e832a8128604331a89ba80873ca36c85b50d21a602c74e60e3e",
+      "width": 1080
+    },
+    "culturalMp4": {
+      "bytes": 745641,
+      "comparisons": [
+        {
+          "from": 0.2,
+          "pixelsWithChannelDeltaAtLeast20": 3135,
+          "rms": 20.151432428228645,
+          "to": 0.6
+        },
+        {
+          "from": 0.6,
+          "pixelsWithChannelDeltaAtLeast20": 1595,
+          "rms": 14.33934081326083,
+          "to": 1.2
+        },
+        {
+          "from": 2.9,
+          "pixelsWithChannelDeltaAtLeast20": 540,
+          "rms": 4.327795309715832,
+          "to": 3.5
+        },
+        {
+          "from": 3.5,
+          "pixelsWithChannelDeltaAtLeast20": 528,
+          "rms": 4.2933569726555705,
+          "to": 4.1
+        },
+        {
+          "from": 14.9,
+          "pixelsWithChannelDeltaAtLeast20": 637,
+          "rms": 4.684083734531095,
+          "to": 15.5
+        },
+        {
+          "from": 15.5,
+          "pixelsWithChannelDeltaAtLeast20": 637,
+          "rms": 4.781203283211345,
+          "to": 16.1
+        }
+      ],
+      "duration": 30,
+      "height": 1920,
+      "sampleResolution": [
+        270,
+        480
+      ],
+      "samples": [
+        {
+          "sha256": "2ae8f6c9be9856cce88ff3aade9b1405641849e27ca0020f33b2b0d97cdf816a",
+          "time": 0.2
+        },
+        {
+          "sha256": "e52aef5307e14091037ddffbcbd5f1728fd90383079d15a6e366d5403a0c9de7",
+          "time": 0.6
+        },
+        {
+          "sha256": "7b29e2f77e61b14ba18cc715e20be7b30fad0e7721ad668d9107a4b3dddb86a5",
+          "time": 1.2
+        },
+        {
+          "sha256": "7d8068e01d45b987bee3bc36af97a5072c2ac8e3f4793de2a19d804ef8441eaa",
+          "time": 2.9
+        },
+        {
+          "sha256": "fa8ea02ca30e27f61ccd5ac2b9773bdcd389d0827ebc4ad156b006e6bba51952",
+          "time": 3.5
+        },
+        {
+          "sha256": "0f5684efba6bb80503eb94b0546825fecce76745be798b318f4f0f63350fddd3",
+          "time": 4.1
+        },
+        {
+          "sha256": "3aa4c0ac751892784e4181f3f27deb18bf6c611396a8e061cc4f9ad03a8532da",
+          "time": 14.9
+        },
+        {
+          "sha256": "767066f109bca0fd43ee266157d12fa7c556a2e61f967a7b3a7d529fe2126d23",
+          "time": 15.5
+        },
+        {
+          "sha256": "8b0068fd56a42afaeb28f03ad5e0410b349ef8f973cc67c623dd615663d68d48",
+          "time": 16.1
+        }
+      ],
+      "sha256": "cbcda8f5132b0d10545f43edbd2efb34c58bb0fee8c69233549ee9520fbd77d0",
+      "width": 1080
+    },
+    "culturalWebm": {
+      "bytes": 1341109,
+      "comparisons": [
+        {
+          "from": 0.2,
+          "pixelsWithChannelDeltaAtLeast20": 3128,
+          "rms": 20.40660737324058,
+          "to": 0.6
+        },
+        {
+          "from": 0.6,
+          "pixelsWithChannelDeltaAtLeast20": 1568,
+          "rms": 14.571068299153664,
+          "to": 1.2
+        },
+        {
+          "from": 2.9,
+          "pixelsWithChannelDeltaAtLeast20": 537,
+          "rms": 4.293245244859684,
+          "to": 3.5
+        },
+        {
+          "from": 3.5,
+          "pixelsWithChannelDeltaAtLeast20": 531,
+          "rms": 4.290664512022877,
+          "to": 4.1
+        },
+        {
+          "from": 14.9,
+          "pixelsWithChannelDeltaAtLeast20": 636,
+          "rms": 4.731669471513656,
+          "to": 15.5
+        },
+        {
+          "from": 15.5,
+          "pixelsWithChannelDeltaAtLeast20": 631,
+          "rms": 4.726393038275951,
+          "to": 16.1
+        }
+      ],
+      "duration": 30,
+      "height": 1920,
+      "sampleResolution": [
+        270,
+        480
+      ],
+      "samples": [
+        {
+          "sha256": "921820e3a0acf786dcd16f5878c939d968f2f106607bac29ef25d065439d889c",
+          "time": 0.2
+        },
+        {
+          "sha256": "8f2040093b0d667a3ad02d822d687af83e0405ca9446f9b111c646bd56932d64",
+          "time": 0.6
+        },
+        {
+          "sha256": "bef55ab316f7fb33c2113ef220a4d4366034069cd60ab78553446a068ea3687a",
+          "time": 1.2
+        },
+        {
+          "sha256": "2924b8009fdab0b0d74c766436d1ffbaef822b96332500e3995f10572eeceab1",
+          "time": 2.9
+        },
+        {
+          "sha256": "cc2a1ec976abbc567504530aaa1d8dbb6e907ef91f4afe6ab79ffde01d464e86",
+          "time": 3.5
+        },
+        {
+          "sha256": "f366f790381b4212eab723447eedaf25bc0a4e51ff969ea2c0db4d6da25529a3",
+          "time": 4.1
+        },
+        {
+          "sha256": "4df284cbbb9236adde065021af6b4797fe01e7971c9cee52dff71df30401b623",
+          "time": 14.9
+        },
+        {
+          "sha256": "72b07e9cbc8fd3cd692f46559e9cb3f3c7be674c7a52d3d2347f96ac73b769bd",
+          "time": 15.5
+        },
+        {
+          "sha256": "a98a9a46d4381c249e3d16f41111b990747fd07f4841c1d329410f7139456cf7",
+          "time": 16.1
+        }
+      ],
+      "sha256": "f82fedc74e506c09151eb9759530692ba6fadcb26d975c06fb07cef5117c5f1f",
+      "width": 1080
+    }
+  },
+  "cleanup": {
+    "finance": {
+      "error": false,
+      "text": "ownload\nFile type\nPNG\nJPG\nPDF\nSVG\nVideo and animation\nMP4\nWebM\nGIF\nSmaller video files.\nPages\nAll pages (3)\nCurrent page\nSelect pages\nWebM settings\nSize\nDesign\n480p\n720p\n1080p\n4K\n1080 × 1920 px\nFrame rate\n24 fps\n30 fps\n60 fps\nQuality\nSmaller file\nBalanced\nBest\nTime per page\nAs set on each page\nThe same for all\n\nA page without a time stays 5 seconds, counted once it has built up.\n\nThis design has no sound. Add some with the Audio tool.\n\n0:30 · 900 frames · about 704 KB\n\nThe size is an estimate.\n\nMade in your browser with VP9 and Opus.\nMake video"
+    },
+    "financeCloseAndReopen": {
+      "error": false,
+      "reopened": true
+    },
+    "culturalChangeSettings": {
+      "error": false
+    }
+  },
+  "timing": {
+    "financeMp4": "not measured",
+    "financeWebmObservationUpperBoundMs": 11078,
+    "culturalMp4ObservationUpperBoundMs": 6593,
+    "culturalWebmObservationUpperBoundMs": 11257,
+    "meaning": "UI start to ready observation includes tool delays; not exact encoder runtime",
+    "operatorInteractionSeconds": "not measured",
+    "targetsPassed": false
+  },
+  "backup": {
+    "bytes": 745472,
+    "sha256": "b435f3604d08f52e6822b6a55c1aa3977f1318bbb815110dcdba25a6b9687ae0",
+    "integrity": "ok",
+    "records": 40,
+    "inlineAssets": true
+  },
+  "limits": [
+    "900 frames is UI plan, not exhaustive decoded frame count.",
+    "Browser player labels no sound; no independent audio-stream inspection or audible-output claim.",
+    "Reel retains explicit subject placeholder; fresh cutout proof is separate.",
+    "No model call, cutout inference, cloud resource or audio implementation in this journey."
+  ]
+}

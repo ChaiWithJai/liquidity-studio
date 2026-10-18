@@ -1,0 +1,334 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-18",
+  "issues": [
+    55,
+    57
+  ],
+  "method": "BrowserOS Neo actual Operations export/import and native WebM rendering; disposable password fixture",
+  "sourcePack": {
+    "finance": {
+      "bytes": 3071571,
+      "sha256": "18597c82ac979ec33c7e346017fa3252f9a58c60486de7e9db67fe168f5fdff6"
+    },
+    "cultural": {
+      "bytes": 2634598,
+      "sha256": "aa4468391a486f561600db4a9b8842555307aad69ed0e4e4c7d4f90b010c2af0"
+    }
+  },
+  "identity": {
+    "differentCurrentOwner": true,
+    "freshEmptyDestinations": true,
+    "explicitNonclinicalSourceAttestation": true,
+    "nativeApprovalTransferred": false,
+    "priorRecoveryDestinationsPreserved": true
+  },
+  "restored": {
+    "finance": {
+      "finalSignoff": "not_granted",
+      "pages": [
+        {
+          "animations": [
+            {
+              "animation": {
+                "enter": {
+                  "delayMs": 0,
+                  "durationMs": 1000,
+                  "easing": "ease-out",
+                  "preset": "rise"
+                }
+              },
+              "id": "headline_layer"
+            }
+          ],
+          "durationSec": 2,
+          "id": "reel_page_1",
+          "transition": {
+            "durationMs": 1000,
+            "easing": "ease-in-out",
+            "preset": "fade"
+          }
+        },
+        {
+          "animations": [],
+          "durationSec": 11,
+          "id": "reel_page_2",
+          "transition": {
+            "durationMs": 1000,
+            "easing": "ease-in-out",
+            "preset": "fade"
+          }
+        },
+        {
+          "animations": [],
+          "durationSec": 14,
+          "id": "reel_page_3",
+          "transition": {
+            "durationMs": 1000,
+            "easing": "ease-in-out",
+            "preset": "fade"
+          }
+        }
+      ],
+      "revision": 8,
+      "sourceState": "current",
+      "status": "proposal"
+    },
+    "cultural": {
+      "finalSignoff": "not_granted",
+      "pages": [
+        {
+          "animations": [
+            {
+              "animation": {
+                "enter": {
+                  "delayMs": 0,
+                  "durationMs": 1000,
+                  "easing": "ease-out",
+                  "preset": "rise"
+                }
+              },
+              "id": "headline_layer"
+            }
+          ],
+          "durationSec": 2,
+          "id": "reel_page_1",
+          "transition": {
+            "durationMs": 1000,
+            "easing": "ease-in-out",
+            "preset": "fade"
+          }
+        },
+        {
+          "animations": [],
+          "durationSec": 11,
+          "id": "reel_page_2",
+          "transition": {
+            "durationMs": 1000,
+            "easing": "ease-in-out",
+            "preset": "fade"
+          }
+        },
+        {
+          "animations": [],
+          "durationSec": 14,
+          "id": "reel_page_3",
+          "transition": {
+            "durationMs": 1000,
+            "easing": "ease-in-out",
+            "preset": "fade"
+          }
+        }
+      ],
+      "revision": 5,
+      "sourceState": "current",
+      "status": "proposal"
+    }
+  },
+  "decoded": {
+    "finance": {
+      "bytes": 1368415,
+      "comparisons": [
+        {
+          "from": 0.2,
+          "pixelsWithChannelDeltaAtLeast20": 2188,
+          "rms": 14.826784689833568,
+          "to": 0.6
+        },
+        {
+          "from": 0.6,
+          "pixelsWithChannelDeltaAtLeast20": 1241,
+          "rms": 12.036603873972512,
+          "to": 1.2
+        },
+        {
+          "from": 2.9,
+          "pixelsWithChannelDeltaAtLeast20": 555,
+          "rms": 4.478866125432566,
+          "to": 3.5
+        },
+        {
+          "from": 3.5,
+          "pixelsWithChannelDeltaAtLeast20": 550,
+          "rms": 4.490571970864559,
+          "to": 4.1
+        },
+        {
+          "from": 14.9,
+          "pixelsWithChannelDeltaAtLeast20": 665,
+          "rms": 4.94962067798807,
+          "to": 15.5
+        },
+        {
+          "from": 15.5,
+          "pixelsWithChannelDeltaAtLeast20": 656,
+          "rms": 4.967710812855818,
+          "to": 16.1
+        }
+      ],
+      "duration": 30,
+      "height": 1920,
+      "sampleResolution": [
+        270,
+        480
+      ],
+      "samples": [
+        {
+          "sha256": "0f9b14ab8ab348886307f3f241e32ecbf9b3c989d98d50962a37458f8af3e3b1",
+          "time": 0.2
+        },
+        {
+          "sha256": "e47d73de39ea48e3b2b613bcabc83737adde76ddc4f2c3caa440aeaed44e665a",
+          "time": 0.6
+        },
+        {
+          "sha256": "4ea9a015a505901dbb7cb1f7c3c48eb99b847914d605846a5a89a1fbfd63c420",
+          "time": 1.2
+        },
+        {
+          "sha256": "8236139c36b7c05ee5a7f26db3c71acc607f3a775fd29ec1123db5fc6c3de664",
+          "time": 2.9
+        },
+        {
+          "sha256": "f43b5eac69f8cc293534a9a9af8da101c6db314bb7e086cfa5d824f6375933f7",
+          "time": 3.5
+        },
+        {
+          "sha256": "0173643c173c35c7277aaca730585eb9bbb3afbac8f90174f1083903e18a2938",
+          "time": 4.1
+        },
+        {
+          "sha256": "43a9b5f21e8bd742fd5713287d389ded632a754a4502c07b7aaba4d39bafec35",
+          "time": 14.9
+        },
+        {
+          "sha256": "1baf979184160dbc4e8b3cef85629f353835369a60d4498c8dbd170768899dbd",
+          "time": 15.5
+        },
+        {
+          "sha256": "56f8bb26ece31e738dc7b338415a014b768ba384f09eaa791a9c371760d22f60",
+          "time": 16.1
+        }
+      ],
+      "sha256": "ff56f90bc6126e832a8128604331a89ba80873ca36c85b50d21a602c74e60e3e",
+      "width": 1080
+    },
+    "cultural": {
+      "bytes": 1341109,
+      "comparisons": [
+        {
+          "from": 0.2,
+          "pixelsWithChannelDeltaAtLeast20": 3128,
+          "rms": 20.40660737324058,
+          "to": 0.6
+        },
+        {
+          "from": 0.6,
+          "pixelsWithChannelDeltaAtLeast20": 1568,
+          "rms": 14.571068299153664,
+          "to": 1.2
+        },
+        {
+          "from": 2.9,
+          "pixelsWithChannelDeltaAtLeast20": 537,
+          "rms": 4.293245244859684,
+          "to": 3.5
+        },
+        {
+          "from": 3.5,
+          "pixelsWithChannelDeltaAtLeast20": 531,
+          "rms": 4.290664512022877,
+          "to": 4.1
+        },
+        {
+          "from": 14.9,
+          "pixelsWithChannelDeltaAtLeast20": 636,
+          "rms": 4.731669471513656,
+          "to": 15.5
+        },
+        {
+          "from": 15.5,
+          "pixelsWithChannelDeltaAtLeast20": 631,
+          "rms": 4.726393038275951,
+          "to": 16.1
+        }
+      ],
+      "duration": 30,
+      "height": 1920,
+      "sampleResolution": [
+        270,
+        480
+      ],
+      "samples": [
+        {
+          "sha256": "921820e3a0acf786dcd16f5878c939d968f2f106607bac29ef25d065439d889c",
+          "time": 0.2
+        },
+        {
+          "sha256": "8f2040093b0d667a3ad02d822d687af83e0405ca9446f9b111c646bd56932d64",
+          "time": 0.6
+        },
+        {
+          "sha256": "bef55ab316f7fb33c2113ef220a4d4366034069cd60ab78553446a068ea3687a",
+          "time": 1.2
+        },
+        {
+          "sha256": "2924b8009fdab0b0d74c766436d1ffbaef822b96332500e3995f10572eeceab1",
+          "time": 2.9
+        },
+        {
+          "sha256": "cc2a1ec976abbc567504530aaa1d8dbb6e907ef91f4afe6ab79ffde01d464e86",
+          "time": 3.5
+        },
+        {
+          "sha256": "f366f790381b4212eab723447eedaf25bc0a4e51ff969ea2c0db4d6da25529a3",
+          "time": 4.1
+        },
+        {
+          "sha256": "4df284cbbb9236adde065021af6b4797fe01e7971c9cee52dff71df30401b623",
+          "time": 14.9
+        },
+        {
+          "sha256": "72b07e9cbc8fd3cd692f46559e9cb3f3c7be674c7a52d3d2347f96ac73b769bd",
+          "time": 15.5
+        },
+        {
+          "sha256": "a98a9a46d4381c249e3d16f41111b990747fd07f4841c1d329410f7139456cf7",
+          "time": 16.1
+        }
+      ],
+      "sha256": "f82fedc74e506c09151eb9759530692ba6fadcb26d975c06fb07cef5117c5f1f",
+      "width": 1080
+    }
+  },
+  "originalOutputs": "../native-motion-neo/manifest.json",
+  "backup": {
+    "source": {
+      "bytes": 745472,
+      "sha256": "b435f3604d08f52e6822b6a55c1aa3977f1318bbb815110dcdba25a6b9687ae0",
+      "integrity": "ok",
+      "recordCount": 40
+    },
+    "recovery": {
+      "bytes": 1187840,
+      "sha256": "cba90c78c268e33c9c717bdf6e109317211d0b33c6b2d00f9a1e4dc18d1ba70c",
+      "integrity": "ok",
+      "recordCount": 46
+    }
+  },
+  "lifecycle": {
+    "fullAppReloadAndExplicitReopenBothBrands": true,
+    "frameUnmountedAfterExports": true,
+    "finalIframeCount": 0,
+    "ownedServerOrderlyStopped": true
+  },
+  "limits": [
+    "No audio implementation or audible proof",
+    "No new cutout inference or paid generation",
+    "No full 900-frame decode",
+    "No social publication or verified final PNG signoff",
+    "No maintained Google or new cloud resource acceptance",
+    "Existing held upstream license/distribution boundary unchanged",
+    "No whole issue 57 closure"
+  ]
+}

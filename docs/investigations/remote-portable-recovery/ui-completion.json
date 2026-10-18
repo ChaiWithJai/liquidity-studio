@@ -1,0 +1,35 @@
+{
+  "actualNeoCreateDestinationStatus": 201,
+  "actualNeoRestoreButtonStatus": 200,
+  "retainedStatusAfterReload": "completed",
+  "newBrandBacklogVisible": true,
+  "alerts": [],
+  "assetCount": 2,
+  "exactAssetHashesAndTwelveLineageFieldsVerified": true,
+  "backupManifestSha256": "75e34ae6a755f614994301c5ed602acd8e0c58bdc846ee0406de587935725bc5",
+  "logicalRecords": 37,
+  "physicalDocuments": 78,
+  "logicalBytes": 1210961,
+  "gcsObjects": 2,
+  "gcsBytes": 18124,
+  "ownedProcessStopped": true,
+  "neoBlank": true,
+  "cleanupExecuted": true,
+  "sourceCommit": "a65bf3682fa99b26970e5ac1cab144d63f3924d7",
+  "browser": {
+    "page": 141,
+    "group": "remote recovery",
+    "ephemeralIdentifiers": true,
+    "controlledPassword": true,
+    "notGoogle": true
+  },
+  "ordinaryUISequence": [
+    "Choose retained source-export pack",
+    "Create new empty recovery brand: QA57 UI recovery",
+    "Explicit current-owner remap/nonclinical acknowledgement",
+    "Restore into this new brand",
+    "Reload and check retained recovery status",
+    "Select new brand and observe restored backlog"
+  ],
+  "previousApiOnlyCheckpointUnchanged": true
+}

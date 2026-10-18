@@ -1,5 +1,7 @@
 # Google-only pilot authentication
 
+Current bounded acceptance and the distinction from unobserved marketer onboarding are recorded in the [October 18 deployment disposition](deployments/google-auth-acceptance.md).
+
 The application defaults to `STUDIO_AUTH_MODE=google`. Google Identity Platform / Firebase Authentication owns accounts, sign-in and token refresh. The app retains only authorization principals (stable IDs, display usernames, role and allowlisted email) and organization/brand memberships. It stores no Google ID tokens, refresh tokens, app password hashes or app sessions in Google mode.
 
 Configure the Google provider and authorized domains in the intended Firebase project, then supply:

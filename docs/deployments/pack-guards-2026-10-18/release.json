@@ -1,0 +1,37 @@
+{
+  "sourceCommit": "bdb7df0ca2b43297a07c9e4e370edf6620f11a7a",
+  "candidateImage": "sha256:5bd9c4a0eb2752d83439654e36e994dec5b0ebedd227762ed4f105a11de0a54f",
+  "registryDigest": "sha256:769b951e7a30541db4f4a115001e339d8b230a5eb36e6dfa3b9cb488d5b6679b",
+  "priorImage": "sha256:d80685341ae364f9072d3963f32f55710902fcdd82e580614a192dbaa164cfc7",
+  "cloudRevision": "liquidity-studio-00024-fur",
+  "cloudRollbackRevision": "liquidity-studio-00022-lok",
+  "cloudTrafficPercent": 100,
+  "cloudPilotAliasCurrent": true,
+  "backupBytes": 434176,
+  "backupSha256": "2a5d2aa7ed4acc2d9445b7c6e46652bdb6386b9e1fbfdda409b6a898d56491b5",
+  "cloudBackup": "gs://liquidity-studio-pilot-261017-liquidity-assets/backups/pre-public-bdb7df0",
+  "cloudBackupSuccessful": true,
+  "browser": {
+    "tool": "BrowserOS neo",
+    "page": 152,
+    "local": {
+      "ready": 200,
+      "anonymousState": 401,
+      "asset": "index-BWJKhL1L.js"
+    },
+    "staged": {
+      "ready": 200,
+      "anonymousState": 401,
+      "asset": "index-BWJKhL1L.js"
+    },
+    "canonical": {
+      "ready": 200,
+      "anonymousState": 401,
+      "asset": "index-BWJKhL1L.js"
+    },
+    "freshGoogleLoginObserved": false
+  },
+  "runtimeConfigurationChanged": false,
+  "schemaMigration": false,
+  "verifiedAt": "2026-10-18T08:05:45.858019+00:00"
+}

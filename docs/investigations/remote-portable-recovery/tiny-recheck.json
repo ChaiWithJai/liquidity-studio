@@ -1,0 +1,37 @@
+{
+  "page": 141,
+  "value": {
+    "requests": [
+      {
+        "body": {
+          "views": []
+        },
+        "route": "/api/studio/workspace/views",
+        "status": 200
+      },
+      {
+        "body": {
+          "checks": {
+            "artifacts": "available",
+            "generationProvider": "not_checked",
+            "repository": "available"
+          },
+          "scope": "studio_repository_access",
+          "status": "ready"
+        },
+        "route": "/api/ready",
+        "status": 200
+      },
+      {
+        "body": {
+          "error": "Request failed",
+          "requestId": "7f2daaa8-9d9a-4e1d-aa95-76ee753c5f21"
+        },
+        "route": "/api/studio/native-editor/cutout/model",
+        "status": 503
+      }
+    ],
+    "rows": 6,
+    "tableAlert": []
+  }
+}
