@@ -1619,13 +1619,13 @@ fieldset[id^="source-claim-"] { scroll-margin-top: 36vh; }
 .workflow-state { margin: 7px 0; }
 .workflow-context nav { display: flex; flex-wrap: wrap; gap: 6px; }
 .workflow-context button { padding: 7px 10px; font-size: 12px; }
-.workflow-target, #workflow-handoff { scroll-margin-top: 180px; }
+.workflow-target, #workflow-handoff { scroll-margin-top: 0; }
 .workflow-target:focus, #workflow-handoff:focus { outline: 3px solid #4c713b; outline-offset: 4px; }
 .preview-workspace { min-width: 0; }
 .field-guidance { display: block; color: #52604a; font-size: 12px; font-weight: 400; margin: 4px 0; }
 @media (max-width: 1100px) { .preview-workspace { order: 1; } }
-@media (max-width: 760px), (max-height: 600px) { .workflow-context { position: static; } .workflow-target, #workflow-handoff { scroll-margin-top: 16px; } }
+@media (max-width: 760px), (max-height: 600px) { .workflow-context { position: static; } .workflow-target, #workflow-handoff { scroll-margin-top: 0; } }
 .workflow-target .generation-review-context--editor { position: static; max-height: none; }
 html:has(.workflow-context) { scroll-padding-top: 180px; }
-.workflow-context ~ :is(.format-tabs, .studio-toolbar) :is(button, a), .workflow-target :is(input, textarea, select, button, summary, a) { scroll-margin-top: 180px; }
-@media (max-width: 760px), (max-height: 600px) { html:has(.workflow-context) { scroll-padding-top: 16px; } .workflow-context ~ :is(.format-tabs, .studio-toolbar) :is(button, a), .workflow-target :is(input, textarea, select, button, summary, a) { scroll-margin-top: 16px; } }
+.workflow-context ~ :is(.format-tabs, .studio-toolbar) :is(button, a), .workflow-target :is(input, textarea, select, button, summary, a) { scroll-margin-top: 0; }
+@media (max-width: 760px), (max-height: 600px) { html:has(.workflow-context) { scroll-padding-top: 16px; } .workflow-context ~ :is(.format-tabs, .studio-toolbar) :is(button, a), .workflow-target :is(input, textarea, select, button, summary, a) { scroll-margin-top: 0; } }
