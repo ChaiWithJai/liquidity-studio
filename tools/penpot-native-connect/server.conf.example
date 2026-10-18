@@ -20,7 +20,7 @@ location = /studio-connect {
     proxy_read_timeout 15s;
     proxy_cache off;
     add_header Cache-Control "private, no-store" always;
-    add_header Referrer-Policy "no-referrer" always;
+    add_header Referrer-Policy "strict-origin" always;
 }
 location = /studio-connect/prove {
     limit_except POST { deny all; }
@@ -39,7 +39,7 @@ location = /studio-connect/prove {
     proxy_read_timeout 15s;
     proxy_cache off;
     add_header Cache-Control "private, no-store" always;
-    add_header Referrer-Policy "no-referrer" always;
+    add_header Referrer-Policy "strict-origin" always;
 }
 # Block suffix aliases; no generic protocol relay.
 location ^~ /studio-connect/ { return 404; }

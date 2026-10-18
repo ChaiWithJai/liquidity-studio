@@ -31,7 +31,7 @@ export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOr
  if(typeof gatewayKey!=='string'||!/^[a-f0-9]{64}$/.test(gatewayKey)||!UUID.test(nativeInstanceId||'')||typeof recordProof!=='function'||typeof describeChallenge!=='function')throw Error('Private native connection dependencies required');
  const studio=new URL(studioOrigin);if(!['http:','https:'].includes(studio.protocol)||studio.origin!==studioOrigin||studio.username||studio.password)throw Error('Fixed Studio origin required');
  return async(req,res)=>{
-  res.setHeader('Cache-Control','private, no-store');res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+  res.setHeader('Cache-Control','private, no-store');res.setHeader('Referrer-Policy','strict-origin');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
   try{
    privateGateway(req,gatewayKey);const url=new URL(req.url,ORIGINS.loopback);
    let html;
