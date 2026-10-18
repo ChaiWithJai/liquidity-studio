@@ -8,7 +8,8 @@
             [app.rpc :as-alias rpc]
             [app.nitrate :as nitrate]
             [app.studio.access :as access]
-            [app.util.services :as sv]))
+            [app.util.services :as sv]
+            [yetti.request :as yreq]))
 
 (defn- conflict! []
   (ex/raise :type :validation :code :studio-native-grant-conflict
@@ -40,7 +41,7 @@
   [{:keys [::db/conn] :as cfg}
    {:keys [::rpc/profile-id team-id member-id intent-id expected-epoch grant-epoch present] :as params}]
   (let [expected (::access/reconciliation-key cfg)
-        presented (get-in (meta params) [::http/request :headers "x-studio-native-grant-key"])]
+        presented (yreq/get-header (::http/request (meta params)) "x-studio-native-grant-key")]
     (when-not (and (string? expected) (re-matches #"[A-Za-z0-9_-]{43}" expected)
                    (string? presented) (re-matches #"[A-Za-z0-9_-]{43}" presented)
                    (java.security.MessageDigest/isEqual (.getBytes expected "UTF-8") (.getBytes presented "UTF-8")))
@@ -101,7 +102,7 @@
   {::sm/params [:map {:title "studio-access-status"} [:team-id ::sm/uuid]]}
   [{:keys [::db/pool] :as cfg} {:keys [::rpc/profile-id team-id] :as params}]
   (when-not (and (access/private-key? (::access/reconciliation-key cfg)
-                    (get-in (meta params) [::http/request :headers "x-studio-native-grant-key"]))
+                    (yreq/get-header (::http/request (meta params)) "x-studio-native-grant-key"))
                  (access/governed-team? cfg team-id)
                  (= profile-id (:actual-profile-id access/*request-context*))
                  (= profile-id (get (::access/operators cfg) team-id))

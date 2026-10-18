@@ -5,7 +5,10 @@
             [app.http :as-alias http]
             [app.http.session :as session]
             [app.rpc :as-alias rpc]
-            [app.util.services :as sv]))
+            [app.util.services :as sv]
+            [yetti.request :as yreq])
+  (:import [io.undertow.server HttpServerExchange]
+           [io.undertow.util HttpString]))
 (def team (uuid/parse "11111111-1111-4111-8111-111111111111"))
 (def personal (uuid/parse "22222222-2222-4222-8222-222222222222"))
 (def profile (uuid/parse "33333333-3333-4333-8333-333333333333"))
@@ -92,3 +95,22 @@
     (is (handler cfg (with-meta {:team team} {::http/request request})))
     (is (not (handler cfg (params team true))))
     (is (handler cfg (params personal true)))))
+
+(deftest actual-ring2-request-private-metadata-uses-header-protocol
+  (let [key (apply str (repeat 43 "a"))
+        make-request (fn [presented]
+                       (let [exchange (HttpServerExchange. nil)]
+                         (.put (.getRequestHeaders exchange) (HttpString. "x-studio-native-grant-key") presented)
+                         (assoc (yreq/->Request :get "/api/rpc/command/get-project" exchange)
+                                ::session/profile-id profile ::session/session {:id team :profile-id profile})))
+        cfg {::access/governed-teams #{team} ::access/operators {team profile}
+             ::access/reconciliation-key key ::access/capture-session (constantly :current)
+             ::access/session-valid? (fn [_ c] (= c :current))
+             ::access/authorize (fn [_] (throw (Exception. "No ordinary operator fallback")))}
+        handler (access/wrap-rpc cfg (fn [_ _] (access/context-team-allowed? team)) {::sv/name "get-project"})
+        request (make-request key)]
+    (is (yreq/request? request))
+    (is (nil? (:headers request)))
+    (is (= key (yreq/get-header request "x-studio-native-grant-key")))
+    (is (handler cfg (with-meta {::rpc/profile-id profile} {::http/request request})))
+    (is (not (handler cfg (with-meta {::rpc/profile-id profile} {::http/request (make-request "invalid")}))))))

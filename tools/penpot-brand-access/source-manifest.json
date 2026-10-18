@@ -1,12 +1,12 @@
 {
   "nativePin": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
   "files": {
-    "access.clj": "2e2041b500162b56838c2bc528c2b83a8956004ac3f89a02272a4d646d0b2216",
-    "access_test.clj": "d8eeff22189083eba4154925eea99596aa5a8f33d4801d86b8842947f0644d48",
+    "access.clj": "5cf24bcf61a73f7175da482de5e833089d856609720cf4f55f20f9ebb0255220",
+    "access_test.clj": "d9c63e76b6c8c3778226bccc5af66130c146a07e8075c31dc4726f4abbb9b654",
     "http_authority.clj": "740bfc66743b39486b8498fdb88229ee5c267063255a0588fac0ea1c8fe26238",
     "http_authority_test.clj": "0742811435d527313f6153621ac0184a260f35bdf9aa74ac1ded00ef653d24b9",
-    "reconciliation_test.clj": "7e2ebb950745a90f14f044b2926fe9ef5444a9ca1ea8e003c417db416cca93aa",
-    "studio_access.clj": "3e064300b34e18e6da9b97df24e989308a86ffbccd77a7751c303786600f8538"
+    "reconciliation_test.clj": "c2423e9712787688427b777fdc755b5abe0a048152a3f184c15c86b0e379bc30",
+    "studio_access.clj": "7a6f4ea5fb2f21b4cf840dedcebb9db5f4f889d589d43b5ae989755b94865262"
   },
   "permissionsPatchSha256": "da1e21eb1061f73682d9d116bbfb199be032ae537be69deb6be725223f1473cb",
   "upstreamManifestSha256": "b76992071c7bca42f1cd931bc9365d856ef7e9b9d17761171b062673c2cee470"

@@ -7,7 +7,8 @@
             [app.http :as-alias http]
             [app.http.session :as session]
             [app.rpc :as-alias rpc]
-            [app.util.services :as sv]))
+            [app.util.services :as sv]
+            [yetti.request :as yreq]))
 
 (defn denied! []
   (ex/raise :type :authorization :code :studio-native-access-denied
@@ -128,8 +129,8 @@
             actual (::session/profile-id request)
             native-session (::session/session request)
             session-context (when-let [capture (::capture-session cfg)] (capture request))
-            key? (private-key? (::reconciliation-key cfg) (get-in request [:headers "x-studio-native-grant-key"]))
-            acting-header (get-in request [:headers "x-studio-acting-profile"])
+            key? (private-key? (::reconciliation-key cfg) (yreq/get-header request "x-studio-native-grant-key"))
+            acting-header (yreq/get-header request "x-studio-acting-profile")
             acting (when (and key? acting-header) (uuid/parse* acting-header))
             resource (cond-> {:native-profile-id (or acting actual)
                               :native-session (select-keys native-session [:id :profile-id :created-at :modified-at])}
