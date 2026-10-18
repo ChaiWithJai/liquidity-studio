@@ -36,6 +36,16 @@ const entries = Object.freeze([
     topicTerms: ["beyonc", "amc"],
     sourceUrl: "https://investor.amctheatres.com/news-events/press-releases/detail/10/renaissance-a-film-by-beyonc-will-take-over-movie-theaters-worldwide-this-december",
     publisher: "Parkwood Entertainment and AMC issuer announcement, October 2, 2023",
+    passage: {
+      version: "renaissance-distribution-release-v1",
+      mode: "after-heading-prefix",
+      section: "RENAISSANCE: A FILM BY BEYONCÉ Will Take Over Movie Theaters, Worldwide This December",
+      paragraphPrefixes: [
+        "LOS ANGELES--(BUSINESS WIRE)-- Today,",
+        "The theatrical concert experience will descend",
+        "The experience will air Thursdays,",
+      ],
+    },
     kind: "financial",
     coverage: "Historical theatrical distribution announcement only. Legacy tour revenue, revenue split, opening gross and merchandise figures are not established. Photo rights are not granted by this source selection.",
   }),
@@ -54,7 +64,7 @@ const entries = Object.freeze([
     preset: "liquidity_desk",
     storyId: "story_nykaa_ipo",
     topicTerms: ["nykaa"],
-    sourceUrl: "https://www.nykaa.com/who_are_we",
+    sourceUrl: "https://www.nykaa.com/who_are_we/lp",
     publisher: "Nykaa issuer company profile",
     passage: {
       version: "nykaa-company-origin-platforms-v1",

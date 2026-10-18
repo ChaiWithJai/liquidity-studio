@@ -54,3 +54,27 @@ test('existing passage selector excludes Nykaa totals and Ramanujan inscription 
   }
  }
 });
+
+test('explicit after-heading selection keeps literal release paragraphs, Unicode and exact offsets without About/legal tail',()=>{
+ const story={id:topics[0][0],title:topics[0][1]},entry=catalogForStory(story,finance)[0],p=entry.passage;
+ const selected=p.paragraphPrefixes.map((prefix,i)=>`${prefix} this exact Beyoncé release paragraph ${i} is retained for unreviewed evidence.`);
+ const html=`<nav><a>${p.section}</a></nav><p>LOS ANGELES--(BUSINESS WIRE)-- Today, pre-heading material is excluded.</p><h1>${p.section}</h1>${selected.map(x=>`<p>${x}</p>`).join('')}<p>About AMC: unrelated company ranking keywords and legal material.</p><p>Cookie terms and media contact details.</p>`;
+ const text=extractSourceText(html,'text/html',story.title,p);
+ assert.equal(text,selected.join('\n'));assert.doesNotMatch(text,/About AMC|Cookie|pre-heading/);
+ const evidence=[{id:'selected',sourceUrl:entry.sourceUrl,text,textSha256:createHash('sha256').update(text).digest('hex'),status:'unreviewed',approval:'none'}];
+ const candidate=buildPreparedCandidate({id:'release',story,scope:finance,brandProfile:{},evidence});
+ assert.equal(validatePreparedCandidate(candidate,evidence),true);
+ assert.ok(candidate.excerpts.every(x=>text.slice(x.startOffset).startsWith(x.text)));
+ assert.equal(candidate.provenance.humanApproval,'none');
+ for(const bad of [
+  html.replace(`<h1>${p.section}</h1>`,'<h1>Different heading</h1>'),
+  html+`<h2>${p.section}</h2>`,
+  html.replace(`<p>${selected[0]}</p>`,''),
+  html+`<p>${selected[0]}</p>`,
+ ])assert.throws(()=>extractSourceText(bad,'text/html',story.title,p),/missing or ambiguous/);
+ assert.throws(()=>extractSourceText(html,'text/html','',{...p,mode:'unknown'}),/Unknown/);
+ assert.throws(()=>extractSourceText(html,'text/html','',{...p,mode:undefined}),/missing or ambiguous/);
+ assert.throws(()=>extractSourceText(html,'text/plain','',p),/Invalid bounded/);
+ assert.throws(()=>extractSourceText(html+'x'.repeat(512*1024),'text/html','',p),/Invalid bounded/);
+ assert.throws(()=>extractSourceText(html,'text/html','',{...p,paragraphPrefixes:[p.paragraphPrefixes[0],p.paragraphPrefixes[0]]}),/Invalid bounded/);
+});
