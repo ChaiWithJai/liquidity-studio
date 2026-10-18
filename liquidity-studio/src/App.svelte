@@ -1060,6 +1060,10 @@
   }
   async function saveSourceClaims() {
     if (!selectedStory) return;
+    if(campaign?.provenance?.mode==="human-reviewed-prepared-candidate"){
+      error="This saved copy uses prepared-source review. Open Review this saved copy instead of editing its generated field claims.";
+      return;
+    }
     if (!reviewClaims.length) {
       error = "Add at least one sourced claim before saving the review.";
       return;
@@ -1741,6 +1745,11 @@
                 </div>
                 <details class="sources workflow-target" id="workflow-sources" tabindex="-1">
                   <summary>Review source claims</summary>
+                  {#if campaign?.provenance?.mode==="human-reviewed-prepared-candidate"}
+                    <p>This copy retains its source evidence. Review it as the current owner without regenerating or changing the saved wording.</p>
+                    <button class="secondary" disabled={busy||!sourcePreparationEnabled} onclick={editReviewedCopy}>Review this saved copy</button>
+                    {#if reviewDirty}<button class="secondary" disabled={busy||pendingEdits} onclick={reloadSourceReview}>Reload saved review (discard review edits)</button>{/if}
+                  {:else}
                   <div class="generation-review-context generation-review-context--editor"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
                   <p class="small muted">
                     Approve a claim only after reviewing its linked source and
@@ -1801,6 +1810,7 @@
                   ><button class="secondary" onclick={saveSourceClaims}
                     >Save source review</button
                   ><button class="secondary" disabled={busy || pendingEdits} onclick={reloadSourceReview}>Reload saved review (discard review edits)</button>
+                  {/if}
                 </details>
                 {#if preflight?.error}<p class="small error">
                     Preflight could not be recorded: {preflight.error}
