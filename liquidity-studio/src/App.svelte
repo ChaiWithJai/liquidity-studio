@@ -185,7 +185,7 @@
     return true;
   }
   $effect(() => {
-    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty) return;
+    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty && !strategyDirty) return;
     const protect = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
