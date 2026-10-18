@@ -52,6 +52,7 @@ const portableAssetFields = [
   "createdBy",
   "createdAt",
   "lineage",
+  "portableHistory",
 ];
 const portableDocumentFields = [
   "schemaVersion",
@@ -68,6 +69,7 @@ const portableDocumentFields = [
   "updatedBy",
   "createdAt",
   "updatedAt",
+  "portableHistory",
 ];
 const pick = (value, fields) =>
   Object.fromEntries(
@@ -181,20 +183,21 @@ export class EditorPackService {
         `editor-review:${this.scope.organizationId}:${this.scope.brandId}:${record.id}`,
       );
       if (review) delete review.journal;
+      const reviewHistory = review
+        ? { authority: "historical-only", record: review }
+        : record.portableHistory?.reviewHistory;
+      const metadata = pick(record, portableDocumentFields);
+      if (metadata.portableHistory)
+        delete metadata.portableHistory.reviewHistory;
       documents.push({
-        metadata: pick(record, portableDocumentFields),
+        metadata,
         current: await scene(record.documentRef),
         initial: await scene(record.initialDocumentRef),
         history,
-        reviewHistory: review
+        reviewHistory: reviewHistory
           ? addFile(
               files,
-              Buffer.from(
-                JSON.stringify({
-                  authority: "historical-only",
-                  record: review,
-                }),
-              ),
+              Buffer.from(JSON.stringify(reviewHistory)),
               "history",
             )
           : null,
@@ -440,9 +443,43 @@ export class EditorPackService {
         });
       return { key, sha256: hash };
     };
+    const portability = (metadata, kind) => {
+      const prior = metadata.portableHistory || {};
+      const restorations = [
+        ...(prior.restorations || []),
+        {
+          fromScope: copy(pack.scope),
+          toScope: {
+            organizationId: this.scope.organizationId,
+            brandId: this.scope.brandId,
+          },
+          restoredBy: actor.id,
+          restoredAt: at,
+          packSha256: pack.sha256,
+        },
+      ];
+      if (restorations.length > 100)
+        throw fail(413, "Portable restoration history limit");
+      return {
+        authority: "historical-only",
+        sourceScope: copy(prior.sourceScope || pack.scope),
+        [kind === "asset" ? "sourceAssetId" : "sourceDocumentId"]: metadata.id,
+        sourceCreatedBy: prior.sourceCreatedBy || metadata.createdBy,
+        ...(kind === "document"
+          ? {
+              sourceUpdatedBy: prior.sourceUpdatedBy || metadata.updatedBy,
+              sourceOrigin: copy(prior.sourceOrigin || metadata.origin),
+            }
+          : {}),
+        restorations,
+      };
+    };
     for (const asset of pack.assets) {
       const metadata = copy(asset.metadata);
       remap(metadata);
+      if (asset.metadata.lineage)
+        metadata.lineage = copy(asset.metadata.lineage);
+      metadata.portableHistory = portability(asset.metadata, "asset");
       planned.push({
         key: `${this.native.prefix}asset:${asset.id}`,
         value: {
@@ -466,14 +503,10 @@ export class EditorPackService {
         authority: "historical-only",
       }));
       record.portableHistory = {
-        sourceScope: pack.scope,
-        sourceDocumentId: record.id,
+        ...portability(doc.metadata, "document"),
         reviewHistory: doc.reviewHistory
           ? validated.json(doc.reviewHistory)
           : null,
-        packSha256: pack.sha256,
-        restoredBy: actor.id,
-        restoredAt: at,
       };
       const story = state.backlog.find((item) => item.id === record.storyId);
       record.origin.sourceContentRevision = story.contentRevision || 1;

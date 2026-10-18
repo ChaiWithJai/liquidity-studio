@@ -26,7 +26,7 @@ test.skip(
   !existsSync(new URL("../.native-editor-source/PIN.json", import.meta.url)),
   "Requires locally prepared pinned upstream source; redistribution condition unresolved.",
 );
-let server, store, base, platform, buildDirectory;
+let server, store, base, platform, buildDirectory, sourcePrincipalId;
 const password = randomBytes(24).toString("base64url");
 const fixtures = [];
 const previousLocalBuildFlag = process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD;
@@ -302,6 +302,7 @@ test.beforeAll(async ({ browser }) => {
   const sourceOwner = (await store.get("identity")).users.find(
     (user) => user.username === "native-host-fixture",
   );
+  sourcePrincipalId = sourceOwner.id;
   const sourceLogin = await fetch(`${base}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -547,6 +548,11 @@ test("actual worker-produced cutout bytes and lineage survive ejection into the 
     )
   ).json();
   expect(asset.lineage.kind).toBe("background-removal");
+  expect(asset.lineage.actorId).toBe(sourcePrincipalId);
+  expect(asset.portableHistory.sourceCreatedBy).toBe(sourcePrincipalId);
+  expect(asset.portableHistory.restorations[0].restoredBy).not.toBe(
+    sourcePrincipalId,
+  );
   expect(asset.lineage.execution).toBe("browser_reported");
   const input = await (
     await page.request.get(

@@ -554,3 +554,60 @@ test("a crashed rollback lease blocks another recovery until expiry, then permit
   );
   assert.deepEqual(await target.repo.read(), before);
 });
+test("re-ejection retains original authors, original source binding and historical approvals without reviving review authority", async (t) => {
+  const source = await fixture(t);
+  const records = await allFormats(source),
+    original = records[0];
+  source.store.update(
+    `editor-review:organization:brand:${original.id}`,
+    () => ({
+      schemaVersion: 1,
+      nativeId: original.id,
+      organizationId: "organization",
+      brandId: "brand",
+      revision: 4,
+      stage: "Approved",
+      approval: { approvedBy: actor.id, approvedAt: new Date().toISOString() },
+      history: [{ action: "approve", actorId: actor.id }],
+      journal: [{ key: "original_actor_replay_key" }],
+    }),
+  );
+  const first = await source.service.export(actor),
+    target = await fixture(t, "liquidity_desk", true, "second-brand"),
+    firstOptions = {
+      ...input,
+      target: { organizationId: "organization", brandId: "second-brand" },
+    };
+  await target.service.install(actor, first, firstOptions);
+  const second = await target.service.export(actor);
+  assert.equal(
+    second.documents.find(item=>item.metadata.id===original.id).metadata.portableHistory.sourceCreatedBy,
+    actor.id,
+  );
+  assert.deepEqual(
+    second.documents.find(item=>item.metadata.id===original.id).metadata.portableHistory.sourceOrigin,
+    original.origin,
+  );
+  assert.equal(
+    second.documents.find(item=>item.metadata.id===original.id).metadata.portableHistory.restorations.length,
+    1,
+  );
+  const final = await fixture(t, "liquidity_desk", true, "third-brand");
+  await final.service.install(actor, second, {
+    ...input,
+    target: { organizationId: "organization", brandId: "third-brand" },
+  });
+  const restored = await final.native.read(actor, original.id);
+  assert.deepEqual(restored.portableHistory.sourceOrigin, original.origin);
+  assert.equal(restored.portableHistory.restorations.length, 2);
+  assert.equal(
+    restored.portableHistory.reviewHistory.authority,
+    "historical-only",
+  );
+  assert.equal(restored.portableHistory.reviewHistory.record.stage, "Approved");
+  assert.equal(
+    restored.portableHistory.reviewHistory.record.journal,
+    undefined,
+  );
+  assert.deepEqual(final.store.keys("editor-review:"), []);
+});

@@ -58,6 +58,43 @@ export function scanPortable(value) {
   }
   visit(value);
 }
+function validatePortability(value) {
+  if (value === undefined) return;
+  exact(value, [
+    "authority",
+    "sourceScope",
+    "sourceAssetId",
+    "sourceDocumentId",
+    "sourceCreatedBy",
+    "sourceUpdatedBy",
+    "sourceOrigin",
+    "restorations",
+  ]);
+  if (
+    value.authority !== "historical-only" ||
+    !Array.isArray(value.restorations) ||
+    value.restorations.length > 100
+  )
+    throw fail(422, "Invalid historical portability provenance");
+  exact(value.sourceScope, ["organizationId", "brandId"]);
+  for (const item of value.restorations) {
+    exact(item, [
+      "fromScope",
+      "toScope",
+      "restoredBy",
+      "restoredAt",
+      "packSha256",
+    ]);
+    exact(item.fromScope, ["organizationId", "brandId"]);
+    exact(item.toScope, ["organizationId", "brandId"]);
+    if (
+      typeof item.restoredBy !== "string" ||
+      !Number.isFinite(Date.parse(item.restoredAt)) ||
+      !/^[a-f0-9]{64}$/.test(item.packSha256)
+    )
+      throw fail(422, "Invalid restoration provenance");
+  }
+}
 export function addFile(files, bytes, kind) {
   const buffer = Buffer.from(bytes),
     sha256 = digest(buffer);
@@ -186,6 +223,7 @@ export function validateEditorPack(input) {
       throw fail(422, "Invalid editor asset identity");
     assetIds.add(asset.id);
     scanPortable(asset.metadata);
+    validatePortability(asset.metadata.portableHistory);
     exact(asset.metadata, [
       "id",
       "name",
@@ -199,6 +237,7 @@ export function validateEditorPack(input) {
       "createdBy",
       "createdAt",
       "lineage",
+      "portableHistory",
     ]);
     if (
       asset.metadata.size > 512 * 1024 ||
@@ -249,6 +288,7 @@ export function validateEditorPack(input) {
   for (const doc of input.documents) {
     exact(doc, ["metadata", "current", "initial", "history", "reviewHistory"]);
     const m = doc.metadata;
+    validatePortability(m?.portableHistory);
     exact(m, [
       "schemaVersion",
       "id",
@@ -264,6 +304,7 @@ export function validateEditorPack(input) {
       "updatedBy",
       "createdAt",
       "updatedAt",
+      "portableHistory",
     ]);
     if (
       !/^[a-f0-9-]{36}$/.test(m.id) ||
