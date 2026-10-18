@@ -21,6 +21,10 @@ test -f /hooks/penpot-brand-access/reconciliation_test.clj
 test -f /hooks/penpot-live-fence/live.clj
 test -f /hooks/penpot-live-fence/live_test.clj
 test -f /hooks/penpot-live-fence/websocket.patch
+test -f /hooks/penpot-native-access-bootstrap/configuration.clj
+test -f /hooks/penpot-native-access-bootstrap/configuration_test.clj
+test -f /hooks/penpot-native-access-bootstrap/main.patch
+test -z "${STUDIO_NATIVE_ACCESS_CONFIG:-}"
 
 # C2's reviewed apply script is exact-source guarded and registers only its
 # explicit RPC namespace. C3 touches the separate HTTP/util WebSocket files.
@@ -30,6 +34,13 @@ git -C /work apply /hooks/penpot-live-fence/websocket.patch
 mkdir -p /work/backend/src/app/studio /work/backend/test/app/studio
 cp /hooks/penpot-live-fence/live.clj /work/backend/src/app/studio/live.clj
 cp /hooks/penpot-live-fence/live_test.clj /work/backend/test/app/studio/live_test.clj
+echo '7ed4c93d478c8c393bc12ab630a563f8d928d1e58d320c644dbc5d414bca5387  /work/backend/src/app/main.clj' | sha256sum -c -
+git -C /work apply --check /hooks/penpot-native-access-bootstrap/main.patch
+git -C /work apply /hooks/penpot-native-access-bootstrap/main.patch
+test ! -e /work/backend/src/app/studio/configuration.clj
+test ! -e /work/backend/test/app/studio/configuration_test.clj
+cp /hooks/penpot-native-access-bootstrap/configuration.clj /work/backend/src/app/studio/configuration.clj
+cp /hooks/penpot-native-access-bootstrap/configuration_test.clj /work/backend/test/app/studio/configuration_test.clj
 cp /recipe/kaocha.edn /work/backend/studio-hook-tests.edn
 mkdir -p /tmp/penpot
 cd /work/backend
@@ -38,7 +49,7 @@ cd /work/backend
 # modules; helper-only tests cannot silently skip their integration syntax.
 # The pinned backend :dev alias has :extra-paths ["test" "dev"], so -M:dev
 # includes these test namespaces without activating Kaocha's :test main opts.
-clojure -M:dev -e "(require 'app.studio.access 'app.studio.http-authority 'app.rpc.commands.studio-access 'app.studio.live 'app.http.websocket 'app.util.websocket) (doseq [n '[app.studio.access-test app.studio.http-authority-test app.studio.reconciliation-test app.studio.live-test]] (require n) (let [tests (count (filter (comp :test meta) (vals (ns-interns n))))] (assert (pos? tests) (str n \" contains no tests\")) (println n :test-vars tests))) (println :native-hook-namespaces-loaded)" \
+clojure -M:dev -e "(require 'app.studio.access 'app.studio.http-authority 'app.rpc.commands.studio-access 'app.studio.live 'app.http.websocket 'app.util.websocket 'app.studio.configuration 'app.main) (doseq [n '[app.studio.access-test app.studio.http-authority-test app.studio.reconciliation-test app.studio.live-test app.studio.configuration-test]] (require n) (let [tests (count (filter (comp :test meta) (vals (ns-interns n))))] (assert (pos? tests) (str n \" contains no tests\")) (println n :test-vars tests))) (println :native-hook-namespaces-loaded)" \
   2>&1 | tee /evidence/namespace-compilation.log
 clojure -M:dev:test --config-file studio-hook-tests.edn \
   2>&1 | tee /evidence/focused-clojure-tests.log

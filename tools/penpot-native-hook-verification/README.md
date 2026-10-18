@@ -7,8 +7,8 @@ installs PNPM, creates a native image, connects a native database, starts an
 application, or enables editing.
 
 Dispatch only after source review. `source_sha` must be the full reviewed Studio
-commit containing both `tools/penpot-brand-access` and
-`tools/penpot-live-fence`. The confirmation is
+commit containing `tools/penpot-brand-access`, `tools/penpot-live-fence` and
+`tools/penpot-native-access-bootstrap`. The confirmation is
 `verify-reviewed-penpot-native-hooks`. The recipe checkout is the workflow's own
 event commit; the independently pinned hook checkout is recorded in the artifact.
 No push or PR trigger exists. Do not dispatch a second run to conceal a failure.
@@ -18,7 +18,13 @@ reconciliation command/test and registers that command in the explicit RPC scan.
 C3 applies its exact pinned WebSocket patch and installs its original live module
 and focused test. Namespace loading checks the actual reconciliation command,
 access/HTTP-authority/live modules and patched HTTP/util WebSocket namespaces
-before Kaocha runs. All four expected focused test namespaces must load and each
+before Kaocha runs. The bootstrap's exact pinned `main.clj` SHA is verified, its
+`main.patch` is applied and its original configuration module/test are installed.
+The recipe requires `app.studio.configuration` and `app.main`, but never calls
+`start`, `resume`, Integrant initialization or `-main`. Pinned `app.main` defines
+those entry points as functions; requiring it constructs its configuration maps
+without invoking its listener/application startup. No native access config is
+supplied to the compile container. All five expected focused test namespaces must load and each
 must contain at least one test var; a zero-test discovery cannot be called a pass.
 
 The pinned backend defines `clojure -M:dev:test` and Kaocha in its actual
