@@ -14,5 +14,20 @@
     }
   ],
   "localBuildOrTests": false,
-  "runtimeChanged": false
+  "runtimeChanged": false,
+  "assetHookDependency": "5406b6f",
+  "originalSources": [
+    {
+      "path": "configuration.clj",
+      "sha256": "a2acf352d5e09b5be0b3fe25847a5c1ed87efa97c54a84ea78a00d01ea2a33dd"
+    },
+    {
+      "path": "configuration_test.clj",
+      "sha256": "ff0f7cda02ce900b8b02071f7c2ebb83bca06904611a449832eb467b1dce42f2"
+    },
+    {
+      "path": "main.patch",
+      "sha256": "8598c5ef01eb3654183c4b176cafb0f9fae850e41492e9718e73aba2b3713840"
+    }
+  ]
 }

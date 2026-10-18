@@ -1,6 +1,8 @@
 (ns app.studio.configuration-test
   (:require [app.common.json :as json]
             [app.studio.access :as access]
+            [app.studio.assets :as assets]
+            [app.http.assets :as native-assets]
             [app.studio.configuration :as configuration]
             [clojure.test :refer [deftest is]]
             [integrant.core :as ig])
@@ -64,3 +66,12 @@
       (Files/setPosixFilePermissions (java.nio.file.Path/of filename (make-array String 0))
                                     (PosixFilePermissions/fromString "rw-r--r--"))
       (is (thrown? IllegalArgumentException (configuration/read-settings filename))))))
+
+(deftest asset-status-requires-module-and-native-handler-integration
+  (is (true? (configuration/asset-hook-installed?)))
+  (with-redefs [assets/hook-version "unsupported"]
+    (is (false? (configuration/asset-hook-installed?))))
+  (with-redefs [native-assets/studio-access-version "unsupported"]
+    (is (false? (configuration/asset-hook-installed?))))
+  (with-redefs [assets/deliver nil]
+    (is (false? (configuration/asset-hook-installed?)))))

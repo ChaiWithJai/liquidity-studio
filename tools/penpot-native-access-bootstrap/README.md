@@ -23,8 +23,10 @@ entries and unknown fields fail closed. The server derives UUID governed-team an
 team-to-operator maps, supplied to actual RPC methods, WS routes and asset routes together with the
 HTTP admission callback. RPC methods also receive the private reconciliation key and
 callback. All three receive the shared live/context and live/session-current? functions.
-RPC status reports constructor hook versions v1 with assets false until the separate
-asset hook is installed; this is not a runtime fence measurement. Existing native HTTP client and session-manager references are preserved.
+RPC status reports constructor hook versions v1. Asset status is v1 only when both
+loaded module and actual HTTP handler patch carry their fixed code markers and the
+byte-delivery function is present; otherwise false. Neither marker comes from JSON.
+This is not a runtime fence measurement. Existing native HTTP client and session-manager references are preserved.
 The fixed callback is not browser configuration. No personal-team classification is
 fetched from Studio, no paired editing is enabled by this patch alone, and no generic
 RPC or asset relay is introduced. The C2 metadata-only operator exception remains
@@ -33,3 +35,5 @@ limited by its separate native resource/ACL hooks.
 The normal native start and resume paths install the configuration before Integrant
 expansion. Custom systems are intentionally outside this patch. A private file must
 be consistently mounted for restart; malformed configured input aborts startup.
+
+Asset integration depends on the reviewed private-asset module and handler patch, including their fixed `hook-version` and `studio-access-version` markers. Apply that exact patch before loading this constructor; the hosted configuration test checks both markers independently.

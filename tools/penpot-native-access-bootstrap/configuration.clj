@@ -2,6 +2,8 @@
 (ns app.studio.configuration
   (:require [app.common.json :as json]
             [app.http.client :as client]
+            [app.http.assets :as native-assets]
+            [app.studio.assets :as assets]
             [app.studio.access :as access]
             [app.studio.http-authority :as authority]
             [app.studio.live :as live]
@@ -58,6 +60,16 @@
   ;; The adapter validates that invariant and supplies its own total deadline.
   (authority/create {::client/client client :grant-key grant-key :callback-origin callback-origin}))
 
+(defn asset-hook-installed?
+  "Fixed loaded-code markers from the original module and exact native handler patch."
+  []
+  (let [module-version (ns-resolve 'app.studio.assets 'hook-version)
+        handler-version (ns-resolve 'app.http.assets 'studio-access-version)]
+    (boolean (and module-version handler-version
+         (= "v1" (var-get module-version))
+         (= "v1" (var-get handler-version))
+         (fn? assets/deliver)))))
+
 (defn install
   "Default off. Add only server constructor keys to the real RPC and WS graph."
   ([system] (install system (System/getenv "STUDIO_NATIVE_ACCESS_CONFIG")))
@@ -77,7 +89,7 @@
              (assoc ::authority {::client/client (ig/ref ::client/client)
                                  :grant-key grant-key :callback-origin callback-origin})
              (update :app.rpc/methods merge common
-                     {::access/installed-features {:rpc-policy "v1" :session "v1" :live "v1" :assets false}
+                     {::access/installed-features {:rpc-policy "v1" :session "v1" :live "v1" :assets (if (asset-hook-installed?) "v1" false)}
                       ::access/reconciliation-key grant-key
                       ::access/authorize-reconciliation (ig/ref ::authority)})
              (update :app.http.websocket/routes merge common)
