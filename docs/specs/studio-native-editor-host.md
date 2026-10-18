@@ -55,3 +55,9 @@ Use isolated real HTTP/SQLite browser fixtures, never ports 3000/3001 or current
 5. Publish PR and independent review. Keep feature off and current exporter operational until immutable-image acceptance. Rollback disables native entry; it preserves native aggregate and original source records.
 
 Cutout, native multiplayer, stock catalogs, public sharing, full font/asset archive ejection, rich approval callbacks and actual reel encoding remain separate acceptance work. This slice must not close those requirements by attribution or annotations alone.
+
+### Distribution checkpoint
+
+The original host/adapter/spec may be reviewed publicly. Vendored upstream source and bundled derivatives stay local while the GPG-text condition remains unresolved. Local builds obtain the exact pinned source through an explicit preparation step; this does not establish permission to redistribute the resulting binary. Do not add that local source or built editor bundle to a public PR until the distribution condition has a documented disposition. Existing production bundle must not be regenerated with this local editor included by default.
+
+The reproducible static import inventory is `doory-host-source-inventory.json`, produced by `python3 scripts/investigations/doory-host-inventory.py /path/to/pinned/doory`. It records literal imports reachable from actual `src/editor/EditorApp.tsx`, source hashes and package names. It is not a complete runtime-network or licensing audit: generated URLs, `new URL` worker references, CSS assets and optional capabilities require separate review. The graph contains 453 files and approximately 2.2 MB of source before packages. It includes collaboration modules despite disabled realtime; do not equate feature configuration with absence of code in the bundle.
