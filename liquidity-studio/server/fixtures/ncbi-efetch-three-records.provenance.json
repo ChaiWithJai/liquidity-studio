@@ -1,0 +1,10 @@
+{
+  "source": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=23439798,21446363,25535358&retmode=xml",
+  "observedAt": "2026-10-18",
+  "method": "one bounded same-origin ordinary BrowserOS Neo fetch; no worker claim",
+  "status": 200,
+  "contentType": "text/xml; charset=UTF-8",
+  "bytes": 37580,
+  "sha256": "329017aa127d8d6c83a57b18793d299554e86b29a3746773046acbc2cd75a08c",
+  "note": "Actual decoded HTTP entity body, not DOM serialization or compressed-wire capture. Tests derive controlled single-record envelopes while preserving each actual complete PubmedArticle verbatim. This is research evidence, never clinical approval."
+}

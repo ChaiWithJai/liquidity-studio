@@ -5,6 +5,8 @@ import { createHash } from "node:crypto";
 import { fail } from "./auth.js";
 import { pinnedLookup } from "./discovery.js";
 import { DEFAULT_SOURCE_HOSTS } from "./source-catalog.js";
+import { serialSourceRequest } from "./source-request-slot.js";
+import { ncbiRequest, extractNcbiAbstract, NCBI_EXTRACTION, NCBI_SELECTION, ncbiSelectionDigest, assertNcbiDescriptor } from "./ncbi-pubmed-source.js";
 
 const MAX_BYTES = 512 * 1024;
 const MAX_TEXT = 24000;
@@ -217,9 +219,12 @@ export async function retrieveSource(
     now = () => new Date().toISOString(),
     query = "",
     passage,
+    retrieval: requestedRetrieval, // Trusted catalog descriptor; never supplied by an HTTP body.
   } = {},
 ) {
-  const url = validateSourceUrl(value, hosts);
+  const retrieval = requestedRetrieval === undefined ? undefined : structuredClone(assertNcbiDescriptor(requestedRetrieval));
+  const citationUrl = validateSourceUrl(value, hosts);
+  const url = retrieval === undefined ? citationUrl : validateSourceUrl(ncbiRequest(value, retrieval).href, "eutils.ncbi.nlm.nih.gov");
   const controller = new AbortController();
   const abort = () => controller.abort();
   signal?.addEventListener("abort", abort, { once: true });
@@ -233,7 +238,7 @@ export async function retrieveSource(
     if (controller.signal.aborted) abortListener();
   });
   try {
-    const work = (async () => {
+    const work = serialSourceRequest(controller.signal, async () => {
       const addresses = await lookup(url.hostname, { all: true });
       if (controller.signal.aborted)
         throw fail(504, "Source retrieval cancelled");
@@ -249,7 +254,7 @@ export async function retrieveSource(
           {
             signal: controller.signal,
             headers: {
-              Accept: "text/html, text/plain",
+              Accept: retrieval === undefined ? "text/html, text/plain" : "application/xml, text/xml",
               "Accept-Encoding": "identity",
               "User-Agent": "LiquidityStudio-SourceReview/1",
             },
@@ -264,7 +269,11 @@ export async function retrieveSource(
             ) {
               res.resume();
               reject(
-                fail(502, "Source response is unavailable or unsupported"),
+                Object.assign(fail(502, "Source response is unavailable or unsupported"), {
+                  upstreamStatus: Number.isInteger(res.statusCode) && res.statusCode >= 100 && res.statusCode <= 599 ? res.statusCode : 0,
+                  sourceEncodingCategory: res.headers["content-encoding"] === undefined ? "absent"
+                    : ["identity", "gzip", "deflate", "br"].includes(res.headers["content-encoding"]) ? res.headers["content-encoding"] : "other",
+                }),
               );
               return;
             }
@@ -287,31 +296,33 @@ export async function retrieveSource(
       });
       if (controller.signal.aborted)
         throw fail(504, "Source retrieval cancelled");
-      const text = extractSourceText(
-        response.bytes.toString("utf8"),
-        response.type,
-        query,
-        passage,
-      );
+      let text;
+      if (retrieval !== undefined) {
+        let xml;
+        try { xml = new TextDecoder("utf-8", { fatal: true }).decode(response.bytes); }
+        catch { throw fail(422, "NCBI response is not valid UTF-8"); }
+        text = extractNcbiAbstract(xml, response.type, retrieval);
+      } else text = extractSourceText(response.bytes.toString("utf8"), response.type, query, passage);
       return {
         schemaVersion: 1,
         requestedUrl: url.href,
-        sourceUrl: url.href,
+        sourceUrl: citationUrl.href,
         retrievedAt: now(),
         contentType: response.type.slice(0, 200),
         responseSha256: sha(response.bytes),
         responseBytes: response.bytes.length,
-        extractionVersion: "plain-excerpts-v1",
-        selectionMethod: passage ? "operator-selected-passage-v1" : query
+        ...(retrieval === undefined ? {} : { retrieval: structuredClone(retrieval) }),
+        extractionVersion: retrieval === undefined ? "plain-excerpts-v1" : NCBI_EXTRACTION,
+        selectionMethod: retrieval !== undefined ? NCBI_SELECTION : passage ? "operator-selected-passage-v1" : query
           ? "topic-keyword-overlap-v1"
           : "document-order-v1",
-        selectionQuerySha256: sha(passage ? JSON.stringify({ query, passage }) : String(query)),
+        selectionQuerySha256: retrieval !== undefined ? ncbiSelectionDigest(retrieval) : sha(passage ? JSON.stringify({ query, passage }) : String(query)),
         text,
         textSha256: sha(text),
         status: "unreviewed",
         approval: "none",
       };
-    })();
+    });
     return await Promise.race([work, aborted]);
   } finally {
     clearTimeout(timer);

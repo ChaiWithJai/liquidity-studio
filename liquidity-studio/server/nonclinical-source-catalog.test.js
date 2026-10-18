@@ -31,7 +31,12 @@ test('new nonclinical selections are exact-story/preset bounded and never approv
  }
  for(const i of [0,2,3]){
   const story={...BRAND_PRESETS.vedic_dharma.researchBacklog[i],id:`research_${i}`};
-  assert.deepEqual(catalogForStory(story,culture),[]);
+  const clinical=catalogForStory(story,culture);
+  assert.equal(clinical.length,1);
+  assert.equal(clinical[0].kind,'clinical');
+  assert.equal(clinical[0].status,'unreviewed');
+  assert.equal(clinical[0].approval,'none');
+  assert.deepEqual(catalogForStory(story,finance),[]);
   assert.deepEqual(story.sourceClaims,[]);
  }
 });

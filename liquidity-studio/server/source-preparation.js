@@ -32,6 +32,9 @@ export class SourcePreparationService {
             passage: catalogForStory(story, this.scope).find(
               (entry) => entry.sourceUrl === url,
             )?.passage,
+            retrieval: catalogForStory(story, this.scope).find(
+              (entry) => entry.sourceUrl === url,
+            )?.retrieval,
             query: [
               story.title,
               ...(story.sourceClaims || [])

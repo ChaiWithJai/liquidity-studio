@@ -3,7 +3,7 @@
 // so unrelated saved candidates do not become stale merely because another topic gains a source.
 export const SOURCE_CATALOG_REVISION = "pilot-primary-v1";
 export const DEFAULT_SOURCE_HOSTS =
-  "angelcity.com,www.gutenberg.org,www.prnewswire.com,investor.amctheatres.com,newsroom.hasbro.com,www.apparelgroup.com,explore.trin.cam.ac.uk";
+  "angelcity.com,www.gutenberg.org,www.prnewswire.com,investor.amctheatres.com,newsroom.hasbro.com,www.apparelgroup.com,explore.trin.cam.ac.uk,pubmed.ncbi.nlm.nih.gov";
 const entries = Object.freeze([
   Object.freeze({
     id: "angel-city-ownership-2024",
@@ -96,6 +96,9 @@ const entries = Object.freeze([
     kind: "cultural",
     coverage: "Institutional biographical account only, not a theorem proof or evidence for devotional causation. Excludes the later memorial translation and its first-Indian-FRS claim. Original manuscript archive retrieval remains separate research.",
   }),
+  Object.freeze({id:"ashwagandha-trial-2012-pmid23439798",artworkSelectionId:"ashwagandha-protocol-copy-v1",preset:"vedic_dharma",storyId:"research_0",topicTerms:["ashwagandha"],sourceUrl:"https://pubmed.ncbi.nlm.nih.gov/23439798/",retrieval:{provider:"ncbi-efetch-pubmed-v1",pmid:"23439798"},publisher:"2012 clinical trial · PMID 23439798",kind:"clinical",passage:{version:"pmid23439798-abstract-protocol-v1",mode:"after-heading-prefix",section:"Abstract",paragraphPrefixes:["Settings and design:","Materials and methods:","Results:","Conclusion:"]},coverage:"One 64-subject, single-center, 60-day trial of a specific extract. Full methods/outcomes retained for separate clinical review; not long-term safety, a dosing recommendation or validation of classical/traditional equivalence."}),
+  Object.freeze({id:"bhramari-immediate-2010-pmid21446363",artworkSelectionId:"bhramari-protocol-copy-v1",preset:"vedic_dharma",storyId:"research_2",topicTerms:["bhramari"],sourceUrl:"https://pubmed.ncbi.nlm.nih.gov/21446363/",retrieval:{provider:"ncbi-efetch-pubmed-v1",pmid:"21446363"},publisher:"2010 immediate physiology study · PMID 21446363",kind:"clinical",passage:{version:"pmid21446363-abstract-v1",section:"Abstract",nextSection:"Similar articles",paragraphPrefixes:["The study was carried out to evaluate the immediate effect Bhramari pranayama,"]},coverage:"Immediate five-minute volunteer observation. Abstract does not state sample size, demographics, randomization or control. Authors' interpretation is not direct vagal measurement, long-term treatment evidence or lineage validation. Procedural source text is evidence, not advice."}),
+  Object.freeze({id:"ereader-comparison-2015-pmid25535358",artworkSelectionId:"ereader-protocol-copy-v1",preset:"vedic_dharma",storyId:"research_3",topicTerms:["circadian"],sourceUrl:"https://pubmed.ncbi.nlm.nih.gov/25535358/",retrieval:{provider:"ncbi-efetch-pubmed-v1",pmid:"25535358"},publisher:"2015 evening reading comparison · PMID 25535358",kind:"clinical",passage:{version:"pmid25535358-abstract-v1",section:"Abstract",nextSection:"Conflict of interest statement",paragraphPrefixes:["In the past 50 y,"]},coverage:"Light-emitting eBook versus printed-book comparison. Abstract omits experimental sample size, demographics and exposure schedule; 1508 is a background survey, not the experiment. No all-screen/all-person generalization or Dinacharya validation."}),
   Object.freeze({
     id: "yoga-sutras-primary-translation",
     preset: "vedic_dharma",
@@ -127,7 +130,7 @@ export function catalogForStory(story, scope) {
         ),
     )
     .map((entry) => ({
-      ...entry,
+      ...structuredClone(entry),
       status: "unreviewed",
       approval: "none",
       catalogRevision: SOURCE_CATALOG_REVISION,
@@ -139,6 +142,10 @@ export function catalogForStory(story, scope) {
 // a published version. Text below must match one unique span of retained evidence.
 // Roles describe excerpts/labels, not a claim that every span is a full sentence.
 const copySelections = [
+  {id:'ashwagandha-protocol-copy-v1',catalogId:'ashwagandha-trial-2012-pmid23439798',preset:'vedic_dharma',requiredKind:'clinical',sourceUrl:'https://pubmed.ncbi.nlm.nih.gov/23439798/',headline:'Ashwagandha plant',facts:[{text:'Single center, prospective, double-blind, randomized, placebo-controlled trial.',form:'sentence'},{text:'A total of 64 subjects with a history of chronic stress were enrolled',form:'clause'},{text:'Final safety and efficacy assessments were done on Day 60.',form:'sentence'}],overlays:['Single center, prospective, double-blind','64 subjects with a history of chronic stress','Final safety and efficacy assessments were done on Day 60.'],captionText:'Final safety and efficacy assessments were done on Day 60.',contextText:'placebo-controlled trial.',storyFactIndex:1},
+  {id:'bhramari-protocol-copy-v1',catalogId:'bhramari-immediate-2010-pmid21446363',preset:'vedic_dharma',requiredKind:'clinical',sourceUrl:'https://pubmed.ncbi.nlm.nih.gov/21446363/',headline:'Bhramari pranayama, a slow breathing exercise',facts:[{text:'Heart rate and blood pressure of volunteers were recorded.',form:'sentence'},{text:'After 5 minutes of this exercise, the blood pressure and heart rate were recorded again.',form:'sentence'},{text:'Fall of diastolic pressure and mean pressure were significant.',form:'sentence'}],overlays:['Heart rate and blood pressure of volunteers','After 5 minutes of this exercise','Fall of diastolic pressure and mean pressure were significant.'],captionText:'The study was carried out to evaluate the immediate effect Bhramari pranayama, a slow breathing exercise for 5 minutes on heart rate and blood pressure.',contextText:'After 5 minutes of this exercise',storyFactIndex:1},
+  {id:'ereader-protocol-copy-v1',catalogId:'ereader-comparison-2015-pmid25535358',preset:'vedic_dharma',requiredKind:'clinical',sourceUrl:'https://pubmed.ncbi.nlm.nih.gov/25535358/',headline:'light-emitting device (LE-eBook)',facts:[{text:'reading an electronic book on a light-emitting device (LE-eBook)',form:'clause'},{text:'with reading a printed book in the hours before bedtime.',form:'clause'},{text:'Participants reading an LE-eBook took longer to fall asleep',form:'clause'}],overlays:['reading an electronic book','with reading a printed book','Participants reading an LE-eBook took longer to fall asleep'],captionText:'Here we compare the biological effects of reading an electronic book on a light-emitting device (LE-eBook) with reading a printed book in the hours before bedtime.',contextText:'in the hours before bedtime.',storyFactIndex:2},
+
   {
     id:'amc-release-copy-v1',catalogId:'beyonce-amc-distribution-2023',preset:'liquidity_desk',
     sourceUrl:'https://investor.amctheatres.com/news-events/press-releases/detail/10/renaissance-a-film-by-beyonc-will-take-over-movie-theaters-worldwide-this-december',
@@ -189,4 +196,9 @@ const copySelections = [
 export function sourceCopySelection(id) {
   const selection=copySelections.find(item=>item.id===id);
   return selection?structuredClone(selection):null;
+}
+
+// New clinical IDs/URLs are authoritative classification, never caller-controlled metadata.
+export function clinicalCopyBindings() {
+ return copySelections.filter(item=>item.requiredKind==='clinical').map(({id,catalogId,sourceUrl})=>({id,catalogId,sourceUrl,publisher:entries.find(entry=>entry.id===catalogId).publisher,retrieval:structuredClone(entries.find(entry=>entry.id===catalogId).retrieval)}));
 }
