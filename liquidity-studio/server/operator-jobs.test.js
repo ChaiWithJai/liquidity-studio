@@ -649,3 +649,42 @@ test("lease expiry settles once while real cancel/resume/retry timestamps still 
     assert.notEqual(current.updatedAt, previous, action);
   }
 });
+
+test("two workers racing the same queued snapshot preserve the winner and perform no loser write", async (t) => {
+  const f = await diskJobFixture(t), story = await f.add();
+  const job = await f.jobs.create(f.user, await f.plan([story]));
+  let announceSnapshot, releaseLoser;
+  const captured = new Promise((resolve) => { announceSnapshot = resolve; });
+  const released = new Promise((resolve) => { releaseLoser = resolve; });
+  const loser = new DurableJobService({
+    repo: {
+      read: async () => {
+        const queuedSnapshot = await f.repo.read();
+        announceSnapshot();
+        await released;
+        return queuedSnapshot;
+      },
+      mutate: f.repo.mutate.bind(f.repo),
+    },
+    identity: f.platform.identity,
+    scope: f.scope,
+  });
+  const losingClaim = loser.claim("loser", job.id, job.items[0].id, 1, job.deliveryEpoch);
+  await captured;
+  // The winner commits its actual SQLite claim while the loser still holds the
+  // queued pre-read. Explicit barriers determine ordering; no timing sleeps.
+  const winner = await f.jobs.claim("winner", job.id, job.items[0].id, 1, job.deliveryEpoch);
+  assert.equal(winner.item.lease.workerId, "winner");
+  assert.equal(winner.item.attempt, 1);
+  const winnerState = await f.repo.read();
+  const physical = jobStorageReceipt(f.store, f.file);
+  releaseLoser();
+  assert.equal(await losingClaim, null);
+  assert.deepEqual(await f.repo.read(), winnerState);
+  assert.deepEqual(jobStorageReceipt(f.store, f.file), physical);
+  const retained = (await f.repo.read()).operatorJobs.find((row) => row.id === job.id).items[0];
+  assert.deepEqual(retained.lease, winner.item.lease);
+  assert.equal(retained.fence, winner.item.fence);
+  assert.equal(retained.attempt, winner.item.attempt);
+  assert.equal(retained.attempts.length, 1);
+});
