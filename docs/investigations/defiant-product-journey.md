@@ -10,4 +10,6 @@ Observed in BrowserOS neo on the local integrated workspace, 2026-10-18. This re
 
 The walkthrough found a report disclosure closing during text entry. The integrated correction retains the user's disclosure state. A second correction preserves the wording's loaded revision across a concurrent report refresh rather than silently changing the save base.
 
-Next: show the retained brief in Campaign Studio, use its source material in the existing review/preview workflow, and evaluate the combined rendered screen. Account invitations are deferred and do not gate this work.
+6. Opened the returned Campaign Studio URL. The retained objective, both deliverables, thesis, finding, source excerpt and report-return link were rendered. Copied the excerpt into source review as unreviewed, explicitly classified/reviewed and saved it, then generated a four-format draft in local synthetic development mode. The draft was saved and the preview became available. This is local workflow evidence, not a claim of managed AI output or native workspace configuration for the new destination.
+
+Next: evaluate the combined rendered screen and finish remaining issue acceptance. Account invitations are deferred and do not gate this work.
