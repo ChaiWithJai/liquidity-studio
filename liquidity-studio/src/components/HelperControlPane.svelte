@@ -5,23 +5,32 @@
   let helperId = $state(''), category = $state(''), error = $state(''), message = $state('');
   let pending = $state(0), uncertain = $state(null);
   let clientId = $state(crypto.randomUUID());
-  let lifecycle = 0, reads = 0;
+  let lifecycle = 0, reads = 0, observedReceiptState = '';
+  // This effect owns an external scoped subscription; its reset state is not derived content.
   const root = '/api/studio/workspace/control';
   const display = id => members.find(member => member.id === id)?.displayName || id;
   function active(grant) { return grant.status === 'active' && Date.parse(grant.expiresAt) > Date.now(); }
   async function refresh(owner = lifecycle, send = request) {
-    const read = ++reads;
+    const read = ++reads, entityId = story?.id;
     try {
       const [next, receipts] = await Promise.all([send(root), send('/api/studio/workspace/operations')]);
       next.operations = receipts.operations;
-      if (owner === lifecycle && read === reads) projection = next;
+      if (owner === lifecycle && read === reads) {
+        projection = next;
+        const receiptState = JSON.stringify({ entityId, proposals: next.proposals.filter(p => p.operationId && p.changes.some(change => change.storyId === entityId)).map(p => [p.id, p.operationId, p.revision]), operations: next.operations.filter(operation => operation.outcomes.some(outcome => outcome.storyId === entityId)).map(operation => [operation.operationId, operation.undone]) });
+        if (entityId && receiptState !== observedReceiptState) {
+          observedReceiptState = receiptState;
+          try { await onContentChanged({ storyIds: [entityId] }); }
+          catch (failure) { if (owner === lifecycle) error = `Shared receipts loaded; refreshing the story failed: ${failure.message}`; }
+        }
+      }
     } catch (failure) { if (owner === lifecycle && read === reads) error = failure.message; }
   }
   $effect(() => {
     const key = scopeKey, send = request;
     actorId;
     untrack(() => {
-      lifecycle++; reads++; projection = { grants: [], proposals: [], presence: [], operations: [] };
+      lifecycle++; reads++; observedReceiptState = ''; projection = { grants: [], proposals: [], presence: [], operations: [] };
       error = ''; message = ''; helperId = ''; category = ''; uncertain = null; pending = 0; clientId = crypto.randomUUID();
       void refresh(lifecycle, send);
     });
