@@ -44,6 +44,16 @@ export function canonicalizeLegalFooter(code) {
   if (!notices.length) return code;
   return body + "\n" + [...new Set(notices)].sort().join("\n") + "\n";
 }
+// PR78's reviewed cleanup correction, applied only after pristine-source checks.
+// scrollIntoView can return a Promise; React effects must never return that value.
+export function fixNativeVideoResult(code, expectedSha256) {
+  if (createHash("sha256").update(code).digest("hex") !== expectedSha256)
+    throw new Error("Native VideoResult pristine source mismatch");
+  const before = "useEffect(() => root.current?.scrollIntoView?.({ block: 'nearest' }), [])";
+  if (code.split(before).length !== 2)
+    throw new Error("Native VideoResult effect anchor mismatch");
+  return code.replace(before, "useEffect(() => {\n    root.current?.scrollIntoView?.({ block: 'nearest' })\n  }, [])");
+}
 export function nativeEditorPlugin() {
   const local = process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD === "true";
   const source = path.join(project, ".native-editor-source");
@@ -85,6 +95,14 @@ export function nativeEditorPlugin() {
       for (const file of manifest.files) verify(file.path, file.sha256);
       verify("LICENSE", manifest.licenseSha256);
       verify("styles/tokens.css", manifest.styleTokensSha256);
+    },
+    transform(code, id) {
+      if (!local || id.split("?")[0] !== path.join(source, "editor/dialogs/video/VideoResult.tsx"))
+        return null;
+      const inventory = JSON.parse(fs.readFileSync(path.resolve(project, "../docs/specs/doory-host-source-inventory.json"), "utf8"));
+      const entry = inventory.files.find(file => file.path === "editor/dialogs/video/VideoResult.tsx");
+      if (!entry) throw new Error("Native VideoResult source inventory missing");
+      return { code: fixNativeVideoResult(code, entry.sha256), map: null };
     },
     configureServer(server) {
       if (!local) return;

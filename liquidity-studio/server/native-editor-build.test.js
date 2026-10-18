@@ -1,8 +1,10 @@
 import test from "node:test";
+import {createHash} from "node:crypto";
 import assert from "node:assert/strict";
 import {
   assertOriginalOnlyNativeBundle,
   canonicalizeLegalFooter,
+  fixNativeVideoResult,
 } from "../scripts/native-editor-vite.js";
 test("original-only build blocks upstream source, dependencies and emitted frame assets", () => {
   assert.doesNotThrow(() =>
@@ -88,4 +90,19 @@ test("production server imports with the Docker runtime layout and no frontend s
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test("private video result effect discards Promise-valued scrolling instead of returning React cleanup", () => {
+  const source = "useEffect(() => root.current?.scrollIntoView?.({ block: 'nearest' }), [])";
+  const digest = createHash("sha256").update(source).digest("hex");
+  const fixed = fixNativeVideoResult(source, digest);
+  let effect, calls = 0;
+  // Execute only the small controlled effect fixture, not upstream source or an editor.
+  const root = {current:{scrollIntoView(){calls++;return Promise.resolve();}}};
+  new Function("useEffect", "root", fixed)((callback) => {effect=callback;}, root);
+  assert.equal(effect(), undefined);
+  assert.equal(calls, 1);
+  assert.throws(()=>fixNativeVideoResult(source+" ",digest),/pristine source mismatch/);
+  const repeated=source+"\n"+source;
+  assert.throws(()=>fixNativeVideoResult(repeated,createHash("sha256").update(repeated).digest("hex")),/anchor mismatch/);
 });
