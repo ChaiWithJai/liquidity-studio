@@ -25,7 +25,18 @@ export async function loadPenpotLocalConfiguration(path, env = process.env) {
     throw new Error(
       "Penpot operator configuration must be a bounded private regular file",
     );
-  const value = JSON.parse(await readFile(path, "utf8"));
+  return validatePenpotLocalConfiguration(
+    JSON.parse(await readFile(path, "utf8")),
+    env,
+  );
+}
+
+/** Trusted server-only values use the same schema and local admission gates. */
+export function validatePenpotLocalConfiguration(value, env = process.env) {
+  if (env.K_SERVICE || env.STUDIO_PENPOT_ENABLED !== "true")
+    throw new Error(
+      "Penpot requires explicit local operator configuration; Cloud Run is unsupported",
+    );
   if (
     !exact(value, [
       "version",
