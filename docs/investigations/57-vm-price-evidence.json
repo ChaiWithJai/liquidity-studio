@@ -1,0 +1,57 @@
+{
+  "retrievedAt": "2026-10-18",
+  "source": "https://cloudbilling.googleapis.com/v1/services/6F81-5844-456A/skus?currencyCode=USD&pageSize=5000",
+  "pages": 7,
+  "complete": true,
+  "selection": "Ordinary E2 core/RAM and persistent disk SKUs whose serviceRegions include us-east4; no Spot/custom/free-tier offsets",
+  "prices": [
+    {
+      "skuId": "6D24-3682-D284",
+      "description": "E2 Instance Ram running in Virginia",
+      "region": "us-east4",
+      "effectiveTime": "2026-10-18T07:00:00Z",
+      "usageUnit": "GiBy.h",
+      "rateUSD": 0.00329199
+    },
+    {
+      "skuId": "7D52-6D58-14FF",
+      "description": "Balanced PD Capacity in Virginia",
+      "region": "us-east4",
+      "effectiveTime": "2026-10-18T07:00:00Z",
+      "usageUnit": "GiBy.mo",
+      "rateUSD": 0.11
+    },
+    {
+      "skuId": "8AF1-1146-E7DA",
+      "description": "Storage PD Capacity in Virginia",
+      "region": "us-east4",
+      "effectiveTime": "2026-10-18T07:00:00Z",
+      "usageUnit": "GiBy.mo",
+      "rateUSD": 0.044
+    },
+    {
+      "skuId": "D5C5-E209-22D3",
+      "description": "E2 Instance Core running in Virginia",
+      "region": "us-east4",
+      "effectiveTime": "2026-10-18T07:00:00Z",
+      "usageUnit": "h",
+      "rateUSD": 0.02456745
+    },
+    {
+      "skuId": "D60B-2646-1A2B",
+      "description": "Regional Storage PD Capacity in Virginia",
+      "region": "us-east4",
+      "effectiveTime": "2026-10-18T07:00:00Z",
+      "usageUnit": "GiBy.mo",
+      "rateUSD": 0.088
+    },
+    {
+      "skuId": "EE8D-A62C-DB40",
+      "description": "Regional Balanced PD Capacity in Virginia",
+      "region": "us-east4",
+      "effectiveTime": "2026-10-18T07:00:00Z",
+      "usageUnit": "GiBy.mo",
+      "rateUSD": 0.22
+    }
+  ]
+}
