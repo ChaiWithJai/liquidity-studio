@@ -153,6 +153,7 @@ test("S17–S21 identifies projection and locates measured text with current per
   await page
     .getByRole("button", { name: "In-Situ Instagram", exact: true })
     .click();
+  await page.getByTestId("artifact-details").locator("summary").click();
   await page.getByLabel("Safe zones", { exact: true }).check();
   await expect(page.locator(".evidence")).toContainText(
     "Measured Story · page 1",

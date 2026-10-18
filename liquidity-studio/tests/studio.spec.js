@@ -198,6 +198,7 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
     "style",
     "width: 0%;",
   );
+  await page.getByTestId("artifact-details").locator("summary").click();
   await page.getByLabel("Safe zones", { exact: true }).check();
   await expect(page.getByLabel("Simulated safe-zone overlay")).toBeVisible();
   await page.getByRole("button", { name: "Reel 30s script" }).click();

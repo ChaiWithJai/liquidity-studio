@@ -1,6 +1,6 @@
 <script>
   import {onMount, onDestroy} from 'svelte';
-  let {request, storyId, format, storyRevision, generationId, onStateChange = () => {}} = $props();
+  let {request, storyId, format, storyRevision, generationId, onStateChange = () => {}, compact = false} = $props();
   let loading = $state(true), busy = $state(false), error = $state(''), rejected = $state(false);
   let result = $state(null), attempt = $state(null);
   let alive = true;
@@ -33,8 +33,8 @@
     finally { if (alive) busy = false; }
   }
 </script>
-<section class="penpot-design-action" aria-label="Campaign design in Penpot">
-  <h3>Design your campaign</h3>
+<section class={["penpot-design-action", {compact}]} aria-label="Campaign design in Penpot">
+  {#if !compact}<h3>Design your campaign</h3>{/if}
   {#if loading}<p role="status">Finding this campaign’s design…</p>
   {:else if openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>
   {:else if result?.available || attempt || result?.design}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Create an editable design from the saved copy and brand.</p>
@@ -44,4 +44,7 @@
 <style>
   .penpot-design-action{display:grid;gap:.4rem;padding:.8rem 1rem;border:1px solid var(--border,#d1d5db);border-radius:.6rem}
   h3,p{margin:0}a,button{justify-self:start;min-height:42px;align-content:center}
+  .compact{border:0;padding:0;gap:.3rem .65rem;align-content:center}
+  .compact a,.compact button{min-height:34px}
+  .compact p{font-size:.75rem;max-width:38rem}
 </style>

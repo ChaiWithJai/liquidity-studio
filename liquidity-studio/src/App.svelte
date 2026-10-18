@@ -1448,51 +1448,23 @@
             </nav>
           </section>
           {/if}
-          {#if !preparedWorkspace}<div class="studio-toolbar" id="workflow-handoff" tabindex="-1">
-            <div>
-              <span class="eyebrow">SAVED CAMPAIGN</span>
-              <span class="provenance"
-                >{campaign ? provenance : "No generated draft yet"}</span
-              >
-            </div>
-            <div class="toolbar-actions">
-              {#if nativeEditorEnabled && campaign && !nativeRecord}<button class="secondary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Edit layout in Studio</button>{/if}
-              <button class="secondary" disabled={busy || !generationReview.ready} onclick={generate}
-                >{busy
-                  ? "Working…"
-                  : campaign
-                    ? "Regenerate draft"
-                    : "Generate draft"}</button
-              >{#if !nativeRecord}<button
-                class="secondary"
-                disabled={busy || !campaign}
-                onclick={exportAsset}
-                >Export Studio preview {format === "carousel"
-                  ? "ZIP"
-                  : format === "reel"
-                    ? "script"
-                    : "PNG"} ↗</button
-              >{/if}
-            </div>
-          </div>
-          {/if}
           {#if campaign && promotedStoryId===selectedStory.id && !nativeRecord && !preparedWorkspace && !((penpotEnabled || penpotStoryDesignsEnabled) && penpotHost)}
             <section class="panel" aria-label="Continue to design"><h3>Your reviewed copy is saved</h3><p>Choose a layout next. Layout approval and publication remain separate.</p>
               {#if nativeEditorEnabled}<button class="primary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Edit design</button>
               {:else}<button class="primary" onclick={()=>focusWorkflow("workflow-preview")}>Preview saved artwork</button>{/if}
             </section>
           {/if}
-          {#if !preparedWorkspace}<div class="format-tabs" aria-label="Campaign format">
+          {#if !preparedWorkspace}<div class="campaign-design-toolbar"><div class="format-tabs" aria-label="Campaign format">
             {#each formats as item (item.id)}<button
                 class:active={format === item.id}
                 onclick={() => selectFormat(item.id)}
                 >{item.name}<small>{item.ratio}</small></button
               >{/each}
           </div>
-          {/if}
           {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
-            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
+            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction compact request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
           {/if}
+          </div>{/if}
           {#if nativeRecord && nativeHost}
             <section class="panel" aria-label="Native proposal workspace">
               <h3>{nativeRecord.sourceState === "historical" ? "Saved historical" : "Studio"} {formats.find(item => item.id === nativeRecord.format)?.name} layout</h3>
@@ -1507,24 +1479,17 @@
                 onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => { nativeSaveState = value.status; if (value.status === "saved" && error === "Save native changes or explicitly discard them before leaving the native editor.") error = ""; }} />{/key}
             </section>
           {/if}
-          {#if penpotEnabled && penpotHost && campaign && selectedStory && !preparedWorkspace}
-            <details class="linked-design-tools"><summary>Linked design tools</summary>{#key penpotHost.client}{#key selectedStory.id}<PenpotPanel request={penpotHost.request} storyId={selectedStory.id} role={user.role} />{/key}{/key}</details>
-          {/if}
-          {#if !preparedWorkspace}<div class="generation-review-context">{#if generationReview.ready}<details class="completed-review"><summary>{generationReview.recordKind==="reviewed-copy" ? "Saved copy review complete" : "Sources ready for generation"} · Review details</summary><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></details>{:else}<SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} />{/if}</div>{/if}
-          {#if exportUrl}<p class="download">
-              <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
-                >Download ready</small
-              >
-            </p>{/if}
-          {#if !(preparedWorkspace)}<details class="small muted workflow-boundaries"><summary>Saving, export and unsaved work</summary><p>Save before exporting. Calendar placement sets a date; export downloads a file. Neither publishes. Unsaved artwork stays in this tab when you visit the calendar or backlog; reloading discards it. Save or discard native editor changes before leaving that editor.</p></details>{/if}
-          {#if helperControlEnabled && helperHost}
-            {#key helperHost.client}<details class="panel shared-helper-control" aria-label="Shared helper control">
-              <summary>Assistant actions</summary>
-              <HelperControlPane request={helperHost.request} scopeKey={`${user.id}:${helperHost.client.scopeKey}`} actorId={user.id}
-                story={selectedStory} members={workspaceState?.members || []} onContentChanged={helperHost.onContentChanged} />
-            </details>{/key}
-          {/if}
           {#if campaign&&!preparedWorkspace}<div class="studio-grid">
+              <section class="preview-workspace workflow-target" id="workflow-preview" aria-label="Preview and validation" tabindex="-1">{#key organizationId + brandId + selectedStory.id + format}<Emulator
+                  {campaign}
+                  {brandProfile}
+                  {format}
+                  {backlog}
+                  activeStoryId={selectedStory.id}
+                  storyRevision={selectedStory.revision}
+                  {pendingEdits}
+                  onpreflight={recordPreflight}
+                />{/key}</section>
               <section class="editor-panel workflow-target" id="workflow-editor" aria-label="Campaign wording" tabindex="-1">
                 <div class="panel-heading">
                   <h3>Edit artwork text</h3>
@@ -1784,16 +1749,7 @@
                   <p class="small muted" data-testid="recorded-preflight">Recorded {preflight.artifact.format} · saved revision {preflight.artifact.storyRevision}</p>
                 {/if}
               </section>
-              <section class="preview-workspace workflow-target" id="workflow-preview" aria-label="Preview and validation" tabindex="-1">{#key organizationId + brandId + selectedStory.id + format}<Emulator
-                  {campaign}
-                  {brandProfile}
-                  {format}
-                  {backlog}
-                  activeStoryId={selectedStory.id}
-                  storyRevision={selectedStory.revision}
-                  {pendingEdits}
-                  onpreflight={recordPreflight}
-                />{/key}</section>
+
             </div>{:else}
             {#snippet manualSourcePrerequisites()}<section class="panel workflow-target" id="workflow-sources" aria-label="Source prerequisites" tabindex="-1">
               <h3>Review sources before generation</h3>
@@ -1874,6 +1830,51 @@
               <details open={reviewDirty}><summary>Manual source review and existing source edits</summary>{@render manualSourcePrerequisites()}</details>
             {:else}{@render manualSourcePrerequisites()}{/if}
             {/if}
+          {#if !preparedWorkspace}<div class="studio-toolbar" id="workflow-handoff" tabindex="-1">
+            <div>
+              <span class="eyebrow">SAVED CAMPAIGN</span>
+              <span class="provenance"
+                >{campaign ? provenance : "No generated draft yet"}</span
+              >
+            </div>
+            <div class="toolbar-actions">
+              {#if nativeEditorEnabled && campaign && !nativeRecord}<button class="secondary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Edit layout in Studio</button>{/if}
+              <button class="secondary" disabled={busy || !generationReview.ready} onclick={generate}
+                >{busy
+                  ? "Working…"
+                  : campaign
+                    ? "Regenerate draft"
+                    : "Generate draft"}</button
+              >{#if !nativeRecord}<button
+                class="secondary"
+                disabled={busy || !campaign}
+                onclick={exportAsset}
+                >Export Studio preview {format === "carousel"
+                  ? "ZIP"
+                  : format === "reel"
+                    ? "script"
+                    : "PNG"} ↗</button
+              >{/if}
+            </div>
+          </div>
+          {/if}
+          {#if penpotEnabled && penpotHost && campaign && selectedStory && !preparedWorkspace}
+            <details class="linked-design-tools"><summary>Linked design tools</summary>{#key penpotHost.client}{#key selectedStory.id}<PenpotPanel request={penpotHost.request} storyId={selectedStory.id} role={user.role} />{/key}{/key}</details>
+          {/if}
+          {#if !preparedWorkspace}<div class="generation-review-context">{#if generationReview.ready}<details class="completed-review"><summary>{generationReview.recordKind==="reviewed-copy" ? "Saved copy review complete" : "Sources ready for generation"} · Review details</summary><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></details>{:else}<SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} />{/if}</div>{/if}
+          {#if exportUrl}<p class="download">
+              <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
+                >Download ready</small
+              >
+            </p>{/if}
+          {#if !(preparedWorkspace)}<details class="small muted workflow-boundaries"><summary>Saving, export and unsaved work</summary><p>Save before exporting. Calendar placement sets a date; export downloads a file. Neither publishes. Unsaved artwork stays in this tab when you visit the calendar or backlog; reloading discards it. Save or discard native editor changes before leaving that editor.</p></details>{/if}
+          {#if helperControlEnabled && helperHost}
+            {#key helperHost.client}<details class="panel shared-helper-control" aria-label="Shared helper control">
+              <summary>Assistant actions</summary>
+              <HelperControlPane request={helperHost.request} scopeKey={`${user.id}:${helperHost.client.scopeKey}`} actorId={user.id}
+                story={selectedStory} members={workspaceState?.members || []} onContentChanged={helperHost.onContentChanged} />
+            </details>{/key}
+          {/if}
         {:else}<div class="empty">
             <h2>No story selected</h2>
             <p>

@@ -438,11 +438,7 @@
 <svelte:window onkeydown={onKey} />
 <section class="emulator" aria-label="Instagram preview simulator">
   <div class="preview-heading">
-    <div>
-      <h3>Studio preview</h3>
-    </div>
-    <span class="simulation">Saved copy · local simulation</span>
-  </div>
+    <h3>Studio preview</h3>
   <div class="segmented" aria-label="Preview mode">
     <button class:active={mode === "design"} onclick={() => setMode("design")}
       >Design Mode</button
@@ -455,16 +451,16 @@
       >3×3 Profile Grid</button
     >
   </div>
+  </div>
   <div class="artifact-identity" aria-label="Preview artifact identity">
-    <b>{brandProfile?.brandName} · Selected: {formatLabel}</b>
-    <p>{mode === "grid" ? "Showing: feed infographic projection (4:5), not the selected format. No carousel, Story or Reel verification in this grid." : `Showing: ${formatLabel} · ${pageLabel} · ${mode === "design" ? "design surface" : "simulated Instagram surface"}`}</p>
-    <p>Saved revision {storyRevision ?? "unavailable"} · {pendingEdits ? "Editor has unsaved changes; saved artwork shown. Save before measuring." : "Saved artwork"}</p>
-    <details data-testid="artifact-details"><summary>Artifact details</summary>
+    <p class="artifact-summary"><b>Selected: {formatLabel}</b> · {pageLabel} · saved revision {storyRevision ?? "unavailable"} · local simulation</p>
+    {#if mode === "grid"}<p class="projection-warning">Showing: feed infographic projection (4:5), not the selected format. No carousel, Story or Reel verification in this grid.</p>{/if}
+    {#if pendingEdits}<p role="status">Editor has unsaved changes; saved artwork shown. Save before measuring.</p>{/if}
+    <details class="preview-settings" data-testid="artifact-details"><summary>Preview settings</summary>
+      <p>{brandProfile?.brandName} · {mode === "grid" ? "Feed infographic grid" : `Showing: ${formatLabel} · ${pageLabel} · ${mode === "design" ? "design surface" : "simulated Instagram surface"}`}</p>
       <p>{artifactIdentity}</p>
       {#if currentEvidence}<p>Artwork {currentEvidence.artworkId} · measurement {currentEvidence.revision}</p><p>Text elements: {currentEvidence.violations.map(item => item.artworkElementId).join(", ") || "No measured violations"}</p>{/if}
       {#if mode === "grid"}<ul>{#each gridItems as item (item.id)}<li>{item.title} · story {item.id} · saved revision {item.revision ?? "unavailable"} · generation {item.campaignDraft?.provenance?.generationId || "unavailable"} · feed infographic</li>{/each}</ul>{/if}
-    </details>
-  </div>
   <div class="preview-controls">
     <label
       >Phone width <select bind:value={phoneWidth}
@@ -494,6 +490,8 @@
     Approximate Instagram chrome. Local interactions only. Validate final assets
     in Instagram before publishing.
   </p>
+    </details>
+  </div>
   <div class="phone-well">
     <div
       class:raw={mode === "design"}
@@ -849,7 +847,11 @@
 </section>
 
 <style>
-  .artifact-identity { padding: 12px; border: 1px solid #71836b; border-radius: 8px; margin: 12px 0; overflow-wrap: anywhere; }
+  .artifact-identity { margin: 6px 0; overflow-wrap: anywhere; font-size: 12px; }
+  .artifact-summary { color: #46543e; }
+  .preview-settings > summary { cursor: pointer; width: fit-content; color: #46543e; }
+  .preview-settings[open] { padding: 8px 10px; border: 1px solid #71836b; border-radius: 8px; }
+  .projection-warning { font-weight: 600; }
   .artifact-identity p { margin: 6px 0; }
   .violation-list { padding-left: 20px; }
   .violation-list li { margin: 10px 0; }
