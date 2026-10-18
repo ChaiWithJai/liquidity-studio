@@ -880,3 +880,81 @@ test("detached pack preserves accepted top-level and primitive-file key order", 
   assert.equal(JSON.stringify(snapshot), JSON.stringify(reordered));
   assert.equal(validateEditorPack(snapshot).pack.sha256, reordered.sha256);
 });
+
+test("token accounting preserves real exported pack size/checksum and corruption rejection", async (t) => {
+  const { accountPortableJson } = await import("./portable-json-accounting.js");
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor);
+  const result = accountPortableJson(pack, { omitRootKeys: ["sha256"] });
+  const { sha256, ...content } = pack;
+  assert.equal(result.bytes, Buffer.byteLength(JSON.stringify(pack), "utf8"));
+  assert.equal(result.contentSha256, jsonDigest(content));
+  assert.equal(result.contentSha256, sha256);
+  const corrupted = structuredClone(pack);
+  corrupted.documents[0].metadata.title += " unsealed";
+  assert.throws(() => validateEditorPack(corrupted), { status: 422 });
+});
+
+test("over-cap input fails before base64 decoding or restore reservation", async (t) => {
+  const target = await fixture(t, "liquidity_desk", true);
+  const before = Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)]));
+  // Shared fixture string avoids allocating a second48MiB reference serialization.
+  const block = "x".repeat(1024 * 1024);
+  const oversized = { schemaVersion: 2, files: Array.from({ length: 49 }, () => ({ base64: block })) };
+  let decoded = false;
+  const originalFrom = Buffer.from;
+  Buffer.from = function(value, encoding, ...rest) {
+    if (encoding === "base64") { decoded = true; throw new Error("unexpected decode"); }
+    return originalFrom.call(this, value, encoding, ...rest);
+  };
+  try {
+    await assert.rejects(target.service.install(actor, oversized, input), { status: 413 });
+  } finally { Buffer.from = originalFrom; }
+  assert.equal(decoded, false);
+  assert.deepEqual(Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)])), before);
+});
+
+test("token accounting preserves the exact existing500000 content-node acceptance boundary", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor);
+  // Extra plain historical-origin metadata is already accepted by the pack schema.
+  // These are hosted complexity fixtures, not claims of human edits or research.
+  pack.documents[0].metadata.origin.benchmarkNodes = [];
+  const count = value => 1 + (value && typeof value === "object"
+    ? Object.values(value).reduce((total, child) => total + count(child), 0)
+    : 0);
+  const contentOf = value => { const { sha256, ...content } = value; return content; };
+  const remaining = 500000 - count(contentOf(pack));
+  assert.ok(remaining > 0);
+  pack.documents[0].metadata.origin.benchmarkNodes = Array(remaining).fill(null);
+  pack.sha256 = jsonDigest(contentOf(pack));
+  assert.equal(count(contentOf(pack)), 500000);
+  assert.doesNotThrow(() => validateEditorPack(pack));
+  pack.documents[0].metadata.origin.benchmarkNodes.push(null);
+  pack.sha256 = jsonDigest(contentOf(pack));
+  assert.equal(count(contentOf(pack)), 500001);
+  assert.throws(() => validateEditorPack(pack), { status: 413, message: "Editor pack complexity limit" });
+});
+
+test("restore capacity uses exact validated Unicode pack bytes without reserializing the pack", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor);
+  pack.documents[0].metadata.title = "Unicode 宇宙 😀 \ud800 caption";
+  const { sha256, ...content } = pack;
+  pack.sha256 = jsonDigest(content);
+  const expectedBytes = Buffer.byteLength(JSON.stringify(pack), "utf8");
+  assert.equal(validateEditorPack(pack).serializedBytes, expectedBytes);
+  const target = await fixture(t, "liquidity_desk", true);
+  let requested;
+  target.service.capacityCheck = async bytes => {
+    requested = bytes;
+    throw Object.assign(new Error("controlled capacity rejection"), { status: 507 });
+  };
+  const before = Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)]));
+  await assert.rejects(target.service.install(actor, pack, input), { status: 507 });
+  assert.equal(requested, expectedBytes * 3);
+  assert.deepEqual(Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)])), before);
+});
