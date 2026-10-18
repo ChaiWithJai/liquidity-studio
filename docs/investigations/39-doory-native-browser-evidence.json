@@ -1,0 +1,17 @@
+{
+  "designId": "68f3f407-256c-46c5-b8ae-19b292a36e17",
+  "revision": 3,
+  "pages": 2,
+  "heading": {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "type": "textbox",
+    "text": "BROWSER VERIFIED NATIVE HEADING",
+    "fontFamily": "\"Inter\", sans-serif",
+    "fontSize": 48,
+    "fontWeight": 700
+  },
+  "expectedStableHeadingId": "22222222-2222-4222-8222-222222222222",
+  "stableHeadingId": true,
+  "browserEditPersisted": true,
+  "documentSha256": "eb999d69e8dd7f349dcf284243491a0cdfc8dd6206825cbb4f30d135ec638bb1"
+}
