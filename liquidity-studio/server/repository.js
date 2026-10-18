@@ -581,7 +581,7 @@ export class ScopedRepository {
       data.assets = expanded;
       checkBudget(Buffer.byteLength(JSON.stringify(envelope(data))));
     } else {
-      data.assets = await Promise.all(data.assets.map(completeAsset));
+      data.assets = await Promise.all(data.assets.map(asset => completeAsset(asset)));
     }
     return {
       ...envelope(data),
