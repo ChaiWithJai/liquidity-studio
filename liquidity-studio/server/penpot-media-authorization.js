@@ -1,4 +1,5 @@
 import { fail } from "./auth.js";
+import { penpotActionDigest } from "./penpot-action-ledger.js";
 
 const ORIGINS = Object.freeze({
   loopback: "http://localhost:39008",
@@ -42,6 +43,49 @@ export function parsePenpotMediaPath(path) {
   return { kind: found[1], id: found[2], thumbnail: Boolean(found[3]) };
 }
 
+export function createPenpotNativeReader({
+  transportMode = "loopback",
+  fetchImpl = fetch,
+} = {}) {
+  const origin = ORIGINS[transportMode];
+  if (!origin) throw Error("Fixed native reader transport required");
+  return async function read(cookie, command, body) {
+    const session = penpotPresentedSession(cookie);
+    if (!["get-profile", "get-file"].includes(command))
+      throw fail(400, "Unsupported native permission command");
+    const response = await fetchImpl(`${origin}/api/rpc/command/${command}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Cookie: session,
+        Origin: "http://localhost:39008",
+      },
+      body: JSON.stringify(body),
+      redirect: "error",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok)
+      throw fail(
+        response.status === 401 ? 401 : 403,
+        "Native asset access denied",
+      );
+    const chunks = [];
+    let size = 0;
+    for await (const chunk of response.body) {
+      size += chunk.length;
+      if (size > 2 * 1024 * 1024)
+        throw fail(503, "Native permission response exceeded its bound");
+      chunks.push(chunk);
+    }
+    try {
+      return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    } catch {
+      throw fail(503, "Native permission response invalid");
+    }
+  };
+}
+
 /** Authorization only: it never returns media bytes or credentials. Registry and
  * actor revalidation are server-owned dependencies. No positive auth is cached.
  */
@@ -57,43 +101,12 @@ export function createPenpotMediaAuthorizer({
     typeof authorize !== "function"
   )
     throw new Error("Fixed native media authorization dependencies required");
-  const origin = ORIGINS[transportMode];
+  const reader = createPenpotNativeReader({ transportMode, fetchImpl });
   let active = 0;
   async function checkRead({ path, cookie }) {
     const requested = parsePenpotMediaPath(path);
     const session = penpotPresentedSession(cookie);
-    async function rpc(command, body) {
-      const response = await fetchImpl(`${origin}/api/rpc/command/${command}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Cookie: session,
-          Origin: "http://localhost:39008",
-        },
-        body: JSON.stringify(body),
-        redirect: "error",
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!response.ok)
-        throw fail(
-          response.status === 401 ? 401 : 403,
-          "Native asset access denied",
-        );
-      const chunks = [];
-      let size = 0;
-      for await (const chunk of response.body) {
-        size += chunk.length;
-        if (size > 2 * 1024 * 1024)
-          throw fail(503, "Native permission response exceeded its bound");
-        chunks.push(chunk);
-      }
-      try {
-        return JSON.parse(Buffer.concat(chunks).toString("utf8"));
-      } catch {
-        throw fail(503, "Native permission response invalid");
-      }
-    }
+    const rpc = (command, body) => reader(session, command, body);
     // Both calls use the PRESENTED native session, never the private operator
     // session. get-file itself applies the official current file read ACL.
     const profile = await rpc("get-profile", {});
@@ -125,6 +138,12 @@ export function createPenpotMediaAuthorizer({
         403,
         "Legacy image is not referenced by its registered native file",
       );
+    if (
+      record.kind === "native-export" &&
+      (file.revn !== record.nativeRevision ||
+        penpotActionDigest(file.data) !== record.nativeSha256)
+    )
+      throw fail(409, "Native export file changed");
     const final = await resolve(requested, profile.id);
     if (!final || JSON.stringify(final) !== JSON.stringify(record))
       throw fail(403, "Native asset registration changed");

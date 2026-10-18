@@ -12,7 +12,13 @@ import { PenpotStudioActions } from "./penpot-studio-actions.js";
 import { NativeEditorService } from "./native-editor.js";
 import { createPenpotPrivateMedia } from "./penpot-private-media.js";
 import { penpotActionDigest } from "./penpot-action-ledger.js";
-import { createPenpotMediaAuthorizer } from "./penpot-media-authorization.js";
+import {
+  createPenpotMediaAuthorizer,
+  createPenpotNativeReader,
+} from "./penpot-media-authorization.js";
+import { createPenpotNativeExports } from "./penpot-native-export.js";
+import { brandRevision } from "./multimodal-contract.js";
+import { isDeepStrictEqual } from "node:util";
 
 /** Optional fixed-loopback runtime. The public deployment never configures this factory. */
 export async function createPenpotStudioRuntime({
@@ -232,7 +238,115 @@ export async function createPenpotStudioRuntime({
       }
     }
   }
+  const nativeReader = createPenpotNativeReader({
+    transportMode: configuration.transportMode,
+  });
+  async function exportSourceContext(request) {
+    const target = configuration.targets.find(
+      (target) =>
+        target.ownerPrincipal === request.profileId &&
+        target.resources.some(
+          (resource) =>
+            resource.kind === "tokens" && resource.nativeId === request.fileId,
+        ),
+    );
+    if (!target) throw fail(403, "Native export target is not registered");
+    const service = serviceFor(target),
+      boundary = service.boundaryFactory(transport);
+    const rows = await boundary.read();
+    const found = rows.bindings.find(
+      (row) => row.targetId === target.id && !row.revokedAt,
+    );
+    if (!found) throw fail(403, "Native export binding unavailable");
+    const binding = boundary.binding(rows, found.id);
+    const actor = await identity.authorizeJobActor(
+      binding.registeredBy,
+      binding.registeredAt,
+    );
+    await identity.authorize(actor, target.organizationId, target.brandId);
+    const resource = binding.resources.find(
+      (resource) =>
+        resource.kind === "tokens" && resource.nativeId === request.fileId,
+    );
+    if (!resource) throw fail(403, "Native export file is not registered");
+    const entry = configuration.manifests.get(target.id);
+    const repo = new ScopedRepository(store, target);
+    const command = {
+      operation: "refresh-brand-tokens",
+      storyId: entry.manifest.storyId,
+      expectedRevision: entry.manifest.storyRevision,
+      generationId: entry.manifest.generationId,
+      expectedBrandRevision: brandRevision(await repo.getBrandProfile()),
+      expectedNativeRevision: 0,
+    };
+    const context = await transport.context({
+      binding,
+      resource,
+      actor: { id: actor.id },
+      command,
+      authorizedAt: binding.registeredAt,
+      reauthorize: () => service.ledger.permitted(actor),
+    });
+    return {
+      organizationId: target.organizationId,
+      brandId: target.brandId,
+      bindingId: binding.id,
+      bindingEpoch: binding.epoch,
+      ownerPrincipal: binding.ownerPrincipal,
+      fileId: resource.nativeId,
+      projectId: binding.nativeProjectId,
+      actorId: actor.id,
+      sourceSha256: penpotActionDigest(context.bundle),
+      manifestSha256: penpotActionDigest(context.manifest),
+      request: structuredClone(request),
+    };
+  }
+  async function authorizeExportContext(cookie, request) {
+    const profile = await nativeReader(cookie, "get-profile", {});
+    if (profile.id !== request.profileId)
+      throw fail(403, "Native export owner changed");
+    const context = await exportSourceContext(request);
+    const file = await nativeReader(cookie, "get-file", { id: request.fileId });
+    const shape =
+      file.data?.pagesIndex?.[request.pageId]?.objects?.[request.objectId];
+    if (
+      file.id !== context.fileId ||
+      file.projectId !== context.projectId ||
+      !Number.isSafeInteger(file.revn) ||
+      !shape ||
+      !Number.isFinite(shape.width) ||
+      !Number.isFinite(shape.height) ||
+      shape.width <= 0 ||
+      shape.height <= 0 ||
+      shape.width * shape.height > 8_000_000
+    )
+      throw fail(
+        422,
+        "Native export object is unavailable or exceeds its bound",
+      );
+    const final = await exportSourceContext(request);
+    if (!isDeepStrictEqual(final, context))
+      throw fail(409, "Native export source changed");
+    return {
+      ...context,
+      nativeRevision: file.revn,
+      nativeSha256: penpotActionDigest(file.data),
+    };
+  }
+  const nativeExports = createPenpotNativeExports({
+    store,
+    transportMode: configuration.transportMode,
+    authorizeContext: authorizeExportContext,
+    reauthorizeContext: async (context) => {
+      const current = await exportSourceContext(context.request);
+      const { nativeRevision, nativeSha256, ...source } = context;
+      if (!isDeepStrictEqual(current, source))
+        throw fail(409, "Native export source or registration changed");
+    },
+  });
   async function authorizeMediaRecord(record) {
+    if (record.kind === "native-export")
+      return nativeExports.authorizeRecord(record);
     const service = serviceFor(record);
     const boundary = service.boundaryFactory(transport);
     if (["font", "legacy-native-copy"].includes(record.kind)) {
@@ -280,6 +394,8 @@ export async function createPenpotStudioRuntime({
     authorize: authorizeMediaRecord,
     resolve: async (requested, ownerPrincipal) => {
       if (!privateIngress || requested.thumbnail) return null;
+      const exported = await nativeExports.resolve(requested, ownerPrincipal);
+      if (exported) return exported;
       const copies =
         (await store.get(
           `penpot-media-security:${requested.kind}:${requested.id}`,
@@ -307,6 +423,7 @@ export async function createPenpotStudioRuntime({
     transportMode: configuration.transportMode,
     forScope: serviceFor,
     authorizeMediaRead,
+    nativeExports,
     async bindings(actor, scope) {
       const service = serviceFor(scope);
       await service.ledger.permitted(actor);

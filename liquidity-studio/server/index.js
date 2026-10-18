@@ -1,3 +1,4 @@
+import { readPenpotExportBody } from "./penpot-native-export.js";
 import { editorRestoreStatus } from "./editor-recovery.js";
 import {
   EditorPackService,
@@ -367,6 +368,65 @@ export function createHttpServer(
           Vary: "Cookie",
         });
         return res.end();
+      }
+      if (
+        [
+          "/api/internal/penpot-native-export",
+          "/api/internal/penpot-export-relay-authorize",
+        ].includes(route)
+      ) {
+        if (
+          !penpotEnabled ||
+          trustedTestMode ||
+          process.env.K_SERVICE ||
+          process.env.STUDIO_PENPOT_PRIVATE_INGRESS !== "true" ||
+          platform.identity.configuration?.mode !== "google" ||
+          url.search
+        )
+          throw fail(404, "Not found");
+        const runtime = await platform.getPenpotRuntime();
+        if (
+          route === "/api/internal/penpot-export-relay-authorize" &&
+          req.method === "GET"
+        ) {
+          let result;
+          try {
+            result = await runtime.nativeExports.authorizeRelay({
+              capability: req.headers["x-studio-export-relay"],
+              cookie: req.headers["x-studio-native-session"],
+              method: req.headers["x-studio-export-method"],
+              path: req.headers["x-studio-export-path"],
+              contentType: req.headers["x-studio-export-content-type"],
+              bodyHash: req.headers["x-studio-export-body-sha256"],
+            });
+          } catch (error) {
+            if (error.status >= 400 && error.status < 500)
+              throw fail(403, "Native export relay denied");
+            throw error;
+          }
+          res.writeHead(204, {
+            "Cache-Control": "private, no-store",
+            ...(result.body ? { "X-Studio-Export-Body": result.body } : {}),
+          });
+          return res.end();
+        }
+        if (
+          route === "/api/internal/penpot-native-export" &&
+          req.method === "POST"
+        ) {
+          const result = await runtime.nativeExports.execute({
+            body: await readPenpotExportBody(req),
+            contentType: req.headers["content-type"],
+            cookie: req.headers["x-studio-native-session"],
+            origin: req.headers["x-studio-native-origin"],
+          });
+          res.writeHead(200, {
+            "Content-Type": result.contentType,
+            "Cache-Control": "private, no-store",
+          });
+          return res.end(result.body);
+        }
+        throw fail(405, "Native export method unsupported");
       }
       if (route === "/api/internal/operator-job" && req.method === "POST") {
         const configuration = jobDispatcherConfiguration();
