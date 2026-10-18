@@ -123,8 +123,9 @@ checking saved colors reconciles the actual native tokens and bound paints.
 
 This updates color tokens through Penpot’s supported current-editor setters; it
 does not deserialize campaign text or replace the human layout. A new or unknown
-font is not automatically rebound. The saved design remains accessible, and a
-color action reports an unsupported font change rather than replacing it.
+font is not automatically rebound. Color refresh uses the saved design’s binding
+map, so a new unsupported Brand Kit font does not block its color update. Older
+designs recover that map from their existing native token bindings.
 Native saved-state verification is separate from visual export approval. The
 plugin uses the currently paired native principal when paired access is enabled;
 server readback retains the real administrative native account and current

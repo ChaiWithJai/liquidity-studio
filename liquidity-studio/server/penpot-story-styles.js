@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {fail} from './auth.js';
-import {compilePenpotNative} from './penpot-native.js';
+import {penpotColorIdentity} from './penpot-native.js';
 import {PenpotTokenRefreshTransport} from './penpot-token-refresh.js';
 import {createPenpotLocalSnapshot} from './penpot-local-snapshot.js';
 import {penpotActionDigest as hash} from './penpot-action-ledger.js';
@@ -26,10 +26,25 @@ export class PenpotStoryStyles {
  async resolve(actor,action,sessionContext){
   const context=await this.designs.context(actor,action.input.storyId,sessionContext),state=await this.designs.store.get(this.designs.key),record=state?.designs.find(d=>d.id===action.designId&&d.status==='ready');
   if(!record||hash(stable(record.identity))!==context.designKey||context.story.revision!==action.input.expectedRevision||context.story.generationId!==action.input.generationId||context.identity.brandRevision!==action.input.expectedBrandRevision)throw fail(409,'Saved source or Brand Kit changed; the existing design is preserved');
-  let compiled;try{compiled=compilePenpotNative(context.bundle,{fileId:record.fileId,fonts:context.workspace.fonts,explicitOm:true});}catch(error){if(['FONT_NOT_VERIFIED','OM_FONT_NOT_VERIFIED'].includes(error.message))throw fail(422,'Color refresh cannot rebind changed or unknown fonts; the saved design fonts are preserved');throw error;}const workspace=context.workspace;
-  const tokens=compiled.changes.filter(c=>c.type==='set-token').map(c=>({id:c['token-id'],setId:c['set-id'],name:c.attrs.name}));
-  const layers=compiled.changes.filter(c=>c.type==='add-obj'&&c.obj?.['applied-tokens']?.fill).map(c=>({pageId:c['page-id'],nativeId:c.id,tokenName:c.obj['applied-tokens'].fill}));
-  const manifest={fileId:record.fileId,projectId:workspace.projectId,ownerPrincipal:workspace.ownerPrincipal,...(workspace.actingNativeProfileId?{pluginPrincipal:workspace.actingNativeProfileId}:{}),bindingEpoch:workspace.bindingEpoch,storyId:context.bundle.storyId,storyRevision:context.bundle.storyRevision,generationId:context.bundle.generationId,sourceApprovals:clone(context.bundle.sourceApprovals),fonts:clone(context.bundle.tokens.fonts),themeId:compiled.changes.find(c=>c.type==='set-token-theme').id,tokens,layers};
+  let mapping=action.colorMapping||record.colorMapping;
+  if(!mapping){
+   // Older ready records predate saved color mappings. Read their existing bindings,
+   // never reconstruct their typography from today's Brand Kit.
+   const file=await this.designs.rpc(context.workspace,'get-file',{id:record.fileId});
+   if(file.id!==record.fileId||file.projectId!==context.workspace.projectId||!Array.isArray(file.data?.pages)||file.data.pages.length!==record.pages.length||record.pages.some((page,i)=>file.data.pages[i]!==page.id))throw fail(409,'Saved native pages changed; check this design before refreshing colors');
+   if([0,1,2,3].some(i=>{const token=file.data.tokensLib?.Studio?.studio?.['color'+i];return token?.$type!=='color'||!/^#[a-f0-9]{6}$/i.test(token.$value);})||!file.data.tokensLib?.$metadata?.activeThemes?.includes('Studio/Brand'))throw fail(409,'Saved Studio color tokens or active theme are unavailable');
+   const identity=penpotColorIdentity(context.bundle),names=new Set(identity.tokens.map(t=>t.name)),layers=[],savedFonts=new Map();
+   const visit=(value,depth=0)=>{if(depth>64)throw fail(502,'Native font metadata exceeds its bound');if(!value||typeof value!=='object')return;const id=value.fontId||value['font-id'],family=value.fontFamily||value['font-family'];if(id)savedFonts.set(id,{fontId:id,...(family?{fontFamily:family}:{})});for(const child of Object.values(value))if(child&&typeof child==='object')visit(child,depth+1);};
+   for(const page of record.pages)for(const [nativeId,shape]of Object.entries(file.data.pagesIndex?.[page.id]?.objects||{})){const tokenName=shape.appliedTokens?.fill||shape['applied-tokens']?.fill;if(names.has(tokenName))layers.push({pageId:page.id,nativeId,tokenName});visit(shape.content);}
+   if(!layers.length)throw fail(409,'This saved design has no bound Brand Kit colors');
+   mapping={...identity,layers,fonts:{savedNativeFonts:[...savedFonts.values()].sort((a,b)=>a.fontId.localeCompare(b.fontId))}};
+  }
+  action.colorMapping=clone(mapping);
+  // The transport compares mapping metadata, but only current authoritative colors
+  // are sent to its token setters. No font field is sent to the native writer.
+  context.bundle=clone(context.bundle);context.bundle.tokens.fonts=clone(mapping.fonts);
+  const workspace=context.workspace,{tokens,layers,themeId}=mapping;
+  const manifest={fileId:record.fileId,projectId:workspace.projectId,ownerPrincipal:workspace.ownerPrincipal,...(workspace.actingNativeProfileId?{pluginPrincipal:workspace.actingNativeProfileId}:{}),bindingEpoch:workspace.bindingEpoch,storyId:context.bundle.storyId,storyRevision:context.bundle.storyRevision,generationId:context.bundle.generationId,sourceApprovals:clone(context.bundle.sourceApprovals),fonts:clone(context.bundle.tokens.fonts),themeId,tokens,layers};
   if(action.manifestHash&&action.manifestHash!==hash(manifest))throw fail(409,'Saved native style mapping changed');return {context,record,manifest};
  }
  async input(actor,action,sessionContext){
@@ -56,7 +71,7 @@ export class PenpotStoryStyles {
   const issuing=(async()=>{
    const nativeInput=await this.input(actor,action,sessionContext),current=await this.resolve(actor,action,sessionContext);
    if(action.status==='native-state-verified')return this.dto(action);
-   if(!action.manifestHash){action.manifestHash=hash(current.manifest);await this.update(action.id,row=>{row.manifestHash=action.manifestHash;});}
+   if(!action.manifestHash){action.manifestHash=hash(current.manifest);await this.update(action.id,row=>{row.manifestHash=action.manifestHash;row.colorMapping=clone(action.colorMapping);});}
    const retained=this.capabilities.get(action.id);if(retained&&retained.expiresAt>this.now())return {...this.dto(action),nativeActionCapability:retained.capability};
    const result=await this.transport.execute(nativeInput);for(const [id,row]of this.capabilities)if(row.expiresAt<=this.now())this.capabilities.delete(id);this.capabilities.set(action.id,{capability:result.nativeActionCapability,expiresAt:result.expiresAt});
    return {...this.dto(action),nativeActionCapability:result.nativeActionCapability};
