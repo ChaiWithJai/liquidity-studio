@@ -22,7 +22,7 @@ const changed = () =>
   });
 
 /** One scoped entity map. Rows are projections; an older full DTO is never relabeled as current. */
-export function createWorkspaceClient({ request, scopeKey }) {
+export function createWorkspaceClient({ request, scopeKey, initialQuery = DEFAULT_WORKSPACE_QUERY, initialUi = {} }) {
   let disposed = false,
     querySequence = 0,
     calendarSequence = 0;
@@ -31,7 +31,7 @@ export function createWorkspaceClient({ request, scopeKey }) {
     entities: new Map(),
     pageIds: [],
     query: {
-      definition: copy(DEFAULT_WORKSPACE_QUERY),
+      definition: copy(initialQuery),
       total: 0,
       filteredTotal: 0,
       groups: [],
@@ -53,6 +53,7 @@ export function createWorkspaceClient({ request, scopeKey }) {
       scrollTop: 0,
       focusStoryId: null,
       drawerStoryId: null,
+      ...copy(initialUi),
     },
     deletedView: null,
   };
@@ -112,14 +113,16 @@ export function createWorkspaceClient({ request, scopeKey }) {
         story: copy(story),
       });
     }
+    const changedStories = stories.some(story => !state.entities.has(story.id) || state.entities.get(story.id).revision !== story.revision);
     publish({ entities });
+    if (changedStories && state.query.loaded) query(state.query.definition).catch(() => {});
   }
-  async function ensureStories(ids) {
+  async function ensureStories(ids, { force = false } = {}) {
     guard();
     const details = await Promise.all(
       [...new Set(ids)].map(async (id) => {
         const existing = state.entities.get(id);
-        if (existing?.story && existing.story.revision === existing.revision)
+        if (!force && existing?.story && existing.story.revision === existing.revision)
           return null;
         return call("/stories/" + encodeURIComponent(id));
       }),
@@ -243,7 +246,7 @@ export function createWorkspaceClient({ request, scopeKey }) {
       });
       await ensureStories([
         ...new Set(result.assignments.map((item) => item.storyId)),
-      ]);
+      ], { force: true });
       if (sequence === calendarSequence)
         publish({ calendar: { ...state.calendar, loading: false } });
       return state.calendar.data;

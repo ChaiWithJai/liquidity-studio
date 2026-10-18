@@ -196,3 +196,17 @@ test("late scoped results are discarded and newer canonical rows cannot be overw
   assert.equal(current.getStory("s"), null);
   current.dispose();
 });
+
+test("explicit detail refresh reconciles an external revision instead of trusting matching cached snapshots", async (t) => {
+  const {client,request}=await fixture(t);
+  await client.query();
+  const id=client.snapshot.pageIds[0];
+  await client.ensureStories([id]);
+  const before=client.getStory(id);
+  await request('/api/studio/workspace/mutations',{method:'POST',body:JSON.stringify({idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:before.revision,patch:{category:'External revision'}}]})});
+  assert.equal(client.getStory(id).revision,before.revision);
+  await client.ensureStories([id],{force:true});
+  assert.equal(client.getStory(id).category,'External revision');
+  assert.ok(client.getStory(id).revision>before.revision);
+  assert.equal(client.snapshot.entities.get(id).row.revision,client.getStory(id).revision);
+});
