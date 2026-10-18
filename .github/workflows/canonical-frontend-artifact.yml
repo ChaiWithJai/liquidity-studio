@@ -1,0 +1,69 @@
+name: Canonical frontend artifact
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact reviewed 40-character source commit
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Require an immutable source commit
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: '[[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+      - name: Verify the checkout
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: liquidity-studio/package-lock.json
+      - name: Install locked dependencies
+        working-directory: liquidity-studio
+        run: npm ci --engine-strict --no-fund
+      - name: Build the canonical original-only frontend
+        working-directory: liquidity-studio
+        run: NODE_ENV=production npm run build
+      - name: Record source and output provenance
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          mkdir -p frontend-artifact
+          cp -R liquidity-studio/dist frontend-artifact/dist
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, subprocess
+          source = os.environ['SOURCE_SHA']
+          assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == source
+          entries = []
+          for entry in subprocess.check_output(['git','ls-tree','-rz','--full-tree',source]).split(b'\0'):
+              if not entry: continue
+              header, name = entry.split(b'\t',1)
+              mode, kind, object_id = header.decode().split()
+              entries.append({'path':name.decode(),'mode':mode,'type':kind,'gitObject':object_id})
+          outputs = []
+          for path in sorted(pathlib.Path('frontend-artifact/dist').rglob('*')):
+              if path.is_file():
+                  data=path.read_bytes()
+                  outputs.append({'path':str(path.relative_to('frontend-artifact/dist')),'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
+          lock=pathlib.Path('liquidity-studio/package-lock.json').read_bytes()
+          manifest={'sourceSha':source,'runId':os.environ['GITHUB_RUN_ID'],'nodeVersion':subprocess.check_output(['node','--version'],text=True).strip(),'packageLockSha256':hashlib.sha256(lock).hexdigest(),'sourceFiles':entries,'files':outputs,'scope':'Build artifact only; required Verify checks must pass on the final PR head.'}
+          pathlib.Path('frontend-artifact/provenance.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canonical-frontend-${{ inputs.source_sha }}
+          path: frontend-artifact/
+          retention-days: 3
+          if-no-files-found: error
