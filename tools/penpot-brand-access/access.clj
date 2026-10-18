@@ -82,11 +82,12 @@
 (defn context-team-allowed? [team-id]
   (if-not *request-context*
     true
-    (let [{:keys [cfg resource private-key command actual-profile-id session-context]} *request-context*]
+    (let [{:keys [cfg resource private-key command actual-profile-id session-context shared-create]} *request-context*]
       (if-not (governed-team? cfg team-id)
         true
         (and (current-rpc-session?)
              (not (contains? denied-governed-mutations command))
+             (not shared-create)
              (or
               ;; Exact private administrative metadata only; not files/content,
               ;; invitations, role changes or human editor owner fallback.
@@ -135,7 +136,8 @@
                        acting (assoc :native-operator-profile-id actual))]
         (when (and acting-header (or (not key?) (not (uuid? acting)))) (denied!))
         (binding [*request-context* {:cfg cfg :resource resource :actual-profile-id actual
-                                    :private-key key? :session-context session-context :command (::sv/name mdata)}]
+                                    :private-key key? :session-context session-context :command (::sv/name mdata)
+                                    :shared-create (and (= "create-file" (::sv/name mdata)) (true? (:is-shared params)))}]
           (f native-cfg params))))))
 
 (defn guard-thread! [conn thread-id]

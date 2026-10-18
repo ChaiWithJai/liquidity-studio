@@ -78,3 +78,17 @@
     (is (= [request] @captured))
     (is (thrown? Exception (handler cfg (with-meta {::rpc/profile-id operator}
                                          {::http/request (assoc-in request [:headers "x-studio-native-grant-key"] "invalid")}))))))
+
+(deftest shared-file-creation-is-denied-only-in-governed-teams
+  (let [request {::session/profile-id profile ::session/session {:id team :profile-id profile}}
+        cfg {::access/governed-teams #{team}
+             ::access/capture-session (constantly :current)
+             ::access/session-valid? (fn [_ c] (= c :current))
+             ::access/authorize (constantly {:allowed true})}
+        handler (access/wrap-rpc cfg (fn [_ params] (access/context-team-allowed? (:team params)))
+                                {::sv/name "create-file"})
+        params (fn [team-id shared] (with-meta {:team team-id :is-shared shared} {::http/request request}))]
+    (is (handler cfg (params team false)))
+    (is (handler cfg (with-meta {:team team} {::http/request request})))
+    (is (not (handler cfg (params team true))))
+    (is (handler cfg (params personal true)))))
