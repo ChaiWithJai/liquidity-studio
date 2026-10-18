@@ -1,3 +1,4 @@
+import {AUDIO_LIMITS,inspectPcmWav} from './native-audio.js';
 import { createHash } from "node:crypto";
 import { accountPortableJson } from "./portable-json-accounting.js";
 import { fail } from "./auth.js";
@@ -12,6 +13,7 @@ export const PACK_LIMITS = Object.freeze({
   assets: 100,
   history: 100,
   fileBytes: 4 * 1024 * 1024,
+  audioFileBytes:AUDIO_LIMITS.bytes,
 });
 export const digest = (bytes) =>
   createHash("sha256").update(bytes).digest("hex");
@@ -105,16 +107,19 @@ export function createPackFileCollection(limits = PACK_LIMITS) {
     if (!Number.isSafeInteger(limits[name]) || limits[name] < 1 || limits[name] > PACK_LIMITS[name])
       throw fail(413, "Invalid portable file budget");
   const files = [];
-  const bounded = Object.freeze({bytes:limits.bytes,files:limits.files,fileBytes:limits.fileBytes});
+  const audioFileBytes=limits.audioFileBytes??limits.fileBytes;
+  if(!Number.isSafeInteger(audioFileBytes)||audioFileBytes<1||audioFileBytes>AUDIO_LIMITS.bytes)throw fail(413,"Invalid portable audio file budget");
+  const bounded = Object.freeze({bytes:limits.bytes,files:limits.files,fileBytes:limits.fileBytes,audioFileBytes});
   fileBudgets.set(files, { limits:bounded, encodedBytes: 2 });
   return files;
 }
 export function addFile(files, bytes, kind) {
   const length = typeof bytes === "string" ? Buffer.byteLength(bytes) : bytes.byteLength;
   const budget = fileBudgets.get(files) || { limits: PACK_LIMITS, encodedBytes: Buffer.byteLength(JSON.stringify(files)) };
-  if (!Number.isSafeInteger(length) || length > budget.limits.fileBytes)
+  if (!Number.isSafeInteger(length) || length > (kind==="audio"?budget.limits.audioFileBytes:budget.limits.fileBytes))
     throw fail(413, "Editor pack per-file byte limit");
   const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes), sha256 = digest(buffer);
+  if(kind==="audio")inspectPcmWav(buffer);
   if (files.some(file => file.sha256 === sha256)) return sha256;
   if (files.length >= budget.limits.files) throw fail(413, "Editor pack file count limit");
   // Base64 uses only ASCII: calculate its exact JSON size before allocating it.
@@ -166,11 +171,12 @@ export function validateEditorPack(input) {
       files.has(file.sha256) ||
       !Number.isSafeInteger(file.size) ||
       file.size < 0 ||
-      file.size > PACK_LIMITS.fileBytes ||
+      file.size > (file.kind==="audio"?PACK_LIMITS.audioFileBytes:PACK_LIMITS.fileBytes) ||
       typeof file.base64 !== "string" ||
       ![
         "document",
         "image",
+        "audio",
         "font",
         "license",
         "repository",
@@ -186,6 +192,7 @@ export function validateEditorPack(input) {
       digest(bytes) !== file.sha256
     )
       throw fail(422, "Editor pack file integrity mismatch");
+    if(file.kind==="audio")inspectPcmWav(bytes);
     files.set(file.sha256, bytes);
   }
   const used = new Set();
@@ -247,6 +254,7 @@ export function validateEditorPack(input) {
       "id",
       "name",
       "contentType",
+      "kind","durationMs","channels","sampleRate",
       "size",
       "width",
       "height",
@@ -259,11 +267,11 @@ export function validateEditorPack(input) {
       "portableHistory",
     ]);
     if (
-      asset.metadata.size > 512 * 1024 ||
+      asset.metadata.size > (asset.metadata.contentType==="audio/wav"?AUDIO_LIMITS.bytes:512*1024) ||
       asset.metadata.id !== asset.id ||
       asset.metadata.sha256 !== asset.file ||
       asset.metadata.size !== bytes(asset.file).length ||
-      !["image/png", "image/jpeg", "image/webp"].includes(
+      !["image/png", "image/jpeg", "image/webp","audio/wav"].includes(
         asset.metadata.contentType,
       ) ||
       !["confirmed", "not_personal_data"].includes(asset.metadata.consent) ||
@@ -271,6 +279,10 @@ export function validateEditorPack(input) {
       !asset.metadata.rightsDeclaration.trim()
     )
       throw fail(422, "Invalid portable image rights or bytes");
+    if(asset.metadata.contentType==='audio/wav'){
+      const actual=inspectPcmWav(bytes(asset.file));
+      if(asset.metadata.kind!=='audio'||asset.metadata.width!==0||asset.metadata.height!==0||['durationMs','channels','sampleRate'].some(k=>actual[k]!==asset.metadata[k]))throw fail(422,'Portable WAV metadata differs from its original bytes');
+    }else if(asset.metadata.kind!==undefined&&asset.metadata.kind!=='image')throw fail(422,'Audio requires PCM WAV bytes');
   }
   for (const asset of input.assets)
     if (asset.metadata.lineage) {

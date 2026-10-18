@@ -1,3 +1,4 @@
+import {createStorySvgGateway} from '../server/penpot-story-svg-gateway.js';
 // Explicit local first-party native proof adapter. Never starts from the normal app.
 import http from 'node:http';
 import {createPenpotNativeAccessForwarder} from '../server/penpot-native-access-forwarder.js';
@@ -19,9 +20,11 @@ const describeChallenge = createNativePairingChallengeReader({
   nativeInstanceId: configuration.nativeInstanceId,
 });
 const accessForwarder = configuration.grantKey ? createPenpotNativeAccessForwarder({studioOrigin: configuration.studioOrigin, grantKey: configuration.grantKey}) : null;
+const svgGateway=configuration.grantKey?createStorySvgGateway(configuration):null;
 const handler = createNativeConnectHandler({...configuration, recordProof, describeChallenge});
 const server = http.createServer({requestTimeout: 15000, headersTimeout: 10000, maxHeaderSize: 16384}, (req, res) => {
   Promise.resolve().then(async () => {
+    if (svgGateway && await svgGateway(req,res)) return;
     if (accessForwarder && await accessForwarder(req, res)) return;
     await handler(req, res);
   }).catch(() => {

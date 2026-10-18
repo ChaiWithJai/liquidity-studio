@@ -147,17 +147,17 @@
     <NativeBrandRefreshPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} getCanvasEpoch={() => canvasEpoch} onRefreshed={refreshedBrand} />
   {/key}
     </div></details>
-    <details name={`native-tools-${record.id}`} data-native-tool="images"><summary>Image rights</summary><div class="tool-panel image-rights">
-    <label>Rights declaration <input bind:value={rightsDeclaration} maxlength="500" placeholder="Describe your permission to use uploaded images" /></label>
+    <details name={`native-tools-${record.id}`} data-native-tool="images"><summary>Upload rights</summary><div class="tool-panel image-rights">
+    <label>Rights declaration <input bind:value={rightsDeclaration} maxlength="500" placeholder="Describe your permission to use uploaded images or audio" /></label>
     <label>Consent
       <select bind:value={consent}>
         <option value="">Choose before uploading</option>
         <option value="confirmed">Permission and required personal consent confirmed</option>
-        <option value="not_personal_data">Owned image with no personal data</option>
+        <option value="not_personal_data">Owned media with no personal data</option>
       </select>
     </label>
     <label><input type="checkbox" bind:checked={cutoutConfirmed} /> I confirm the selected image’s recorded rights and consent permit background removal.</label>
-    <p>Uploads support PNG, JPEG and WebP up to 512 KiB and four megapixels. When configured locally, background removal preserves pixel dimensions and rejects PNG output above 512 KiB. It never silently resizes or overwrites the original; native Undo restores the original reference.</p>
+    <p>Images support PNG, JPEG and WebP up to 512 KiB and four megapixels. Audio Uploads supports 16-bit stereo PCM WAV up to 6 MiB, 30 seconds, at 44.1 or 48 kHz, with at most four saved tracks. Other audio formats and microphone recording are not supported in Studio yet. When configured locally, background removal preserves pixel dimensions and rejects PNG output above 512 KiB. It never silently resizes or overwrites the original; native Undo restores the original reference.</p>
     </div></details>
   </div>
   <iframe title="Native Doory design canvas" bind:this={frame} sandbox="allow-scripts allow-same-origin allow-downloads" referrerpolicy="no-referrer"></iframe>

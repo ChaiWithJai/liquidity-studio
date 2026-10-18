@@ -13,3 +13,7 @@ test('portable file count/encoded byte/per-file budgets reject before base64 acc
  const oversized=Buffer.alloc(65);oversized.toString=()=>{throw Error('must not encode oversized input');};
  assert.throws(()=>addFile(files,oversized,'document'),{status:413});assert.equal(files.length,2);
 });
+
+test('six-MiB audio pack budget does not raise the ordinary file budget',async()=>{
+ const {pcmWav}=await import('../tests/fixtures/native-audio.js'),bytes=pcmWav(),files=createPackFileCollection();assert.ok(bytes.length>PACK_LIMITS.fileBytes);addFile(files,bytes,'audio');assert.equal(files[0].kind,'audio');assert.throws(()=>addFile(createPackFileCollection(),bytes,'image'),/per-file byte limit/);
+});

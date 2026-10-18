@@ -43,3 +43,25 @@ location = /studio-connect/prove {
 }
 # Block suffix aliases; no generic protocol relay.
 location ^~ /studio-connect/ { return 404; }
+
+# One-use Studio draft SVG downloads, authenticated by the current native cookie.
+# The opaque permit and native cookie must never enter access logs.
+location = /studio-save-svg {
+    limit_except GET { deny all; }
+    access_log off;
+    proxy_pass http://host.docker.internal:39044;
+    include /run/studio-native-connect-gateway-header.conf;
+    proxy_set_header Host "localhost:39044";
+    proxy_set_header X-Studio-Native-Session $http_cookie;
+    proxy_set_header Cookie "";
+    proxy_set_header Authorization "";
+    proxy_set_header Origin "";
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+    proxy_connect_timeout 2s;
+    proxy_read_timeout 65s;
+    proxy_cache off;
+    add_header Cache-Control "private, no-store" always;
+    add_header Referrer-Policy "no-referrer" always;
+}
+location ^~ /studio-save-svg/ { return 404; }

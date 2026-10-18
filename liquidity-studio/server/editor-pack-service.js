@@ -1,7 +1,9 @@
+import {inspectPcmWav} from './native-audio.js';
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { randomUUID } from "node:crypto";
+import { randomUUID,createHash } from "node:crypto";
+const jsonDigestBytes=bytes=>createHash("sha256").update(bytes).digest("hex");
 import sharp from "sharp";
 import { ScopedRepository, scopeKey } from "./repository.js";
 import { transactionValues } from "./storage-transaction.js";
@@ -50,6 +52,7 @@ const portableAssetFields = [
   "id",
   "name",
   "contentType",
+  "kind","durationMs","channels","sampleRate",
   "size",
   "width",
   "height",
@@ -201,7 +204,7 @@ export class EditorPackService {
       assets.push({
         id: asset.id,
         metadata: pick(asset, portableAssetFields),
-        file: addFile(files, Buffer.from(asset.base64, "base64"), "image"),
+        file: addFile(files, Buffer.from(asset.base64, "base64"), asset.kind==="audio"?"audio":"image"),
       });
     }
     for (const key of documentKeys) {
@@ -522,6 +525,7 @@ export class EditorPackService {
     // Re-project validates archived evidence, scope and excerpt hashes before reserving the target.
     projectPreparedHistory(restoredPrepared, this.scope);
     for (const asset of pack.assets) {
+      if(asset.metadata.kind==="audio"){inspectPcmWav(validated.bytes(asset.file));continue;}
       const image = sharp(validated.bytes(asset.file), {
         limitInputPixels: 4_000_000,
       });
@@ -682,13 +686,17 @@ export class EditorPackService {
       if (asset.metadata.lineage)
         metadata.lineage = copy(asset.metadata.lineage);
       metadata.portableHistory = portability(asset.metadata, "asset");
+      const original=validated.bytes(asset.file),payload={};
+      if(metadata.kind==='audio'&&original.length>512*1024){
+        payload.bytesKeys=[];
+        for(let offset=0,index=0;offset<original.length;offset+=1024*1024,index++){
+          const key=`${this.native.prefix}payload:audio-${id}-${asset.id}-${index}`,chunk=original.subarray(offset,offset+1024*1024);
+          planned.push({key,value:{kind:'native-audio-bytes',base64:chunk.toString('base64'),sha256:jsonDigestBytes(chunk)}});payload.bytesKeys.push(key);
+        }
+      }else payload.base64=original.toString('base64');
       planned.push({
         key: `${this.native.prefix}asset:${asset.id}`,
-        value: {
-          ...metadata,
-          base64: validated.bytes(asset.file).toString("base64"),
-          fingerprint: jsonDigest({ restore: id, asset: asset.id }),
-        },
+        value: {...metadata,...payload,fingerprint:jsonDigest({restore:id,asset:asset.id})},
       });
     }
     for (const doc of pack.documents) {

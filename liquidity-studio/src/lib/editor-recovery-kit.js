@@ -11,7 +11,7 @@ export async function createEditorRecoveryKit(pack){
  async function add(path,value){const sha256=await hash(value);if(entries[path]){if(await hash(entries[path])!==sha256)reject();return;}total+=value.length;if(total>MAX_PAYLOAD)throw Error('The readable recovery kit is too large. Download the unchanged JSON pack instead.');entries[path]=value;inventory.push({path,size:value.length,sha256});}
  inventory.push({path:'studio-editor-pack.json',size:serialized.length,sha256:await hash(serialized)});
  for(const font of pack.fonts){if(font.license!=='OFL-1.1'||!/^[A-Za-z0-9.-]+\.(ttf|otf)$/.test(font.filename)||!/^[A-Za-z0-9.-]+\.txt$/.test(font.licenseFilename))reject();for(const [name,id]of [[font.filename,font.file],[font.licenseFilename,font.licenseFile]]){const value=bytes(byHash.get(id));if(await hash(value)!==id)reject();await add('fonts/'+name,value);}}
- const manifest={kind:'studio-readable-recovery-kit',schemaVersion:1,packSha256:sha256,packSchemaVersion:pack.schemaVersion,scope:pack.scope,exportedAt:pack.exportedAt,contents:{layouts:pack.documents.length,images:pack.assets.length,embeddedFiles:pack.files.length,fontVariants:pack.fonts.length},files:inventory.map(file=>({...file}))};
+ const manifest={kind:'studio-readable-recovery-kit',schemaVersion:1,packSha256:sha256,packSchemaVersion:pack.schemaVersion,scope:pack.scope,exportedAt:pack.exportedAt,contents:{layouts:pack.documents.length,images:pack.assets.filter(asset=>asset.metadata?.kind!=="audio").length,audio:pack.assets.filter(asset=>asset.metadata?.kind==="audio").length,embeddedFiles:pack.files.length,fontVariants:pack.fonts.length},files:inventory.map(file=>({...file}))};
  await add('recovery-manifest.json',strToU8(JSON.stringify(manifest,null,2)+'\n'));
  await add('RESTORE.md',strToU8(restoreGuide(pack,manifest.contents)));
  entries.SHA256SUMS=strToU8(inventory.map(file=>`${file.sha256}  ${file.path}`).join('\n')+'\n');
@@ -24,7 +24,7 @@ Keep this kit private: it contains source evidence and owned artwork. It contain
 
 ## What is included
 
-- studio-editor-pack.json: the unchanged portable pack, including saved brand/backlog data, ${counts.layouts} Studio native layouts and history, ${counts.images} original/cutout images, stored media exports and their supported lineage. Required payloads are embedded in the JSON; do not reconstruct asset paths manually.
+- studio-editor-pack.json: the unchanged portable pack, including saved brand/backlog data, ${counts.layouts} Studio native layouts and history, ${counts.images} original/cutout images, ${counts.audio} uploaded audio sources, stored media exports and their supported lineage. Required payloads are embedded in the JSON; do not reconstruct asset paths manually.
 - fonts/: ${counts.fontVariants} exact licensed font variants and their OFL notices, extracted for installation. Keep each notice beside its font.
 - recovery-manifest.json: source identifiers, counts and file hashes. The pack's sealed digest is ${pack.sha256}.
 - SHA256SUMS: hashes of the JSON, fonts, notices, manifest and this guide. On macOS run shasum -a 256 -c SHA256SUMS; on Linux use sha256sum -c SHA256SUMS from the extracted kit directory.

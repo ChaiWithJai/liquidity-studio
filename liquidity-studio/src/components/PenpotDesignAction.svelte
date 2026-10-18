@@ -5,6 +5,22 @@
   let result = $state(null), attempt = $state(null);
   let styleAttempt=$state(null),styleReceipt=$state(null),styleCapability=$state(''),styleError=$state(''),styleNotice=$state(''),styleRejected=$state(false);
   let copyNotice=$state('');
+  let svgUrl=$state(''),svgError=$state('');
+  async function prepareSvg(){
+    if(busy||loading||!openUrl)return;busy=true;svgUrl='';svgError='';
+    const saved={storyId,format,expectedRevision:storyRevision,generationId,fileId:result.design.fileId,nativeUrl:openUrl};
+    try{
+      const fresh=await request(`/api/studio/penpot/designs?storyId=${encodeURIComponent(saved.storyId)}&format=${encodeURIComponent(saved.format)}`);
+      if(!alive)return;
+      if(storyId!==saved.storyId||format!==saved.format||storyRevision!==saved.expectedRevision||generationId!==saved.generationId||openUrl!==saved.nativeUrl)throw Error('The campaign changed. Reopen its saved design before saving SVG.');
+      const design=fresh.design;
+      if(design?.status!=='ready'||design.fileId!==saved.fileId||design.storyId!==saved.storyId||design.generationId!==saved.generationId||design.nativeUrl!==saved.nativeUrl||!Number.isSafeInteger(design.nativeRevision)||design.nativeRevision<0)throw Error(fresh.reason||'The saved design is unavailable. Reopen it before saving SVG.');
+      result=fresh;
+      const value=await request('/api/studio/penpot/designs/svg',{method:'POST',body:JSON.stringify({storyId:saved.storyId,format:saved.format,expectedRevision:saved.expectedRevision,generationId:saved.generationId,expectedNativeRevision:design.nativeRevision})});
+      if(alive&&value.downloadUrl?.startsWith('http://localhost:39008/studio-save-svg?permit='))svgUrl=value.downloadUrl;
+    }
+    catch(failure){if(alive)svgError=failure.message;}finally{if(alive){busy=false;if(refreshPending){refreshPending=false;void load();}}}
+  }
   const pluginManifestUrl='http://localhost:39039/manifest.json';
   async function copyStyleValue(value,label){
     try{await navigator.clipboard.writeText(value);if(alive)copyNotice=`${label} copied.`;}
@@ -66,6 +82,11 @@
   {:else if !error && openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>{#if result.design.styles?.needsRefresh}<p>Brand Kit styles changed. This existing design and your Penpot edits are preserved.</p>{#if result.design.styles.refreshAvailable}<button class="secondary" disabled={busy||loading} onclick={prepareStyles}>{busy?'Preparing colors…':styleRejected?'Prepare a new color update':styleAttempt?'Retry same color update':'Refresh Brand Kit colors'}</button><button class="secondary" disabled={busy||loading} onclick={checkStyles}>Check saved colors</button>{/if}{/if}
   {:else if !error && (result?.available || attempt || result?.design)}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Create an editable design from the saved copy and brand.</p>
   {:else if result?.reason}<p>{result.reason}</p>{/if}
+  {#if !loading && openUrl && result?.svgAvailable}<button class="secondary" disabled={busy} onclick={prepareSvg}>{busy?'Preparing download…':'Save SVG'}</button>
+    <p>Draft SVG of this format’s first board, with licensed fonts embedded. Save changes in Penpot first. Images outside the verified export set are not supported.</p>
+    {#if svgUrl}<a href={svgUrl} target="_blank" rel="noopener noreferrer">Download draft SVG ↗</a><p>This one-use download expires in two minutes. Use your connected Penpot account.</p>{/if}
+    {#if svgError}<p role="alert">{svgError}</p>{/if}
+  {/if}
   {#if styleCapability}<section class="style-handoff" aria-label="Apply saved Brand Kit colors">
     <ol>
       <li>Open this design’s Plugins menu and add the Studio plugin.</li>
