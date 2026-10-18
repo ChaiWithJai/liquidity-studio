@@ -92,3 +92,9 @@ test('named working groups preserve domain facts and historical report membershi
  const stored=f.store.get(f.service.key);await assert.rejects(f.service.saveCluster(f.actor,f.command({cluster:{name:'Foreign',nodeIds:['not-in-this-organization']}})),{status:409});assert.deepEqual(f.store.get(f.service.key),stored);
  await assert.rejects(f.service.graph(f.actor,{focusId:'edge_lagos_to_london'}),{status:422});
 });
+
+test('unlocated artist suggestions do not leak into unrelated person or overview focus',async t=>{
+ const f=await fixture(t);await f.service.import(f.actor,f.command({kind:'owned',data:{nodes:[{id:'unlocated-artist',kind:'artist',name:'Unlocated artist',relatedResourceIds:['unlocated-resource-details']},{id:'unlocated-person',kind:'person',name:'Independent person'},{id:'unlocated-resource',kind:'resource',name:'Possible studio'}],resources:[{id:'unlocated-resource-details',nodeId:'unlocated-resource'}]}}));
+ assert.deepEqual((await f.service.graph(f.actor,{})).relatedResources,[]);assert.deepEqual((await f.service.graph(f.actor,{focusId:'unlocated-person'})).relatedResources,[]);
+ assert.equal((await f.service.graph(f.actor,{focusId:'unlocated-artist'})).relatedResources[0].id,'unlocated-resource');
+});
