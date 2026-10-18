@@ -1,14 +1,18 @@
 --- a/backend/src/app/http/assets.clj
 +++ b/backend/src/app/http/assets.clj
-@@ -16,6 +16,7 @@
+@@ -16,8 +16,11 @@
     [app.http.session :as session]
     [app.rpc.permissions :as perms]
     [app.storage :as sto]
 +   [app.studio.assets :as studio-assets]
     [integrant.core :as ig]
     [yetti.response :as-alias yres]))
++
++(def studio-access-version "v1")
  
-@@ -124,7 +125,8 @@
+ (def ^:private default-cache-max-age
+   (ct/duration {:hours 24}))
+@@ -124,7 +127,8 @@
    [{:keys [::sto/storage] :as cfg} request]
    (let [id  (get-id request)
          obj (sto/get-object storage id)]
@@ -18,7 +22,7 @@
        (nil? obj)
        {::yres/status 404}
  
-@@ -137,27 +139,29 @@
+@@ -137,27 +141,29 @@
        {::yres/status 404}
  
        :else

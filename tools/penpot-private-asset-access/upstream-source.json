@@ -6,14 +6,14 @@
       "path": "backend/src/app/http/assets.clj",
       "gitBlob": "b0adb45b13df7f336067a117ffc6578539d69ff9",
       "sha256": "ca3f1f723c447dcd9fbfb43eed5dc1ea2f394fa86916b56e719d019957ccaeda",
-      "patchedSha256": "6f854571da5824f4c97e5f10a61cc546bd38a4282104af73c1d695694b9efd9b"
+      "patchedSha256": "cd17216f284f357552c3b2827897c362756afd6c0ec25998209994479db275c1"
     }
   ],
   "localBuildOrTests": false,
   "runtimeChanged": false,
   "originalSources": {
-    "assets.clj": "764df9caf70cc29df98959f1cb2f1cf4f210bfd850144a2a2f16f28a403262e7",
+    "assets.clj": "9758938583e4ced68c4fd61f0d9570a2c38639b798fb4eab8e4f0db868f431b5",
     "assets_test.clj": "47599a43c0d9a994caf3b673263363a98db802fd91238e0388f6df4a25f8de2f"
   },
-  "patchSha256": "50b6e5d8a9f990c1c5ca59915c46d8e8b690ac43b60072f390c5c7cfce73bec7"
+  "patchSha256": "b8dcb3aeb7c6d4dd7491ff604de1ffc2b5225dd136e1d13465d13997b1c3d712"
 }

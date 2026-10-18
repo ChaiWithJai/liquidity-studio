@@ -8,6 +8,8 @@
             [app.studio.access :as access]
             [yetti.response :as-alias response]))
 
+(def hook-version "v1")
+
 (def ^:private protected-buckets
   #{"file-media-object" "team-font-variant" "file-object-thumbnail"
     "file-thumbnail" "file-data" "file-data-fragment"})
