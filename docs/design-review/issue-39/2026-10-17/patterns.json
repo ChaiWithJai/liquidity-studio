@@ -1,0 +1,71 @@
+[
+  {
+    "mode": "T3 · Work surfaces",
+    "description": "Cross-step cluster. See report.md for sequence, implications and acceptance tests.",
+    "count": 4,
+    "example_ids": [
+      "review-1",
+      "review-8",
+      "review-9",
+      "review-17"
+    ],
+    "example_quotes": [
+      "Tall backlog rows show only three of five stories at 1280×720. No visible column controls, selection, saved views or bulk actions.",
+      "Narrow calendar columns force long titles into tall cards. Sunday offscreen. No dated range or visible direct-move affordance.",
+      "Monday already stacks two cards: preserve existing stacking. Add direct move/reorder affordances and explicit dates/timezone. Assignments only is useful truthful copy."
+    ]
+  },
+  {
+    "mode": "T1 · Observable state",
+    "description": "Cross-step cluster. See report.md for sequence, implications and acceptance tests.",
+    "count": 5,
+    "example_ids": [
+      "review-2",
+      "review-4",
+      "review-6",
+      "review-11",
+      "review-13"
+    ],
+    "example_quotes": [
+      "One matching story but heading still reads 5. Show 1 of 5 and active filters.",
+      "No matches is presented as No stories here yet, despite count 5. Distinguish empty brand from search result; offer Clear filters.",
+      "Generate enabled despite empty source URLs and unreviewed claims. Not invoked; enforcement untested. Show actionable prerequisite summary before generation.",
+      "Carousel selected while profile grid shows feed artwork. Clarify feed-grid projection so users do not verify the wrong format.",
+      "Preflight reports one text box in chrome zones. Provide jump/highlight to offending text rather than requiring manual search."
+    ]
+  },
+  {
+    "mode": "T4 · Fluidity",
+    "description": "Cross-step cluster. See report.md for sequence, implications and acceptance tests.",
+    "count": 5,
+    "example_ids": [
+      "review-3",
+      "review-5",
+      "review-7",
+      "review-12",
+      "review-14"
+    ],
+    "example_quotes": [
+      "Positive: Huda search survives editor → backlog. Preserve continuity in detail drawers and per-brand views.",
+      "Search crosses brand boundary and repeats false empty state. S05 → S09 → S10 demonstrates a recurring recovery burden.",
+      "Long source review separates generation controls from prerequisites. Keep review summary and task actions visible without weakening source gates.",
+      "Useful preview modes and simulation labels; dense controls and long edit column separate preview from scheduling and review.",
+      "onScreenText and bRollDirection expose internal field names. Use readable labels and guidance."
+    ]
+  },
+  {
+    "mode": "T2 · Shared control",
+    "description": "Cross-step cluster. See report.md for sequence, implications and acceptance tests.",
+    "count": 3,
+    "example_ids": [
+      "review-10",
+      "review-15",
+      "review-16"
+    ],
+    "example_quotes": [
+      "Saved draft exists, but no visible actor, revision, presence or delegation state. Live collaboration remains a proposal; bind helper actions to brand+story+revision.",
+      "Batch history and telemetry exist. No visible helper ownership, plan preview or pause/takeover in inspected empty state. Backend durability cannot be inferred.",
+      "Service/repository/provider readiness distinction is useful. not_checked needs an actionable next step; walk-away jobs need durable detail and resumption tests."
+    ]
+  }
+]

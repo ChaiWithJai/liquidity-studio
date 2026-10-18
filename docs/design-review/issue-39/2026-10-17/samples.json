@@ -1,0 +1,233 @@
+[
+  {
+    "id": "S01",
+    "title": "Backlog entry",
+    "flow": "A — Find and inspect a story",
+    "action": "Open studio",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:38.829Z",
+    "desktop": "shots/S01.jpg",
+    "order": 1
+  },
+  {
+    "id": "S02",
+    "title": "Search narrows the backlog",
+    "flow": "A — Find and inspect a story",
+    "action": "Type Huda in search",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:44.582Z",
+    "desktop": "shots/S02.jpg",
+    "order": 2
+  },
+  {
+    "id": "S03",
+    "title": "Open filtered story",
+    "flow": "A — Find and inspect a story",
+    "action": "Open the only matching story",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:44.872Z",
+    "desktop": "shots/S03.jpg",
+    "order": 3
+  },
+  {
+    "id": "S04",
+    "title": "Return preserves the search",
+    "flow": "A — Find and inspect a story",
+    "action": "Return via Story backlog",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:50.156Z",
+    "desktop": "shots/S04.jpg",
+    "order": 4
+  },
+  {
+    "id": "S05",
+    "title": "Search empty state",
+    "flow": "A — Find and inspect a story",
+    "action": "Replace search with unmatched text",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:50.192Z",
+    "desktop": "shots/S05.jpg",
+    "order": 5
+  },
+  {
+    "id": "S06",
+    "title": "Calendar overview",
+    "flow": "B — Schedule and inspect content",
+    "action": "Navigate to calendar",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:50.495Z",
+    "desktop": "shots/S06.jpg",
+    "order": 6
+  },
+  {
+    "id": "S07",
+    "title": "Calendar card opens source review",
+    "flow": "B — Schedule and inspect content",
+    "action": "Open Tuesday card",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:56.491Z",
+    "desktop": "shots/S07.jpg",
+    "order": 7
+  },
+  {
+    "id": "S08",
+    "title": "Keyboard reaches generation below source review",
+    "flow": "B — Schedule and inspect content",
+    "action": "Focus Save source review then Tab, without saving",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:56.537Z",
+    "desktop": "shots/S08.jpg",
+    "order": 8
+  },
+  {
+    "id": "S09",
+    "title": "Switch to an existing brand",
+    "flow": "C — Inspect an existing campaign",
+    "action": "Select Chai With Jai",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T00:59:56.691Z",
+    "desktop": "shots/S09.jpg",
+    "order": 9
+  },
+  {
+    "id": "S10",
+    "title": "Clear inherited search in the other brand",
+    "flow": "C — Inspect an existing campaign",
+    "action": "Clear search",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:01.131Z",
+    "desktop": "shots/S10.jpg",
+    "order": 10
+  },
+  {
+    "id": "S11",
+    "title": "Existing brand first story",
+    "flow": "C — Inspect an existing campaign",
+    "action": "Open first story",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:01.433Z",
+    "desktop": "shots/S11.jpg",
+    "order": 11
+  },
+  {
+    "id": "S12",
+    "title": "Brand configuration",
+    "flow": "D — Configuration and operations",
+    "action": "Open Brand Kit",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:01.735Z",
+    "desktop": "shots/S12.jpg",
+    "order": 12
+  },
+  {
+    "id": "S13",
+    "title": "Operations entry",
+    "flow": "D — Configuration and operations",
+    "action": "Open Operations",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:02.138Z",
+    "desktop": "shots/S13.jpg",
+    "order": 13
+  },
+  {
+    "id": "S14",
+    "title": "Readiness detail receives keyboard focus",
+    "flow": "D — Configuration and operations",
+    "action": "Tab from Refresh focuses Readiness details; batch not invoked",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:07.689Z",
+    "desktop": "shots/S14.jpg",
+    "order": 14
+  },
+  {
+    "id": "S15",
+    "title": "Transient brand switch — exclude from data conclusions",
+    "flow": "E — Recover existing work",
+    "action": "Select existing recovery brand",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:07.727Z",
+    "desktop": "shots/S15.jpg",
+    "order": 15,
+    "caution": "Captured before asynchronous brand content settled. Not evidence of a tenant leak."
+  },
+  {
+    "id": "S16",
+    "title": "Recovery story editor",
+    "flow": "E — Recover existing work",
+    "action": "Open existing recovery story",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:08.085Z",
+    "desktop": "shots/S16.jpg",
+    "order": 16
+  },
+  {
+    "id": "S17",
+    "title": "Carousel design preview",
+    "flow": "E — Recover existing work",
+    "action": "Select Carousel then Design Mode",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:14.255Z",
+    "desktop": "shots/S17.jpg",
+    "order": 17
+  },
+  {
+    "id": "S18",
+    "title": "Profile grid comparison",
+    "flow": "E — Recover existing work",
+    "action": "Switch to 3×3 Profile Grid",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:14.599Z",
+    "desktop": "shots/S18.jpg",
+    "order": 18
+  },
+  {
+    "id": "S19",
+    "title": "Story safe-zone inspection",
+    "flow": "E — Recover existing work",
+    "action": "Select Story, In-Situ, Safe zones",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:15.465Z",
+    "desktop": "shots/S19.jpg",
+    "order": 19
+  },
+  {
+    "id": "S20",
+    "title": "Reel inspection",
+    "flow": "E — Recover existing work",
+    "action": "Select Reel",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:15.854Z",
+    "desktop": "shots/S20.jpg",
+    "order": 20
+  },
+  {
+    "id": "S21",
+    "title": "Reel playback controls and preflight",
+    "flow": "E — Recover existing work",
+    "action": "Focus scrubber via keyboard without playback",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:20.519Z",
+    "desktop": "shots/S21.jpg",
+    "order": 21
+  },
+  {
+    "id": "S22",
+    "title": "Existing campaign calendar",
+    "flow": "E — Recover existing work",
+    "action": "Return to calendar",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:00:21.434Z",
+    "desktop": "shots/S22.jpg",
+    "order": 22
+  },
+  {
+    "id": "S23",
+    "title": "Scheduling control after opening calendar card",
+    "flow": "E — Recover existing work",
+    "action": "Open existing Monday campaign; keyboard-focus assignment button without submitting",
+    "url": "http://localhost:3001/",
+    "time": "2026-10-18T01:02:11.292Z",
+    "desktop": "shots/S23.jpg",
+    "order": 23
+  }
+]

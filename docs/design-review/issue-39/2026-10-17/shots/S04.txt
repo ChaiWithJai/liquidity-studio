@@ -1,0 +1,65 @@
+- complementary:
+  - link "◈ LIQUIDITY STUDIO":
+    - /url: /
+    - text: ◈
+    - text: LIQUIDITY
+    - text: STUDIO
+  - text: Organization
+  - combobox "Organization":
+    - option "Studio" [selected]
+  - text: Brand
+  - combobox "Brand":
+    - option "The Liquidity Desk" [selected]
+    - option "Chai With Jai"
+    - option "Operator recovery check"
+  - navigation "Main navigation":
+    - button "Story backlog" [active]:
+      - generic: ▤
+      - text: Story backlog
+    - button "Content calendar":
+      - generic: ▦
+      - text: Content calendar
+    - button "Campaign Studio":
+      - generic: ◧
+      - text: Campaign Studio
+    - button "Brand Kit":
+      - generic: ◉
+      - text: Brand Kit
+    - button "Operations":
+      - generic: ⌘
+      - text: Operations
+  - generic: fo
+  - text: founder
+  - generic: founder
+  - button "Sign out": ↪
+- main:
+  - generic: Studio / The Liquidity Desk
+  - heading "Good stories, next up." [level=1]
+  - paragraph: A focused workspace for source-backed editorial work.
+  - generic: ● Private workspace
+  - heading "Story backlog 5" [level=2]:
+    - text: Story backlog
+    - generic: "5"
+  - paragraph: Opening a saved story keeps your edits.
+  - textbox "Search stories":
+    - /placeholder: Search stories…
+    - text: Huda
+  - combobox "Filter by status":
+    - option "All" [selected]
+    - option "In Backlog"
+  - article:
+    - generic: Tue
+    - generic: SOURCE
+    - generic: Founder Equity & Buybacks
+    - heading "How Huda Kattan Bought Back 100% of Huda Beauty" [level=3]
+    - paragraph: Add source facts before generating.
+    - generic: In Backlog
+    - button "Open story ↗"
+  - generic "Add a story"
+  - option "Monday" [selected]
+  - option "Tuesday"
+  - option "Wednesday"
+  - option "Thursday"
+  - option "Friday"
+  - option "Saturday"
+  - option "Sunday"

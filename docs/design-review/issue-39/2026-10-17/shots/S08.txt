@@ -1,0 +1,125 @@
+- complementary:
+  - link "◈ LIQUIDITY STUDIO":
+    - /url: /
+    - text: ◈
+    - text: LIQUIDITY
+    - text: STUDIO
+  - text: Organization
+  - combobox "Organization":
+    - option "Studio" [selected]
+  - text: Brand
+  - combobox "Brand":
+    - option "The Liquidity Desk" [selected]
+    - option "Chai With Jai"
+    - option "Operator recovery check"
+  - navigation "Main navigation":
+    - button "Story backlog":
+      - generic: ▤
+      - text: Story backlog
+    - button "Content calendar":
+      - generic: ▦
+      - text: Content calendar
+    - button "Campaign Studio":
+      - generic: ◧
+      - text: Campaign Studio
+    - button "Brand Kit":
+      - generic: ◉
+      - text: Brand Kit
+    - button "Operations":
+      - generic: ⌘
+      - text: Operations
+  - generic: fo
+  - text: founder
+  - generic: founder
+  - button "Sign out": ↪
+- main:
+  - generic: Studio / The Liquidity Desk
+  - heading "Campaign Studio" [level=1]
+  - paragraph: Edit the substance. Inspect the surface. Export with context.
+  - generic: ● Private workspace
+  - generic: ACTIVE STORY
+  - heading "How Huda Kattan Bought Back 100% of Huda Beauty" [level=2]
+  - text: No generated draft yet
+  - button "Generate draft"
+  - button "Export PNG ↗" [disabled]
+  - generic "Campaign format":
+    - button "Feed post 4:5":
+      - text: Feed post
+      - generic: 4:5
+    - button "Carousel 4 slides":
+      - text: Carousel
+      - generic: 4 slides
+    - button "Story 9:16":
+      - text: Story
+      - generic: 9:16
+    - button "Reel 30s script":
+      - text: Reel
+      - generic: 30s script
+  - heading "Review sources before generation" [level=3]
+  - paragraph: Add a source link to each claim and choose its review status. Unreviewed claims cannot enter a campaign.
+  - group "Claim 1":
+    - generic: Claim 1
+    - button "Remove claim 1"
+    - text: Claim text
+    - textbox "Claim text": $1.25B valuation in 2017 when private equity firm TSG Consumer Partners bought a minority stake
+    - text: HTTPS source URL
+    - textbox "HTTPS source URL":
+      - /placeholder: https://…
+    - text: Claim classification
+    - combobox "Claim classification":
+      - option "Select a classification"
+      - option "General editorial"
+      - option "Financial" [selected]
+      - option "Cultural"
+      - option "Clinical · separate reviewer required"
+    - text: Review status
+    - combobox "Review status":
+      - option "Unreviewed" [selected]
+      - option "Approved after source review"
+      - option "Rejected"
+  - group "Claim 2":
+    - generic: Claim 2
+    - button "Remove claim 2"
+    - text: Claim text
+    - textbox "Claim text": "2024 equity buyback: Huda Kattan repurchased TSG’s stake to reclaim 100% family ownership"
+    - text: HTTPS source URL
+    - textbox "HTTPS source URL":
+      - /placeholder: https://…
+    - text: Claim classification
+    - combobox "Claim classification":
+      - option "Select a classification"
+      - option "General editorial"
+      - option "Financial" [selected]
+      - option "Cultural"
+      - option "Clinical · separate reviewer required"
+    - text: Review status
+    - combobox "Review status":
+      - option "Unreviewed" [selected]
+      - option "Approved after source review"
+      - option "Rejected"
+  - group "Claim 3":
+    - generic: Claim 3
+    - button "Remove claim 3"
+    - text: Claim text
+    - textbox "Claim text": 70%–75% estimated gross margins on core color cosmetics product lines
+    - text: HTTPS source URL
+    - textbox "HTTPS source URL":
+      - /placeholder: https://…
+    - text: Claim classification
+    - combobox "Claim classification":
+      - option "Select a classification"
+      - option "General editorial"
+      - option "Financial" [selected]
+      - option "Cultural"
+      - option "Clinical · separate reviewer required"
+    - text: Review status
+    - combobox "Review status":
+      - option "Unreviewed" [selected]
+      - option "Approved after source review"
+      - option "Rejected"
+  - button "Add source claim"
+  - button "Save source review"
+  - generic: ◧
+  - heading "A story ready to take shape." [level=2]
+  - paragraph: Generate a draft from the supplied facts, then review every format.
+  - button "Generate four-format draft" [active]

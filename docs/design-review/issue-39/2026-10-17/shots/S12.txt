@@ -1,0 +1,127 @@
+- complementary:
+  - link "◈ LIQUIDITY STUDIO":
+    - /url: /
+    - text: ◈
+    - text: LIQUIDITY
+    - text: STUDIO
+  - text: Organization
+  - combobox "Organization":
+    - option "Studio" [selected]
+  - text: Brand
+  - combobox "Brand":
+    - option "The Liquidity Desk"
+    - option "Chai With Jai" [selected]
+    - option "Operator recovery check"
+  - navigation "Main navigation":
+    - button "Story backlog":
+      - generic: ▤
+      - text: Story backlog
+    - button "Content calendar":
+      - generic: ▦
+      - text: Content calendar
+    - button "Campaign Studio":
+      - generic: ◧
+      - text: Campaign Studio
+    - button "Brand Kit" [active]:
+      - generic: ◉
+      - text: Brand Kit
+    - button "Operations":
+      - generic: ⌘
+      - text: Operations
+  - generic: fo
+  - text: founder
+  - generic: founder
+  - button "Sign out": ↪
+- main:
+  - generic: Studio / Chai With Jai
+  - heading "Your brand, clearly." [level=1]
+  - paragraph: A focused workspace for source-backed editorial work.
+  - generic: ● Private workspace
+  - text: Brand name
+  - textbox "Brand name": Chai With Jai
+  - text: Website
+  - textbox "Website": https://chaiwithjai.com
+  - text: Tagline
+  - textbox "Tagline": They sell the aesthetic. We honor the lineage and prove the physiology.
+  - text: Editorial mission
+  - textbox "Editorial mission": Explore culture and wellbeing through clearly sourced, carefully reviewed stories.
+  - text: Wordmark / monogram
+  - textbox "Wordmark / monogram": CWJ // ॐ
+  - text: Heading font
+  - combobox "Heading font":
+    - option "Mona Sans" [selected]
+    - option "Inter"
+    - option "Instrument Serif"
+    - option "DejaVu Sans"
+  - text: Body font
+  - combobox "Body font":
+    - option "Mona Sans"
+    - option "Inter" [selected]
+    - option "Instrument Serif"
+    - option "DejaVu Sans"
+  - text: Night
+  - textbox "Night color": "#0b101b"
+  - textbox "Night hex": "#0B101B"
+  - text: Orange
+  - textbox "Orange color": "#e85d04"
+  - textbox "Orange hex": "#E85D04"
+  - text: Blue
+  - textbox "Blue color": "#219ebc"
+  - textbox "Blue hex": "#219EBC"
+  - text: Light
+  - textbox "Light color": "#e5e7eb"
+  - textbox "Light hex": "#E5E7EB"
+  - button "Save Brand Kit"
+  - region "Brand positioning reference":
+    - generic: OWNER POSITIONING · READ-ONLY REFERENCE
+    - heading "Proposed editorial positioning" [level=2]
+    - paragraph: These audiences and pillars describe editorial intent. They are not verified factual or clinical claims. Source review is required for every campaign.
+    - generic: proposed-positioning
+    - heading "Audience value groups" [level=3]
+    - article:
+      - heading "Lineage Reclamationists" [level=3]
+      - paragraph: 20–38
+      - paragraph: Authentic Sanskrit, Shastra and cultural roots
+    - article:
+      - heading "Empirical Bio-Strategists" [level=3]
+      - paragraph: 25–45
+      - paragraph: Source-backed physiology and biomarkers
+    - article:
+      - heading "Shakti & Sadhana Seekers" [level=3]
+      - paragraph: 24–50+
+      - paragraph: Devotion and intuition with rigor through the Ramanujan Continuum
+    - article:
+      - heading "Sovereign Healers & Educators" [level=3]
+      - paragraph: 28–55
+      - paragraph: Citation-backed pedagogy
+    - heading "Editorial pillars" [level=3]
+    - list:
+      - paragraph: Shastra vs. Grift Audits (De-Colonizing Wellness)
+      - paragraph: Ramanujan Continuum (Divine Feminine, Intuition & Neuroscience)
+      - paragraph: Pranayama & Autonomic Engineering
+      - paragraph: Empirical Ayurveda & Circadian Biochemistry
+      - paragraph: Lineage & Living Sanatana Dharma
+    - paragraph: Clinical claims remain quarantined until explicit source and clinical review are recorded.
+  - region "Unreviewed research topics":
+    - heading "Research queue · unreviewed" [level=2]
+    - paragraph: Research prompts are starting points, not approved claims. Open a topic to add sourced claims for review.
+    - article:
+      - 'heading "Ashwagandha: classical sources and evidence review" [level=3]'
+      - generic: unreviewed
+      - button "Review sources"
+    - article:
+      - heading "Ramanujan, devotion and mathematical proof" [level=3]
+      - generic: unreviewed
+      - button "Review sources"
+    - article:
+      - 'heading "Bhramari: lineage and primary physiology research" [level=3]'
+      - generic: unreviewed
+      - button "Review sources"
+    - article:
+      - heading "Dinacharya and circadian research" [level=3]
+      - generic: unreviewed
+      - button "Review sources"
+    - article:
+      - 'heading "Yoga Sutras: yamas, niyamas and posture" [level=3]'
+      - generic: unreviewed
+      - button "Review sources"

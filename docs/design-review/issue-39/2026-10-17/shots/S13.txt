@@ -1,0 +1,89 @@
+- complementary:
+  - link "◈ LIQUIDITY STUDIO":
+    - /url: /
+    - text: ◈
+    - text: LIQUIDITY
+    - text: STUDIO
+  - text: Organization
+  - combobox "Organization":
+    - option "Studio" [selected]
+  - text: Brand
+  - combobox "Brand":
+    - option "The Liquidity Desk"
+    - option "Chai With Jai" [selected]
+    - option "Operator recovery check"
+  - navigation "Main navigation":
+    - button "Story backlog":
+      - generic: ▤
+      - text: Story backlog
+    - button "Content calendar":
+      - generic: ▦
+      - text: Content calendar
+    - button "Campaign Studio":
+      - generic: ◧
+      - text: Campaign Studio
+    - button "Brand Kit":
+      - generic: ◉
+      - text: Brand Kit
+    - button "Operations" [active]:
+      - generic: ⌘
+      - text: Operations
+  - generic: fo
+  - text: founder
+  - generic: founder
+  - button "Sign out": ↪
+- main:
+  - generic: Studio / Chai With Jai
+  - heading "Studio operations" [level=1]
+  - paragraph: A focused workspace for source-backed editorial work.
+  - generic: ● Private workspace
+  - heading "Health & readiness" [level=2]
+  - button "Refresh"
+  - paragraph: Repository readiness does not establish provider connectivity.
+  - generic: ready
+  - generic: Service readiness
+  - generic: available
+  - generic: Repository check
+  - generic: not_checked
+  - generic: Generation provider
+  - generic "Readiness details"
+  - heading "Scoped operations" [level=2]
+  - button "Run this brand’s batch"
+  - paragraph:
+    - link "Download scoped feedback JSONL":
+      - /url: /api/admin/backprop-jsonl?organizationId=org_default&brandId=brand_vedic
+  - paragraph: Jobs use this organization and brand. Export is separate from publishing.
+  - heading "Recent batch attempts" [level=3]
+  - list "Recent batch attempts":
+    - listitem: No batch attempts for this brand.
+  - heading "Organization management" [level=2]
+  - text: New organization name
+  - textbox "New organization name"
+  - button "Create organization"
+  - text: New brand in Studio
+  - textbox "New brand in Studio"
+  - text: Brand preset
+  - combobox "Brand preset":
+    - option "The Liquidity Desk" [selected]
+    - option "Chai With Jai"
+  - button "Create brand"
+  - heading "Telemetry & generation" [level=2]
+  - generic: "0"
+  - generic: Recent generation traces
+  - generic: "0"
+  - generic: Recorded usage events
+  - generic: "0"
+  - generic: Recent operational events
+  - paragraph: Usage records describe operations; they are not customer invoices or proof of factual accuracy.
+  - table:
+    - rowgroup:
+      - row "Status Provider Model Duration":
+        - columnheader "Status"
+        - columnheader "Provider"
+        - columnheader "Model"
+        - columnheader "Duration"
+    - rowgroup:
+      - row "No generation traces for this brand.":
+        - cell "No generation traces for this brand."
+  - generic "Operational data"
+  - generic "Architecture reference"

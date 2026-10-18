@@ -1,0 +1,159 @@
+- complementary:
+  - link "◈ LIQUIDITY STUDIO":
+    - /url: /
+    - text: ◈
+    - text: LIQUIDITY
+    - text: STUDIO
+  - text: Organization
+  - combobox "Organization":
+    - option "Studio" [selected]
+  - text: Brand
+  - combobox "Brand":
+    - option "The Liquidity Desk"
+    - option "Chai With Jai"
+    - option "Operator recovery check" [selected]
+  - navigation "Main navigation":
+    - button "Story backlog":
+      - generic: ▤
+      - text: Story backlog
+    - button "Content calendar":
+      - generic: ▦
+      - text: Content calendar
+    - button "Campaign Studio":
+      - generic: ◧
+      - text: Campaign Studio
+    - button "Brand Kit":
+      - generic: ◉
+      - text: Brand Kit
+    - button "Operations":
+      - generic: ⌘
+      - text: Operations
+  - generic: fo
+  - text: founder
+  - generic: founder
+  - button "Sign out": ↪
+- main:
+  - generic: Studio / Operator recovery check
+  - heading "Campaign Studio" [level=1]
+  - paragraph: Edit the substance. Inspect the surface. Export with context.
+  - generic: ● Private workspace
+  - generic: ACTIVE STORY
+  - heading "Hosted Google and Vertex acceptance" [level=2]
+  - text: Provider draft · source review required
+  - button "Regenerate draft"
+  - button "Export PNG ↗"
+  - generic "Campaign format":
+    - button "Feed post 4:5":
+      - text: Feed post
+      - generic: 4:5
+    - button "Carousel 4 slides":
+      - text: Carousel
+      - generic: 4 slides
+    - button "Story 9:16":
+      - text: Story
+      - generic: 9:16
+    - button "Reel 30s script":
+      - text: Reel
+      - generic: 30s script
+  - heading "Make it yours." [level=3]
+  - generic: Saved draft
+  - paragraph: Edit the wording, then save to update your preview and exported artwork.
+  - text: Headline
+  - textbox "Headline": Hosted recovery acceptance
+  - text: Fact 1
+  - textbox "Fact 1": Google Identity Platform supports Google sign-in for web applications.
+  - text: Fact 2
+  - textbox "Fact 2": Google Identity Platform supports Google sign-in for web applications.
+  - text: Fact 3
+  - textbox "Fact 3": Google Identity Platform supports Google sign-in for web applications.
+  - text: Takeaway
+  - textbox "Takeaway": Review the sources before publishing.
+  - text: Caption
+  - textbox "Caption": Source-backed notes for editorial review.
+  - generic "Advanced format JSON"
+  - button "Save changes" [disabled]
+  - text: Assigned day
+  - combobox "Assigned day":
+    - option "Monday" [selected]
+    - option "Tuesday"
+    - option "Wednesday"
+    - option "Thursday"
+    - option "Friday"
+    - option "Saturday"
+    - option "Sunday"
+  - button "Assign to calendar"
+  - paragraph: Assigning a day does not publish or export.
+  - generic "Review source claims"
+  - option "Select a classification"
+  - option "General editorial" [selected]
+  - option "Financial"
+  - option "Cultural"
+  - option "Clinical · separate reviewer required"
+  - option "Unreviewed"
+  - option "Approved after source review" [selected]
+  - option "Rejected"
+  - region "Instagram preview simulator":
+    - generic: PREVIEW LAB
+    - heading "See it in context." [level=3]
+    - generic: Local simulation
+    - generic "Preview mode":
+      - button "Design Mode"
+      - button "In-Situ Instagram"
+      - button "3×3 Profile Grid"
+    - text: Phone width
+    - combobox "Phone width":
+      - option "375 px"
+      - option "390 px · generic"
+      - option "402 px · iPhone 16 Pro" [selected]
+      - option "430 px"
+    - text: Zoom
+    - slider "Preview zoom": "85"
+    - status: 85%
+    - checkbox "Safe zones"
+    - text: Safe zones
+    - checkbox "Caption ruler" [checked]
+    - text: Caption ruler
+    - paragraph: Approximate Instagram chrome. Local interactions only. Validate final assets in Instagram before publishing.
+    - generic "Simulated phone viewport":
+      - generic: 9:41
+      - generic: ▴ ▰ ▮
+      - generic: th
+      - generic: theliquiditydesk
+      - generic: Editorial draft
+      - button "Post options": •••
+      - group "Artwork preview":
+        - img "Hosted recovery acceptance":
+          - generic: THE LIQUIDITY DESK · The Liquidity Desk
+          - generic: Hosted recovery acceptance
+          - generic: Google Identity Platform supportsGoogle sign-in for web applications.
+          - generic: Google Identity Platform supportsGoogle sign-in for web applications.
+          - generic: Google Identity Platform supportsGoogle sign-in for web applications.
+          - generic: Review the sources before publishing.
+          - generic: EDITORIAL DRAFT
+      - button "Like post": ♡
+      - button "Comment on post": ♧
+      - button "Share post preview": ➤
+      - button "Save post locally": ♧
+      - paragraph: 0 local likes · Preview only
+      - text: theliquiditydesk Source-backed notes for editorial review.
+      - generic: LOCAL DRAFT · NO INSTAGRAM CONNECTION
+      - text: Approximate fold
+      - spinbutton "Caption fold threshold": "125"
+      - text: characters
+      - paragraph:
+        - mark: Source-backed notes for editorial review.
+        - text: │
+      - text: Configurable simulation. Actual truncation varies by app, device and layout.
+    - generic: Measured preflight
+    - button "Measure again"
+    - generic: "0"
+    - text: text boxes in chrome zones
+    - generic: "0"
+    - text: text boxes outside artwork
+    - generic: 9.73:1
+    - text: minimum text/background contrast
+    - generic: 4:5
+    - text: target ratio · matched
+    - generic: "41"
+    - text: caption characters before simulated fold
+    - paragraph: Measured SVG text boxes and fill contrast against the base background; images, glyph shapes and all native app variations are not covered. Review required. No confidence score is inferred.

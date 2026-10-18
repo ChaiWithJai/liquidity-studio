@@ -1,0 +1,96 @@
+- complementary:
+  - link "◈ LIQUIDITY STUDIO":
+    - /url: /
+    - text: ◈
+    - text: LIQUIDITY
+    - text: STUDIO
+  - text: Organization
+  - combobox "Organization":
+    - option "Studio" [selected]
+  - text: Brand
+  - combobox "Brand":
+    - option "The Liquidity Desk"
+    - option "Chai With Jai"
+    - option "Operator recovery check" [selected]
+  - navigation "Main navigation":
+    - button "Story backlog":
+      - generic: ▤
+      - text: Story backlog
+    - button "Content calendar":
+      - generic: ▦
+      - text: Content calendar
+    - button "Campaign Studio":
+      - generic: ◧
+      - text: Campaign Studio
+    - button "Brand Kit":
+      - generic: ◉
+      - text: Brand Kit
+    - button "Operations":
+      - generic: ⌘
+      - text: Operations
+  - generic: fo
+  - text: founder
+  - generic: founder
+  - button "Sign out": ↪
+- main:
+  - generic: Studio / Operator recovery check
+  - heading "Good stories, next up." [level=1]
+  - paragraph: A focused workspace for source-backed editorial work.
+  - generic: ● Private workspace
+  - heading "Story backlog 5" [level=2]:
+    - text: Story backlog
+    - generic: "5"
+  - paragraph: Opening a saved story keeps your edits.
+  - textbox "Search stories":
+    - /placeholder: Search stories…
+  - combobox "Filter by status":
+    - option "All" [selected]
+    - option "In Backlog"
+  - article:
+    - generic: Mon
+    - generic: SOURCE
+    - generic: Source research
+    - 'heading "Ashwagandha: classical sources and evidence review" [level=3]'
+    - paragraph: Add source facts before generating.
+    - generic: In Backlog
+    - button "Open story ↗"
+  - article:
+    - generic: Mon
+    - generic: SOURCE
+    - generic: Source research
+    - heading "Ramanujan, devotion and mathematical proof" [level=3]
+    - paragraph: Add source facts before generating.
+    - generic: In Backlog
+    - button "Open story ↗"
+  - article:
+    - generic: Mon
+    - generic: SOURCE
+    - generic: Source research
+    - 'heading "Bhramari: lineage and primary physiology research" [level=3]'
+    - paragraph: Add source facts before generating.
+    - generic: In Backlog
+    - button "Open story ↗"
+  - article:
+    - generic: Mon
+    - generic: SOURCE
+    - generic: Source research
+    - heading "Dinacharya and circadian research" [level=3]
+    - paragraph: Add source facts before generating.
+    - generic: In Backlog
+    - button "Open story ↗"
+  - article:
+    - generic: Mon
+    - generic: SOURCE
+    - generic: Source research
+    - 'heading "Yoga Sutras: yamas, niyamas and posture" [level=3]'
+    - paragraph: Add source facts before generating.
+    - generic: In Backlog
+    - button "Open story ↗"
+  - generic "Add a story"
+  - option "Monday" [selected]
+  - option "Tuesday"
+  - option "Wednesday"
+  - option "Thursday"
+  - option "Friday"
+  - option "Saturday"
+  - option "Sunday"

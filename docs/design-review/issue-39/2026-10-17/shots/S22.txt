@@ -1,0 +1,74 @@
+- complementary:
+  - link "◈ LIQUIDITY STUDIO":
+    - /url: /
+    - text: ◈
+    - text: LIQUIDITY
+    - text: STUDIO
+  - text: Organization
+  - combobox "Organization":
+    - option "Studio" [selected]
+  - text: Brand
+  - combobox "Brand":
+    - option "The Liquidity Desk"
+    - option "Chai With Jai"
+    - option "Operator recovery check" [selected]
+  - navigation "Main navigation":
+    - button "Story backlog":
+      - generic: ▤
+      - text: Story backlog
+    - button "Content calendar" [active]:
+      - generic: ▦
+      - text: Content calendar
+    - button "Campaign Studio":
+      - generic: ◧
+      - text: Campaign Studio
+    - button "Brand Kit":
+      - generic: ◉
+      - text: Brand Kit
+    - button "Operations":
+      - generic: ⌘
+      - text: Operations
+  - generic: fo
+  - text: founder
+  - generic: founder
+  - button "Sign out": ↪
+- main:
+  - generic: Studio / Operator recovery check
+  - heading "Make room for the week." [level=1]
+  - paragraph: A focused workspace for source-backed editorial work.
+  - generic: ● Private workspace
+  - heading "Weekly editorial calendar" [level=2]
+  - generic: Assignments only · no automatic publishing
+  - heading "Monday" [level=3]
+  - button "Acceptance test Hosted Google and Vertex acceptance Exported":
+    - generic: Acceptance test
+    - generic: Hosted Google and Vertex acceptance
+    - generic: Exported
+  - button "Women’s Sports Economics Angel City FC’s $250M Control Deal & NWSL Media Boom In Backlog":
+    - generic: Women’s Sports Economics
+    - generic: Angel City FC’s $250M Control Deal & NWSL Media Boom
+    - generic: In Backlog
+  - heading "Tuesday" [level=3]
+  - button "Founder Equity & Buybacks How Huda Kattan Bought Back 100% of Huda Beauty In Backlog":
+    - generic: Founder Equity & Buybacks
+    - generic: How Huda Kattan Bought Back 100% of Huda Beauty
+    - generic: In Backlog
+  - heading "Wednesday" [level=3]
+  - button "Music & Box Office Backend Beyoncé’s Direct-to-AMC Concert Film Distribution Play In Backlog":
+    - generic: Music & Box Office Backend
+    - generic: Beyoncé’s Direct-to-AMC Concert Film Distribution Play
+    - generic: In Backlog
+  - heading "Thursday" [level=3]
+  - button "Global IPOs & Retail Falguni Nayar’s $13B Omnichannel Beauty IPO in India In Backlog":
+    - generic: Global IPOs & Retail
+    - generic: Falguni Nayar’s $13B Omnichannel Beauty IPO in India
+    - generic: In Backlog
+  - heading "Friday" [level=3]
+  - button "Film Financing & IP Ownership Margot Robbie & LuckyChap’s $50M Producer Backend Check In Backlog":
+    - generic: Film Financing & IP Ownership
+    - generic: Margot Robbie & LuckyChap’s $50M Producer Backend Check
+    - generic: In Backlog
+  - heading "Saturday" [level=3]
+  - paragraph: Room for a story
+  - heading "Sunday" [level=3]
+  - paragraph: Room for a story

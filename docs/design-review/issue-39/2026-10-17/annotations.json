@@ -1,0 +1,257 @@
+[
+  {
+    "id": "review-1",
+    "sample": "S01",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.3819444444444444,
+      "w": 0.7421875,
+      "h": 0.5833333333333334
+    },
+    "note": "Tall backlog rows show only three of five stories at 1280×720. No visible column controls, selection, saved views or bulk actions.",
+    "mode": "T3 · Work surfaces",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-2",
+    "sample": "S02",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.2638888888888889,
+      "w": 0.7421875,
+      "h": 0.2916666666666667
+    },
+    "note": "One matching story but heading still reads 5. Show 1 of 5 and active filters.",
+    "mode": "T1 · Observable state",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-3",
+    "sample": "S04",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.72265625,
+      "y": 0.2777777777777778,
+      "w": 0.2421875,
+      "h": 0.08333333333333333
+    },
+    "note": "Positive: Huda search survives editor → backlog. Preserve continuity in detail drawers and per-brand views.",
+    "mode": "T4 · Fluidity",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-4",
+    "sample": "S05",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.3888888888888889,
+      "w": 0.7421875,
+      "h": 0.3402777777777778
+    },
+    "note": "No matches is presented as No stories here yet, despite count 5. Distinguish empty brand from search result; offer Clear filters.",
+    "mode": "T1 · Observable state",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-5",
+    "sample": "S09",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.2777777777777778,
+      "w": 0.7421875,
+      "h": 0.4513888888888889
+    },
+    "note": "Search crosses brand boundary and repeats false empty state. S05 → S09 → S10 demonstrates a recurring recovery burden.",
+    "mode": "T4 · Fluidity",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-6",
+    "sample": "S03",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.7421875,
+      "y": 0.3333333333333333,
+      "w": 0.21875,
+      "h": 0.06944444444444445
+    },
+    "note": "Generate enabled despite empty source URLs and unreviewed claims. Not invoked; enforcement untested. Show actionable prerequisite summary before generation.",
+    "mode": "T1 · Observable state",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-7",
+    "sample": "S08",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.4722222222222222,
+      "w": 0.7421875,
+      "h": 0.5069444444444444
+    },
+    "note": "Long source review separates generation controls from prerequisites. Keep review summary and task actions visible without weakening source gates.",
+    "mode": "T4 · Fluidity",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-8",
+    "sample": "S06",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.3472222222222222,
+      "w": 0.7421875,
+      "h": 0.5625
+    },
+    "note": "Narrow calendar columns force long titles into tall cards. Sunday offscreen. No dated range or visible direct-move affordance.",
+    "mode": "T3 · Work surfaces",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-9",
+    "sample": "S22",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.2708333333333333,
+      "w": 0.12109375,
+      "h": 0.6458333333333334
+    },
+    "note": "Monday already stacks two cards: preserve existing stacking. Add direct move/reorder affordances and explicit dates/timezone. Assignments only is useful truthful copy.",
+    "mode": "T3 · Work surfaces",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-10",
+    "sample": "S16",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.3333333333333333,
+      "w": 0.7421875,
+      "h": 0.1111111111111111
+    },
+    "note": "Saved draft exists, but no visible actor, revision, presence or delegation state. Live collaboration remains a proposal; bind helper actions to brand+story+revision.",
+    "mode": "T2 · Shared control",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-11",
+    "sample": "S18",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.19444444444444445,
+      "w": 0.7421875,
+      "h": 0.7986111111111112
+    },
+    "note": "Carousel selected while profile grid shows feed artwork. Clarify feed-grid projection so users do not verify the wrong format.",
+    "mode": "T1 · Observable state",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-12",
+    "sample": "S19",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.5390625,
+      "y": 0.4027777777777778,
+      "w": 0.40625,
+      "h": 0.1527777777777778
+    },
+    "note": "Useful preview modes and simulation labels; dense controls and long edit column separate preview from scheduling and review.",
+    "mode": "T4 · Fluidity",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-13",
+    "sample": "S21",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.54296875,
+      "y": 0.6805555555555556,
+      "w": 0.3984375,
+      "h": 0.3125
+    },
+    "note": "Preflight reports one text box in chrome zones. Provide jump/highlight to offending text rather than requiring manual search.",
+    "mode": "T1 · Observable state",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-14",
+    "sample": "S21",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.23828125,
+      "y": 0.5277777777777778,
+      "w": 0.25,
+      "h": 0.3194444444444444
+    },
+    "note": "onScreenText and bRollDirection expose internal field names. Use readable labels and guidance.",
+    "mode": "T4 · Fluidity",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-15",
+    "sample": "S13",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0.3125,
+      "w": 0.7421875,
+      "h": 0.5902777777777778
+    },
+    "note": "Batch history and telemetry exist. No visible helper ownership, plan preview or pause/takeover in inspected empty state. Backend durability cannot be inferred.",
+    "mode": "T2 · Shared control",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-16",
+    "sample": "S14",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.21484375,
+      "y": 0,
+      "w": 0.7421875,
+      "h": 0.2916666666666667
+    },
+    "note": "Service/repository/provider readiness distinction is useful. not_checked needs an actionable next step; walk-away jobs need durable detail and resumption tests.",
+    "mode": "T2 · Shared control",
+    "from": "reviewer",
+    "ts": 1792285279709
+  },
+  {
+    "id": "review-17",
+    "sample": "S23",
+    "viewport": "desktop",
+    "rect": {
+      "x": 0.234375,
+      "y": 0.5763888888888888,
+      "w": 0.25390625,
+      "h": 0.22916666666666666
+    },
+    "note": "Calendar → editor → bottom of Reel form is the actual path to Assigned day. Direct calendar move with keyboard alternative and undo can remove the form-navigation detour while preserving explicit assignment-only semantics.",
+    "mode": "T3 · Work surfaces",
+    "from": "reviewer",
+    "ts": 1792285383602
+  }
+]
