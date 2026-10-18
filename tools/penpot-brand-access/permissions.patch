@@ -1,0 +1,185 @@
+--- a/backend/src/app/rpc.clj
++++ b/backend/src/app/rpc.clj
+@@ -17,6 +17,7 @@
+    [app.common.uuid :as uuid]
+    [app.config :as cf]
+    [app.db :as db]
++   [app.studio.access :as studio-access]
+    [app.http :as-alias http]
+    [app.http.access-token :as actoken]
+    [app.http.client :as-alias http.client]
+@@ -349,7 +350,8 @@
+     (wrap-spec-conform cfg $ mdata)
+     (wrap-params-validation cfg $ mdata)
+     (wrap-authentication cfg $ mdata)
+-    (wrap-nitrate-sso cfg $ mdata)))
++    (wrap-nitrate-sso cfg $ mdata)
++    (studio-access/wrap-rpc cfg $ mdata)))
+ 
+ (defn- wrap-management
+   [cfg f mdata]
+@@ -362,7 +364,8 @@
+     (wrap-spec-conform cfg $ mdata)
+     (wrap-params-validation cfg $ mdata)
+     (wrap-authentication cfg $ mdata)
+-    (wrap-nitrate-sso cfg $ mdata)))
++    (wrap-nitrate-sso cfg $ mdata)
++    (studio-access/wrap-rpc cfg $ mdata)))
+ 
+ 
+ 
+--- a/backend/src/app/binfile/common.clj
++++ b/backend/src/app/binfile/common.clj
+@@ -23,6 +23,7 @@
+    [app.common.weak :as weak]
+    [app.config :as cf]
+    [app.db :as db]
++   [app.studio.access :as studio-access]
+    [app.db.sql :as sql]
+    [app.features.fdata :as fdata]
+    [app.features.file-migrations :as fmigr]
+@@ -386,6 +387,7 @@
+ 
+ (defn get-file-permissions
+   ([conn profile-id file-id]
++   (studio-access/guard-file! conn file-id)
+    (let [rows     (get-file-permissions* conn profile-id file-id)
+          is-owner (boolean (some :is-owner rows))
+          is-admin (boolean (some :is-admin rows))
+@@ -495,7 +497,10 @@
+   (db/run! cfg (fn [{:keys [::db/conn]}]
+                  (let [ids' (db/create-array conn "uuid" ids)]
+                    (->> (db/exec! conn [sql:get-libraries ids'])
+-                        (into #{} xf-map-id))))))
++                        (into #{} (comp (map (fn [row]
++                                              (doseq [source-id ids]
++                                                (studio-access/guard-library! conn source-id (:id row)))
++                                              row)) xf-map-id)))))))
+ 
+ (defn get-file-object-thumbnails
+   "Return all file object thumbnails for a given file."
+@@ -881,7 +886,9 @@
+ (defn get-file-libraries
+   [conn file-id]
+   (into []
+-        (map decode-row-features)
++        (map (fn [row]
++               (studio-access/guard-library! conn file-id (:id row))
++               (decode-row-features row)))
+         (db/exec! conn [sql:get-file-libraries file-id file-id file-id])))
+ 
+ (defn get-resolved-file-libraries
+--- a/backend/src/app/rpc/commands/teams.clj
++++ b/backend/src/app/rpc/commands/teams.clj
+@@ -17,6 +17,7 @@
+    [app.common.uuid :as uuid]
+    [app.config :as cf]
+    [app.db :as db]
++   [app.studio.access :as studio-access]
+    [app.db.sql :as sql]
+    [app.email :as eml]
+    [app.features.logical-deletion :as ldel]
+@@ -50,6 +51,7 @@
+ 
+ (defn get-permissions
+   [conn profile-id team-id]
++  (studio-access/guard-team! team-id)
+   (let [rows     (db/exec! conn [sql:team-permissions profile-id team-id])
+         is-owner (boolean (some :is-owner rows))
+         is-admin (boolean (some :is-admin rows))
+@@ -186,6 +188,7 @@
+                   sql:get-teams-with-permissions-and-subscription
+                   sql:get-teams-with-permissions)]
+     (->> (db/exec! conn [sql (:default-team-id profile) profile-id])
++         (filter #(studio-access/context-team-allowed? (:id %)))
+          (into [] xform:process-teams))))
+ 
+ (def ^:private schema:get-teams
+@@ -216,6 +219,7 @@
+ (defn- get-owned-teams
+   [cfg profile-id]
+   (->> (db/exec! cfg [sql:get-owned-teams profile-id])
++       (filter #(studio-access/context-team-allowed? (:id %)))
+        (into [] (map decode-row))))
+ 
+ (sv/defmethod ::get-owned-teams
+@@ -622,6 +626,7 @@
+   ([cfg params]
+    (add-profile-to-team! cfg params nil))
+   ([{:keys [::db/conn] :as cfg} {:keys [:profile-id :team-id] :as params} options]
++   (studio-access/guard-team-expansion! team-id)
+    (assert (db/connection-map? cfg)
+            "expected cfg with valid connection")
+    (when (contains? cf/flags :admin-console)
+--- a/backend/src/app/rpc/commands/projects.clj
++++ b/backend/src/app/rpc/commands/projects.clj
+@@ -13,6 +13,7 @@
+    [app.common.time :as ct]
+    [app.common.uuid :as uuid]
+    [app.db :as db]
++   [app.studio.access :as studio-access]
+    [app.db.sql :as-alias sql]
+    [app.features.logical-deletion :as ldel]
+    [app.loggers.audit :as-alias audit]
+@@ -51,6 +52,7 @@
+ 
+ (defn- get-permissions
+   [conn profile-id project-id]
++  (studio-access/guard-project! conn project-id)
+   (let [rows     (db/exec! conn [sql:project-permissions
+                                  project-id profile-id
+                                  project-id profile-id])
+@@ -163,7 +165,8 @@
+ 
+ (defn get-all-projects
+   [conn profile-id]
+-  (db/exec! conn [sql:all-projects profile-id profile-id]))
++  (filterv #(studio-access/context-team-allowed? (:team-id %))
++           (db/exec! conn [sql:all-projects profile-id profile-id])))
+ 
+ 
+ ;; --- QUERY: Get project
+--- a/backend/src/app/rpc/commands/files.clj
++++ b/backend/src/app/rpc/commands/files.clj
+@@ -24,6 +24,7 @@
+    [app.common.uri :as uri]
+    [app.config :as cf]
+    [app.db :as db]
++   [app.studio.access :as studio-access]
+    [app.db.sql :as-alias sql]
+    [app.features.fdata :as feat.fdata]
+    [app.features.logical-deletion :as ldel]
+@@ -735,7 +736,8 @@
+ 
+ (defn get-library-file-references
+   [conn file-id]
+-  (db/exec! conn [sql:library-using-files file-id]))
++  (filterv #(studio-access/context-team-allowed? (studio-access/file-team conn (:id %)))
++           (db/exec! conn [sql:library-using-files file-id])))
+ 
+ (def ^:private schema:get-library-file-references
+   [:map {:title "get-library-file-references"}
+@@ -845,6 +847,7 @@
+ 
+ (defn- get-file-info
+   [{:keys [::db/conn] :as cfg} {:keys [id] :as params}]
++  (studio-access/guard-file! conn id)
+   (db/get conn :file
+           {:id id}
+           {::sql/columns [:id :deleted-at]}))
+--- a/backend/src/app/rpc/commands/comments.clj
++++ b/backend/src/app/rpc/commands/comments.clj
+@@ -17,6 +17,7 @@
+    [app.common.uuid :as uuid]
+    [app.config :as cf]
+    [app.db :as db]
++   [app.studio.access :as studio-access]
+    [app.db.sql :as sql]
+    [app.email :as eml]
+    [app.features.fdata :as feat.fdata]
+@@ -812,4 +813,5 @@
+    cfg
+    (fn [{:keys [::db/conn]}]
+      (doseq [thread-id threads]
++       (studio-access/guard-thread! conn thread-id)
+        (upsert-comment-thread-status! conn profile-id thread-id)))))

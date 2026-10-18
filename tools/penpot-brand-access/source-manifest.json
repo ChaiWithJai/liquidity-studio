@@ -1,11 +1,13 @@
 {
   "nativePin": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
   "files": {
-    "access.clj": "ed90f958e578baf1ca0ab9967a5f8fab3974e2b0e07ba500efdd8e931160daa9",
-    "access_test.clj": "db2d35759d552f6a213722292ed7150acfa2b4c7ed73455a8c36106e932cf062",
-    "http_authority.clj": "be28094e61c1e7347a43831e4f26cb438482403315da0cf899aaec3e63fad3f6",
-    "http_authority_test.clj": "bc21ddd2c235d647d1f486181664fec2aa83932b0ed20686da7396219ee09a21",
+    "access.clj": "d2c65e88dc3f35df93d48c4cc58fc7006d8c7f75bd249116f3c25d1c6e202e72",
+    "access_test.clj": "42cb72694c7603598bce1fd0abc0b5f9064980da65734bccc7b5dd9f07e894a1",
+    "http_authority.clj": "740bfc66743b39486b8498fdb88229ee5c267063255a0588fac0ea1c8fe26238",
+    "http_authority_test.clj": "0742811435d527313f6153621ac0184a260f35bdf9aa74ac1ded00ef653d24b9",
     "reconciliation_test.clj": "2ed264643fb001b046e52dcea32c05a14f00bad77fa46679134f90026e834c94",
     "studio_access.clj": "7ef0b73daef7e0701d3d6551cfd1632f1a912e2971e9faad5029063c27d227e5"
-  }
+  },
+  "permissionsPatchSha256": "da1e21eb1061f73682d9d116bbfb199be032ae537be69deb6be725223f1473cb",
+  "upstreamManifestSha256": "b76992071c7bca42f1cd931bc9365d856ef7e9b9d17761171b062673c2cee470"
 }

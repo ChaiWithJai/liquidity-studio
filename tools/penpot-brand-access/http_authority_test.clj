@@ -51,3 +51,22 @@
       ;; A functional deadline check, not a latency/performance benchmark.
       ;; The old inline body callback blocks for five seconds before get(timeout).
       (is (< (/ (- (System/nanoTime) start) 1000000.0) 3000.0)))))
+(deftest administrative-transport-keeps-acting-human-separate-from-actual-session
+  (let [calls (atom [])
+        native-client (http/build-client {:follow-redirects :never})
+        read-authority (authority/create {::client/client native-client :grant-key (apply str (repeat 43 "a"))
+                                         :callback-origin "http://host.docker.internal:39044"})
+        operator (uuid/parse "55555555-5555-4555-8555-555555555555")
+        person (uuid/parse "33333333-3333-4333-8333-333333333333")
+        session (uuid/parse "44444444-4444-4444-8444-444444444444")]
+    (with-redefs [http/send-async (fn [request _]
+                                  (swap! calls conj request)
+                                  (CompletableFuture/completedFuture {:status 200 :body (ByteArrayInputStream. (.getBytes "{\"allowed\":true}" "UTF-8"))}))]
+      (is (:allowed (read-authority {:native-profile-id person :native-operator-profile-id operator
+                                    :native-team-id (uuid/parse "11111111-1111-4111-8111-111111111111") :operation :write
+                                    :native-session {:id session :profile-id operator}})))
+      (let [request (first @calls) payload (json/decode (:body request))]
+        (is (.endsWith (:uri request) "/admission"))
+        (is (= (str operator) (get payload "nativeOperatorProfileId")))
+        (is (= (str person) (get payload "nativeProfileId")))
+        (is (= (str operator) (get-in payload ["nativeSession" "profileId"])))))))

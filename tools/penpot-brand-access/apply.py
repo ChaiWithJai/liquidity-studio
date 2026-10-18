@@ -13,13 +13,22 @@ if set(manifest['files'])!=set(mapping):raise SystemExit('Incomplete C2 source i
 for name in mapping:
  p=source/name
  if p.is_symlink() or not p.is_file() or hashlib.sha256(p.read_bytes()).hexdigest()!=manifest['files'][name]:raise SystemExit('C2 source hash mismatch')
+upstream=json.loads((source/'upstream-manifest.json').read_text())
+if hashlib.sha256((source/'permissions.patch').read_bytes()).hexdigest()!=manifest['permissionsPatchSha256'] or hashlib.sha256((source/'upstream-manifest.json').read_bytes()).hexdigest()!=manifest['upstreamManifestSha256']:raise SystemExit('Native permission patch inventory changed')
+for name,entry in upstream['files'].items():
+ p=root/'backend/src/app'/name
+ if p.is_symlink() or hashlib.sha256(p.read_bytes()).hexdigest()!=entry['beforeSha256']:raise SystemExit('Native permission source changed: '+name)
 rpc=root/'backend/src/app/rpc.clj';original=rpc.read_bytes()
 anchor=b"'app.rpc.commands.access-token\n"
 if hashlib.sha256(original).hexdigest()!=RPC_SHA or original.count(anchor)!=1:raise SystemExit('Native RPC source changed')
 for name,target in mapping.items():
  p=root/target
  if not p.resolve().is_relative_to(root) or p.exists():raise SystemExit('Refusing existing or escaping C2 target')
-patched=original.replace(anchor,b"'app.rpc.commands.studio-access\n          "+anchor)
+subprocess.run(['git','-C',str(root),'apply','--check',str(source/'permissions.patch')],check=True,timeout=10)
+subprocess.run(['git','-C',str(root),'apply',str(source/'permissions.patch')],check=True,timeout=10)
+for name,entry in upstream['files'].items():
+ if hashlib.sha256((root/'backend/src/app'/name).read_bytes()).hexdigest()!=entry['afterSha256']:raise SystemExit('Native permission patched bytes mismatch: '+name)
+patched=rpc.read_bytes().replace(anchor,b"'app.rpc.commands.studio-access\n          "+anchor)
 for name,target in mapping.items():
  p=root/target;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes((source/name).read_bytes())
 rpc.write_bytes(patched)

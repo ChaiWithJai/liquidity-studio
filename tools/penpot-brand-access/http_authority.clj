@@ -10,7 +10,7 @@
            [java.util.function Function BiConsumer]))
 
 (defn- body [resource]
-  (if (:native-operator-profile-id resource)
+  (if (:intent-id resource)
     {:nativeOperatorProfileId (str (:native-operator-profile-id resource))
      :nativeTeamId (str (:native-team-id resource))
      :nativeMemberId (str (:native-member-id resource))
@@ -21,13 +21,16 @@
       ;; Legacy v0 :id may be the raw cookie credential. Never stringify it.
       (when-not (and (uuid? (get-in resource [:native-session :id]))
                      (uuid? (:native-profile-id resource))
-                     (= (:native-profile-id resource) (get-in resource [:native-session :profile-id])))
+                     (= (or (:native-operator-profile-id resource) (:native-profile-id resource))
+                        (get-in resource [:native-session :profile-id])))
         (throw (IllegalArgumentException. "Governed native access requires a UUID v1 session; sign in again")))
-    {:nativeProfileId (str (:native-profile-id resource))
+    (cond-> {:nativeProfileId (str (:native-profile-id resource))
      :nativeTeamId (str (:native-team-id resource))
      :operation (name (:operation resource))
      :nativeSession {:id (str (get-in resource [:native-session :id]))
-                     :profileId (str (get-in resource [:native-session :profile-id]))}})))
+                     :profileId (str (get-in resource [:native-session :profile-id]))}}
+      (:native-operator-profile-id resource)
+      (assoc :nativeOperatorProfileId (str (:native-operator-profile-id resource)))))))
 
 (defn create
   "Uses the existing pinned java-http-clj client. Fixed local callback, key and
@@ -41,7 +44,7 @@
     (throw (IllegalArgumentException. "Fixed native authority configuration required")))
   (fn [resource]
     (let [payload (try (json/encode (body resource)) (catch Exception _ nil))
-          path (if (:native-operator-profile-id resource) "reconciliation" "admission")
+          path (if (:intent-id resource) "reconciliation" "admission")
           stream (atom nil)
           request (when (and payload (<= (alength (.getBytes payload "UTF-8")) 4096))
                     {:uri (str callback-origin "/api/native/penpot/access/" path)
