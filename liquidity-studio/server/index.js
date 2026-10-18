@@ -627,8 +627,10 @@ export function createHttpServer(
             ),
           );
         const candidateRoute = route.match(
-          /^\/api\/studio\/preparations\/([a-f0-9-]{36})(?:\/(edit|review-plan|promote))?$/,
+          /^\/api\/studio\/preparations\/([a-f0-9-]{36})(?:\/(edit|review-plan|promote|fork-plan|fork))?$/,
         );
+        if(candidateRoute&&candidateRoute[2]==="fork-plan"&&req.method==="GET")return json(200,await platform.preparedPromotion(scope,repo).historicalForkPlan(user,candidateRoute[1]));
+        if(candidateRoute&&candidateRoute[2]==="fork"&&req.method==="POST")return json(201,await platform.preparedPromotion(scope,repo).forkHistorical(user,candidateRoute[1],body));
         if (
           candidateRoute &&
           candidateRoute[2] === "review-plan" &&

@@ -1,4 +1,5 @@
 import { assertRestoreAvailable } from "./restore-gate.js";
+import { historicalForkPlan, forkHistoricalCandidate } from "./prepared-historical.js";
 import { randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
 import { exact, hash } from "./workspace-schema.js";
@@ -89,7 +90,7 @@ export class PreparedPromotionService {
       evidenceSha256: evidenceDigest(entry.evidence),
       copyFieldCount: copyFields(artwork).length,
       sourceUrls: entry.evidence.map((source) => source.sourceUrl),
-      requiresClinicalReview:
+      requiresClinicalReview: entry.derivation?.requiresClinicalReview === true ||
         (entry.candidate.sourceSelection || []).some(
           (source) => source.kind === "clinical",
         ) ||
@@ -99,6 +100,8 @@ export class PreparedPromotionService {
         "Exact saved copy and retrieved evidence reviewed by the current operator; not automated factual or clinical accuracy.",
     };
   }
+  async historicalForkPlan(actor,id){return historicalForkPlan(this,actor,id);}
+  async forkHistorical(actor,id,input){return forkHistoricalCandidate(this,actor,id,input);}
   async fork(actor, storyId, input) {
     exact(input, [
       "idempotencyKey",
@@ -329,7 +332,7 @@ export class PreparedPromotionService {
           evidenceDigest(entry.evidence) !== input.evidenceSha256
         )
           throw fail(409, "Saved draft or evidence changed after review");
-        const clinical =
+        const clinical = entry.derivation?.requiresClinicalReview === true ||
           (entry.candidate.sourceSelection || []).some(
             (source) => source.kind === "clinical",
           ) ||
