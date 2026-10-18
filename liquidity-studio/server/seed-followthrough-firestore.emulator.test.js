@@ -146,6 +146,10 @@ test('Firestore operator commands: zero-write snapshot, apply unknown reply, sam
  let sent;
  await assert.rejects(runFirestoreSeedOperator(apply,'apply',{...cli,createStore,dispatch:async(repo,id)=>{const receipt=JSON.parse(fs.readFileSync(intent));assert.equal(receipt.stage,'accepted');assert.equal(receipt.jobId,id);assert.ok(receipt.operationId);sent=id;throw new Error('controlled lost Cloud Tasks reply');}}),/lost Cloud Tasks reply/);
  assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'dispatch-unknown');assert.equal((await f.repo.read()).operatorJobs.length,1);
- const done=await runFirestoreSeedOperator(apply,'apply',{...cli,createStore,dispatch:async(repo,id)=>{assert.equal(id,sent);assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'accepted');}});
+ await assert.rejects(runFirestoreSeedOperator(apply,'apply',{...cli,createStore,dispatch:async()=>({error:'controlled returned enqueue error'})}),error=>error.status===503);
+ assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'dispatch-unknown');
+ await assert.rejects(runFirestoreSeedOperator(apply,'apply',{...cli,createStore,dispatch:async()=>undefined}),error=>error.status===503);
+ assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'dispatch-unknown');
+ const done=await runFirestoreSeedOperator(apply,'apply',{...cli,createStore,dispatch:async(repo,id)=>{assert.equal(id,sent);assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'accepted');await repo.mutate(state=>{state.operatorJobs.find(job=>job.id===id).outbox={state:'delivered',attempts:1};return state;});}});
  assert.equal(done.jobId,sent);assert.equal(JSON.parse(fs.readFileSync(intent)).stage,'dispatched');assert.equal((await f.repo.read()).operatorJobs.length,1);
 });

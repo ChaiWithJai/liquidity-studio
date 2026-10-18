@@ -42,7 +42,7 @@ export function operatorArguments(args,mode,{env=process.env,root=appRoot}={}){
  const applying=mode==='apply'&&args.includes('--apply'),names=[...common,...(mode==='apply'?applyOnly:[])],pairs=args.filter(value=>value!=='--apply');
  if(args.filter(value=>value==='--apply').length>(mode==='apply'?1:0)||pairs.length!==names.length*2||pairs.some((value,index)=>index%2===0&&!names.includes(value))||names.some(name=>pairs.filter(value=>value===name).length!==1))throw fail(400,'Explicit operator target, scope, source and private paths required');
  const get=name=>{const index=pairs.indexOf(name);return index<0?undefined:pairs[index+1];},target={projectId:get('--project'),databaseId:get('--database'),collection:get('--collection'),bucketName:get('--bucket')};
- if(!/^[a-z][a-z0-9-]{4,62}$/.test(target.projectId)||!id(target.databaseId)||!id(target.collection)||!/^[a-z0-9][a-z0-9._-]{1,220}[a-z0-9]$/.test(target.bucketName)||!['--organization','--brand','--actor'].every(name=>id(get(name)))||!/^[a-f0-9]{40}$/.test(get('--source-commit')))throw fail(400,'Invalid explicit operator target');
+ if(!/^[a-z][a-z0-9-]{4,62}$/.test(target.projectId)||(target.databaseId!=='(default)'&&!id(target.databaseId))||!id(target.collection)||!/^[a-z0-9][a-z0-9._-]{1,220}[a-z0-9]$/.test(target.bucketName)||!['--organization','--brand','--actor'].every(name=>id(get(name)))||!/^[a-f0-9]{40}$/.test(get('--source-commit')))throw fail(400,'Invalid explicit operator target');
  if(env.STUDIO_STORAGE_MODE!=='firestore')throw fail(409,'Existing Firestore runtime configuration required');
  same(target,{projectId:env.GOOGLE_CLOUD_PROJECT,databaseId:env.STUDIO_FIRESTORE_DATABASE,collection:env.STUDIO_FIRESTORE_COLLECTION,bucketName:env.STUDIO_ASSET_BUCKET||env.STUDIO_GCS_BUCKET});
  const out=privatePath(get('--out'),false),sourceFile=privatePath(get('--source-manifest'),true),manifest=readJson(sourceFile,get('--source-manifest-sha256'),256*1024);
@@ -108,7 +108,10 @@ export async function runFirestoreSeedOperator(args,mode,{env=process.env,root=a
    await assembly.identity.authorize(actor,scope.organizationId,scope.brandId);
    const state=await assembly.repo.read(),job=state.operatorJobs?.find(row=>row.id===intent.jobId),receipt=state.workspace?.receipts?.find(row=>row.idempotencyKey===binding.titleKey)?.seedFollowthrough;
    if(!job||job.actorId!==actor.id||job.purpose!=='source-preparation'||!receipt||job.items.length!==receipt.items.length||job.items.some(item=>!receipt.items.some(expected=>expected.storyId===item.storyId&&expected.storyRevision===item.storyRevision&&expected.inputFingerprint===item.inputFingerprint)))throw fail(409,'Accepted source job differs from its reviewed receipt');
-   await dispatch(assembly.repo,intent.jobId);
+   const delivery=await dispatch(assembly.repo,intent.jobId);
+   if(delivery?.error)throw fail(503,'Dispatcher reported uncertain delivery; retain the accepted job');
+   const delivered=(await assembly.repo.read()).operatorJobs?.find(row=>row.id===intent.jobId);
+   if(!delivered||!['delivered','worker_received'].includes(delivered.outbox?.state))throw fail(503,'Persisted delivery acknowledgement unavailable; retain the accepted job');
    intent={...intent,stage:'dispatched'};durable(config.intent,intent,true);
   }catch(error){intent={...intent,stage:'dispatch-unknown'};durable(config.intent,intent,true);throw error;}
   const result={apply:true,sourceCommit:config.sourceCommit,planSha256:config.plan.planSha256,scope,operationId:intent.operationId,jobId:intent.jobId,meaning:'Existing source-preparation job delivered; output unreviewed, no source/clinical approval'};durable(config.out,result);return result;

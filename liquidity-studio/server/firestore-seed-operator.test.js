@@ -30,3 +30,11 @@ test('cloud apply: exact stable intent is fsynced before even constructing SDK; 
  await assert.rejects(runFirestoreSeedOperator(args,'apply',{...f,createStore}),/controlled unavailable SDK/);assert.equal(calls,2);
  const changed=[...args];changed[changed.indexOf('--job-key')+1]=randomUUID();await assert.rejects(runFirestoreSeedOperator(changed,'apply',{...f,createStore}),error=>error.status===409);assert.equal(calls,2);
 });
+
+test('cloud operator: explicit default database is accepted only when exact environment and manifest match',async t=>{
+ const f=operatorFixture(t);f.manifest.target.databaseId='(default)';f.env.STUDIO_FIRESTORE_DATABASE='(default)';fs.writeFileSync(f.source,JSON.stringify(f.manifest),{mode:0o600});
+ const args=[...f.args];args[args.indexOf('--database')+1]='(default)';args[args.indexOf('--source-manifest-sha256')+1]=hash(fs.readFileSync(f.source));
+ assert.equal(operatorArguments(args,'plan',f).target.databaseId,'(default)');
+ assert.throws(()=>operatorArguments(args,'plan',{...f,env:{...f.env,STUDIO_FIRESTORE_DATABASE:undefined}}),error=>error.status===409);
+ const changed=[...args];changed[changed.indexOf('--database')+1]='(other)';assert.throws(()=>operatorArguments(changed,'plan',f),error=>error.status===400);
+});
