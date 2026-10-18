@@ -1,0 +1,23 @@
+# Governed refresh of saved native Brand Kit styles
+
+This change extends the existing Studio-owned Doory document contract. It does not enable the optional native editor on a runtime or change upstream editor infrastructure.
+
+The operator opens an existing layout for the same source content and generation, checks its saved Brand Kit, and explicitly refreshes its styles. A Brand Kit change no longer makes Studio silently create a replacement layout instead of opening the saved human-edited document. Source or generation changes still require a new document. The history selection was introduced in `82461149`; `9804b6d4` later switched it to the source-content revision. Its additional brand-hash equality caused the replacement behavior when a palette changed. This change retains the source/generation gates and moves brand drift into the explicit guarded refresh.
+
+`POST /api/studio/native-editor/documents/:id/brand-tokens` accepts only `expectedRevision`, `expectedOldBrandRevision`, `expectedBrandRevision`, and `idempotencyKey`, under the existing authenticated organization and brand query scope. The server derives the profile, source approval, fonts, assets and native document from current registered state. Caller-supplied native documents, colors, URLs and identities are not accepted by this operation.
+
+The existing pure `applyDooryBrandTokens` transformation updates registered token bindings while preserving native object IDs, human text and geometry. The final transaction binds current membership, source/generation, old native revision and the new Brand Kit revision. A conflicting source, profile, membership or native edit prevents commit. The resulting document and receipt form one new durable native version; the prior approval becomes stale. A refresh does not approve content or mark an artifact exported.
+
+The UI requires a saved, ready canvas. An edit that starts while a request is pending prevents the response from replacing that canvas, even if its autosave subsequently completes. An unconfirmed request keeps the same idempotency key for retry. After a successful response, Studio re-reads the current native record before adopting it; an intervening version or scope change preserves the open buffer instead.
+
+## Verification
+
+Nine real SQLite/service/HTTP regressions cover human-text and geometry preservation, both brands and all four format contracts, missing verified fonts, source and generation drift, membership revocation, in-transaction races, scoped HTTP access, stale approval, a lost-response replay after SQLite closes and reopens, and rejection of restored historical provenance. They use original disposable sources and explicit test password authentication, not Google production identity evidence.
+
+The native browser test uses the actual privately prepared upstream EditorApp and a built Studio App. It edits native text, changes Brand Kit through the UI, explicitly refreshes the existing document and compares rendered PNG pixels. The pinned upstream quick PNG command explicitly uses transparent output, so the test checks a visible accent-color change rather than incorrectly expecting the background swatch in transparent PNG bytes. Results are recorded separately after the run; a source test alone is not an export fidelity claim.
+
+## Rollback and limits
+
+Removing the new route, panel and history-selection condition returns to the previous behavior. Existing saved native versions remain private records; no migration or automatic palette update runs. Native documents remain available through their existing scoped reads. Operators should preserve a newer local buffer on conflict rather than retrying a different intent against an unseen version.
+
+Historical restored documents remain read-only and cannot use this brand-only operation to bypass source review. The operation reuses verified font and private-asset checks; it does not establish positive external-asset archive portability. No public native-editor distribution rights, cloud editor integration or publication action is implied.

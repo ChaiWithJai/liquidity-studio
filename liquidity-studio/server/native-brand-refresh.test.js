@@ -573,3 +573,40 @@ test("source and brand changes during refresh cannot commit stale native styles"
     }
   }
 });
+
+test("historical restored provenance cannot be promoted by a brand-only refresh", async () => {
+  const f = await fixture();
+  try {
+    const profile = await f.repo.getBrandProfile();
+    const oldHash = brandRevision(profile);
+    const native = await f.service.create(f.actor, {
+      storyId: f.story.id,
+      format: "infographic",
+      expectedRevision: 1,
+      generationId: f.story.generationId,
+      expectedBrandRevision: oldHash,
+      idempotencyKey: "historical_brand_create",
+    });
+    await f.store.update(f.service.key(native.id), (row) => ({
+      ...row,
+      origin: { ...row.origin, requiresSourceReview: true },
+    }));
+    await f.repo.updateBrandProfile({
+      colors: profile.colors.map((color, index) =>
+        index === 0 ? { ...color, hex: "#123456" } : color,
+      ),
+    });
+    await assert.rejects(
+      f.service.refreshBrandTokens(f.actor, native.id, {
+        expectedRevision: 1,
+        expectedOldBrandRevision: oldHash,
+        expectedBrandRevision: brandRevision(await f.repo.getBrandProfile()),
+        idempotencyKey: "historical_brand_refresh",
+      }),
+      { status: 409 },
+    );
+    assert.equal((await f.store.get(f.service.key(native.id))).revision, 1);
+  } finally {
+    f.store.close();
+  }
+});
