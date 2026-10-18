@@ -1,0 +1,26 @@
+--- a/backend/src/app/main.clj
++++ b/backend/src/app/main.clj
+@@ -13,6 +13,7 @@
+    [app.common.logging :as l]
+    [app.common.time :as ct]
+    [app.config :as cf]
++   [app.studio.configuration :as studio-access]
+    [app.db :as-alias db]
+    [app.email :as-alias email]
+    [app.http :as-alias http]
+@@ -638,6 +639,7 @@
+                   (fn [sys]
+                     (some-> sys not-empty ig/halt!)
+                     (-> system-config
++                        (studio-access/install)
+                         (cond-> (contains? cf/flags :backend-worker)
+                           (merge worker-config))
+                         (ig/expand)
+@@ -656,6 +658,7 @@
+   (alter-var-root #'app.system/system
+                   (fn [sys]
+                     (let [config (-> system-config
++                                     (studio-access/install)
+                                      (cond-> (contains? cf/flags :backend-worker)
+                                        (merge worker-config))
+                                      (ig/expand))]

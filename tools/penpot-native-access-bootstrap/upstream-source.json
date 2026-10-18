@@ -1,0 +1,18 @@
+{
+  "repository": "penpot/penpot",
+  "commit": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "files": [
+    {
+      "path": "backend/src/app/main.clj",
+      "gitBlob": "d25ace71280fa7120de3a1175446cdc6aff6bc73",
+      "sha256": "7ed4c93d478c8c393bc12ab630a563f8d928d1e58d320c644dbc5d414bca5387"
+    },
+    {
+      "path": "backend/src/app/http/client.clj",
+      "gitBlob": "891e581f70a1c542d9d9e42cf9b94a92fc4c8907",
+      "sha256": "47fc28ede3f7a0cb1e19040c34b54e03a6b9d0838439dda87c28d9f5db6d549e"
+    }
+  ],
+  "localBuildOrTests": false,
+  "runtimeChanged": false
+}
