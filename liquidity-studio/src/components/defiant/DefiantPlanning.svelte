@@ -2,12 +2,14 @@
  import {untrack} from 'svelte';
  let {state:workspace,location,planIds,positions,request,onSaved,onNavigate,onRestoreView,onDirtyChange=()=>{}}=$props();
  let noteTarget=$state(''),note=$state(''),noteKind=$state('note'),viewName=$state(''),title=$state(''),thesis=$state('');
- let busy=$state(false),error=$state(''),notice=$state(''),intent=$state(null),unknown=$state(false),loadedReport=$state(''),baseTitle=$state(''),baseThesis=$state(''),historyIndex=$state('current');
+ let busy=$state(false),error=$state(''),notice=$state(''),intent=$state(null),unknown=$state(false),loadedReport=$state(''),loadedReportRevision=$state(0),baseTitle=$state(''),baseThesis=$state(''),historyIndex=$state('current');
  const report=$derived(workspace.reports.find(r=>r.id===location.reportId));
  const selectedNotes=$derived(workspace.annotations.filter(a=>a.targetId===location.selected));
+ const wordingDirty=$derived(title!==baseTitle||thesis!==baseThesis);
  const dirty=$derived(Boolean(note.trim()||viewName.trim()||title!==baseTitle||thesis!==baseThesis||intent));
  $effect(()=>{onDirtyChange(dirty);});
- $effect(()=>{const id=report?.id||'';untrack(()=>{if(id!==loadedReport&&!dirty){loadedReport=id;historyIndex='current';title=report?.title||'';thesis=report?.thesis||'';baseTitle=title;baseThesis=thesis;}});});
+ $effect(()=>{const id=report?.id||'',revision=report?.revision||0;untrack(()=>{if((id!==loadedReport||revision!==loadedReportRevision)&&!wordingDirty&&!intent)adoptReport(false);});});
+ function adoptReport(keepWording){loadedReport=report?.id||'';loadedReportRevision=report?.revision||0;historyIndex='current';baseTitle=report?.title||'';baseThesis=report?.thesis||'';if(!keepWording){title=baseTitle;thesis=baseThesis;}intent=null;error='';}
  function edit(){notice='';if(!unknown)intent=null;}
  function editNote(event){const value=event.currentTarget.value;if(value.trim()&&!noteTarget)noteTarget=location.selected;if(!value.trim())noteTarget='';note=value;edit();}
  async function send(path,payload,kind){
@@ -16,7 +18,7 @@
  async function submit(){
   if(!intent||busy)return;busy=true;error='';notice='';
   try{const ack=await request(intent.path,{method:'POST',body:JSON.stringify(intent.body)});const kind=intent.kind;intent=null;unknown=false;
-   if(kind==='note'){note='';noteTarget='';}if(kind==='view')viewName='';if(kind==='report'){title=ack.report.title;thesis=ack.report.thesis;baseTitle=title;baseThesis=thesis;loadedReport=ack.report.id;onNavigate({...location,view:'report',reportId:ack.report.id});}
+   if(kind==='note'){note='';noteTarget='';}if(kind==='view')viewName='';if(kind==='report'){title=ack.report.title;thesis=ack.report.thesis;baseTitle=title;baseThesis=thesis;loadedReport=ack.report.id;loadedReportRevision=ack.report.revision;onNavigate({...location,view:'report',reportId:ack.report.id});}
    notice=kind==='refresh'?'Saved a new report snapshot':kind==='note'?'Note saved':kind==='view'?'View saved':'Report saved';try{await onSaved(ack);}catch{error='Your save succeeded, but current references could not reload. Reload to see the saved version.';}
   }catch(failure){error=failure.status===409?'The workspace changed. Your text is retained. Reload current references, then save again.':failure.message;unknown=!(Number.isInteger(failure.status)&&failure.status>=400&&failure.status<500);}
   finally{busy=false;}
@@ -26,6 +28,7 @@
  function openReport(id){if(dirty){error='Save or clear your working text before opening a report.';return;}onNavigate({...location,view:'report',reportId:id});}
 </script>
 <section class="planning" aria-label="Shared planning">
+ <button class="quiet" disabled={busy||unknown} onclick={reload}>Reload saved work</button>
  {#if error}<p role="alert">{error}</p>{/if}{#if notice}<p role="status">{notice}</p>{/if}
  {#if unknown}<p>The reply was interrupted. Retry this same save to check its outcome.</p><button disabled={busy} onclick={submit}>Retry same save</button>{:else if error}<button disabled={busy} onclick={reload}>Reload current references</button>{/if}
  <details open={Boolean(location.selected)}><summary>Notes on this selection <span>{selectedNotes.length}</span></summary>
@@ -35,8 +38,9 @@
  <details open={location.view==='report'}><summary>Reports <span>{workspace.reports.length}</span></summary><div class="saved-list">{#each workspace.reports as saved(saved.id)}<button disabled={busy||unknown} onclick={()=>openReport(saved.id)}>{saved.title}</button>{/each}</div>
  {#if location.view==='report'&&location.reportId&&!report}<p>This report is unavailable in the current organization.</p>{/if}
  {#if report}{@const snapshot=historyIndex==='current'?report:(report.history[Number(historyIndex)]||report)}<article class="report"><label>Read a report version<select bind:value={historyIndex}><option value="current">Current · revision {report.revision}</option>{#each report.history as previous,index(previous.revision)}<option value={String(index)}>Earlier · revision {previous.revision}</option>{/each}</select></label><h3>{snapshot.title}</h3><p>{snapshot.thesis}</p><small>Snapshot revision {snapshot.revision} · source revision {snapshot.sourceRevision}. Changes to references do not update this report automatically.</small>{#each snapshot.findings as finding(finding.id)}<section><h4>{finding.name}</h4><p>{finding.description}</p>{#each finding.notes as saved(saved.id)}<blockquote>{saved.text}</blockquote>{/each}{#each finding.evidence as evidence(evidence.id)}<p>{evidence.title}{#if evidence.sourceUrl} · <a href={evidence.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>{/if}</p>{/each}</section>{/each}{#if snapshot.annotations?.length}<details><summary>Included notes</summary>{#each snapshot.annotations as saved(saved.id)}<p>{saved.text}</p>{/each}</details>{/if}<p>{report.history.length} earlier snapshots retained.</p><button disabled={busy||unknown||!planIds.length} onclick={()=>send(`/reports/${report.id}/refresh`,{expectedReportRevision:report.revision,planIds},'refresh')}>Refresh from current shortlist</button><button disabled={busy||unknown||dirty} onclick={()=>onNavigate({...location,view:'map',reportId:''})}>Back to map</button></article>{/if}
+ {#if report&&report.id===loadedReport&&report.revision!==loadedReportRevision}<section class="version-conflict" aria-label="Newer report wording"><h3>A newer report version is saved</h3><p>Your working text is still based on revision {loadedReportRevision}. Saved revision {report.revision}: {report.title}</p><p>{report.thesis}</p><button disabled={busy||unknown} onclick={()=>adoptReport(false)}>Use saved wording</button><button disabled={busy||unknown} onclick={()=>adoptReport(true)}>Keep my wording on this version</button></section>{/if}
  {#if report}<p>Wording below edits the current report. Earlier snapshots stay unchanged.</p>{/if}<label>Report title<input bind:value={title} oninput={edit} disabled={busy||unknown} maxlength="300"/></label><label>Working thesis<textarea bind:value={thesis} oninput={edit} disabled={busy||unknown} rows="3" maxlength="12000"></textarea></label>
- <button disabled={busy||unknown||!title.trim()||(!report&&!planIds.length)} onclick={()=>send('/reports',{report:{...(report?{id:report.id,expectedReportRevision:report.revision}:{planIds}),title,thesis}},'report')}>{report?'Save report wording':'Save shortlist as report'}</button><p>{report?'Saving wording preserves the findings snapshot. Refresh only when you want to capture current references.':'Choose at least one finding for your shortlist. Reports retain the evidence and notes from the time you save.'}</p>
+ <button disabled={busy||unknown||!title.trim()||(!report&&!planIds.length)} onclick={()=>send('/reports',{report:{...(report?{id:report.id,expectedReportRevision:loadedReportRevision}:{planIds}),title,thesis}},'report')}>{report?'Save report wording':'Save shortlist as report'}</button><p>{report?'Saving wording preserves the findings snapshot. Refresh only when you want to capture current references.':'Choose at least one finding for your shortlist. Reports retain the evidence and notes from the time you save.'}</p>
  </details>
  {#if dirty&&!unknown}<button class="quiet" disabled={busy} onclick={()=>{note='';noteTarget='';viewName='';title=baseTitle;thesis=baseThesis;intent=null;error='';}}>Clear working text</button>{/if}
 </section>
