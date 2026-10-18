@@ -20,7 +20,7 @@ jobs:
     env:
       UPSTREAM_SHA: ff7a66f51938b2293260ea27a64e2c4e0833b5e3
       DEVENV: penpotapp/devenv@sha256:912d522803d94fa3e5c9f304088887a45fa6d90517751094f22a14a8754d2b37
-      ORIGINAL_FRONTEND: penpotapp/frontend@sha256:bb8abe27d53de84c95597f2c02c0e702b2779971fb0703e543f9ecf183e999f6
+      ORIGINAL_FRONTEND: penpotapp/frontend@sha256:2c7f4e840102e06bccf36b6a93fc3a030cc0bbba7e0125dec33197187dba8041
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -56,11 +56,26 @@ jobs:
           # Record exact actual versions; mismatch fails, never silently upgrades.
           docker run --rm --network none --memory 512m --cpus 1 --entrypoint bash "$DEVENV" -lc '
             node --version; pnpm --version; java -version 2>&1; clojure -Sdescribe
-            test "$(node --version)" = v24.21.0
-            test "$(pnpm --version)" = 12.5.1
+            test "$(node --version)" = v24.22.0
+            test "$(pnpm --version)" = 12.14.0
             java -version 2>&1 | grep -q "27\."
             clojure -Sdescribe | grep -q 1.12.5.1664
           ' > evidence/toolchain.txt
+      - name: Prepare exact target pnpm through its official version manager
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p review-tools/home review-tools/bin
+          cp studio/scripts/investigations/penpot-font-ui-repair/pnpm-frozen.sh review-tools/bin/pnpm
+          chmod 755 review-tools/bin/pnpm
+          docker run --rm --memory 1g --memory-swap 1g --cpus 1 \
+            --mount type=bind,src="$GITHUB_WORKSPACE/review-tools",dst=/review-tools \
+            -e PNPM_HOME=/review-tools/home -w / --entrypoint bash "$DEVENV" \
+            -lc '/opt/node/bin/pnpm self-update 12.5.1 --registry=https://registry.npmjs.org && test "$(/review-tools/home/pnpm --version)" = 12.5.1' \
+            2>&1 | tee evidence/pnpm-manager.log
+          # Verify actual installed native bytes against immutable package SRI, not version text alone.
+          python3 studio/scripts/investigations/penpot-font-ui-repair/verify-pnpm.py \
+            review-tools/home/pnpm > evidence/pnpm-integrity.json
       - name: Official complete frontend build in bounded disposable runner container
         shell: bash
         run: |
@@ -69,11 +84,13 @@ jobs:
           # No production credentials, runtime volume, deployment, account or application DB.
           docker run --rm --name penpot-font-ui-build --memory 8g --memory-swap 8g --cpus 4 \
             --mount type=bind,src="$GITHUB_WORKSPACE/upstream",dst=/work \
-            -w /work/frontend -e CI=true -e JAVA_TOOL_OPTIONS=-Xmx4096m \
+            --mount type=bind,src="$GITHUB_WORKSPACE/review-tools",dst=/review-tools,readonly \
+            -w /work/frontend -e CI=true -e PNPM_HOME=/review-tools/home -e JAVA_TOOL_OPTIONS=-Xmx4096m \
             -e NODE_OPTIONS=--max-old-space-size=1536 \
             -e SHADOWCLJS_EXTRA_PARAMS='' --entrypoint bash "$DEVENV" \
-            -lc './scripts/build 2.18.3-font-ui-qa' 2>&1 | tee evidence/build.log
-          # CI=true requires pnpm frozen-lock defaults. Reject ANY changed tracked dependency lock.
+            -lc 'export PATH=/review-tools/bin:$PATH; test "$(pnpm --version)" = 12.5.1; ./scripts/build 2.18.3-font-ui-qa' 2>&1 | tee evidence/build.log
+          # The exact pnpm wrapper appends explicit --frozen-lockfile to every install/i call.
+          # Preserve the independent post-build tracked-lock/dependency diff gate.
           git -C upstream diff --exit-code -- '**/*lock*' '**/deps.edn' '**/package.json'
           test -s upstream/frontend/target/dist/js/main.js
           test -s upstream/frontend/target/dist/js/main-dashboard.js
