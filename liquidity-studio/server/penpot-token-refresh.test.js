@@ -351,3 +351,35 @@ test("equivalent Brand Kit font fallback normalization preserves verified bindin
   profile.fonts.heading = "Mona Sans";
   await assert.rejects(resolve(input()), /verified rebind/);
 });
+
+test("101 concurrent native actions cannot exceed the atomic 100-entry bound", async () => {
+  const f = fixture();
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  let allEntered;
+  const entered = new Promise((resolve) => {
+    allEntered = resolve;
+  });
+  let count = 0;
+  f.transport.resolveContext = async () => {
+    if (++count === 101) allEntered();
+    await gate;
+    return { bundle: f.bundle, manifest: f.manifest };
+  };
+  const requests = Array.from({ length: 101 }, () =>
+    f.transport.execute(f.input),
+  );
+  await entered;
+  release();
+  const results = await Promise.allSettled(requests);
+  assert.equal(
+    results.filter((result) => result.status === "fulfilled").length,
+    100,
+  );
+  const rejected = results.filter((result) => result.status === "rejected");
+  assert.equal(rejected.length, 1);
+  assert.equal(rejected[0].reason.status, 429);
+  assert.equal(f.transport.pending.size, 100);
+});

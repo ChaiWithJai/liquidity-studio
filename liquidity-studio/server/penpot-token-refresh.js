@@ -169,6 +169,10 @@ export class PenpotTokenRefreshTransport {
       generationId: context.bundle.generationId,
       brandRevision: context.bundle.brandRevision,
     };
+    // No await separates this capacity check from insertion. Concurrent context
+    // lookups may all pass the inexpensive admission check above.
+    this.prune();
+    if (this.pending.size >= 100) throw fail(429, "Native action queue full");
     this.pending.set(digest(capability), {
       input,
       context: structuredClone(context),
