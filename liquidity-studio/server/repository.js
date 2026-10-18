@@ -468,9 +468,10 @@ export class ScopedRepository {
   }
   async exportData() {
     const data = await this.read();
-    // Execution authority, delivery leases and pending work are never portable.
+    // Execution authority, delivery leases and helper grants are never portable.
     delete data.operatorJobs;
     delete data.operatorJobScope;
+    delete data.operatorControl;
     if (data.workspace) {
       delete data.workspace.receipts;
       data.workspace = portableWorkspace(
