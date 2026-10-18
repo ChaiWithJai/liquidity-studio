@@ -177,6 +177,18 @@
         }
       });
   });
+  // Keyed DOM moves can blur a focused row even when its element stays connected.
+  // Preserve only existing row focus; a user who moved elsewhere keeps that focus.
+  $effect.pre(() => {
+    rows;
+    const active = document.activeElement;
+    const id = active?.getAttribute?.("data-detail-story");
+    if (!id || !host?.contains(active)) return;
+    tick().then(() => {
+      if (!alive || !host?.isConnected || document.activeElement !== document.body) return;
+      host.querySelector(`[data-detail-story="${CSS.escape(id)}"]`)?.focus({ preventScroll: true });
+    });
+  });
   async function toggleSelection(id, checked) {
     if (checked && selected.length >= 25) {
       localError = "Select at most 25 stories per operation.";

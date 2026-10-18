@@ -316,3 +316,40 @@ test("immediate view create and update save visible search/status before debounc
  const view=await changeAndSave('Large queue','In Backlog','Create saved view');expect(view.definition.filters.search).toBe('Large queue');await expect(page.getByLabel('Saved workspace view')).toHaveValue(view.id);
  const updated=await changeAndSave('External','All','Update selected view');expect(updated.id).toBe(view.id);expect(updated.revision).toBeGreaterThan(view.revision);expect(updated.definition.filters.search).toBe('External');
 });
+
+
+for (const movedFocus of [false, true]) test(`delayed canonical sort ${movedFocus ? "preserves a new user focus target" : "retains the returned row focus"}`, async ({ page }) => {
+  const founder = (await platform.store.get("identity")).users.find(user => user.username === "table-founder");
+  const brand = await platform.identity.createBrand(founder, { organizationId: "org_default", name: `Focus recovery ${movedFocus}`, preset: "liquidity_desk" });
+  await page.goto(base);
+  await page.getByLabel("Username", { exact: true }).fill("table-founder");
+  await page.getByLabel("Password", { exact: true }).fill(password);
+  await page.getByRole("button", { name: "Sign in →" }).click();
+  await page.getByRole("combobox", { name: "Brand", exact: true }).selectOption(brand.id);
+  await expect(page.locator(".story-row")).toHaveCount(5);
+  await page.getByLabel("Sort stories", { exact: true }).selectOption("category");
+  const opener = page.locator("[data-detail-story]").first();
+  const id = await opener.getAttribute("data-detail-story");
+  await opener.click();
+  await expect(page.getByLabel("Detail category")).toBeVisible();
+  let releaseQuery, queryStarted;
+  const held = new Promise(resolve => releaseQuery = resolve);
+  const started = new Promise(resolve => queryStarted = resolve);
+  await page.route("**/api/studio/workspace/query?**", async route => {
+    const response = await route.fetch();
+    queryStarted();
+    await held;
+    await route.fulfill({ response });
+  });
+  await page.getByLabel("Detail category").fill(movedFocus ? "ZZZZZZ later canonical sort" : "ZZZ delayed canonical sort");
+  await page.getByRole("button", { name: "Save detail metadata", exact: true }).click();
+  await started;
+  await page.keyboard.press("Escape");
+  const rowButton = page.locator(`[data-detail-story="${id}"]`);
+  await expect(rowButton).toBeFocused();
+  const search = page.getByRole("textbox", { name: "Search stories", exact: true });
+  if (movedFocus) await search.focus();
+  releaseQuery();
+  await expect(page.locator("[data-detail-story]").last()).toHaveAttribute("data-detail-story", id);
+  await expect(movedFocus ? search : rowButton).toBeFocused();
+});
