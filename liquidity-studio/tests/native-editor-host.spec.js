@@ -882,6 +882,13 @@ test("reference-correct MODNet replaces a private portrait through native undo/s
     "Requires explicitly configured owned digest-pinned checkpoint; no model download.",
   );
   const sharp = (await import("sharp")).default;
+  const cacheBlocked = process.env.STUDIO_NATIVE_QA_CACHE_BLOCKED === "true";
+  if (cacheBlocked)
+    await page.addInitScript(() => {
+      caches.open = async () => {
+        throw new DOMException("Controlled unavailable cache", "SecurityError");
+      };
+    });
   let modelChunks = 0;
   page.on("response", (response) => {
     if (/\/cutout\/model\/\d+\?/.test(response.url())) modelChunks++;
@@ -1094,11 +1101,14 @@ test("reference-correct MODNet replaces a private portrait through native undo/s
   await expect(frame.getByRole("dialog")).toHaveCount(0);
   measurements.crossFrameCachedToProcessingAndCancelMs =
     Date.now() - cachedStarted;
-  expect(modelChunks).toBe(chunksAfterCold);
+  expect(modelChunks).toBe(
+    cacheBlocked ? chunksAfterCold * 2 : chunksAfterCold,
+  );
   expect(
     (await read()).document.pages[0].objects.find((o) => o.id === original.id)
       ?.assetId,
   ).toBe(warmImage.assetId);
+  measurements.optionalCacheBlockedByTest = cacheBlocked;
   measurements.modelChunks = modelChunks;
   measurements.modelBytes = 25888640;
   measurements.outputBytes = asset.size;

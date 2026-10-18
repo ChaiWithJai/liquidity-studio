@@ -33,19 +33,24 @@ export function createModnetModelLoader({
     )
       throw Error("Background-removal model configuration is invalid.");
     if (memory) return memory;
-    const cache = await cacheStorage?.open(CACHE_NAME);
+    let cache, cachedBytes;
+    // Storage availability is optional, but authorization and whole-model
+    // integrity are mandatory. A blocked cache never selects another origin.
+    try {
+      cache = await cacheStorage?.open(CACHE_NAME);
+      const hit = await cache?.match(CACHE_KEY);
+      if (hit) cachedBytes = new Uint8Array(await hit.arrayBuffer());
+    } catch {}
     check(signal);
-    const hit = await cache?.match(CACHE_KEY);
-    check(signal);
-    if (hit) {
-      const bytes = new Uint8Array(await hit.arrayBuffer());
-      check(signal);
-      if (await valid(bytes)) {
+    if (cachedBytes) {
+      if (await valid(cachedBytes)) {
         check(signal);
-        memory = bytes;
-        return bytes;
+        memory = cachedBytes;
+        return cachedBytes;
       }
-      await cache.delete(CACHE_KEY);
+      try {
+        await cache?.delete(CACHE_KEY);
+      } catch {}
       check(signal);
     }
     const bytes = new Uint8Array(SIZE);
