@@ -3,6 +3,7 @@
   import { createNativeEditorBroker } from '../lib/native-editor-broker.js';
   import EditorReviewPanel from './EditorReviewPanel.svelte';
   import EditorExportPanel from './EditorExportPanel.svelte';
+  import NativeBrandRefreshPanel from './NativeBrandRefreshPanel.svelte';
 
   let {
     record, request, scopeKey, getScopeKey,
@@ -22,7 +23,20 @@
   let editorDirty = $state(false);
   let editorReady = $state(false);
   let exportStages = $state.raw([]);
+  let canvasEpoch = $state(0);
   let historical = $derived(record.origin?.requiresSourceReview === true || record.sourceState === 'historical');
+  function refreshedBrand(saved, captured) {
+    if (getScopeKey() !== captured.scope || record.id !== captured.id) return;
+    const opening = localRecord?.id === record.id ? localRecord : record;
+    if (opening.revision !== captured.revision || editorDirty || canvasEpoch !== captured.canvasEpoch) {
+      recoveryMessage = 'Brand styles were saved in a newer version. Your local canvas is preserved; resolve its save conflict before reloading.';
+      return;
+    }
+    localRecord = saved;
+    onSaved(saved);
+    editorReady = false;
+    reloadEpoch += 1;
+  }
   let exportReceiptEpoch = $state(0);
 
   $effect(() => {
@@ -75,6 +89,7 @@
         onState(state) {
           if (state.status === 'error') { clearTimeout(watchdog); loading = false; editorReady = false; }
           editorDirty = state.dirty ?? ['dirty', 'saving', 'conflict'].includes(state.status);
+          if (editorDirty) canvasEpoch += 1;
           onDirtyChange(editorDirty);
           onSaveStateChange(state);
         },
@@ -128,6 +143,9 @@
     <p>Uploads support PNG, JPEG and WebP up to 512 KiB and four megapixels. When configured locally, background removal preserves pixel dimensions and rejects PNG output above 512 KiB. It never silently resizes or overwrites the original; native Undo restores the original reference.</p>
   </details>
   {#if loading}<p role="status">Opening native editor…</p>{/if}
+  {#key `${scopeKey}:${record.id}:${(localRecord?.id === record.id ? localRecord : record).revision}`}
+    <NativeBrandRefreshPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} getCanvasEpoch={() => canvasEpoch} onRefreshed={refreshedBrand} />
+  {/key}
   <EditorReviewPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} refreshKey={exportReceiptEpoch} />
   {#key `${scopeKey}:${record.id}:${(localRecord?.id === record.id ? localRecord : record).revision}`}
     <EditorExportPanel record={localRecord?.id === record.id ? localRecord : record} stages={exportStages} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} onExported={()=>exportReceiptEpoch++} />

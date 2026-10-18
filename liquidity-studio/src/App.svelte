@@ -105,7 +105,7 @@
       client.ingestStories(bootstrap.backlog || []);
       const story = client.getStory(storyId);
       const history = await capturedRequest(`/api/studio/native-editor/documents?storyId=${encodeURIComponent(storyId)}&format=${openingFormat}`);
-      const existing = history.documents.find(item => (item.sourceContentRevision === undefined ? item.storyRevision === story.revision : item.sourceContentRevision === (story.contentRevision || 1)) && item.generationId === story.generationId && item.brandRevision === bootstrap.nativeEditorContext.brandRevision);
+      const existing = history.documents.find(item => (item.sourceContentRevision === undefined ? item.storyRevision === story.revision : item.sourceContentRevision === (story.contentRevision || 1)) && item.generationId === story.generationId);
       if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;
       const created = existing ? await capturedRequest(`/api/studio/native-editor/documents/${existing.id}`) : await capturedRequest("/api/studio/native-editor/documents", { method:"POST", body:JSON.stringify({storyId,format:openingFormat,expectedRevision:story.revision,generationId:story.generationId,expectedBrandRevision:bootstrap.nativeEditorContext.brandRevision,idempotencyKey:crypto.randomUUID()}) });
       if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;

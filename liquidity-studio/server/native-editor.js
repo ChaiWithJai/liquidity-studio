@@ -1,11 +1,14 @@
-import { assertRestoreAvailable } from './restore-gate.js';
+import { assertRestoreAvailable } from "./restore-gate.js";
 import { createHash, randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
 import {
   compileMultimodalBundle,
   brandRevision,
 } from "./multimodal-contract.js";
-import { compileDooryDocument } from "./doory-native-adapter.js";
+import {
+  compileDooryDocument,
+  applyDooryBrandTokens,
+} from "./doory-native-adapter.js";
 import { getApprovedClaims } from "./source-integrity.js";
 
 let activeImageDecodes = 0;
@@ -183,7 +186,8 @@ export class NativeEditorService {
       this.scope.organizationId,
       this.scope.brandId,
     );
-    if (this.repo.key) assertRestoreAvailable(await this.store.get(this.repo.key));
+    if (this.repo.key)
+      assertRestoreAvailable(await this.store.get(this.repo.key));
   }
   key(id) {
     if (typeof id !== "string" || !/^[a-f0-9-]{36}$/.test(id))
@@ -192,11 +196,14 @@ export class NativeEditorService {
   }
   async commitScoped(key, mutate, origin) {
     if (!this.repo.key) return this.store.update(key, mutate);
-    const result = await this.store.transact([this.repo.key, key], ([source, current]) => {
-      assertRestoreAvailable(source);
-      if (origin) this.assertCurrent(source, origin);
-      return [source, mutate(current)];
-    });
+    const result = await this.store.transact(
+      [this.repo.key, key],
+      ([source, current]) => {
+        assertRestoreAvailable(source);
+        if (origin) this.assertCurrent(source, origin);
+        return [source, mutate(current)];
+      },
+    );
     return result[1];
   }
   async persistDocument(document) {
@@ -267,7 +274,9 @@ export class NativeEditorService {
           title: record.title,
           updatedAt: record.updatedAt,
           storyRevision: record.origin.storyRevision,
-          ...(record.origin.sourceContentRevision === undefined ? {} : { sourceContentRevision: record.origin.sourceContentRevision }),
+          ...(record.origin.sourceContentRevision === undefined
+            ? {}
+            : { sourceContentRevision: record.origin.sourceContentRevision }),
           generationId: record.origin.generationId,
           brandRevision: record.origin.brandRevision,
         })),
@@ -290,7 +299,11 @@ export class NativeEditorService {
       if ([409, 422].includes(error.status)) sourceState = value.origin.requiresSourceReview === true ? "historical" : "changed";
       else throw error;
     }
-    return { ...(await this.publicRecord(actor, value)), sourceState };
+    return {
+      ...(await this.publicRecord(actor, value)),
+      sourceState,
+      currentBrandRevision: brandRevision(state.brandProfile),
+    };
   }
   request(actor, operation, input) {
     text(input.idempotencyKey, "idempotency key", 100);
@@ -308,6 +321,11 @@ export class NativeEditorService {
     return receipt?.snapshot;
   }
   assertCurrent(state, origin) {
+    this.assertSourceCurrent(state, origin);
+    if (brandRevision(state.brandProfile) !== origin.brandRevision)
+      throw fail(409, "Native source or brand changed; review before saving");
+  }
+  assertSourceCurrent(state, origin) {
     assertRestoreAvailable(state);
     if (origin.requiresSourceReview === true) throw fail(409,"Restored layout is historical; establish a new reviewed source binding before editing");
     const story = state.backlog.find((item) => item.id === origin.storyId);
@@ -315,10 +333,10 @@ export class NativeEditorService {
       !story ||
       (origin.sourceContentRevision === undefined
         ? story.revision !== origin.storyRevision
-        : !Number.isSafeInteger(origin.sourceContentRevision) || origin.sourceContentRevision < 1 ||
+        : !Number.isSafeInteger(origin.sourceContentRevision) ||
+          origin.sourceContentRevision < 1 ||
           (story.contentRevision || 1) !== origin.sourceContentRevision) ||
       story.generationId !== origin.generationId ||
-      brandRevision(state.brandProfile) !== origin.brandRevision ||
       hash(story.campaignDraft) !== origin.sourceCampaignSha256 ||
       hash(getApprovedClaims(story)) !== hash(origin.sourceApprovals)
     )
@@ -363,7 +381,10 @@ export class NativeEditorService {
       format: input.format,
       availableFonts: this.availableFonts,
     });
-    const origin = { ...native.manifest, sourceContentRevision: story.contentRevision || 1 };
+    const origin = {
+      ...native.manifest,
+      sourceContentRevision: story.contentRevision || 1,
+    };
     const documentRef = await this.persistDocument(native.document);
     let retained = false;
     try {
@@ -388,14 +409,18 @@ export class NativeEditorService {
         updatedAt: this.now(),
       };
       let snapshot;
-      const saved = await this.commitScoped(key, (current) => {
-        snapshot = this.replay(current, intent);
-        if (snapshot) return current;
-        if (current) throw fail(409, "Native create collision");
-        const { origin, ...receiptSnapshot } = record;
-        snapshot = receiptSnapshot;
-        return { ...record, receipts: [{ ...intent, snapshot }] };
-      }, origin);
+      const saved = await this.commitScoped(
+        key,
+        (current) => {
+          snapshot = this.replay(current, intent);
+          if (snapshot) return current;
+          if (current) throw fail(409, "Native create collision");
+          const { origin, ...receiptSnapshot } = record;
+          snapshot = receiptSnapshot;
+          return { ...record, receipts: [{ ...intent, snapshot }] };
+        },
+        origin,
+      );
       retained =
         saved.documentRef.key === documentRef.key &&
         saved.documentRef.artifact?.object === documentRef.artifact?.object;
@@ -613,6 +638,132 @@ export class NativeEditorService {
     if (ids.size > 250) throw fail(422, "Too many native image references");
     return Promise.all([...ids].map((id) => this.asset(actor, id, false)));
   }
+  async refreshBrandTokens(actor, id, input) {
+    exact(input, [
+      "expectedRevision",
+      "expectedOldBrandRevision",
+      "expectedBrandRevision",
+      "idempotencyKey",
+    ]);
+    revision(input.expectedRevision);
+    if (
+      ![input.expectedOldBrandRevision, input.expectedBrandRevision].every(
+        (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value),
+      )
+    )
+      throw fail(
+        400,
+        "Expected saved and current brand revisions are required",
+      );
+    await this.authorize(actor);
+    const intent = this.request(actor, `brand-tokens:${id}`, input),
+      key = this.key(id);
+    const original = await this.store.get(key);
+    if (!original) throw fail(404, "Native document not found");
+    const replay = this.replay(original, intent);
+    if (replay) return this.publicRecord(actor, original, replay);
+    const state = await this.repo.read();
+    this.assertSourceCurrent(state, original.origin);
+    if (
+      original.revision !== input.expectedRevision ||
+      original.origin.brandRevision !== input.expectedOldBrandRevision ||
+      brandRevision(state.brandProfile) !== input.expectedBrandRevision
+    )
+      throw fail(409, "Native document or brand changed; reload explicitly");
+    if (input.expectedOldBrandRevision === input.expectedBrandRevision)
+      throw fail(409, "Saved native styles already use this brand revision");
+    const story = state.backlog.find((row) => row.id === original.storyId);
+    compileMultimodalBundle({
+      scope: this.scope,
+      brandProfile: state.brandProfile,
+      story,
+      request: {
+        schemaVersion: 1,
+        storyId: story.id,
+        expectedRevision: story.revision,
+        generationId: story.generationId,
+        expectedBrandRevision: input.expectedBrandRevision,
+        requiredCapabilities: [],
+      },
+    });
+    const hydrated = await this.hydrate(original);
+    const refreshed = applyDooryBrandTokens({
+      document: hydrated.document,
+      manifest: original.origin,
+      tokens: state.brandProfile,
+      expectedBrandRevision: input.expectedOldBrandRevision,
+      brandRevision: input.expectedBrandRevision,
+      availableFonts: this.availableFonts,
+    });
+    const document = validateHostedDocument(refreshed.document, {
+      assets: await this.documentAssets(actor, refreshed.document),
+      pageIds: original.origin.pageIds,
+    });
+    const origin = {
+      ...refreshed.manifest,
+      ...(original.origin.sourceContentRevision === undefined
+        ? {}
+        : { sourceContentRevision: original.origin.sourceContentRevision }),
+    };
+    const documentRef = await this.persistDocument(document);
+    let retained = false;
+    try {
+      const identitySnapshot = await this.store.get("identity");
+      if (!identitySnapshot?.users.some((user) => user.id === actor.id))
+        throw fail(403, "Current principal is unavailable");
+      await this.authorize(actor);
+      let snapshot;
+      const keys = [this.repo.key, key, "identity"];
+      const values = await this.store.transact(
+        keys,
+        ([source, current, identity]) => {
+          if (hash(identity) !== hash(identitySnapshot))
+            throw fail(
+              409,
+              "Membership changed; retry in the current workspace",
+            );
+          this.assertCurrent(source, origin);
+          if (!current) throw fail(404, "Native document not found");
+          snapshot = this.replay(current, intent);
+          if (snapshot) return [source, current, identity];
+          if (
+            current.revision !== input.expectedRevision ||
+            current.origin.brandRevision !== input.expectedOldBrandRevision ||
+            hash(current.origin) !== hash(original.origin)
+          )
+            throw fail(
+              409,
+              "Native document changed; preserve local work and reload explicitly",
+            );
+          snapshot = {
+            documentRef,
+            origin,
+            revision: current.revision + 1,
+            updatedBy: actor.id,
+            updatedAt: this.now(),
+          };
+          return [
+            source,
+            {
+              ...current,
+              ...snapshot,
+              receipts: [...current.receipts, { ...intent, snapshot }].slice(
+                -100,
+              ),
+            },
+            identity,
+          ];
+        },
+      );
+      const saved = values[1];
+      retained =
+        saved.documentRef.key === documentRef.key &&
+        saved.documentRef.artifact?.object === documentRef.artifact?.object;
+      return await this.publicRecord(actor, saved, snapshot);
+    } finally {
+      if (!retained) await this.discardPayload(documentRef);
+    }
+  }
   async save(actor, id, input) {
     exact(input, ["expectedRevision", "title", "document", "idempotencyKey"]);
     revision(input.expectedRevision);
@@ -642,28 +793,34 @@ export class NativeEditorService {
       this.assertCurrent(await this.repo.read(), original.origin);
       let snapshot;
       const updatedAt = this.now();
-      const saved = await this.commitScoped(key, (current) => {
-        if (!current) throw fail(404, "Native document not found");
-        snapshot = this.replay(current, intent);
-        if (snapshot) return current;
-        if (current.revision !== input.expectedRevision)
-          throw fail(
-            409,
-            "Native document changed; preserve local work and reload explicitly",
-          );
-        snapshot = {
-          documentRef,
-          title: input.title,
-          revision: current.revision + 1,
-          updatedBy: actor.id,
-          updatedAt,
-        };
-        return {
-          ...current,
-          ...snapshot,
-          receipts: [...current.receipts, { ...intent, snapshot }].slice(-100),
-        };
-      }, original.origin);
+      const saved = await this.commitScoped(
+        key,
+        (current) => {
+          if (!current) throw fail(404, "Native document not found");
+          snapshot = this.replay(current, intent);
+          if (snapshot) return current;
+          if (current.revision !== input.expectedRevision)
+            throw fail(
+              409,
+              "Native document changed; preserve local work and reload explicitly",
+            );
+          snapshot = {
+            documentRef,
+            title: input.title,
+            revision: current.revision + 1,
+            updatedBy: actor.id,
+            updatedAt,
+          };
+          return {
+            ...current,
+            ...snapshot,
+            receipts: [...current.receipts, { ...intent, snapshot }].slice(
+              -100,
+            ),
+          };
+        },
+        original.origin,
+      );
       retained =
         saved.documentRef.key === documentRef.key &&
         saved.documentRef.artifact?.object === documentRef.artifact?.object;
