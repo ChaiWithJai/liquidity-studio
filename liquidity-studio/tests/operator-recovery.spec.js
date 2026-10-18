@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import {unzipSync,strFromU8} from "fflate";
 import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -457,4 +458,9 @@ test("an unrelated 423 and a locked marketer never receive a founder recovery sh
   await expect(page.getByRole("region",{name:"Locked brand recovery",exact:true})).toHaveCount(0);
   await expect(page.getByRole("button",{name:"Operations",exact:true})).toHaveCount(0);
   expect(statusCalls).toHaveLength(0);
+});
+
+test('Operations recovery kit downloads readable instructions/fonts and its exact JSON remains selectable',async({page},testInfo)=>{
+ const panel=await enter(page),pending=page.waitForEvent('download');await panel.getByRole('button',{name:'Download recovery kit (ZIP)',exact:true}).click();const download=await pending;expect(download.suggestedFilename()).toBe('studio-recovery-kit.zip');const target=testInfo.outputPath('private-recovery-kit.zip');await download.saveAs(target);const entries=unzipSync(readFileSync(target));expect(strFromU8(entries['RESTORE.md'])).toContain('Penpot is a separate export');expect(Object.keys(entries).some(name=>name.startsWith('fonts/')&&name.endsWith('.ttf'))).toBe(true);expect(Object.keys(entries).some(name=>name.startsWith('fonts/')&&name.endsWith('.txt'))).toBe(true);
+ await panel.getByLabel('Choose private editor pack (up to 48 MiB)',{exact:true}).setInputFiles({name:'studio-editor-pack.json',mimeType:'application/json',buffer:Buffer.from(entries['studio-editor-pack.json'])});await expect(panel.getByLabel('Unvalidated pack preview',{exact:true})).toContainText('1 layouts');await expect(panel.getByRole('button',{name:'Create new empty recovery brand',exact:true})).toBeVisible();
 });

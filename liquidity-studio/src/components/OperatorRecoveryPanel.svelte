@@ -1,5 +1,6 @@
 <script>
   import {onDestroy,onMount} from 'svelte';
+  import {createEditorRecoveryKit} from '../lib/editor-recovery-kit.js';
   let {actorId,organizationId,brandId,scopeKey,getScopeKey,request,onRestored=()=>{},recoveryOnly=false,initialStatus=null,onRecovered=()=>{}}=$props();
   let pack=$state.raw(null),preview=$state.raw(null),destination=$state.raw(null),journal=$state.raw(null),intent=$state.raw(null);
   let busy=$state(false),uncertain=$state(false),error=$state(''),notice=$state(''),name=$state(''),preset=$state('liquidity_desk'),acknowledged=$state(false);
@@ -28,9 +29,9 @@
     }catch(failure){if(current()&&ticket===sequence)error=failure.message||'This JSON file could not be read.';}
     finally{if(current()&&ticket===sequence)busy=false;}
   }
-  async function exportPack(){
+  async function exportPack(kit=false){
     if(busy||uncertain)return;busy=true;error='';
-    try{const value=await request('/api/admin/editor-pack/export');if(!current())return;const url=URL.createObjectURL(new Blob([JSON.stringify(value)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`studio-editor-pack-${brandId}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),0);notice='Pack downloaded. Keep it private; it contains source evidence and owned artwork, not sign-in credentials.';}
+    try{const value=await request('/api/admin/editor-pack/export');if(!current())return;const bundle=kit?await createEditorRecoveryKit(value):null;if(!current())return;const url=URL.createObjectURL(new Blob([bundle?bundle.bytes:JSON.stringify(value)],{type:bundle?'application/zip':'application/json'}));const a=document.createElement('a');a.href=url;a.download=bundle?bundle.filename:`studio-editor-pack-${brandId}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),0);notice=bundle?'Recovery kit downloaded. Extract it and start with RESTORE.md. To restore here, choose its studio-editor-pack.json file. Keep the kit private.':'Pack downloaded. Keep it private; it contains source evidence and owned artwork, not sign-in credentials.';}
     catch(failure){if(current())error=failure.message||'Export was not available. Settle edits and retry.';}
     finally{if(current())busy=false;}
   }
@@ -91,7 +92,8 @@
     <button class="secondary" disabled={busy} onclick={checkStatus}>Refresh recovery status</button>
   {:else}
   <p>Download this brand’s private editor pack, or restore a pack into a new empty brand. Existing brands are never replaced.</p>
-  <button class="secondary" disabled={busy||uncertain} onclick={exportPack}>Download current brand pack</button>
+  <button class="primary" disabled={busy||uncertain} onclick={()=>exportPack(true)}>Download recovery kit (ZIP)</button><p>The kit includes your exact editor pack, readable licensed fonts/notices, checksums and a restore guide. Extract it first, then choose studio-editor-pack.json below. Registered Penpot archives remain a separate export.</p>
+  <button class="secondary" disabled={busy||uncertain} onclick={()=>exportPack()}>Download current brand pack</button>
   <label>Choose private editor pack (up to 48 MiB)<input type="file" accept="application/json,.json" disabled={busy||uncertain} onchange={selectFile}/></label>
   {#if preview}<div aria-label="Unvalidated pack preview"><strong>Unvalidated file preview</strong><p>{preview.documents} layouts · {preview.assets} images · {preview.files} files · schema {preview.schemaVersion}. These are untrusted file claims; server validation happens before installation.</p></div>{/if}
   {#if locator}<p>A recovery request is retained for this account and source brand. No pack bytes or credentials are stored in the browser.</p>{#if locator.destination}<button class="secondary" disabled={busy} onclick={checkStatus}>Check retained recovery status</button>{/if}{#if (locator.operation==='destination'||locator.operation==='install')&&journal?.originalActor!==false}<button class="secondary" disabled={busy||locator.operation==='install'&&!pack||['installing','rolling-back'].includes(journal?.status)} onclick={resume}>Retry retained recovery request</button>{/if}{/if}
