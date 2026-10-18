@@ -536,3 +536,38 @@ test("operator input/output budgets cannot be bypassed by a brand output setting
         : (process.env[key] = value);
   }
 });
+test("provider token usage is recorded only from complete nonnegative actual counters", async () => {
+  const oldFetch = globalThis.fetch,
+    oldKey = process.env.AI_GATEWAY_KEY;
+  process.env.AI_GATEWAY_KEY = "isolated-usage-fixture";
+  try {
+    for (const [usage, expected] of [
+      [
+        { prompt_tokens: 11, completion_tokens: 5, total_tokens: 16 },
+        { inputTokens: 11, outputTokens: 5, totalTokens: 16 },
+      ],
+      [{ prompt_tokens: -1, completion_tokens: 5, total_tokens: 4 }, null],
+    ]) {
+      globalThis.fetch = async () => ({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify(campaignFromApprovedClaims(story)),
+                },
+              },
+            ],
+            usage,
+          }),
+      });
+      const result = await run(gateway());
+      assert.deepEqual(result.trace.usage, expected);
+    }
+  } finally {
+    globalThis.fetch = oldFetch;
+    if (oldKey === undefined) delete process.env.AI_GATEWAY_KEY;
+    else process.env.AI_GATEWAY_KEY = oldKey;
+  }
+});

@@ -205,11 +205,21 @@ export function createAppContainer(overrides = {}) {
 
   // JTBD #2: Formatting for Multi-Channel Posting (Infographic, Carousel, Story, Reel)
   const multiFormatFormatterService = {
-    async generateCampaignForStory(storyId) {
+    async prepareCampaignForStory(storyId, expected = {}) {
       const backlog = await repo.listBacklog();
       const story = backlog.find((s) => s.id === storyId);
       if (!story) throw fail(404, "Story not found");
       const brandProfile = await repo.getBrandProfile();
+      if (
+        expected.storyRevision !== undefined &&
+        story.revision !== expected.storyRevision
+      )
+        throw fail(409, "Planned story changed");
+      if (
+        expected.brandRevision &&
+        brandRevision(brandProfile) !== expected.brandRevision
+      )
+        throw fail(409, "Planned brand changed");
 
       let campaign, trace, reservation;
       try {
@@ -239,17 +249,23 @@ export function createAppContainer(overrides = {}) {
         generationId: trace.traceId,
         requiresReview: true,
       };
+      const evalResult = telemetry.evaluateCampaignSilent(
+        campaign,
+        story,
+        brandProfile,
+      );
+      return { story, brandProfile, campaign, evalResult, trace, reservation };
+    },
+    async generateCampaignForStory(storyId) {
+      const prepared = await this.prepareCampaignForStory(storyId);
+      const { story, brandProfile, campaign, evalResult, trace, reservation } =
+        prepared;
       const savedStory = await repo.saveCampaignDraft(
         story.id,
         campaign,
         story.revision,
       );
 
-      const evalResult = telemetry.evaluateCampaignSilent(
-        campaign,
-        story,
-        brandProfile,
-      );
       await telemetry.recordGenerationTrace({
         trace,
         storyId: story.id,
