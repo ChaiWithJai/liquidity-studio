@@ -4,14 +4,16 @@
   "description": "De-slopped Content Generation & Evaluation Studio for 'The Business of Female Pop Culture & Sports' (Svelte + Node.js + Vertex AI / Gemini + Cloud Run)",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/local-development.mjs",
     "build": "node scripts/build-dist.js",
     "start": "node server/index.js",
     "eval:smoke": "node server/eval-smoke.js",
     "test:gateway": "node --test server/gateway.test.js",
     "test:backwards": "node server/backwards-test.js",
     "qa:loop": "node server/qa-loop.js",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "dev:studio": "node scripts/local-development.mjs",
+    "dev:ui": "vite"
   },
   "dependencies": {
     "@google-cloud/firestore": "9.3.1",
