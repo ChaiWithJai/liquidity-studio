@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 /**
  * Backwards Verification & Contract Test Suite (server/backwards-test.js)
  *
@@ -113,6 +114,8 @@ async function runBackwardsTestSuite() {
       storyId: createdStory.id,
       status: "Scheduled",
       scheduledDay: "Thursday",
+      expectedRevision: (await container.ports.repo.listBacklog()).find(story=>story.id===createdStory.id).revision||0,
+      idempotencyKey: randomUUID(),
     });
     assert.equal(
       schedRes.status,

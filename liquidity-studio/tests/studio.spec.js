@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { randomBytes } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { createHttpServer } from "../server/index.js";
 import { createPlatform } from "../server/platform.js";
 import { DurableStore } from "../server/storage.js";
@@ -447,7 +447,7 @@ test("profile grid uses real scheduled/exported records and excludes ordinary dr
     const generated = await page.request.post(base + "/api/studio/generate-campaign" + scope, {data:{storyId:story.id}});
     expect(generated.status()).toBe(200);
     if (status === "Scheduled") {
-      const scheduled = await page.request.post(base + "/api/studio/schedule" + scope, {data:{storyId:story.id,status,scheduledDay:day}});
+      const scheduled = await page.request.post(base + "/api/studio/schedule" + scope, {data:{storyId:story.id,status,scheduledDay:day,expectedRevision:(await generated.json()).story.revision,idempotencyKey:randomUUID()}});
       expect(scheduled.status()).toBe(200);
     }
     if (status === "Exported") {

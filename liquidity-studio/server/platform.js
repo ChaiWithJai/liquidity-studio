@@ -1,4 +1,5 @@
 import { EditorBoundary, validateEditorTargets } from "./editor-boundary.js";
+import { WorkspaceService } from "./workspace.js";
 import { DurableStore } from "./storage.js";
 import { IdentityService } from "./auth.js";
 import { GoogleIdentityService } from "./google-auth.js";
@@ -26,6 +27,7 @@ export function createPlatform({
       transport: editorTransport,
       now: editorNow,
     });
+  platform.workspace = (scope, repo) => new WorkspaceService({store:platform.store,identity:platform.identity,scope,repo});
   const initialize = async (activeStore) => {
     platform.store = activeStore;
     if (authMode === "google")
