@@ -8,7 +8,7 @@ Deliver one useful **graph → annotation → saved report → explicit destinat
 
 The user subsequently identified a separate design-treatment worktree (`codex/defiant-design-treatment`, observed `65b62de`) owning the component API mocks and distinctive human/agent interaction. That work must drive frontend language and read models. Do not build a parallel graph/App implementation. The orchestrator coordinates its owner and integration. PLATFORM owns persisted backend state, organization authorization, intake/query/adapter/serialization and explicit draft handoff. DRAFT coordinates the contract and supports integration; its duplicate frontend implementation is on hold. No agent edits another owner's working tree.
 
-The visible component surface currently uses node `kind/name/subtitle`, edge `kind/from/to/name`, stable selection/plan IDs and semantic callbacks. Preserve that surface where practical; adapt durable records behind it rather than imposing a second `type/label/sourceId` vocabulary. Mock success is design evidence only. Before wiring, agree the small component/API boundary with the actual owner, including provenance, revisions, error/pending states and real semantic agent actions.
+The visible component surface currently uses node `kind/name/subtitle`, edge `kind/from/to/name`, stable selection/plan IDs and semantic callbacks. Preserve that surface where practical; adapt durable records behind it rather than imposing a second `type/label/sourceId` vocabulary. Mock success is design evidence only. The [component/service contract](../component-contract.md) records exact study props/actions, agreed first read DTOs, pending/saved/retry/conflict and URL semantics. Finalize later write payload details with the actual frontend owner at each slice; do not invent a competing UI.
 
 ## Dependency graph and vertical integrations
 
@@ -41,7 +41,7 @@ GitHub Issues is the task list target. Acceptance, verification, dependencies an
 3. [#227: annotations and planning reports](https://github.com/ChaiWithJai/liquidity-studio/issues/227) — backend persistence and frontend report composition integrate. Dependency: #225 and #226.
 4. [#228: explicit destination draft handoff](https://github.com/ChaiWithJai/liquidity-studio/issues/228) — PLATFORM service/transaction and frontend destination flow. Dependency: #227.
 
-#211 owns the complete customer journey; #214 supplies graph/annotation/report acceptance. These children do not replace either parent. Keep source integrations focused at roughly five files; split an implementation task if it grows, not the product into separate dashboards.
+#225 feeds #218; #226 implements #218/#219 interaction; #227 implements #219/#220 saved sense-making; #228 implements #220 handoff. #218–#220 are the customer-facing delivery tracks. #211 owns the complete customer journey; #214 supplies graph/annotation/report acceptance. These children do not replace either parent. Keep source integrations focused at roughly five files; split an implementation task if it grows, not the product into separate dashboards.
 
 ## Checkpoints
 
