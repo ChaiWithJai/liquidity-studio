@@ -1,0 +1,9 @@
+# S13/S14 durable-jobs after-evidence, version 3
+
+These actual mounted App captures use combined source `6cf3f19`, rebased onto main `1e670df` after the editor taskbar/context and resize-cleanup changes (#69). App differs from that main only by the Jobs import/navigation/title/render. Canonical generated assets were rebuilt from combined source; generated-file conflicts were not resolved by selecting either old bundle.
+
+The original canonical baseline `273cdde3` and review-15/review-16 remain unchanged. [After-v1](../after-v1/README.md) and [after-v2](../after-v2/README.md) are preserved. S13 reopens the same completed job after browser closure and an independent Node worker; S14 focuses Refresh jobs while retaining saved item detail. The historical founder infrastructure readiness control is separate and unchanged, not falsely relabelled as provider success.
+
+The unmodified viewport is 1280×720; these are full-page PNGs. The manifest records actual dimensions, hashes, UTC capture times, fixture actor/scope/task/state and served assets. No credentials/database/tokens are committed. Explicit isolated password/synthetic fixtures make no paid provider calls or live pilot changes. The output mode remains visibly synthetic, with provider usage not reported rather than invented zero cost.
+
+Exact combined verification: full Node suite155 passed/1 optional Firestore Emulator skip; full Chromium suite46 passed/2 optional Auth Emulator skips, including editor-context and job workflows. Backwards contracts and structural QA passed. App/JobsPane official Svelte MCP reports zero issues. No human usability, live Google-worker, Cloud Tasks/IAM, load-test or paid-model acceptance is inferred. See [the contract/runbook](../../../specs/durable-operator-jobs.md); operator outbox recovery may use the explicit CLI, while automatic scheduling remains future configuration.
