@@ -46,6 +46,7 @@ export function parsePenpotMediaPath(path) {
 export function createPenpotNativeReader({
   transportMode = "loopback",
   fetchImpl = fetch,
+  runAuthorityPhase = (work) => work(),
 } = {}) {
   const origin = ORIGINS[transportMode];
   if (!origin) throw Error("Fixed native reader transport required");
@@ -98,7 +99,8 @@ export function createPenpotMediaAuthorizer({
   if (
     !Object.hasOwn(ORIGINS, transportMode) ||
     typeof resolve !== "function" ||
-    typeof authorize !== "function"
+    typeof authorize !== "function" ||
+    typeof runAuthorityPhase !== "function"
   )
     throw new Error("Fixed native media authorization dependencies required");
   const reader = createPenpotNativeReader({ transportMode, fetchImpl });
@@ -110,15 +112,18 @@ export function createPenpotMediaAuthorizer({
     // Both calls use the PRESENTED native session, never the private operator
     // session. get-file itself applies the official current file read ACL.
     const profile = await rpc("get-profile", {});
-    const record = await resolve(requested, profile.id);
-    if (
-      !record ||
-      ![record.fileId, record.projectId, record.ownerPrincipal].every(
-        (id) => typeof id === "string" && UUID.test(id),
+    const record = await runAuthorityPhase(async () => {
+      const record = await resolve(requested, profile.id);
+      if (
+        !record ||
+        ![record.fileId, record.projectId, record.ownerPrincipal].every(
+          (id) => typeof id === "string" && UUID.test(id),
+        )
       )
-    )
-      throw fail(404, "Registered native asset not found");
-    await authorize(record);
+        throw fail(404, "Registered native asset not found");
+      await authorize(record);
+      return record;
+    });
     if (profile.id !== record.ownerPrincipal)
       throw fail(403, "Native asset owner mismatch");
     const file = await rpc("get-file", { id: record.fileId });
@@ -144,10 +149,12 @@ export function createPenpotMediaAuthorizer({
         penpotActionDigest(file.data) !== record.nativeSha256)
     )
       throw fail(409, "Native export file changed");
-    const final = await resolve(requested, profile.id);
-    if (!final || JSON.stringify(final) !== JSON.stringify(record))
-      throw fail(403, "Native asset registration changed");
-    await authorize(final);
+    await runAuthorityPhase(async () => {
+      const final = await resolve(requested, profile.id);
+      if (!final || JSON.stringify(final) !== JSON.stringify(record))
+        throw fail(403, "Native asset registration changed");
+      await authorize(final);
+    });
     return { authorized: true };
   }
   return async function authorizeRead(request) {

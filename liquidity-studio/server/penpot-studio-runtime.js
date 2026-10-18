@@ -431,6 +431,10 @@ export async function createPenpotStudioRuntime({
   }
   const authorizeMediaRead = createPenpotMediaAuthorizer({
     transportMode: configuration.transportMode,
+    runAuthorityPhase: (work) =>
+      identity.runManagedJobLookupPhase
+        ? identity.runManagedJobLookupPhase(work)
+        : work(),
     authorize: authorizeMediaRecord,
     resolve: async (requested, ownerPrincipal) => {
       if (!privateIngress || requested.thumbnail) return null;
