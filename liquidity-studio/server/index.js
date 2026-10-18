@@ -119,7 +119,7 @@ function viewContext(value) {
     throw fail(400, "Invalid preflight view context");
   return { ...value };
 }
-async function readBody(req, limit = 262144) {
+async function readBody(req, limit = 262144, timeoutMs = 0) {
   if (!(req.headers["content-type"] || "").startsWith("application/json"))
     throw fail(415, "Use application/json");
   if (Number(req.headers["content-length"]) > limit) {
@@ -130,12 +130,20 @@ async function readBody(req, limit = 262144) {
     let bytes = 0,
       settled = false;
     const chunks = [];
+    let deadline;
     const rejectOnce = (error) => {
       if (!settled) {
         settled = true;
+        clearTimeout(deadline);
+        chunks.length = 0;
         reject(error);
       }
     };
+    if (timeoutMs)
+      deadline = setTimeout(() => {
+        rejectOnce(fail(408, "Portable-pack request body timed out"));
+        req.resume();
+      }, timeoutMs);
     req.on("data", (chunk) => {
       if (settled) return;
       bytes += chunk.length;
@@ -160,6 +168,7 @@ async function readBody(req, limit = 262144) {
         return;
       }
       settled = true;
+      clearTimeout(deadline);
       resolve(value);
     });
     req.on("error", () => rejectOnce(fail(400, "Request body failed")));
@@ -181,6 +190,7 @@ export function createHttpServer(
   {
     platform = appContainer ? null : createPlatform(),
     trustedTestMode = false,
+    portableBodyTimeoutMs = 15000,
     helperControlEnabled = process.env.STUDIO_HELPER_CONTROL_ENABLED === "true",
     distDir = DIST_DIR,
     editorBoundaryEnabled = process.env.STUDIO_EDITOR_BOUNDARY_ENABLED ===
@@ -195,7 +205,19 @@ export function createHttpServer(
     throw new Error(
       "Injected containers require an authenticated platform or explicit trustedTestMode",
     );
+  if (
+    !Number.isInteger(portableBodyTimeoutMs) ||
+    portableBodyTimeoutMs < 1 ||
+    portableBodyTimeoutMs > 15000
+  )
+    throw new Error(
+      "Portable body deadline must be between 1 and 15000 milliseconds",
+    );
+  // One bounded portable operation per server, including response serialization/backpressure.
+  let portableOperationActive = false;
   const server = http.createServer(async (req, res) => {
+    let portableOperationSettled;
+    let portableBody = false;
     const requestId = randomUUID();
     let activeContainer;
     res.setHeader("X-Request-Id", requestId);
@@ -475,6 +497,61 @@ export function createHttpServer(
       const founder = () => {
         if (user.role !== "founder") throw fail(403, "Founder access required");
       };
+      if (route.startsWith("/api/admin/editor-pack/")) {
+        founder();
+        if (
+          !nativeEditorEnabled ||
+          trustedTestMode ||
+          process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== "true"
+        )
+          throw fail(404, "Not found");
+        const methods = {
+          "/api/admin/editor-pack/destinations": "POST",
+          "/api/admin/editor-pack/export": "GET",
+          "/api/admin/editor-pack/install": "POST",
+          "/api/admin/editor-pack/rollback": "POST",
+        };
+        if (methods[route] !== req.method) throw fail(404, "Not found");
+        // Authorize without constructing a repository or seeding scoped data.
+        if (route !== "/api/admin/editor-pack/destinations")
+          await identity.authorize(
+            user,
+            url.searchParams.get("organizationId"),
+            url.searchParams.get("brandId"),
+          );
+        if (portableOperationActive) {
+          res.setHeader("Retry-After", "1");
+          if (req.method === "POST") {
+            // Discard transport bytes without attaching a JSON/data collector.
+            req.resume();
+          }
+          throw fail(
+            429,
+            "Another portable-pack operation is active. Retry this request after it finishes.",
+          );
+        }
+        portableOperationActive = true;
+        portableBody = req.method === "POST";
+        let operationDone = false,
+          responseDone = res.destroyed,
+          released = false;
+        const release = () => {
+          if (!released && operationDone && responseDone) {
+            released = true;
+            portableOperationActive = false;
+          }
+        };
+        const responseFinished = () => {
+          responseDone = true;
+          release();
+        };
+        res.once("finish", responseFinished);
+        res.once("close", responseFinished);
+        portableOperationSettled = () => {
+          operationDone = true;
+          release();
+        };
+      }
       const body =
         req.method === "POST"
           ? await readBody(
@@ -494,6 +571,7 @@ export function createHttpServer(
                       route.startsWith("/api/studio/native-editor/")
                     ? 768 * 1024
                     : 262144,
+              portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
       if (route === "/api/admin/organizations" && req.method === "POST") {
@@ -1638,6 +1716,8 @@ export function createHttpServer(
         }),
       );
       return json(status, { error: code, requestId });
+    } finally {
+      portableOperationSettled?.();
     }
   });
   server.requestTimeout = 30000;

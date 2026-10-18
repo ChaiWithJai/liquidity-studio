@@ -88,3 +88,27 @@ Ejection rejects a file above four MiB before encoding it. The file collection c
 The service checks combined retained/live history counts before hydrating that document. Completed PNGs are validated and handed to the file budget individually, so rejection stops before reading a later artifact. Mutable source/native/review/export metadata is fingerprinted sequentially. Immutable inline export payloads are excluded from that metadata pass and read only when their completed receipt is consumed; collection-key fences remain, and exact bytes still must match the stage/receipt hash and full PNG decode. This does not weaken current scoped authorization or restore export completion authority.
 
 Controlled Node/SQLite regressions verify that exhausted file/byte budgets stop later scene hydration, 101 combined history entries stop before any scene read, and an artifact budget failure stops before the next payload. Whole-store snapshots before and after rejected ejection remain equal. A completed PNG is loaded once, rather than three times across capture/read/final capture. These are bounded-behavior checks, not a claimed measured peak-heap or production capacity benchmark.
+
+### HTTP admission and body deadline
+
+The HTTP server admits one portable-pack operation at a time, across export,
+install, rollback, and empty-destination creation. Authentication, founder access,
+feature flags, the known route/method, and existing-scope membership are checked
+before admission and before collecting a body. An occupied slot returns HTTP 429
+with `Retry-After: 1`; the caller can retry the same install idempotency key after
+the active operation finishes. Rejection does not start JSON collection or an
+installation journal. Transport bytes may be discarded without retaining them so
+HTTP clients can receive the response while uploading.
+
+The slot remains occupied until both server work has settled and the response
+has finished or closed. Disconnecting an export client does not admit another
+export while the original work continues. Aborted or failed body collection
+releases its slot; portable POST body collection has a 15-second deadline. The
+49 MiB install body limit and all archive limits remain unchanged. Ordinary
+non-pack routes are not serialized by this guard.
+
+This is a per-server-instance overlap control, not a hard 512 MiB memory limit or
+an aggregate spend guarantee. JSON parsing, validation, archive serialization,
+and transport still have memory costs; multi-instance scaling and instance-level
+capacity require separate operational limits. Regression tests use tiny held
+requests and a held HTTP response, rather than allocating maximum-size packs.
