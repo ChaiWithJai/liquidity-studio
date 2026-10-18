@@ -2,6 +2,8 @@
   import { onMount, tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
   import Emulator from "./Emulator.svelte";
+  import SourceReviewSummary from "./SourceReviewSummary.svelte";
+  import { sourceReviewSummary, reviewSignature } from "./lib/source-review.js";
   import { createGoogleAuth } from "./lib/google-auth.js";
   import "./studio.css";
 
@@ -71,6 +73,15 @@
   let sourceFacts = $state("");
   let sourceUrls = $state("");
   let reviewClaims = $state([]);
+  let savedReviewSignature = $state("[]");
+  let generationReview = $derived(sourceReviewSummary(reviewClaims, reviewSignature(reviewClaims) !== savedReviewSignature));
+  function focusSourceClaim(id) {
+    const target = document.getElementById(`source-claim-${encodeURIComponent(id)}`);
+    const disclosure = target?.closest("details");
+    if (disclosure) disclosure.open = true;
+    target?.scrollIntoView({ block: "center", behavior: "smooth" });
+    (target?.querySelector("textarea, input, select") || target)?.focus();
+  }
   let category = $state("Editorial");
   let newDay = $state("Monday");
   let newOrganization = $state("");
@@ -451,6 +462,7 @@
       })) ||
       []
     ).map((claim) => ({ ...claim }));
+    savedReviewSignature = reviewSignature(reviewClaims);
     exportUrl = "";
     preflight = null;
     syncEditor();
@@ -487,7 +499,7 @@
     syncEditor();
   }
   async function generate() {
-    if (!selectedStory || busy) return;
+    if (!selectedStory || busy || !generationReview.ready) return;
     if (pendingEdits && !(await saveEdit())) return;
     busy = true;
     error = "";
@@ -603,6 +615,21 @@
   function removeSourceClaim(id) {
     reviewClaims = reviewClaims.filter((claim) => claim.id !== id);
   }
+  async function reloadSourceReview() {
+    if (!selectedStory || busy || pendingEdits) return;
+    const token = lastScopeToken;
+    const id = selectedStory.id;
+    try {
+      const data = await request("/api/studio/bootstrap");
+      if (token !== lastScopeToken || selectedStory?.id !== id) return;
+      const story = data.backlog?.find((item) => item.id === id);
+      if (!story) throw new Error("Story is no longer available in this brand.");
+      backlog = data.backlog;
+      selectStory(story);
+      error = "";
+      notice = "Saved review reloaded. Unsaved review edits were discarded.";
+    } catch (failure) { if (token === lastScopeToken) error = failure.message; }
+  }
   async function saveSourceClaims() {
     if (!selectedStory) return;
     if (!reviewClaims.length) {
@@ -610,14 +637,22 @@
       return;
     }
     error = "";
+    const token = lastScopeToken;
+    const storyId = selectedStory.id;
+    const submittedSignature = reviewSignature(reviewClaims);
     try {
       const result = await post("/api/studio/source-claims", {
-        storyId: selectedStory.id,
+        storyId,
         sourceClaims: reviewClaims,
         expectedRevision: selectedStory.revision,
       });
+      if (token !== lastScopeToken || selectedStory?.id !== storyId) return;
       if (result.story) {
         selectedStory = result.story;
+        const savedClaims = (result.story.sourceClaims || []).map((claim) => ({ ...claim }));
+        const unchanged = reviewSignature(reviewClaims) === submittedSignature;
+        if (unchanged) reviewClaims = savedClaims;
+        savedReviewSignature = reviewSignature(savedClaims);
         const index = backlog.findIndex(
           (story) => story.id === selectedStory.id,
         );
@@ -626,7 +661,7 @@
       notice =
         "Source review saved. Only approved sourced claims can enter generation.";
     } catch (failure) {
-      error = failure.message;
+      if (token === lastScopeToken && selectedStory?.id === storyId) error = failure.message;
     }
   }
   async function saveProfile(event) {
@@ -1044,7 +1079,7 @@
               >
             </div>
             <div class="toolbar-actions">
-              <button class="secondary" disabled={busy} onclick={generate}
+              <button class="secondary" disabled={busy || !generationReview.ready} onclick={generate}
                 >{busy
                   ? "Working…"
                   : campaign
@@ -1062,6 +1097,7 @@
               >
             </div>
           </div>
+          <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
           {#if exportUrl}<p class="download">
               <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
                 >Actual exported artifact · scope authorization required</small
@@ -1266,7 +1302,7 @@
                     Approve a claim only after reviewing its linked source and
                     meaning. Clinical claims require a separate clinical review.
                   </p>
-                  {#each reviewClaims as claim, i (claim.id)}<fieldset>
+                  {#each reviewClaims as claim, i (claim.id)}<fieldset id={`source-claim-${encodeURIComponent(claim.id)}`} tabindex="-1">
                       <legend>Claim {i + 1}</legend><button
                         class="secondary"
                         onclick={() => removeSourceClaim(claim.id)}
@@ -1320,7 +1356,7 @@
                     onclick={addSourceClaim}>Add source claim</button
                   ><button class="secondary" onclick={saveSourceClaims}
                     >Save source review</button
-                  >
+                  ><button class="secondary" disabled={busy || pendingEdits} onclick={reloadSourceReview}>Reload saved review (discard review edits)</button>
                 </details>
                 {#if preflight?.error}<p class="small error">
                     Preflight could not be recorded: {preflight.error}
@@ -1344,7 +1380,7 @@
                 Unreviewed claims cannot enter a campaign.
               </p>
               <div class="field-editor">
-                {#each reviewClaims as claim, i (claim.id)}<fieldset>
+                {#each reviewClaims as claim, i (claim.id)}<fieldset id={`source-claim-${encodeURIComponent(claim.id)}`} tabindex="-1">
                     <legend>Claim {i + 1}</legend><button
                         class="secondary"
                         onclick={() => removeSourceClaim(claim.id)}
@@ -1396,7 +1432,7 @@
               >
               <button class="secondary" onclick={saveSourceClaims}
                 >Save source review</button
-              >
+              ><button class="secondary" disabled={busy || pendingEdits} onclick={reloadSourceReview}>Reload saved review (discard review edits)</button>
             </section>
             <div class="empty">
               <span class="empty-symbol">◧</span>
@@ -1405,7 +1441,8 @@
                 Generate a draft from the supplied facts, then review every
                 format.
               </p>
-              <button class="primary" disabled={busy} onclick={generate}
+              <SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} />
+              <button class="primary" disabled={busy || !generationReview.ready} onclick={generate}
                 >{busy ? "Generating…" : "Generate four-format draft"}</button
               >
             </div>{/if}

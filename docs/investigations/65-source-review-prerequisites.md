@@ -1,0 +1,15 @@
+# Source review prerequisites and recovery (#65)
+
+Baseline source: main `324f3fcd6b4823ab30cbda404a06e47cd72f6345`. `git log -S "Save source review" -- liquidity-studio/src/App.svelte` attributes the canonical Svelte review UI to `754f042`; this is source history, not an assertion that a source-unlabelled screenshot image was built from that commit. Canonical annotation IDs review-6/review-7 and steps S03/S08 remain unchanged.
+
+The generation service already calls `getApprovedClaims` before reserving generation usage or invoking the gateway. The missing UI prerequisite presentation did not establish an enforcement bypass. The UI now shows saved review eligibility, approved/excluded counts, per-claim blockers and an explicit unsaved-review blocker beside generation. Initial compilation needs at least one approved valid claim; unreviewed/rejected claims remain excluded. Clinical claims require a server-recorded review. A local attestation checkbox alone is not that record.
+
+Both review panels have stable claim anchors and an explicit reload action that discards review edits. Reload is disabled while campaign edits are pending. Source saves use existing optimistic revisions and ignore late responses after story/scope changes. A 409 preserves local review edits for deliberate recovery; no automatic retry overwrites a competing review. Failed generation continues preserving the existing draft.
+
+Upstream: current authorized scope, selected persisted story/revision and source-review route. Downstream: generation/source integrity/gateway, saved campaign and format previews. Authorization and source/clinical gates remain server-owned. This change neither grants a helper approval authority nor certifies facts.
+
+Verification: presentation eligibility compared with actual server `getApprovedClaims` for empty/rejected/unreviewed/mixed/invalid/clinical cases; real Chromium UI→HTTP→SQLite test proves disabled controls, stable-claim focus, save/dirty/reload, direct API 422 quarantine and competing-review 409 recovery. No paid provider request, deployment or production data mutation is required. Further after-change visual evidence and independent review are tracked before issue closure.
+
+After-change evidence: [S03](../design-review/issue-65/2026-10-18/S03-after.png), [S08](../design-review/issue-65/2026-10-18/S08-after.png), and [manifest](../design-review/issue-65/2026-10-18/manifest.json). These replay the task states using an original disposable fixture at the same 1280×720 viewport; they are not a false claim of pixel-identical historical data. All 13 existing/new Studio browser tests pass; both edited Svelte components pass official MCP autofixer.
+
+Independent review reproduced two additional failures on the initial PR head: a blocker link targeted controls inside a closed source disclosure, and a delayed save overwrote newer same-story review typing. The follow-up opens the enclosing disclosure before focus and compares the submitted review signature before replacing form state. Server saved state/revision updates while later local typing remains dirty. Two additional real-browser regressions cover these cases.
