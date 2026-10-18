@@ -38,5 +38,39 @@
       "sha256": "1da7732f6fb4907d9922af2c9d6a1aa8b851f6d6d7641fb0c335e341f1305be8"
     }
   ],
-  "modnetSourceCommit": "28165a451e4610c9d77cfdf925a94610bb2810fb"
+  "modnetSourceCommit": "28165a451e4610c9d77cfdf925a94610bb2810fb",
+  "noticeInventory": [
+    {
+      "repository": "xuebinqin/U-2-Net",
+      "commit": "ac7e1c817ecab7c7dff5ce6b1abba61cd213ff29",
+      "treeUrl": "https://api.github.com/repos/xuebinqin/U-2-Net/git/trees/ac7e1c817ecab7c7dff5ce6b1abba61cd213ff29?recursive=1",
+      "truncated": false,
+      "noticePaths": [
+        "LICENSE"
+      ]
+    },
+    {
+      "repository": "ZHKKKe/MODNet",
+      "commit": "28165a451e4610c9d77cfdf925a94610bb2810fb",
+      "treeUrl": "https://api.github.com/repos/ZHKKKe/MODNet/git/trees/28165a451e4610c9d77cfdf925a94610bb2810fb?recursive=1",
+      "truncated": false,
+      "noticePaths": [
+        "LICENSE"
+      ]
+    },
+    {
+      "repository": "BritishWerewolf/U-2-Netp",
+      "commit": "7112208dbac3a3642496c8d54e2f0f9bb3dc1dc8",
+      "treeUrl": "https://huggingface.co/api/models/BritishWerewolf/U-2-Netp/tree/7112208dbac3a3642496c8d54e2f0f9bb3dc1dc8?recursive=true",
+      "noticePaths": [],
+      "licenseDeclaration": "README.md model card"
+    },
+    {
+      "repository": "Xenova/modnet",
+      "commit": "fa2fa546052fba4c08921230a26cc69a333fca12",
+      "treeUrl": "https://huggingface.co/api/models/Xenova/modnet/tree/fa2fa546052fba4c08921230a26cc69a333fca12?recursive=true",
+      "noticePaths": [],
+      "licenseDeclaration": "README.md model card"
+    }
+  ]
 }
