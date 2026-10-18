@@ -223,6 +223,13 @@ export class PenpotTokenRefreshTransport {
         throw fail(409, "Native context changed");
       await row.input.reauthorize();
       this.lookup(capability);
+      const finalContext = await this.context(row.input);
+      if (
+        !sameIdentity(finalContext.bundle, current.bundle) ||
+        !isDeepStrictEqual(finalContext.manifest, current.manifest)
+      )
+        throw fail(409, "Source or registration changed before native claim");
+      this.lookup(capability);
       row.state = "claimed";
       row.acknowledgement = randomBytes(32).toString("base64url");
       return {
@@ -272,6 +279,16 @@ export class PenpotTokenRefreshTransport {
       )
         throw fail(409, "Native paint propagation not yet verified");
       await row.input.reauthorize();
+      this.lookup(capability);
+      const finalContext = await this.context(row.input);
+      if (
+        !sameIdentity(finalContext.bundle, current.bundle) ||
+        !isDeepStrictEqual(finalContext.manifest, current.manifest)
+      )
+        throw fail(
+          409,
+          "Source or registration changed during native verification",
+        );
       this.lookup(capability);
       this.pending.delete(digest(capability));
       return {

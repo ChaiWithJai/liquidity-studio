@@ -383,3 +383,37 @@ test("101 concurrent native actions cannot exceed the atomic 100-entry bound", a
   assert.equal(rejected[0].reason.status, 429);
   assert.equal(f.transport.pending.size, 100);
 });
+
+test("source revision changed during held native verification cannot receive a current receipt", async () => {
+  const f = fixture();
+  const result = await f.transport.execute(f.input);
+  const claimed = await f.transport.claim(result.nativeActionCapability, {
+    fileId: "file",
+    ownerPrincipal: "owner",
+  });
+  let release, entered;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  const waiting = new Promise((resolve) => {
+    entered = resolve;
+  });
+  f.transport.nativeSnapshot = async () => {
+    entered();
+    await gate;
+    return {
+      ...f.snapshot,
+      revision: 6,
+      tokenValues: f.bundle.tokens.colors.map((color) => color.hex),
+      boundPaintsMatch: true,
+    };
+  };
+  const verification = f.transport.acknowledge(
+    result.nativeActionCapability,
+    claimed.acknowledgement,
+  );
+  await waiting;
+  f.bundle.storyRevision++;
+  release();
+  await assert.rejects(verification, (error) => error.status === 409);
+});
