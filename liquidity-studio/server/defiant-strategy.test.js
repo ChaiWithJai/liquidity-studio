@@ -68,3 +68,12 @@ test('unlocated focused signal shows only real incident edges and bounded neighb
  await f.service.import(f.founder,{expectedRevision:1,idempotencyKey:randomUUID(),kind:'owned',data});
  const graph=await f.service.graph(f.founder,{focusId:'s',selectedId:'p'});assert.deepEqual(graph.nodes.map(n=>n.id),['s','p']);assert.deepEqual(graph.edges.map(e=>e.id),['link']);assert.equal(graph.edges[0].from,'s');assert.equal(graph.nodes.some(n=>n.kind==='region'),false);assert.equal(graph.selectedItem.name,'Owned collaborator');
 });
+
+
+test('graph filters preserve the selection and facts while filtering visible references and edges',async t=>{
+ const f=await setup(t);await f.service.enable(f.founder,{});await f.service.import(f.founder,{expectedRevision:1,idempotencyKey:randomUUID(),kind:'demo'});
+ const before=await f.service.read(f.founder),artists=await f.service.graph(f.founder,{kinds:'artist'});assert.ok(artists.nodes.length>0);assert.ok(artists.nodes.every(n=>n.kind==='artist'));assert.ok(artists.edges.every(e=>artists.nodes.some(n=>n.id===e.from)&&artists.nodes.some(n=>n.id===e.to)));
+ const hidden=await f.service.graph(f.founder,{focusId:'node_lagos',selectedId:'yt_sig_lagos_01',showExamples:'false'});assert.deepEqual(hidden.nodes,[]);assert.deepEqual(hidden.edges,[]);assert.equal(hidden.selectedItem.id,'yt_sig_lagos_01');assert.deepEqual(hidden.matches,[]);
+ const routes=await f.service.graph(f.founder,{kinds:'route'});assert.ok(routes.edges.length>0);assert.ok(routes.edges.every(e=>e.kind==='route'));
+ await assert.rejects(f.service.graph(f.founder,{kinds:'not-a-type'}),{status:400});assert.deepEqual(await f.service.read(f.founder),before);
+});

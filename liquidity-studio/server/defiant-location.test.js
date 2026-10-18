@@ -31,3 +31,10 @@ test('owned entity identifiers with colons roundtrip without broadening organiza
  assert.equal(route.strategy.focus,'owned:producer');assert.equal(route.strategy.selected,'owned:relationship');assert.equal(route.strategy.savedViewId,'view:one');assert.equal(route.strategy.reportId,'report:one');assert.equal(route.strategy.destinationBrandId,'');
  assert.equal(strategyOrganizationFor({...route,organizationId:'org:invalid'},[{id:'org:invalid',strategy:{enabled:true}}]),null);
 });
+
+
+test('strategy filters and search roundtrip without leaking into publishing URLs',()=>{
+ const url=workflowHref('http://localhost/',{organizationId:'defiant_org',tab:'strategy',strategy:{view:'map',kinds:['artist'],showExamples:false,query:'London producer'}});
+ const route=readWorkflowLocation(url);assert.deepEqual(route.strategy.kinds,['artist']);assert.equal(route.strategy.showExamples,false);assert.equal(route.strategy.query,'London producer');
+ const published=new URL(workflowHref(url,{organizationId:'org_default',brandId:'brand_default',tab:'studio'}));for(const key of ['kinds','examples','find'])assert.equal(published.searchParams.has(key),false);
+});

@@ -34,7 +34,7 @@ export class DefiantStrategyService {
  }
 
  async graph(actor,input={}){
-  exact(input,['focusId','selectedId','query']);for(const k of ['focusId','selectedId'])if(input[k]!==undefined&&input[k]!==''&&(typeof input[k]!=='string'||input[k].length>128))throw fail(400,'Invalid graph selection');if(input.query!==undefined&&(typeof input.query!=='string'||input.query.length>200))throw fail(400,'Invalid graph search');return projectGraph(await this.read(actor),input);
+  exact(input,['focusId','selectedId','query','kinds','showExamples']);if(input.kinds!==undefined&&(typeof input.kinds!=='string'||input.kinds.split(',').some(k=>!['region','artist','signal','person','resource','format','catalog','external','route'].includes(k))))throw fail(400,'Invalid graph type filter');if(input.showExamples!==undefined&&!['true','false'].includes(input.showExamples))throw fail(400,'Invalid graph example filter');for(const k of ['focusId','selectedId'])if(input[k]!==undefined&&input[k]!==''&&(typeof input[k]!=='string'||input[k].length>128))throw fail(400,'Invalid graph selection');if(input.query!==undefined&&(typeof input.query!=='string'||input.query.length>200))throw fail(400,'Invalid graph search');return projectGraph(await this.read(actor),input);
  }
  intake(input){
   if(!['owned','demo'].includes(input.kind))throw fail(400,'Choose explicit owned intake or labeled demo');
