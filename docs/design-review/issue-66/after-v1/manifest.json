@@ -1,0 +1,234 @@
+{
+  "schemaVersion": 1,
+  "issues": [
+    66,
+    67
+  ],
+  "capturedSourceCommit": "81331951bc716a6efc6ad66e63bf080a1a538222",
+  "baselineCommit": "273cdde3fba60e1c6c46de84721b07db88b3241f",
+  "baselineUnmodified": true,
+  "fixture": "Fresh SQLite scope with seeded unreviewed research/source tasks. Explicit test-only password auth. No generation, provider, export or cloud operation in capture journey.",
+  "sourceSha256": {
+    "liquidity-studio/src/App.svelte": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+    "liquidity-studio/src/WorkspaceTable.svelte": "76461432ca43a01d4d0971379fafde88d6f53f62a8cc425f86527ea5686ee83c",
+    "liquidity-studio/src/lib/workspace-client.js": "6f481ae3e2b49d584386a2017613d902732f0f29030492c855fa43ebb9614dd5",
+    "liquidity-studio/src/components/WorkspaceCalendar.svelte": "719d451fa598e6a3c7fad296a3580da432c18267c8ea54c2c73517fd8a4fb121",
+    "liquidity-studio/src/lib/calendar-model.js": "b1bf667956cd5c6d39d4fba9a12d5ade57e1214cc31458d29feaa4e1b2c3ebf2",
+    "liquidity-studio/tests/backlog-filters.spec.js": "6e0ee6b1614440b4ec7071478f56f5968eda7edbb6a00abc3bd60cd038693b31"
+  },
+  "compiledAssets": [
+    {
+      "path": "liquidity-studio/dist/assets/index-DjuLGKd4.js",
+      "sha256": "cdd9dba03e5597bc089cf5820b0e893ec81a7c6f87930aadfa937b96bd129331"
+    },
+    {
+      "path": "liquidity-studio/dist/assets/index-DoRfITYh.css",
+      "sha256": "b03d627b798ff25cc90ee715a5f1ba0c5edb03b72db55ead82a6d7076c7d36aa"
+    }
+  ],
+  "captures": [
+    {
+      "step": "S01",
+      "action": "Open scoped backlog",
+      "recordedAt": "2026-10-18T02:01:59.071Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S01.png",
+      "sha256": "f6f01c4148a592255a2f5aab8ea286bee091e7cc6b9436dbf85cf6ab7692751c",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S02",
+      "action": "Search Huda; one of five visible",
+      "recordedAt": "2026-10-18T02:01:59.329Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S02.png",
+      "sha256": "3fb6d5e892739abc4f7c55d175a11cbeb4e8338a068bf545ba647677b92dab87",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S03",
+      "action": "Open the filtered existing story in the campaign editor",
+      "recordedAt": "2026-10-18T02:01:59.427Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S03.png",
+      "sha256": "749ffe0c7e2fd23135a0c1fe1d512a72445e002a82d82acd7720f03d94751aa9",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S04",
+      "action": "Return from selected story; same-brand filter retained",
+      "recordedAt": "2026-10-18T02:01:59.512Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S04.png",
+      "sha256": "a505b7ec03c0d966b51c7bb1c414fd9db1be8a8e5f28c6125552753e5e786a8d",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S06",
+      "action": "Open dated calendar; existing weekday plans remain explicitly undated",
+      "recordedAt": "2026-10-18T02:01:59.730Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S06.png",
+      "sha256": "ccdad9cb07d37e2e3b10da3b9a4bb628147f3e77d7038d29a9003569b08bcfd2",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S07",
+      "action": "Open existing undated Huda story without inventing a dated placement or draft",
+      "recordedAt": "2026-10-18T02:01:59.828Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S07.png",
+      "sha256": "749ffe0c7e2fd23135a0c1fe1d512a72445e002a82d82acd7720f03d94751aa9",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S05",
+      "action": "Unmatched query shows no-match recovery, not empty brand",
+      "recordedAt": "2026-10-18T02:02:00.132Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S05.png",
+      "sha256": "0628fcb22fb27ef5545e21c6f53e14cedc5608e6b69c48851ee1d1bb3a1efd72",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S09",
+      "action": "Switch to CWJ; prior brand filter does not cross scope",
+      "recordedAt": "2026-10-18T02:02:00.438Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S09.png",
+      "sha256": "64cd2f7e7af628a27b3836855a54259cd21105281c9f3112c2b2286d216757b4",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_vedic",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S10",
+      "action": "Clear the deliberately set CWJ filter; five stories visible",
+      "recordedAt": "2026-10-18T02:02:00.775Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S10.png",
+      "sha256": "8b5072ae70a4bea884608d26bfcacb703491ed319607831705dbaf2665992b63",
+      "sourceAppSha256": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+      "sourceBase": "81331951bc716a6efc6ad66e63bf080a1a538222",
+      "actor": "isolated test founder",
+      "organization": "org_default",
+      "brand": "brand_vedic",
+      "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+      "humanMetrics": null,
+      "dimensions": {
+        "width": 1280,
+        "height": 720
+      }
+    }
+  ],
+  "limitations": [
+    "New controlled fixture; no pixel-equivalence claim against historical live data.",
+    "Viewport screenshots are unmodified; panels below the fold remain below the fold.",
+    "No human usability timing, live Google authorization or production concurrency certification."
+  ]
+}

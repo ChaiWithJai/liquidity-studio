@@ -2,6 +2,9 @@
   import { onMount, tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
   import Emulator from "./Emulator.svelte";
+  import WorkspaceTable from "./WorkspaceTable.svelte";
+  import WorkspaceCalendar from "./components/WorkspaceCalendar.svelte";
+  import { createWorkspaceClient } from "./lib/workspace-client.js";
   import { scopedRequest } from "./lib/scoped-request.js";
   import SourceReviewSummary from "./SourceReviewSummary.svelte";
   import { sourceReviewSummary, reviewSignature } from "./lib/source-review.js";
@@ -53,9 +56,13 @@
   let notice = $state("");
   let tab = $state("backlog");
   let brandProfile = $state(null);
-  let backlog = $state([]);
-  let calendar = $state([]);
+  let workspaceClient = $state(null);
+  let workspaceState = $state(null);
+  let workspaceUnsubscribe;
+  // Projection of one canonical entity map; editor fields are intentional transient buffers.
+  let backlog = $derived(workspaceState ? [...workspaceState.entities.values()].filter(entry => entry.story?.revision === entry.revision).map(entry => entry.story) : []);
   let selectedStory = $state(null);
+  let editorConflictRevision = $state(null);
   let campaign = $state(null);
   let format = $state("infographic");
   let scheduledDay = $state("Monday");
@@ -67,7 +74,7 @@
   let activeBacklogScopeKey = "";
   let scopeLoadError = $state("");
   let searchQuery = $derived(search.trim());
-  let filtersActive = $derived(Boolean(searchQuery || statusFilter !== "All"));
+  let filtersActive = $derived(Boolean(searchQuery || statusFilter !== "All" || Object.entries(workspaceState?.query.definition.filters || {}).some(([key,value]) => !["search","statuses"].includes(key) && value !== "any" && value != null && value !== "" && (!Array.isArray(value) || value.length))));
   let editJson = $state("");
   let editFields = $state({});
   let pendingEdits = $state(false);
@@ -165,6 +172,56 @@
     clearTimeout(googleLoginTimer);
     googleLoginTimer = undefined;
   }
+  function disposeWorkspaceClient() {
+    workspaceUnsubscribe?.();
+    workspaceClient?.dispose();
+    workspaceClient = null;
+    workspaceState = null;
+  }
+  function initializeWorkspaceClient(view) {
+    disposeWorkspaceClient();
+    const client = createWorkspaceClient({ request, scopeKey: backlogScopeKey(), initialQuery: view?.workspaceQuery, initialUi: view?.workspaceUi });
+    workspaceClient = client;
+    workspaceUnsubscribe = client.subscribe(state => {
+      workspaceState = state;
+      const current = selectedStory && client.getStory(selectedStory.id);
+      if (current && current.revision > selectedStory.revision) {
+        if (pendingEdits || reviewSignature(reviewClaims) !== savedReviewSignature) {
+          // Canonical projections may advance; an unsaved editor keeps its original optimistic base.
+          editorConflictRevision = current.revision;
+        } else {
+          // A clean editor adopts the whole saved snapshot, including its editable buffers.
+          selectStory(current);
+        }
+      }
+    });
+  }
+  async function openWorkspaceStory(id) {
+    const client = workspaceClient;
+    try {
+      await client.ensureStories([id], { force: true });
+      if (workspaceClient !== client) return;
+      const story = client.getStory(id);
+      if (story) await openStory(story);
+    } catch (failure) {
+      if (workspaceClient === client && failure.code !== "REQUEST_CONTEXT_CHANGED") error = failure.message;
+    }
+  }
+  async function discardLocalEditsAndReload() {
+    const client = workspaceClient, storyId = selectedStory?.id;
+    if (!client || !storyId) return;
+    try {
+      await client.ensureStories([storyId], {force:true});
+      if (workspaceClient !== client || selectedStory?.id !== storyId) return;
+      const story = client.getStory(storyId);
+      if (story) { selectStory(story); error = ""; notice = "Loaded the current saved story. Local edits were discarded."; }
+    } catch (failure) {
+      if (workspaceClient === client && failure.code !== "REQUEST_CONTEXT_CHANGED") error = failure.message;
+    }
+  }
+  function receiveStories(stories, replace = false) {
+    if (workspaceClient && stories) workspaceClient.ingestStories(stories, {replace});
+  }
   function clearWorkspace() {
     requestSessionEpoch++;
     lastScopeToken++;
@@ -179,8 +236,7 @@
     permissions = {};
     organizationId = "";
     brandId = "";
-    backlog = [];
-    calendar = [];
+    disposeWorkspaceClient();
     selectedStory = null;
     campaign = null;
     brandProfile = null;
@@ -323,6 +379,8 @@
       statusFilter,
       selectedStoryId: selectedStory?.id,
       scrollY: tab === "backlog" ? window.scrollY : previous?.scrollY || 0,
+      workspaceQuery: workspaceClient?.snapshot.query.definition,
+      workspaceUi: workspaceClient?.snapshot.ui,
     });
   }
   async function navigateTab(next) {
@@ -339,6 +397,7 @@
   async function clearFilters() {
     search = "";
     statusFilter = "All";
+    await workspaceClient?.query({...workspaceClient.snapshot.query.definition,filters:{}});
     rememberBacklogView();
     await tick();
     searchInput?.focus();
@@ -352,6 +411,8 @@
           statusFilter,
           selectedStoryId: selectedStory?.id || cached?.selectedStoryId,
           scrollY: cached?.scrollY || 0,
+          workspaceQuery: workspaceClient?.snapshot.query.definition || cached?.workspaceQuery,
+          workspaceUi: workspaceClient?.snapshot.ui || cached?.workspaceUi,
         }
       : cached;
     activeBacklogScopeKey = key;
@@ -360,8 +421,7 @@
     scopeLoadError = "";
     const token = ++lastScopeToken;
     scopeLoading = true;
-    backlog = [];
-    calendar = [];
+    disposeWorkspaceClient();
     brandProfile = null;
     reviewClaims = [];
     notice = "";
@@ -373,6 +433,7 @@
     preflight = null;
     exportUrl = "";
     pendingEdits = false;
+    initializeWorkspaceClient(view);
     try {
       const data = await request("/api/studio/bootstrap");
       if (token !== lastScopeToken) return;
@@ -383,8 +444,7 @@
         brandProfile.fonts.body = supportedFont(brandProfile.fonts.body);
         brandProfile.colors ||= [];
       }
-      backlog = data.backlog || [];
-      calendar = data.calendar || [];
+      receiveStories(data.backlog || [], true);
       if (data.organizations) organizations = data.organizations;
       if (data.permissions) permissions = data.permissions;
       if (backlog.length) {
@@ -394,8 +454,7 @@
       if (token === lastScopeToken) {
         error = failure.message;
         scopeLoadError = failure.message;
-        backlog = [];
-        calendar = [];
+        disposeWorkspaceClient();
         brandProfile = null;
       }
     } finally {
@@ -437,8 +496,9 @@
     await loadScope();
   }
   function selectStory(story) {
-    selectedStory = story;
-    campaign = story?.campaignDraft || null;
+    editorConflictRevision = null;
+    selectedStory = story ? JSON.parse(JSON.stringify(story)) : null;
+    campaign = selectedStory?.campaignDraft || null;
     scheduledDay = story?.scheduledDay || "Monday";
     reviewClaims = (
       story?.sourceClaims ||
@@ -499,8 +559,7 @@
       campaign = result.campaign;
       selectedStory =
         result.backlog?.find((story) => story.id === storyId) || result.story;
-      backlog = result.backlog || backlog;
-      calendar = result.calendar || calendar;
+      receiveStories(result.backlog || (selectedStory ? [selectedStory] : []));
       syncEditor();
       notice = "Draft generated. Review the sources before export.";
     } catch (failure) {
@@ -529,8 +588,7 @@
         selectedStory.revision = saved.revision;
       campaign[format] = content;
       selectedStory.campaignDraft = campaign;
-      const story = backlog.find((item) => item.id === selectedStory.id);
-      if (story) story.campaignDraft = campaign;
+      receiveStories([saved.story || selectedStory]);
       pendingEdits = editJson !== editingSnapshot;
       notice = pendingEdits
         ? "Saved the submitted edit. Newer changes remain unsaved."
@@ -563,8 +621,7 @@
       }
       // Scheduling changes metadata only. Keep any text typed while it ran.
       selectedStory = { ...data.story, campaignDraft: campaign || data.story.campaignDraft };
-      backlog = (data.backlog || backlog).map(story => story.id === storyId ? selectedStory : story);
-      calendar = data.calendar || calendar;
+      receiveStories(data.backlog || [data.story]);
       notice = `Assigned to ${requestedDay} as an undated weekday. This does not publish to Instagram.`;
     } catch (failure) {
       if (token === lastScopeToken && selectedStory?.id === storyId) error = failure.message;
@@ -581,15 +638,12 @@
         format,
         content: campaign[format],
       });
+      // Reconcile the exported revision before exposing its download. Clean snapshot adoption
+      // intentionally clears stale artifacts, so the new link is assigned afterward.
+      receiveStories(result.backlog || (selectedStory ? [selectedStory] : []));
       exportUrl = result.downloadUrl || result.artifact?.downloadUrl || "";
-      exportName =
-        result.filename || result.artifact?.filename || "Download export";
-      if (!exportUrl)
-        throw new Error("Server did not return a downloadable artifact");
-      backlog = result.backlog || backlog;
-      calendar = result.calendar || calendar;
-      selectedStory =
-        backlog.find((story) => story.id === selectedStory.id) || selectedStory;
+      exportName = result.filename || result.artifact?.filename || "Download export";
+      if (!exportUrl) throw new Error("Server did not return a downloadable artifact");
       notice = "Export created. Download the actual file below.";
     } catch (failure) {
       error = `Export failed: ${failure.message}`;
@@ -621,7 +675,7 @@
       if (token !== lastScopeToken || selectedStory?.id !== id) return;
       const story = data.backlog?.find((item) => item.id === id);
       if (!story) throw new Error("Story is no longer available in this brand.");
-      backlog = data.backlog;
+      receiveStories(data.backlog, true);
       selectStory(story);
       error = "";
       notice = "Saved review reloaded. Unsaved review edits were discarded.";
@@ -650,10 +704,7 @@
         const unchanged = reviewSignature(reviewClaims) === submittedSignature;
         if (unchanged) reviewClaims = savedClaims;
         savedReviewSignature = reviewSignature(savedClaims);
-        const index = backlog.findIndex(
-          (story) => story.id === selectedStory.id,
-        );
-        if (index >= 0) backlog[index] = selectedStory;
+        receiveStories([result.story]);
       }
       notice =
         "Source review saved. Only approved sourced claims can enter generation.";
@@ -718,8 +769,7 @@
         sourceUrls: sourceUrls.split("\n").filter(Boolean),
         sourceStatus: "unreviewed",
       });
-      backlog = result.backlog || [result.story, ...backlog];
-      calendar = result.calendar || calendar;
+      receiveStories(result.backlog || [result.story]);
       title = "";
       sourceFacts = "";
       sourceUrls = "";
@@ -977,8 +1027,8 @@
       {:else if tab === "backlog"}
         <div class="section-line">
           <div>
-            <h2>Story backlog <span class="count">{filteredStories.length} of {backlog.length}</span></h2>
-            <p id="backlog-results" class="muted" role="status" aria-live="polite" aria-atomic="true">Showing {filteredStories.length} of {backlog.length} stories.{searchQuery ? ` Search: ${searchQuery}.` : ""}{statusFilter !== "All" ? ` Status: ${statusFilter}.` : ""}</p>
+            <h2>Story backlog <span class="count">{workspaceState?.query.loaded ? workspaceState.query.filteredTotal : filteredStories.length} of {workspaceState?.query.loaded ? workspaceState.query.total : backlog.length}</span></h2>
+            <p id="backlog-results" class="muted" role="status" aria-live="polite" aria-atomic="true">Showing {workspaceState?.query.loaded ? workspaceState.query.filteredTotal : filteredStories.length} of {workspaceState?.query.loaded ? workspaceState.query.total : backlog.length} stories.{searchQuery ? ` Search: ${searchQuery}.` : ""}{statusFilter !== "All" ? ` Status: ${statusFilter}.` : ""}</p>
             <p class="muted">Opening a saved story keeps your edits.</p>
           </div>
           <div class="filters">
@@ -1003,35 +1053,11 @@
             <button class="secondary" onclick={clearFilters}>Clear filters</button>
           </div>
         {/if}
-        <div class="story-list">
-          {#each filteredStories as story (story.id)}<article class="story-row">
-              <div class="story-day">
-                <b>{story.scheduledDay?.slice(0, 3) || "—"}</b><span
-                  >{story.campaignDraft ? "DRAFT" : "SOURCE"}</span
-                >
-              </div>
-              <div class="story-copy">
-                <span class="eyebrow">{story.category}</span>
-                <h3>{story.title}</h3>
-                <p>
-                  {story.verifiedFacts?.[0] ||
-                    "Add source facts before generating."}
-                </p>
-                <span class="status-tag">{story.status}</span>
-              </div>
-              <button class="secondary" onclick={() => openStory(story)}
-                >{story.campaignDraft ? "Open draft" : "Open story"} ↗</button
-              >
-            </article>{:else}<div class="empty">
-              {#if backlog.length}
-                <h3>No stories match these filters.</h3>
-                <p>Your stories are still in this brand. Clear filters to show them.</p>
-              {:else}
-                <h3>No stories here yet.</h3>
-                <p>Add supplied facts below. The studio will not invent them.</p>
-              {/if}
-            </div>{/each}
-        </div>
+        {#if workspaceClient}
+          <WorkspaceTable client={workspaceClient} scopeKey={workspaceClient.scopeKey} actorId={user.id} {canAdmin} {search} {statusFilter}
+            onQueryFilters={(filters) => { search = filters.search || ""; statusFilter = filters.statuses?.[0] || "All"; rememberBacklogView(); }}
+            onOpenStory={openStory} />
+        {/if}
         <details class="panel add-story">
           <summary>Add a story</summary>
           <form class="form-grid" onsubmit={addStory}>
@@ -1062,25 +1088,17 @@
           </form>
         </details>
       {:else if tab === "calendar"}
-        <div class="section-line">
-          <h2>Weekly editorial calendar</h2>
-          <span class="muted small"
-            >Assignments only · no automatic publishing</span
-          >
-        </div>
-        <div class="calendar-grid">
-          {#each days as day (day)}<section class="day-column">
-              <h3>{day}</h3>
-              {#each backlog.filter((story) => story.scheduledDay === day) as story (story.id)}<button
-                  class="calendar-story"
-                  onclick={() => openStory(story)}
-                  ><span class="eyebrow">{story.category}</span><b
-                    >{story.title}</b
-                  ><span class="status-tag">{story.status}</span></button
-                >{:else}<p class="muted small">Room for a story</p>{/each}
-            </section>{/each}
-        </div>
+        {#if workspaceClient}
+          <WorkspaceCalendar client={workspaceClient} scopeKey={workspaceClient.scopeKey}
+            onOpenStory={openWorkspaceStory}
+            onReceipt={() => {}} />
+        {/if}
       {:else if tab === "studio"}
+        {#if selectedStory && editorConflictRevision}
+          <div class="workspace-conflict" role="alert">A newer saved revision {editorConflictRevision} is available. Your local edits still use revision {selectedStory.revision}; they cannot overwrite the newer work.
+            <button class="secondary" onclick={discardLocalEditsAndReload}>Discard local edits and load saved story</button>
+          </div>
+        {/if}
         {#if selectedStory}<div class="studio-toolbar">
             <div>
               <span class="eyebrow">ACTIVE STORY</span>

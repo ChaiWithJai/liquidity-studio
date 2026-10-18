@@ -31,7 +31,7 @@ async function capture(page, step, action) {
     sourceAppSha256: createHash("sha256")
       .update(readFileSync(new URL("../src/App.svelte", import.meta.url)))
       .digest("hex"),
-    sourceBase: "324f3fc",
+    sourceBase: process.env.STUDIO_EVIDENCE_SOURCE_COMMIT || "324f3fc",
     actor: "isolated test founder",
     organization: "org_default",
     brand: await page
@@ -118,6 +118,7 @@ test("S01–S05 and S09–S10 counts, no-match recovery and per-brand return con
     .locator(".story-row")
     .getByRole("button", { name: "Open story" })
     .click();
+  await capture(page, "S03", "Open the filtered existing story in the campaign editor");
   await page
     .getByRole("button", { name: "Story backlog", exact: true })
     .click();
@@ -127,6 +128,17 @@ test("S01–S05 and S09–S10 counts, no-match recovery and per-brand return con
     "S04",
     "Return from selected story; same-brand filter retained",
   );
+  await expect(page.locator(".story-row")).toHaveCount(1);
+  await page.getByRole("button", {name:"Content calendar", exact:true}).click();
+  await expect(page.getByRole("heading",{name:"Plan the work.",exact:true})).toBeVisible();
+  const calendarStory=page.getByRole("button",{name:/^Open How Huda Kattan/});
+  await expect(calendarStory).toHaveCount(1);
+  await capture(page,"S06","Open dated calendar; existing weekday plans remain explicitly undated");
+  await calendarStory.click();
+  await expect(page.getByRole("heading",{name:/How Huda Kattan/})).toBeVisible();
+  await capture(page,"S07","Open existing undated Huda story without inventing a dated placement or draft");
+  await page.getByRole("button",{name:"Story backlog",exact:true}).click();
+  await expect(search).toHaveValue("Huda");
   await expect(page.locator(".story-row")).toHaveCount(1);
   await search.fill("no-matching-fixture-story");
   await expect(
@@ -255,10 +267,10 @@ test("loading and failed scopes never masquerade as empty, and stale scope respo
 test("status, selected story and backlog scroll survive navigation; organization and sign-out boundaries are intentional", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.setViewportSize({ width: 1280, height: 560 });
   await signIn(page);
   const rows = page.locator(".story-row");
-  const selectedTitle = await rows.last().getByRole("heading").innerText();
+  const selectedTitle = await rows.last().locator("[data-detail-story]").innerText();
   await rows.last().scrollIntoViewIfNeeded();
   const scroll = await page.evaluate(() => window.scrollY);
   expect(scroll).toBeGreaterThan(0);
@@ -298,6 +310,7 @@ test("status, selected story and backlog scroll survive navigation; organization
     .selectOption("org_default");
   await expect(page.getByLabel("Search stories")).toHaveValue("Huda");
   await expect(page.getByLabel("Filter by status")).toHaveValue("In Backlog");
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await signIn(page);
   await expect(page.getByLabel("Search stories")).toHaveValue("");
