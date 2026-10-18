@@ -1,0 +1,13 @@
+# Actual constrained-filesystem restore refusal
+
+On 18 October 2026, ordinary BrowserOS neo restoration exposed [#254](https://github.com/ChaiWithJai/liquidity-studio/issues/254): a constructor-selected SQLite database on a 64 MiB HFS+ sparse image unexpectedly accepted restoration. Available destination storage was 65,523,712 bytes, below the 100,894,231 bytes required for the selected real pack. The guard had inspected the host source working directory because the launcher supplied the database directly rather than through STUDIO_DATABASE_PATH. The unexpectedly completed destination and quiescent backup were retained as failure evidence.
+
+The fix binds the default capacity check to DurableStore's actual constructor-selected database directory. It preserves the existing three-times-serialized-pack plus 64 MiB reserve and checks before restore reservation or staging. Fixed safe capacity codes distinguish a known pre-write refusal from an uncertain transport result; arbitrary server errors remain redacted.
+
+Root then used the same constrained volume and identical pack through Neo. The corrected guard returned 507. An initial UI replay exposed generic uncertain-outcome wording; the final source corrected that guidance and removed a duplicate retry control. The final ordinary replay retained the same destination/request, displayed explicit disk-space guidance and exactly one **Retry same recovery request** button, with no fresh Restore button or uncertain-outcome message. Status reported no active installation, and the refused destination backlog remained empty after reload. No native content or source workspace was changed.
+
+This proves actual constrained-filesystem admission refusal and useful retained-request recovery guidance. It does not claim filesystem-full mid-write recovery, a new maximum-pack benchmark, Docker restart-policy behavior, or cloud provisioning. Earlier interrupted rollback, two-instance recovery and fresh native/application reconnection evidence remain separate. Broader [#57](https://github.com/ChaiWithJai/liquidity-studio/issues/57) stays open. Private image, database, runtime paths and request material are excluded.
+
+Source regression and browser checks run only in hosted CI. No local test runner, build, inference, new Docker image or host-disk filling was used for this acceptance.
+
+The disposable app was stopped after acceptance; its exact owned disk image was detached normally and retained. The first detach was busy while the backup process still held SQLite handles. After that process exited, normal detach succeeded. No forced detach or unrelated runtime stop occurred. The accompanying frontend provenance records the exact hosted canonical output imported for the final check run.
