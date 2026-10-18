@@ -85,14 +85,15 @@ jobs:
               printf "%s\n" "$resolved" > /review-tools/resolved-pnpm.path
               # Verify inside the same namespace: global symlinks may be absolute.
               python3 /recipe/verify-pnpm.py "$bin_dir/pnpm" > /review-tools/pnpm-integrity.json
-              test "$("$bin_dir/pnpm" --version)" = 12.5.1
+              verified="$(cat /review-tools/verified-pnpm.path)"
+              test "$("$verified" --version)" = 12.5.1
             ' 2>&1 | tee evidence/pnpm-manager.log
       - name: Preserve bounded pnpm setup diagnostics even on failure
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          for name in pnpm-integrity.json installed-pnpm.path resolved-pnpm.path pnpm-diagnostic.json; do
+          for name in pnpm-integrity.json installed-pnpm.path resolved-pnpm.path pnpm-diagnostic.json verified-pnpm.path verified-pnpm.sha256; do
             if [ -f "review-tools/$name" ]; then
               test "$(stat -c %s "review-tools/$name")" -le 65536
               cp "review-tools/$name" evidence/
