@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createNativeCutoutModel} from '../server/native-cutout-model.js';
 export const nativeBridgeSources = [
  'src/lib/native-editor-frame.js','src/lib/native-editor-mount.jsx','src/lib/native-editor-adapter.js',
- 'src/lib/native-editor-broker.js','src/lib/native-cutout-remover.js','src/lib/modnet-worker.js',
+ 'src/lib/native-editor-broker.js','src/lib/native-cutout-availability.js','src/lib/native-editor-size-presets.js','src/lib/native-cutout-remover.js','src/lib/modnet-worker.js',
  'src/lib/modnet-worker-client.js','src/lib/modnet-model-cache.js','src/lib/modnet-processor.js',
  'server/native-cutout-contract.js','package-lock.json',
 ];
