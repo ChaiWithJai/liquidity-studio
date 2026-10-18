@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import {
   MODNET_MODEL_SHA256,
   MODNET_PROCESSOR_VERSION,
-} from "../src/lib/modnet-processor.js";
+} from "./native-cutout-contract.js";
 const EXPECTED_SIZE = 25_888_640;
 const CHUNK_SIZE = 256 * 1024;
 async function readModel(path) {

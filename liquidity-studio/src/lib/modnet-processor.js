@@ -2,9 +2,10 @@
  * Reference: ZHKKKe/MODNet 28165a4, onnx/inference_onnx.py.
  * This module contains no model bytes or upstream implementation.
  */
-export const MODNET_PROCESSOR_VERSION = "studio-modnet-area-v1";
-export const MODNET_MODEL_SHA256 =
-  "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9";
+export {
+  MODNET_PROCESSOR_VERSION,
+  MODNET_MODEL_SHA256,
+} from "../../server/native-cutout-contract.js";
 
 export function modelDimensions(width, height) {
   if (

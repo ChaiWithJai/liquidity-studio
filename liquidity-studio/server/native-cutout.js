@@ -3,7 +3,7 @@ import { fail } from "./auth.js";
 import {
   MODNET_MODEL_SHA256,
   MODNET_PROCESSOR_VERSION,
-} from "../src/lib/modnet-processor.js";
+} from "./native-cutout-contract.js";
 const hash = (value) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
 function exact(value, keys) {
