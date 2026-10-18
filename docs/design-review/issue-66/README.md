@@ -31,3 +31,12 @@ The checked-in tests use fresh local SQLite fixtures and random disposable passw
 Versioned after-change frames use new controlled fixtures. They are not pixel comparisons against the historical live dataset. Their manifests record source hashes, compiled bundle hashes, viewport, capture actions and artifact checksums. The original baseline and annotation IDs are retained. These checks establish functional behavior, not human task-time improvement, broad accessibility certification or production multi-user load capacity.
 
 #66/#67 remain open for independent review and immutable runtime acceptance; the broader #39 workflow remains open.
+
+## Recorded checks at source 8133195
+
+- Node 22 backend/client/model suite: 137 passed, one Firestore emulator test skipped because its emulator was not configured.
+- Combined Chromium suite: 39 passed, two Google Auth Emulator journeys skipped because that emulator was not configured. This includes seven real-API calendar journeys, six table-specific journeys and three editor concurrency regressions.
+- Production Vite build passed. Official Svelte MCP found zero issues in App, Table and Calendar; DOM/query effects are intentional external I/O rather than derived state assignments.
+- Independent reviewers reproduced the pre-fix dirty editor, stale filtered count and drawer metadata overwrite failures, then verified their focused probes against the fixes. The final export integration test downloads and checks actual PNG bytes.
+
+The canonical integrated S06/S07 screenshots are included. S22/S23 original evidence remains linked by #67; supplementary C01–C06 and the direct-input regression journeys cover dated stacking, movement and undo. No claim of measured human action savings or a newly captured canonical S22/S23 is made in this slice.
