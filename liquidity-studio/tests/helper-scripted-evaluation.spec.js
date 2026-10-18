@@ -94,7 +94,7 @@ test("scripted screenshot/observation helper: scoped stale, malformed, pause and
     observations = [];
   const evidence = {
     schemaVersion: 1,
-    sourceCommit: "ed4cf97",
+    sourceCommit: "961bc14",
     actorKind: "scripted-helper",
     model: null,
     scope,

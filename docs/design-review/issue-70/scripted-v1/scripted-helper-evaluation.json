@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "ed4cf97",
+  "sourceCommit": "961bc14",
   "actorKind": "scripted-helper",
   "model": null,
   "scope": {
@@ -14,102 +14,102 @@
   "samples": [
     {
       "path": "/api/studio/workspace/query",
-      "elapsedMs": 3.13,
+      "elapsedMs": 4.97,
       "status": 200
     },
     {
       "path": "/api/studio/workspace/stories/story_angel_city",
-      "elapsedMs": 3.21,
+      "elapsedMs": 2.75,
       "status": 200
     },
     {
       "path": "/api/studio/workspace/control/grants",
-      "elapsedMs": 3.07,
+      "elapsedMs": 3.57,
       "status": 201
     },
     {
       "path": "/api/studio/workspace/mutations",
-      "elapsedMs": 4.85,
+      "elapsedMs": 4.16,
       "status": 200
     },
     {
       "path": "/api/studio/workspace/control/proposals",
-      "elapsedMs": 4.42,
+      "elapsedMs": 7.46,
       "status": 409
     },
     {
       "path": "/api/studio/workspace/stories/story_angel_city",
-      "elapsedMs": 2.62,
+      "elapsedMs": 2.58,
       "status": 200
     },
     {
       "path": "/api/studio/workspace/control/proposals",
-      "elapsedMs": 3.48,
+      "elapsedMs": 6.06,
       "status": 400
     },
     {
       "path": "/api/studio/workspace/control/proposals",
-      "elapsedMs": 2.65,
+      "elapsedMs": 3.34,
       "status": 400
     },
     {
       "path": "/api/studio/workspace/stories/story_angel_city",
-      "elapsedMs": 2.2,
-      "status": 200
-    },
-    {
-      "path": "/api/studio/workspace/stories/story_angel_city",
-      "elapsedMs": 1.87,
-      "status": 200
-    },
-    {
-      "path": "/api/studio/workspace/control/proposals",
-      "elapsedMs": 2.67,
-      "status": 201
-    },
-    {
-      "path": "/api/studio/workspace/control/proposals/3340fc15-1a92-4e52-8651-0600c04990cc/approve",
-      "elapsedMs": 3.63,
-      "status": 200
-    },
-    {
-      "path": "/api/studio/workspace/control/proposals/3340fc15-1a92-4e52-8651-0600c04990cc/apply",
-      "elapsedMs": 2.74,
-      "status": 200
-    },
-    {
-      "path": "/api/studio/workspace/control/proposals/3340fc15-1a92-4e52-8651-0600c04990cc/apply",
-      "elapsedMs": 2.08,
-      "status": 200
-    },
-    {
-      "path": "/api/studio/workspace/stories/story_angel_city",
-      "elapsedMs": 1.75,
-      "status": 200
-    },
-    {
-      "path": "/api/studio/workspace/control/proposals",
-      "elapsedMs": 2.75,
-      "status": 201
-    },
-    {
-      "path": "/api/studio/workspace/control/proposals/2942548d-df8b-47ba-8364-3c7c8f69edf3/approve",
-      "elapsedMs": 2.25,
-      "status": 200
-    },
-    {
-      "path": "/api/studio/workspace/control/grants/1f0a53fa-1d5d-4c74-af3c-e6248eb9e230/pause",
-      "elapsedMs": 2.41,
-      "status": 200
-    },
-    {
-      "path": "/api/studio/workspace/control/proposals/2942548d-df8b-47ba-8364-3c7c8f69edf3/apply",
       "elapsedMs": 2.73,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/stories/story_angel_city",
+      "elapsedMs": 2.46,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals",
+      "elapsedMs": 3.85,
+      "status": 201
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/6b793ae3-377c-4f5b-991a-af98aa1933b8/approve",
+      "elapsedMs": 2.97,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/6b793ae3-377c-4f5b-991a-af98aa1933b8/apply",
+      "elapsedMs": 2.85,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/6b793ae3-377c-4f5b-991a-af98aa1933b8/apply",
+      "elapsedMs": 2.28,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/stories/story_angel_city",
+      "elapsedMs": 3.28,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals",
+      "elapsedMs": 3.5,
+      "status": 201
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/61f424db-8566-46d4-baa5-2c9bd1884b3f/approve",
+      "elapsedMs": 3.24,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/grants/b249411c-25a9-45a4-ae18-777778130f1a/pause",
+      "elapsedMs": 2.86,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/61f424db-8566-46d4-baa5-2c9bd1884b3f/apply",
+      "elapsedMs": 2.9,
       "status": 409
     },
     {
       "path": "/api/studio/workspace/stories/story_angel_city",
-      "elapsedMs": 2.06,
+      "elapsedMs": 3.12,
       "status": 200
     }
   ],
@@ -119,7 +119,7 @@
       "brandId": "brand_default",
       "storyId": "story_angel_city",
       "expectedRevision": 1,
-      "capturedAt": "2026-10-18T02:38:34.841Z",
+      "capturedAt": "2026-10-18T02:39:27.456Z",
       "screenshotSha256": "4ea1ba5d625a3a3408c241fd9425755425b45b988cac5eab289c2c1422256a15",
       "viewport": {
         "width": 1440,
@@ -134,8 +134,8 @@
   "humanInterventions": null,
   "requestCount": 20,
   "latencyMs": {
-    "p50": 2.67,
-    "p95": 4.42,
+    "p50": 3.12,
+    "p95": 6.06,
     "definition": "nearest-rank isolated loopback HTTP requests, not model or human latency"
   },
   "results": {

@@ -1,6 +1,6 @@
 # Scripted shared-control evaluation, v1
 
-This original bounded protocol evaluation ran against source `ed4cf97`, the mounted PR89 candidate, on isolated ephemeral localhost HTTP and SQLite fixtures. It uses two authenticated test-only password sessions, owner and helper, without live users, cloud resources, paid providers or model inference. The test captures real Chromium pixels at1440×1100 alongside authenticated structured observations containing organization, brand, stable story ID, revision, timestamp and screenshot SHA256. The script chooses the action from structured data; it does not interpret pixels. This is not a visual-reasoning benchmark.
+This original bounded protocol evaluation ran against source `961bc14`, merged PR89 main, on isolated ephemeral localhost HTTP and SQLite fixtures. It uses two authenticated test-only password sessions, owner and helper, without live users, cloud resources, paid providers or model inference. The test captures real Chromium pixels at1440×1100 alongside authenticated structured observations containing organization, brand, stable story ID, revision, timestamp and screenshot SHA256. The script chooses the action from structured data; it does not interpret pixels. This is not a visual-reasoning benchmark.
 
 Reproduce from `liquidity-studio` with Node22 and existing dependencies:
 
@@ -8,7 +8,7 @@ Reproduce from `liquidity-studio` with Node22 and existing dependencies:
 NODE_ENV=test node node_modules/@playwright/test/cli.js test tests/helper-scripted-evaluation.spec.js --output=/tmp/liquidity-scripted-helper-evaluation
 ```
 
-One final run passed in2.5seconds overall, with the test body taking1.1seconds. The20 explicitly instrumented HTTP exchanges had nearest-rank p50=2.67ms and p95=4.42ms. Login, browser rendering, screenshots and the deliberately dropped response are outside that request-latency distribution. These single-run loopback measurements are neither model latency, human task time nor production service-level objectives.
+One final run passed in2.2seconds overall, with the test body taking895milliseconds. The20 explicitly instrumented HTTP exchanges had nearest-rank p50=3.12ms and p95=6.06ms. Login, browser rendering, screenshots and the deliberately dropped response are outside that request-latency distribution. These single-run loopback measurements are neither model latency, human task time nor production service-level objectives.
 
 The action/result sequence is executable in the test:
 
