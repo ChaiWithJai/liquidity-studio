@@ -2,9 +2,9 @@ import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { fail } from "./auth.js";
 import { brandRevision } from "./multimodal-contract.js";
-import { renderSvg } from "./artwork.js";
+import { renderSvg, sourcePrefixForLines } from "./artwork.js";
 import { storyContentDigest } from "./story-content-revision.js";
-import { catalogForStory, SOURCE_CATALOG_REVISION } from "./source-catalog.js";
+import { catalogForStory, SOURCE_CATALOG_REVISION, sourceCopySelection } from "./source-catalog.js";
 export const PREPARATION_PURPOSE = "source-preparation";
 export function preparationInput(story, scope) {
   return {
@@ -121,6 +121,85 @@ export function candidateArtwork(excerpts) {
     },
   };
 }
+/** Version2 changes only new source-derived artwork, never historical human work. */
+export function candidateArtworkV2(excerpts) {
+  const [heading, first = heading, second = first, third = second] = excerpts;
+  const sourceFieldMappings = [];
+  const value = (fieldPath, excerpt, width, size, maxLines) => {
+    const text = maxLines ? sourcePrefixForLines(excerpt.text, {width,size,maxLines}) : excerpt.text;
+    sourceFieldMappings.push({fieldPath,evidenceId:excerpt.evidenceId,startOffset:excerpt.startOffset,textLength:text.length});
+    return text;
+  };
+  const h = path => value(path,heading,900,52,2);
+  const rows = excerpts.length >= 3 ? excerpts.slice(-3) : [first,second,third];
+  const artwork = {
+    infographic: {
+      headline:h("infographic.headline"),
+      statRows:rows.map((x,i)=>value(`infographic.statRows.${i}`,x,840,34,3)),
+      bottomTakeaway:value("infographic.bottomTakeaway",third,900,29,2),
+      caption:value("infographic.caption",first),
+    },
+    carousel: {
+      coverHook:h("carousel.coverHook"),
+      slides:[...rows,third].map((x,i)=>({
+        slideNumber:i+1,title:h(`carousel.slides.${i}.title`),
+        bodyMetric:value(`carousel.slides.${i}.bodyMetric`,x,840,34,4),
+        visualNote:i===3?"Editorial review step; no factual assertion":"Source excerpt text card",
+      })),
+    },
+    story:{
+      hookBanner:value("story.hookBanner",heading,900,52,3),
+      keyStatHighlight:value("story.keyStatHighlight",first,840,34,5),
+      interactiveStickerPrompt:value("story.interactiveStickerPrompt",second,900,29,2),
+    },
+    reel:{
+      spokenHook0to3s:value("reel.spokenHook0to3s",heading,740,52,3),
+      beats:rows.map((x,i)=>({
+        timecode:["0:00-0:05","0:05-0:15","0:15-0:30"][i],
+        voiceover:value(`reel.beats.${i}.voiceover`,x,680,34,5),
+        onScreenText:value(`reel.beats.${i}.onScreenText`,x,740,52,3),
+        bRollDirection:"Unreviewed source excerpt text card",
+      })),
+      closingCta:value("reel.closingCta",third,740,29,2),
+    },
+  };
+  return {artwork,sourceFieldMappings};
+}
+
+/** Version3 selects useful, pinned exact clauses/sentences; never truncates to fit. */
+export function candidateArtworkV3(evidence, sourceSelection, preset) {
+  if (!Array.isArray(sourceSelection) || sourceSelection.length !== 1 || evidence.length !== 1)
+    throw fail(422, "Exact copy requires one pinned source selection");
+  const pointer=sourceSelection[0],selection=sourceCopySelection(pointer?.artworkSelectionId);
+  const snapshot=evidence[0];
+  if (!selection || pointer.id!==selection.catalogId || pointer.sourceUrl!==selection.sourceUrl ||
+      snapshot.sourceUrl!==selection.sourceUrl || preset!==selection.preset)
+    throw fail(422, "Unknown or mismatched exact copy selection");
+  const span=(text,form='clause')=>{
+    if (typeof text!=='string' || !text || text.length>2000) throw fail(422,"Invalid exact source copy");
+    const offset=snapshot.text.indexOf(text);
+    if (offset<0 || snapshot.text.indexOf(text,offset+1)!==-1)
+      throw fail(422,"Selected source copy is missing or ambiguous; source research required");
+    return {text,evidenceId:snapshot.id,sourceUrl:snapshot.sourceUrl,startOffset:offset,form};
+  };
+  const heading=span(selection.headline,'label'),facts=selection.facts.map(item=>span(item.text,item.form));
+  const overlays=selection.overlays.map(text=>span(text,'label'));
+  const paragraphs=snapshot.text.split('\n').filter(text=>text.startsWith(selection.captionPrefix+' '));
+  if(paragraphs.length!==1)throw fail(422,"Source context paragraph is missing or ambiguous");
+  const caption=span(paragraphs[0],'context'),context=span(selection.contextText,'label');
+  const sourceFieldMappings=[];
+  const value=(fieldPath,item)=>{sourceFieldMappings.push({fieldPath,evidenceId:item.evidenceId,startOffset:item.startOffset,textLength:item.text.length,copyForm:item.form});return item.text;};
+  const editorial='Review the full source context before using this draft.';
+  const artwork={
+    infographic:{headline:value('infographic.headline',heading),statRows:facts.map((x,i)=>value(`infographic.statRows.${i}`,x)),bottomTakeaway:value('infographic.bottomTakeaway',context),caption:value('infographic.caption',caption)},
+    carousel:{coverHook:value('carousel.coverHook',heading),slides:[...facts,null].map((x,i)=>({slideNumber:i+1,title:x?value(`carousel.slides.${i}.title`,heading):'Review the source',bodyMetric:x?value(`carousel.slides.${i}.bodyMetric`,x):editorial,visualNote:value(`carousel.slides.${i}.visualNote`,context)}))},
+    story:{hookBanner:value('story.hookBanner',heading),keyStatHighlight:value('story.keyStatHighlight',facts[selection.storyFactIndex]),interactiveStickerPrompt:value('story.interactiveStickerPrompt',context)},
+    reel:{spokenHook0to3s:value('reel.spokenHook0to3s',heading),beats:facts.map((x,i)=>({timecode:['0:00-0:05','0:05-0:15','0:15-0:30'][i],voiceover:value(`reel.beats.${i}.voiceover`,x),onScreenText:value(`reel.beats.${i}.onScreenText`,overlays[i]),bRollDirection:'Unreviewed source excerpt text card'})),closingCta:value('reel.closingCta',context)},
+  };
+  const excerpts=[heading,...facts].map(({form,...item})=>({...item,status:'unreviewed',clinicalReview:null}));
+  return {artwork,sourceFieldMappings,excerpts};
+}
+
 export function buildPreparedCandidate({
   id,
   scope,
@@ -131,6 +210,7 @@ export function buildPreparedCandidate({
   itemId,
   attemptId,
   createdAt,
+  projectionFrom, // Trusted server fork context only; never an HTTP override.
 }) {
   if (
     !id ||
@@ -152,11 +232,16 @@ export function buildPreparedCandidate({
     )
       throw fail(422, "Preparation evidence integrity failed");
   }
-  const excerpts = excerptsFor(evidence);
-  if (!excerpts.length)
-    throw fail(422, "No usable source excerpts were retrieved");
+  const sourceSelection=projectionFrom?structuredClone(projectionFrom.sourceSelection||[]):catalogForStory(story, scope).filter(entry=>evidence.some(snapshot=>snapshot.sourceUrl===entry.sourceUrl));
+  const version=projectionFrom?(projectionFrom.artworkProjectionVersion===undefined?1:projectionFrom.artworkProjectionVersion):sourceSelection.some(entry=>entry.artworkSelectionId)?3:2;
+  if (![1,2,3].includes(version)) throw fail(422,"Unknown retained copy projection");
+  const priorExcerpts=version===3?null:excerptsFor(evidence);
+  if (priorExcerpts && !priorExcerpts.length) throw fail(422, "No usable source excerpts were retrieved");
+  const projection=version===3?candidateArtworkV3(evidence,sourceSelection,scope.preset):version===2?candidateArtworkV2(priorExcerpts):{artwork:candidateArtwork(priorExcerpts)};
+  const excerpts=version===3?projection.excerpts:priorExcerpts;
   return {
     schemaVersion: 1,
+    ...(version>=2?{artworkProjectionVersion:version,sourceFieldMappings:projection.sourceFieldMappings}:{}),
     id,
     ...scope,
     storyId: story.id,
@@ -168,10 +253,8 @@ export function buildPreparedCandidate({
     attemptId,
     createdAt,
     excerpts,
-    sourceSelection: catalogForStory(story, scope).filter((entry) =>
-      evidence.some((snapshot) => snapshot.sourceUrl === entry.sourceUrl),
-    ),
-    artwork: candidateArtwork(excerpts),
+    sourceSelection,
+    artwork: projection.artwork,
     provenance: {
       purpose: PREPARATION_PURPOSE,
       mode: "extractive-unreviewed",
@@ -193,10 +276,23 @@ export function validatePreparedCandidate(candidate, evidence) {
     candidate.provenance.modelCalls !== 0
   )
     throw fail(422, "Candidate cannot claim human approval or model execution");
-  const excerpts = excerptsFor(evidence);
+  const version = candidate.artworkProjectionVersion === undefined ? 1 : candidate.artworkProjectionVersion;
+  if (version !== 1 && version !== 2 && version !== 3) throw fail(422, "Unknown candidate artwork projection version");
+  if (!Array.isArray(evidence) || !evidence.length || evidence.length > 2 ||
+      evidence.some(snapshot => !snapshot || typeof snapshot.text !== "string"))
+    throw fail(422, "Invalid candidate evidence shape");
+  let excerpts = version===3?null:excerptsFor(evidence);
+  if (excerpts && !excerpts.length) throw fail(422, "Candidate source excerpts required");
+  let projection;
+  try { projection = version===3?candidateArtworkV3(evidence,candidate.sourceSelection,candidate.preset):version === 2 ? candidateArtworkV2(excerpts) : {artwork:candidateArtwork(excerpts)}; }
+  catch { throw fail(422, "Candidate source prefixes cannot fit the declared projection"); }
+  if(version===3)excerpts=projection.excerpts;
+  if ((version === 1 && candidate.sourceFieldMappings !== undefined) ||
+      (version >= 2 && !isDeepStrictEqual(candidate.sourceFieldMappings, projection.sourceFieldMappings)))
+    throw fail(422, "Candidate source field mappings must preserve exact source prefixes");
   if (
     !isDeepStrictEqual(candidate.excerpts, excerpts) ||
-    !isDeepStrictEqual(candidate.artwork, candidateArtwork(excerpts)) ||
+    !isDeepStrictEqual(candidate.artwork, projection.artwork) ||
     !isDeepStrictEqual(
       candidate.provenance.evidenceIds,
       evidence.map((snapshot) => snapshot.id),

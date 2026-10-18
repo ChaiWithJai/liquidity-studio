@@ -89,6 +89,20 @@ export function extractSourceText(body, contentType, query = "", passage) {
   const type = contentType.split(";")[0].trim().toLowerCase();
   if (!["text/plain", "text/html", "application/xhtml+xml"].includes(type))
     throw fail(422, "Source must return HTML or plain text");
+  const afterHeading = passage?.mode === "after-heading-prefix";
+  if (passage?.mode !== undefined && !afterHeading)
+    throw fail(422, "Unknown source passage mode");
+  if (passage?.lineBreakParagraphs !== undefined &&
+      (!afterHeading || typeof passage.lineBreakParagraphs !== "boolean"))
+    throw fail(422, "Invalid source line-break paragraph option");
+  if (afterHeading && (
+    type === "text/plain" || Buffer.byteLength(body, "utf8") > MAX_BYTES ||
+    typeof passage.section !== "string" || !passage.section.trim() ||
+    !Array.isArray(passage.paragraphPrefixes) || !passage.paragraphPrefixes.length ||
+    passage.paragraphPrefixes.length > 8 ||
+    passage.paragraphPrefixes.some(prefix => typeof prefix !== "string" || !prefix.trim()) ||
+    new Set(passage.paragraphPrefixes).size !== passage.paragraphPrefixes.length
+  )) throw fail(422, "Invalid bounded after-heading source passage");
   let text = body;
   const heading =
     type === "text/plain"
@@ -112,9 +126,10 @@ export function extractSourceText(body, contentType, query = "", passage) {
       }));
       const starts = headings.filter((item) => item.text === passage.section);
       const ends = headings.filter((item) => item.text === passage.nextSection);
-      if (starts.length !== 1 || ends.length !== 1 || starts[0].start >= ends[0].start)
+      if (starts.length !== 1 || (!afterHeading &&
+        (ends.length !== 1 || starts[0].start >= ends[0].start)))
         throw fail(422, "Selected source passage boundaries are missing or ambiguous; source research required");
-      text = text.slice(starts[0].start, ends[0].end);
+      text = text.slice(starts[0].start, afterHeading ? undefined : ends[0].end);
     }
     const article = text.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i);
     const main = text.match(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/i);
@@ -126,6 +141,7 @@ export function extractSourceText(body, contentType, query = "", passage) {
         /<(script|style|noscript|svg|nav|header|footer|form)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
         " ",
       )
+      .replace(/<br\b[^>]*>/gi, match => afterHeading && passage.lineBreakParagraphs === true ? "\n" : match)
       .replace(/<\/(p|div|section|article|li|h[1-6]|tr)\s*>/gi, "\n")
       .replace(/<[^>]*>/g, " ");
     text = entities(text);
@@ -142,15 +158,17 @@ export function extractSourceText(body, contentType, query = "", passage) {
   if (passage) {
     const starts = paragraphs.flatMap((line, index) => line === passage.section ? [index] : []);
     const ends = paragraphs.flatMap((line, index) => line === passage.nextSection ? [index] : []);
-    if (starts.length !== 1 || ends.length !== 1 || ends[0] <= starts[0])
+    if (starts.length !== 1 || (!afterHeading && (ends.length !== 1 || ends[0] <= starts[0])))
       throw fail(422, "Selected source passage boundaries are missing or ambiguous; source research required");
-    const section = paragraphs.slice(starts[0] + 1, ends[0]);
+    const section = paragraphs.slice(starts[0] + 1, afterHeading ? undefined : ends[0]);
     const selected = passage.paragraphPrefixes.map((prefix) => {
       const matches = section.filter((line) => line.startsWith(`${prefix} `));
       if (matches.length !== 1)
         throw fail(422, "Selected source passage is missing or ambiguous; source research required");
       return matches[0];
     });
+    if (afterHeading && new Set(selected).size !== selected.length)
+      throw fail(422, "Selected source paragraphs overlap; source research required");
     const selectedText = selected.join("\n");
     if (selectedText.length < 40 || selectedText.length > MAX_TEXT)
       throw fail(422, "Selected source passage exceeds readable evidence bounds");

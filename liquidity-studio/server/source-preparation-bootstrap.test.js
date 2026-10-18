@@ -7,7 +7,7 @@ import {
   existingPreparationPlan,
 } from "./run-source-preparation-bootstrap.js";
 process.env.NODE_ENV = "test";
-test("existing 10-story plan selects curated Huda/AngelCity/Yoga, reports 7 attention topics and performs no writes/dispatch", async (t) => {
+test("existing 10-story plan selects seven nonclinical pointers, reports three clinical research topics and performs no writes/dispatch", async (t) => {
   const store = new DurableStore(":memory:"),
     platform = createPlatform({ store, authMode: "password" });
   await platform.ready;
@@ -33,11 +33,11 @@ test("existing 10-story plan selects curated Huda/AngelCity/Yoga, reports 7 atte
   }
   assert.equal(
     results.reduce((sum, plan) => sum + plan.eligible.length, 0),
-    3,
+    7,
   );
   assert.equal(
     results.reduce((sum, plan) => sum + plan.attention.length, 0),
-    7,
+    3,
   );
   assert.ok(
     results[0].eligible.some((story) => story.storyId === "story_huda_buyback"),
@@ -108,7 +108,7 @@ test("explicit existing-state apply queues once through durable outbox; repeat n
   assert.equal(huda.campaignDraft, null);
   assert.equal(huda.preparationStatus, "queued");
   assert.equal(state.operatorJobs.length, 1);
-  assert.equal(state.operatorJobs[0].items.length, 2);
+  assert.equal(state.operatorJobs[0].items.length, 5);
   delete process.env.STUDIO_SOURCE_PREPARATION_ENABLED;
   await assert.rejects(bootstrapExistingPreparation(config), { status: 409 });
   process.env.STUDIO_SOURCE_PREPARATION_ENABLED = "true";

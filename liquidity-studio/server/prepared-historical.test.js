@@ -1,3 +1,4 @@
+import {candidateArtwork} from './prepared-source-candidate.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID, createHash } from "node:crypto";
@@ -322,4 +323,16 @@ test("dedup receipt rejects changed payload and bounds aliases without discardin
     (await f.repo.read()).preparedSourceCandidates[1].forkAliases.length,
     31,
   );
+});
+
+
+test('unfinished historical version1 continuation retains its old projection and human working copy',async t=>{
+ const f=await fixture(t);
+ await f.repo.mutate(state=>{const candidate=state.preparedSourceCandidates[0].candidate;candidate.artwork=candidateArtwork(candidate.excerpts);delete candidate.artworkProjectionVersion;delete candidate.sourceFieldMappings;return state;});
+ const before=structuredClone((await f.repo.read()).preparedSourceCandidates[0]);
+ const plan=await f.service.historicalForkPlan(f.actor,f.id),result=await f.service.forkHistorical(f.actor,f.id,body(plan));
+ const state=await f.repo.read(),entry=state.preparedSourceCandidates.find(x=>x.candidate.id===result.candidateId);
+ assert.equal(entry.candidate.artworkProjectionVersion,undefined);assert.equal(entry.candidate.sourceFieldMappings,undefined);
+ assert.deepEqual(entry.candidate.artwork,before.candidate.artwork);assert.deepEqual(entry.workingArtwork,before.workingArtwork);
+ assert.deepEqual(state.preparedSourceCandidates[0],before);assert.equal(entry.editorialStatus,'unreviewed');
 });

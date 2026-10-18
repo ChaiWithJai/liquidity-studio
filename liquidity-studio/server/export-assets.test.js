@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { renderSvg } from './artwork.js';
+import { renderSvg, sourcePrefixForLines } from './artwork.js';
 import { createExport, zipFiles } from './export-assets.js';
 
 const campaign = {
@@ -66,4 +66,14 @@ test('brand typography uses bundled approved families and never injects arbitrar
   assert.ok(ids.includes('infographic-page-1-heading'));
   assert.deepEqual([...renderSvg({campaign,format:'infographic'}).matchAll(/data-artwork-id="([^"]+)"/g)].map(match=>match[1]),ids);
   for (const slideIndex of ['0', '\" onload=\"alert(1)', -1, 1.5, 99]) assert.throws(()=>renderSvg({campaign,format:'infographic',slideIndex}), /Invalid artwork page index/);
+});
+
+
+test('source prefix fitting retains whole Unicode source words and refuses a word that cannot fit',()=>{
+ const source='Beyoncé ॐ historical source words preserve exact boundaries and context for review without an invented ending.';
+ const prefix=sourcePrefixForLines(source,{width:300,size:34,maxLines:2});
+ assert.ok(source.startsWith(prefix));assert.ok(prefix.length<source.length);
+ assert.ok(source[prefix.length]===' ');assert.doesNotMatch(prefix,/…|\.\.\./);
+ assert.throws(()=>sourcePrefixForLines('x'.repeat(300),{width:300,size:34,maxLines:2}),/capacity/);
+ for(const maxLines of [0,-1,NaN])assert.throws(()=>sourcePrefixForLines(source,{width:300,size:34,maxLines}));
 });

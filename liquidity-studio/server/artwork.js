@@ -51,6 +51,23 @@ function wrap(value, characters, maximumLines) {
   return lines;
 }
 
+/** Longest whole-word exact source prefix within the same wrap model as artwork.
+ * No font changes, paraphrase, punctuation completion or ellipsis. */
+export function sourcePrefixForLines(value, { width, size, maxLines }) {
+  if (typeof value !== "string" || !Number.isFinite(width) || width <= 0 ||
+      !Number.isFinite(size) || size <= 0 || !Number.isInteger(maxLines) || maxLines < 1)
+    throw new Error("Invalid source text layout budget");
+  const characters = Math.max(8, Math.floor(width / (size * 0.63)));
+  let prefix = "";
+  for (const match of value.matchAll(/\S+/gu)) {
+    const next = value.slice(0, match.index + match[0].length);
+    try { wrap(next, characters, maxLines); } catch { break; }
+    prefix = next;
+  }
+  if (!prefix) throw new Error("Source word exceeds artwork capacity");
+  return prefix;
+}
+
 function textBlock(
   value,
   x,

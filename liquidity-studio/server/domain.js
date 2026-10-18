@@ -91,7 +91,7 @@ export const INITIAL_CONTENT_BACKLOG = [
   },
   {
     id: 'story_nykaa_ipo',
-    title: 'Falguni Nayar’s $13B Omnichannel Beauty IPO in India',
+    title: 'Nykaa’s 2022 Plan for a GCC Omnichannel Alliance',
     category: 'Global IPOs & Retail',
     trendBadge: '🌍 Global Market Spotlight',
     status: 'In Backlog',
@@ -104,7 +104,7 @@ export const INITIAL_CONTENT_BACKLOG = [
   },
   {
     id: 'story_margot_luckychap',
-    title: 'Margot Robbie & LuckyChap’s $50M Producer Backend Check',
+    title: 'Margot Robbie & LuckyChap: Film Production and IP Development',
     category: 'Film Financing & IP Ownership',
     trendBadge: '🎬 Evergreen Performer',
     status: 'In Backlog',
@@ -234,7 +234,7 @@ export const BRAND_PRESETS = {
     },
     researchBacklog: [
       'Ashwagandha: classical sources and evidence review',
-      'Ramanujan, devotion and mathematical proof',
+      'Ramanujan: Trinity’s Record of Mathematical Work',
       'Bhramari: lineage and primary physiology research',
       'Dinacharya and circadian research',
       'Yoga Sutras: yamas, niyamas and posture'
