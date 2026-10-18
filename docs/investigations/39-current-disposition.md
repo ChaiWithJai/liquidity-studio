@@ -1,5 +1,21 @@
 # Current investigation disposition
 
+## Updated disposition — 2026-10-18
+
+Current integrated source is main `d2f61d4` (reviewed release source `ce31424`). The earlier reconciliation below is retained as a dated snapshot; its pending-work statements are superseded by this update.
+
+- Investigation #39 is closed with its evidence and explicit remaining child requirements.
+- [#53 is closed](https://github.com/ChaiWithJai/liquidity-studio/issues/53#issuecomment-6246163210). PR95 and PR123 provide actual authenticated local native import/edit/save/reload/export, conflict recovery, both brands/four formats, and saved Brand Kit changes reaching native pixels while preserving human text and geometry. The ticket's disposable local-stack requirement is distinct from cloud distribution or real invited-user onboarding.
+- #103 and #69 are closed with [real Google local/cloud prepared-preview evidence](../deployments/prepared-source-pilot.md). The subsequent long-form passage-quality finding remains tracked in #127: its implementation is integrated and running locally, but a refreshed signed-in BrowserOS neo preview has not yet been accepted.
+- The recovery screen from PR129 is integrated into **main through PR130**. PR129 initially merged into its dependency branch, so that merge alone was not a main release. The incomplete candidate was held; the corrected image preserves the passage selection and recovery screen together. Native/portable capabilities remain disabled in the maintained public runtime.
+- #120 and #125 are closed for bounded per-ejection accumulation and per-instance HTTP admission. These do not establish an aggregate memory or spending guarantee.
+- #52, #54, #55, #56, #57 and #58 retain their own remaining acceptance. Actual learner practice and Nicole's real account onboarding are not established by agent fixtures. #30 remains open. This update makes no new real outsider-account acceptance claim.
+- New local testing uses **BrowserOS neo only**, following the operator's memory-pressure constraint. Earlier Node/Playwright evidence remains identified as earlier evidence; it is not relabeled as Neo execution. Source review, ordinary builds and operational backups are distinguished from browser acceptance.
+
+The current small slices are positive private-raster transfer into Penpot, continuing historical native layouts as new current-source proposals, the remaining scheduling/export UI ordering checks, and the refreshed passage preview. The original generated campaign, historical native records and rollback artifacts remain available. Upstream redistribution conditions, full media/performance acceptance and the human learning study remain separate requirements.
+
+## Prior reconciliation snapshot
+
 Recorded 2026-10-18 against main `307072`. This reconciles issue [39](https://github.com/ChaiWithJai/liquidity-studio/issues/39)'s investigation deliverables and four operator UX rounds. It supersedes present-tense capability statements in the earlier architecture decision and routing ledger; it does not rewrite their historical experiments, close implementation children, or certify a complete native production pipeline. Issue #39 remains open for review of this reconciliation.
 
 ## Investigation evidence and decision
