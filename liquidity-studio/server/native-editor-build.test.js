@@ -5,6 +5,7 @@ import {
   assertOriginalOnlyNativeBundle,
   canonicalizeLegalFooter,
   fixNativeVideoResult,
+  fixNativeWebmContainer,
 } from "../scripts/native-editor-vite.js";
 test("original-only build blocks upstream source, dependencies and emitted frame assets", () => {
   assert.doesNotThrow(() =>
@@ -105,4 +106,37 @@ test("private video result effect discards Promise-valued scrolling instead of r
   assert.throws(()=>fixNativeVideoResult(source+" ",digest),/pristine source mismatch/);
   const repeated=source+"\n"+source;
   assert.throws(()=>fixNativeVideoResult(repeated,createHash("sha256").update(repeated).digest("hex")),/anchor mismatch/);
+});
+
+test("private WebM transform applies exactly the reviewed container patch and binds its helper", async () => {
+  const {readFile}=await import('node:fs/promises');
+  const patch=await readFile(new URL('../../scripts/investigations/doory-webm-duration/webm-duration.patch',import.meta.url),'utf8');
+  const hunks=patch.split('diff --git ')[1].split(/@@[^\n]*\n/).slice(1);
+  const before=hunks.map(hunk=>hunk.split('\n').filter(line=>/^[ -]/.test(line)).map(line=>line.slice(1)).join('\n')+'\n').join('/* controlled gap */\n');
+  const fixed=fixNativeWebmContainer(before,createHash('sha256').update(before).digest('hex'),patch);
+  assert.match(fixed,/correctMuxedWebmDuration\(target.buffer, endUs\)/);
+  assert.match(fixed,/endUs = Math.max\(endUs, end\)/);
+  assert.throws(()=>fixNativeWebmContainer(before,createHash('sha256').update(before).digest('hex'),patch+' '),/patch mismatch/);
+  const expectedHelper=patch.split('+++ b/frontend/src/editor/engine/export/video/muxedWebmDuration.ts\n')[1].split('\n').filter(line=>line.startsWith('+')).map(line=>line.slice(1)).join('\n')+'\n';
+  assert.equal(await readFile(new URL('../src/lib/native-webm-duration.ts',import.meta.url),'utf8'),expectedHelper);
+});
+
+test("reviewed WebM duration helper repairs the actual 900-frame muxer metadata without changing payload bytes", async () => {
+  const {readFile}=await import('node:fs/promises');
+  const {transformWithEsbuild}=await import('vite');
+  const {Muxer,ArrayBufferTarget}=await import('webm-muxer');
+  const source=await readFile(new URL('../src/lib/native-webm-duration.ts',import.meta.url),'utf8');
+  const {code}=await transformWithEsbuild(source,'native-webm-duration.ts',{loader:'ts'});
+  const {correctMuxedWebmDuration}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+  const target=new ArrayBufferTarget(),muxer=new Muxer({target,video:{codec:'V_VP8',width:16,height:16,frameRate:30}});
+  for(let i=0;i<900;i++)muxer.addVideoChunkRaw(new Uint8Array([0,0,0]),'key',Math.round(i*1e6/30));
+  muxer.finalize();const original=target.buffer.slice(0),fixed=correctMuxedWebmDuration(target.buffer,30000000);
+  const b=new Uint8Array(original),at=b.findIndex((_,i)=>b[i]===0x44&&b[i+1]===0x89&&b[i+2]===0x88)+3;
+  assert.equal(new DataView(original).getFloat64(at),29966);
+  assert.equal(new DataView(fixed).getFloat64(at),30000);
+  assert.equal(fixed.byteLength,original.byteLength);
+  assert.deepEqual(new Uint8Array(target.buffer),b);
+  const changed=[...b.keys()].filter(i=>b[i]!==new Uint8Array(fixed)[i]);
+  assert.ok(changed.length>0&&changed.every(i=>i>=at&&i<at+8));
+  assert.throws(()=>correctMuxedWebmDuration(original,0),/positive actual chunk end/);
 });

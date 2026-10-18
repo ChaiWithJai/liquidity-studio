@@ -54,6 +54,24 @@ export function fixNativeVideoResult(code, expectedSha256) {
     throw new Error("Native VideoResult effect anchor mismatch");
   return code.replace(before, "useEffect(() => {\n    root.current?.scrollIntoView?.({ block: 'nearest' })\n  }, [])");
 }
+// Apply the already-reviewed PR83 container diff without changing pinned source files.
+export function fixNativeWebmContainer(code, expectedSha256, patch) {
+  if (createHash("sha256").update(code).digest("hex") !== expectedSha256)
+    throw new Error("Native WebM container pristine source mismatch");
+  if (createHash("sha256").update(patch).digest("hex") !== "99d607c02273a8c89a8a8c87019dfe241b7e4bfc0f7194579c494c48b934de3d")
+    throw new Error("Reviewed WebM duration patch mismatch");
+  const section = patch.split("diff --git ")[1];
+  let count = 0;
+  for (const hunk of section.split(/@@[^\n]*\n/).slice(1)) {
+    const lines = hunk.split("\n").filter(line => /^[ +\-]/.test(line));
+    const before = lines.filter(line => line[0] !== "+").map(line => line.slice(1)).join("\n") + "\n";
+    const after = lines.filter(line => line[0] !== "-").map(line => line.slice(1)).join("\n") + "\n";
+    if (code.split(before).length !== 2) throw new Error("Native WebM container patch anchor mismatch");
+    code = code.replace(before, after); count++;
+  }
+  if (count !== 2) throw new Error("Native WebM container patch hunks mismatch");
+  return code;
+}
 export function nativeEditorPlugin() {
   const local = process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD === "true";
   const source = path.join(project, ".native-editor-source");
@@ -61,6 +79,8 @@ export function nativeEditorPlugin() {
     name: "studio-native-editor-local-boundary",
     enforce: "pre",
     async resolveId(id, importer) {
+      if (local && id === "./muxedWebmDuration" && importer?.split("?")[0] === path.join(source, "editor/engine/export/video/container.ts"))
+        return path.join(project, "src/lib/native-webm-duration.ts");
       if (id === "virtual:studio-native-editor")
         return "\0studio-native-editor";
       if (
@@ -97,12 +117,16 @@ export function nativeEditorPlugin() {
       verify("styles/tokens.css", manifest.styleTokensSha256);
     },
     transform(code, id) {
-      if (!local || id.split("?")[0] !== path.join(source, "editor/dialogs/video/VideoResult.tsx"))
-        return null;
+      if (!local) return null;
+      const file = id.split("?")[0];
+      const relative = path.relative(source, file).split(path.sep).join("/");
+      if (!["editor/dialogs/video/VideoResult.tsx", "editor/engine/export/video/container.ts"].includes(relative)) return null;
       const inventory = JSON.parse(fs.readFileSync(path.resolve(project, "../docs/specs/doory-host-source-inventory.json"), "utf8"));
-      const entry = inventory.files.find(file => file.path === "editor/dialogs/video/VideoResult.tsx");
-      if (!entry) throw new Error("Native VideoResult source inventory missing");
-      return { code: fixNativeVideoResult(code, entry.sha256), map: null };
+      const entry = inventory.files.find(item => item.path === relative);
+      if (!entry) throw new Error("Native video source inventory missing");
+      const fixed = relative.endsWith("VideoResult.tsx") ? fixNativeVideoResult(code, entry.sha256)
+        : fixNativeWebmContainer(code, entry.sha256, fs.readFileSync(path.resolve(project, "../scripts/investigations/doory-webm-duration/webm-duration.patch"), "utf8"));
+      return { code: fixed, map: null };
     },
     configureServer(server) {
       if (!local) return;
