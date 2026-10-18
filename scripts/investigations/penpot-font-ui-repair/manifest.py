@@ -25,7 +25,7 @@ if __name__ == '__main__':
         'kind': 'complete-frontend-build-inventory',
         'upstream': 'ff7a66f51938b2293260ea27a64e2c4e0833b5e3',
         'officialApplicationVersion': '2.18.3',
-        'candidateLabel': 'original-owned-font-ui-qa-derivative',
+        'candidateLabel': 'original-owned-font-and-thumbnail-ui-derivative',
         'original': original, 'candidate': candidate,
         'changed': [name for name in sorted(set(original) | set(candidate))
                     if original.get(name) != candidate.get(name)],

@@ -3,6 +3,14 @@ name: Penpot pinned font UI candidate
 on:
   workflow_dispatch:
     inputs:
+      recipient_public_key_base64:
+        description: Operator RSA public PEM base64; private key remains local
+        required: true
+        type: string
+      recipient_sha256:
+        description: Independently verified recipient public SPKI DER SHA256
+        required: true
+        type: string
       confirmation:
         description: 'Exact reviewed source-only build authorization phrase'
         required: true
@@ -46,7 +54,8 @@ jobs:
           find upstream -name '*lock*' -type f -print0 | sort -z | xargs -0 sha256sum > evidence/locks.before.sha256
           git -C upstream apply --check ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
           git -C upstream apply ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
-          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs > evidence/applied.patch
+          python3 studio/tools/penpot-thumbnail-refresh/apply.py upstream > evidence/thumbnail-apply.json
+          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs frontend/src/app/main/data/workspace/thumbnails.cljs frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs > evidence/applied.patch
       - name: Resolve pinned official toolchain without building an image
         shell: bash
         run: |
@@ -111,7 +120,7 @@ jobs:
             -w /work/frontend -e CI=true -e PNPM_HOME=/review-tools/home -e JAVA_TOOL_OPTIONS=-Xmx4096m \
             -e NODE_OPTIONS=--max-old-space-size=1536 \
             -e SHADOWCLJS_EXTRA_PARAMS='' --entrypoint bash "$DEVENV" \
-            -lc 'export PATH=/review-tools/bin:$PATH; test "$(pnpm --version)" = 12.5.1; ./scripts/build 2.18.3' 2>&1 | tee evidence/build.log
+            -lc 'export PATH=/review-tools/bin:$PATH; test "$(pnpm --version)" = 12.5.1; ./scripts/build 2.18.3 && clojure -M:dev:shadow-cljs compile test && node target/tests/test.js --focus frontend-tests.data.workspace-thumbnails-test' 2>&1 | tee evidence/build.log
           # The exact pnpm wrapper appends explicit --frozen-lockfile to every install/i call.
           # Preserve the independent post-build tracked-lock/dependency diff gate.
           git -C upstream diff --exit-code -- '**/*lock*' '**/deps.edn' '**/package.json'
@@ -134,14 +143,49 @@ jobs:
           cp studio/scripts/investigations/penpot-font-ui-repair/README.md evidence/
           git -C upstream archive HEAD | gzip > evidence/upstream-source.tar.gz
           cp upstream/frontend/src/app/main/data/fonts.cljs evidence/fonts.modified.cljs
+          cp upstream/frontend/src/app/main/data/workspace/thumbnails.cljs evidence/thumbnails.modified.cljs
+          cp upstream/frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs evidence/workspace_thumbnails_test.modified.cljs
+          cp studio/tools/penpot-thumbnail-refresh/thumbnails.patch studio/tools/penpot-thumbnail-refresh/thumbnails-test.patch evidence/
+          cp studio/tools/penpot-thumbnail-refresh/source-manifest.json evidence/thumbnail-source-manifest.json
+          cp studio/tools/penpot-thumbnail-refresh/README.md evidence/thumbnail-README.md
           cp upstream/LICENSE evidence/UPSTREAM-LICENSE
           tar -C upstream/frontend/target/dist -czf evidence/frontend-complete-candidate.tar.gz .
           sha256sum evidence/*.gz evidence/*.patch evidence/*.cljs evidence/assets.json > evidence/artifact-hashes.txt
           rm -rf evidence/original
+      - name: Encrypt complete native frontend delivery for the explicit operator
+        env:
+          NATIVE_RECIPIENT_PUBLIC_KEY_BASE64: ${{ inputs.recipient_public_key_base64 }}
+          NATIVE_RECIPIENT_SHA256: ${{ inputs.recipient_sha256 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir encrypted-delivery
+          tar -cf "$RUNNER_TEMP/penpot-delivery.tar" -C evidence .
+          test "$(stat -c %s "$RUNNER_TEMP/penpot-delivery.tar")" -le 3221225472
+          sha256sum "$RUNNER_TEMP/penpot-delivery.tar" | sed "s|$RUNNER_TEMP/||" > encrypted-delivery/plaintext-archive.sha256
+          split -d -a 3 -b 268435456 "$RUNNER_TEMP/penpot-delivery.tar" "$RUNNER_TEMP/penpot.part-"
+          for part in "$RUNNER_TEMP"/penpot.part-*; do
+            name=$(basename "$part")
+            node studio/liquidity-studio/scripts/native-artifact-envelope.mjs seal "$part" "encrypted-delivery/$name.enc" "encrypted-delivery/$name.envelope.json"
+          done
+          python3 - <<'PYINDEX'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP']);archive=root/'penpot-delivery.tar'
+          digest=lambda p: hashlib.file_digest(p.open('rb'),'sha256').hexdigest()
+          parts=sorted(root.glob('penpot.part-*'))
+          assert 1<=len(parts)<=12
+          entries=[]
+          for i,p in enumerate(parts):
+              assert p.name==f'penpot.part-{i:03d}' and p.is_file() and not p.is_symlink()
+              assert 0<p.stat().st_size<=268435456
+              entries.append({'index':i,'plaintextFile':p.name,'ciphertextFile':p.name+'.enc','envelopeFile':p.name+'.envelope.json','plaintextBytes':p.stat().st_size,'plaintextSha256':digest(p)})
+          assert sum(x['plaintextBytes'] for x in entries)==archive.stat().st_size<=3221225472
+          pathlib.Path('encrypted-delivery/delivery-index.json').write_text(json.dumps({'schemaVersion':1,'archiveName':'penpot-delivery.tar','archiveBytes':archive.stat().st_size,'archiveSha256':digest(archive),'partCount':len(entries),'parts':entries},indent=2)+'\n')
+          PYINDEX
+          printf 'Decrypt ONLY each ciphertextFile listed by delivery-index.json using its envelopeFile and the local operator private key. Verify every plaintextBytes/SHA; concatenate ONLY the listed plaintextFile values in numeric index order, with no wildcard. Verify archiveBytes/SHA before extracting. No image push or deployment.\n' > encrypted-delivery/README.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: always()
         with:
-          name: penpot-font-ui-review-only
-          path: evidence/
-          retention-days: 7
+          name: encrypted-penpot-frontend-candidate-${{ github.run_id }}
+          path: encrypted-delivery/
+          retention-days: 3
           if-no-files-found: error
