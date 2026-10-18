@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { fail } from "./auth.js";
-import { NATIVE_TARGETS } from "./multimodal-contract.js";
+import {
+  NATIVE_TARGETS,
+  STABLE_LAYER_IDS,
+  brandRevision as hashBrandRevision,
+} from "./multimodal-contract.js";
 import { getApprovedClaims, validateCampaign } from "./source-integrity.js";
 
 const FORMATS = { infographic: 1, carousel: 4, story: 1, reel: 3 };
@@ -19,7 +23,23 @@ function registeredFont(name, registry) {
   const entry = registry.find((item) => item.family === family(name));
   if (!entry || !/^[a-f0-9]{64}$/.test(entry.sha256 || ""))
     reject(`Missing verified font: ${family(name)}`);
-  return structuredClone(entry);
+  return {
+    family: entry.family,
+    sha256: entry.sha256,
+    license: entry.license || "unverified",
+    source:
+      typeof entry.source === "string"
+        ? entry.source.slice(0, 240)
+        : "operator registry",
+    ...(Array.isArray(entry.verifiedCodepoints)
+      ? {
+          verifiedCodepoints: entry.verifiedCodepoints.filter(
+            (value) =>
+              typeof value === "string" && /^U\+[0-9A-F]{4,6}$/.test(value),
+          ),
+        }
+      : {}),
+  };
 }
 function tokens(profile, registry) {
   const colors = profile.colors;
@@ -78,7 +98,123 @@ function additionalCopy(format, source, index) {
 /** Native schema v1 at pinned Doory, not a generic Fabric canvas or rendered-image wrapper.
  * Native serialization source: https://github.com/shaongitbd/doory/blob/27b6f68221fdbf1ef1bedc182e303210ca9e39f5/frontend/src/editor/engine/serialization.ts
  */
-export function compileDooryDocument({ spec, format, availableFonts = [] }) {
+function fieldMappings(value, sourcePath, destinationPath) {
+  if (value !== null && typeof value === "object")
+    return Object.entries(value).flatMap(([key, child]) =>
+      fieldMappings(child, `${sourcePath}.${key}`, `${destinationPath}.${key}`),
+    );
+  return [{ sourcePath, destinationPath }];
+}
+function validateSourcePage(page, index, format, campaign, brandProfile) {
+  const height = ["story", "reel"].includes(format) ? 1920 : 1350;
+  if (
+    page.id !== `${format}_page_${index + 1}` ||
+    page.width !== 1080 ||
+    page.height !== height
+  )
+    reject("SOURCE_PAGE_DIMENSION_OR_ID_MISMATCH");
+  const source = campaign[format];
+  const item =
+    format === "carousel"
+      ? source.slides[index]
+      : format === "reel"
+        ? source.beats[index]
+        : source;
+  const sourcePath =
+    format === "carousel"
+      ? `carousel.slides.${index}`
+      : format === "reel"
+        ? `reel.beats.${index}`
+        : format;
+  if (
+    !isDeepStrictEqual(page.semanticContent, {
+      format: source,
+      page: item,
+      sourcePagePath: sourcePath,
+      executionStatus: "proposal_only",
+    }) ||
+    !isDeepStrictEqual(
+      page.sourceFieldMappings,
+      fieldMappings(source, format, "semanticContent.format"),
+    )
+  )
+    reject("SOURCE_PAGE_MISMATCH");
+  const headline =
+    format === "infographic"
+      ? item.headline
+      : format === "carousel"
+        ? item.title
+        : format === "story"
+          ? item.hookBanner
+          : item.onScreenText;
+  const metrics =
+    format === "infographic"
+      ? item.statRows
+      : format === "carousel"
+        ? [item.bodyMetric]
+        : format === "story"
+          ? [item.keyStatHighlight]
+          : [item.voiceover];
+  const expectedLayers = [
+    {
+      id: "subject_cutout_layer",
+      type: "asset-placeholder",
+      assetId: null,
+      backgroundRemoval: {
+        requested: true,
+        executed: false,
+        engine: "unselected",
+      },
+    },
+    {
+      id: "brand_pill_badge",
+      type: "text-proposal",
+      text: brandProfile.logoText || brandProfile.brandName,
+      curvedText: { requested: true, implemented: false },
+    },
+    { id: "headline_layer", type: "text-proposal", text: headline },
+    ...[0, 1, 2].map((i) => ({
+      id: `metric_card_${i + 1}`,
+      type: "text-proposal",
+      text: metrics[i] || "",
+      empty: !metrics[i],
+    })),
+  ];
+  if (
+    !Array.isArray(page.layers) ||
+    !isDeepStrictEqual(
+      page.layers.map((layer) => layer.id),
+      STABLE_LAYER_IDS,
+    ) ||
+    !isDeepStrictEqual(page.layers, expectedLayers)
+  )
+    reject("SOURCE_LAYER_MISMATCH");
+  if (format === "reel") {
+    const times = [
+      [0, 3],
+      [3, 15],
+      [15, 30],
+    ][index];
+    if (
+      !isDeepStrictEqual(page.timecode, {
+        startSeconds: times[0],
+        endSeconds: times[1],
+      }) ||
+      page.sourceBeatTimecode !== item.timecode
+    )
+      reject("SOURCE_TIMING_MISMATCH");
+  } else if (
+    page.timecode !== undefined ||
+    page.sourceBeatTimecode !== undefined
+  )
+    reject("SOURCE_TIMING_MISMATCH");
+}
+export function compileDooryDocument({
+  spec,
+  brandProfile,
+  format,
+  availableFonts = [],
+}) {
   if (
     spec?.kind !== "multimodal-spec" ||
     spec.schemaVersion !== 1 ||
@@ -94,12 +230,37 @@ export function compileDooryDocument({ spec, format, availableFonts = [] }) {
     spec.sourceCampaign?.provenance?.generationId !== spec.generationId
   )
     reject("Incomplete scoped generation provenance");
+  if (
+    !brandProfile ||
+    hashBrandRevision(brandProfile) !== spec.brandRevision ||
+    spec.tokens?.authority !== "studio" ||
+    spec.tokens.externalChanges !== "proposal_requires_studio_approval" ||
+    !isDeepStrictEqual(spec.tokens.colors, brandProfile.colors) ||
+    !isDeepStrictEqual(spec.tokens.fonts, brandProfile.fonts)
+  )
+    reject("SOURCE_BRAND_MISMATCH");
   const story = { sourceClaims: spec.sourceApprovals };
   getApprovedClaims(story);
   validateCampaign(spec.sourceCampaign, story);
   const pages = spec.formats?.[format]?.pages;
   if (pages?.length !== FORMATS[format]) reject("Unexpected format page count");
   const palette = tokens(spec.tokens, availableFonts);
+  const badgeText = brandProfile.logoText || brandProfile.brandName;
+  const badgeFont = badgeText.includes("ॐ")
+    ? registeredFont("Noto Sans Devanagari", availableFonts)
+    : palette.body;
+  if (
+    badgeText.includes("ॐ") &&
+    ![
+      ...new Set(
+        [...badgeText].map(
+          (char) =>
+            `U+${char.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")}`,
+        ),
+      ),
+    ].every((code) => badgeFont.verifiedCodepoints?.includes(code))
+  )
+    reject("Missing verified badge glyph coverage");
   const bindings = [];
   const document = {
     schemaVersion: 1,
@@ -109,6 +270,7 @@ export function compileDooryDocument({ spec, format, availableFonts = [] }) {
     pages: [],
   };
   for (const [index, page] of pages.entries()) {
+    validateSourcePage(page, index, format, spec.sourceCampaign, brandProfile);
     const layers = page.layers;
     const get = (id) => layers.find((layer) => layer.id === id);
     if (
@@ -140,7 +302,7 @@ export function compileDooryDocument({ spec, format, availableFonts = [] }) {
         28,
         900,
         palette.accent,
-        palette.body.family,
+        badgeFont.family,
       ),
       textbox(
         "headline_layer",
@@ -195,7 +357,14 @@ export function compileDooryDocument({ spec, format, availableFonts = [] }) {
               : "text",
         ...(object.id === "subject_cutout_layer"
           ? { stroke: "accent" }
-          : { font: object.id === "headline_layer" ? "heading" : "body" }),
+          : {
+              font:
+                object.id === "headline_layer"
+                  ? "heading"
+                  : object.id === "brand_pill_badge"
+                    ? "badge"
+                    : "body",
+            }),
       });
     document.pages.push({
       id: page.id,
@@ -221,7 +390,11 @@ export function compileDooryDocument({ spec, format, availableFonts = [] }) {
       sourceCampaign: structuredClone(spec.sourceCampaign),
       sourceCampaignSha256: sha(spec.sourceCampaign),
       sourceApprovals: structuredClone(spec.sourceApprovals),
-      fontProvenance: { heading: palette.heading, body: palette.body },
+      fontProvenance: {
+        heading: palette.heading,
+        body: palette.body,
+        badge: badgeFont,
+      },
       layerTokenBindings: bindings,
       pageIds: document.pages.map((p) => p.id),
       limitations: [
@@ -263,6 +436,13 @@ export function applyDooryBrandTokens({
   )
     reject("Native page identity changed; reconcile explicitly");
   const palette = tokens(nextTokens, availableFonts);
+  palette.badge = registeredFont(
+    manifest.fontProvenance.badge.family,
+    availableFonts,
+  );
+  for (const code of manifest.fontProvenance.badge.verifiedCodepoints || [])
+    if (!palette.badge.verifiedCodepoints?.includes(code))
+      reject("Missing verified badge glyph coverage");
   const copy = structuredClone(document);
   for (const page of copy.pages)
     page.background = { type: "solid", color: palette.background };
@@ -282,7 +462,11 @@ export function applyDooryBrandTokens({
     manifest: {
       ...structuredClone(manifest),
       brandRevision,
-      fontProvenance: { heading: palette.heading, body: palette.body },
+      fontProvenance: {
+        heading: palette.heading,
+        body: palette.body,
+        badge: palette.badge,
+      },
       documentSha256: sha(copy),
     },
   };

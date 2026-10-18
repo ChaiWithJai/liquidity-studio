@@ -14,13 +14,24 @@ import {
   validateDooryDocument,
   DooryLocalTransport,
 } from "./doory-local-transport.js";
-const availableFonts = ["Instrument Serif", "Mona Sans", "Inter"].map(
-  (family) => ({
-    family,
-    sha256: "a".repeat(64),
-    source: "unit registry, not rendered font proof",
-  }),
-);
+const availableFonts = [
+  "Instrument Serif",
+  "Mona Sans",
+  "Inter",
+  "Noto Sans Devanagari",
+].map((family) => ({
+  family,
+  sha256: "a".repeat(64),
+  source: "unit registry, not rendered font proof",
+  verifiedCodepoints: [
+    "U+0043",
+    "U+0057",
+    "U+004A",
+    "U+0020",
+    "U+002F",
+    "U+0950",
+  ],
+}));
 function fixture(preset) {
   const profile = structuredClone(BRAND_PRESETS[preset]);
   const story = {
@@ -66,9 +77,14 @@ test("both brands all formats preserve full source, native text/stableIDs and th
       ["story", 1, 1920],
       ["reel", 3, 1920],
     ]) {
-      const { spec } = fixture(brand),
+      const { spec, profile } = fixture(brand),
         before = structuredClone(spec);
-      const result = compileDooryDocument({ spec, format, availableFonts });
+      const result = compileDooryDocument({
+        spec,
+        brandProfile: profile,
+        format,
+        availableFonts,
+      });
       assert.deepEqual(spec, before);
       assert.deepEqual(validateDooryDocument(result.document), result.document);
       assert.equal(result.document.pages.length, count);
@@ -96,6 +112,7 @@ test("token refresh preserves human native text/IDs/geometry/source while changi
   const { spec, profile } = fixture("vedic_dharma");
   const result = compileDooryDocument({
     spec,
+    brandProfile: profile,
     format: "carousel",
     availableFonts,
   });
@@ -139,7 +156,8 @@ test("token refresh preserves human native text/IDs/geometry/source while changi
 test("missing fonts, unapproved claims, unsupported version and stale bindings reject visibly", () => {
   const { spec, profile } = fixture("vedic_dharma");
   assert.throws(
-    () => compileDooryDocument({ spec, format: "story" }),
+    () =>
+      compileDooryDocument({ spec, brandProfile: profile, format: "story" }),
     /Missing verified font/,
   );
   const incompatible = structuredClone(spec);
@@ -148,6 +166,7 @@ test("missing fonts, unapproved claims, unsupported version and stale bindings r
     () =>
       compileDooryDocument({
         spec: incompatible,
+        brandProfile: profile,
         format: "story",
         availableFonts,
       }),
@@ -156,10 +175,16 @@ test("missing fonts, unapproved claims, unsupported version and stale bindings r
   const bad = structuredClone(spec);
   bad.sourceApprovals[0].status = "unreviewed";
   assert.throws(() =>
-    compileDooryDocument({ spec: bad, format: "story", availableFonts }),
+    compileDooryDocument({
+      spec: bad,
+      brandProfile: profile,
+      format: "story",
+      availableFonts,
+    }),
   );
   const result = compileDooryDocument({
     spec,
+    brandProfile: profile,
     format: "story",
     availableFonts,
   });
@@ -202,9 +227,10 @@ test("local transport rejects caller endpoints, bad identities, unversioned writ
       kind: "document",
       nativeId: "11111111-1111-4111-8111-111111111111",
     };
-  const { spec } = fixture("vedic_dharma");
+  const { spec, profile } = fixture("vedic_dharma");
   const { document } = compileDooryDocument({
     spec,
+    brandProfile: profile,
     format: "story",
     availableFonts,
   });
@@ -235,9 +261,10 @@ test("local transport rejects caller endpoints, bad identities, unversioned writ
 });
 
 test("registered writes reject missing target fonts and recheck membership immediately before fetch", async () => {
-  const { spec } = fixture("vedic_dharma");
+  const { spec, profile } = fixture("vedic_dharma");
   const { document } = compileDooryDocument({
     spec,
+    brandProfile: profile,
     format: "story",
     availableFonts,
   });
@@ -255,7 +282,9 @@ test("registered writes reject missing target fonts and recheck membership immed
   let calls = 0;
   const transport = new DooryLocalTransport({
     sessions: new Map([["owner", { cookie: "unit", csrf: "unit" }]]),
-    fontFamiliesByOwner: new Map([["owner", ["Mona Sans", "Inter"]]]),
+    fontFamiliesByOwner: new Map([
+      ["owner", ["Mona Sans", "Inter", "Noto Sans Devanagari"]],
+    ]),
     fetchImpl: async () => {
       calls++;
       throw Error("unexpected I/O");
@@ -309,6 +338,7 @@ test("actual pinned browser serialization defaults survive token refresh without
   const { spec, profile } = fixture("vedic_dharma");
   const compiled = compileDooryDocument({
     spec,
+    brandProfile: profile,
     format: "story",
     availableFonts,
   });
@@ -340,4 +370,128 @@ test("actual pinned browser serialization defaults survive token refresh without
     };
     assert.throws(() => validateDooryDocument(nested), /solid colors/);
   }
+});
+
+test("initial compile rejects coherent rendered-copy tampering, malformed stable layers and source geometry/timing", () => {
+  const { spec, profile } = fixture("vedic_dharma");
+  const changes = [
+    (b) => {
+      b.formats.infographic.pages[0].layers[2].text = "Unsupported assertion";
+    },
+    (b) => {
+      b.formats.infographic.pages[0].layers[3].text = "Unsupported metric";
+    },
+    (b) => {
+      const p = b.formats.infographic.pages[0];
+      p.semanticContent.format.headline = "Unsupported assertion";
+      p.semanticContent.page.headline = "Unsupported assertion";
+      p.layers[2].text = "Unsupported assertion";
+    },
+    (b) => {
+      b.formats.infographic.pages[0].layers[1].text = "False brand label";
+    },
+    (b) => {
+      b.formats.infographic.pages[0].layers[3].id = "headline_layer";
+    },
+    (b) => {
+      b.formats.infographic.pages[0].layers.push(
+        b.formats.infographic.pages[0].layers[2],
+      );
+    },
+    (b) => {
+      b.formats.infographic.pages[0].width = 999;
+    },
+    (b) => {
+      b.formats.infographic.pages[0].id = "other-page";
+    },
+    (b) => {
+      b.formats.infographic.pages[0].sourceFieldMappings = [];
+    },
+    (b) => {
+      b.tokens.colors[0].hex = "#ffffff";
+    },
+  ];
+  for (const change of changes) {
+    const bad = structuredClone(spec);
+    change(bad);
+    assert.throws(
+      () =>
+        compileDooryDocument({
+          spec: bad,
+          brandProfile: profile,
+          format: "infographic",
+          availableFonts,
+        }),
+      /SOURCE_/,
+    );
+  }
+  for (const change of [
+    (b) => {
+      b.formats.reel.pages[0].timecode.endSeconds = 4;
+    },
+    (b) => {
+      b.formats.reel.pages[1].sourceBeatTimecode = "fabricated";
+    },
+  ]) {
+    const bad = structuredClone(spec);
+    change(bad);
+    assert.throws(
+      () =>
+        compileDooryDocument({
+          spec: bad,
+          brandProfile: profile,
+          format: "reel",
+          availableFonts,
+        }),
+      /SOURCE_TIMING_MISMATCH/,
+    );
+  }
+});
+
+test("CWJ badge preserves exact Sanskrit codepoint and requires verified explicit Noto glyph coverage", () => {
+  const { spec, profile } = fixture("vedic_dharma");
+  const input = {
+    spec,
+    brandProfile: profile,
+    format: "infographic",
+    availableFonts,
+  };
+  const compiled = compileDooryDocument(input),
+    badge = compiled.document.pages[0].objects.find(
+      (o) => o.id === "brand_pill_badge",
+    );
+  assert.equal(badge.text, "CWJ // ॐ");
+  assert.equal([...badge.text].at(-1).codePointAt(0), 0x0950);
+  assert.equal(badge.fontFamily, '"Noto Sans Devanagari", sans-serif');
+  assert.equal(
+    compiled.manifest.fontProvenance.badge.family,
+    "Noto Sans Devanagari",
+  );
+  assert.throws(
+    () =>
+      compileDooryDocument({
+        ...input,
+        availableFonts: availableFonts.filter(
+          (f) => f.family !== "Noto Sans Devanagari",
+        ),
+      }),
+    /Missing verified font/,
+  );
+  const missing = structuredClone(availableFonts);
+  missing.find((f) => f.family === "Noto Sans Devanagari").verifiedCodepoints =
+    [];
+  assert.throws(
+    () => compileDooryDocument({ ...input, availableFonts: missing }),
+    /glyph coverage/,
+  );
+  const privateRegistry = availableFonts.map((f) => ({
+    ...f,
+    secretSession: "must never enter manifest",
+  }));
+  assert.ok(
+    !JSON.stringify(
+      compileDooryDocument({ ...input, availableFonts: privateRegistry })
+        .manifest,
+    ).includes("must never"),
+  );
 });
