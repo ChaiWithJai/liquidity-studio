@@ -87,6 +87,11 @@ export class DurableStorePort {
   async update(key, mutate) {
     throw new Error("Not implemented");
   }
+  /** Delete one record only when a synchronous predicate over it and 0–7
+   * server-selected guard records succeeds in the same storage transaction. */
+  async deleteIf(key, guardKeys, predicate) {
+    throw new Error("Not implemented");
+  }
   async delete(key) {
     throw new Error("Not implemented");
   }

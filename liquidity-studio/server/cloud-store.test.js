@@ -169,3 +169,11 @@ test('SDK boundary: multi-key transaction reads all chunks before writes and ato
   await assert.rejects(store.transact(['native', 'approval'], () => [{ text: 'x'.repeat(4*1024*1024) }, {}]), { code: 'STORE_CAPACITY' });
   assert.deepEqual([...firestore.records], unchanged);
 });
+
+test('SDK boundary: conditional deletion checks current guards and removes owned chunks physically',async()=>{
+ const firestore=fakeFirestore(),store=new FirestoreStore({firestore});
+ await store.update('owned',()=>({installation:'old',large:'字'.repeat(100000)}));await store.update('reservation',()=>({installation:'new'}));
+ assert.equal(await store.deleteIf('owned',['reservation'],([value,guard])=>value.installation===guard.installation),false);assert.ok(await store.get('owned'));
+ await assert.rejects(store.deleteIf('owned',['reservation'],async()=>true),/synchronous boolean/);assert.ok(await store.get('owned'));
+ await store.update('reservation',()=>({installation:'old'}));assert.equal(await store.deleteIf('owned',['reservation'],([value,guard])=>value.installation===guard.installation),true);assert.equal(await store.get('owned'),null);assert.deepEqual(await store.keys('owned'),[]);assert.equal(firestore.records.size,2);
+});

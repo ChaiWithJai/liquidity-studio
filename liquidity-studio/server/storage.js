@@ -61,6 +61,21 @@ export class DurableStore {
       throw error;
     }
   }
+  deleteIf(key, guardKeys, predicate) {
+    const keys = transactionKeys([key, ...guardKeys], predicate);
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const allowed = predicate(keys.map(item => this.get(item)));
+      if (allowed instanceof Promise) allowed.catch(() => {});
+      if (typeof allowed !== "boolean") throw new Error("Conditional deletion requires a synchronous boolean predicate");
+      if (allowed) this.db.prepare("DELETE FROM documents WHERE key=?").run(key);
+      this.db.exec("COMMIT");
+      return allowed;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
   delete(key) {
     this.db.prepare("DELETE FROM documents WHERE key=?").run(key);
   }

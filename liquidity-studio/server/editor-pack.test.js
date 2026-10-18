@@ -178,16 +178,16 @@ test("staging failure hides partial state and rolls back only installation-owned
   const pack = await f.service.export(actor),
     target = await fixture(t, "liquidity_desk", true),
     before = await target.repo.read();
-  const update = target.store.update.bind(target.store);
+  const transact = target.store.transact.bind(target.store);
   let writes = 0,
     blocked = false;
-  target.store.update = (key, fn) => {
-    if (key.startsWith(target.native.prefix)) {
+  target.store.transact = (keys, fn) => {
+    if (keys.some((key) => key.startsWith(target.native.prefix))) {
       blocked =
         target.store.get(target.repo.key).editorRestore.status === "installing";
       if (++writes === 2) throw new Error("Injected disk write failure");
     }
-    return update(key, fn);
+    return transact(keys, fn);
   };
   await assert.rejects(
     target.service.install(actor, pack, input),
@@ -219,11 +219,12 @@ test("revoked owner cannot activate or continue an interrupted installation; cur
   await allFormats(source);
   const pack = await source.service.export(actor),
     target = await fixture(t, "liquidity_desk", true);
-  const update = target.store.update.bind(target.store);
+  const update = target.store.update.bind(target.store),
+    transact = target.store.transact.bind(target.store);
   let staged = false;
-  target.store.update = (key, fn) => {
-    const value = update(key, fn);
-    if (key.startsWith(target.native.prefix) && !staged) {
+  target.store.transact = (keys, fn) => {
+    const value = transact(keys, fn);
+    if (keys.some((key) => key.startsWith(target.native.prefix)) && !staged) {
       staged = true;
       update("identity", (state) => ({ ...state, users: [] }));
     }
@@ -287,7 +288,7 @@ test("actual process interruption preserves a durable reservation and fresh-proc
   target.backup(join(directory, "pre-restore.sqlite"));
   target.close();
   writeFileSync(packfile, JSON.stringify(pack), { mode: 0o600 });
-  const script = `import{readFileSync}from'node:fs';import{DurableStore}from'./server/storage.js';import{ScopedRepository}from'./server/repository.js';import{NativeEditorService}from'./server/native-editor.js';import{EditorPackService}from'./server/editor-pack-service.js';const store=new DurableStore(process.argv[1]);const repo=new ScopedRepository(store,${JSON.stringify(empty.scope)});await repo.ready;const native=new NativeEditorService({store,repo,scope:${JSON.stringify(empty.scope)},identity:{authorize:async()=>{}}});const update=store.update.bind(store);store.update=(key,fn)=>{const value=update(key,fn);if(key.startsWith(native.prefix))process.exit(86);return value;};await new EditorPackService({native}).install(${JSON.stringify(actor)},JSON.parse(readFileSync(process.argv[2])),${JSON.stringify(input)});`;
+  const script = `import{readFileSync}from'node:fs';import{DurableStore}from'./server/storage.js';import{ScopedRepository}from'./server/repository.js';import{NativeEditorService}from'./server/native-editor.js';import{EditorPackService}from'./server/editor-pack-service.js';const store=new DurableStore(process.argv[1]);const repo=new ScopedRepository(store,${JSON.stringify(empty.scope)});await repo.ready;const native=new NativeEditorService({store,repo,scope:${JSON.stringify(empty.scope)},identity:{authorize:async()=>{}}});const transact=store.transact.bind(store);store.transact=(keys,fn)=>{const value=transact(keys,fn);if(keys.some(key=>key.startsWith(native.prefix)))process.exit(86);return value;};await new EditorPackService({native}).install(${JSON.stringify(actor)},JSON.parse(readFileSync(process.argv[2])),${JSON.stringify(input)});`;
   const child = spawnSync(
     process.execPath,
     ["--input-type=module", "-e", script, filename, packfile],
@@ -378,4 +379,178 @@ test("ejection rejects a concurrent new native document, image, or review update
       (error) => error.status === 409 && /changed/.test(error.message),
     );
   }
+});
+async function processFixture(t) {
+  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs"),
+    { tmpdir } = await import("node:os"),
+    { join } = await import("node:path"),
+    { spawnSync } = await import("node:child_process");
+  const directory = mkdtempSync(join(tmpdir(), "editor-pack-races-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor),
+    empty = await fixture(t, "liquidity_desk", true),
+    before = await empty.repo.read();
+  const filename = join(directory, "target.sqlite"),
+    packfile = join(directory, "pack.json"),
+    store = new DurableStore(filename);
+  t.after(() => store.close());
+  store.update("identity", () => ({ users: [actor], memberships: [] }));
+  store.update(empty.repo.key, () => before);
+  writeFileSync(packfile, JSON.stringify(pack), { mode: 0o600 });
+  const repo = new ScopedRepository(store, empty.scope);
+  await repo.ready;
+  const native = new NativeEditorService({
+      repo,
+      scope: empty.scope,
+      identity: empty.identity,
+    }),
+    service = new EditorPackService({ native });
+  const nextInput = {
+    ...input,
+    idempotencyKey: "new_process_installation_key",
+  };
+  const child = (mode) => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "tests/fixtures/editor-pack-child.mjs",
+        filename,
+        packfile,
+        JSON.stringify(empty.scope),
+        JSON.stringify(actor),
+        JSON.stringify(nextInput),
+        mode,
+        input.idempotencyKey,
+      ],
+      { encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+  };
+  return { store, repo, native, service, before, pack, child, nextInput };
+}
+test("two processes: releasing rollback never deletes a new installer journal", async (t) => {
+  const f = await processFixture(t),
+    id = "old-empty-reservation";
+  f.store.update(f.repo.key, () => ({
+    ...f.before,
+    editorRestore: { id, status: "installing" },
+  }));
+  f.store.update(f.service.journalKey, () => ({
+    id,
+    status: "installing",
+    key: input.idempotencyKey,
+    before: f.before,
+    plannedKeys: [],
+  }));
+  const transact = f.store.transact.bind(f.store);
+  let interleaved = false;
+  f.store.transact = (keys, callback) => {
+    const result = transact(keys, callback);
+    if (
+      !interleaved &&
+      keys.includes(f.service.journalKey) &&
+      f.store.get(f.service.journalKey) === null
+    ) {
+      interleaved = true;
+      f.child("install");
+    }
+    return result;
+  };
+  await f.service.rollback(actor, { idempotencyKey: input.idempotencyKey });
+  assert.equal(interleaved, true);
+  assert.equal(
+    f.store.get(f.service.journalKey)?.key,
+    f.nextInput.idempotencyKey,
+  );
+  assert.equal(f.store.get(f.service.journalKey)?.status, "completed");
+  assert.equal(
+    (await f.service.install(actor, f.pack, f.nextInput)).restored,
+    true,
+  );
+});
+test("two processes: a stale recovery cannot delete a replacement installer document", async (t) => {
+  const f = await processFixture(t);
+  await f.service.install(actor, f.pack, input);
+  const original = f.store.get(f.service.journalKey);
+  f.store.update(f.repo.key, () => ({
+    ...f.before,
+    editorRestore: { id: original.id, status: "installing" },
+  }));
+  f.store.update(f.service.journalKey, () => ({
+    ...original,
+    status: "installing",
+  }));
+  const target = f.native.key(f.pack.documents[0].metadata.id),
+    deleteIf = f.store.deleteIf.bind(f.store),
+    remove = f.store.delete.bind(f.store);
+  let interleaved = false;
+  const replace = () => {
+    if (interleaved) return;
+    interleaved = true;
+    f.store.update(f.service.journalKey, (current) => ({
+      ...current,
+      rollbackLeaseExpiresAt: 0,
+    }));
+    f.child("rollback-install");
+  };
+  f.store.deleteIf = (key, keys, guard) => {
+    if (key === target) replace();
+    return deleteIf(key, keys, guard);
+  };
+  // Retains the pre-fix interleaving: old code deleted after a separate owner read.
+  f.store.delete = (key) => {
+    if (key === target) replace();
+    return remove(key);
+  };
+  await assert.rejects(
+    f.service.rollback(actor, { idempotencyKey: input.idempotencyKey }),
+    { status: 409 },
+  );
+  assert.equal(interleaved, true);
+  assert.ok(f.store.get(target));
+  assert.notEqual(f.store.get(target).restoreInstallationId, original.id);
+  assert.equal(
+    (await f.native.read(actor, f.pack.documents[0].metadata.id)).sourceState,
+    "current",
+  );
+});
+test("a crashed rollback lease blocks another recovery until expiry, then permits a new token", async (t) => {
+  const target = await fixture(t, "liquidity_desk", true),
+    before = await target.repo.read(),
+    id = "interrupted-rollback",
+    at = Date.now();
+  target.store.update(target.repo.key, () => ({
+    ...before,
+    editorRestore: { id, status: "installing" },
+  }));
+  target.store.update(target.service.journalKey, () => ({
+    id,
+    status: "rolling-back",
+    key: input.idempotencyKey,
+    before,
+    plannedKeys: [],
+    rollbackToken: "crashed-process-token",
+    rollbackLeaseExpiresAt: at + 60000,
+  }));
+  const now = new EditorPackService({
+    native: target.native,
+    now: () => new Date(at).toISOString(),
+  });
+  await assert.rejects(
+    now.rollback(actor, { idempotencyKey: input.idempotencyKey }),
+    { status: 409 },
+  );
+  await assert.rejects(target.repo.read(), { status: 423 });
+  const later = new EditorPackService({
+    native: target.native,
+    now: () => new Date(at + 60001).toISOString(),
+  });
+  assert.equal(
+    (await later.rollback(actor, { idempotencyKey: input.idempotencyKey }))
+      .rolledBack,
+    true,
+  );
+  assert.deepEqual(await target.repo.read(), before);
 });

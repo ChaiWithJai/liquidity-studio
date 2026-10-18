@@ -476,6 +476,7 @@ export class EditorPackService {
         restoredAt: at,
       };
       const story = state.backlog.find((item) => item.id === record.storyId);
+      record.origin.sourceContentRevision = story.contentRevision || 1;
       record.origin.sourceApprovals = copy(
         story.sourceClaims.filter((c) => c.status === "approved"),
       );
@@ -534,10 +535,28 @@ export class EditorPackService {
     try {
       for (const entry of planned) {
         await this.principal(actor);
-        await this.store.update(entry.key, (current) => {
-          if (current !== null) throw fail(409, "Restore key collision");
-          return { ...entry.value, restoreInstallationId: id };
-        });
+        await this.store.transact(
+          ["identity", this.repo.key, this.journalKey, entry.key],
+          ([currentIdentity, source, currentJournal, current]) => {
+            if (
+              jsonDigest(currentIdentity) !== principal.identityHash ||
+              source?.editorRestore?.id !== id ||
+              currentJournal?.id !== id ||
+              currentJournal.status !== "installing"
+            )
+              throw fail(
+                409,
+                "Restore reservation or authorization changed during staging",
+              );
+            if (current !== null) throw fail(409, "Restore key collision");
+            return [
+              currentIdentity,
+              source,
+              currentJournal,
+              { ...entry.value, restoreInstallationId: id },
+            ];
+          },
+        );
       }
       const result = {
         restored: true,
@@ -552,7 +571,8 @@ export class EditorPackService {
           if (
             jsonDigest(currentIdentity) !== principal.identityHash ||
             current?.editorRestore?.id !== id ||
-            currentJournal?.id !== id
+            currentJournal?.id !== id ||
+            currentJournal?.status !== "installing"
           )
             throw fail(409, "Restore authorization or reservation changed");
           return [
@@ -574,39 +594,80 @@ export class EditorPackService {
     }
   }
   async rollback(actor, { idempotencyKey }) {
-    // Operator recovery requires current founder authority; a revoked initiating owner cannot continue.
-    await this.principal(actor);
-    const journal = await this.store.get(this.journalKey);
-    if (
-      !journal ||
-      journal.key !== idempotencyKey ||
-      journal.status !== "installing"
-    )
-      throw fail(409, "No matching interrupted installation");
+    const principal = await this.principal(actor),
+      token = randomUUID(),
+      at = Date.parse(this.now());
+    if (!Number.isSafeInteger(at))
+      throw fail(500, "Restore recovery clock is unavailable");
+    let journal;
+    await this.store.transact(
+      ["identity", this.repo.key, this.journalKey],
+      ([identity, source, current]) => {
+        if (jsonDigest(identity) !== principal.identityHash)
+          throw fail(409, "Restore authorization changed");
+        if (
+          !current ||
+          current.key !== idempotencyKey ||
+          !["installing", "rolling-back"].includes(current.status) ||
+          source?.editorRestore?.id !== current.id
+        )
+          throw fail(409, "No matching interrupted installation");
+        if (
+          current.status === "rolling-back" &&
+          current.rollbackLeaseExpiresAt > at
+        )
+          throw fail(
+            409,
+            "Another recovery is in progress; retry after its lease expires",
+          );
+        journal = {
+          ...current,
+          status: "rolling-back",
+          rollbackToken: token,
+          rollbackLeaseExpiresAt: at + 60_000,
+        };
+        return [identity, source, journal];
+      },
+    );
+    const checked = (identity, source, current) => {
+      if (
+        jsonDigest(identity) !== principal.identityHash ||
+        source?.editorRestore?.id !== journal.id ||
+        current?.id !== journal.id ||
+        current.status !== "rolling-back" ||
+        current.rollbackToken !== token
+      )
+        throw fail(
+          409,
+          "Restore reservation, recovery lease or authorization changed",
+        );
+    };
     for (const key of journal.plannedKeys) {
       if (!key.startsWith(this.native.prefix))
         throw fail(500, "Invalid restore journal ownership");
-      const value = await this.store.get(key);
-      if (value?.restoreInstallationId === journal.id)
-        await this.store.delete(key);
-      else if (value)
-        throw fail(
-          409,
-          "Restore key ownership changed; operator inspection required",
-        );
+      await this.store.deleteIf(
+        key,
+        ["identity", this.repo.key, this.journalKey],
+        ([value, identity, source, current]) => {
+          checked(identity, source, current);
+          if (value && value.restoreInstallationId !== journal.id)
+            throw fail(
+              409,
+              "Restore key ownership changed; operator inspection required",
+            );
+          return true;
+        },
+      );
     }
     await this.store.transact(
-      [this.repo.key, this.journalKey],
-      ([state, current]) => {
-        if (
-          state?.editorRestore?.id !== journal.id ||
-          current?.id !== journal.id
-        )
-          throw fail(409, "Restore reservation changed");
-        return [journal.before, null];
+      ["identity", this.repo.key, this.journalKey],
+      ([identity, source, current]) => {
+        checked(identity, source, current);
+        // Releasing the journal and reservation is one atomic action. Never issue
+        // a later unconditional delete: another installer may already own the key.
+        return [identity, journal.before, null];
       },
     );
-    await this.store.delete(this.journalKey);
     return { rolledBack: true };
   }
 }

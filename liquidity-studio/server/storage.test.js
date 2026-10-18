@@ -113,3 +113,12 @@ test("separate writer processes serialize updates and failed mutations roll back
     fs.rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('conditional deletion atomically checks guard records and rejects async decisions',async()=>{
+ const store=new DurableStore(':memory:');try{
+  store.update('owned',()=>({installation:'old'}));store.update('reservation',()=>({installation:'new'}));
+  assert.equal(store.deleteIf('owned',['reservation'],([value,guard])=>value.installation===guard.installation),false);assert.ok(store.get('owned'));
+  assert.throws(()=>store.deleteIf('owned',['reservation'],async()=>true),/synchronous boolean/);assert.ok(store.get('owned'));
+  store.update('reservation',()=>({installation:'old'}));assert.equal(store.deleteIf('owned',['reservation'],([value,guard])=>value.installation===guard.installation),true);assert.equal(store.get('owned'),null);assert.deepEqual(store.keys('owned'),[]);
+ }finally{store.close();}
+});
