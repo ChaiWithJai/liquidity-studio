@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "scope": "Actual BrowserOS neo UI, existing owned39035 HTTP/in-memory fixture and local password founder. Not Google, production, paid inference, new service or native rebuild.",
+  "fixtureServerSourceCommit": "ab31ca143781f37b2002f0c83dd82f25256f0b4b",
+  "privateFrame": {
+    "sourceCommit": "4d1e30ee4d1690999337ed83d165d71b90abe23d",
+    "upstreamPin": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+    "frameSha256": "0a43055573a6f1f2c34a5cc7e1362fc0ef0f3d0b81a8ad12ada8d0399a519da3",
+    "sourceFrameBlob": "877d872bc406104ce56adfda3f4f68bb102f68c3",
+    "sourceMountBlob": "1bc79f8e0351f327098f87a1a12baec13e543ffc"
+  },
+  "orders": [
+    {
+      "order": "calendar-plan \u2192 review \u2192 export",
+      "format": "infographic",
+      "date": "2026-10-17",
+      "actions": "Actual calendar Move/date/save; Begin review\u2192Start post-production\u2192Submit final layout\u2192Approve saved layout; native Prepare approved PNGs; private preview; explicit PNG approval/download.",
+      "nativeId": "0f1fc966-3cc2-44c9-f5bc-9d806cc990b3",
+      "storyRevisionBefore": 4,
+      "storyRevisionAfterPlan": 5,
+      "sourceContentRevision": 2,
+      "reviewRevision": 4,
+      "nativeRevision": 2
+    },
+    {
+      "order": "review \u2192 export \u2192 calendar-plan",
+      "format": "story",
+      "date": "2026-10-18",
+      "actions": "Unassigned prior campaign plan through Calendar UI; independently reviewed Story native proposal; actual native PNG preparation/private preview/signoff/download with planning empty; assigned dated plan through Calendar UI and reopened native review.",
+      "nativeId": "2a8a4f54-cf92-91c9-4e3b-b48e7124cfbf",
+      "storyRevisionBeforePlan": 6,
+      "storyRevisionAfterPlan": 7,
+      "sourceContentRevision": 2,
+      "reviewRevisionBeforeAndAfterPlan": 4,
+      "nativeRevisionBeforeAndAfterPlan": 2,
+      "staleAfterPlan": false
+    }
+  ],
+  "generationId": "eadea46e-930d-4ce6-b790-a98941a7ede6",
+  "finalReadback": {
+    "reviews": [
+      {
+        "binding": {
+          "brandRevision": "e1094188fe449fa896c0977f57b0a802f95b26784b40d6fdb78e0229fe93a992",
+          "documentSha256": "88d98c2cd972e902d0151622a7539e6f8bdd27a4b65f94fbec9e8e9814232d6a",
+          "generationId": "eadea46e-930d-4ce6-b790-a98941a7ede6",
+          "nativeRevision": 2,
+          "sourceContentRevision": 2,
+          "storyId": "303bf056-04b6-488a-9c3d-a10c2a02cc21",
+          "storyRevision": 4
+        },
+        "exports": [
+          {
+            "artifactId": "58e1cf273a807ab4a7f7034c13035201b9e134ae111e1d30221cc58561712804",
+            "completedBy": "a7521399-55a8-49c6-9f86-efdcce6de0f0",
+            "eventId": "2b09a285-3fab-45db-b9ce-d42420a4c6e2",
+            "exportedAt": 1792302091189,
+            "mime": "image/png",
+            "nativeId": "0f1fc966-3cc2-44c9-f5bc-9d806cc990b3",
+            "pageIndex": 0,
+            "reviewRevision": 4,
+            "sha256": "53f1a5d477e25703dcf3f9423ff594737d6646939b89407e933ac30fc76769f6",
+            "signedOffBy": "a7521399-55a8-49c6-9f86-efdcce6de0f0",
+            "size": 143060
+          }
+        ],
+        "nativeId": "0f1fc966-3cc2-44c9-f5bc-9d806cc990b3",
+        "planning": [
+          {
+            "date": "2026-10-18",
+            "format": null,
+            "id": "7ace3f73-2ff6-4f6d-982d-1a7dc54652f8",
+            "timeZone": "America/New_York",
+            "unit": "campaign"
+          }
+        ],
+        "revision": 4,
+        "stage": "Approved",
+        "stale": false
+      },
+      {
+        "binding": {
+          "brandRevision": "e1094188fe449fa896c0977f57b0a802f95b26784b40d6fdb78e0229fe93a992",
+          "documentSha256": "ce833c99bc1f71d9ecc1aeffa31a5d894a2109ef771fd7f565c816bc533f3877",
+          "generationId": "eadea46e-930d-4ce6-b790-a98941a7ede6",
+          "nativeRevision": 2,
+          "sourceContentRevision": 2,
+          "storyId": "303bf056-04b6-488a-9c3d-a10c2a02cc21",
+          "storyRevision": 4
+        },
+        "exports": [
+          {
+            "artifactId": "de9a9c3922fd7a60872f64b89dd6416119a713c8871a98f58288004526b16030",
+            "completedBy": "a7521399-55a8-49c6-9f86-efdcce6de0f0",
+            "eventId": "fc3ad4a6-4d3d-4e92-8054-8e04de9f4cc5",
+            "exportedAt": 1792302131890,
+            "mime": "image/png",
+            "nativeId": "2a8a4f54-cf92-91c9-4e3b-b48e7124cfbf",
+            "pageIndex": 0,
+            "reviewRevision": 4,
+            "sha256": "5550f69e15d6b45b34c9bcbad6da30f18603801b241ca0ebe3b1a0bf7c93e63b",
+            "signedOffBy": "a7521399-55a8-49c6-9f86-efdcce6de0f0",
+            "size": 114025
+          }
+        ],
+        "nativeId": "2a8a4f54-cf92-91c9-4e3b-b48e7124cfbf",
+        "planning": [
+          {
+            "date": "2026-10-18",
+            "format": null,
+            "id": "7ace3f73-2ff6-4f6d-982d-1a7dc54652f8",
+            "timeZone": "America/New_York",
+            "unit": "campaign"
+          }
+        ],
+        "revision": 4,
+        "stage": "Approved",
+        "stale": false
+      }
+    ],
+    "story": {
+      "contentRevision": 2,
+      "generationId": "eadea46e-930d-4ce6-b790-a98941a7ede6",
+      "revision": 7
+    },
+    "ui": "Saved layout review\n\nApproval applies to this saved native version. Scheduling and export are separate actions; neither publishes to social media.\n\nApproved \u00b7 review 4 \u00b7 native version 2\n\nApproved by fresh-layout-owner at 2026-10-18T05:42:05.662Z.\n\nPlanned: 2026-10-18 \u00b7 America/New_York\n\nExported \u00b7 1 verified PNG receipt\n\nReload review"
+  },
+  "exportFirstBeforePlan": {
+    "review": {
+      "binding": {
+        "brandRevision": "e1094188fe449fa896c0977f57b0a802f95b26784b40d6fdb78e0229fe93a992",
+        "documentSha256": "ce833c99bc1f71d9ecc1aeffa31a5d894a2109ef771fd7f565c816bc533f3877",
+        "generationId": "eadea46e-930d-4ce6-b790-a98941a7ede6",
+        "nativeRevision": 2,
+        "sourceContentRevision": 2,
+        "storyId": "303bf056-04b6-488a-9c3d-a10c2a02cc21",
+        "storyRevision": 4
+      },
+      "exports": [
+        {
+          "artifactId": "de9a9c3922fd7a60872f64b89dd6416119a713c8871a98f58288004526b16030",
+          "completedBy": "a7521399-55a8-49c6-9f86-efdcce6de0f0",
+          "eventId": "fc3ad4a6-4d3d-4e92-8054-8e04de9f4cc5",
+          "exportedAt": 1792302131890,
+          "mime": "image/png",
+          "nativeId": "2a8a4f54-cf92-91c9-4e3b-b48e7124cfbf",
+          "pageIndex": 0,
+          "reviewRevision": 4,
+          "sha256": "5550f69e15d6b45b34c9bcbad6da30f18603801b241ca0ebe3b1a0bf7c93e63b",
+          "signedOffBy": "a7521399-55a8-49c6-9f86-efdcce6de0f0",
+          "size": 114025
+        }
+      ],
+      "planning": [],
+      "revision": 4,
+      "stage": "Approved",
+      "stale": false
+    },
+    "story": {
+      "contentRevision": 2,
+      "generationId": "eadea46e-930d-4ce6-b790-a98941a7ede6",
+      "revision": 6
+    },
+    "ui": "Saved layout review\n\nApproval applies to this saved native version. Scheduling and export are separate actions; neither publishes to social media.\n\nApproved \u00b7 review 4 \u00b7 native version 2\n\nApproved by fresh-layout-owner at 2026-10-18T05:42:05.662Z.\n\nExported \u00b7 1 verified PNG receipt\n\nReload review"
+  },
+  "artifacts": [
+    {
+      "filename": "plan-before-export.png",
+      "sha256": "53f1a5d477e25703dcf3f9423ff594737d6646939b89407e933ac30fc76769f6",
+      "bytes": 143060,
+      "width": 1080,
+      "height": 1350,
+      "matchesPrivatePreviewAndReceipt": true
+    },
+    {
+      "filename": "export-before-plan.png",
+      "sha256": "5550f69e15d6b45b34c9bcbad6da30f18603801b241ca0ebe3b1a0bf7c93e63b",
+      "bytes": 114025,
+      "width": 1080,
+      "height": 1920,
+      "matchesPrivatePreviewAndReceipt": true
+    },
+    {
+      "filename": "export-before-plan-neo.png",
+      "sha256": "6c69d8a08be2708793bfac3bfeca440ebcf2f412747472b4d302cd6307f3e543",
+      "width": 1862,
+      "height": 1536,
+      "viewportCssPixels": {
+        "width": 1051,
+        "height": 868
+      },
+      "meaning": "Actual Neo screenshot shows Approved review4/native2, PlannedOct18 and Exported1 together, with native toolbar visible. Original image preserved without editing."
+    }
+  ],
+  "limits": [
+    "No new uncertain-reply injection; previously executed PR116 replay evidence remains separate.",
+    "Disposable nonclinical controlled sources; no source factual-accuracy, clinical, social-publication or broader57 closure claim.",
+    "Node/Playwright/test processes were not started; only existing Neo/browser and ordinary authenticated read-only HTTP readback."
+  ],
+  "planFirstAfterExport": {
+    "review": {
+      "revision": 4,
+      "stage": "Approved",
+      "stale": false,
+      "binding": {
+        "brandRevision": "e1094188fe449fa896c0977f57b0a802f95b26784b40d6fdb78e0229fe93a992",
+        "documentSha256": "88d98c2cd972e902d0151622a7539e6f8bdd27a4b65f94fbec9e8e9814232d6a",
+        "generationId": "eadea46e-930d-4ce6-b790-a98941a7ede6",
+        "nativeRevision": 2,
+        "sourceContentRevision": 2,
+        "storyId": "303bf056-04b6-488a-9c3d-a10c2a02cc21",
+        "storyRevision": 4
+      },
+      "planning": [
+        {
+          "date": "2026-10-17",
+          "format": null,
+          "id": "2d5710a0-6c7e-4fa6-bef9-c8e037b6e7f7",
+          "timeZone": "America/New_York",
+          "unit": "campaign"
+        }
+      ],
+      "exports": [
+        {
+          "artifactId": "58e1cf273a807ab4a7f7034c13035201b9e134ae111e1d30221cc58561712804",
+          "completedBy": "a7521399-55a8-49c6-9f86-efdcce6de0f0",
+          "eventId": "2b09a285-3fab-45db-b9ce-d42420a4c6e2",
+          "exportedAt": 1792302091189,
+          "mime": "image/png",
+          "nativeId": "0f1fc966-3cc2-44c9-f5bc-9d806cc990b3",
+          "pageIndex": 0,
+          "reviewRevision": 4,
+          "sha256": "53f1a5d477e25703dcf3f9423ff594737d6646939b89407e933ac30fc76769f6",
+          "signedOffBy": "a7521399-55a8-49c6-9f86-efdcce6de0f0",
+          "size": 143060
+        }
+      ]
+    },
+    "story": {
+      "contentRevision": 2,
+      "generationId": "eadea46e-930d-4ce6-b790-a98941a7ede6",
+      "revision": 5
+    },
+    "ui": "Saved layout review\n\nApproval applies to this saved native version. Scheduling and export are separate actions; neither publishes to social media.\n\nApproved \u00b7 review 4 \u00b7 native version 2\n\nApproved by fresh-layout-owner at 2026-10-18T05:41:15.244Z.\n\nPlanned: 2026-10-17 \u00b7 America/New_York\n\nExported \u00b7 1 verified PNG receipt\n\nReload review"
+  },
+  "mainCommit": "954019d35b0f5c1e9f507f4d1cadecf636d227cd",
+  "moduleComparison": [
+    {
+      "path": "liquidity-studio/server/editor-approval.js",
+      "mainSha256": "0be99ec7ee8c73556590524bc31f10d388a8732903f25e8161b2e3f8e409d3b9",
+      "fixtureSha256": "0be99ec7ee8c73556590524bc31f10d388a8732903f25e8161b2e3f8e409d3b9",
+      "identical": true
+    },
+    {
+      "path": "liquidity-studio/server/editor-export.js",
+      "mainSha256": "e33497786dd865422b8bfee0cda6f90d7e01e99e7c95d80bbf9d88161b2e4250",
+      "fixtureSha256": "e33497786dd865422b8bfee0cda6f90d7e01e99e7c95d80bbf9d88161b2e4250",
+      "identical": true
+    },
+    {
+      "path": "liquidity-studio/server/editor-completion-envelope.js",
+      "mainSha256": "e8ffc6f76de3bc0fd89a8b55d74fa6fed5170ebda2a47bbb97fc15cb87cc06dc",
+      "fixtureSha256": "e8ffc6f76de3bc0fd89a8b55d74fa6fed5170ebda2a47bbb97fc15cb87cc06dc",
+      "identical": true
+    },
+    {
+      "path": "liquidity-studio/server/story-content-revision.js",
+      "mainSha256": "878647fdeb28a397b0498fd7c60045cd3ec01d781e4e6d9ac0337ebcbe192c14",
+      "fixtureSha256": "878647fdeb28a397b0498fd7c60045cd3ec01d781e4e6d9ac0337ebcbe192c14",
+      "identical": true
+    }
+  ],
+  "browserSession": {
+    "group": "approval order qa",
+    "pageId": 108,
+    "ephemeralIdentifiers": true
+  }
+}
