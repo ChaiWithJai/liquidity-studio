@@ -38,10 +38,17 @@ test('brandless organization uses real enable/import/graph and restores the sele
  await page.goForward();await expect(page).toHaveURL(/select=node_lagos/);
  expect(brandBootstraps).toEqual([]);expect(platform.store.keys(`scope:${org.id}:`)).toEqual([]);
  expect((await platform.store.get('identity')).organizations.find(x=>x.id===org.id).brands).toEqual([]);
- await workspace.getByRole('button',{name:'Explore Our imported producer, person',exact:true}).click();
+ await workspace.getByText('All references',{exact:true}).click();await workspace.locator('.rail').getByRole('button',{name:/Our imported producer/}).click();
  const planning=workspace.getByRole('region',{name:'Shared planning',exact:true});
  await planning.getByLabel('Your note',{exact:true}).fill('Check production availability before any outreach.');await workspace.getByRole('button',{name:'Explore Our brief signal, signal',exact:true}).click();await planning.getByRole('button',{name:'Save note',exact:true}).click();await expect(planning.getByRole('status')).toHaveText('Note saved');await expect(planning).not.toContainText('Check production availability before any outreach.');await workspace.getByRole('button',{name:'Explore Our imported producer, person',exact:true}).click();await expect(planning).toContainText('Check production availability before any outreach.');
  await workspace.getByRole('button',{name:'Add to shortlist',exact:true}).click();
  await planning.getByText('Saved views',{exact:false}).first().click();await planning.getByLabel('Name this view',{exact:true}).fill('Producer research');await planning.getByRole('button',{name:'Save current view',exact:true}).click();await expect(planning.getByRole('status')).toHaveText('View saved');
  await planning.getByText('Reports',{exact:false}).first().click();await planning.getByLabel('Report title',{exact:true}).fill('Production research plan');await planning.getByLabel('Working thesis',{exact:true}).fill('A working hypothesis, not verified availability.');await planning.getByRole('button',{name:'Save shortlist as report',exact:true}).click();await expect(page).toHaveURL(/view=report/);await expect(planning.getByRole('status')).toHaveText('Report saved');await page.reload();await expect(page.getByRole('region',{name:'Shared planning'})).toContainText('Check production availability before any outreach.');
+ await planning.getByLabel('Report title',{exact:true}).fill('My unsaved report wording');
+ const api=base+'/api/studio/strategy/'+org.id;const saved=await (await page.request.get(api)).json();const original=saved.reports[0];
+ expect((await page.request.post(api+'/reports',{data:{expectedRevision:saved.revision,idempotencyKey:randomBytes(16).toString('hex').replace(/^(........)(....)(....)(....)(............)$/,'$1-$2-$3-$4-$5'),report:{id:original.id,expectedReportRevision:original.revision,title:'Other writer saved title',thesis:original.thesis}}})).ok()).toBeTruthy();
+ await planning.getByRole('button',{name:'Reload saved work',exact:true}).click();await expect(planning.getByLabel('Report title',{exact:true})).toHaveValue('My unsaved report wording');await expect(planning.getByRole('region',{name:'Newer report wording'})).toContainText('Other writer saved title');
+ await planning.getByRole('button',{name:'Save report wording',exact:true}).click();await expect(planning.getByRole('alert')).toContainText('Your text is retained');
+ await planning.getByRole('button',{name:'Keep my wording on this version',exact:true}).click();await planning.getByRole('button',{name:'Save report wording',exact:true}).click();await expect(planning.getByRole('status')).toHaveText('Report saved');await expect(planning.getByRole('heading',{name:'My unsaved report wording',exact:true})).toBeVisible();
+
 });
