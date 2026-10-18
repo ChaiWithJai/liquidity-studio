@@ -1,0 +1,124 @@
+# Manual-only candidate build; activation is not dispatch or runtime deployment.
+name: Penpot pinned font UI candidate
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Exact reviewed source-only build authorization phrase'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: penpot-font-ui-candidate
+  cancel-in-progress: false
+jobs:
+  build:
+    if: inputs.confirmation == 'build-reviewed-penpot-font-ui-candidate'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      UPSTREAM_SHA: ff7a66f51938b2293260ea27a64e2c4e0833b5e3
+      DEVENV: penpotapp/devenv@sha256:912d522803d94fa3e5c9f304088887a45fa6d90517751094f22a14a8754d2b37
+      ORIGINAL_FRONTEND: penpotapp/frontend@sha256:2c7f4e840102e06bccf36b6a93fc3a030cc0bbba7e0125dec33197187dba8041
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          path: studio
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: penpot/penpot
+          ref: ff7a66f51938b2293260ea27a64e2c4e0833b5e3
+          persist-credentials: false
+          path: upstream
+      - name: Source and host admission
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = "$UPSTREAM_SHA"
+          echo '923eb82925a265419a2a46c36b12fdcabc0922b4d209018b96e92407dfe79bd4  upstream/frontend/src/app/main/data/fonts.cljs' | sha256sum -c -
+          echo '85879dc707f99e7e0cf9a014164f1bd3874fe1e015348158fca3feb0252dec16  studio/scripts/investigations/penpot-font-ui-repair/fonts.patch' | sha256sum -c -
+          test "$(df --output=avail -B1 . | tail -1)" -ge 24000000000
+          test "$(awk '/MemTotal/{print $2}' /proc/meminfo)" -ge 12000000
+          mkdir -p evidence
+          git -C upstream status --porcelain > evidence/upstream-before.status
+          find upstream -name '*lock*' -type f -print0 | sort -z | xargs -0 sha256sum > evidence/locks.before.sha256
+          git -C upstream apply --check ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
+          git -C upstream apply ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
+          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs > evidence/applied.patch
+      - name: Resolve pinned official toolchain without building an image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull --platform linux/amd64 "$DEVENV"
+          docker image inspect "$DEVENV" > evidence/devenv-image.json
+          # Record exact actual versions; mismatch fails, never silently upgrades.
+          docker run --rm --network none --memory 512m --cpus 1 --entrypoint bash "$DEVENV" -lc '
+            node --version; pnpm --version; java -version 2>&1; clojure -Sdescribe
+            test "$(node --version)" = v24.22.0
+            test "$(pnpm --version)" = 12.14.0
+            java -version 2>&1 | grep -q "27\."
+            clojure -Sdescribe | grep -q 1.12.5.1664
+          ' > evidence/toolchain.txt
+      - name: Prepare exact target pnpm through its official version manager
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p review-tools/home review-tools/bin
+          cp studio/scripts/investigations/penpot-font-ui-repair/pnpm-frozen.sh review-tools/bin/pnpm
+          chmod 755 review-tools/bin/pnpm
+          docker run --rm --memory 1g --memory-swap 1g --cpus 1 \
+            --mount type=bind,src="$GITHUB_WORKSPACE/review-tools",dst=/review-tools \
+            -e PNPM_HOME=/review-tools/home -w / --entrypoint bash "$DEVENV" \
+            -lc '/opt/node/bin/pnpm self-update 12.5.1 --registry=https://registry.npmjs.org && test "$(/review-tools/home/pnpm --version)" = 12.5.1' \
+            2>&1 | tee evidence/pnpm-manager.log
+          # Verify actual installed native bytes against immutable package SRI, not version text alone.
+          python3 studio/scripts/investigations/penpot-font-ui-repair/verify-pnpm.py \
+            review-tools/home/pnpm > evidence/pnpm-integrity.json
+      - name: Official complete frontend build in bounded disposable runner container
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Full official frontend script includes WASM, MCP/plugin and UI prerequisites.
+          # No production credentials, runtime volume, deployment, account or application DB.
+          docker run --rm --name penpot-font-ui-build --memory 8g --memory-swap 8g --cpus 4 \
+            --mount type=bind,src="$GITHUB_WORKSPACE/upstream",dst=/work \
+            --mount type=bind,src="$GITHUB_WORKSPACE/review-tools",dst=/review-tools,readonly \
+            -w /work/frontend -e CI=true -e PNPM_HOME=/review-tools/home -e JAVA_TOOL_OPTIONS=-Xmx4096m \
+            -e NODE_OPTIONS=--max-old-space-size=1536 \
+            -e SHADOWCLJS_EXTRA_PARAMS='' --entrypoint bash "$DEVENV" \
+            -lc 'export PATH=/review-tools/bin:$PATH; test "$(pnpm --version)" = 12.5.1; ./scripts/build 2.18.3' 2>&1 | tee evidence/build.log
+          # The exact pnpm wrapper appends explicit --frozen-lockfile to every install/i call.
+          # Preserve the independent post-build tracked-lock/dependency diff gate.
+          git -C upstream diff --exit-code -- '**/*lock*' '**/deps.edn' '**/package.json'
+          test -s upstream/frontend/target/dist/js/main.js
+          test -s upstream/frontend/target/dist/js/main-dashboard.js
+          test -s upstream/frontend/target/dist/js/shared.js
+          test -s upstream/frontend/target/dist/js/libs.js
+      - name: Preserve complete candidate graph, source and original-image comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull --platform linux/amd64 "$ORIGINAL_FRONTEND"
+          original_id=$(docker create "$ORIGINAL_FRONTEND")
+          trap 'docker rm "$original_id" >/dev/null' EXIT
+          mkdir -p evidence/original
+          docker cp "$original_id:/var/www/app/." evidence/original/
+          python3 studio/scripts/investigations/penpot-font-ui-repair/manifest.py \
+            evidence/original upstream/frontend/target/dist evidence/assets.json
+          cp studio/scripts/investigations/penpot-font-ui-repair/fonts.patch evidence/
+          cp studio/scripts/investigations/penpot-font-ui-repair/README.md evidence/
+          git -C upstream archive HEAD | gzip > evidence/upstream-source.tar.gz
+          cp upstream/frontend/src/app/main/data/fonts.cljs evidence/fonts.modified.cljs
+          cp upstream/LICENSE evidence/UPSTREAM-LICENSE
+          tar -C upstream/frontend/target/dist -czf evidence/frontend-complete-candidate.tar.gz .
+          sha256sum evidence/*.gz evidence/*.patch evidence/*.cljs evidence/assets.json > evidence/artifact-hashes.txt
+          rm -rf evidence/original
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: penpot-font-ui-review-only
+          path: evidence/
+          retention-days: 7
+          if-no-files-found: error

@@ -1,4 +1,4 @@
-# REVIEW ONLY: not installed under .github/workflows, not dispatched.
+# Manual-only candidate build; activation is not dispatch or runtime deployment.
 name: Penpot pinned font UI candidate
 on:
   workflow_dispatch:

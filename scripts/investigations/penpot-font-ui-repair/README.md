@@ -1,6 +1,6 @@
 # Pinned Penpot font UI repair: review-only recipe
 
-Issue166, downstream54. No build, workflow dispatch, runtime mount, upload retry, font conversion or account/file change is claimed by this source packet. `hosted-build.workflow.PROPOSED.yml` is deliberately outside `.github/workflows`; normal PR CI cannot execute it. It requires source/resource review before activation or dispatch.
+Issue166, downstream54. No build, workflow dispatch, runtime mount, upload retry, font conversion or account/file change is claimed by this source packet. The reviewed manual-only workflow is now installed at `.github/workflows/penpot-font-ui-candidate.yml`; `hosted-build.workflow.PROPOSED.yml` remains its byte-identical review copy. It has no push/PR trigger. The exact confirmation phrase is required on workflow_dispatch; no dispatch/build has occurred. Root reviews final source/all-five standard checks before authorizing one hosted candidate build. Activation is not deployment or font acceptance.
 
 ## Observed defect and source diagnosis
 
