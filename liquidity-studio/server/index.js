@@ -282,6 +282,14 @@ export function createHttpServer(
         throw fail(400, "Invalid path");
       const url = new URL(req.url, "http://localhost");
       const route = url.pathname;
+      if (route === "/api/native/penpot/designs/svg") {
+        if (!developmentPenpotStoryDesigns?.svgDownload || trustedTestMode || req.method !== "POST" || url.search) throw fail(404, "Not found");
+        const input = await readBody(req, 256, 4000);
+        workspaceExact(input, ["permit"]);
+        const result = await developmentPenpotStoryDesigns.svgDownload(req.headers["x-studio-native-grant-key"], input.permit, req.headers["x-studio-native-session"]);
+        res.writeHead(200, {"Content-Type":"image/svg+xml", "Content-Disposition":`attachment; filename="${result.filename}"`, "Cache-Control":"no-store", "X-Content-Type-Options":"nosniff", "X-Studio-Svg-Sha256":result.sha256});
+        return res.end(result.bytes);
+      }
       if (["/api/native/penpot/access/admission", "/api/native/penpot/access/reconciliation"].includes(route)) {
         if (!nativeAccess || trustedTestMode || req.method !== "POST" || url.search) throw fail(404, "Not found");
         const input = await readBody(req, 4096, 1000);
@@ -1411,15 +1419,17 @@ export function createHttpServer(
               !trustedTestMode,
           },
         });
-      if (developmentPenpotStoryDesigns && (route === "/api/studio/penpot/designs" || route === "/api/studio/penpot/designs/styles" || /^\/api\/studio\/penpot\/designs\/styles\/[a-f0-9-]{36}\/reconcile$/.test(route))) {
+      if (developmentPenpotStoryDesigns && (route === "/api/studio/penpot/designs" || route === "/api/studio/penpot/designs/styles" || route === "/api/studio/penpot/designs/svg" || /^\/api\/studio\/penpot\/designs\/styles\/[a-f0-9-]{36}\/reconcile$/.test(route))) {
         const designs = await developmentPenpotStoryDesigns(scope);
         const sessionContext = createHash("sha256").update(token(req, identity.mode)).digest("hex");
+        if(route.endsWith("/svg")&&req.method==="POST"&&designs.svg)return json(200,await designs.svg.prepare(user,body,sessionContext));
         if(route.endsWith("/styles")&&req.method==="POST"&&designs.styles)return json(200,await designs.styles.prepare(user,body,sessionContext));
         if(route.endsWith("/reconcile")&&req.method==="POST"&&designs.styles){workspaceExact(body,[]);return json(200,await designs.styles.reconcile(user,route.split("/").at(-2),sessionContext));}
         if(route!=="/api/studio/penpot/designs")throw fail(404,"Not found");
-        if (req.method === "GET") return json(200, await designs.designs(user, {
-          storyId: url.searchParams.get("storyId"), format: url.searchParams.get("format"),
-        }, sessionContext));
+        if (req.method === "GET") {
+          const value = await designs.designs(user, {storyId:url.searchParams.get("storyId"),format:url.searchParams.get("format")}, sessionContext);
+          return json(200, {...value, svgAvailable:Boolean(designs.svg)});
+        }
         if (req.method === "POST") return json(201, await designs.createDesign(user, body, sessionContext));
         throw fail(404, "Not found");
       }

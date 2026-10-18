@@ -554,3 +554,6 @@ export function createPenpotNativeExports({
     },
   };
 }
+
+// Shared bounded pinned DTO readers for the same-file customer SVG download.
+export {parseResponse as parsePenpotExportResponse, bounded as readBoundedPenpotExportResponse};

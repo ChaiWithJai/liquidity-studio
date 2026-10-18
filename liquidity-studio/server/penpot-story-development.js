@@ -1,3 +1,4 @@
+import {PenpotStorySvg,storySvgDispatcher} from './penpot-story-svg.js';
 import {PenpotStoryStyles,storyStylePluginTransport} from './penpot-story-styles.js';
 import {createPenpotPluginLocalHost} from './penpot-plugin-local-host.js';
 // Explicit developer launcher integration, never production identity or pairing.
@@ -50,8 +51,9 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
   // Only the constructor chooses paired access. The actor never selects an
   // operator identity, project, session, or alternate workspace in HTTP input.
   const brandAccess=brandAccessFor?await brandAccessFor({scope,workspaceFor:administrativeWorkspaceFor,rpc,repo,boundary,nativeSessions:configuration.sessions}):null;
-  const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess});service.styles=new PenpotStoryStyles({designs:service,sessions:configuration.sessions,grantKey,fetchImpl});services.set(key,service);return service;
+  const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess});service.styles=new PenpotStoryStyles({designs:service,sessions:configuration.sessions,grantKey,fetchImpl});if(grantKey)service.svg=new PenpotStorySvg({designs:service,grantKey,fetchImpl});services.set(key,service);return service;
  };
  provider.createStylePluginHost=()=>createPenpotPluginLocalHost(storyStylePluginTransport(services),{port:39039});
+ if(grantKey)provider.svgDownload=storySvgDispatcher(services,grantKey);
  return provider;
 }
