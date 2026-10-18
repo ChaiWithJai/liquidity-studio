@@ -161,7 +161,8 @@ export class PenpotFontRecovery {
         await this.writeJournal(journal);
         variants = await this.context();
         this.preflight(variants, journal);
-        if (this.ownedRow(variants, font).some(v => Number(field(v, 'fontWeight', 'font-weight')) === font.weight)) {
+        if (this.ownedRow(variants, font).some(v => Number(field(v, 'fontWeight', 'font-weight')) === font.weight &&
+            field(v, 'fontStyle', 'font-style') === (font.style || 'normal'))) {
           throw fail(409, 'Font appeared before creation; inspect this intent without overwriting');
         }
         await this.rpc('create-font-variant', { 'team-id': this.target.teamId, 'font-id': font.oldFontId.slice(7),

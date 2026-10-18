@@ -11,16 +11,16 @@ const ids = {
   intent: '55555555-5555-4555-8555-555555555555', session: '66666666-6666-4666-8666-666666666666',
 };
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
-function pack() {
-  return createPenpotFontPack({ archive: Buffer.from('controlled original archive bytes'), fonts: [400, 700].map(weight => ({
-    family: 'Mona Sans', weight, oldFontId: 'custom-' + ids.font,
+function pack(styles = false) {
+  return createPenpotFontPack({ archive: Buffer.from('controlled original archive bytes'), fonts: [400, styles ? 400 : 700].map((weight, index) => ({
+    family: 'Mona Sans', weight, ...(styles ? { style: index ? 'italic' : 'normal' } : {}), oldFontId: 'custom-' + ids.font,
     sourceName: weight === 400 ? 'MonaSans-Regular.otf' : 'MonaSans-Bold.otf',
     bytes: readFileSync(new URL(`../public/fonts/MonaSans-${weight === 400 ? 'Regular' : 'Bold'}.otf`, import.meta.url)),
     licenseBytes: readFileSync(new URL('../public/fonts/MonaSans-OFL.txt', import.meta.url)),
   })) });
 }
-function fixture() {
-  const source = pack(), variants = [], assets = new Map(), calls = [];
+function fixture(styles = false) {
+  const source = pack(styles), variants = [], assets = new Map(), calls = [];
   let journal = null, profile = ids.profile, chunk, lostCreate = false;
   const service = new PenpotFontRecovery({ pack: source, profileId: ids.profile, teamId: ids.team, projectId: ids.project,
     readJournal: async () => structuredClone(journal), writeJournal: async value => { journal = structuredClone(value); },
@@ -33,14 +33,15 @@ function fixture() {
       if (op === 'create-upload-session') { assert.equal(body['total-chunks'], 1); return { sessionId: ids.session }; }
       if (op === 'upload-chunk') { assert.equal(body.index, 0); chunk = body.content; return {}; }
       if (op === 'create-font-variant') {
-        const font = source.fonts.find(f => f.weight === body['font-weight']);
-        assert.equal(body['font-id'], ids.font); assert.equal(body['font-style'], 'normal');
+        const font = source.fonts.find(f => f.weight === body['font-weight'] && (f.style || 'normal') === body['font-style']);
+        assert.equal(body['font-id'], ids.font);
         assert.equal(body.uploads['font/otf'], ids.session);
         assert.equal(sha(chunk), font.sourceSha256);
-        const id = `${String(font.weight).padStart(8, '0')}-7777-4777-8777-777777777777`;
-        const asset = `${String(font.weight).padStart(8, '0')}-8888-4888-8888-888888888888`;
+        const variantKey = font.weight + (font.style === 'italic' ? 1 : 0);
+        const id = `${String(variantKey).padStart(8, '0')}-7777-4777-8777-777777777777`;
+        const asset = `${String(variantKey).padStart(8, '0')}-8888-4888-8888-888888888888`;
         variants.push({ id, fontId: ids.font, teamId: ids.team, fontFamily: 'Mona Sans',
-          fontWeight: String(font.weight), fontStyle: 'normal', otfFileId: asset });
+          fontWeight: String(font.weight), fontStyle: font.style || 'normal', otfFileId: asset });
         assets.set(asset, chunk);
         if (lostCreate) { lostCreate = false; throw new Error('Original native creation reply lost'); }
         return variants.at(-1);
@@ -76,6 +77,22 @@ test('all UUID conflicts are rejected before any upload, even when later family 
   await assert.rejects(f.service.restore(input(f.service)), /already exists/);
   assert.equal(f.calls.filter(c => c.op.includes('upload') || c.op === 'create-font-variant').length, 0);
   assert.equal(f.getJournal(), null);
+});
+
+test('same family and weight normal/italic variants preserve both styles and replay without duplicate creation', async () => {
+  // Controlled RPC-contract fixture: these licensed bytes exercise transport and
+  // persistence selection, not a claim that the regular binary is a real italic.
+  const f = fixture(true);
+  const result = await f.service.restore(input(f.service));
+  assert.equal(result.completed, true);
+  assert.deepEqual(result.fonts.map(x => [x.fontId, x.weight, x.style]), [
+    ['custom-' + ids.font, 400, 'normal'], ['custom-' + ids.font, 400, 'italic'],
+  ]);
+  assert.equal(new Set(result.fonts.map(x => x.variantId)).size, 2);
+  assert.ok(result.fonts.every(x => x.sourceSha256 === f.source.fonts[0].sourceSha256));
+  await f.service.restore(input(f.service));
+  assert.equal(f.calls.filter(c => c.op === 'create-font-variant').length, 2);
+  assert.equal((await f.service.status()).completed, true);
 });
 
 test('lost creation response reconciles exact same intent/bytes without another create; another intent rejects', async () => {
