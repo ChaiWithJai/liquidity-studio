@@ -11,7 +11,8 @@
     "test:gateway": "node --test server/gateway.test.js",
     "test:backwards": "node server/backwards-test.js",
     "qa:loop": "node server/qa-loop.js",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "dev:studio": "node scripts/local-development.mjs"
   },
   "dependencies": {
     "@google-cloud/firestore": "9.3.1",
