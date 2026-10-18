@@ -1,0 +1,240 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Nonpersonal background engine QA</title>
+    <style>
+      body {
+        font: 16px system-ui;
+        max-width: 1100px;
+        margin: 30px auto;
+        background: #eee;
+        color: #111;
+      }
+      section {
+        display: flex;
+        gap: 20px;
+      }
+      canvas,
+      img {
+        width: 320px;
+        height: 320px;
+        object-fit: contain;
+        border: 1px solid #888;
+        background: repeating-conic-gradient(#bbb 0% 25%, white 0% 50%) 0/20px
+          20px;
+      }
+      button {
+        padding: 12px;
+        margin: 10px;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Nonpersonal background engine QA</h1>
+    <p>
+      Clearly synthetic generated portrait. Actual bundled worker and ONNX WASM.
+      One fixture, no production quality guarantee.
+    </p>
+    <button id="run">Run cold/warm/cache/cancel sequence</button>
+    <section>
+      <div>
+        <h2>Preserved synthetic input</h2>
+        <canvas id="input" width="768" height="768"></canvas>
+      </div>
+      <div>
+        <h2>Actual output alpha</h2>
+        <img id="output" alt="Engine output" />
+      </div>
+    </section>
+    <pre id="status">Ready</pre>
+    <script type="module">
+      import { createBundledRemover } from "/src/editor/engine/bgRemoval/bundled.ts";
+      import { parseModelDescriptor } from "/src/editor/engine/bgRemoval/model.ts";
+      import { MODEL_CACHE } from "/src/editor/engine/bgRemoval/modelStore.ts";
+      const status = document.querySelector("#status"),
+        canvas = document.querySelector("#input"),
+        ctx = canvas.getContext("2d", { willReadFrequently: true });
+      const portrait = await createImageBitmap(
+        await (await fetch("/portrait-input.png")).blob(),
+      );
+      ctx.drawImage(portrait, 0, 0, 768, 768);
+      portrait.close();
+      const digest = async (b) =>
+        [...new Uint8Array(await crypto.subtle.digest("SHA-256", b))]
+          .map((x) => x.toString(16).padStart(2, "0"))
+          .join("");
+      const memory = () =>
+        performance.memory
+          ? {
+              usedJSHeapSize: performance.memory.usedJSHeapSize,
+              totalJSHeapSize: performance.memory.totalJSHeapSize,
+              jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
+              scope:
+                "Chromium page JS heap estimate only; excludes dedicated worker/WASM/native/GPU; not peak process memory",
+            }
+          : null;
+      window.bgQA = { state: "ready", results: [], errors: [] };
+      document.querySelector("#run").onclick = async () => {
+        document.querySelector("#run").disabled = true;
+        window.bgQA.state = "running";
+        const before = memory();
+        let remover;
+        try {
+          const cfg = await (await fetch("/api/v1/config/")).json(),
+            model = parseModelDescriptor(cfg.assets.background_removal_model);
+          if (!model) throw Error("No valid model");
+          const input = await new Promise((r) => canvas.toBlob(r, "image/png")),
+            inputHash = await digest(await input.arrayBuffer());
+          const cache = await caches.open(MODEL_CACHE);
+          await cache.delete(model.url);
+          performance.clearResourceTimings();
+          window.bgQA.model = model;
+          window.bgQA.input = {
+            bytes: input.size,
+            sha256: inputHash,
+            width: 768,
+            height: 768,
+          };
+          window.bgQA.crossOriginIsolated = crossOriginIsolated;
+          window.bgQA.hardwareConcurrency = navigator.hardwareConcurrency;
+          window.bgQA.memoryBefore = before;
+          remover = createBundledRemover(model);
+          window.bgQA.remover = remover;
+          async function run(name, cancel = false) {
+            const events = [],
+              controller = new AbortController(),
+              start = performance.now(),
+              mem = memory();
+            let abortAt = null;
+            try {
+              const result = await remover.remove(
+                input,
+                (stage, percent) => {
+                  events.push({
+                    stage,
+                    percent,
+                    elapsedMs: performance.now() - start,
+                  });
+                  status.textContent = JSON.stringify(
+                    { name, stage, percent },
+                    null,
+                    2,
+                  );
+                  if (
+                    cancel &&
+                    stage === "processing" &&
+                    percent >= 10 &&
+                    abortAt === null
+                  ) {
+                    abortAt = performance.now();
+                    controller.abort(
+                      new DOMException(
+                        "Explicit synthetic portrait QA cancellation",
+                        "AbortError",
+                      ),
+                    );
+                  }
+                },
+                controller.signal,
+              );
+              const end = performance.now(),
+                bitmap = await createImageBitmap(result),
+                c = new OffscreenCanvas(bitmap.width, bitmap.height),
+                g = c.getContext("2d", { willReadFrequently: true });
+              g.drawImage(bitmap, 0, 0);
+              const rgba = g.getImageData(0, 0, c.width, c.height).data;
+              bitmap.close();
+              const bins = { transparent: 0, partial: 0, opaque: 0 };
+              let min = 255,
+                max = 0;
+              for (let i = 3; i < rgba.length; i += 4) {
+                const a = rgba[i];
+                min = Math.min(min, a);
+                max = Math.max(max, a);
+                bins[
+                  a === 0 ? "transparent" : a === 255 ? "opaque" : "partial"
+                ]++;
+              }
+              document.querySelector("#output").src =
+                URL.createObjectURL(result);
+              const row = {
+                name,
+                status: "complete",
+                elapsedMs: end - start,
+                bytes: result.size,
+                sha256: await digest(await result.arrayBuffer()),
+                width: c.width,
+                height: c.height,
+                alpha: { ...bins, min, max },
+                events,
+                memoryBefore: mem,
+                memoryAfter: memory(),
+              };
+              window.bgQA.results.push(row);
+              window.bgQA.output = result;
+              return row;
+            } catch (e) {
+              const row = {
+                name,
+                status: "failed",
+                error: { name: e.name, message: e.message },
+                elapsedMs: performance.now() - start,
+                abortLatencyMs:
+                  abortAt === null ? null : performance.now() - abortAt,
+                events,
+                memoryBefore: mem,
+                memoryAfter: memory(),
+              };
+              window.bgQA.results.push(row);
+              if (!cancel) throw e;
+              return row;
+            }
+          }
+          await run("cold-download-and-worker");
+          await run("warm-same-worker");
+          remover.dispose();
+          remover = createBundledRemover(model);
+          window.bgQA.remover = remover;
+          await run("verified-cache-new-worker");
+          await run("cancel-after-processing10", true);
+          await run("recovery-after-cancel");
+          remover.dispose();
+          window.bgQA.remover = null;
+          window.bgQA.inputUnchanged =
+            inputHash === (await digest(await input.arrayBuffer()));
+          window.bgQA.cacheEntry = !!(await cache.match(model.url));
+          window.bgQA.resourceTimings = performance
+            .getEntriesByType("resource")
+            .filter((x) => /onnx|wasm|worker|bgRemoval/.test(x.name))
+            .map((x) => ({
+              name: new URL(x.name).pathname,
+              initiatorType: x.initiatorType,
+              duration: x.duration,
+              transferSize: x.transferSize,
+              encodedBodySize: x.encodedBodySize,
+              decodedBodySize: x.decodedBodySize,
+            }));
+          window.bgQA.memoryAfter = memory();
+          window.bgQA.state = "complete";
+          status.textContent = JSON.stringify(
+            { ...window.bgQA, output: undefined, remover: undefined },
+            null,
+            2,
+          );
+        } catch (e) {
+          remover?.dispose();
+          window.bgQA.errors.push({ name: e.name, message: e.message });
+          window.bgQA.state = "failed";
+          status.textContent = JSON.stringify(window.bgQA, null, 2);
+        } finally {
+          document.querySelector("#run").disabled = false;
+        }
+      };
+    </script>
+  </body>
+</html>
