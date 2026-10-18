@@ -1,0 +1,20 @@
+{
+  "source": "6cf3f19bff22119ee19ef1fa201e98288ec21d36",
+  "revision": "liquidity-studio-00013-vac",
+  "image": "sha256:7d2c1d2b074d7da5fc51a364df8dc0e739b5f9c756cfc68fbfd1ecada89c331b",
+  "baselineStep": "S13",
+  "annotationIds": [
+    "review-15",
+    "review-16"
+  ],
+  "screenshot": "S13-cloud-job-rejoined.png",
+  "sha256": "f598e3d9fc9366be776a0108fc67d19e0b20f708911bc4efaa9f648cac8e6c62",
+  "jobId": "fa33b88b-ab4f-4e6f-a697-d122bcef8efb",
+  "scope": "existing Pilot acceptance brand",
+  "mode": "real Google + Cloud Tasks + Vertex",
+  "limits": [
+    "Not a human usability evaluation",
+    "No assertion of in-flight provider cancellation billing",
+    "Native editor and helper not enabled by this release"
+  ]
+}
