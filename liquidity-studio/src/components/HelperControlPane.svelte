@@ -1,5 +1,6 @@
 <script>
   import { untrack } from 'svelte';
+  import { createPresenceHeartbeat } from '../lib/presence-heartbeat.js';
   import { canonicalZone, validDate, captureIntent, placeCommand, removeCommand, unitLabel } from '../lib/calendar-model.js';
   let { request, scopeKey, actorId, story = null, members = [], onContentChanged = async () => {} } = $props();
   let projection = $state({ grants: [], proposals: [], presence: [], operations: [] });
@@ -39,6 +40,7 @@
   const ready = () => observation && observation.settings === settings() && observation.base === story?.revision;
   const actionLabel = kind => ({ 'story.patch': 'Category changes', 'assignment.place': 'Calendar placement or move', 'assignment.remove': 'Calendar removal' })[kind] || kind;
   let clientId = $state(crypto.randomUUID());
+  let presenceNotice = $state('');
   let lifecycle = 0, reads = 0, observedReceiptState = '';
   // This effect owns an external scoped subscription; its reset state is not derived content.
   const root = '/api/studio/workspace/control';
@@ -73,11 +75,14 @@
     return () => { clearInterval(timer); grantSearchController?.abort(); grantSearchReads++; lifecycle++; reads++; };
   });
   $effect(() => {
-    const send = request, selected = story ? { storyId: story.id, observedRevision: story.revision } : { storyId: null, observedRevision: null };
+    const send = request, actor = actorId, id = clientId;
+    const selected = story ? { storyId: story.id, observedRevision: story.revision } : { storyId: null, observedRevision: null };
     scopeKey;
-    const beat = () => send(root + '/presence', { method: 'POST', body: JSON.stringify({ clientId, clientKind: 'human', ...selected }) }).catch(() => {});
-    void beat(); const timer = setInterval(beat, 10000);
-    return () => clearInterval(timer);
+    untrack(() => { presenceNotice = ''; });
+    const heartbeat = createPresenceHeartbeat({ request: send, actorId: actor, clientId: id, selected,
+      onPaused: message => { presenceNotice = message; } });
+    void heartbeat.beat(); const timer = setInterval(() => void heartbeat.beat(), 10000);
+    return () => { clearInterval(timer); heartbeat.stop(); };
   });
   async function notifyContent(receipt, owner) {
     const storyIds = [...new Set((receipt.rows || receipt.outcomes || []).map(item => item.id || item.storyId).filter(Boolean))];
@@ -253,6 +258,7 @@
     </article>
   {/each}
   <h3>Advisory presence</h3>
+  {#if presenceNotice}<p role="status">{presenceNotice}</p>{/if}
   <p>Presence is a last-seen signal, not a lock or an authorization grant.</p>
   {#each projection.presence || [] as person (person.clientId)}<p>{display(person.actorId)} · {person.clientKind} · {person.connected ? 'recently connected' : 'last seen'} · {person.storyId || 'no selected story'} · observed revision {person.observedRevision ?? 'none'}</p>{/each}
 </section>
