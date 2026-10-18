@@ -21,6 +21,7 @@ test.skip(
 let server, store, base, platform, buildDirectory;
 const password = randomBytes(24).toString("base64url");
 const fixtures = [];
+const previousLocalBuildFlag = process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD;
 test.beforeAll(async () => {
   process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD = "true";
   store = new DurableStore(":memory:");
@@ -58,7 +59,8 @@ test.beforeAll(async () => {
       },
     });
   } finally {
-    process.env.NODE_ENV = priorEnvironment;
+    if (priorEnvironment === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = priorEnvironment;
   }
   server = createServer((req, res) => {
     const route = req.url.split("?")[0];
@@ -150,6 +152,8 @@ test.beforeAll(async () => {
   }
 });
 test.afterAll(async () => {
+  if (previousLocalBuildFlag === undefined) delete process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD;
+  else process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD = previousLocalBuildFlag;
   await new Promise((resolve) => server?.close(resolve));
   if (buildDirectory) rmSync(buildDirectory, { recursive: true, force: true });
   store?.close();

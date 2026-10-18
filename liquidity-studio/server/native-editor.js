@@ -7,6 +7,7 @@ import {
 import { compileDooryDocument } from "./doory-native-adapter.js";
 import { getApprovedClaims } from "./source-integrity.js";
 
+let activeImageDecodes = 0;
 const FORMATS = new Set(["infographic", "carousel", "story", "reel"]);
 const TYPES = new Set([
   "textbox",
@@ -262,6 +263,11 @@ export class NativeEditorService {
         })),
     };
   }
+  async publicRecord(actor, record, snapshot = record) {
+    const dto = await this.hydrate(record, snapshot);
+    await this.authorize(actor);
+    return dto;
+  }
   async read(actor, id) {
     await this.authorize(actor);
     const value = await this.store.get(this.key(id));
@@ -274,7 +280,7 @@ export class NativeEditorService {
       if ([409, 422].includes(error.status)) sourceState = "changed";
       else throw error;
     }
-    return { ...(await this.hydrate(value)), sourceState };
+    return { ...(await this.publicRecord(actor, value)), sourceState };
   }
   request(actor, operation, input) {
     text(input.idempotencyKey, "idempotency key", 100);
@@ -326,7 +332,7 @@ export class NativeEditorService {
     const key = this.key(id);
     const prior = await this.store.get(key);
     const replay = this.replay(prior, intent);
-    if (replay) return this.hydrate(prior, replay);
+    if (replay) return this.publicRecord(actor, prior, replay);
     const state = await this.repo.read();
     const story = state.backlog.find((item) => item.id === input.storyId);
     if (!story) throw fail(404, "Story not found");
@@ -377,7 +383,7 @@ export class NativeEditorService {
       retained =
         saved.documentRef.key === documentRef.key &&
         saved.documentRef.artifact?.object === documentRef.artifact?.object;
-      return await this.hydrate(saved, snapshot);
+      return await this.publicRecord(actor, saved, snapshot);
     } finally {
       if (!retained) await this.discardPayload(documentRef);
     }
@@ -443,17 +449,15 @@ export class NativeEditorService {
       );
     const sharp = (await import("sharp")).default;
     let metadata;
+    if (activeImageDecodes >= 2) throw fail(429, "Image decoding is busy; retry this upload shortly");
+    activeImageDecodes++;
     try {
-      metadata = await sharp(bytes, {
-        limitInputPixels: 16000000,
-        animated: false,
-      }).metadata();
-      await sharp(bytes, { limitInputPixels: 16000000, animated: false })
-        .raw()
-        .toBuffer();
+      metadata = await sharp(bytes, { limitInputPixels: 4000000, animated: false }).metadata();
+      // Decode validation produces a tiny sample, never a full uncompressed raster buffer.
+      await sharp(bytes, { limitInputPixels: 4000000, animated: false }).resize(1,1).raw().toBuffer();
     } catch {
-      throw fail(422, "Image could not be safely decoded");
-    }
+      throw fail(422, "Image could not be safely decoded; use an image up to four megapixels");
+    } finally { activeImageDecodes--; }
     if (
       { png: "image/png", jpeg: "image/jpeg", webp: "image/webp" }[
         metadata.format
@@ -533,6 +537,7 @@ export class NativeEditorService {
       : Buffer.from(asset.base64, "base64");
     if (createHash("sha256").update(bytes).digest("hex") !== asset.sha256)
       throw fail(500, "Native asset integrity mismatch");
+    await this.authorize(actor);
     return { ...dto, base64: bytes.toString("base64") };
   }
   async documentAssets(actor, document) {
@@ -566,7 +571,7 @@ export class NativeEditorService {
     const original = await this.store.get(key);
     if (!original) throw fail(404, "Native document not found");
     const replay = this.replay(original, intent);
-    if (replay) return this.hydrate(original, replay);
+    if (replay) return this.publicRecord(actor, original, replay);
     const state = await this.repo.read();
     this.assertCurrent(state, original.origin);
     if (original.revision !== input.expectedRevision)
@@ -610,7 +615,7 @@ export class NativeEditorService {
       retained =
         saved.documentRef.key === documentRef.key &&
         saved.documentRef.artifact?.object === documentRef.artifact?.object;
-      return await this.hydrate(saved, snapshot);
+      return await this.publicRecord(actor, saved, snapshot);
     } finally {
       if (!retained) await this.discardPayload(documentRef);
     }

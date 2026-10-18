@@ -408,5 +408,9 @@ test("real authenticated HTTP saves native proposals; anonymous and wrong-brand 
     idempotencyKey: "http_bad_image_upload",
   });
   assert.equal(badImage.status, 422);
+  const oversizedPixels = await sharp({ create: { width: 3000, height: 2000, channels: 4, background: '#123456' } }).png().toBuffer();
+  const largeImage = await api("assets", { ...upload, base64: oversizedPixels.toString("base64"), idempotencyKey: "http_large_image_upload" });
+  assert.equal(largeImage.status, 422);
+
   assert.equal((await api("fonts")).data.results.length, 4);
 });

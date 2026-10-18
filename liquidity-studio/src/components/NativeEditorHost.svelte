@@ -104,7 +104,7 @@
         <option value="not_personal_data">Owned procedural image with no personal data</option>
       </select>
     </label>
-    <p>Uploads support PNG, JPEG and WebP up to 512 KiB. Background removal is unavailable.</p>
+    <p>Uploads support PNG, JPEG and WebP up to 512 KiB and four megapixels. Background removal is unavailable.</p>
   </details>
   {#if loading}<p role="status">Opening native editor…</p>{/if}
   <iframe title="Native Doory design canvas" bind:this={frame} sandbox="allow-scripts allow-same-origin allow-downloads" referrerpolicy="no-referrer"></iframe>

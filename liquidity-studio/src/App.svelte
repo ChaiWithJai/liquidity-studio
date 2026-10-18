@@ -1279,7 +1279,7 @@
               {#if nativeDirty}<button class="secondary" onclick={() => leaveNativeEditor(true)}>Discard local native changes and return</button>{/if}
               {#key nativeHost}<NativeEditorHost record={nativeRecord} request={nativeHost.request} scopeKey={nativeHost.scopeKey} getScopeKey={nativeHost.getScopeKey}
                 onSaved={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.id) nativeRecord = saved; }}
-                onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => nativeSaveState = value.status} />{/key}
+                onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => { nativeSaveState = value.status; if (value.status === "saved" && error === "Save native changes or explicitly discard them before leaving the native editor.") error = ""; }} />{/key}
             </section>
           {/if}
           <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
