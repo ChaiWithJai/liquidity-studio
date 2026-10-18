@@ -1,0 +1,6 @@
+# Source recipe only. Context is liquidity-studio/, after the managed seam merge.
+# Exact public Studio digest must already contain the matching server modules.
+ARG STUDIO_IMAGE
+FROM ${STUDIO_IMAGE}
+COPY --chown=node:node scripts/serve-managed-native-connect.mjs /app/scripts/serve-managed-native-connect.mjs
+CMD ["node", "scripts/serve-managed-native-connect.mjs", "--config", "/run/studio/managed-native.json"]
