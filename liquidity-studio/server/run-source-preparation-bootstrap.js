@@ -138,6 +138,9 @@ async function main() {
   const args = process.argv.slice(2),
     apply = args.includes("--apply");
   if (
+    ["--apply", "--organization", "--brand"].some(
+      (flag) => args.filter((arg) => arg === flag).length > 1,
+    ) ||
     args.some(
       (arg, index) =>
         !["--apply", "--organization", "--brand"].includes(arg) &&

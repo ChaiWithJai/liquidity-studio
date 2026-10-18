@@ -90,6 +90,18 @@ export function extractSourceText(body, contentType, query = "") {
   if (!["text/plain", "text/html", "application/xhtml+xml"].includes(type))
     throw fail(422, "Source must return HTML or plain text");
   let text = body;
+  const heading =
+    type === "text/plain"
+      ? ""
+      : entities(
+          (body.match(/<h1\b[^>]*>([\s\S]*?)<\/h1\s*>/i)?.[1] || "").replace(
+            /<[^>]*>/g,
+            " ",
+          ),
+        )
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 180);
   if (type !== "text/plain") {
     const article = text.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i);
     const main = text.match(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/i);
@@ -136,6 +148,11 @@ export function extractSourceText(body, contentType, query = "") {
         .filter((row) => row.paragraph.length >= 40)
         .map((row) => row.paragraph);
   }
+  if (heading)
+    paragraphs = [
+      heading,
+      ...paragraphs.filter((paragraph) => paragraph !== heading),
+    ];
   text = paragraphs.join("\n").slice(0, MAX_TEXT).trim();
   if (text.length < 40)
     throw fail(422, "Source returned too little readable text");

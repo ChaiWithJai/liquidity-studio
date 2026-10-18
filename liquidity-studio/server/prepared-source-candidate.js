@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from "node:util";
 import { fail } from "./auth.js";
 import { brandRevision } from "./multimodal-contract.js";
 import { renderSvg } from "./artwork.js";
-import {storyContentDigest} from "./story-content-revision.js";
+import { storyContentDigest } from "./story-content-revision.js";
 import { catalogForStory, SOURCE_CATALOG_REVISION } from "./source-catalog.js";
 export const PREPARATION_PURPOSE = "source-preparation";
 export function preparationInput(story, scope) {
@@ -40,69 +40,80 @@ export function preparationUrls(story, scope) {
 }
 function excerptsFor(evidence) {
   return evidence
-    .flatMap((snapshot) =>
-      snapshot.text
+    .flatMap((snapshot) => {
+      const paragraphs = snapshot.text
         .split("\n")
-        .filter((text) => text.length >= 40)
-        .slice(0, 3)
-        .map((text) => {
-          const excerpt = text.slice(0, 140);
-          return {
-            evidenceId: snapshot.id,
-            sourceUrl: snapshot.sourceUrl,
-            text: excerpt,
-            startOffset: snapshot.text.indexOf(excerpt),
-            status: "unreviewed",
-            clinicalReview: null,
-          };
-        }),
-    )
-    .slice(0, 3);
+        .map((text) =>
+          text.includes(" -- ") ? text.slice(text.indexOf(" -- ") + 4) : text,
+        )
+        .filter(
+          (text) =>
+            text.length >= 40 &&
+            !(
+              /^(About |Media Contact|View original|For more information)/i.test(
+                text,
+              ) || /^SOURCE /.test(text)
+            ),
+        );
+      return paragraphs.slice(0, 4).map((text) => {
+        const sentence = text.match(/^.*?[.!?](?=\s|$)/)?.[0] || text;
+        const cut = sentence.slice(0, 140);
+        const excerpt =
+          sentence.length > 140 ? cut.slice(0, cut.lastIndexOf(" ")) : cut;
+        return {
+          evidenceId: snapshot.id,
+          sourceUrl: snapshot.sourceUrl,
+          text: excerpt,
+          startOffset: snapshot.text.indexOf(excerpt),
+          status: "unreviewed",
+          clinicalReview: null,
+        };
+      });
+    })
+    .slice(0, 4);
 }
 export function candidateArtwork(excerpts) {
-  const [first, second = first, third = first] = excerpts.map(
-    (excerpt) => excerpt.text,
-  );
+  const [heading, first = heading, second = first, third = first] =
+    excerpts.map((excerpt) => excerpt.text);
   const texts = [first, second, third];
   return {
     infographic: {
-      headline: "Source excerpts · review required",
+      headline: heading.slice(0, 100),
       statRows: texts,
-      bottomTakeaway: "Machine preparation has not approved these excerpts.",
-      caption: "Inspect the retrieved evidence before adopting a claim.",
+      bottomTakeaway: third,
+      caption: first,
     },
     carousel: {
-      coverHook: "Retrieved source excerpts",
+      coverHook: heading.slice(0, 100),
       slides: [
         ...texts.map((text, index) => ({
           slideNumber: index + 1,
-          title: "Unreviewed excerpt",
+          title: heading.slice(0, 70),
           bodyMetric: text,
           visualNote: "Source excerpt text card",
         })),
         {
           slideNumber: 4,
-          title: "Review the evidence",
-          bodyMetric:
-            "Inspect the original source before approving this draft.",
+          title: heading.slice(0, 70),
+          bodyMetric: third,
           visualNote: "Editorial review step; no factual assertion",
         },
       ],
     },
     story: {
-      hookBanner: "Source review candidate",
+      hookBanner: heading.slice(0, 90),
       keyStatHighlight: first,
-      interactiveStickerPrompt: "What needs further verification?",
+      interactiveStickerPrompt: second.slice(0, 90),
     },
     reel: {
-      spokenHook0to3s: "Source review candidate.",
+      spokenHook0to3s: heading.slice(0, 90),
       beats: texts.map((text, index) => ({
         timecode: ["0:00-0:05", "0:05-0:15", "0:15-0:30"][index],
-        voiceover: text.slice(0,100),
-        onScreenText: "Unreviewed source excerpt",
+        voiceover: text.slice(0, 100),
+        onScreenText: text.slice(0, 75),
         bRollDirection: "Unreviewed source excerpt text card",
       })),
-      closingCta: "Verify the original evidence before sharing.",
+      closingCta: third.slice(0, 90),
     },
   };
 }

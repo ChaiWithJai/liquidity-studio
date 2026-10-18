@@ -165,8 +165,13 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
     path: screenshotPath,
     contentType: "image/png",
   });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.screenshot({
+    path: testInfo.outputPath("annotation1-desktop-after-v3.png"),
+  });
+  await page.setViewportSize({ width: 883, height: 695 });
   await panel
-    .getByLabel("headline", { exact: true })
+    .getByLabel("Headline", { exact: true })
     .fill("HUMAN EDITED PREPARED SOURCE DRAFT");
   await panel
     .getByRole("button", { name: "Save preview edits", exact: true })
@@ -176,7 +181,7 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
   ).toBeVisible();
   await page.reload();
   panel = await open(page);
-  await expect(panel.getByLabel("headline", { exact: true })).toHaveValue(
+  await expect(panel.getByLabel("Headline", { exact: true })).toHaveValue(
     "HUMAN EDITED PREPARED SOURCE DRAFT",
   );
   expect(calls).toBe(initialCalls);
@@ -230,11 +235,11 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
 });
 test("both brand candidates retain scope and unsaved candidate work blocks navigation until explicit discard", async ({
   page,
-}) => {
+}, testInfo) => {
   await signIn(page);
   let panel = await open(page);
   await panel
-    .getByLabel("headline", { exact: true })
+    .getByLabel("Headline", { exact: true })
     .fill("LOCAL PREVIEW WORK");
   await page
     .getByRole("button", { name: "Content calendar", exact: true })
@@ -249,13 +254,17 @@ test("both brand candidates retain scope and unsaved candidate work blocks navig
       exact: true,
     })
     .click();
-  await expect(panel.getByLabel("headline", { exact: true })).not.toHaveValue(
+  await expect(panel.getByLabel("Headline", { exact: true })).not.toHaveValue(
     "LOCAL PREVIEW WORK",
   );
   await page
     .getByRole("button", { name: "Story backlog", exact: true })
     .click();
   panel = await open(page, "brand_vedic");
+  await page.setViewportSize({ width: 883, height: 695 });
+  await page.screenshot({
+    path: testInfo.outputPath("cwj-primary-preview-after-v3.png"),
+  });
   await panel
     .getByText("Evidence and unresolved questions", { exact: true })
     .click();
@@ -309,7 +318,7 @@ test("lost post-commit preview save retains the exact request until its receipt 
     },
   );
   await panel
-    .getByLabel("headline", { exact: true })
+    .getByLabel("Headline", { exact: true })
     .fill("RETAINED PREVIEW SAVE");
   await panel
     .getByRole("button", { name: "Save preview edits", exact: true })
@@ -317,7 +326,7 @@ test("lost post-commit preview save retains the exact request until its receipt 
   await expect(
     panel.getByRole("button", { name: "Retry same request", exact: true }),
   ).toBeVisible();
-  await expect(panel.getByLabel("headline", { exact: true })).toBeDisabled();
+  await expect(panel.getByLabel("Headline", { exact: true })).toBeDisabled();
   await panel
     .getByRole("button", { name: "Retry same request", exact: true })
     .click();
@@ -397,7 +406,7 @@ test("an external candidate edit invalidates an already-open review without over
   await panel
     .getByRole("button", { name: "Reload saved preview / discard edits" })
     .click();
-  await expect(panel.getByLabel("headline", { exact: true })).toHaveValue(
+  await expect(panel.getByLabel("Headline", { exact: true })).toHaveValue(
     "EXTERNAL SAVED CANDIDATE",
   );
 });

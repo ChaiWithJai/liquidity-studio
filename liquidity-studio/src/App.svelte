@@ -1245,7 +1245,8 @@
           </div>
         {/if}
         {#if selectedStory}
-          <section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
+          {#if sourcePreparationEnabled&&!campaign}<div class="prepared-story-context"><strong>{selectedStory.title}</strong><button class="secondary" onclick={()=>navigateTab("backlog")}>Return to backlog</button></div>{/if}
+          {#if !(sourcePreparationEnabled&&!campaign)}<section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
             <div class="workflow-identity"><strong title={selectedStory.title}>{selectedStory.title}</strong><span>{currentOrganization?.name} / {currentBrand?.name} · {formats.find(item => item.id === format)?.name} · revision {selectedStory.revision}</span></div>
             <p class="workflow-state" role="status">{preparedDirty ? "Unsaved prepared preview" : pendingEdits ? "Unsaved artwork changes" : campaign ? "Artwork saved" : sourcePreparationEnabled ? selectedStory.preparationStatus==='ready' ? "Source preview saved" : "Source preparation workspace" : "No draft yet"} · {reviewDirty ? "Unsaved source review" : sourcePreparationEnabled&&!campaign ? "Evidence awaits explicit human review" : generationReview.ready ? "Source prerequisites saved" : `${generationReview.blockers.length} source prerequisite${generationReview.blockers.length === 1 ? "" : "s"} to review`}{editorConflictRevision ? ` · Newer saved revision ${editorConflictRevision}; resolve the conflict before saving.` : ""} · Next: {nextWorkflowAction}</p>
             <nav aria-label="Editorial task actions">
@@ -1257,6 +1258,7 @@
               <button class="secondary" onclick={() => navigateTab("backlog")}>Return to backlog</button>
             </nav>
           </section>
+          {/if}
           {#if campaign||!sourcePreparationEnabled}<div class="studio-toolbar" id="workflow-handoff" tabindex="-1">
             <div>
               <span class="eyebrow">ACTIVE STORY</span>
@@ -1306,7 +1308,7 @@
                 >Download ready</small
               >
             </p>{/if}
-          <details class="small muted workflow-boundaries"><summary>Saving, export and unsaved work</summary><p>Save before exporting. Calendar placement sets a date; export downloads a file. Neither publishes. Unsaved artwork stays in this tab when you visit the calendar or backlog; reloading discards it. Save or discard native editor changes before leaving that editor.</p></details>
+          {#if !(sourcePreparationEnabled&&!campaign)}<details class="small muted workflow-boundaries"><summary>Saving, export and unsaved work</summary><p>Save before exporting. Calendar placement sets a date; export downloads a file. Neither publishes. Unsaved artwork stays in this tab when you visit the calendar or backlog; reloading discards it. Save or discard native editor changes before leaving that editor.</p></details>{/if}
           {#if campaign||!sourcePreparationEnabled}<div class="format-tabs" aria-label="Campaign format">
             {#each formats as item (item.id)}<button
                 class:active={format === item.id}
