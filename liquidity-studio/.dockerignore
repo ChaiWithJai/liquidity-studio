@@ -17,3 +17,12 @@ server/fixtures/
 
 !public/
 !public/**
+
+# The optional local Penpot plugin contains only our static bridge, never operator config.
+!tools/
+!tools/penpot-token-plugin/
+!tools/penpot-token-plugin/index.html
+!tools/penpot-token-plugin/action.js
+!tools/penpot-token-plugin/plugin-tail.js
+!tools/penpot-token-plugin/style.css
+!tools/penpot-token-plugin/ui.js
