@@ -238,3 +238,55 @@ test("unreferenced asset, stale native revision and changed rights cannot produc
     f.store.close();
   }
 });
+
+test("one bounded scoped ledger prunes expired permits and preserves active replay", async () => {
+  const f = await fixture();
+  try {
+    let now = 1000;
+    f.service.now = () => now;
+    const prepare = (index) =>
+      f.service.prepare(f.actor, {
+        documentId: f.record.id,
+        expectedRevision: f.record.revision,
+        inputAssetId: f.asset.id,
+        idempotencyKey: `bounded_cutout_intent_${index}`,
+      });
+    const first = await prepare(0);
+    for (let i = 1; i < 128; i++) await prepare(i);
+    assert.equal((await prepare(0)).id, first.id);
+    await assert.rejects(prepare(128), { status: 429 });
+    const keys = f.store.keys(`${f.native.prefix}cutout`);
+    assert.deepEqual(keys, [`${f.native.prefix}cutout-intents`]);
+    assert.equal(f.store.get(keys[0]).intents.length, 128);
+    now += 16 * 60 * 1000;
+    const current = await prepare(129);
+    assert.deepEqual(f.store.keys(`${f.native.prefix}cutout`), keys);
+    assert.equal(f.store.get(keys[0]).intents.length, 1);
+    const output = await f.service.complete(f.actor, {
+      intentId: current.id,
+      base64: f.bytes.toString("base64"),
+      idempotencyKey: "bounded_complete_cutout",
+    });
+    assert.equal(output.lineage.intentId, current.id);
+    await assert.rejects(
+      f.service.complete(f.actor, {
+        intentId: first.id,
+        base64: f.bytes.toString("base64"),
+        idempotencyKey: "expired_complete_cutout",
+      }),
+      { status: 404 },
+    );
+    now += 16 * 60 * 1000;
+    await prepare(130);
+    assert.equal(
+      (await f.native.asset(f.actor, output.id)).sha256,
+      output.sha256,
+    );
+    assert.equal(
+      (await f.native.asset(f.actor, f.asset.id)).sha256,
+      f.asset.sha256,
+    );
+  } finally {
+    f.store.close();
+  }
+});

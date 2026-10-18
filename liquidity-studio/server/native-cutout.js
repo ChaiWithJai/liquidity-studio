@@ -15,6 +15,7 @@ function exact(value, keys) {
   )
     throw fail(400, "Unsupported cutout fields");
 }
+export const MAX_CUTOUT_INTENTS = 128;
 export class NativeCutoutService {
   constructor({ native, model, now = () => Date.now() }) {
     this.native = native;
@@ -90,13 +91,14 @@ export class NativeCutoutService {
         actor: actor.id,
         key: input.idempotencyKey,
       }).slice(0, 32),
-      intentKey = `${this.native.prefix}cutout:${intentId}`;
+      intentKey = `${this.native.prefix}cutout-intents`;
     const fingerprint = hash(input),
       now = this.now();
     const result = await this.store.transact(
       ["identity", this.native.repo.key, documentKey, assetKey, intentKey],
       (values) => {
-        const [identity, state, current, asset, prior] = values;
+        const [identity, state, current, asset, ledger] = values;
+        const prior = ledger?.intents.find((item) => item.id === intentId);
         this.assertIdentity(identity, actor);
         if (
           !current ||
@@ -118,35 +120,44 @@ export class NativeCutoutService {
             throw fail(409, "Cutout intent expired; start again");
           return values;
         }
+        const retained = (ledger?.intents || []).filter(
+          (item) => item.expiresAt >= now,
+        );
+        if (retained.length >= MAX_CUTOUT_INTENTS)
+          throw fail(
+            429,
+            "Too many pending background-removal intents; retry after existing intents expire",
+          );
+        const permit = {
+          id: intentId,
+          actorId: actor.id,
+          fingerprint,
+          documentId: input.documentId,
+          nativeRevision: current.revision,
+          documentRefHash: hash(current.documentRef),
+          inputAssetId: asset.id,
+          inputSha256: asset.sha256,
+          width: asset.width,
+          height: asset.height,
+          rightsDeclaration: asset.rightsDeclaration,
+          consent: asset.consent,
+          modelSha256: MODNET_MODEL_SHA256,
+          processorVersion: MODNET_PROCESSOR_VERSION,
+          outputPolicy: "preserve-resolution-or-reject",
+          createdAt: now,
+          expiresAt: now + 15 * 60 * 1000,
+        };
         return [
           identity,
           state,
           current,
           asset,
-          {
-            id: intentId,
-            actorId: actor.id,
-            fingerprint,
-            documentId: input.documentId,
-            nativeRevision: current.revision,
-            documentRefHash: hash(current.documentRef),
-            inputAssetId: asset.id,
-            inputSha256: asset.sha256,
-            width: asset.width,
-            height: asset.height,
-            rightsDeclaration: asset.rightsDeclaration,
-            consent: asset.consent,
-            modelSha256: MODNET_MODEL_SHA256,
-            processorVersion: MODNET_PROCESSOR_VERSION,
-            outputPolicy: "preserve-resolution-or-reject",
-            createdAt: now,
-            expiresAt: now + 15 * 60 * 1000,
-          },
+          { intents: [...retained, permit] },
         ];
       },
     );
     await this.native.authorize(actor);
-    const intent = result[4];
+    const intent = result[4].intents.find((item) => item.id === intentId);
     return {
       id: intent.id,
       nativeRevision: intent.nativeRevision,
@@ -165,8 +176,10 @@ export class NativeCutoutService {
     await this.model.manifest();
     if (!/^[a-f0-9]{32}$/.test(input.intentId || ""))
       throw fail(400, "Invalid cutout intent");
-    const intentKey = `${this.native.prefix}cutout:${input.intentId}`;
-    const intent = await this.store.get(intentKey);
+    const intentKey = `${this.native.prefix}cutout-intents`;
+    const intent = (await this.store.get(intentKey))?.intents.find(
+      (item) => item.id === input.intentId,
+    );
     if (!intent || intent.actorId !== actor.id)
       throw fail(404, "Cutout intent not found");
     const documentKey = this.native.key(intent.documentId),
@@ -189,7 +202,10 @@ export class NativeCutoutService {
           assetKey,
           intentKey,
         ],
-        validate: ([identity, state, current, source, permit], asset) => {
+        validate: ([identity, state, current, source, ledger], asset) => {
+          const permit = ledger?.intents.find(
+            (item) => item.id === input.intentId,
+          );
           this.assertIdentity(identity, actor);
           if (
             !permit ||
