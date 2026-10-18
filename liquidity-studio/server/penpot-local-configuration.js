@@ -27,7 +27,13 @@ export async function loadPenpotLocalConfiguration(path, env = process.env) {
     );
   const value = JSON.parse(await readFile(path, "utf8"));
   if (
-    !exact(value, ["version", "targets", "sessions", "manifests"]) ||
+    !exact(value, [
+      "version",
+      "targets",
+      "sessions",
+      "manifests",
+      "transportMode",
+    ]) ||
     value.version !== 1 ||
     !Array.isArray(value.sessions) ||
     !Array.isArray(value.manifests) ||
@@ -35,6 +41,9 @@ export async function loadPenpotLocalConfiguration(path, env = process.env) {
     value.manifests.length > 50
   )
     throw new Error("Invalid local Penpot configuration");
+  const transportMode = value.transportMode || "loopback";
+  if (!["loopback", "docker-host"].includes(transportMode))
+    throw new Error("Unsupported fixed native transport mode");
   const targets = validateEditorTargets(value.targets);
   if (!targets.length || targets.some((target) => target.adapter !== "penpot"))
     throw new Error("Only pinned Penpot targets are supported");
@@ -91,5 +100,5 @@ export async function loadPenpotLocalConfiguration(path, env = process.env) {
   }
   if (targets.some((target) => !manifests.has(target.id)))
     throw new Error("Every native target needs its private verified manifest");
-  return { targets, sessions, manifests };
+  return { targets, sessions, manifests, transportMode };
 }

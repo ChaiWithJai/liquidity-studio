@@ -153,7 +153,17 @@ export class PenpotTokenRefreshTransport {
     this.validateCommand(input);
     this.prune();
     if (this.pending.size >= 100) throw fail(429, "Native action queue full");
-    input = { ...input, authorizedAt: new Date(this.now()).toISOString() };
+    // A durable caller carries its original server-owned intent time across restarts.
+    // No HTTP field may supply this trusted authorization context.
+    if (
+      input.authorizedAt !== undefined &&
+      !Number.isFinite(Date.parse(input.authorizedAt))
+    )
+      throw fail(400, "Invalid server native authorization context");
+    input = {
+      ...input,
+      authorizedAt: input.authorizedAt || new Date(this.now()).toISOString(),
+    };
     const context = await this.context(input);
     const snapshot = await this.snapshot(
       input,

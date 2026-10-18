@@ -1,8 +1,21 @@
 import { createHash, randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
 
-const hash = (value) =>
-  createHash("sha256").update(JSON.stringify(value)).digest("hex");
+function canonical(value) {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, canonical(value[key])]),
+    );
+  return value;
+}
+export const penpotActionDigest = (value) =>
+  createHash("sha256")
+    .update(JSON.stringify(canonical(value)))
+    .digest("hex");
+const hash = penpotActionDigest;
 const identifier = (value) =>
   typeof value === "string" && /^[\w-]{1,200}$/.test(value);
 const commandFields = [
@@ -109,7 +122,9 @@ export class PenpotActionLedger {
       !execution ||
       !identifier(execution.fileId) ||
       !Number.isInteger(execution.bindingEpoch) ||
-      execution.bindingEpoch < 1
+      execution.bindingEpoch < 1 ||
+      typeof execution.manifestHash !== "string" ||
+      !/^[a-f0-9]{64}$/.test(execution.manifestHash)
     )
       throw new Error("Invalid server native registration snapshot");
     let result;
@@ -118,6 +133,7 @@ export class PenpotActionLedger {
       const snapshot = {
         fileId: execution.fileId,
         bindingEpoch: execution.bindingEpoch,
+        manifestHash: execution.manifestHash,
       };
       if (row.execution && hash(row.execution) !== hash(snapshot))
         throw fail(409, "Native action registration changed");

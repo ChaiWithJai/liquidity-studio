@@ -57,6 +57,7 @@ export async function createPenpotStudioRuntime({
     authorizeActor: createPenpotActorAuthorizer(identity),
     nativeSnapshot: createPenpotLocalSnapshot({
       sessions: configuration.sessions,
+      transportMode: configuration.transportMode,
     }),
     resolveContext: async (input) => {
       const entry = configuration.manifests.get(input.binding.targetId);
@@ -84,6 +85,7 @@ export async function createPenpotStudioRuntime({
   });
   return {
     transport,
+    transportMode: configuration.transportMode,
     forScope: serviceFor,
     async bindings(actor, scope) {
       const service = serviceFor(scope);

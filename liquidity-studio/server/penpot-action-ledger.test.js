@@ -34,6 +34,15 @@ test("SQLite native action intent survives reopen without capabilities, deduplic
     Array.from({ length: 5 }, () => ledger.create(actor, input)),
   );
   assert.equal(rows.filter((row) => row.created).length, 1);
+  assert.equal(
+    (
+      await ledger.create(actor, {
+        ...input,
+        command: Object.fromEntries(Object.entries(input.command).reverse()),
+      })
+    ).created,
+    false,
+  );
   const id = rows[0].action.id;
   await ledger.transition(actor, id, "pending-native-action");
   await store.close();

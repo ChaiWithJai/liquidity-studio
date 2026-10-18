@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Original Penpot panel component fixture</title>
+  </head>
+  <body>
+    <button id="switch-scope">Switch fixture scope</button>
+    <main id="panel"></main>
+    <script type="module">
+      import { mount, unmount } from "svelte";
+      import PenpotPanel from "/src/components/PenpotPanel.svelte";
+      let app;
+      function open(scope) {
+        if (app) unmount(app);
+        app = mount(PenpotPanel, {
+          target: document.querySelector("#panel"),
+          props: {
+            storyId: "original-story",
+            role: "founder",
+            request: async (path, options = {}) => {
+              const response = await fetch(path + "?brand=" + scope, {
+                ...options,
+                headers: { "Content-Type": "application/json" },
+              });
+              if (!response.ok)
+                throw new Error("Original fixture request rejected");
+              return response.json();
+            },
+          },
+        });
+      }
+      open("one");
+      document.querySelector("#switch-scope").onclick = () => open("two");
+    </script>
+  </body>
+</html>

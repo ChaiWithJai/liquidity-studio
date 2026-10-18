@@ -325,6 +325,19 @@ test("scoped HTTP native action survives lost acknowledgement/reopen; replay nev
       }),
     (error) => error.status === 410,
   );
+  const manifestKey = `${scope.organizationId}:${scope.brandId}:${binding.id}:tokens`;
+  const originalTheme = manifests.get(manifestKey).themeId;
+  manifests.get(manifestKey).themeId = "changed-after-process-restart";
+  assert.equal(
+    (
+      await request(
+        `/api/studio/penpot/actions/${interrupted.action.id}/reconcile`,
+        {},
+      )
+    ).status,
+    409,
+  );
+  manifests.get(manifestKey).themeId = originalTheme;
   const reconciledResponse = await request(
     `/api/studio/penpot/actions/${interrupted.action.id}/reconcile`,
     {},

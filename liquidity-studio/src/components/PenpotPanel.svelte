@@ -100,7 +100,7 @@
     <p>Copy into the local Studio plugin in the registered Penpot document. This code expires within one minute and is never saved in browser storage. Leaving this story clears it.</p>
     <button disabled={busy} onclick={() => reconcile(actionId)}>Check saved native state</button>
   {/if}
-  <h4>Durable action history</h4>
+  <h4>Recent durable action history</h4>
   {#if !history.length}<p>No action history for this story.</p>{/if}
   <ul>
     {#each history as action (action.id)}

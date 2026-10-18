@@ -1,0 +1,16 @@
+# Opt-in only; combine with the maintained Google configuration after candidate acceptance.
+# Operator JSON transportMode must be docker-host; no arbitrary native URL is accepted.
+services:
+  studio:
+    environment:
+      STUDIO_PENPOT_ENABLED: "true"
+      STUDIO_PENPOT_OPERATOR_CONFIG: /run/penpot/operator.json
+    ports:
+      - "127.0.0.1:39019:39019"
+    volumes:
+      - type: bind
+        source: ${STUDIO_PENPOT_CONFIG_HOST:?Set the private operator JSON path}
+        target: /run/penpot/operator.json
+        read_only: true
+        bind:
+          create_host_path: false

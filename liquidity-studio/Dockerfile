@@ -21,6 +21,7 @@ COPY --from=frontend-builder --chown=node:node /app/dist ./dist
 COPY --from=frontend-builder --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node package.json package-lock.json ./
 COPY --chown=node:node server ./server
+COPY --chown=node:node tools/penpot-token-plugin ./tools/penpot-token-plugin
 COPY --from=frontend-builder /app/public/fonts /usr/local/share/fonts/liquidity
 RUN fc-cache -f
 USER node

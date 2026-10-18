@@ -1395,8 +1395,41 @@ export function createHttpServer(
   server.headersTimeout = 10000;
   return server;
 }
+export async function startConfiguredStudio(options = {}) {
+  if (process.env.STUDIO_PENPOT_ENABLED !== "true")
+    return startServer(createHttpServer(), options);
+  if (process.env.K_SERVICE)
+    throw new Error("Local Penpot startup is unavailable in Cloud Run");
+  const platform = createPlatform();
+  await platform.ready;
+  const runtime = await platform.getPenpotRuntime();
+  const { createPenpotPluginLocalHost } = await import(
+    "./penpot-plugin-local-host.js"
+  );
+  const plugin = createPenpotPluginLocalHost(runtime.transport);
+  await new Promise((resolve, reject) => {
+    plugin.once("error", reject);
+    // Desktop mode requires a container-published loopback port; no host URL is configurable.
+    plugin.listen(
+      39019,
+      runtime.transportMode === "docker-host" ? "0.0.0.0" : "127.0.0.1",
+      resolve,
+    );
+  });
+  const server = createHttpServer(null, { platform, penpotEnabled: true });
+  server.once("close", () => plugin.close());
+  return startServer(server, options);
+}
 if (
   process.argv[1] &&
   fileURLToPath(import.meta.url) === path.resolve(process.argv[1])
 )
-  startServer(createHttpServer());
+  void startConfiguredStudio().catch(() => {
+    console.error(
+      JSON.stringify({
+        event: "startup_failed",
+        code: "LOCAL_PENPOT_CONFIGURATION_FAILED",
+      }),
+    );
+    process.exit(1);
+  });
