@@ -1,5 +1,7 @@
 # Complete blueprint routing after native experiments
 
+> Historical checkpoint: current shipped-versus-open status and all four UX-round dispositions are reconciled in [Current investigation disposition](39-current-disposition.md). Retain the dated evidence below; its present-tense gaps are not a statement that later merged work is absent.
+
 This additive overlay retains every A01–A33/B01–B37 requirement from the [complete instructional ledger](39-instructional-disposition.md); read its full requirement/disposition text rather than treating an issue link as acceptance. The earlier ledger describes its dated baseline. [Current architecture and completion audit](39-editor-architecture-decision.md) incorporates later real Doory native evidence and the reported Penpot failure. No learner competence score or implemented pipeline is inferred.
 
 Native fixture evidence partially advances A07/A18 and B09/B14: an actual editable Doory document survived API/browser save/reload and SVG/PNG export. It does not satisfy either complete objective, both-brand/four-format tasks or integrated handoffs. The guest MP4 advances media feasibility only; A30 remains the unexecuted 30-second reel transfer. Penpot text loss blocks B24 and archive acceptance. All clinical examples retain source-review/clinical quarantine rather than disappearing from the syllabus.
