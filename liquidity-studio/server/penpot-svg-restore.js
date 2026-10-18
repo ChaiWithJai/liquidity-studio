@@ -32,18 +32,61 @@ function normalizeContent(value, depth = 0) {
     fail("UNSUPPORTED_RAW_SVG_TAG");
   if (value.attrs !== undefined && !object(value.attrs))
     fail("INVALID_SVG_ATTRIBUTES");
-  for (const [key, attr] of Object.entries(value.attrs || {})) {
+  const aliases = {
+    fontSize: "font-size",
+    fontWeight: "font-weight",
+    fontFamily: "font-family",
+    fontStyle: "font-style",
+    letterSpacing: "letter-spacing",
+    fillOpacity: "fill-opacity",
+    textAnchor: "text-anchor",
+    dataPreflightText: "data-preflight-text",
+  };
+  const attrs = {};
+  for (const [inputKey, attr] of Object.entries(value.attrs || {})) {
+    const key = Object.hasOwn(aliases, inputKey) ? aliases[inputKey] : inputKey;
+    if (Object.hasOwn(attrs, key)) fail("DUPLICATE_SVG_ATTRIBUTE");
+    attrs[key] = attr;
     if (
-      /^on/i.test(key) ||
-      /^(href|xlink:href|src)$/i.test(key) ||
       typeof attr !== "string" ||
-      /url\s*\(/i.test(attr)
+      attr.length > 200 ||
+      /[\\(){};<>]/.test(attr)
     )
       fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    if (["x", "y", "dx", "dy", "font-size", "letter-spacing"].includes(key)) {
+      if (
+        !/^-?(?:\d+(?:\.\d+)?|\.\d+)$/.test(attr) ||
+        !Number.isFinite(Number(attr)) ||
+        Math.abs(Number(attr)) > 20000 ||
+        (key === "font-size" && (Number(attr) <= 0 || Number(attr) > 2000))
+      )
+        fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    } else if (["opacity", "fill-opacity"].includes(key)) {
+      if (!/^(?:0(?:\.\d+)?|1(?:\.0+)?)$/.test(attr))
+        fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    } else if (key === "fill") {
+      if (!/^#[0-9a-f]{6}$/i.test(attr) && attr !== "none")
+        fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    } else if (key === "font-weight") {
+      if (!/^(?:[1-9]00|normal|bold)$/.test(attr))
+        fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    } else if (key === "font-family") {
+      if (!/^[A-Za-z0-9 ,'"-]{1,200}$/.test(attr))
+        fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    } else if (key === "font-style") {
+      if (!["normal", "italic", "oblique"].includes(attr))
+        fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    } else if (key === "text-anchor") {
+      if (!["start", "middle", "end"].includes(attr))
+        fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    } else if (key === "data-preflight-text") {
+      if (!["true", "false"].includes(attr)) fail("UNSUPPORTED_SVG_ATTRIBUTE");
+    } else fail("UNSUPPORTED_SVG_ATTRIBUTE");
   }
+
   return {
     tag: new Keyword(value.tag),
-    ...(value.attrs !== undefined ? { attrs: value.attrs } : {}),
+    ...(value.attrs !== undefined ? { attrs } : {}),
     ...(value.content !== undefined
       ? { content: normalizeContent(value.content, depth + 1) }
       : {}),

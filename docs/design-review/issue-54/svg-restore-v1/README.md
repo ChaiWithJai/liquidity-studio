@@ -22,7 +22,7 @@ Actual original and repaired exports:
 
 ## Bounded implementation and reproduction
 
-`compilePenpotSvgRestoreRepair` compiles only text/tspan content normalization at exact declared version2.18.3. It preserves text/geometry/shape IDs, escapes literal Transit control prefixes, validates native page/shape identity and current revision, bounds input2MiB/depth32/shape count2048/pages20, and rejects executable, external-resource or unknown SVG content/attributes. It does not activate tokens, install fonts, grant access or convert SVG into native editable typography.
+`compilePenpotSvgRestoreRepair` compiles only text/tspan content normalization at exact declared version2.18.3. It preserves text/geometry/shape IDs, escapes literal Transit control prefixes, validates native page/shape identity and current revision, bounds input2MiB/depth32/shape count2048/pages20, and accepts only a declared text/tspan attribute allowlist with bounded numeric/enum/font-name/hex-paint values. Unknown attributes, style strings, CSS escapes, external references and executable content reject. Declared lossy JSON camelCase attribute aliases map back to canonical SVG names; conflicting aliases reject. It does not activate tokens, install fonts, grant access or convert SVG into native editable typography.
 
 The local wrapper has a fixed loopback39008 endpoint, rejects proxies/redirects, reads only a private0600 disposable QA account file, verifies the same owned project, forbids the anchor/original target, and requires the `Studio SVG restore QA ` target-name prefix. It defaults to dry-run and requires explicit `--apply`. No arbitrary endpoint or browser identity is accepted. Expected revision is checked before submission; this tool requires a quiescent disposable target. It does not claim an atomic cross-client compare-and-swap beyond Penpot's own update protocol, nor instantaneous identity revocation. Do not use it to patch an actively edited production file.
 
@@ -37,7 +37,7 @@ PATH="$NODE22_PATH:$PATH" python3 scripts/investigations/penpot-svg-restore-loca
 node --test liquidity-studio/server/penpot-svg-restore.test.js liquidity-studio/server/penpot-native.test.js
 ```
 
-Eight focused Node22 checks pass, including existing native adapter/source-integrity tests. Negative repairs cover unsupported versions/tags/attributes, wrong revisions including booleans, native page mismatch, excessive depth/size and duplicate pages. A real stale wrapper invocation was rejected without submission. No dependencies, images, cloud resources or model calls were added.
+Ten focused Node22 checks pass, including existing native adapter/source-integrity tests. Negative repairs cover unsupported versions/tags/attributes, wrong revisions including booleans, native page mismatch, excessive depth/size and duplicate pages. A real stale wrapper invocation was rejected without submission. Root review identified compiler acceptance of unknown/escaped-CSS attributes (not an observed browser request); the explicit allowlist/value contract fixes this. The stricter compiler accepted all actual fixture attributes and was applied only to the disposable clone at revision5→6; actual exports were rechecked. No dependencies, images, cloud resources or model calls were added.
 
 ## Remaining issue54 scope
 

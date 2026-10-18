@@ -10,7 +10,7 @@
     "label": "original",
     "format": "svg",
     "bytes": 5166,
-    "sha256": "4a48fce588358c5cbd2222880c605232f124625702d3d60c885a8a96844603ed",
+    "sha256": "52b48d3780757fcb0e697df93ea15d518d8e2715bec043a4afc50c08cabf907b",
     "containsHeadline": true
   },
   {
@@ -24,7 +24,7 @@
     "label": "repaired",
     "format": "svg",
     "bytes": 5166,
-    "sha256": "d8915a032944d1905da65ddc21267673ca527602c115d8db4548ed0b42257531",
+    "sha256": "3a46a3ce4bc8eca2ac5d6882820f28991cd636b46cd2331d073c8c830a5327ec",
     "containsHeadline": true
   }
 ]

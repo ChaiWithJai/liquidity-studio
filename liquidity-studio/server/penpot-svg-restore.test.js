@@ -21,7 +21,7 @@ function fixture() {
               type: "svg-raw",
               content: {
                 tag: "text",
-                attrs: { fill: "#fff" },
+                attrs: { fill: "#ffffff" },
                 content: [
                   {
                     tag: "tspan",
@@ -128,4 +128,48 @@ test("repair size, depth and duplicate pages are bounded before submitting chang
   assert.throws(() => compile(file), /SVG_CONTENT_TOO_DEEP/);
   shape.content = { tag: "text", content: ["x".repeat(2 * 1024 * 1024)] };
   assert.throws(() => compile(file), /NATIVE_REPAIR_TOO_LARGE/);
+});
+
+test("text attribute contract rejects unknown fields, styles, CSS escapes and unsupported values", () => {
+  const file = fixture(),
+    shape = Object.values(file.data.pagesIndex[file.data.pages[0]].objects)[0];
+  for (const attrs of [
+    { unknown: "value" },
+    { style: "fill:red" },
+    { fill: "u\\72l(https://example.invalid)" },
+    { "font-family": "Inter; background: red" },
+    { "font-size": "calc(10px)" },
+    { "text-anchor": "url" },
+    { fill: "red" },
+  ]) {
+    shape.content.attrs = attrs;
+    assert.throws(() => compile(file), /UNSUPPORTED_SVG_ATTRIBUTE/);
+  }
+  shape.content.attrs = {
+    fill: "#e85d04",
+    "font-family": "Inter, Noto Sans Devanagari, sans-serif",
+    "font-size": "34",
+    "font-weight": "400",
+    x: "80",
+    y: "478",
+    "data-preflight-text": "true",
+  };
+  assert.equal(compile(file).changedShapes.length, 1);
+});
+
+test("declared lossy JSON attribute aliases restore canonical SVG keys and conflicting aliases reject", () => {
+  const file = fixture(),
+    shape = Object.values(file.data.pagesIndex[file.data.pages[0]].objects)[0];
+  shape.content.attrs = {
+    fontSize: "34",
+    fontWeight: "400",
+    fontFamily: "Inter, sans-serif",
+    dataPreflightText: "true",
+    fill: "#e85d04",
+  };
+  const plan = compile(file);
+  assert.ok(plan.transitBody.includes('"~:font-size"'));
+  assert.ok(!plan.transitBody.includes('"~:fontSize"'));
+  shape.content.attrs["font-size"] = "35";
+  assert.throws(() => compile(file), /DUPLICATE_SVG_ATTRIBUTE/);
 });
