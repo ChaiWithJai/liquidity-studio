@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "scope": "operator whole-instance local recovery, not scoped customer export or cloud deployment",
+  "sourcePostgresVersion": "15.19",
+  "freshNativeDatabaseAndAssetVolumes": true,
+  "isolatedFullStudioSqliteSnapshot": true,
+  "endpointTakeover": "same native endpoint during controlled maintenance window; original native and Studio writers stopped",
+  "nativeImageSource": "923b0e5c7eeda722b539191a8d8fa6eb304753bd",
+  "nativeCandidateRun": "39153128667",
+  "backups": {
+    "studio-backup.sqlite": {
+      "bytes": 10366976,
+      "sha256": "a416dbf8ac981b441a969d158cc4876783c75f7828fd8778d90e42193bc7e2cc"
+    },
+    "native-db.dump": {
+      "bytes": 677540,
+      "sha256": "81feb288b413d9d9dbb4f2774fca8d00d6dcbc0d93a4db10a0689dc0efc1b02e"
+    },
+    "assets.tar": {
+      "bytes": 27107840,
+      "sha256": "0c9acb2bdb3676fa2948d94e3ee868000d3539cf033d2860e7cf4deb7a4bf270"
+    }
+  },
+  "restore": {
+    "nativeFileCount": 26,
+    "sameNativeFileIDs": true,
+    "changedCloneFiles": 1,
+    "assetFilesVerified": 260,
+    "editMethod": "BrowserOS neo native text layer",
+    "savedAndReloaded": true,
+    "headline": "Recovered CWJ design \u00b7 editable copy",
+    "exportMethod": "Penpot native Export 1 element, PNG, 1x",
+    "png": {
+      "path": "recovered-cwj.png",
+      "bytes": 76530,
+      "sha256": "83e158e1913ec122639085143418d4dc3c95ffdd2aece9239198fe29876fb4c3",
+      "width": 1080,
+      "height": 1350
+    }
+  },
+  "rollback": {
+    "controllerExit": 0,
+    "journalRestored": true,
+    "cloneWritersStopped": true,
+    "originalAll26FileMetadataUnchanged": true,
+    "originalReopenedThroughNeo": true,
+    "sourcePostgresAndValkeyNeverStopped": true,
+    "sourceVolumesPreserved": true
+  },
+  "limits": [
+    "Admin-controlled full database/assets and complete Studio identity/binding snapshot, not a tenant-scoped export.",
+    "Local machine and existing cached compatible images; no managed cloud deployment, budget, concurrent instance or AMD64 runtime acceptance.",
+    "No original source file was overwritten or headline changed.",
+    "Does not repeat or replace previously accepted Instagram24-item product audit."
+  ]
+}
