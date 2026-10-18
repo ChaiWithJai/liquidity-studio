@@ -611,3 +611,17 @@ test("re-ejection retains original authors, original source binding and historic
   );
   assert.deepEqual(final.store.keys("editor-review:"), []);
 });
+
+test('portable export rejects unsupported current and retained historical fonts without changing native save', async t => {
+  const f = await fixture(t);
+  const state = await f.repo.read();
+  const created = await f.native.create(actor, {storyId:'story', format:'infographic', expectedRevision:state.backlog[0].revision, generationId:'gen', expectedBrandRevision:brandRevision(state.brandProfile), idempotencyKey:'font_portability_create'});
+  const document = structuredClone(created.document);
+  document.pages[0].objects.find(o => o.id === 'headline_layer').fontFamily = 'Uninstalled Custom Font';
+  const saved = await f.native.save(actor, created.id, {expectedRevision:1, title:created.title, document, idempotencyKey:'font_portability_save'});
+  assert.equal(saved.document.pages[0].objects.find(o => o.id === 'headline_layer').fontFamily, 'Uninstalled Custom Font');
+  await assert.rejects(f.service.export(actor), /font not included/);
+  document.pages[0].objects.find(o => o.id === 'headline_layer').fontFamily = 'Inter';
+  await f.native.save(actor, created.id, {expectedRevision:2, title:created.title, document, idempotencyKey:'font_portability_supported_save'});
+  await assert.rejects(f.service.export(actor), /font not included/);
+});

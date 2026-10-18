@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { fail } from "./auth.js";
 import { validateHostedDocument } from "./native-editor.js";
+import { nativeFontCatalog } from "./native-editor-fonts.js";
 export const PACK_VERSION = 1;
 export const PACK_LIMITS = Object.freeze({
   bytes: 48 * 1024 * 1024,
@@ -327,11 +328,28 @@ export function validateEditorPack(input) {
       throw fail(422, "Foreign native origin reference");
     if (!Array.isArray(doc.history) || doc.history.length > PACK_LIMITS.history)
       throw fail(413, "Native history limit");
-    const validate = (hash) =>
-      validateHostedDocument(json(hash), {
+    const validate = (hash) => {
+      const document = json(hash);
+      const supported = new Set(nativeFontCatalog().map(font => font.family));
+      const supplied = new Set(input.fonts.map(font => font.family));
+      const visit = value => {
+        if (!value || typeof value !== "object") return;
+        if (Object.hasOwn(value, "fontFamily")) {
+          // The pinned adapter uses a quoted primary family and a generic fallback.
+          const family = typeof value.fontFamily === "string"
+            ? value.fontFamily.match(/^"([^"\n]+)", (?:sans-serif|serif)$/)?.[1] || value.fontFamily
+            : null;
+          if (!supported.has(family) || !supplied.has(family))
+            throw fail(422, "Native document uses a font not included in the supported licensed pack fonts");
+        }
+        for (const child of Object.values(value)) visit(child);
+      };
+      visit(document);
+      return validateHostedDocument(document, {
         assets: input.assets.map((a) => a.metadata),
         pageIds: m.origin.pageIds,
       });
+    };
     validate(doc.current);
     validate(doc.initial);
     for (const snapshot of doc.history) {
