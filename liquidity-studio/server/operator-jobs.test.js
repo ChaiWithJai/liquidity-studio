@@ -72,6 +72,11 @@ test("reviewed plan/idempotency, item receipt and draft commit together; duplica
   });
   const done = await f.jobs.runNext("worker", job.id, job.items[0].id, 1);
   assert.equal(done.state, "completed");
+  assert.equal(done.outbox.state, "worker_received");
+  await assert.rejects(
+    f.jobs.control(f.user, job.id, "cancel", { idempotencyKey: randomUUID() }),
+    { status: 409 },
+  );
   assert.equal(done.items[0].receipt.storyRevision, 2);
   const saved = (await f.repo.read()).backlog.find(
     (row) => row.id === story.id,
@@ -459,4 +464,33 @@ test("worker restart quarantines a restored queued job by default until explicit
     idempotencyKey: randomUUID(),
   });
   assert.equal((await f.jobs.runNext("resumed", job.id)).state, "completed");
+});
+test("a lease expiring during generation is unknown rather than a false content-revision conflict", async (t) => {
+  const f = await fixture(t),
+    story = await f.add(),
+    job = await f.jobs.create(f.user, await f.plan([story]));
+  let now = Date.now();
+  const jobs = new DurableJobService({
+    repo: f.repo,
+    identity: f.platform.identity,
+    scope: f.scope,
+    now: () => now,
+    formatter: {
+      prepareCampaignForStory: async (...args) => {
+        const prepared = await f.jobs.formatter.prepareCampaignForStory(
+          ...args,
+        );
+        now += 120001;
+        return prepared;
+      },
+    },
+  });
+  const result = await jobs.runNext("expired", job.id);
+  assert.equal(result.items[0].state, "unknown");
+  assert.equal(result.items[0].error.code, "WORKER_LEASE_LOST");
+  assert.equal(
+    (await f.repo.read()).backlog.find((row) => row.id === story.id)
+      .campaignDraft,
+    null,
+  );
 });

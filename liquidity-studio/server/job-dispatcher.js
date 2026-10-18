@@ -133,6 +133,11 @@ export class CloudTasksJobDispatcher {
       }
       await repo.mutate((state) => {
         const live = state.operatorJobs.find((row) => row.id === job.id);
+        if (
+          live.deliveryEpoch !== job.deliveryEpoch ||
+          live.outbox.state === "worker_received"
+        )
+          return state;
         live.outbox = {
           state: "delivered",
           attempts: live.outbox.attempts + 1,

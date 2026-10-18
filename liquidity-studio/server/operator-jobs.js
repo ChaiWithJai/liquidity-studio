@@ -122,8 +122,12 @@ export class DurableJobService {
       (job) => job.id === id,
     );
     if (!job) throw fail(404, "Job not found");
+    const owner = (await this.repo.store.get("identity")).users.find(
+      (user) => user.id === job.actorId,
+    );
     return {
       ...publicJob(job),
+      requestedBy: owner?.username || "Removed account",
       canControl: job.actorId === user.id || user.role === "founder",
     };
   }
@@ -180,6 +184,7 @@ export class DurableJobService {
         getApprovedClaims(story);
         return {
           ...input,
+          storyTitle: story.title,
           id: itemIds[index],
           state: "queued",
           attempt: 0,
@@ -204,10 +209,11 @@ export class DurableJobService {
       });
       return state;
     });
-    return publicJob(
+    return this.detail(
+      user,
       state.operatorJobs.find(
         (job) => job.idempotencyKey === input.idempotencyKey,
-      ),
+      ).id,
     );
   }
   async control(user, id, action, input) {
@@ -356,6 +362,11 @@ export class DurableJobService {
           startedAt: stamp(),
         });
         job.state = "running";
+        job.outbox = {
+          ...job.outbox,
+          state: "worker_received",
+          workerReceivedAt: stamp(),
+        };
         job.updatedAt = stamp();
         claimed = { job: structuredClone(job), item: structuredClone(item) };
       }
@@ -423,7 +434,9 @@ export class DurableJobService {
           live.lease.expiresAt <= this.now() ||
           liveJob.cancelled
         )
-          throw fail(409, "Job lease was revoked or expired");
+          throw Object.assign(fail(409, "Job lease was revoked or expired"), {
+            code: "WORKER_LEASE_LOST",
+          });
         const story = state.backlog.find((story) => story.id === item.storyId);
         if (
           !story ||
@@ -501,23 +514,23 @@ export class DurableJobService {
             committed: false,
           };
         if (live.state === "running" && live.fence === item.fence) {
-          live.state =
-            error.code === "PROVIDER_TIMEOUT"
-              ? "unknown"
-              : error.status === 409
-                ? "conflict"
-                : "failed";
+          live.state = ["PROVIDER_TIMEOUT", "WORKER_LEASE_LOST"].includes(
+            error.code,
+          )
+            ? "unknown"
+            : error.status === 409
+              ? "conflict"
+              : "failed";
           live.error = {
-            code:
-              error.code === "PROVIDER_TIMEOUT"
-                ? "PROVIDER_TIMEOUT"
-                : error.status === 403
-                  ? "ACCESS_REVOKED"
-                  : error.status === 429
-                    ? "QUOTA_EXCEEDED"
-                    : error.status === 409
-                      ? "REVISION_CONFLICT"
-                      : "GENERATION_FAILED",
+            code: ["PROVIDER_TIMEOUT", "WORKER_LEASE_LOST"].includes(error.code)
+              ? error.code
+              : error.status === 403
+                ? "ACCESS_REVOKED"
+                : error.status === 429
+                  ? "QUOTA_EXCEEDED"
+                  : error.status === 409
+                    ? "REVISION_CONFLICT"
+                    : "GENERATION_FAILED",
             message:
               "Item did not commit. Inspect current source/revisions before explicit retry; a provider request may have been billed.",
           };
