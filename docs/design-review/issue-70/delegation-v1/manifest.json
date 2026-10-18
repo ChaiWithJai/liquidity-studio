@@ -1,0 +1,58 @@
+{
+  "capture": "Actual production-built App, ephemeral authenticated HTTP/SQLite controlled fixture",
+  "sourceCommit": "acb4eca",
+  "asset": "index-BREcmq6a.js",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "deviceScaleFactor": 1
+  },
+  "limits": [
+    "Synthetic campaign A; no paid generation",
+    "Two authenticated human principals driven by semantic browser automation; no model inference",
+    "B remains unreviewed and has no campaign",
+    "Not deployed acceptance, human usability research, or Google account onboarding"
+  ],
+  "files": [
+    {
+      "file": "S16-human-grant-B-founder.png",
+      "bytes": 111334,
+      "sha256": "247f03fa14cf11857fab17bc866cd7f3fad164245bfa98d712307c2516c9bc97"
+    },
+    {
+      "file": "S16-human-after-helper-founder.png",
+      "bytes": 126285,
+      "sha256": "46d2bd7d36140712ea5d61706bae2cba2d72eea4233734ecd0b451697dbf15ee"
+    },
+    {
+      "file": "S23-human-calendar-result-founder.png",
+      "bytes": 111415,
+      "sha256": "d4a9c34ab13b513635a7d3dbf1061fea7a2bed68a8f61cb0238b69dc5a14f167"
+    },
+    {
+      "file": "S04-unfinished-return-founder.png",
+      "bytes": 126166,
+      "sha256": "6d86cdd404439fa02f91a981f0cc77d79c7f3d382b39164d3459372306f6837d"
+    },
+    {
+      "file": "S16-human-grant-B-marketer.png",
+      "bytes": 109724,
+      "sha256": "ccab56c1833bf67555c990be1e7fce49c27966d76470dab297c5099f8fee249d"
+    },
+    {
+      "file": "S16-human-after-helper-marketer.png",
+      "bytes": 124098,
+      "sha256": "40c59f302254f446344451b6757fbc6d8965b31d140962f8d529d77ccf21ab2d"
+    },
+    {
+      "file": "journey-founder.json",
+      "bytes": 636,
+      "sha256": "55d689eec9d470a1f1093b43818d480071f895cd7d39f71a8d89075bad06a5a3"
+    },
+    {
+      "file": "journey-marketer.json",
+      "bytes": 636,
+      "sha256": "f6b1b13a6590ffd66e648718c566a54a96d5a7be79bd8786dc0cf1a4f203463f"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "humanRole": "marketer",
+  "proposalOperatorRole": "founder",
+  "scenario": "Authenticated semantic helper; no model inference",
+  "viewport": {
+    "width": 1280,
+    "height": 720,
+    "deviceScaleFactor": 1
+  },
+  "planDate": "2026-10-17",
+  "storyAId": "b8f2b0ca-2e20-4dbf-a2da-aaf4e4738f13",
+  "storyBId": "d46070bc-76b4-475e-8f83-3e44e89c091f",
+  "grantId": "83820a48-98bc-4353-a539-3812cd9c2d7b",
+  "proposalId": "c96b9ffc-9901-4ba1-a30b-f76038433ebd",
+  "revisionA": 2,
+  "revisionB": 3,
+  "sourceReviewB": "unreviewed",
+  "campaignB": null,
+  "unsavedA": "HUMAN UNSAVED A MUST REMAIN",
+  "focusRetainedAfterHelper": true
+}
