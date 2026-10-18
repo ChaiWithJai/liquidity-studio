@@ -3,8 +3,8 @@
   "files": {
     "access.clj": "b4e22c0a916662c990389c3d1c6cac0589b3ebdbad782201a8140c1373e986ae",
     "access_test.clj": "b9a1a842d11cd0cdd0d8fab2ece32616b31272bc44d77c21fc04ffef2a120b09",
-    "http_authority.clj": "740bfc66743b39486b8498fdb88229ee5c267063255a0588fac0ea1c8fe26238",
-    "http_authority_test.clj": "0742811435d527313f6153621ac0184a260f35bdf9aa74ac1ded00ef653d24b9",
+    "http_authority.clj": "24065ac6a0c780bfdf6de8caa1a803cf25ed57fb589742284a9e39b56e775ead",
+    "http_authority_test.clj": "ed0b1051ffe75dd139dfa641f749eab9793b7167f23bf26a4fcd148425551422",
     "reconciliation_test.clj": "c2423e9712787688427b777fdc755b5abe0a048152a3f184c15c86b0e379bc30",
     "studio_access.clj": "7a6f4ea5fb2f21b4cf840dedcebb9db5f4f889d589d43b5ae989755b94865262"
   },

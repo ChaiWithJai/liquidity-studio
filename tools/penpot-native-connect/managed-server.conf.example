@@ -1,0 +1,50 @@
+# Managed private-network adapter variant. Upstream service name is deployment-owned.
+# Exact public HTTPS browser Origin is checked against managed config by adapter.
+# Add to the existing native frontend only after private adapter/key review.
+# No native backend, file, team, share or WebSocket routes are changed.
+# Private include contains ONE directive with a generated 32-byte hex key:
+# proxy_set_header X-Studio-Native-Gateway "<private 64 hex characters>";
+# The exact same key is constructor-only in the original proof adapter.
+location = /studio-connect {
+    limit_except GET { deny all; }
+    access_log off;
+    proxy_pass http://studio-native-connect:39044;
+    include /run/studio-native-connect-gateway-header.conf;
+    proxy_set_header Host "studio-native-connect:39044";
+    proxy_set_header Cookie "";
+    proxy_set_header Authorization "";
+    proxy_set_header X-Studio-Native-Session "";
+    proxy_set_header X-Studio-Native-Origin "";
+    proxy_set_header Origin "";
+    proxy_pass_request_body off;
+    proxy_set_header Content-Length "";
+    proxy_connect_timeout 2s;
+    proxy_read_timeout 15s;
+    proxy_cache off;
+    add_header Cache-Control "private, no-store" always;
+    add_header Referrer-Policy "strict-origin" always;
+}
+location = /studio-connect/prove {
+    limit_except POST { deny all; }
+    access_log off;
+    client_max_body_size 128;
+    client_body_timeout 5s;
+    proxy_pass http://studio-native-connect:39044;
+    include /run/studio-native-connect-gateway-header.conf;
+    proxy_set_header Host "studio-native-connect:39044";
+    proxy_set_header X-Studio-Native-Session $http_cookie;
+    proxy_set_header X-Studio-Native-Origin $http_origin;
+    proxy_set_header Cookie "";
+    proxy_set_header Authorization "";
+    proxy_set_header Origin "";
+    proxy_connect_timeout 2s;
+    proxy_read_timeout 15s;
+    proxy_cache off;
+    add_header Cache-Control "private, no-store" always;
+    add_header Referrer-Policy "strict-origin" always;
+}
+# Block suffix aliases; no generic protocol relay.
+location ^~ /studio-connect/ { return 404; }
+
+# One-use Studio draft SVG downloads, authenticated by the current native cookie.
+# The opaque permit and native cookie must never enter access logs.

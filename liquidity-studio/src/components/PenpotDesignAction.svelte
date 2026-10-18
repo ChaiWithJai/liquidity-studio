@@ -35,10 +35,13 @@
   }
   onDestroy(() => { alive = false; loadSequence++; });
   onMount(() => { void load(); });
+  function nativeDesignUrl(value){
+    try{const url=new URL(value);return (url.protocol==='https:'||url.origin==='http://localhost:39008')&&!url.username&&!url.password&&url.pathname==='/'&&url.hash.startsWith('#/workspace?team-id=')?value:'';}catch{return '';}
+  }
   const nativeUrl = $derived(result?.design?.nativeUrl || '');
-  const openUrl = $derived(result?.design?.status === 'ready' && nativeUrl.startsWith('http://localhost:39008/#/workspace?team-id=') ? nativeUrl : '');
+  const openUrl = $derived(result?.design?.status === 'ready' && nativeDesignUrl(nativeUrl) ? nativeUrl : '');
   function reportState(design) {
-    onStateChange(design?.status === 'ready' && design.nativeUrl?.startsWith('http://localhost:39008/#/workspace?team-id=') ? 'ready' : design?.status === 'pending' ? 'pending' : 'unknown');
+    onStateChange(design?.status === 'ready' && nativeDesignUrl(design.nativeUrl) ? 'ready' : design?.status === 'pending' ? 'pending' : 'unknown');
   }
   async function load() {
     const ticket = ++loadSequence;

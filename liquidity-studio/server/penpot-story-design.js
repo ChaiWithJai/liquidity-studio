@@ -1,3 +1,4 @@
+import {nativePublicOrigin,nativeRpcOrigin} from './penpot-origins.js';
 import {randomUUID} from 'node:crypto';
 import {fail} from './auth.js';
 import {compileMultimodalBundle,brandRevision} from './multimodal-contract.js';
@@ -29,7 +30,7 @@ export function verifyPenpotStoryFile(file,compiled,projectId){
 function compileStory(bundle,options){try{return compilePenpotNative(bundle,{...options,explicitOm:true});}catch(error){if(error.message==='OM_FONT_NOT_VERIFIED')throw fail(422,'This workspace needs the verified Noto Sans Devanagari font for the Om badge');if(error.message==='FONT_NOT_VERIFIED')throw fail(422,'The native workspace fonts do not match the saved Brand Kit');if(error.message==='OM_GLYPH_OUTSIDE_BADGE')throw fail(422,'Explicit Om font binding currently supports the brand badge only');throw error;}}
 /** Workspace authority and RPC are constructor-only. No owner/session/project URL from HTTP. */
 export class PenpotStoryDesigns{
- constructor({store,identity,scope,repo,workspaceFor,rpc,brandAccess=null,now=()=>Date.now()}){Object.assign(this,{store,identity,scope,repo,workspaceFor,rpc,brandAccess,now});this.key=`penpot-story-designs:${scope.organizationId}:${scope.brandId}`;}
+ constructor({store,identity,scope,repo,workspaceFor,rpc,brandAccess=null,nativeOrigin='http://localhost:39008',now=()=>Date.now()}){Object.assign(this,{store,identity,scope,repo,workspaceFor,rpc,brandAccess,now,nativeOrigin:nativePublicOrigin(nativeOrigin)});this.key=`penpot-story-designs:${scope.organizationId}:${scope.brandId}`;}
  async context(actor,storyId,sessionContext){
   await this.identity.authorize(actor,this.scope.organizationId,this.scope.brandId);
   let workspace,grantSnapshot;
@@ -51,7 +52,7 @@ export class PenpotStoryDesigns{
   const identity={storyId:story.id,generationId:story.generationId,contentRevision:story.contentRevision||1,contentSha256:storyContentDigest(story),brandRevision:bundle.brandRevision,authoritySha256:hash(authority)};
   return {story,bundle,workspace,grantSnapshot,identity,designKey:hash(stableDesignIdentity(identity))};
  }
- dto(record,format,actor,currentBrandRevision=record.appliedBrandRevision||record.identity.brandRevision){const page=record.pages?.find(p=>p.format===format);return {id:record.id,status:record.status,storyId:record.identity.storyId,generationId:record.identity.generationId,fileId:record.fileId,nativeRevision:record.nativeRevision??null,styles:{refreshAvailable:Boolean(this.styles),savedBrandRevision:record.appliedBrandRevision||record.identity.brandRevision,currentBrandRevision,needsRefresh:(record.appliedBrandRevision||record.identity.brandRevision)!==currentBrandRevision,...(record.styleAction?{action:record.styleAction}:{})},nativeUrl:record.status==='ready'?`http://localhost:39008/#/workspace?team-id=${record.teamId}&file-id=${record.fileId}${page?'&page-id='+page.id:''}`:null,...(record.actorId===actor.id&&record.status==='pending'?{retry:{...record.input}}:{}),limitations:['Native Reel pages are static boards, not rendered video.','Source review and publication approval are separate.']};}
+ dto(record,format,actor,currentBrandRevision=record.appliedBrandRevision||record.identity.brandRevision){const page=record.pages?.find(p=>p.format===format);return {id:record.id,status:record.status,storyId:record.identity.storyId,generationId:record.identity.generationId,fileId:record.fileId,nativeRevision:record.nativeRevision??null,styles:{refreshAvailable:Boolean(this.styles),savedBrandRevision:record.appliedBrandRevision||record.identity.brandRevision,currentBrandRevision,needsRefresh:(record.appliedBrandRevision||record.identity.brandRevision)!==currentBrandRevision,...(record.styleAction?{action:record.styleAction}:{})},nativeUrl:record.status==='ready'?`${this.nativeOrigin}/#/workspace?team-id=${record.teamId}&file-id=${record.fileId}${page?'&page-id='+page.id:''}`:null,...(record.actorId===actor.id&&record.status==='pending'?{retry:{...record.input}}:{}),limitations:['Native Reel pages are static boards, not rendered video.','Source review and publication approval are separate.']};}
  async designs(actor,input,sessionContext){query(input);try{const context=await this.context(actor,input.storyId,sessionContext);const state=await this.store.get(this.key);let record=savedDesign(state,context);if(record?.status!=='ready')compileStory(context.bundle,{fileId:'00000000-0000-4000-8000-000000000001',fonts:context.workspace.fonts});if(record?.status==='ready'){const file=await this.rpc(context.workspace,'get-file',{id:record.fileId});if(file.id!==record.fileId||file.projectId!==context.workspace.projectId||!Number.isSafeInteger(file.revn)||file.revn<0)throw fail(403,'Current native design access is unavailable');const action=(state?.styleActions||[]).filter(a=>a.designId===record.id&&a.actorId===actor.id&&a.input.expectedBrandRevision===context.identity.brandRevision).at(-1);record={...record,nativeRevision:file.revn,...(action&&this.styles?{styleAction:this.styles.dto(action)}:{})};}return {available:true,reason:null,design:record?this.dto(record,input.format,actor,context.identity.brandRevision):null};}catch(error){if([409,422,503].includes(error.status))return {available:false,reason:error.message,design:null};throw error;}}
  async createDesign(actor,input,sessionContext){
   command(input);const requestHash=hash({actorId:actor.id,input});let context=await this.context(actor,input.storyId,sessionContext),record;
@@ -91,15 +92,15 @@ export class PenpotStoryDesigns{
 }
 
 /** Exact pinned local RPC surface, with private operator owner cookies only. */
-export function createPenpotStoryRpc({sessions,transportMode='loopback',grantKey=null,fetchImpl=fetch}){
- const origin=({loopback:'http://localhost:39008','docker-host':'http://host.docker.internal:39008'})[transportMode];if(!origin)throw Error('Fixed local native transport required');
+export function createPenpotStoryRpc({sessions,transportMode='loopback',grantKey=null,fetchImpl=fetch,nativeOrigin='http://localhost:39008',rpcOrigin=null}){
+ nativeOrigin=nativePublicOrigin(nativeOrigin);const origin=rpcOrigin===null?({loopback:'http://localhost:39008','docker-host':'http://host.docker.internal:39008'})[transportMode]:nativeRpcOrigin(rpcOrigin);if(!origin)throw Error('Fixed native transport required');
  if(grantKey!==null&&(typeof grantKey!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(grantKey)))throw Error('Private native grant key required');
  return async(workspace,operation,body)=>{
   if(!['get-profile','get-project','get-team','get-team-members','get-font-variants','get-file','create-file','update-file'].includes(operation))throw fail(400,'Unsupported native design operation');
   const session=sessions.get(workspace.ownerPrincipal);if(!session?.cookie)throw fail(403,'Registered native owner session unavailable');
   const payload=JSON.stringify(body);if(Buffer.byteLength(payload)>2*1024*1024)throw fail(413,'Native design exceeds the bounded RPC request');
   const actingHeaders=grantKey?{'X-Studio-Native-Grant-Key':grantKey,...(uuid(workspace.actingNativeProfileId)?{'X-Studio-Acting-Profile':workspace.actingNativeProfileId}:{})}:{};
-  const response=await fetchImpl(`${origin}/api/rpc/command/${operation}`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Origin:'http://localhost:39008',Cookie:session.cookie,...actingHeaders},body:payload,redirect:'error',signal:AbortSignal.timeout(15000)});
+  const response=await fetchImpl(`${origin}/api/rpc/command/${operation}`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Origin:nativeOrigin,Cookie:session.cookie,...actingHeaders},body:payload,redirect:'error',signal:AbortSignal.timeout(15000)});
   if(!response.ok){
    if([401,403].includes(response.status))console.warn(JSON.stringify({event:'native_design_authority_denied',operation,status:response.status}));
    await response.body?.cancel().catch(()=>{});throw fail(response.status===404?404:[401,403].includes(response.status)?403:response.status===409?409:502,'Native design request did not complete; preserve the operation key');

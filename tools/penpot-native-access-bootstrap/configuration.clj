@@ -47,7 +47,7 @@
                                        (uuid-text? (:team-id %)) (uuid-text? (:operator-profile-id %))) teams)
                          (= (count teams) (count (set (map :team-id teams))))
                          (string? (:grant-key value)) (re-matches #"[A-Za-z0-9_-]{43}" (:grant-key value))
-                         (= "http://host.docker.internal:39044" (:callback-origin value)))
+                         (contains? #{"http://host.docker.internal:39044" "http://studio-native-connect:39044"} (:callback-origin value)))
             (invalid!))
           {:governed-teams (set (map #(java.util.UUID/fromString (:team-id %)) teams))
            :operators (into {} (map (fn [entry] [(java.util.UUID/fromString (:team-id entry))

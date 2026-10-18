@@ -39,7 +39,7 @@
   [{:keys [::client/client grant-key callback-origin]}]
   (when-not (and (instance? HttpClient client)
                  (= HttpClient$Redirect/NEVER (.followRedirects ^HttpClient client))
-                 (= callback-origin "http://host.docker.internal:39044")
+                 (contains? #{"http://host.docker.internal:39044" "http://studio-native-connect:39044"} callback-origin)
                  (string? grant-key) (re-matches #"[A-Za-z0-9_-]{43}" grant-key))
     (throw (IllegalArgumentException. "Fixed native authority configuration required")))
   (fn [resource]

@@ -12,13 +12,17 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
  // Same strict private-file schema; this does not change process feature flags.
  const configuration=await loadDevelopmentPenpotConfiguration(configurationPath,{STUDIO_PENPOT_ENABLED:'true'});
  if(configuration.transportMode!=='loopback')throw Error('Developer Penpot requires fixed loopback transport');
- const rpc=createPenpotStoryRpc({sessions:configuration.sessions,transportMode:'loopback',grantKey,fetchImpl});
+ return createPenpotStoryProvider({store,identity,configuration,brandAccessFor,grantKey,fetchImpl});
+}
+/** Shared composition; callers validate their deployment-specific configuration. */
+export function createPenpotStoryProvider({store,identity,configuration,brandAccessFor=null,grantKey=null,fetchImpl=fetch,nativeOrigin='http://localhost:39008',rpcOrigin=null,localTools=true}) {
+ const rpc=createPenpotStoryRpc({sessions:configuration.sessions,transportMode:configuration.transportMode,grantKey,fetchImpl,nativeOrigin,rpcOrigin});
  const services=new Map();
  const provider=async scope=>{
   const key=JSON.stringify([scope.organizationId,scope.brandId]);
   if(services.has(key))return services.get(key);
   const targets=configuration.targets.filter(t=>t.organizationId===scope.organizationId&&t.brandId===scope.brandId);
-  if(targets.length!==1)throw fail(503,'Configure exactly one native workspace for this local brand');
+  if(targets.length!==1)throw fail(503,'Configure exactly one native workspace for this brand');
   const target=targets[0],entry=configuration.version===2?configuration.workspaces.get(target.id):configuration.manifests.get(target.id),fonts=configuration.version===2?entry?.fonts:entry?.manifest.nativeFonts;
   if(!Array.isArray(fonts)||!fonts.length)throw fail(422,'Verified team-local fonts are required');
   const repo=new ScopedRepository(store,scope),boundary=new EditorBoundary({store,identity,scope,repo,targets:[target]});
@@ -51,9 +55,9 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
   // Only the constructor chooses paired access. The actor never selects an
   // operator identity, project, session, or alternate workspace in HTTP input.
   const brandAccess=brandAccessFor?await brandAccessFor({scope,workspaceFor:administrativeWorkspaceFor,rpc,repo,boundary,nativeSessions:configuration.sessions}):null;
-  const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess});service.styles=new PenpotStoryStyles({designs:service,sessions:configuration.sessions,grantKey,fetchImpl});if(grantKey)service.svg=new PenpotStorySvg({designs:service,grantKey,fetchImpl});services.set(key,service);return service;
+  const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess,nativeOrigin});if(localTools)service.styles=new PenpotStoryStyles({designs:service,sessions:configuration.sessions,grantKey,fetchImpl});if(localTools&&grantKey)service.svg=new PenpotStorySvg({designs:service,grantKey,fetchImpl});services.set(key,service);return service;
  };
- provider.createStylePluginHost=()=>createPenpotPluginLocalHost(storyStylePluginTransport(services),{port:39039});
- if(grantKey)provider.svgDownload=storySvgDispatcher(services,grantKey);
+ if(localTools)provider.createStylePluginHost=()=>createPenpotPluginLocalHost(storyStylePluginTransport(services),{port:39039});
+ if(localTools&&grantKey)provider.svgDownload=storySvgDispatcher(services,grantKey);
  return provider;
 }

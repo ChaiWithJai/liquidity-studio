@@ -15,6 +15,10 @@ export async function loadDevelopmentPenpotConfiguration(path,env=process.env){
 export function validateDevelopmentPenpotConfiguration(value,env=process.env){
  if(env.K_SERVICE||env.K_REVISION||env.STUDIO_PENPOT_ENABLED!=='true')invalid();
  if(value?.version===1)return validatePenpotLocalConfiguration(value,env);
+ return validatePenpotWorkspaceConfiguration(value);
+}
+/** Strict workspace-only schema shared by explicit local and managed constructors. */
+export function validatePenpotWorkspaceConfiguration(value){
  if(!exact(value,['version','transportMode','sessions','workspaces'])||value.version!==2||value.transportMode!=='loopback'||!Array.isArray(value.sessions)||!value.sessions.length||value.sessions.length>20||!Array.isArray(value.workspaces)||!value.workspaces.length||value.workspaces.length>50)invalid();
  const sessions=new Map(),workspaces=new Map(),scopes=new Set(),teams=new Set(),projects=new Set();
  for(const s of value.sessions){
