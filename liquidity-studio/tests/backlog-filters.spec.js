@@ -303,3 +303,130 @@ test("status, selected story and backlog scroll survive navigation; organization
   await expect(page.getByLabel("Search stories")).toHaveValue("");
   await expect(page.getByLabel("Filter by status")).toHaveValue("All");
 });
+
+test("pending campaign edits save to the old scope before brand/organization navigation; failed saves restore selectors", async ({
+  page,
+}) => {
+  await signIn(page);
+  const scope = "?organizationId=org_default&brandId=brand_default";
+  const title = "Pending scope switch fixture";
+  const created = await page.request.post(
+    base + "/api/studio/backlog" + scope,
+    {
+      data: {
+        title,
+        category: "Review",
+        scheduledDay: "Monday",
+        sourceClaims: [
+          {
+            id: "pending-scope-claim",
+            text: "Explicitly reviewed fixture excerpt.",
+            sourceUrl: "https://example.org/source",
+            kind: "general",
+            status: "approved",
+          },
+        ],
+      },
+    },
+  );
+  expect(created.status()).toBe(201);
+  const story = (await created.json()).story;
+  const { campaignFromApprovedClaims } = await import(
+    "../server/source-integrity.js"
+  );
+  const app = await platform.forScope({
+    organizationId: "org_default",
+    brandId: "brand_default",
+  });
+  // Trusted fixture setup, no provider invocation. Editing/navigation below uses actual UI/API.
+  await app.ports.repo.saveCampaignDraft(story.id, {
+    ...campaignFromApprovedClaims(story),
+    provenance: {
+      mode: "synthetic",
+      generationId: "scope-switch-fixture-generation",
+    },
+  });
+  await page.reload();
+  await page
+    .locator(".story-row")
+    .filter({ hasText: title })
+    .getByRole("button", { name: "Open draft" })
+    .click();
+  await page
+    .getByLabel("Headline", { exact: true })
+    .fill("Saved before brand switch");
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
+  await expect(page.locator(".story-row")).toHaveCount(5);
+  await expect(page.getByLabel("Brand", { exact: true })).toHaveValue(
+    "brand_vedic",
+  );
+  await expect(page.getByLabel("Search stories")).toHaveValue("");
+  const savedStory = async () =>
+    (
+      await (
+        await page.request.get(base + "/api/studio/bootstrap" + scope)
+      ).json()
+    ).backlog.find((item) => item.id === story.id);
+  expect((await savedStory()).campaignDraft.infographic.headline).toBe(
+    "Saved before brand switch",
+  );
+  await page.getByLabel("Search stories").fill("CWJ scoped query");
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_default");
+  await expect(page.getByLabel("Search stories")).toHaveValue("");
+  await page.getByLabel("Search stories").fill(title);
+  await page
+    .locator(".story-row")
+    .getByRole("button", { name: "Open draft" })
+    .click();
+  await page
+    .getByLabel("Headline", { exact: true })
+    .fill("Saved before organization switch");
+  await page
+    .getByLabel("Organization", { exact: true })
+    .selectOption(otherOrganization.id);
+  await expect(page.locator(".story-row")).toHaveCount(5);
+  await expect(page.getByLabel("Organization", { exact: true })).toHaveValue(
+    otherOrganization.id,
+  );
+  await expect(page.getByLabel("Search stories")).toHaveValue("");
+  expect((await savedStory()).campaignDraft.infographic.headline).toBe(
+    "Saved before organization switch",
+  );
+  await page
+    .getByLabel("Organization", { exact: true })
+    .selectOption("org_default");
+  await expect(page.getByLabel("Search stories")).toHaveValue(title);
+  await page
+    .locator(".story-row")
+    .getByRole("button", { name: "Open draft" })
+    .click();
+  await page
+    .getByLabel("Headline", { exact: true })
+    .fill("Still unsaved after controlled failure");
+  await page.route("**/api/studio/save-edit?*", (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: "application/json",
+      body: JSON.stringify({ error: "Controlled pending-save failure" }),
+    }),
+  );
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
+  await expect(page.getByRole("alert")).toContainText(
+    "Controlled pending-save failure",
+  );
+  await expect(page.getByLabel("Brand", { exact: true })).toHaveValue(
+    "brand_default",
+  );
+  await expect(page.getByLabel("Headline", { exact: true })).toHaveValue(
+    "Still unsaved after controlled failure",
+  );
+  await page
+    .getByLabel("Organization", { exact: true })
+    .selectOption(otherOrganization.id);
+  await expect(page.getByLabel("Organization", { exact: true })).toHaveValue(
+    "org_default",
+  );
+  expect((await savedStory()).campaignDraft.infographic.headline).toBe(
+    "Saved before organization switch",
+  );
+});

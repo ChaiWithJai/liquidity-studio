@@ -411,9 +411,14 @@
     }
   }
   async function switchOrganization(event) {
-    if (pendingEdits && !(await saveEdit())) return;
+    const selector = event.currentTarget;
+    const requestedOrganizationId = selector.value;
+    if (pendingEdits && !(await saveEdit())) {
+      selector.value = organizationId;
+      return;
+    }
     rememberBacklogView();
-    organizationId = event.currentTarget.value;
+    organizationId = requestedOrganizationId;
     brandId =
       organizations.find((org) => org.id === organizationId)?.brands?.[0]?.id ||
       "";
@@ -421,9 +426,14 @@
     await loadScope();
   }
   async function switchBrand(event) {
-    if (pendingEdits && !(await saveEdit())) return;
+    const selector = event.currentTarget;
+    const requestedBrandId = selector.value;
+    if (pendingEdits && !(await saveEdit())) {
+      selector.value = brandId;
+      return;
+    }
     rememberBacklogView();
-    brandId = event.currentTarget.value;
+    brandId = requestedBrandId;
     tab = "backlog";
     await loadScope();
   }
