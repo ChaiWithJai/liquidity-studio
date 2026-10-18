@@ -1,0 +1,163 @@
+{
+  "kind": "immutable-release-controlled-QA-browser",
+  "recordedAt": "2026-10-18T01:42:42.798798+00:00",
+  "sourceRevision": "d7afd5804d4572eb2dedeeffa1d375ddae955147",
+  "imageConfigId": "a596bb0995c6fd6723fbc683360559a097d00168363e9b346a65358d43327713",
+  "registryManifest": "e70148992e987c98e407f84b3468db06931bce887d36e899d9d488016a595988",
+  "scriptAsset": "/assets/index-DXHlbw1j.js",
+  "authentication": "explicit password test adapter on isolated candidate; not managed Google evidence",
+  "viewport": {
+    "width": 1051,
+    "height": 868,
+    "devicePixelRatio": 2
+  },
+  "capture": "BrowserOS neo actual PNG screenshots; native full-page images S17-S20; viewport images other steps; no CSS hiding or image processing",
+  "canonicalAnnotations": {
+    "64": [
+      "review-2",
+      "review-3",
+      "review-4",
+      "review-5"
+    ],
+    "65": [
+      "review-6",
+      "review-7"
+    ],
+    "68": [
+      "review-11",
+      "review-13"
+    ]
+  },
+  "fixture": "64/65 use existing unreviewed seeds;68 new clearly labeled controlled source excerpt, explicit synthetic fallback with no provider keys or ADC; saved QA-only hook change revision2to3",
+  "sourceGateHTTP": {
+    "status": 422,
+    "message": "Approve at least one sourced claim before generation",
+    "requestId": "d0a6466e-af60-4643-b085-2c6d2a7c4eef"
+  },
+  "locate": {
+    "target": "reel-page-1-provenance",
+    "focused": true,
+    "inViewport": true,
+    "reviewSummaryOverlap": false,
+    "hitClass": "reel-meta",
+    "revision": 3
+  },
+  "images": [
+    {
+      "step": "S01",
+      "file": "S01.png",
+      "width": 1744,
+      "height": 1440,
+      "bytes": 226647,
+      "sha256": "70a26b6587567318417f067767d40d2dcd63c72d7230a920485f27ad7490b64c"
+    },
+    {
+      "step": "S02",
+      "file": "S02.png",
+      "width": 1860,
+      "height": 1536,
+      "bytes": 158131,
+      "sha256": "68f900a6b5c05441491d71099c8081b423ee065270a3cf36dd8cef7842c8397e"
+    },
+    {
+      "step": "S03",
+      "file": "S03.png",
+      "width": 1860,
+      "height": 1536,
+      "bytes": 214068,
+      "sha256": "7e0e2d5be6937ad2d3881f2214a2fbff805c96f9e03c93a6766b4713ff947b66"
+    },
+    {
+      "step": "S04",
+      "file": "S04.png",
+      "width": 1860,
+      "height": 1536,
+      "bytes": 156011,
+      "sha256": "a0bed52a5250f83e8acf56d6bd7d3caab2efd6767ccb9d4370ae84abf77ca921"
+    },
+    {
+      "step": "S05",
+      "file": "S05.png",
+      "width": 1860,
+      "height": 1536,
+      "bytes": 155988,
+      "sha256": "6265e14a15f206c130a0050d34c23b6c66ad69335e5446a965c1648c565273e2"
+    },
+    {
+      "step": "S08",
+      "file": "S08.png",
+      "width": 1860,
+      "height": 1536,
+      "bytes": 178157,
+      "sha256": "1c60537dd63d9f0f7ebf1aa9ef3a083f73bea002769a140fb4e5fb83edb437e6"
+    },
+    {
+      "step": "S09",
+      "file": "S09.png",
+      "width": 1860,
+      "height": 1536,
+      "bytes": 228220,
+      "sha256": "5a36853f93d13413ff43de25d51277d00e75c3afacb3ba0f5dd07f244032339a"
+    },
+    {
+      "step": "S10",
+      "file": "S10.png",
+      "width": 1860,
+      "height": 1536,
+      "bytes": 230353,
+      "sha256": "dd2c74464398818bf19e48d8004449d4e446e7ddc642f52cedfb11d3aa4d2bf8"
+    },
+    {
+      "step": "S17",
+      "file": "S17.png",
+      "width": 2102,
+      "height": 6908,
+      "bytes": 610378,
+      "sha256": "c4642ab5ac1bef7159522e56ec1835a6cbc44c6ab082224fdfdcface1c9f0e3f"
+    },
+    {
+      "step": "S18",
+      "file": "S18.png",
+      "width": 2102,
+      "height": 7438,
+      "bytes": 628944,
+      "sha256": "7a53169be658d3bd01bfcdc5ebe7e1e6f3d615fab3acb16b3c356af1fc28ab09"
+    },
+    {
+      "step": "S19",
+      "file": "S19.png",
+      "width": 2102,
+      "height": 5984,
+      "bytes": 592292,
+      "sha256": "b98caf64c1e3be5b7c6bc1c7dcc51548915086105131b04e38aad8166ba8195e"
+    },
+    {
+      "step": "S20",
+      "file": "S20.png",
+      "width": 2102,
+      "height": 8662,
+      "bytes": 795210,
+      "sha256": "5ea9dc7f614dd1a9c04c43eaa4ea948a365e029a729ac9a0a771ca7326d7a382"
+    },
+    {
+      "step": "S21",
+      "file": "S21.png",
+      "width": 1860,
+      "height": 1536,
+      "bytes": 174225,
+      "sha256": "608f8cf921e90f22389708ea3399e1cb7209c5c33b4eaae4f6c0abd35fcf21d9"
+    }
+  ],
+  "limits": [
+    "Not production Google sign-in proof",
+    "No paid generation",
+    "Not Instagram or final-export certification",
+    "S17 captured before debounce completed: identity is current, measurement is explicitly pending",
+    "S21 follows QA-only save at revision3; earlier preview steps revision2",
+    "Initial invalid QA launch settings were corrected without changing the immutable image; production password adapter failed closed"
+  ],
+  "scriptAssetEvidence": {
+    "bytes": 290847,
+    "sha256": "f5d41cb3599b7944ca20fefc40e27966d03f11f5c06baa25c01ad1196d3a11a5"
+  }
+}
