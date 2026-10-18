@@ -307,7 +307,7 @@ export class DurableJobService {
     });
     return this.candidate(user, id);
   }
-  async create(user, input, authorizationMode = "operator-plan") {
+  async create(user, input, authorizationMode = "operator-plan", control = null) {
     user = await this.authorize(user);
     exact(input, [
       "idempotencyKey",
@@ -345,16 +345,18 @@ export class DurableJobService {
         throw fail(400, "Invalid or duplicate planned story");
       seen.add(item.storyId);
     }
-    const requestHash = hash(input),
+    const requestHash = hash(control ? {input, binding: control.binding} : input),
       id = randomUUID(),
       createdAt = stamp();
     const itemIds = input.items.map(() => randomUUID());
     const state = await this.repo.mutate((state) => {
-      state.operatorJobScope = this.scope;
-      state.operatorJobs ||= [];
-      const prior = state.operatorJobs.find(
+      const prior = state.operatorJobs?.find(
         (job) => job.idempotencyKey === input.idempotencyKey,
       );
+      // Trusted constructor/operator callback only; never populated from an HTTP DTO.
+      control?.guard(state, prior);
+      state.operatorJobScope = this.scope;
+      state.operatorJobs ||= [];
       if (prior) {
         if (prior.requestHash !== requestHash || prior.actorId !== user.id)
           throw fail(409, "Idempotency key belongs to another plan");
