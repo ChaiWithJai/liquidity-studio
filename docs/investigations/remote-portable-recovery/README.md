@@ -27,10 +27,35 @@ The [sanitized manifest](manifest.json) and [actual asset readback](asset-readba
 
 ## Known composition limits and failures
 
-- Generic table requests returned 500 because the private QA wrapper omitted the exact `workspace-views:<organization>:<brand>` namespace used by `WorkspaceViews`. This is an operational wrapper gap, not established production corruption. A prepared private correction adds only those scoped keys; it was not executed during this checkpoint.
-- The wrapper did not delegate production `checkHealth`, so Operations displayed the fallback `local-database` artifact label despite remote storage. The prepared correction delegates the unchanged production check. A tiny later recheck is separate from this recorded journey.
+- Generic table requests returned 500 because the private QA wrapper omitted the exact `workspace-views:<organization>:<brand>` namespace used by `WorkspaceViews`. This is an operational wrapper gap, not established production corruption. The later tiny recheck below resolves this private guard omission; the original checkpoint is preserved rather than relabeled.
+- The wrapper did not delegate production `checkHealth`, so Operations displayed the fallback `local-database` artifact label despite remote storage. The later tiny recheck delegates the unchanged production check and records the correct remote artifact label.
 - Two generic catch-path 503 events were observed without route/reason capture. They are not labeled readiness failures: `/api/ready` returns its response directly, while these events came through the generic error handler. The actual Operations readiness readback was ready/200. Future bounded private status logging is prepared; the precise 503 request remains unestablished here.
 - GCS SDK PassThrough `MaxListenersExceededWarning` messages appeared during native payload operations and backup. They were neither suppressed nor fixed. The passing bounded byte operations are not a leak-free, stress, maximum-pack heap or low-disk guarantee.
 - An attempted raw native PNG download produced no new file, so no new PNG export artifact is claimed. Browser asset decode, native UI persistence and exact pack bytes are the measured results here. No inference, paid provider call, restored motion/audio, external collaboration, new Google login or distribution clearance was performed.
 
 These observations advance the remote-storage portion of issue 57. Its remaining media, collaboration, capacity and distribution boundaries remain explicit in the [current pack specification](../../specs/editor-portable-pack.md); this report does not close the ticket or authorize additional infrastructure.
+
+
+## Later full ordinary UI recovery and tiny recheck
+
+The subsequent controlled Neo journey completed the end-user remote destination path as well. It does not convert step 4 above into a UI-button observation; these are distinct checkpoints.
+
+The operator selected the retained source-export pack in Operations, entered **QA57 UI recovery** with the financial preset and clicked **Create new empty recovery brand**. The ordinary endpoint returned 201. A private outer QA guard permitted exactly one extra scope only after validating the production deterministic receipt-key-derived UUID, exact empty preset state, and the sole identity changes adding that brand and the current target founder's membership. The production service and auth rules remained unchanged; there was no browser-supplied wildcard, new organization or budget reset.
+
+The visible exact-pack current-owner remap/nonclinical-source acknowledgement was deliberately checked, then **Restore into this new brand** was clicked. The ordinary install endpoint returned 200. Operations displayed **Recovery status: completed**, while explaining that native layouts and prepared evidence remain historical. After full page reload, **Check retained recovery status** again confirmed completed without reinstalling. Selecting **QA57 UI recovery** in the Brand menu showed the restored controlled story in the actual backlog with no alert. No native frame, model, inference or render ran during this extension.
+
+![Actual remote UI recovery completed](ui-recovery-completed.jpg)
+
+[The measured UI record](ui-completion.json) retains the explicit 201/200 observations. The final quiescent backup independently confirmed the two asset hashes and all twelve historical cutout-lineage fields in this UI-created scope as well. This stage used a new current owner relative to the remote source; it did not install old principals, sessions or approval authority.
+
+Before the UI extension, a tiny corrected-composition recheck returned 200 for scoped views and the actual backlog query, with six visible rows and no table alert. `/api/ready` returned ready/200 with repository and artifacts both **available**, generation provider **not_checked**. The only guard change for views was exact equality on the permitted `workspace-views:<org>:<brand>` keys; `checkHealth` delegated unchanged production behavior. These fixes were private QA composition corrections, not production service changes.
+
+A safe request to the explicitly disabled `/api/studio/native-editor/cutout/model` returned 503 and was correlated by route/request ID in bounded private status logging. The disabled-model source path fails before model loading/inference. This establishes that specific recheck response; it does not retroactively assign the earlier unclassified 503 events to that route. See [tiny-recheck.json](tiny-recheck.json). SDK listener warnings remained unsuppressed.
+
+## Final quiescent backup and authorized cleanup
+
+The final v3 backup retained 37 registered logical records, 78 physical parent/chunk documents and 1,210,961 bytes of logical JSON, plus the same two immutable GCS scene objects totaling 18,124 bytes. Its private manifest SHA-256 is `75e34ae6a755f614994301c5ed602acd8e0c58bdc846ee0406de587935725bc5`. Every present local record/artifact size and SHA-256 was independently checked before cleanup. V1 and v2 backups, original packs and all local payload bytes remain retained.
+
+After explicit operator review and authorization, the cleanup first compared the exact isolated QA record/chunk inventory, nanosecond update times, canonical parent metadata, chunk bytes and both GCS generation/owner/hash/MIME/CRC records against v3. It then deleted exactly **78 Firestore documents in one all-or-none WriteBatch**, with an exact `lastUpdateTime` precondition on each parent/chunk. Only afterward did unchanged production generation-match deletion remove the **two recorded GCS generations**. Exact recorded locations were verified absent. No recursive deletion, production namespace enumeration, foreign object, IAM or service change occurred.
+
+[The sanitized cleanup receipt](cleanup-receipt.json) records actual outcomes. The fixture was stopped, its Neo page blanked, and the port/password-fixture slot explicitly returned. No application requests followed release. This cleanup is not a provider hard-erasure or retention-expiry guarantee, and it adds no stress, multi-instance, managed Google, media or distribution acceptance claim. The original API-only evidence and unresolved limits above remain accurately bounded.

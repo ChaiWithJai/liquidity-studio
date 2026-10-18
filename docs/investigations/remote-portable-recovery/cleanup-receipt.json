@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-18T07:51:41.575Z",
+  "backupManifestSha256": "75e34ae6a755f614994301c5ed602acd8e0c58bdc846ee0406de587935725bc5",
+  "preflight": {
+    "firestore": true,
+    "gcs": true
+  },
+  "firestoreBatch": {
+    "committed": true,
+    "deletedDocuments": 78
+  },
+  "artifacts": [
+    {
+      "artifactAlias": "qa-artifact-1",
+      "generation": "1792308064291687",
+      "deleted": true,
+      "exactGenerationAbsent": true
+    },
+    {
+      "artifactAlias": "qa-artifact-2",
+      "generation": "1792308069009443",
+      "deleted": true,
+      "exactGenerationAbsent": true
+    }
+  ],
+  "localBackupsRetained": true,
+  "completedAt": "2026-10-18T07:51:47.414Z",
+  "notALiveAvailabilityClaim": true,
+  "noHardErasureClaim": true
+}
