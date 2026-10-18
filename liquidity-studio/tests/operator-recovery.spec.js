@@ -381,6 +381,10 @@ async function reserveEmptyDestination(page) {
     schemaVersion:1,id,status:"installing",key:randomBytes(16).toString("hex"),actorId:actor.id,
     packSha256:"a".repeat(64),before,plannedKeys:[],createdAt:new Date().toISOString(),
   }));
+  // The destination was created by HTTP fixture setup rather than the mounted
+  // panel. Reload the real session so its new authorized brand is selectable.
+  await page.reload();
+  await expect(page.getByLabel("Brand",{exact:true}).locator(`option[value="${target.brandId}"]`)).toHaveCount(1);
   return {target,scopeKey,before};
 }
 
