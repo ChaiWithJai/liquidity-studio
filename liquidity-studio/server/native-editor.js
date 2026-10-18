@@ -617,6 +617,43 @@ export class NativeEditorService {
     await this.authorize(actor);
     return { ...dto, base64: bytes.toString("base64") };
   }
+  async resolveAsset(actor, id, input) {
+    exact(input, ["intent", "documentId", "expectedNativeRevision", "generationId"]);
+    if (!["library-preview", "document-usage"].includes(input.intent))
+      throw fail(400, "Choose a supported private asset intent");
+    await this.authorize(actor);
+    const key = this.key(input.documentId);
+    const record = await this.store.get(key);
+    if (!record) throw fail(404, "Native document not found");
+    if (record.revision !== input.expectedNativeRevision ||
+        record.origin.generationId !== input.generationId)
+      throw fail(409, "Native asset context changed; reopen explicitly");
+    this.assertCurrent(await this.repo.read(), record.origin);
+    if (input.intent === "document-usage") {
+      const native = await this.hydrate(record);
+      const references = await this.documentAssets(actor, native.document);
+      if (!references.some((asset) => asset.id === id))
+        throw fail(422, "Asset is not referenced by this saved native document");
+    }
+    const asset = await this.asset(actor, id);
+    const latest = await this.store.get(key);
+    if (!latest || latest.revision !== record.revision ||
+        hash(latest.origin) !== hash(record.origin))
+      throw fail(409, "Native asset context changed during retrieval");
+    this.assertCurrent(await this.repo.read(), latest.origin);
+    await this.authorize(actor);
+    return { ...asset, manifest: {
+      schemaVersion: 1,
+      asset: { id: asset.id, organizationId: this.scope.organizationId,
+        brandId: this.scope.brandId, sha256: asset.sha256,
+        mime: asset.contentType, size: asset.size, width: asset.width, height: asset.height,
+        ownership: "immutable-brand-upload" },
+      usage: { intent: input.intent, documentId: record.id,
+        nativeRevision: record.revision, generationId: record.origin.generationId },
+      delivery: { transport: "studio-authenticated-proxy", publicShare: false,
+        authorization: "current-membership-per-retrieval", cacheLifetime: "editor-session" },
+    } };
+  }
   async documentAssets(actor, document) {
     const ids = new Set();
     let count = 0;
