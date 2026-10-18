@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { previewCalendar } from "./calendar-optimistic.js";
 
 export const DEFAULT_WORKSPACE_QUERY = Object.freeze({
   filters: {},
@@ -45,7 +46,7 @@ export function createWorkspaceClient({
       error: "",
       loaded: false,
     },
-    calendar: { data: null, loading: false, error: "", parameters: null },
+    calendar: { data: null, loading: false, error: "", parameters: null, optimistic: null },
     members: [],
     views: [],
     operations: [],
@@ -255,12 +256,14 @@ export function createWorkspaceClient({
       publish({
         entities,
         calendar: {
+          ...state.calendar,
           data: {
             ...rest,
             unscheduledIds: unscheduled.map((row) => row.id),
             legacyWeekdayIds: legacyWeekdays.map((row) => row.id),
           },
           parameters: copy(parameters),
+          optimistic: state.calendar.optimistic?.status === "confirmed" ? null : state.calendar.optimistic,
           loading: true,
           error: "",
         },
@@ -316,7 +319,9 @@ export function createWorkspaceClient({
       throw Error("Wait for the current workspace change to finish.");
     if (state.uncertain && !retry) throw Error("Resolve the retained uncertain request with Retry same request before another change.");
     const intent = { path, payload: copy(payload) };
-    publish({ mutationPending: true, error: "", uncertain: null });
+    const preview = path === "/mutations" ? previewCalendar(state.calendar.data,payload.changes,payload.idempotencyKey) : null;
+    const optimistic = preview ? { base: copy(state.calendar.data), changes: copy(payload.changes), idempotencyKey: payload.idempotencyKey, status: "saving", data: preview } : null;
+    publish({ mutationPending: true, error: "", uncertain: null, calendar: {...state.calendar,optimistic} });
     let recorded = false;
     try {
       const result = await call(path, intent.payload);
@@ -329,7 +334,8 @@ export function createWorkspaceClient({
       for (const row of rows) applyRow(row, entities);
       querySequence++;
       calendarSequence++;
-      publish({ entities, receipt: result, uncertain: null });
+      const accepted = result.outcomes?.every(item => item.status === "applied");
+      publish({ entities, receipt: result, uncertain: null, calendar: {...state.calendar,optimistic: accepted && optimistic ? {...optimistic,status:"confirmed",data:previewCalendar(optimistic.base,optimistic.changes,optimistic.idempotencyKey,"confirmed")} : null} });
       await ensureStories(rows.map((row) => row.id));
       await refreshProjections();
       guard();
@@ -342,6 +348,7 @@ export function createWorkspaceClient({
             ? "The change was recorded, but its story could not refresh. Reload before editing again."
             : error.message,
           ...(uncertain ? { uncertain: intent } : {}),
+          calendar: {...state.calendar,optimistic: uncertain && optimistic ? {...optimistic,status:"uncertain",data:previewCalendar(optimistic.base,optimistic.changes,optimistic.idempotencyKey,"uncertain")} : recorded ? state.calendar.optimistic : null},
         });
       }
       throw error;

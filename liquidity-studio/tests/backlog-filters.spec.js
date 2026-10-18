@@ -130,7 +130,7 @@ test("S01–S05 and S09–S10 counts, no-match recovery and per-brand return con
   );
   await expect(page.locator(".story-row")).toHaveCount(1);
   await page.getByRole("button", {name:"Content calendar", exact:true}).click();
-  await expect(page.getByRole("heading",{name:"Plan the work.",exact:true})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Dated content calendar",exact:true})).toBeVisible();
   const calendarStory=page.getByRole("button",{name:/^Open How Huda Kattan/});
   await expect(calendarStory).toHaveCount(1);
   await capture(page,"S06","Open dated calendar; existing weekday plans remain explicitly undated");

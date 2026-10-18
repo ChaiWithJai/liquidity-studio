@@ -43,7 +43,11 @@
   let epoch = 0;
   let pointerStart = null;
   let lastDragAt = 0;
-  const data = $derived($client.calendar.data);
+  const data = $derived.by(() => {
+    const preview = $client.calendar.optimistic?.data;
+    return preview && preview.startDate === startDate && preview.endDate === endDate && preview.timeZone === timeZone
+      ? preview : $client.calendar.data;
+  });
   const blocked = $derived(pending || $client.mutationPending);
   const days = $derived.by(() => {
     try {
@@ -221,6 +225,7 @@
   async function commit(changes, message, focusKey = null, retry = false) {
     if (blocked) return;
     const token = epoch;
+    const focusOrigin = document.activeElement;
     pending = true;
     localError = "";
     try {
@@ -245,7 +250,8 @@
       await client.loadOperations();
       if (token !== epoch) return;
       pending = false;
-      if (resolvedFocusKey) await focusUnit(resolvedFocusKey);
+      if (resolvedFocusKey && (document.activeElement === focusOrigin || document.activeElement === document.body))
+        await focusUnit(resolvedFocusKey);
     } catch (failure) {
       if (token === epoch) localError = failure.message;
     } finally {
@@ -453,7 +459,7 @@
 {/snippet}
 
 <section class="workspace-calendar" aria-label="Dated content calendar">
-  <div class="calendar-heading"><div><h2>Plan the work.</h2><p>Dates arrange campaign or format plans. They do not export or publish content.</p></div><button type="button" onclick={reloadCalendar} disabled={blocked}>Reload calendar</button></div>
+  <div class="calendar-heading"><button type="button" onclick={reloadCalendar} disabled={blocked}>Reload calendar</button></div>
   <div class="calendar-controls">
     <label>Start date<input aria-label="Calendar start date" type="date" bind:value={startDate} onchange={refresh}/></label>
     <label>End date<input aria-label="Calendar end date" type="date" bind:value={endDate} onchange={refresh}/></label>
@@ -462,22 +468,22 @@
     <label>Planning unit<select aria-label="Calendar planning unit" bind:value={unitFilter} onchange={storePreferences}><option value="campaign">Whole campaigns</option><option value="format">Individual formats</option><option value="all">Campaigns and formats</option></select></label>
     <button type="button" onclick={() => shiftRange(-1)} disabled={blocked}>Previous range</button><button type="button" onclick={() => shiftRange(1)} disabled={blocked}>Next range</button>
   </div>
-  <p class="calendar-feedback" aria-live="polite" aria-atomic="true">{announcement || "Choose Move for date and position controls, or use a plan handle to drag. Space lifts a focused handle."}</p>
+  <p class="calendar-feedback" aria-live="polite" aria-atomic="true">{announcement}</p>
   {#if localError || $client.calendar.error || $client.error}<div class="calendar-error" role="alert"><strong>Calendar change needs attention.</strong> {localError || $client.calendar.error || $client.error}<button type="button" onclick={reloadCalendar}>Reload authoritative calendar</button></div>{/if}
-  {#if attemptKey && $client.uncertain?.payload?.idempotencyKey === attemptKey}<p class="calendar-error">The server outcome is unknown. Retrying keeps the same request key, so it cannot create a duplicate placement.<button type="button" disabled={blocked} onclick={() => commit(null,"The retried calendar action was recorded.",null,true)}>Retry calendar request</button></p>{/if}
+  {#if $client.uncertain}<p class="calendar-error">Save unconfirmed. Retry to check and finish this change.<button type="button" disabled={blocked} onclick={() => commit(null,"The retried calendar action was recorded.",null,true)}>Retry calendar request</button></p>{/if}
   {#if lastOperationId}<div class="calendar-receipt"><span>{lastOperation?.undone ? "Calendar action undone." : "Calendar action saved."}</span><button type="button" onclick={undo} disabled={blocked || !lastOperation?.canUndo}>Undo calendar action</button><small>Undo checks current revisions and preserves newer work.</small></div>{/if}
-  {#if $client.calendar.loading}<p role="status">Loading the current brand's calendar…</p>
+  {#if $client.calendar.loading && (!data || data.startDate !== startDate || data.endDate !== endDate || data.timeZone !== timeZone)}<p role="status">Loading calendar…</p>
   {:else if data}
     <div class="workspace-date-grid" class:moving={!!drag} aria-label="Dated plans">
       {#each days as date (date)}
         <section class="calendar-day" class:drop-target={dropDate === date} data-calendar-date={date} aria-label={`Plans for ${date}`}>
           <h3>{dateLabel(date)}<small>{date} · {timeZone}</small></h3>
-          <ol>{#each placements(date) as item (item.assignmentId)}
+          <ol>{#each placements(date) as item (unitKey(item))}
             <li class="calendar-plan" data-assignment-id={item.assignmentId}>
               <button type="button" class="calendar-handle" aria-label={`Move ${row(item.storyId)?.title || "story"}, ${unitLabel(item)}`} data-calendar-unit={unitKey(item)} disabled={blocked}
                 onpointerdown={event => pointerDown(event, item)} onpointermove={pointerMove} onpointerup={pointerUp} onpointercancel={cancelPointer} onkeydown={event => handleKey(event, item)} onclick={event => { if (event.detail === 0 || Date.now() - lastDragAt > 500) openMove(item); }}>↕ <span>{unitLabel(item)}</span></button>
               <button type="button" class="workspace-story-button" onclick={() => onOpenStory(item.storyId)}>{row(item.storyId)?.title || "Loading story…"}</button>
-              <small>{row(item.storyId)?.status} · revision {row(item.storyId)?.revision}</small>
+              <small>{item.pending === 'saving' ? 'Saving…' : item.pending === 'uncertain' ? 'Save unconfirmed' : item.pending === 'confirmed' ? 'Saved' : `${row(item.storyId)?.status} · revision ${row(item.storyId)?.revision}`}</small>
               <div class="calendar-card-actions"><button type="button" onclick={() => reorder(item, -1)} disabled={blocked} aria-label={`Move ${row(item.storyId)?.title} earlier`}>Earlier</button><button type="button" onclick={() => reorder(item, 1)} disabled={blocked} aria-label={`Move ${row(item.storyId)?.title} later`}>Later</button><button type="button" onclick={() => remove(item)} disabled={blocked}>Unassign</button></div>
             </li>
           {:else}<li class="calendar-empty">No {unitFilter === "format" ? "format plans" : "plans"} on this date.</li>{/each}</ol>
@@ -514,10 +520,6 @@
     gap: 1rem;
     align-items: start;
   }
-  .calendar-heading h2 {
-    margin: 0;
-  }
-  .calendar-heading p,
   .calendar-pools p {
     color: #526256;
     font-size: 0.88rem;
