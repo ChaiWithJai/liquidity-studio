@@ -4,6 +4,10 @@
  * Implements all 3 Core JTBDs + Founder Admin Observability via Ports & Adapters.
  */
 
+import {
+  brandRevision,
+  SpecificationMultimodalCanvasAdapter,
+} from "./multimodal-contract.js";
 import { createExport } from "./export-assets.js";
 import { discoverInto } from "./discovery.js";
 import { getApprovedClaims } from "./source-integrity.js";
@@ -29,7 +33,6 @@ export class InMemoryGCPFirestoreAdapter {
         idx % 5
       ],
       campaignDraft: null,
-
     }));
   }
 
@@ -135,6 +138,8 @@ export function createAppContainer(overrides = {}) {
   const aiGateway = overrides.aiGateway || new AIGateway();
   const repo = overrides.repo || new InMemoryGCPFirestoreAdapter();
   const telemetry = overrides.telemetry || new ObservabilityEngine();
+  const multimodalCanvas =
+    overrides.multimodalCanvas || new SpecificationMultimodalCanvasAdapter();
 
   // JTBD #3: Curating & Managing a Content Calendar / Backlog
   const backlogCalendarService = {
@@ -144,7 +149,12 @@ export function createAppContainer(overrides = {}) {
         repo.listBacklog(),
         repo.getCalendarSchedule(),
       ]);
-      return { brandProfile, backlog, calendar };
+      return {
+        brandProfile,
+        brandRevision: brandRevision(brandProfile),
+        backlog,
+        calendar,
+      };
     },
     async updateBrandProfile(patch) {
       const updated = await repo.updateBrandProfile(patch);
@@ -489,7 +499,7 @@ export function createAppContainer(overrides = {}) {
   };
 
   return {
-    ports: { aiGateway, repo, telemetry },
+    ports: { aiGateway, repo, telemetry, multimodalCanvas },
     services: {
       backlogCalendarService,
       multiFormatFormatterService,
