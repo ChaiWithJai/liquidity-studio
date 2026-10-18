@@ -613,6 +613,8 @@ export function createHttpServer(
         )
           throw fail(404, "Not found");
         const jobs = platform.operatorJobs(scope, activeContainer);
+        const forkRoute=route.match(/^\/api\/studio\/preparations\/stories\/([^/]+)\/fork$/);
+        if(forkRoute&&req.method==="POST")return json(201,await platform.preparedPromotion(scope,repo).fork(user,decodeURIComponent(forkRoute[1]),body));
         const preparationStoryRoute = route.match(
           /^\/api\/studio\/preparations\/stories\/([^/]+)$/,
         );

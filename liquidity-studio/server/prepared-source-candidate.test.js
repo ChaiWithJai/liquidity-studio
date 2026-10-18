@@ -122,11 +122,60 @@ test("operator catalog prepares existing Huda topic without changing unsourced l
     preparationFingerprint(huda, { ...scope, preset: "vedic_dharma" }),
   );
 });
-test('every prepared format uses the canonical renderer without invented filler or long title overflow',async()=>{
- const {renderSvg}=await import('./artwork.js');
- const longText=Array.from({length:3},(_,i)=>`Source paragraph ${i}: `+'An exact source word sequence. '.repeat(30)).join('\n');
- const snapshots=[{...evidence[0],text:longText,textSha256:createHash('sha256').update(longText).digest('hex')}];
- const candidate=buildPreparedCandidate({id:'candidate',scope:{organizationId:'org',brandId:'brand'},story,brandProfile:{},evidence:snapshots});
- for(const format of ['infographic','carousel','story','reel'])assert.ok(renderSvg({campaign:candidate.artwork,brandProfile:{},format,slideIndex:0}).startsWith('<svg'));
- assert.ok(candidate.excerpts.every(excerpt=>excerpt.text.length<=220));
+test("every prepared format uses the canonical renderer without invented filler or long title overflow", async () => {
+  const { renderSvg } = await import("./artwork.js");
+  const longText = Array.from(
+    { length: 3 },
+    (_, i) =>
+      `Source paragraph ${i}: ` + "An exact source word sequence. ".repeat(30),
+  ).join("\n");
+  const snapshots = [
+    {
+      ...evidence[0],
+      text: longText,
+      textSha256: createHash("sha256").update(longText).digest("hex"),
+    },
+  ];
+  const candidate = buildPreparedCandidate({
+    id: "candidate",
+    scope: { organizationId: "org", brandId: "brand" },
+    story,
+    brandProfile: {},
+    evidence: snapshots,
+  });
+  for (const format of ["infographic", "carousel", "story", "reel"])
+    assert.ok(
+      renderSvg({
+        campaign: candidate.artwork,
+        brandProfile: {},
+        format,
+        slideIndex: 0,
+      }).startsWith("<svg"),
+    );
+  assert.ok(candidate.excerpts.every((excerpt) => excerpt.text.length <= 220));
+});
+
+test("numbered primary-text verse keeps its meaningful sentence rather than only the verse number", () => {
+  const text =
+    "29. The eight means of Yoga are: the Commandments, the Rules, right Poise, right Control of the life-force, Withdrawal, Attention, Meditation, Contemplation.";
+  const snapshots = [
+    {
+      ...evidence[0],
+      text,
+      textSha256: createHash("sha256").update(text).digest("hex"),
+    },
+  ];
+  const candidate = buildPreparedCandidate({
+    id: "verse-candidate",
+    scope: { organizationId: "org", brandId: "brand" },
+    story,
+    brandProfile: {},
+    evidence: snapshots,
+  });
+  assert.equal(
+    candidate.artwork.infographic.headline,
+    "The eight means of Yoga",
+  );
+  assert.match(candidate.excerpts[0].text, /29\. The eight means of Yoga/);
+  assert.ok(text.includes(candidate.artwork.infographic.headline));
 });

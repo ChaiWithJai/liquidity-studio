@@ -6,6 +6,7 @@ import { brandRevision } from "./multimodal-contract.js";
 import { getApprovedClaims, validateCampaign } from "./source-integrity.js";
 import {
   preparationFingerprint,
+  buildPreparedCandidate,
   validateCandidateLayout,
 } from "./prepared-source-candidate.js";
 import {
@@ -51,6 +52,11 @@ export class PreparedPromotionService {
     return entry;
   }
   current(state, entry) {
+    if (entry.restoredHistorical)
+      throw fail(
+        409,
+        "Restored evidence is historical; open a fresh current-generation review draft before confirming",
+      );
     const story = state.backlog.find(
       (story) => story.id === entry.candidate.storyId,
     );
@@ -89,6 +95,162 @@ export class PreparedPromotionService {
       canReviewClinical: principal.actor.role === "founder",
       approvalMeaning:
         "Exact saved copy and retrieved evidence reviewed by the current operator; not automated factual or clinical accuracy.",
+    };
+  }
+  async fork(actor, storyId, input) {
+    exact(input, [
+      "idempotencyKey",
+      "expectedRevision",
+      "expectedContentRevision",
+      "generationId",
+      "brandRevision",
+    ]);
+    if (
+      typeof input.idempotencyKey !== "string" ||
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
+        input.idempotencyKey,
+      ) ||
+      !Number.isInteger(input.expectedRevision) ||
+      input.expectedRevision < 1 ||
+      !Number.isInteger(input.expectedContentRevision) ||
+      input.expectedContentRevision < 1 ||
+      typeof input.generationId !== "string" ||
+      !input.generationId ||
+      typeof input.brandRevision !== "string"
+    )
+      throw fail(400, "Current story and reviewed-copy revision required");
+    const principal = await this.principal(actor),
+      requestHash = hash(input),
+      id = randomUUID(),
+      createdAt = new Date().toISOString();
+    let candidateId;
+    await this.repo.ready;
+    await this.repo.store.transact(
+      ["identity", this.repo.key],
+      ([identity, state]) => {
+        assertRestoreAvailable(state);
+        if (hash(identity) !== principal.identityHash)
+          throw fail(409, "Review authority changed");
+        const prior = state.preparedSourceCandidates?.find(
+          (entry) => entry.forkRequest?.id === input.idempotencyKey,
+        );
+        if (prior) {
+          if (
+            prior.forkRequest.actorId !== principal.actor.id ||
+            prior.forkRequest.requestHash !== requestHash
+          )
+            throw fail(409, "Fork key already used");
+          candidateId = prior.candidate.id;
+          return [identity, state];
+        }
+        const story = state.backlog.find((story) => story.id === storyId);
+        if (!story) throw fail(404, "Story not found");
+        if (
+          story.revision !== input.expectedRevision ||
+          (story.contentRevision || 1) !== input.expectedContentRevision ||
+          story.generationId !== input.generationId ||
+          story.campaignDraft?.provenance?.generationId !==
+            input.generationId ||
+          brandRevision(state.brandProfile) !== input.brandRevision
+        )
+          throw fail(
+            409,
+            "Current campaign changed; reload before editing reviewed copy",
+          );
+        if (story.campaignDraft?.provenance?.mode !== REVIEWED_CANDIDATE_MODE)
+          throw fail(409, "This campaign does not use prepared-copy review");
+        const active = state.preparedSourceCandidates?.find(
+          (entry) =>
+            entry.replacement?.generationId === story.generationId &&
+            !entry.promotionReceipts?.length &&
+            entry.candidate.inputFingerprint ===
+              preparationFingerprint(story, this.scope) &&
+            entry.candidate.brandRevision === input.brandRevision,
+        );
+        if (active) {
+          candidateId = active.candidate.id;
+          return [identity, state];
+        }
+        const original = state.preparedSourceCandidates?.find(
+          (entry) =>
+            entry.candidate.id ===
+            story.campaignDraft.provenance.reviewedCopy?.candidateId,
+        );
+        if (!original?.evidence?.length)
+          throw fail(
+            409,
+            "Retained source evidence is required before making a review draft",
+          );
+        const artwork = copy(story.campaignDraft);
+        delete artwork.provenance;
+        validateCandidateLayout(artwork, state.brandProfile);
+        const candidate = buildPreparedCandidate({
+          id,
+          scope: this.scope,
+          story,
+          brandProfile: state.brandProfile,
+          evidence: copy(original.evidence),
+          jobId: null,
+          itemId: null,
+          attemptId: null,
+          createdAt,
+        });
+        const entry = {
+          candidate,
+          evidence: copy(original.evidence),
+          revision: 1,
+          workingArtwork: artwork,
+          editorialStatus: "unreviewed",
+          forkRequest: {
+            id: input.idempotencyKey,
+            requestHash,
+            actorId: principal.actor.id,
+          },
+          replacement: {
+            generationId: story.generationId,
+            contentRevision: story.contentRevision || 1,
+            originalCandidateId: original.candidate.id,
+          },
+          derivation: {
+            kind: "reviewed-copy-fork",
+            createdAt,
+            actorId: principal.actor.id,
+          },
+        };
+        if ((state.preparedSourceCandidates?.length || 0) >= 30)
+          throw fail(
+            429,
+            "Prepared draft history is full; preserve and manage existing history before adding another draft",
+          );
+        state.preparedSourceCandidates = [
+          ...(state.preparedSourceCandidates || []),
+          entry,
+        ];
+        if (
+          Buffer.byteLength(JSON.stringify(state.preparedSourceCandidates)) >
+          192 * 1024
+        )
+          throw fail(413, "Prepared evidence history is full");
+        story.preparedCandidateId = id;
+        story.preparationStatus = "ready";
+        story.preparationUpdatedAt = createdAt;
+        story.revision++;
+        candidateId = id;
+        return [identity, state];
+      },
+    );
+    const state = await this.repo.read();
+    const story = state.backlog.find((story) => story.id === storyId),
+      entry = this.entry(state, candidateId);
+    return {
+      candidateId,
+      story: copy(story),
+      forkStillCurrent:
+        !entry.promotionReceipts?.length &&
+        entry.replacement?.generationId === story.generationId &&
+        entry.candidate.inputFingerprint ===
+          preparationFingerprint(story, this.scope) &&
+        entry.candidate.brandRevision === brandRevision(state.brandProfile),
     };
   }
   async promote(actor, id, input) {
@@ -144,7 +306,14 @@ export class PreparedPromotionService {
         }
         const story = this.current(state, entry),
           artwork = copy(entry.workingArtwork || entry.candidate.artwork);
-        if (story.campaignDraft || entry.promotionReceipts?.length)
+        if (
+          (story.campaignDraft &&
+            (!entry.replacement ||
+              story.generationId !== entry.replacement.generationId ||
+              (story.contentRevision || 1) !==
+                entry.replacement.contentRevision)) ||
+          entry.promotionReceipts?.length
+        )
           throw fail(
             409,
             "An existing campaign must be preserved; this candidate cannot replace it",
@@ -173,6 +342,8 @@ export class PreparedPromotionService {
             "Clinical copy requires separate current founder clinical review",
           );
         validateCandidateLayout(artwork, state.brandProfile);
+        if (entry.replacement)
+          entry.prePromotionCampaign = copy(story.campaignDraft);
         const before = captureContentRevisions(state),
           evidence = entry.evidence.map(
             ({ id, sourceUrl, responseSha256, textSha256 }) => ({

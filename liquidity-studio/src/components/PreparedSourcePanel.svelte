@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy, untrack } from 'svelte';
   import { renderSvg } from '../../server/artwork.js';
-  let {request,storyId,scopeKey,getScopeKey,brandProfile,onDirtyChange=()=>{},onPromoted=()=>{},onStoryChanged=()=>{}}=$props();
+  let {request,storyId,scopeKey,getScopeKey,brandProfile,onDirtyChange=()=>{},onPromoted=()=>{},onStoryChanged=()=>{},onReturnToHandoff=()=>{}}=$props();
   let info=$state(null),working=$state(null),savedSignature=$state(''),format=$state('infographic'),page=$state(0),pending=$state(false),error=$state(''),notice=$state(''),retained=$state(null),kind=$state(''),reviewPlan=$state(null),reviewed=$state(false),clinicalReviewed=$state(false);
   let closed=false,sequence=0;
   const capturedScope=untrack(()=>scopeKey),capturedStory=untrack(()=>storyId);
@@ -81,7 +81,8 @@
   {:else if info}
     <p>{info.sourceReady?'A sourced preview is not ready yet. Preparation runs in the durable worker, independently of this editor.':'Source research needs attention. No matching retrievable primary source is configured for this topic.'}</p>{#each info.catalog as entry(entry.id)}<p>{entry.coverage}</p>{/each}
   {/if}
-  {#if info}<button class="secondary" disabled={!info.sourceReady||dirty||pending||!!retained||['queued','running'].includes(info.status)} onclick={prepare}>{info.prepared?'Prepare a new source candidate':'Prepare source preview'}</button><button class="secondary" disabled={pending||!!retained||dirty} onclick={()=>load()}>Refresh preparation status</button>{/if}
+  {#if info?.hasCampaign}<button class="secondary" disabled={dirty||pending||!!retained} onclick={onReturnToHandoff}>Return to current handoff</button>{/if}
+  {#if info&&!info.hasCampaign}<button class="secondary" disabled={!info.sourceReady||dirty||pending||!!retained||['queued','running'].includes(info.status)} onclick={prepare}>{info.prepared?'Prepare a new source candidate':'Prepare source preview'}</button><button class="secondary" disabled={pending||!!retained||dirty} onclick={()=>load()}>Refresh preparation status</button>{/if}
 </section>
 <style>
   .prepared-source header,.prepared-toolbar{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}.prepared-source h3{margin:0}.prepared-layout{display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr);gap:20px;margin:16px 0}.prepared-artwork{max-width:300px;margin:0 auto;width:100%;align-self:start}.prepared-artwork img{display:block;width:100%;height:auto}.prepared-toolbar{justify-content:flex-start;gap:8px}.prepared-toolbar button{padding:8px;font-size:12px}.prepared-toolbar label{font-size:12px}.prepared-copy{max-height:620px;overflow:auto}.prepared-copy label{display:block;margin-bottom:12px}.prepared-copy textarea{display:block;width:100%;box-sizing:border-box}.prepared-source pre{white-space:pre-wrap;max-height:280px;overflow:auto;font:inherit;font-size:13px}.prepared-source details{margin:12px 0}.prepared-source select{max-width:100%}@media(max-width:720px){.prepared-layout{grid-template-columns:1fr}.prepared-artwork{max-width:330px}.prepared-copy{max-height:none}}

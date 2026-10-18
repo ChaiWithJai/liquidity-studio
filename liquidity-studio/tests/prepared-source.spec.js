@@ -223,14 +223,80 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
   const data = await response.json();
   expect(data.receipt.modelCalls).toBe(0);
   expect(data.receipt.publicationApproved).toBe(false);
-  await expect(page.getByLabel("Headline", { exact: true })).toHaveValue(
-    "HUMAN EDITED PREPARED SOURCE DRAFT",
+  await expect(page.locator("#workflow-preview svg")).toContainText(
+    /HUMAN.*EDITED/s,
   );
+  await expect(
+    page.getByRole("button", { name: "Edit reviewed copy", exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByText("Human-reviewed prepared copy · layout approval required", {
       exact: true,
     }),
   ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Edit reviewed copy", exact: true })
+    .click();
+  panel = page.getByRole("region", {
+    name: "Prepared source draft",
+    exact: true,
+  });
+  await expect(panel.getByLabel("Headline", { exact: true })).toHaveValue(
+    "HUMAN EDITED PREPARED SOURCE DRAFT",
+  );
+  await panel
+    .getByLabel("Headline", { exact: true })
+    .fill("REVIEWED COPY UPDATED AGAIN");
+  await panel
+    .getByRole("button", { name: "Save preview edits", exact: true })
+    .click();
+  await expect(
+    panel.getByText("Preview edits saved.", { exact: false }),
+  ).toBeVisible();
+  await page.reload();
+  await page.locator('[data-open-story="story_huda_buyback"]').click();
+  await page
+    .getByRole("button", { name: "Edit reviewed copy", exact: true })
+    .click();
+  panel = page.getByRole("region", {
+    name: "Prepared source draft",
+    exact: true,
+  });
+  await expect(panel.getByLabel("Headline", { exact: true })).toHaveValue(
+    "REVIEWED COPY UPDATED AGAIN",
+  );
+  await panel
+    .getByRole("button", {
+      name: "Review saved draft and evidence",
+      exact: true,
+    })
+    .click();
+  await panel
+    .getByRole("combobox", { name: "Content classification", exact: true })
+    .selectOption("financial");
+  await panel
+    .getByLabel(
+      "I reviewed this saved draft and its evidence across all formats.",
+      { exact: true },
+    )
+    .check();
+  const replacement = page.waitForResponse(
+    (response) =>
+      response.url().includes("/promote") &&
+      response.request().method() === "POST",
+  );
+  await panel
+    .getByRole("button", {
+      name: "Confirm reviewed copy and continue to handoff",
+    })
+    .click();
+  const replaced = await replacement;
+  expect(replaced.status()).toBe(200);
+  const updated = await replaced.json();
+  expect(updated.receipt.generationId).not.toBe(data.receipt.generationId);
+  await expect(page.locator("#workflow-preview svg")).toContainText(
+    /UPDATED.*AGAIN/s,
+  );
   expect(paid).toEqual([]);
 });
 test("both brand candidates retain scope and unsaved candidate work blocks navigation until explicit discard", async ({

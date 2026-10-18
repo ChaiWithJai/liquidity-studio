@@ -30,3 +30,9 @@ Use the [prepared-source specification](../specs/prepared-source-candidates.md) 
 Whole-draft confirmation binds saved copy, evidence, candidate/source/brand revisions and current human identity. The server derives exact editorial field records, preserves the edited copy without a paid regeneration, and leaves native layout/publication approval separate. Subsequent copy tampering fails the reconstructive integrity validator. Portable restoration of preparation aggregates is an explicit follow-up with the pack owner; unsupported extensions currently fail closed rather than silently disappearing or regaining approval.
 
 Desktop and second-brand captures: [Huda desktop](prepared-source/annotation-1-desktop-after-v3.png), [CWJ historical text preview](prepared-source/cwj-primary-preview-after-v3.png). The earlier [v2 capture](prepared-source/annotation-1-after-v2.png) is retained as an observed intermediate result, not the final UX proof.
+
+## Review, edit and review again
+
+The actual Huda journey now continues beyond its first promotion: open **Edit reviewed copy**, change/save the new unreviewed fork, reload, resume that same fork, explicitly confirm the whole draft again, and observe the updated handoff with a different generation ID. No model call runs. A real SQLite regression also proves a concurrent generation change rejects promotion and an old native-origin binding becomes stale. Prior immutable candidate receipts and the previous campaign are retained. This closes the initial dead end where a reviewed field manifest correctly rejected changed copy but the UI had no fresh-review path.
+
+The CWJ extraction also has a regression for numbered primary-text sentences: the verse prefix `29.` stays attached to its meaningful sentence rather than becoming a standalone headline. The earlier CWJ v3 screenshot documents the prior observed state; the replacement capture is recorded separately before acceptance.

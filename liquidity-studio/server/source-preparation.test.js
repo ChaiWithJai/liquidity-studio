@@ -399,3 +399,202 @@ test("reviewed copy digests ignore object key order but reject malformed or unre
     );
   }
 });
+test("explicit current-generation fork supports review-edit-review without overwriting its prior generation", async (t) => {
+  const { PreparedPromotionService } = await import("./prepared-promotion.js");
+  const f = await fixture(t),
+    job = await f.jobs.create(f.user, f.input);
+  await f.jobs.runNext("worker", job.id, job.items[0].id, 1);
+  const service = new PreparedPromotionService({
+      repo: f.repo,
+      identity: f.platform.identity,
+      scope: f.scope,
+    }),
+    id = (await f.repo.read()).preparedSourceCandidates[0].candidate.id;
+  const confirm = async (candidateId) => {
+    const plan = await service.plan(f.user, candidateId);
+    return service.promote(f.user, candidateId, {
+      idempotencyKey: randomUUID(),
+      expectedCandidateRevision: plan.candidateRevision,
+      expectedContentRevision: plan.contentRevision,
+      brandRevision: plan.brandRevision,
+      copySha256: plan.copySha256,
+      evidenceSha256: plan.evidenceSha256,
+      reviewed: true,
+      kind: "clinical",
+      clinicalReviewed: true,
+    });
+  };
+  const first = await confirm(id),
+    original = structuredClone(first.story.campaignDraft),
+    forkInput = {
+      idempotencyKey: randomUUID(),
+      expectedRevision: first.story.revision,
+      expectedContentRevision: first.story.contentRevision,
+      generationId: first.story.generationId,
+      brandRevision: brandRevision(await f.repo.getBrandProfile()),
+    },
+    fork = await service.fork(f.user, f.story.id, forkInput);
+  assert.deepEqual(fork.story.campaignDraft, original);
+  assert.equal(
+    (await service.fork(f.user, f.story.id, forkInput)).candidateId,
+    fork.candidateId,
+  );
+  const artwork = structuredClone(original);
+  delete artwork.provenance;
+  artwork.infographic.headline = "SECOND DELIBERATE REVIEW";
+  await f.jobs.editCandidate(f.user, fork.candidateId, {
+    idempotencyKey: randomUUID(),
+    expectedRevision: 1,
+    artwork,
+  });
+  const current = (await f.repo.read()).backlog.find(
+      (story) => story.id === f.story.id,
+    ),
+    reopened = await service.fork(f.user, f.story.id, {
+      ...forkInput,
+      idempotencyKey: randomUUID(),
+      expectedRevision: current.revision,
+    });
+  assert.equal(reopened.candidateId, fork.candidateId);
+  const second = await confirm(fork.candidateId);
+  assert.equal(
+    second.story.campaignDraft.infographic.headline,
+    "SECOND DELIBERATE REVIEW",
+  );
+  assert.notEqual(second.story.generationId, first.story.generationId);
+  assert.equal(second.story.contentRevision, first.story.contentRevision + 1);
+  const state = await f.repo.read();
+  const { NativeEditorService } = await import("./native-editor.js");
+  const { hash } = await import("./workspace-schema.js");
+  const origin = {
+    storyId: first.story.id,
+    storyRevision: first.story.revision,
+    generationId: first.story.generationId,
+    brandRevision: brandRevision(state.brandProfile),
+    sourceCampaignSha256: hash(first.story.campaignDraft),
+    sourceApprovals: getApprovedClaims(first.story),
+  };
+  const boundary = Object.create(NativeEditorService.prototype);
+  assert.doesNotThrow(() =>
+    boundary.assertCurrent(
+      { brandProfile: state.brandProfile, backlog: [first.story] },
+      origin,
+    ),
+  );
+  assert.throws(() => boundary.assertCurrent(state, origin), { status: 409 });
+  assert.deepEqual(
+    state.preparedSourceCandidates.find(
+      (entry) => entry.candidate.id === fork.candidateId,
+    ).prePromotionCampaign,
+    original,
+  );
+  assert.equal(
+    state.preparedSourceCandidates.find((entry) => entry.candidate.id === id)
+      .promotionReceipts[0].generationId,
+    first.story.generationId,
+  );
+  const another = await service.fork(f.user, f.story.id, {
+      ...forkInput,
+      idempotencyKey: randomUUID(),
+      expectedRevision: second.story.revision,
+      expectedContentRevision: second.story.contentRevision,
+      generationId: second.story.generationId,
+    }),
+    plan = await service.plan(f.user, another.candidateId);
+  await f.repo.mutate((state) => {
+    const story = state.backlog.find((story) => story.id === f.story.id);
+    story.generationId = randomUUID();
+    story.campaignDraft.provenance.generationId = story.generationId;
+    story.revision++;
+    return state;
+  });
+  await assert.rejects(
+    service.promote(f.user, another.candidateId, {
+      idempotencyKey: randomUUID(),
+      expectedCandidateRevision: plan.candidateRevision,
+      expectedContentRevision: plan.contentRevision,
+      brandRevision: plan.brandRevision,
+      copySha256: plan.copySha256,
+      evidenceSha256: plan.evidenceSha256,
+      reviewed: true,
+      kind: "clinical",
+      clinicalReviewed: true,
+    }),
+    { status: 409 },
+  );
+});
+test("restored historical records cannot be edited or promoted directly; deliberate current-generation fork requires a fresh review", async (t) => {
+  const { PreparedPromotionService } = await import("./prepared-promotion.js");
+  const f = await fixture(t),
+    job = await f.jobs.create(f.user, f.input);
+  await f.jobs.runNext("worker", job.id, job.items[0].id, 1);
+  const service = new PreparedPromotionService({
+      repo: f.repo,
+      identity: f.platform.identity,
+      scope: f.scope,
+    }),
+    id = (await f.repo.read()).preparedSourceCandidates[0].candidate.id,
+    plan = await service.plan(f.user, id),
+    promoted = await service.promote(f.user, id, {
+      idempotencyKey: randomUUID(),
+      expectedCandidateRevision: 1,
+      expectedContentRevision: plan.contentRevision,
+      brandRevision: plan.brandRevision,
+      copySha256: plan.copySha256,
+      evidenceSha256: plan.evidenceSha256,
+      reviewed: true,
+      kind: "clinical",
+      clinicalReviewed: true,
+    });
+  await f.repo.mutate((state) => {
+    const entry = state.preparedSourceCandidates[0];
+    entry.restoredHistorical = {
+      packSha256: "a".repeat(64),
+      originalScope: { organizationId: "former", brandId: "former" },
+      originalCandidateId: id,
+    };
+    delete entry.promotionReceipts;
+    const story = state.backlog.find((story) => story.id === f.story.id);
+    story.sourceClaims.forEach((claim) => {
+      claim.status = "unreviewed";
+      delete claim.reviewedBy;
+      delete claim.reviewedAt;
+      delete claim.clinicalReview;
+    });
+    story.revision++;
+    return state;
+  });
+  await assert.rejects(service.plan(f.user, id), { status: 409 });
+  await assert.rejects(
+    f.jobs.editCandidate(f.user, id, {
+      idempotencyKey: randomUUID(),
+      expectedRevision: 1,
+      artwork: promoted.story.campaignDraft,
+    }),
+    { status: 409 },
+  );
+  const current = (await f.repo.read()).backlog.find(
+      (story) => story.id === f.story.id,
+    ),
+    fork = await service.fork(f.user, f.story.id, {
+      idempotencyKey: randomUUID(),
+      expectedRevision: current.revision,
+      expectedContentRevision: current.contentRevision,
+      generationId: current.generationId,
+      brandRevision: brandRevision(await f.repo.getBrandProfile()),
+    });
+  assert.equal(fork.forkStillCurrent, true);
+  assert.equal(
+    (await f.jobs.candidate(f.user, fork.candidateId)).approval,
+    "none",
+  );
+  assert.equal(
+    (await service.plan(f.user, fork.candidateId)).requiresClinicalReview,
+    true,
+  );
+  assert.equal(
+    (await f.repo.read()).backlog.find((story) => story.id === f.story.id)
+      .sourceClaims[0].status,
+    "unreviewed",
+  );
+});

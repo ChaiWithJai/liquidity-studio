@@ -56,7 +56,7 @@ function excerptsFor(evidence) {
             ),
         );
       return paragraphs.slice(0, 4).map((text) => {
-        const sentence = text.match(/^.*?[.!?](?=\s|$)/)?.[0] || text;
+        const sentence = text.match(/^.{25,}?[.!?](?=\s|$)/)?.[0] || text;
         const cut = sentence.slice(0, 140);
         const excerpt =
           sentence.length > 140 ? cut.slice(0, cut.lastIndexOf(" ")) : cut;
@@ -73,8 +73,12 @@ function excerptsFor(evidence) {
     .slice(0, 4);
 }
 export function candidateArtwork(excerpts) {
-  const [heading, first = heading, second = first, third = first] =
+  const [sourceHeading, first = sourceHeading, second = first, third = first] =
     excerpts.map((excerpt) => excerpt.text);
+  const heading = sourceHeading
+    .replace(/^\d+\.\s+/, "")
+    .split(/:\s/)[0]
+    .replace(/\s+are$/, "");
   const texts = [first, second, third];
   return {
     infographic: {

@@ -170,6 +170,7 @@ export class DurableJobService {
       contentRevision: story.contentRevision || 1,
       brandRevision: brandRevision(state.brandProfile),
       sourceReady,
+      hasCampaign: Boolean(story.campaignDraft),
       status:
         story.preparationStatus ||
         (sourceReady ? "not_prepared" : "source_needed"),
@@ -192,7 +193,7 @@ export class DurableJobService {
       (story) => story.id === entry.candidate.storyId,
     );
     const stale =
-      !story ||
+      Boolean(entry.restoredHistorical) || !story ||
       preparationFingerprint(story, this.scope) !==
         entry.candidate.inputFingerprint ||
       brandRevision(state.brandProfile) !== entry.candidate.brandRevision;
@@ -220,6 +221,7 @@ export class DurableJobService {
         (entry) => entry.candidate.id === id,
       );
       if (!entry) throw fail(404, "Prepared candidate not found");
+      if(entry.restoredHistorical)throw fail(409,"Historical candidate requires a fresh current-generation review draft");
       entry.edits ||= [];
       const prior = entry.edits.find(
         (edit) => edit.id === input.idempotencyKey,
