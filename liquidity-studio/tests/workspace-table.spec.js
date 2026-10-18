@@ -285,7 +285,7 @@ test("external rename reconciles filtered rows after a forced detail refresh",as
  const row=page.locator('.story-row'),id=await row.getAttribute('data-story-id'),revision=Number(await row.getAttribute('data-story-revision'));
  const response=await page.request.post(`${base}/api/studio/workspace/mutations?organizationId=org_default&brandId=brand_default`,{data:{idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:revision,patch:{title:'Externally renamed queue item'}}]}});expect(response.ok()).toBeTruthy();
  await row.locator('[data-detail-story]').click();await expect(page.getByLabel('Detail queue title')).toHaveValue('Externally renamed queue item');await page.getByRole('button',{name:'Close story details'}).click();
- await expect(page.locator('.story-row')).toHaveCount(0);await expect(page.locator('#backlog-results')).toContainText(/Showing 0 of [1-9]\d* stories/);
+ await expect(page.getByLabel('Search stories')).toBeFocused();await expect(page.locator('.story-row')).toHaveCount(0);await expect(page.locator('#backlog-results')).toContainText(/Showing 0 of [1-9]\d* stories/);
 });
 
 test("dirty detail and inline metadata retain their opening revisions after another writer changes the story",async({page})=>{

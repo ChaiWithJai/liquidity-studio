@@ -307,12 +307,11 @@
     client.setUi({ drawerStoryId: null });
     await tick();
     if (opener?.isConnected) opener.focus();
-    else
-      (scroller || host)
-        ?.querySelector(
-          `[data-detail-story="${CSS.escape(client.snapshot.ui.focusStoryId || "")}"], [data-open-story="${CSS.escape(client.snapshot.ui.focusStoryId || "")}"]`,
-        )
-        ?.focus();
+    else {
+      const id = CSS.escape(client.snapshot.ui.focusStoryId || "");
+      const rowControl = (scroller || host)?.querySelector(`[data-detail-story="${id}"], [data-open-story="${id}"]`);
+      (rowControl || document.querySelector('[aria-label="Search stories"]') || host)?.focus();
+    }
   }
   async function openEditor(id) {
     localError = "";
@@ -396,7 +395,7 @@
 </script>
 
 <svelte:window onkeydown={onKey}/>
-<section bind:this={host} class="workspace-table-surface" aria-label="Story work table" data-scope-key={scopeKey}>
+<section bind:this={host} tabindex="-1" class="workspace-table-surface" aria-label="Story work table" data-scope-key={scopeKey}>
   <div class="projection-switch" role="group" aria-label="Story projection"><button class="secondary" aria-pressed={($client.ui.viewKind||"table")==="table"} onclick={()=>client.setUi({viewKind:"table"})}>Table view</button><button class="secondary" aria-pressed={$client.ui.viewKind==="board"} onclick={()=>client.setUi({viewKind:"board"})}>Board view</button><span>Both show the same filtered stories and saved revisions.</span>{#if !selected.length}<span>0 selected · active brand only</span><button class="secondary" disabled={!rows.length||$client.mutationPending} onclick={selectLoaded}>Select loaded rows</button>{/if}</div>
   <div class="table-tools">
     <label>Sort by <select aria-label="Sort stories" value={$client.query.definition.sort?.[0]?.field||"title"} onchange={event=>runQuery({sort:[{field:event.currentTarget.value,direction:$client.query.definition.sort?.[0]?.direction||"asc"}]})}>{#each ["title","category","status","revision","plannedDate","assigneeId","exportedAt"] as field (field)}<option value={field}>{labels[field]||"Export date"}</option>{/each}</select></label>

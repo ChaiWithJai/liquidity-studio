@@ -638,14 +638,12 @@
         format,
         content: campaign[format],
       });
-      exportUrl = result.downloadUrl || result.artifact?.downloadUrl || "";
-      exportName =
-        result.filename || result.artifact?.filename || "Download export";
-      if (!exportUrl)
-        throw new Error("Server did not return a downloadable artifact");
+      // Reconcile the exported revision before exposing its download. Clean snapshot adoption
+      // intentionally clears stale artifacts, so the new link is assigned afterward.
       receiveStories(result.backlog || (selectedStory ? [selectedStory] : []));
-      selectedStory =
-        backlog.find((story) => story.id === selectedStory.id) || selectedStory;
+      exportUrl = result.downloadUrl || result.artifact?.downloadUrl || "";
+      exportName = result.filename || result.artifact?.filename || "Download export";
+      if (!exportUrl) throw new Error("Server did not return a downloadable artifact");
       notice = "Export created. Download the actual file below.";
     } catch (failure) {
       error = `Export failed: ${failure.message}`;
