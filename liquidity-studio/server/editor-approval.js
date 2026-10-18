@@ -19,6 +19,11 @@ export class EditorApprovalService {
     const nativeKey=this.native.key(id);
     return ['identity',this.repo.key,nativeKey,`editor-review:${this.scope.organizationId}:${this.scope.brandId}:${id}`];
   }
+  canApprove(identity, actor) {
+    return actor.role === 'founder' || (actor.role === 'marketer' && identity.memberships.some(member =>
+      member.userId === actor.id && member.organizationId === this.scope.organizationId &&
+      Array.isArray(member.approvalBrandIds) && member.approvalBrandIds.includes(this.scope.brandId)));
+  }
   async principal(actor) {
     if (!actor?.id) throw fail(401,'Sign in required');
     const identity = await this.store.get('identity');
@@ -52,7 +57,8 @@ export class EditorApprovalService {
       const [identity,source,native,review]=values;
       if(hash(identity)!==principal.identityHash) throw fail(409,'Membership changed; reload review');
       this.scoped(native);
-      result=this.dto(review,this.stale(source,native,review));
+      const dto=this.dto(review,this.stale(source,native,review));
+      result=dto ? {...dto,canApprove:this.canApprove(identity,principal.actor),approval:dto.approval ? {...dto.approval,approvedByLabel:identity.users.find(user=>user.id===dto.approval.approvedBy)?.username || 'Former workspace member'} : null} : null;
       return values;
     });
     return result;
@@ -75,15 +81,18 @@ export class EditorApprovalService {
       let stage;
       if(input.action==='create'){if(prior)throw fail(409,'Review already exists');stage='DraftReady';}
       else if(!prior) throw fail(409,'Create review before transitioning');
-      else if(input.action==='restart') stage='DraftReady';
+      else if(input.action==='restart') {
+        if(prior.stage==='Approved' && !this.stale(source,native,prior) && !this.canApprove(identity,principal.actor)) throw fail(403,'Approval authority required to reopen a current approved layout');
+        stage='DraftReady';
+      }
       else if(input.action==='reject'){
         if(!['FinalLayout','Approved'].includes(prior.stage))throw fail(409,'Review cannot be rejected from this stage');
-        if(prior.stage==='Approved'&&principal.actor.role!=='founder')throw fail(403,'Founder approval authority required');
+        if(!this.canApprove(identity,principal.actor))throw fail(403,'Approval authority required');
         stage='InPostProd';
       } else {
         const [from,to]=steps[input.action];
         if(prior.stage!==from)throw fail(409,'Review transition is out of order');
-        if(input.action==='approve'&&principal.actor.role!=='founder')throw fail(403,'Founder approval authority required');
+        if(input.action==='approve'&&!this.canApprove(identity,principal.actor))throw fail(403,'Approval authority required');
         stage=to;
       }
       const revision=(prior?.revision||0)+1, binding=this.binding(native);

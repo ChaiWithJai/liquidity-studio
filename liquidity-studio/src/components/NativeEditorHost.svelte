@@ -1,6 +1,7 @@
 <script>
   import { untrack } from 'svelte';
   import { createNativeEditorBroker } from '../lib/native-editor-broker.js';
+  import EditorReviewPanel from './EditorReviewPanel.svelte';
 
   let {
     record, request, scopeKey, getScopeKey,
@@ -16,6 +17,8 @@
   let localRecord = $state.raw(null);
   let reloadEpoch = $state(0);
   let recoveryMessage = $state('');
+  let editorDirty = $state(false);
+  let editorReady = $state(false);
 
   $effect(() => {
     if (!frame) return;
@@ -24,6 +27,7 @@
     const epoch = reloadEpoch;
     const capturedRequest = untrack(() => request);
     loading = true;
+    editorReady = false;
     let activeBroker;
     let disposed = false;
     let watchdog;
@@ -34,6 +38,7 @@
       clearTimeout(watchdog);
       activeBroker?.dispose();
       loading = true;
+      editorReady = false;
       activeBroker = createNativeEditorBroker({
         frameWindow: frame.contentWindow,
         request: capturedRequest,
@@ -44,7 +49,7 @@
           localRecord = saved;
           onSaved(saved);
         },
-        onReady() { clearTimeout(watchdog); loading = false; },
+        onReady() { clearTimeout(watchdog); loading = false; editorReady = true; },
         async onConflictResolve(action) {
           if (action !== 'reload') {
             recoveryMessage = 'Saving a separate native copy is unavailable in this host. Your local edits remain open; export your work before reloading.';
@@ -62,8 +67,9 @@
           }
         },
         onState(state) {
-          if (state.status === 'error') { clearTimeout(watchdog); loading = false; }
-          onDirtyChange(state.dirty ?? ['dirty', 'saving', 'conflict'].includes(state.status));
+          if (state.status === 'error') { clearTimeout(watchdog); loading = false; editorReady = false; }
+          editorDirty = state.dirty ?? ['dirty', 'saving', 'conflict'].includes(state.status);
+          onDirtyChange(editorDirty);
           onSaveStateChange(state);
         },
       });
@@ -112,6 +118,7 @@
     <p>Uploads support PNG, JPEG and WebP up to 512 KiB and four megapixels. Background removal is unavailable.</p>
   </details>
   {#if loading}<p role="status">Opening native editor…</p>{/if}
+  <EditorReviewPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} />
   <iframe title="Native Doory design canvas" bind:this={frame} sandbox="allow-scripts allow-same-origin allow-downloads" referrerpolicy="no-referrer"></iframe>
 </section>
 

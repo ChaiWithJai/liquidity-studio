@@ -14,4 +14,4 @@ liquidity-studio/playwright-report/
 liquidity-studio/data/
 
 # Pinned local editor source; AAL distribution condition not resolved
-liquidity-studio/.native-editor-source/
+liquidity-studio/.native-editor-source

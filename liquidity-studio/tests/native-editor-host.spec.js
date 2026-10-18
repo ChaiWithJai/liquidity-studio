@@ -32,6 +32,7 @@ test.beforeAll(async () => {
     password,
     role: "founder",
   });
+  await platform.identity.provision({ username: "native-marketer-fixture", password, role: "marketer" });
   const api = createHttpServer(null, { platform, nativeEditorEnabled: true });
   const root = fileURLToPath(new URL("..", import.meta.url));
   buildDirectory = mkdtempSync(
@@ -155,7 +156,7 @@ test.afterAll(async () => {
   if (previousLocalBuildFlag === undefined)
     delete process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD;
   else process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD = previousLocalBuildFlag;
-  await new Promise((resolve) => server?.close(resolve));
+  if (server) await new Promise((resolve) => server.close(resolve));
   if (buildDirectory) rmSync(buildDirectory, { recursive: true, force: true });
   store?.close();
 });
@@ -408,6 +409,7 @@ test("native concurrent writer yields conflict and explicit reload adopts saved 
   ).toBeVisible({ timeout: 30000 });
   const endpoint = `${base}/api/studio/native-editor/documents/${fixtures[0].id}?organizationId=org_default&brandId=brand_default`;
   const before = await (await page.request.get(endpoint)).json();
+  await frame.locator("[data-artboard]").first().scrollIntoViewIfNeeded();
   const art = await frame.locator("[data-artboard]").first().boundingBox();
   await page.mouse.dblclick(
     art.x + art.width * 0.5,
@@ -481,6 +483,7 @@ test("actual Studio mounts and resumes native proposal without mutating original
     if (route.request().method() === "POST") await saveGate;
     await route.continue();
   });
+  await frame.locator("[data-artboard]").first().scrollIntoViewIfNeeded();
   const art = await frame.locator("[data-artboard]").first().boundingBox();
   await page.mouse.dblclick(
     art.x + art.width * 0.5,
@@ -573,6 +576,7 @@ test("iframe reload disposes its previous parent broker before mounting a replac
   await expect(
     frame.getByRole("button", { name: "Layers", exact: true }),
   ).toBeVisible({ timeout: 30000 });
+  await frame.locator("[data-artboard]").first().scrollIntoViewIfNeeded();
   const art = await frame.locator("[data-artboard]").first().boundingBox();
   await page.mouse.dblclick(
     art.x + art.width * 0.5,
@@ -623,4 +627,99 @@ test("iframe reload disposes its previous parent broker before mounting a replac
     "SAVED BEFORE FRAME RELOAD",
   );
   await page.keyboard.press("Escape");
+});
+
+test('saved layout review rejects dirty/stale versions and approves the acknowledged native revision', async ({ page }, testInfo) => {
+  await page.request.post(`${base}/api/auth/login`, { data: { username: 'native-host-fixture', password } });
+  await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
+  const panel = page.getByRole('region', { name: 'Saved layout review', exact: true });
+  await panel.getByRole('button', { name: 'Begin review', exact: true }).click();
+  await panel.getByRole('button', { name: 'Start post-production', exact: true }).click();
+  await panel.getByRole('button', { name: 'Submit final layout', exact: true }).click();
+  await expect(panel.getByRole('button', { name: 'Approve saved layout', exact: true })).toBeEnabled();
+  const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
+  await expect(frame.getByRole('button', { name: 'Layers', exact: true })).toBeVisible({ timeout: 30000 });
+  const fixture = fixtures[0];
+  const endpoint = `${base}/api/studio/native-editor/documents/${fixture.id}?organizationId=org_default&brandId=${fixture.brandId}`;
+  const before = await (await page.request.get(endpoint)).json();
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  await page.route('**/api/studio/native-editor/documents/*?*', async route => {
+    if (route.request().method() === 'POST') await held;
+    await route.continue();
+  });
+  const art = await frame.locator('[data-artboard]').first().boundingBox();
+  await page.mouse.dblclick(art.x + art.width * .5, art.y + art.height * 365 / 1350);
+  await expect(frame.locator('textarea[data-fabric="textarea"]')).toBeAttached();
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.type('FINAL SAVED REVIEW VERSION');
+  await page.keyboard.press('Escape');
+  try {
+    await expect(panel.getByRole('button', { name: 'Approve saved layout', exact: true })).toBeDisabled();
+    await expect(panel.getByText('Save your native edits before changing review state.', { exact: true })).toBeVisible();
+  } finally { release(); }
+  await expect.poll(async () => (await (await page.request.get(endpoint)).json()).revision).toBe(before.revision + 1);
+  await expect(panel.getByRole('alert')).toContainText('saved content or source changed');
+  await panel.getByRole('button', { name: 'Restart review for saved version', exact: true }).click();
+  await panel.getByRole('button', { name: 'Start post-production', exact: true }).click();
+  await panel.getByRole('button', { name: 'Submit final layout', exact: true }).click();
+  await panel.getByRole('button', { name: 'Approve saved layout', exact: true }).click();
+  await expect(panel.getByRole('status')).toContainText('Approved');
+  const review = await (await page.request.get(`${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`)).json();
+  expect(review.stale).toBe(false);
+  expect(review.approval.nativeRevision).toBe(before.revision + 1);
+  expect(review.history.map(value => value.action)).toEqual(['create', 'start', 'submit', 'restart', 'start', 'submit', 'approve']);
+  await page.screenshot({ path: testInfo.outputPath('saved-layout-approved.png'), fullPage: true });
+});
+
+test('marketer submits a saved layout and a separate founder session approves it', async ({ page, browser }) => {
+  const fixture=fixtures[1];
+  await page.request.post(`${base}/api/auth/login`,{data:{username:'native-marketer-fixture',password}});
+  await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
+  await page.getByRole('combobox',{name:'Native fixture',exact:true}).selectOption(fixture.id);
+  const panel=page.getByRole('region',{name:'Saved layout review',exact:true});
+  await panel.getByRole('button',{name:'Begin review',exact:true}).click();
+  await panel.getByRole('button',{name:'Start post-production',exact:true}).click();
+  await panel.getByRole('button',{name:'Submit final layout',exact:true}).click();
+  await expect(panel.getByText('A founder or designated brand approver must approve this saved layout.',{exact:true})).toBeVisible();
+  await expect(panel.getByRole('button',{name:'Approve saved layout',exact:true})).toHaveCount(0);
+  const endpoint=`${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`;
+  const review=await(await page.request.get(endpoint)).json();
+  const denial=await page.request.post(endpoint,{data:{action:'approve',expectedRevision:review.revision,expectedNativeRevision:review.binding.nativeRevision,idempotencyKey:'marketer_forged_approve_123'}});
+  expect(denial.status()).toBe(403);
+  const context=await browser.newContext();
+  try {
+    const founderPage=await context.newPage();
+    await founderPage.request.post(`${base}/api/auth/login`,{data:{username:'native-host-fixture',password}});
+    await founderPage.goto(`${base}/tests/fixtures/native-editor-host.html`);
+    await founderPage.getByRole('combobox',{name:'Native fixture',exact:true}).selectOption(fixture.id);
+    await founderPage.getByRole('region',{name:'Saved layout review',exact:true}).getByRole('button',{name:'Approve saved layout',exact:true}).click();
+    await panel.getByRole('button',{name:'Reload review',exact:true}).click();
+    await expect(panel.getByRole('status')).toContainText('Approved');
+    const saved=await(await page.request.get(endpoint)).json();
+    expect(saved.history.at(-1).actorId).not.toBe(saved.history[0].actorId);
+    expect(saved.canApprove).toBe(false);
+  } finally { await context.close(); }
+});
+
+test('a lost review response retries the same intent without a second transition',async({page})=>{
+  const fixture=fixtures[2];
+  await page.request.post(`${base}/api/auth/login`,{data:{username:'native-host-fixture',password}});
+  await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
+  await page.getByRole('combobox',{name:'Native fixture',exact:true}).selectOption(fixture.id);
+  const panel=page.getByRole('region',{name:'Saved layout review',exact:true});
+  const keys=[];
+  await page.route('**/api/studio/native-editor/documents/*/review?*',async route=>{
+    if(route.request().method()!=='POST')return route.continue();
+    keys.push(route.request().postDataJSON().idempotencyKey);
+    if(keys.length===1){await route.fetch();return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Controlled lost response'})});}
+    return route.continue();
+  });
+  await panel.getByRole('button',{name:'Begin review',exact:true}).click();
+  await expect(panel.getByRole('alert')).toContainText('Retry the same action');
+  await panel.getByRole('button',{name:'Begin review',exact:true}).click();
+  await expect(panel.getByRole('status')).toContainText('Draft ready');
+  expect(keys).toHaveLength(2);expect(keys[1]).toBe(keys[0]);
+  const saved=await(await page.request.get(`${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`)).json();
+  expect(saved.revision).toBe(1);expect(saved.history).toHaveLength(1);
 });

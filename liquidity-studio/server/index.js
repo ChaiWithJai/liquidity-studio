@@ -654,6 +654,13 @@ export function createHttpServer(
         );
         if (nativeAssetMatch && req.method === "GET")
           return json(200, await service.asset(user, nativeAssetMatch[1]));
+        const reviewMatch = route.match(
+          /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/review$/,
+        );
+        if (reviewMatch && req.method === "GET")
+          return json(200, await platform.editorApproval(scope, repo).read(user, reviewMatch[1]));
+        if (reviewMatch && req.method === "POST")
+          return json(200, await platform.editorApproval(scope, repo).transition(user, reviewMatch[1], body));
         const nativeMatch = route.match(
           /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})$/,
         );

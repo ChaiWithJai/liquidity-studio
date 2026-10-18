@@ -82,3 +82,28 @@ test('membership changed during authorization and client role/scope overrides fa
   await assert.rejects(f.service.transition(marketer,'doc',{action:'create',expectedRevision:0,expectedNativeRevision:1,idempotencyKey:'override_test_key_123',role:'founder'}),{status:400});
  }finally{f.store.close();}
 });
+
+test('only approval authority can reject final layout or reopen a current approved layout',async()=>{
+ const f=fixture();try{
+  await f.call(marketer,'create',0);await f.call(marketer,'start',1);await f.call(marketer,'submit',2);
+  await assert.rejects(f.call(marketer,'reject',3),{status:403});
+  await f.call(founder,'approve',3);
+  await assert.rejects(f.call(marketer,'reject',4),{status:403});
+  await assert.rejects(f.call(marketer,'restart',4),{status:403});
+  assert.equal((await f.service.read(founder,'doc')).stage,'Approved');
+  f.store.update('native:doc',v=>({...v,revision:2}));
+  assert.equal((await f.call(marketer,'restart',4,2)).stage,'DraftReady');
+ }finally{f.store.close();}
+});
+
+test('designated approval permission is explicit and bound to the current organization and brand',async()=>{
+ const f=fixture();try{
+  await f.call(marketer,'create',0);await f.call(marketer,'start',1);await f.call(marketer,'submit',2);
+  f.store.update('identity',v=>({...v,memberships:v.memberships.map(m=>m.userId==='marketer'?{...m,organizationId:'foreign',approvalBrandIds:['b']}:m)}));
+  await assert.rejects(f.call(marketer,'approve',3),{status:403});
+  f.store.update('identity',v=>({...v,memberships:v.memberships.map(m=>m.userId==='marketer'?{...m,organizationId:'o',approvalBrandIds:['b']}:m)}));
+  assert.equal((await f.service.read(marketer,'doc')).canApprove,true);
+  assert.equal((await f.call(marketer,'approve',3)).stage,'Approved');
+  assert.equal((await f.call(marketer,'reject',4)).stage,'InPostProd');
+ }finally{f.store.close();}
+});
