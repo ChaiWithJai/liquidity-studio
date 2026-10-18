@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "961bc14",
+  "actorKind": "scripted-helper",
+  "model": null,
+  "scope": {
+    "organizationId": "org_default",
+    "brandId": "brand_default"
+  },
+  "viewport": {
+    "width": 1440,
+    "height": 1100
+  },
+  "samples": [
+    {
+      "path": "/api/studio/workspace/query",
+      "elapsedMs": 4.97,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/stories/story_angel_city",
+      "elapsedMs": 2.75,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/grants",
+      "elapsedMs": 3.57,
+      "status": 201
+    },
+    {
+      "path": "/api/studio/workspace/mutations",
+      "elapsedMs": 4.16,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals",
+      "elapsedMs": 7.46,
+      "status": 409
+    },
+    {
+      "path": "/api/studio/workspace/stories/story_angel_city",
+      "elapsedMs": 2.58,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals",
+      "elapsedMs": 6.06,
+      "status": 400
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals",
+      "elapsedMs": 3.34,
+      "status": 400
+    },
+    {
+      "path": "/api/studio/workspace/stories/story_angel_city",
+      "elapsedMs": 2.73,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/stories/story_angel_city",
+      "elapsedMs": 2.46,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals",
+      "elapsedMs": 3.85,
+      "status": 201
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/6b793ae3-377c-4f5b-991a-af98aa1933b8/approve",
+      "elapsedMs": 2.97,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/6b793ae3-377c-4f5b-991a-af98aa1933b8/apply",
+      "elapsedMs": 2.85,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/6b793ae3-377c-4f5b-991a-af98aa1933b8/apply",
+      "elapsedMs": 2.28,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/stories/story_angel_city",
+      "elapsedMs": 3.28,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals",
+      "elapsedMs": 3.5,
+      "status": 201
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/61f424db-8566-46d4-baa5-2c9bd1884b3f/approve",
+      "elapsedMs": 3.24,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/grants/b249411c-25a9-45a4-ae18-777778130f1a/pause",
+      "elapsedMs": 2.86,
+      "status": 200
+    },
+    {
+      "path": "/api/studio/workspace/control/proposals/61f424db-8566-46d4-baa5-2c9bd1884b3f/apply",
+      "elapsedMs": 2.9,
+      "status": 409
+    },
+    {
+      "path": "/api/studio/workspace/stories/story_angel_city",
+      "elapsedMs": 3.12,
+      "status": 200
+    }
+  ],
+  "observations": [
+    {
+      "organizationId": "org_default",
+      "brandId": "brand_default",
+      "storyId": "story_angel_city",
+      "expectedRevision": 1,
+      "capturedAt": "2026-10-18T02:39:27.456Z",
+      "screenshotSha256": "4ea1ba5d625a3a3408c241fd9425755425b45b988cac5eab289c2c1422256a15",
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "source": "authenticated structured GET plus browser screenshot; no pixel inference"
+    }
+  ],
+  "corrections": 1,
+  "scriptedOwnerApprovals": 2,
+  "scriptedOwnerPauseInterventions": 1,
+  "humanInterventions": null,
+  "requestCount": 20,
+  "latencyMs": {
+    "p50": 3.12,
+    "p95": 6.06,
+    "definition": "nearest-rank isolated loopback HTTP requests, not model or human latency"
+  },
+  "results": {
+    "staleScreenshotRejected": true,
+    "malformedActionRejected": true,
+    "pausedEpochRejected": true,
+    "lostResponseRecoveredSameKey": true,
+    "helperReceipts": 1,
+    "humanFocusPreserved": true,
+    "rejoinPersisted": true
+  },
+  "limitations": [
+    "single fixture run",
+    "scripted owner approvals, not observed human interventions",
+    "pixels not interpreted",
+    "no model loaded, no memory/inference measurement",
+    "no cloud or Google-session acceptance"
+  ]
+}
