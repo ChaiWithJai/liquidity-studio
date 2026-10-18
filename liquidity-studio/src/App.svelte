@@ -6,6 +6,7 @@
   import WorkspaceCalendar from "./components/WorkspaceCalendar.svelte";
   import JobsPane from "./components/JobsPane.svelte";
   import NativeEditorHost from "./components/NativeEditorHost.svelte";
+  import NativeLayoutHistory from "./components/NativeLayoutHistory.svelte";
   import PenpotPanel from "./components/PenpotPanel.svelte";
   import OperatorRecoveryPanel from "./components/OperatorRecoveryPanel.svelte";
   import PreparedSourcePanel from "./components/PreparedSourcePanel.svelte";
@@ -90,11 +91,14 @@
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
   });
-  async function openNativeEditor() {
-    if (!nativeEditorEnabled || !campaign || !selectedStory || busy || !workspaceClient) return;
+  async function openNativeEditor(requestedId = null) {
+    if (typeof requestedId !== "string") requestedId = null;
+    if (!nativeEditorEnabled || !selectedStory || (!campaign && !requestedId) || busy || !workspaceClient) return;
+    if (!leaveNativeEditor()) return;
+    const client = workspaceClient, storyId = selectedStory.id, openingFormat = format;
     if (reviewDirty) { error = "Save or reload source review edits before opening the native editor."; return; }
     if (pendingEdits && !(await saveEdit())) return;
-    const client = workspaceClient, storyId = selectedStory.id, openingFormat = format;
+    if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;
     const capturedRequest = (path, options) => {
       if (workspaceClient !== client) return Promise.reject(Object.assign(new Error("Workspace changed"), {code:"REQUEST_CONTEXT_CHANGED"}));
       return request(path, options);
@@ -107,12 +111,13 @@
       client.ingestStories(bootstrap.backlog || []);
       const story = client.getStory(storyId);
       const history = await capturedRequest(`/api/studio/native-editor/documents?storyId=${encodeURIComponent(storyId)}&format=${openingFormat}`);
-      const existing = history.documents.find(item => (item.sourceContentRevision === undefined ? item.storyRevision === story.revision : item.sourceContentRevision === (story.contentRevision || 1)) && item.generationId === story.generationId);
+      const existing = requestedId ? history.documents.find(item => item.id === requestedId) : history.documents.find(item => (item.sourceContentRevision === undefined ? item.storyRevision === story.revision : item.sourceContentRevision === (story.contentRevision || 1)) && item.generationId === story.generationId);
       if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;
+      if (requestedId && !existing) throw new Error("That saved layout is no longer available in this story and format.");
       const created = existing ? await capturedRequest(`/api/studio/native-editor/documents/${existing.id}`) : await capturedRequest("/api/studio/native-editor/documents", { method:"POST", body:JSON.stringify({storyId,format:openingFormat,expectedRevision:story.revision,generationId:story.generationId,expectedBrandRevision:bootstrap.nativeEditorContext.brandRevision,idempotencyKey:crypto.randomUUID()}) });
       if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;
       nativeHost = { client, scopeKey:client.scopeKey, request:capturedRequest, getScopeKey:()=>workspaceClient === client ? client.scopeKey : "context-changed" };
-      nativeRecord = created; nativeDirty = false; nativeSaveState = "idle";
+      nativeRecord = created; nativeDirty = false; nativeSaveState = "idle"; preparedEditingStoryId = "";
     } catch (failure) { if (workspaceClient === client) error = failure.message; }
     finally { if (workspaceClient === client) busy = false; }
   }
@@ -1275,6 +1280,9 @@
           </div>
         {/if}
         {#if selectedStory}
+          {#if nativeEditorEnabled && preparedHost}{#key preparedHost.client}{#key `${selectedStory.id}:${format}`}
+            <NativeLayoutHistory request={preparedHost.request} storyId={selectedStory.id} {format} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} onOpen={openNativeEditor} />
+          {/key}{/key}{/if}
           {#if preparedWorkspace}<div class="prepared-story-context"><strong>{selectedStory.title}</strong><button class="secondary" onclick={()=>navigateTab("backlog")}>Return to backlog</button></div>{/if}
           {#if !(preparedWorkspace)}<section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
             <div class="workflow-identity"><strong title={selectedStory.title}>{selectedStory.title}</strong><span>{currentOrganization?.name} / {currentBrand?.name} · {formats.find(item => item.id === format)?.name} · revision {selectedStory.revision}</span></div>
@@ -1320,12 +1328,15 @@
           {/if}
           {#if nativeRecord && nativeHost}
             <section class="panel" aria-label="Native proposal workspace">
-              <h3>Native {formats.find(item => item.id === nativeRecord.format)?.name} proposal</h3>
-              <p role="status">Native revision {nativeRecord.revision} · {nativeDirty ? "Unsaved native work" : "Native proposal saved"} · {nativeSaveState}. The original generated campaign and approval state are unchanged.</p>
+              <h3>{nativeRecord.sourceState === "historical" ? "Historical" : "Native"} {formats.find(item => item.id === nativeRecord.format)?.name} {nativeRecord.sourceState === "historical" ? "layout" : "proposal"}</h3>
+              <p role="status">Native revision {nativeRecord.revision} · {nativeRecord.sourceState === "historical" ? "Read-only historical evidence" : nativeDirty ? "Unsaved native work" : "Native proposal saved"} · {nativeSaveState}. The saved campaign copy and its approval state are unchanged.</p>
               <button class="secondary" disabled={nativeDirty} onclick={() => leaveNativeEditor()}>Return to original campaign and exporter</button>
               {#if nativeDirty}<button class="secondary" onclick={() => leaveNativeEditor(true)}>Discard local native changes and return</button>{/if}
               {#key nativeHost}<NativeEditorHost record={nativeRecord} request={nativeHost.request} scopeKey={nativeHost.scopeKey} getScopeKey={nativeHost.getScopeKey}
                 onSaved={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.id) nativeRecord = saved; }}
+                canRebind={user.role === "founder"} canReviewSource={sourcePreparationEnabled}
+                onReviewSource={async () => { if (!leaveNativeEditor()) return; if (campaign) await editReviewedCopy(); else focusWorkflow("workflow-preview"); }}
+                onRebound={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.origin?.historicalRebind?.nativeId) { nativeRecord = saved; nativeHost = {...nativeHost}; nativeDirty = false; nativeSaveState = "idle"; notice = "New editable layout proposal created. Review this version before exporting; the historical layout is unchanged."; } }}
                 onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => { nativeSaveState = value.status; if (value.status === "saved" && error === "Save native changes or explicitly discard them before leaving the native editor.") error = ""; }} />{/key}
             </section>
           {/if}

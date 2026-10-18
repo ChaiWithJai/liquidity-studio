@@ -1068,6 +1068,11 @@ export function createHttpServer(
             200,
             await service.refreshBrandTokens(user, brandTokensMatch[1], body),
           );
+        const rebindMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/(rebind-plan|rebind)$/);
+        if (rebindMatch && rebindMatch[2] === "rebind-plan" && req.method === "GET")
+          return json(200, await service.rebindPlan(user, rebindMatch[1]));
+        if (rebindMatch && rebindMatch[2] === "rebind" && req.method === "POST")
+          return json(201, await service.rebind(user, rebindMatch[1], body));
         const nativeMatch = route.match(
           /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})$/,
         );

@@ -1,3 +1,4 @@
+import { planHistoricalRebind, rebindHistorical } from './native-historical-rebind.js';
 import { assertRestoreAvailable } from "./restore-gate.js";
 import { createHash, randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
@@ -279,6 +280,7 @@ export class NativeEditorService {
             : { sourceContentRevision: record.origin.sourceContentRevision }),
           generationId: record.origin.generationId,
           brandRevision: record.origin.brandRevision,
+          requiresSourceReview: record.origin.requiresSourceReview === true,
         })),
     };
   }
@@ -342,6 +344,8 @@ export class NativeEditorService {
     )
       throw fail(409, "Native source or brand changed; review before saving");
   }
+  async rebindPlan(actor, id) { return planHistoricalRebind(this, actor, id, validateHostedDocument); }
+  async rebind(actor, id, input) { return rebindHistorical(this, actor, id, input, validateHostedDocument); }
   async create(actor, input) {
     exact(input, [
       "storyId",
