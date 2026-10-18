@@ -97,6 +97,7 @@ function viewContext(value) {
           "measuredAt",
           "measurementRevision",
           "artworkId",
+          "playheadSeconds",
         ].includes(key),
     ) ||
     (value.measurementRevision !== undefined &&
@@ -107,6 +108,8 @@ function viewContext(value) {
         !/^(infographic|carousel|story|reel)-page-[1-4]$/.test(
           value.artworkId,
         ))) ||
+    (value.playheadSeconds !== undefined &&
+      (!Number.isFinite(value.playheadSeconds) || value.playheadSeconds < 0 || value.playheadSeconds > 30)) ||
     !["instagram", "design"].includes(value.mode) ||
     !Number.isInteger(value.frameIndex) ||
     value.frameIndex < 0 ||
@@ -160,7 +163,11 @@ async function readBody(req, limit = 262144, timeoutMs = 0) {
       if (settled) return;
       let value;
       try {
-        value = JSON.parse(Buffer.concat(chunks).toString() || "{}");
+        // Incoming request listeners retain this array until request teardown.
+        // Drop its Buffer references before creating the decoded/parsed forms.
+        const encoded = Buffer.concat(chunks);
+        chunks.length = 0;
+        value = JSON.parse(encoded.toString("utf8") || "{}");
       } catch {
         rejectOnce(fail(400, "Malformed JSON"));
         return;
@@ -1768,6 +1775,22 @@ export function createHttpServer(
           throw fail(400, "Invalid preflight measurements");
         }
         const context = viewContext(body.viewContext);
+        if (context?.playheadSeconds !== undefined && body.format !== "reel")
+          throw fail(400, "Only Reel preflight has a motion playhead");
+        if (context?.playheadSeconds !== undefined) {
+          const beats = story.campaignDraft?.reel?.beats || [];
+          let frame = 0;
+          for (let index = beats.length - 1; index >= 0; index--) {
+            const start = typeof beats[index].timecode === "string"
+              ? beats[index].timecode.match(/^(\d+):(\d+)/) : null;
+            if (start && context.playheadSeconds >= Number(start[1]) * 60 + Number(start[2])) {
+              frame = index;
+              break;
+            }
+          }
+          if (context.frameIndex !== frame)
+            throw fail(400, "Reel preflight frame does not match its saved playhead");
+        }
         const lastFrame =
           body.format === "carousel" ? 3 : body.format === "reel" ? 2 : 0;
         if (context && context.frameIndex > lastFrame)

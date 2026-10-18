@@ -56,14 +56,17 @@ export async function createPenpotStudioRuntime({
   store,
   identity,
   configurationPath,
+  configurationLoader = loadPenpotLocalConfiguration,
   env = process.env,
 }) {
+  if (env.K_SERVICE || env.STUDIO_PENPOT_ENABLED !== "true")
+    throw fail(503, "Penpot requires explicit local operator configuration");
   if (identity.configuration?.mode !== "google")
     throw fail(
       503,
       "Penpot Studio integration requires managed Google identity",
     );
-  const configuration = await loadPenpotLocalConfiguration(
+  const configuration = await configurationLoader(
     configurationPath,
     env,
   );

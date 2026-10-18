@@ -1,0 +1,78 @@
+[
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 401,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "POST"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "POST"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  },
+  {
+    "status": 201,
+    "method": "POST"
+  },
+  {
+    "status": 200,
+    "method": "POST"
+  },
+  {
+    "status": 200,
+    "method": "GET"
+  }
+]

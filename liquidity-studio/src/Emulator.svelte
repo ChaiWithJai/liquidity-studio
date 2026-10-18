@@ -80,6 +80,8 @@
       following,
       comments.length,
       pendingEdits,
+      reelPlaying,
+      format === "reel" && !reelPlaying ? reelTime : null,
     ]),
   );
   let currentEvidence = $derived(
@@ -119,6 +121,12 @@
     }),
   );
   let reelBeats = $derived(campaign?.reel?.beats || []);
+  let beatStart = $derived.by(() => {
+    const match = reelBeats[beat]?.timecode?.match(/^(\d+):(\d+)/);
+    return match ? Number(match[1]) * 60 + Number(match[2]) : 0;
+  });
+  let reveal = $derived(Math.min(1, Math.max(0, (reelTime - beatStart) / 0.7)));
+  const waveBars = Array.from({ length: 15 }, (_, index) => index);
   let carouselSlides = $derived(campaign?.carousel?.slides || []);
   const weekDays = [
     "Monday",
@@ -194,10 +202,6 @@
   onMount(() => {
     if (window.innerWidth < 700) zoom = 75;
     const timer = setInterval(() => {
-      if (reelPlaying) {
-        reelTime = Math.min(30, reelTime + 0.25);
-        if (reelTime >= 30) reelPlaying = false;
-      }
       if (storyPlaying) {
         storyTime += 0.25;
         if (storyTime >= 5) {
@@ -214,6 +218,32 @@
       document.fonts.removeEventListener("loadingdone", measure);
     };
   });
+  // One clock drives the playhead, kinetic text and simulated pacing bars.
+  // It runs only during playback; scrubbing and pause freeze that exact frame.
+  $effect(() => {
+    if (!reelPlaying || format !== "reel") return;
+    let previous = performance.now();
+    let frame;
+    function advance(now) {
+      reelTime = Math.min(30, reelTime + Math.max(0, now - previous) / 1000);
+      previous = now;
+      if (reelTime >= 30) reelPlaying = false;
+      else frame = requestAnimationFrame(advance);
+    }
+    frame = requestAnimationFrame(advance);
+    return () => cancelAnimationFrame(frame);
+  });
+  $effect(() => {
+    // A new saved revision must never inherit the previous draft's motion clock.
+    artifactIdentity;
+    format;
+    reelPlaying = false;
+    reelTime = 0;
+  });
+  function toggleReel() {
+    if (reelTime >= 30) reelTime = 0;
+    reelPlaying = !reelPlaying;
+  }
   function setMode(next) {
     mode = next;
     reelPlaying = false;
@@ -253,6 +283,10 @@
     await tick();
     await document.fonts.ready;
     if (!isCurrent()) return;
+    if (format === "reel" && reelPlaying) {
+      measurementStatus = { key, message: "Pause the Reel to measure its current frame. Playback is not a full-motion clearance check." };
+      return;
+    }
     if (!artworkElement || mode === "grid" || pendingEdits) {
       evidence = null;
       return;
@@ -339,6 +373,7 @@
         frameIndex: format === "reel" ? beat : slide,
         storyFrame,
         pollVote: poll,
+        ...(format === "reel" ? { playheadSeconds: reelTime } : {}),
         measuredAt: new Date().toISOString(),
       },
     };
@@ -350,7 +385,7 @@
       renderKey: key,
       revision: payload.viewContext.measurementRevision,
       number: ++completedMeasurements,
-      label: `${formatLabel} · ${pageLabel}`,
+      label: `${formatLabel} · ${pageLabel}${format === "reel" ? ` · ${reelTime.toFixed(2)}s paused frame` : ""}`,
       artworkId: payload.viewContext.artworkId,
     };
     onpreflight(payload, isCurrent);
@@ -541,7 +576,7 @@
             notice = "Liked in this simulation";
           }}
         >
-          <div class="artwork" bind:this={artworkElement} data-highlight={focusedElement}>
+          <div class="artwork" class:kinetic-reel={mode === "instagram" && format === "reel"} style:--reel-rise="{(1 - reveal) * 80}px" bind:this={artworkElement} data-highlight={focusedElement}>
             {@html artifactHtml}
           </div>
           {#if mode === "instagram" && format === "carousel"}<span
@@ -653,6 +688,10 @@
                   : ""}
               </p>
               <AudioMarquee />
+              <div class="reel-pacing" aria-label="Simulated waveform, no audio playback">
+                <div class="pacing-bars" aria-hidden="true">{#each waveBars as index (index)}<i style:height="{5 + 13 * Math.abs(Math.sin(reelTime * 5 + index * 0.8))}px"></i>{/each}</div>
+                <small>Pacing simulation · no audio</small>
+              </div>
             </div>
           {/if}
           {#if safeZones && ["story", "reel"].includes(format)}<div
@@ -669,7 +708,7 @@
             >{/if}
         </div>
         {#if format === "reel"}<div class="reel-controls">
-            <button onclick={() => (reelPlaying = !reelPlaying)}
+            <button onclick={toggleReel}
               >{reelPlaying ? "Pause reel" : "Play reel"}</button
             ><input
               aria-label="Reel scrubber"
@@ -677,9 +716,10 @@
               min="0"
               max="30"
               step=".25"
+              oninput={() => (reelPlaying = false)}
               bind:value={reelTime}
-            /><output data-testid="active-beat"
-              >BEAT {beat + 1} · {Math.floor(reelTime)} / 30s</output
+            /><output data-testid="active-beat" data-playhead={reelTime}
+              >BEAT {beat + 1} · {reelTime.toFixed(2)} / 30s</output
             >
           </div>{/if}
         {#if mode === "instagram" && !["story", "reel"].includes(format)}
@@ -766,7 +806,7 @@
   </div>
   <div class="evidence workflow-target" id="workflow-validation" role="region" aria-label="Measured validation results" tabindex="-1">
     <div class="evidence-title">
-      <b>Measured preflight</b><button disabled={pendingEdits || mode === "grid"} onclick={measure}>Measure again</button>
+      <b>Measured preflight</b><button disabled={pendingEdits || mode === "grid" || (format === "reel" && reelPlaying)} onclick={measure}>Measure again</button>
     </div>
     {#if currentEvidence}<p class="small">Measured {currentEvidence.label} · saved revision {storyRevision ?? "unavailable"} · measurement {currentEvidence.number}</p><div class="measurements">
         <span
@@ -816,4 +856,13 @@
   .violation-list li { margin: 10px 0; }
   .violation-list span { display: block; overflow-wrap: anywhere; }
   :global([data-preflight-highlight="true"]) { outline: 3px solid #e436c2; outline-offset: 5px; }
+  .kinetic-reel :global(text[data-artwork-id$="-heading"]),
+  .kinetic-reel :global(text[data-artwork-id*="-body-"]) { transform: translateY(var(--reel-rise)); }
+  .reel-pacing { margin-top: 6px; }
+  .pacing-bars { height: 18px; display: flex; align-items: center; gap: 3px; }
+  .pacing-bars i { width: 3px; border-radius: 2px; background: currentColor; }
+  @media (prefers-reduced-motion: reduce) {
+    .kinetic-reel :global(text[data-artwork-id]) { transform: none; }
+    .pacing-bars i { height: 8px !important; }
+  }
 </style>

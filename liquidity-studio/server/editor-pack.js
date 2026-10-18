@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { accountPortableJson } from "./portable-json-accounting.js";
 import { fail } from "./auth.js";
 import { validateHostedDocument } from "./native-editor.js";
 import { projectPreparedHistory, restorePreparedHistory } from "./editor-pack-prepared.js";
@@ -14,7 +15,8 @@ export const PACK_LIMITS = Object.freeze({
 });
 export const digest = (bytes) =>
   createHash("sha256").update(bytes).digest("hex");
-export const jsonDigest = (value) => digest(Buffer.from(JSON.stringify(value)));
+export const jsonDigest = (value) =>
+  createHash("sha256").update(JSON.stringify(value), "utf8").digest("hex");
 const formats = new Set(["infographic", "carousel", "story", "reel"]);
 const secretKeys = new Set([
   "__proto__",
@@ -125,8 +127,7 @@ export function addFile(files, bytes, kind) {
 }
 /** No extraction paths, URLs, executable code, storage references, sessions or live approval grants. */
 export function validateEditorPack(input) {
-  if (Buffer.byteLength(JSON.stringify(input)) > PACK_LIMITS.bytes)
-    throw fail(413, "Editor pack exceeds 48 MiB");
+  const accounting = accountPortableJson(input, { omitRootKeys: ["sha256"] });
   exact(input, [
     "schemaVersion",
     "kind",
@@ -143,7 +144,7 @@ export function validateEditorPack(input) {
   if (![1,2].includes(input.schemaVersion) || input.kind !== "studio-native-editor-pack")
     throw fail(422, "Unsupported editor pack version");
   const { sha256, ...content } = input;
-  if (sha256 !== jsonDigest(content))
+  if (sha256 !== accounting.contentSha256)
     throw fail(422, "Editor pack checksum mismatch");
   exact(input.scope, ["organizationId", "brandId"]);
   if (!input.scope.organizationId || !input.scope.brandId)
@@ -428,7 +429,13 @@ export function validateEditorPack(input) {
   }
   if (used.size !== files.size)
     throw fail(422, "Unreferenced editor pack bytes");
-  return { pack: structuredClone(input), files, repository, json, bytes };
+  // Metadata and containers must detach from the caller before any async use.
+  // File records have exactly these four validated primitive fields; new records
+  // can share immutable string/number values without cloning the base64 payloads.
+  // Replacing the value preserves the original top-level key order/checksum.
+  const pack = structuredClone({ ...input, files: [] });
+  pack.files = input.files.map((file) => ({ ...file }));
+  return { pack, files, repository, json, bytes, serializedBytes: accounting.bytes };
 }
 export function sealEditorPack(content) {
   const pack = { ...content, sha256: jsonDigest(content) };

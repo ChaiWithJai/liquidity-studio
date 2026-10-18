@@ -459,8 +459,10 @@ export class EditorPackService {
       throw fail(422, "Current owner source review acknowledgement required");
   }
   async install(actor, pack, input) {
-    const validated = validateEditorPack(pack),
-      principal = await this.principal(actor);
+    const validated = validateEditorPack(pack);
+    // Use only the detached validated snapshot across authorization/storage awaits.
+    pack = validated.pack;
+    const principal = await this.principal(actor);
     this.validateTarget(pack, input, principal.actor);
     // Verify fonts already installed by the operator. Import never writes executable/font paths.
     const approvedFonts = nativeFontCatalog().flatMap((font) =>
@@ -533,7 +535,7 @@ export class EditorPackService {
         throw fail(422, "Invalid portable image dimensions or encoding");
       await image.resize(1, 1).raw().toBuffer();
     }
-    await this.capacityCheck(Buffer.byteLength(JSON.stringify(pack)) * 3);
+    await this.capacityCheck(validated.serializedBytes * 3);
     const intentFingerprint = jsonDigest({
       packSha256: pack.sha256,
       options: input,

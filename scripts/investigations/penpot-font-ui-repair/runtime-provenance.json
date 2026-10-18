@@ -1,0 +1,98 @@
+{
+  "kind": "registry-and-primary-build-source-read-only-receipt",
+  "localImagePullOrExecution": false,
+  "devenv": {
+    "index": "sha256:f1f3571504f344c60d683de12e9f606e8576d557e6a4f574fb5db3a6f452f430",
+    "amd64": "sha256:912d522803d94fa3e5c9f304088887a45fa6d90517751094f22a14a8754d2b37",
+    "config": "sha256:4e1a57dba9110dd98b2c7434f359e3cf7ff06f5d196a6283e96e5702b9ef5d44",
+    "architecture": "amd64",
+    "buildSource": "4f015b9500ca512a549715a8d0897d98d4c6ecd3",
+    "buildDockerfileSha256": "412b61f94d2c3d8e417479401e548845ff7b3b3fad9936c2b1d742a1ff3e3ef7",
+    "baseToolchainFromBuildSource": {
+      "node": "24.22.0",
+      "pnpm": "12.14.0",
+      "java": "27.0.0",
+      "clojureCLI": "1.12.5.1664"
+    },
+    "limits": "Build source/provenance, not an executed binary-version proof. Hosted network-none runtime probe must confirm before any build."
+  },
+  "targetApplicationSource": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "frontend": {
+    "index": "sha256:bb8abe27d53de84c95597f2c02c0e702b2779971fb0703e543f9ecf183e999f6",
+    "descriptors": [
+      {
+        "digest": "sha256:2c7f4e840102e06bccf36b6a93fc3a030cc0bbba7e0125dec33197187dba8041",
+        "platform": {
+          "architecture": "amd64",
+          "os": "linux"
+        }
+      },
+      {
+        "digest": "sha256:4b755d7b8dc666184cea086b25dffe3273e09df782e72b8e4eb3388624f9b28b",
+        "platform": {
+          "architecture": "arm64",
+          "os": "linux"
+        }
+      }
+    ],
+    "comparisonAmd64": "sha256:2c7f4e840102e06bccf36b6a93fc3a030cc0bbba7e0125dec33197187dba8041"
+  },
+  "buildPnpm": {
+    "version": "12.5.1",
+    "managerMethod": "Official pnpm self-update outside any project into isolated PNPM_HOME; original upstream packageManager unchanged",
+    "registry": "https://registry.npmjs.org",
+    "package": {
+      "name": "pnpm",
+      "version": "12.5.1",
+      "dist": {
+        "shasum": "63d45ee7d0d3154d162d8b0db0603277f256bfdf",
+        "tarball": "https://registry.npmjs.org/pnpm/-/pnpm-12.5.1.tgz",
+        "fileCount": 449,
+        "integrity": "sha512-4/MFvHhKK8ifWtO2E4iJRw+ujSr182thIW7JHCw9ZAiXdfneOKrDMQROpA8kXLDVZmOS399lgk4ZB+9qLGLeXw==",
+        "signatures": [
+          {
+            "sig": "MEUCIQC7beO7UbuinRUqd75tDA7npst3PuGyR7nojzjFcjJ+PQIgEDeHq18hEHCjOsYdxoSRpW5J/XvD0X99QmsPFHYzsHg=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/pnpm@12.5.1",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 3973378
+      }
+    },
+    "nativePackage": {
+      "name": "@pnpm/exe.linux-x64",
+      "version": "12.5.1",
+      "dist": {
+        "shasum": "53d8b4f8d4df550c77e334b6ce11afcd2730d56a",
+        "tarball": "https://registry.npmjs.org/@pnpm/exe.linux-x64/-/exe.linux-x64-12.5.1.tgz",
+        "fileCount": 4,
+        "integrity": "sha512-3PkUBYo5z4dgtlnTNIFj7QGpcDUAuqXz9WGVigPDCeccEnhGiRkWmA5102TmYJHtwJP3LfmE+ZF9PGeWhn8p9Q==",
+        "signatures": [
+          {
+            "sig": "MEUCIQCTS9y2/ZT/OB604KbwSJwSPxTIlwW3VijIIkuXjASGIwIgcnN7YITaIhwqFjp/ezjpfK+yyg5WNvwsPsXLoOFk8mQ=",
+            "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+          }
+        ],
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@pnpm%2fexe.linux-x64@12.5.1",
+          "provenance": {
+            "predicateType": "https://slsa.dev/provenance/v1"
+          }
+        },
+        "unpackedSize": 52371280
+      }
+    },
+    "packageManagerSourceHashMatchesRegistrySRI": true
+  },
+  "sources": [
+    "https://github.com/penpot/penpot/blob/4f015b9500ca512a549715a8d0897d98d4c6ecd3/docker/devenv/Dockerfile",
+    "https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/frontend/package.json",
+    "https://pnpm.io/cli/self-update",
+    "https://pnpm.io/cli/install#--frozen-lockfile"
+  ]
+}

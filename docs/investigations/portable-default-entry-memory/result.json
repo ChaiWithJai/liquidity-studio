@@ -1,0 +1,36 @@
+{
+  "sourceRuntime": "c86761011bf7f6dfb028a4952cce30bf9b24096f",
+  "sourceDocsHead": "150900c",
+  "candidateSha256": "f6d9518cac31d85d35ba5819bf8eb9cd97f98c5cef82eaaff3550a84347d9f03",
+  "candidateBytes": 50331648,
+  "profile": "default image entrypoint node server/index.js; no NODE_OPTIONS; no supervisor",
+  "memoryLimits": {
+    "app": 536870912,
+    "nginx": 67108864,
+    "topology": 603979776
+  },
+  "ordinaryNeo": {
+    "page": 163,
+    "installAttempts": 1,
+    "newDestinationHttp": 201,
+    "installHttp": 502,
+    "outcome": "unknown retained request; no retry"
+  },
+  "app": {
+    "oomKilled": true,
+    "exitCode": 137,
+    "highestSampledMemoryUsage": 160210944,
+    "peakUnavailable": true,
+    "collectorRows": 50,
+    "noAddedObserverProcessWithinCgroup": true
+  },
+  "postmortemDatabaseBackupAvailable": false,
+  "candidateValidity": "not established",
+  "capsRaised": false,
+  "appAndNginxStopped": true,
+  "ownedNeoBlank": true,
+  "cloudOrProviderCalls": false,
+  "localValidatorsRun": false,
+  "journalStateNotObserved": true,
+  "controlledPasswordNotGoogle": true
+}
