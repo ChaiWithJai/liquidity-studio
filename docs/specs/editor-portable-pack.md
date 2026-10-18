@@ -137,10 +137,21 @@ has finished or closed. Disconnecting an export client does not admit another
 export while the original work continues. Aborted or failed body collection
 releases its slot; portable POST body collection has a 15-second deadline. The
 49 MiB install body limit and all archive limits remain unchanged. Ordinary
-non-pack routes are not serialized by this guard.
+non-pack routes are not serialized by this guard. The read-only recovery status route is also exempt, after the same founder/feature/scope checks, so an active installation cannot hide its journal.
 
 This is a per-server-instance overlap control, not a hard 512 MiB memory limit or
 an aggregate spend guarantee. JSON parsing, validation, archive serialization,
 and transport still have memory costs; multi-instance scaling and instance-level
 capacity require separate operational limits. Regression tests use tiny held
 requests and a held HTTP response, rather than allocating maximum-size packs.
+## Founder Operations recovery workflow
+
+The default-off portable capability adds an Operations panel to the ordinary Studio application. A founder can download the active brand's validated JSON pack, select a private pack no larger than 48 MiB, inspect a clearly unvalidated file summary, and create a new empty recovery brand. The panel never offers an existing brand as an installation destination. The current owner deliberately attests to nonclinical source review and maps retained native owners to the current account; this does not restore prepared-copy, artwork, clinical or publication approval.
+
+Destination creation accepts an optional idempotency key. Its actor-scoped ledger retains at most 32 successful exact-payload requests without eviction; replay rechecks current founder membership and preserves any work subsequently added to that destination. Changed payloads conflict. Existing callers without a key retain their previous behavior.
+
+`GET /api/admin/editor-pack/status?organizationId=…&brandId=…` reads only the durable restore journal after current founder/scope authorization. It does not instantiate or seed a repository, and remains available while the destination is reserved. The projection contains status, installation ID, pack hash, creation time and completed result. Only the original actor receives the original request key/replay indicator; another authorized founder receives rollback capability only. Identity hashes, source snapshots, internal storage keys and recovery lease tokens are excluded.
+
+The panel stores only an actor/source-scope-partitioned recovery locator in browser storage: destination identity, pack/file hashes and request key. It stores no pack bytes, source copy, credentials or grants. Closing the page requires reselecting the exact file before replaying installation. A status check never executes an install. An unknown reply retains the same intent/key; known refusal presents the server reason. Interrupted installation is explicitly rolled back to its owned empty destination before retrying. Rollback by installation ID uses the same atomic reservation and ownership checks as the existing key-based operation, without exposing the original actor's key to another founder.
+
+All requests use the existing managed-identity dispatcher. Explicit destination requests retain the originating workspace/session fence before token acquisition and after responses. Leaving that scope unmounts the panel; late replies cannot adopt another brand's state. This panel adds no editor distribution, model, infrastructure or sign-in capability. It does not satisfy the separate current-owner native/source rebind acceptance merely by installing historical evidence.

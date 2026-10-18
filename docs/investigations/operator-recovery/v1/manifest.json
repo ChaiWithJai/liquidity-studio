@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "scope": "Built original-only Studio App, controlled owned-source fixtures, local HTTP/SQLite and explicit test password authentication; not managed Google acceptance or upstream EditorApp distribution",
+  "baseCommit": "1dcb3a104adab7955d07143d0d982e08e0cfc288",
+  "journeys": {
+    "passed": 5,
+    "includes": [
+      "both brand pack download and new empty destination restore",
+      "reloaded completed journal readback",
+      "lost create and install replies with exact retained request keys",
+      "marketer UI and API denial",
+      "controlled interrupted journal, locked status and installation-ID rollback before retry"
+    ]
+  },
+  "providerCalls": 0,
+  "runtimeMutations": "Only owned ephemeral test databases and HTTP ports; no maintained runtime or cloud changes",
+  "artifacts": [
+    {
+      "filename": "finance-recovery-rejoined.png",
+      "sha256": "064389e3734a01d2890e54cbad44561aef163b7f465eafa12e0fadda26c70fdf",
+      "width": 1440,
+      "height": 1100
+    },
+    {
+      "filename": "cultural-recovery-rejoined.png",
+      "sha256": "b23a71f27c450f2f7eefed0b59aeb66c3ea561e80ce8940481afd87f5580edfd",
+      "width": 1440,
+      "height": 1100
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "liquidity-studio/server/editor-recovery.js",
+      "sha256": "cea28a175a9ba4bec7558656ed00a27ead323a89a41e37824d39858920e23fc7"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-service.js",
+      "sha256": "42b6c77e0d5dbc0bee936b6b7e3d5e1c724470a744c536c4a2f9f4a567ae29bd"
+    },
+    {
+      "path": "liquidity-studio/src/components/OperatorRecoveryPanel.svelte",
+      "sha256": "7bc17c20b866f92b48fc18e7e1b85009190b5347cbb9c9e82d04798ff84693a8"
+    },
+    {
+      "path": "liquidity-studio/src/App.svelte",
+      "sha256": "acd3be314b0c844b3c411f117a8839666efe24779c418de59baa716554f81887"
+    },
+    {
+      "path": "liquidity-studio/server/index.js",
+      "sha256": "d77b17cbbadc40f45621998913cf7e77c3e6b8ff41c79c811d1f1ccc40d06f4b"
+    }
+  ],
+  "nodeTests": {
+    "passed": 333,
+    "skipped": 2,
+    "failed": 0,
+    "meaning": "Separate Firestore/Google emulator suites cover their own boundaries"
+  }
+}

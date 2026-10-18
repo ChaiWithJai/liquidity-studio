@@ -8,6 +8,7 @@
   import NativeEditorHost from "./components/NativeEditorHost.svelte";
   import NativeLayoutHistory from "./components/NativeLayoutHistory.svelte";
   import PenpotPanel from "./components/PenpotPanel.svelte";
+  import OperatorRecoveryPanel from "./components/OperatorRecoveryPanel.svelte";
   import PreparedSourcePanel from "./components/PreparedSourcePanel.svelte";
   import HelperControlPane from "./components/HelperControlPane.svelte";
   import { createWorkspaceClient } from "./lib/workspace-client.js";
@@ -66,6 +67,7 @@
   let workspaceState = $state(null);
   let helperControlEnabled = $state(false);
   let nativeEditorEnabled = $state(false);
+  let nativePortableEnabled = $state(false);
   let penpotEnabled = $state(false);
   let sourcePreparationEnabled=$state(false),preparedDirty=$state(false),preparedEditingStoryId=$state(""),preparedForkIntent=$state(null);
   let preparedWorkspace=$derived(sourcePreparationEnabled&&(!campaign||preparedEditingStoryId===selectedStory?.id));
@@ -313,6 +315,18 @@
       onUnauthorized: clearWorkspace,
     });
   }
+  function recoveryRequest(path, options = {}, target = null) {
+    const captured = requestContext(), auth = googleAuth, google = authMode === "google";
+    const query = new URLSearchParams(target ? {organizationId:target.organizationId,brandId:target.brandId} : {organizationId,brandId}).toString();
+    return scopedRequest({path,options,scoped:true,context:{...captured,query},
+      getContext:()=>({...requestContext(),query}),
+      authorize:async()=>google?{Authorization:`Bearer ${await auth.getToken()}`}:{},
+      onUnauthorized:clearWorkspace});
+  }
+  async function recoveryFinished(){
+    const session=await request("/api/auth/session",{},false);
+    organizations=session.organizations||organizations;
+  }
   function post(path, body = {}, scoped = true) {
     return request(
       path,
@@ -388,7 +402,7 @@
     if (workspaceClient && stories) workspaceClient.ingestStories(stories, {replace});
   }
   function clearWorkspace() {
-    leaveNativeEditor(true); nativeEditorEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
+    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     requestSessionEpoch++;
     lastScopeToken++;
     scopeLoading = false;
@@ -571,7 +585,7 @@
     searchInput?.focus();
   }
   async function loadScope() {
-    leaveNativeEditor(true); nativeEditorEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
+    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
     const view = key === activeBacklogScopeKey
@@ -609,6 +623,7 @@
       if (token !== lastScopeToken) return;
       helperControlEnabled = data.operatorCapabilities?.helperControl === true;
       nativeEditorEnabled = data.operatorCapabilities?.nativeEditor === true;
+      nativePortableEnabled = data.operatorCapabilities?.nativePortable === true;
       penpotEnabled = data.operatorCapabilities?.penpot === true;
       sourcePreparationEnabled=data.operatorCapabilities?.sourcePreparation===true;
       brandProfile = data.brandProfile;
@@ -1835,6 +1850,7 @@
             </p>{/each}
         </section>
       {:else if tab === "admin" && canAdmin}
+        {#if nativePortableEnabled && workspaceClient}{#key workspaceClient}<OperatorRecoveryPanel actorId={user.id} {organizationId} {brandId} scopeKey={workspaceClient.scopeKey} getScopeKey={()=>workspaceClient?.scopeKey} request={recoveryRequest} onRestored={recoveryFinished}/>{/key}{/if}
         <div class="admin-grid">
           <section class="panel">
             <div class="panel-heading">

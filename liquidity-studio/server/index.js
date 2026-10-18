@@ -1,3 +1,4 @@
+import { editorRestoreStatus } from "./editor-recovery.js";
 import {
   EditorPackService,
   createEditorRestoreDestination,
@@ -508,6 +509,7 @@ export function createHttpServer(
         const methods = {
           "/api/admin/editor-pack/destinations": "POST",
           "/api/admin/editor-pack/export": "GET",
+          "/api/admin/editor-pack/status": "GET",
           "/api/admin/editor-pack/install": "POST",
           "/api/admin/editor-pack/rollback": "POST",
         };
@@ -519,38 +521,40 @@ export function createHttpServer(
             url.searchParams.get("organizationId"),
             url.searchParams.get("brandId"),
           );
-        if (portableOperationActive) {
-          res.setHeader("Retry-After", "1");
-          if (req.method === "POST") {
-            // Discard transport bytes without attaching a JSON/data collector.
-            req.resume();
+        if (route !== "/api/admin/editor-pack/status") {
+          if (portableOperationActive) {
+            res.setHeader("Retry-After", "1");
+            if (req.method === "POST") {
+              // Discard transport bytes without attaching a JSON/data collector.
+              req.resume();
+            }
+            throw fail(
+              429,
+              "Another portable-pack operation is active. Retry this request after it finishes.",
+            );
           }
-          throw fail(
-            429,
-            "Another portable-pack operation is active. Retry this request after it finishes.",
-          );
+          portableOperationActive = true;
+          portableBody = req.method === "POST";
+          let operationDone = false,
+            responseDone = res.destroyed,
+            released = false;
+          const release = () => {
+            if (!released && operationDone && responseDone) {
+              released = true;
+              portableOperationActive = false;
+            }
+          };
+          const responseFinished = () => {
+            responseDone = true;
+            release();
+          };
+          res.once("finish", responseFinished);
+          res.once("close", responseFinished);
+          portableOperationSettled = () => {
+            operationDone = true;
+            release();
+          };
         }
-        portableOperationActive = true;
-        portableBody = req.method === "POST";
-        let operationDone = false,
-          responseDone = res.destroyed,
-          released = false;
-        const release = () => {
-          if (!released && operationDone && responseDone) {
-            released = true;
-            portableOperationActive = false;
-          }
-        };
-        const responseFinished = () => {
-          responseDone = true;
-          release();
-        };
-        res.once("finish", responseFinished);
-        res.once("close", responseFinished);
-        portableOperationSettled = () => {
-          operationDone = true;
-          release();
-        };
       }
       const body =
         req.method === "POST"
@@ -627,7 +631,12 @@ export function createHttpServer(
           route === "/api/admin/editor-pack/destinations" &&
           req.method === "POST"
         ) {
-          workspaceExact(body, ["organizationId", "name", "preset"]);
+          workspaceExact(body, [
+            "organizationId",
+            "name",
+            "preset",
+            "idempotencyKey",
+          ]);
           return json(
             201,
             await createEditorRestoreDestination({
@@ -643,6 +652,16 @@ export function createHttpServer(
           url.searchParams.get("organizationId"),
           url.searchParams.get("brandId"),
         );
+        if (route === "/api/admin/editor-pack/status" && req.method === "GET")
+          return json(
+            200,
+            await editorRestoreStatus({
+              store: platform.store,
+              identity,
+              actor: user,
+              scope: target,
+            }),
+          );
         const restoreRepo = new ScopedRepository(platform.store, target);
         await restoreRepo.ready;
         const packService = new EditorPackService({
@@ -664,7 +683,9 @@ export function createHttpServer(
           route === "/api/admin/editor-pack/rollback" &&
           req.method === "POST"
         ) {
-          workspaceExact(body, ["idempotencyKey"]);
+          workspaceExact(body, ["idempotencyKey", "installationId"]);
+          if (!body.idempotencyKey && !body.installationId)
+            throw fail(400, "A current recovery installation is required");
           return json(200, await packService.rollback(user, body));
         }
         throw fail(404, "Not found");
@@ -735,8 +756,16 @@ export function createHttpServer(
         )
           throw fail(404, "Not found");
         const jobs = platform.operatorJobs(scope, activeContainer);
-        const forkRoute=route.match(/^\/api\/studio\/preparations\/stories\/([^/]+)\/fork$/);
-        if(forkRoute&&req.method==="POST")return json(201,await platform.preparedPromotion(scope,repo).fork(user,decodeURIComponent(forkRoute[1]),body));
+        const forkRoute = route.match(
+          /^\/api\/studio\/preparations\/stories\/([^/]+)\/fork$/,
+        );
+        if (forkRoute && req.method === "POST")
+          return json(
+            201,
+            await platform
+              .preparedPromotion(scope, repo)
+              .fork(user, decodeURIComponent(forkRoute[1]), body),
+          );
         const preparationStoryRoute = route.match(
           /^\/api\/studio\/preparations\/stories\/([^/]+)$/,
         );
@@ -751,8 +780,28 @@ export function createHttpServer(
         const candidateRoute = route.match(
           /^\/api\/studio\/preparations\/([a-f0-9-]{36})(?:\/(edit|review-plan|promote|fork-plan|fork))?$/,
         );
-        if(candidateRoute&&candidateRoute[2]==="fork-plan"&&req.method==="GET")return json(200,await platform.preparedPromotion(scope,repo).historicalForkPlan(user,candidateRoute[1]));
-        if(candidateRoute&&candidateRoute[2]==="fork"&&req.method==="POST")return json(201,await platform.preparedPromotion(scope,repo).forkHistorical(user,candidateRoute[1],body));
+        if (
+          candidateRoute &&
+          candidateRoute[2] === "fork-plan" &&
+          req.method === "GET"
+        )
+          return json(
+            200,
+            await platform
+              .preparedPromotion(scope, repo)
+              .historicalForkPlan(user, candidateRoute[1]),
+          );
+        if (
+          candidateRoute &&
+          candidateRoute[2] === "fork" &&
+          req.method === "POST"
+        )
+          return json(
+            201,
+            await platform
+              .preparedPromotion(scope, repo)
+              .forkHistorical(user, candidateRoute[1], body),
+          );
         if (
           candidateRoute &&
           candidateRoute[2] === "review-plan" &&
@@ -945,15 +994,27 @@ export function createHttpServer(
               .editorApproval(scope, repo)
               .transition(user, reviewMatch[1], body),
           );
-        const portableExportMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/portable-exports(?:\/([a-f0-9]{64}))?$/);
+        const portableExportMatch = route.match(
+          /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/portable-exports(?:\/([a-f0-9]{64}))?$/,
+        );
         if (portableExportMatch && req.method === "GET") {
-          if (process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== "true") throw fail(404,"Not found");
-          const history = new EditorPackService({native:service});
-          return json(200,portableExportMatch[2]
-            ? await history.historicalExportBytes(user,portableExportMatch[1],portableExportMatch[2])
-            : await history.historicalExports(user,portableExportMatch[1]));
+          if (process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== "true")
+            throw fail(404, "Not found");
+          const history = new EditorPackService({ native: service });
+          return json(
+            200,
+            portableExportMatch[2]
+              ? await history.historicalExportBytes(
+                  user,
+                  portableExportMatch[1],
+                  portableExportMatch[2],
+                )
+              : await history.historicalExports(user, portableExportMatch[1]),
+          );
         }
-        const exportStageMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/exports$/);
+        const exportStageMatch = route.match(
+          /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/exports$/,
+        );
         if (exportStageMatch && req.method === "GET")
           return json(
             200,
@@ -1129,6 +1190,10 @@ export function createHttpServer(
           operatorCapabilities: {
             helperControl: helperControlEnabled && !trustedTestMode,
             nativeEditor: nativeEditorEnabled && !trustedTestMode,
+            nativePortable:
+              nativeEditorEnabled &&
+              !trustedTestMode &&
+              process.env.STUDIO_NATIVE_PORTABLE_ENABLED === "true",
             penpot: penpotEnabled && !trustedTestMode && !process.env.K_SERVICE,
             sourcePreparation:
               process.env.STUDIO_SOURCE_PREPARATION_ENABLED === "true" &&
