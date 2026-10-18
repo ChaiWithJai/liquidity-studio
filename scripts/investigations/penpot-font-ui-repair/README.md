@@ -46,3 +46,10 @@ Neo only, original disposable QA2 team: select exact Inter once, observe unmodif
 ## Rollback
 
 No automatic deploy or runtime mutation exists here. Before a separately reviewed candidate mount, capture current effective Compose/image/assets, consistent native backup and source/copy fingerprints. Only owned39008 frontend, complete reviewed graph, read-only bind with create_host_path:false. Restore official baseline frontend graph before stopping any ancillary callback. Never touch maintained Studio3001/cloud, original files/fonts or52 identity pairing. Retain failed outputs. Missing fonts/UI/compiler failure remains open until actual proof.
+
+
+## First hosted attempt and bounded path correction
+
+Actual manual run [39118020071](https://github.com/ChaiWithJai/liquidity-studio/actions/runs/39118020071), source6409e4c, passed source/host admission and the real pinned toolchain probe. Official self-update successfully installed pnpm12.5.1, then the recipe failed because it assumed the executable was PNPM_HOME/pnpm. No frontend compilation or font acceptance occurred; partial evidence uploaded. This was a build recipe path failure, not OOM or native parser repair proof.
+
+Primary [pnpm globalBinDir](https://pnpm.io/settings/other#globalbindir) documents that v11+ global binaries live in a bin subdirectory. The correction uses supported [pnpm bin --global](https://pnpm.io/cli/bin), strictly requires the owned /review-tools/home/bin path, records installed/resolved paths, and validates the real resolved executable stays under the owned home. Native SRI verification now runs inside the same pinned container namespace, avoiding a host-side absolute-symlink assumption, before executing the installed binary's version probe. The frozen-lock wrapper uses that exact admitted bin path. Versions, integrity pins, source patch, official build, memory/swap/CPU/deadline and no-deploy bounds remain unchanged. No rerun is authorized by this source change alone.

@@ -70,12 +70,24 @@ jobs:
           chmod 755 review-tools/bin/pnpm
           docker run --rm --memory 1g --memory-swap 1g --cpus 1 \
             --mount type=bind,src="$GITHUB_WORKSPACE/review-tools",dst=/review-tools \
+            --mount type=bind,src="$GITHUB_WORKSPACE/studio/scripts/investigations/penpot-font-ui-repair",dst=/recipe,readonly \
             -e PNPM_HOME=/review-tools/home -w / --entrypoint bash "$DEVENV" \
-            -lc '/opt/node/bin/pnpm self-update 12.5.1 --registry=https://registry.npmjs.org && test "$(/review-tools/home/pnpm --version)" = 12.5.1' \
-            2>&1 | tee evidence/pnpm-manager.log
-          # Verify actual installed native bytes against immutable package SRI, not version text alone.
-          python3 studio/scripts/investigations/penpot-font-ui-repair/verify-pnpm.py \
-            review-tools/home/pnpm > evidence/pnpm-integrity.json
+            -lc '
+              set -euo pipefail
+              /opt/node/bin/pnpm self-update 12.5.1 --registry=https://registry.npmjs.org
+              bin_dir="$(/opt/node/bin/pnpm bin --global)"
+              test "$bin_dir" = /review-tools/home/bin
+              test -x "$bin_dir/pnpm"
+              resolved="$(readlink -f "$bin_dir/pnpm")"
+              case "$resolved" in /review-tools/home/*) ;; *) exit 1 ;; esac
+              printf "%s\n" "$bin_dir/pnpm" > /review-tools/installed-pnpm.path
+              printf "%s\n" "$resolved" > /review-tools/resolved-pnpm.path
+              # Verify inside the same namespace: global symlinks may be absolute.
+              python3 /recipe/verify-pnpm.py "$bin_dir/pnpm" > /review-tools/pnpm-integrity.json
+              test "$("$bin_dir/pnpm" --version)" = 12.5.1
+            ' 2>&1 | tee evidence/pnpm-manager.log
+          cp review-tools/pnpm-integrity.json review-tools/installed-pnpm.path \
+            review-tools/resolved-pnpm.path evidence/
       - name: Official complete frontend build in bounded disposable runner container
         shell: bash
         run: |

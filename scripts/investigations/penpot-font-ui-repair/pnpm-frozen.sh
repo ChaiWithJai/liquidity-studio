@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Original-owned hosted-only wrapper. Actual pnpm remains the official version manager's binary.
 set -euo pipefail
-real=/review-tools/home/pnpm
+real=/review-tools/home/bin/pnpm
 [[ "$($real --version)" == 12.5.1 ]] || { echo 'Pinned pnpm version mismatch' >&2; exit 1; }
 install=false
 for arg in "$@"; do
