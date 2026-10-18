@@ -131,16 +131,31 @@ function parseResponse(bytes, type, request) {
 }
 
 async function bounded(response, max) {
-  if (Number(response.headers.get("content-length")) > max)
+  if (!response.body) throw fail(502, "Native export response was empty");
+  if (Number(response.headers.get("content-length")) > max) {
+    await response.body.cancel().catch(() => {});
     throw fail(502, "Native export output exceeds its bound");
-  const chunks = [];
-  let size = 0;
-  for await (const chunk of response.body) {
-    size += chunk.length;
-    if (size > max) throw fail(502, "Native export output exceeds its bound");
-    chunks.push(chunk);
   }
-  return Buffer.concat(chunks);
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0,
+    completed = false;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        completed = true;
+        break;
+      }
+      size += value.byteLength;
+      if (size > max) throw fail(502, "Native export output exceeds its bound");
+      chunks.push(value);
+    }
+    return Buffer.concat(chunks);
+  } finally {
+    if (!completed) await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  }
 }
 
 export async function readPenpotExportBody(req) {
