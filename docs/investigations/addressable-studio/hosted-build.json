@@ -1,0 +1,24 @@
+{
+  "runId": 39136538762,
+  "sourceCommit": "dc83d100ec64c1156ad39d143713705182a45ea9",
+  "artifactId": 12139787801,
+  "zipSha256": "3ec65dc09eaa14c09889aa4d28506a47a9503bc1b1dd20b5247b4a814e848efb",
+  "method": "Exact hosted canonical build outputs; no local build",
+  "files": {
+    "assets/index-B9KMmpHk.css": "6562986b7b08e62858ab663a41e3d6257306ce97f088cf4895c609c5f8b1995f",
+    "assets/index-tjdreXjK.js": "ef47a349195b35fcd6ee2c39c02c463e35ce2d41f46d0a2a531ab5a1ecab6f41",
+    "fonts/DejaVuSans-Bold.ttf": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96",
+    "fonts/DejaVuSans.ttf": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322",
+    "fonts/InstrumentSerif-OFL.txt": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521",
+    "fonts/InstrumentSerif-Regular.ttf": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88",
+    "fonts/Inter-LICENSE.txt": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a",
+    "fonts/InterVariable.ttf": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+    "fonts/LICENSE.txt": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9",
+    "fonts/MonaSans-Bold.otf": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641",
+    "fonts/MonaSans-OFL.txt": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de",
+    "fonts/MonaSans-Regular.otf": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39",
+    "fonts/NotoSansDevanagari-OFL.txt": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331",
+    "fonts/NotoSansDevanagari.ttf": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e",
+    "index.html": "7a5efc39efb97b76027f357345c89a07bf1abcce294c813b47623cf876d44dc3"
+  }
+}
