@@ -1,0 +1,98 @@
+{
+  "source": "0dea05b",
+  "at": "2026-10-18T04:52:21.595Z",
+  "scopes": [
+    {
+      "brandId": "brand_default",
+      "storyCount": 5,
+      "jobs": [
+        {
+          "id": "c5c44e8d-079e-486a-b20f-9267fd1850d5",
+          "items": [
+            {
+              "storyId": "story_huda_buyback",
+              "state": "completed"
+            }
+          ]
+        },
+        {
+          "id": "ce6486b0-9733-4a78-9ad7-07c54cc0ec64",
+          "items": [
+            {
+              "storyId": "story_angel_city",
+              "state": "completed"
+            }
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "id": "94976968-eead-4a8c-9578-da98abd6ae1c",
+          "storyId": "story_huda_buyback",
+          "modelCalls": 0,
+          "evidence": [
+            {
+              "url": "https://www.prnewswire.com/news-releases/huda-beauty-reclaims-full-ownership-as-an-independent-beauty-brand-302471853.html",
+              "responseBytes": 221186,
+              "responseSha256": "4831ebe77e48e93e344b891606be1aa8f4e6e01f6f359c879fb76c488d49030c",
+              "textSha256": "c0474cef4e954ede98dbd87c596745dc3d99ce1c3f97c625bc4eb728ed9371ff"
+            }
+          ]
+        },
+        {
+          "id": "3d263054-369e-4ff5-ac2c-2010230a4532",
+          "storyId": "story_angel_city",
+          "modelCalls": 0,
+          "evidence": [
+            {
+              "url": "https://angelcity.com/acfc-post/angel-city-ownership-agreement-announcement",
+              "responseBytes": 256573,
+              "responseSha256": "f2365cad4639c15b4389ad19ae0e7a814f9c99daa25c3e300657300833d34e08",
+              "textSha256": "0653dd2fab9eb35810ec5e00027dc248a5436151184404a33bc50a86aedf5ed5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "brandId": "brand_vedic",
+      "storyCount": 5,
+      "jobs": [
+        {
+          "id": "6343c446-53a7-44eb-905e-db92f25816bd",
+          "items": [
+            {
+              "storyId": "research_4",
+              "state": "completed"
+            }
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "id": "834a0fad-7012-4738-bc8a-32f42513067d",
+          "storyId": "research_4",
+          "modelCalls": 0,
+          "evidence": [
+            {
+              "url": "https://www.gutenberg.org/cache/epub/2526/pg2526-images.html",
+              "responseBytes": 214464,
+              "responseSha256": "a2a10676c7d0c7eea96c81ea4c3ed49bea1fe0fd1e79768a4a665d5ca48ee985",
+              "textSha256": "1c258526d885c45d65e5151102886c9c7c4767f680d7a7229b5a9f074f96ba21"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "evidenceKind": "operator Firestore readback of actual managed Cloud Tasks work; paired with real Google browser screenshots",
+  "cloudRevision": "liquidity-studio-00019-gen",
+  "trafficPercent": 100,
+  "sourceCommit": "0dea05bc9c1a4b8f5310f5afc7174863b3d39e41",
+  "mergedMain": "9a005d2aeae4414576a1caefbecbf32423ee2d7b",
+  "localImage": "sha256:958e6ee2bff52d2f21a858e3b45480c4225337c3a7046b0a061d4db97c444e24",
+  "registryDigest": "sha256:859a373f13f5b7629d5699febe5f75115d82e991522a5ea8f4e6c9bd38b85d57",
+  "newHumanSourceApprovals": 0,
+  "otherSeedStories": "7 need source research; no readiness fabricated",
+  "anonymousStateStatus": 401
+}

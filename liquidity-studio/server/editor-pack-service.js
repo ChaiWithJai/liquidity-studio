@@ -9,6 +9,8 @@ import { BRAND_PRESETS } from "./domain.js";
 import { fail } from "./auth.js";
 import {
   addFile,
+  createPackFileCollection,
+  PACK_LIMITS,
   sealEditorPack,
   validateEditorPack,
   jsonDigest,
@@ -85,8 +87,9 @@ export class EditorPackService {
     native,
     now = () => new Date().toISOString(),
     capacityCheck = checkRestoreCapacity,
+    createFiles = createPackFileCollection,
   }) {
-    Object.assign(this, { native, now, capacityCheck });
+    Object.assign(this, { native, now, capacityCheck, createFiles });
     this.repo = native.repo;
     this.store = native.store;
     this.scope = native.scope;
@@ -114,7 +117,7 @@ export class EditorPackService {
     const preparedHistory = projectPreparedHistory(repository.data.preparedSourceCandidates || [], this.scope);
     delete repository.data.preparedSourceCandidates;
     repository.sha256 = jsonDigest(repository.data);
-    const files = [],
+    const files = this.createFiles(),
       documents = [],
       assets = [],
       fonts = [];
@@ -134,12 +137,12 @@ export class EditorPackService {
     );
     if (documentKeys.length > 100 || assetKeys.length > 100)
       throw fail(413, "Editor pack collection limit");
-    const captured = await Promise.all(
-      [...documentKeys, ...assetKeys, ...reviewKeys, ...exportKeys].map(async (key) => [
-        key,
-        jsonDigest(await this.store.get(key)),
-      ]),
-    );
+    const captured = [];
+    // Payload bytes are immutable and checked against their receipt as they stream.
+    // Fence mutable metadata sequentially, without retaining all parsed payloads at once.
+    const exportMetadataKeys = exportKeys.filter(key=>!key.startsWith(exportPrefix+"bytes:"));
+    for (const key of [...documentKeys, ...assetKeys, ...reviewKeys, ...exportMetadataKeys])
+      captured.push([key,jsonDigest(await this.store.get(key))]);
     if (
       reviewKeys.some(
         (key) =>
@@ -160,6 +163,8 @@ export class EditorPackService {
     }
     for (const key of documentKeys) {
       const record = await this.store.get(key);
+      if ((record.restoredHistory?.length || 0) + (record.receipts?.length || 0) > PACK_LIMITS.history)
+        throw fail(413,"Native history limit before scene hydration");
       const scene = async (reference) =>
         addFile(
           files,
@@ -203,7 +208,9 @@ export class EditorPackService {
       if (!ledger && review?.exports?.length) throw fail(422,"Completed export receipt ledger is missing");
       // Active review transitions intentionally reset their projection. Durable receipts retain
       // completed artifacts after later edits/restarts without reviving completion credentials.
-      const completed = await projectFinalPngs({nativeId:record.id,format:record.format,receipts:(ledger?.events || []).map(event=>event.receipt),
+      const finalExports = [];
+      const retainFinal = ({bytes,bytesKeys,...item})=>finalExports.push({...item,file:addFile(files,bytes,"final-png")});
+      await projectFinalPngs({nativeId:record.id,format:record.format,receipts:(ledger?.events || []).map(event=>event.receipt),onArtifact:retainFinal,
         loadStage:artifactId=>this.store.get(exportPrefix+artifactId),
         loadBytes:async stage=>stage.reference.artifact
           ? this.store.downloadArtifact(this.scope,stage.reference.artifact)
@@ -212,9 +219,8 @@ export class EditorPackService {
         const chunks = await Promise.all(item.bytesKeys.map(key=>this.store.get(key)));
         const bytes = Buffer.concat(chunks.map(chunk=>Buffer.from(chunk?.base64 || "","base64")));
         await validateFinalPng(bytes,item.receipt,{nativeId:record.id,format:record.format});
-        completed.push({...copy(item),bytes});
+        retainFinal({...copy(item),bytes});
       }
-      const finalExports = completed.map(({bytes,bytesKeys,...item})=>({...item,file:addFile(files,bytes,"final-png")}));
       documents.push({
         metadata,
         finalExports,
