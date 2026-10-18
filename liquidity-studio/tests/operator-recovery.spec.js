@@ -363,3 +363,89 @@ test("a controlled interrupted installation can be inspected while locked and ro
     "Recovery status: completed",
   );
 });
+
+// Controlled interrupted state; all reads and rollback still use the real HTTP
+// authorization/repository gates. This is not a successful-install fixture.
+async function reserveEmptyDestination(page) {
+  await enter(page);
+  const response = await page.request.post(`${base}/api/admin/editor-pack/destinations?organizationId=org_default&brandId=brand_default`, {
+    data: {organizationId:"org_default",name:"Locked selected recovery brand",preset:"liquidity_desk",idempotencyKey:randomBytes(16).toString("hex")},
+  });
+  expect(response.status()).toBe(201);
+  const destination = await response.json(), target = destination.scope;
+  const scopeKey = `scope:${target.organizationId}:${target.brandId}`, before = await platform.store.get(scopeKey);
+  const actor = (await platform.store.get("identity")).users.find(user=>user.username==="founder");
+  const id = randomBytes(16).toString("hex");
+  await platform.store.update(scopeKey,state=>({...state,editorRestore:{id,status:"installing"}}));
+  await platform.store.update(`editor-restore:${target.organizationId}:${target.brandId}`,()=>({
+    schemaVersion:1,id,status:"installing",key:randomBytes(16).toString("hex"),actorId:actor.id,
+    packSha256:"a".repeat(64),before,plannedKeys:[],createdAt:new Date().toISOString(),
+  }));
+  return {target,scopeKey,before};
+}
+
+test("selected locked brand exposes only authorized recovery and UI rollback reloads its empty workspace",async({page})=>{
+  const {target,scopeKey,before}=await reserveEmptyDestination(page);
+  expect((await page.request.get(`${base}/api/studio/bootstrap?organizationId=${target.organizationId}&brandId=${target.brandId}`)).status()).toBe(423);
+  const overview=[];page.on("request",request=>{if(request.url().includes("/api/admin/overview"))overview.push(request.url());});
+  await page.getByLabel("Brand",{exact:true}).selectOption(target.brandId);
+  const shell=page.getByRole("region",{name:"Locked brand recovery",exact:true});
+  await expect(shell).toBeVisible();
+  await expect(shell.getByLabel("Recovery status")).toHaveText("Recovery status: installing");
+  await expect(page.getByRole("region",{name:"Story work table",exact:true})).toHaveCount(0);
+  await expect(shell.getByRole("button",{name:"Download current brand pack"})).toHaveCount(0);
+  await expect(shell.getByLabel("Choose private editor pack (up to 48 MiB)")).toHaveCount(0);
+  await expect(shell.getByRole("button",{name:"Create new empty recovery brand"})).toHaveCount(0);
+  await page.getByRole("button",{name:"Operations",exact:true}).click();
+  expect(overview).toHaveLength(0);
+  await expect(shell).toBeVisible();
+  await page.reload();
+  await page.getByLabel("Brand",{exact:true}).selectOption(target.brandId);
+  await expect(shell).toBeVisible();
+  await shell.getByRole("button",{name:"Refresh recovery status"}).click();
+  await expect(shell.getByLabel("Recovery status")).toHaveText("Recovery status: installing");
+  await shell.getByRole("button",{name:"Recover interrupted empty destination"}).click();
+  await expect(shell).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Workspace could not load."})).toHaveCount(0);
+  expect(await platform.store.get(scopeKey)).toEqual(before);
+  expect((await page.request.get(`${base}/api/studio/bootstrap?organizationId=${target.organizationId}&brandId=${target.brandId}`)).status()).toBe(200);
+});
+
+test("late locked-scope status cannot replace a different brand or a signed-out session",async({page})=>{
+  const {target}=await reserveEmptyDestination(page);
+  let release,observed;const held=new Promise(resolve=>release=resolve),seen=new Promise(resolve=>observed=resolve);
+  await page.route("**/api/admin/editor-pack/status?**",async route=>{
+    if(new URL(route.request().url()).searchParams.get("brandId")===target.brandId){observed();await held;}
+    await route.continue();
+  });
+  await page.getByLabel("Brand",{exact:true}).selectOption(target.brandId);await seen;
+  await page.getByLabel("Brand",{exact:true}).selectOption("brand_vedic");release();
+  await expect(page.getByRole("region",{name:"Story work table",exact:true})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Locked brand recovery",exact:true})).toHaveCount(0);
+  await expect(page.getByLabel("Brand",{exact:true})).toHaveValue("brand_vedic");
+  // A second held lookup is invalidated by logout, not only by brand changes.
+  let releaseLogout,observedLogout;const heldLogout=new Promise(resolve=>releaseLogout=resolve),seenLogout=new Promise(resolve=>observedLogout=resolve);
+  await page.unroute("**/api/admin/editor-pack/status?**");
+  await page.route("**/api/admin/editor-pack/status?**",async route=>{observedLogout();await heldLogout;await route.continue();});
+  await page.getByLabel("Brand",{exact:true}).selectOption(target.brandId);await seenLogout;
+  await page.getByRole("button",{name:"Sign out",exact:true}).click();releaseLogout();
+  await expect(page.getByRole("heading",{name:"Sign in to Studio"})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Locked brand recovery",exact:true})).toHaveCount(0);
+});
+
+test("an unrelated 423 and a locked marketer never receive a founder recovery shell",async({page})=>{
+  await enter(page);
+  await platform.store.update("scope:org_default:brand_vedic",state=>({...state,editorRestore:{id:"unmatched",status:"installing"}}));
+  await page.getByLabel("Brand",{exact:true}).selectOption("brand_vedic");
+  await expect(page.getByRole("heading",{name:"Workspace could not load."})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Locked brand recovery",exact:true})).toHaveCount(0);
+  await page.getByRole("button",{name:"Sign out",exact:true}).click();
+  await platform.store.update("scope:org_default:brand_default",state=>({...state,editorRestore:{id:"member-locked",status:"installing"}}));
+  const statusCalls=[];page.on("request",request=>{if(request.url().includes("/api/admin/editor-pack/status"))statusCalls.push(request.url());});
+  await page.getByLabel("Username",{exact:true}).fill("marketer");await page.getByLabel("Password",{exact:true}).fill(password);
+  await page.getByRole("button",{name:"Sign in →"}).click();
+  await expect(page.getByRole("heading",{name:"Workspace could not load."})).toBeVisible();
+  await expect(page.getByRole("region",{name:"Locked brand recovery",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("button",{name:"Operations",exact:true})).toHaveCount(0);
+  expect(statusCalls).toHaveLength(0);
+});

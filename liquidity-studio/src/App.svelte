@@ -197,6 +197,7 @@
   const backlogViews = new SvelteMap();
   let activeBacklogScopeKey = "";
   let scopeLoadError = $state("");
+  let lockedRecovery = $state.raw(null);
   let searchQuery = $derived(search.trim());
   let filtersActive = $derived(Boolean(searchQuery || statusFilter !== "All" || Object.entries(workspaceState?.query.definition.filters || {}).some(([key,value]) => !["search","statuses"].includes(key) && value !== "any" && value != null && value !== "" && (!Array.isArray(value) || value.length))));
   let editJson = $state("");
@@ -323,6 +324,9 @@
       authorize:async()=>google?{Authorization:`Bearer ${await auth.getToken()}`}:{},
       onUnauthorized:clearWorkspace});
   }
+  function recoveryScopeKey() {
+    return `${requestSessionEpoch}:${lastScopeToken}:${user?.id}:${organizationId}:${brandId}`;
+  }
   async function recoveryFinished(){
     const session=await request("/api/auth/session",{},false);
     organizations=session.organizations||organizations;
@@ -408,6 +412,7 @@
     scopeLoading = false;
     helperControlEnabled = false;
     scopeLoadError = "";
+    lockedRecovery = null;
     backlogViews.clear();
     activeBacklogScopeKey = "";
     search = "";
@@ -602,6 +607,7 @@
     search = view?.search || "";
     statusFilter = view?.statusFilter || "All";
     scopeLoadError = "";
+    lockedRecovery = null;
     const token = ++lastScopeToken;
     scopeLoading = true;
     helperControlEnabled = false;
@@ -645,6 +651,23 @@
         scopeLoadError = failure.message;
         disposeWorkspaceClient();
         brandProfile = null;
+        // The existing recovery route authorizes current founder membership
+        // without opening the locked repository. No other 423 unlocks data.
+        if (failure.status === 423 && user?.role === "founder") {
+          const key = recoveryScopeKey();
+          try {
+            const status = await recoveryRequest("/api/admin/editor-pack/status");
+            if (token === lastScopeToken && key === recoveryScopeKey() &&
+                status.scope?.organizationId === organizationId && status.scope?.brandId === brandId &&
+                ["installing", "rolling-back"].includes(status.status) && status.canRollback === true) {
+              lockedRecovery = {key, actorId:user.id, organizationId, brandId, status};
+              error = "";
+            }
+          } catch (recoveryFailure) {
+            if (token === lastScopeToken && key === recoveryScopeKey())
+              error = recoveryFailure.message || "Recovery status could not be checked. Retry this workspace.";
+          }
+        }
       }
     } finally {
       if (token === lastScopeToken) {
@@ -978,6 +1001,7 @@
     if (tab === "backlog") rememberBacklogView();
     tab = "admin";
     error = "";
+    if (lockedRecovery) return;
     try {
       [adminData, graph, readiness] = await Promise.all([
         request("/api/admin/overview"),
@@ -1197,6 +1221,17 @@
         </div>{/if}
       {#if scopeLoading}
         <div class="panel" role="status">Loading {currentBrand?.name || "brand"} workspace…</div>
+      {:else if lockedRecovery && canAdmin}
+        <section class="panel" aria-label="Locked brand recovery">
+          <h2>Recover this brand’s interrupted installation</h2>
+          <p>Stories and artwork remain locked. Check recovery status or return this interrupted destination to empty before loading it again.</p>
+          {#key lockedRecovery.key}<OperatorRecoveryPanel
+            actorId={lockedRecovery.actorId} organizationId={lockedRecovery.organizationId} brandId={lockedRecovery.brandId}
+            scopeKey={lockedRecovery.key} getScopeKey={recoveryScopeKey} request={recoveryRequest}
+            recoveryOnly initialStatus={lockedRecovery.status} onRecovered={loadScope}
+          />{/key}
+          <button class="secondary" onclick={loadScope}>Retry workspace</button>
+        </section>
       {:else if scopeLoadError}
         <div class="panel">
           <h2>Workspace could not load.</h2>
