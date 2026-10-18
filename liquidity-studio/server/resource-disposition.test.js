@@ -14,10 +14,15 @@ test('planning disposition explains uncertainty, expiry and explicit denial with
 
 import {resourceConfirmation} from './defiant-resource-confirmation.js';
 test('explicit manager confirmation preserves imported facts and prior reports, requires evidence, and records provenance',()=>{
- const imported={id:'resource',capabilities:['Production'],location:'London',verification:'user-reported',rights:{status:'unverified',notes:'Imported uncertainty'},availability:{status:'unknown'}},report={findings:[{resources:[structuredClone(imported)]}]},state={revision:7,resources:[structuredClone(imported)],evidence:[{id:'permission'}],reports:[report]},input={purpose:'Internal planning consultation',availability:'confirmed',permission:'confirmed',start:'2026-10-18T10:00:00Z',end:'2026-10-19T10:00:00Z',timeZone:'Europe/London',evidenceIds:['permission'],notes:'Manager reported for this use only'};
+ const imported={id:'resource',nodeId:'resource-node',capabilities:['Production'],location:'London',verification:'user-reported',rights:{status:'unverified',notes:'Imported uncertainty'},availability:{status:'unknown'}},report={findings:[{resources:[structuredClone(imported)]}]},state={revision:7,graph:{nodes:[{id:'resource-node',verification:'user-reported'}]},resources:[structuredClone(imported)],evidence:[{id:'permission'}],reports:[report]},input={purpose:'Internal planning consultation',availability:'confirmed',permission:'confirmed',start:'2026-10-18T10:00:00Z',end:'2026-10-19T10:00:00Z',timeZone:'Europe/London',evidenceIds:['permission'],notes:'Manager reported for this use only'};
  assert.equal(resourceDisposition(imported,at).status,'needs-information');
  assert.throws(()=>resourceConfirmation(state,'resource',{...input,evidenceIds:[]},{id:'planner'},at),{status:422});assert.equal(state.resources[0].confirmation,undefined);
  const saved=resourceConfirmation(state,'resource',input,{id:'planner'},at);assert.equal(resourceDisposition(saved,at).status,'eligible');assert.equal(saved.confirmation.actorId,'planner');assert.equal(saved.confirmation.recordedAt,at);assert.equal(saved.confirmation.sourceRevision,7);assert.deepEqual(saved.rights,imported.rights);assert.deepEqual(saved.availability,imported.availability);assert.deepEqual(report.findings[0].resources[0],imported);
  resourceConfirmation(state,'resource',{...input,availability:'unavailable'},{id:'other-planner'},at);assert.equal(resourceDisposition(saved,at).status,'unavailable');assert.equal(saved.confirmationHistory[0].actorId,'planner');
  assert.throws(()=>resourceConfirmation(state,'resource',{...input,actorId:'forged'},{id:'planner'},at),{status:400});
+});
+
+test('a sample node cannot be confirmed even when its resource omits the classification',()=>{
+ const state={revision:1,graph:{nodes:[{id:'sample-node',verification:'example'}]},resources:[{id:'sample-resource',nodeId:'sample-node',rights:{status:'unknown'},availability:{status:'unknown'}}],evidence:[]};
+ assert.throws(()=>resourceConfirmation(state,'sample-resource',{}, {id:'planner'},at),{status:422});assert.equal(state.resources[0].confirmation,undefined);
 });

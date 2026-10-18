@@ -3,6 +3,8 @@ import {exact} from './defiant-strategy-notes.js';
 export function resourceConfirmation(state,resourceId,input,actor,at){
  exact(input,['purpose','availability','permission','start','end','timeZone','evidenceIds','notes']);
  const resource=state.resources.find(r=>r.id===resourceId);if(!resource)throw fail(404,'Resource unavailable');
+ const node=state.graph.nodes.find(n=>n.id===resource.nodeId);if(!node)throw fail(404,'Resource reference unavailable');
+ if(resource.verification==='example'||node.verification==='example')throw fail(422,'Import an owned resource before confirming planning details; sample references cannot become usable supply');
  if(!['confirmed','unknown','unavailable'].includes(input.availability)||!['confirmed','unknown','denied'].includes(input.permission))throw fail(422,'Choose availability and reported permission');
  if(typeof input.purpose!=='string'||!input.purpose.trim()||input.purpose.length>500||typeof input.notes!=='string'||input.notes.length>2000)throw fail(422,'Describe the proposed use and notes');
  const ids=input.evidenceIds;if(!Array.isArray(ids)||ids.length>64||new Set(ids).size!==ids.length||ids.some(id=>!state.evidence.some(e=>e.id===id)))throw fail(422,'Choose existing supporting evidence');
