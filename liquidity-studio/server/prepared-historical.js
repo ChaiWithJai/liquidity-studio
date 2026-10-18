@@ -260,6 +260,7 @@ export async function forkHistoricalCandidate(service, actor, id, input) {
         story,
         brandProfile: state.brandProfile,
         evidence: clone(historical.evidence),
+        projectionFrom: historical.candidate,
         jobId: null,
         itemId: null,
         attemptId: null,

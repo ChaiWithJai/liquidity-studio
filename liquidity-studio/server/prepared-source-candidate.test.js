@@ -213,7 +213,7 @@ test('historical version1 retains original artwork and fingerprint semantics wit
 
 test('version dispatch rejects null, strings, zero and unknown versions rather than treating them as historical',()=>{
  const candidate=buildPreparedCandidate({id:'version',scope:{organizationId:'org',brandId:'brand'},story,brandProfile:{},evidence});
- for(const version of [null,'2',0,3])assert.throws(()=>validatePreparedCandidate({...candidate,artworkProjectionVersion:version},evidence),error=>error.status===422);
+ for(const version of [null,'2',0,99])assert.throws(()=>validatePreparedCandidate({...candidate,artworkProjectionVersion:version},evidence),error=>error.status===422);
 });
 
 test('three retained primary paragraphs become three distinct source rows and timed facts without duplicate padding',()=>{

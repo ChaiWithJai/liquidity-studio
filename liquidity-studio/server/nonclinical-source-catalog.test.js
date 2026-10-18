@@ -45,7 +45,7 @@ test('existing passage selector excludes Nykaa totals and Ramanujan inscription 
   const text=extractSourceText(html,'text/html',title,passage);
   assert.equal(text,selected.join('\n'));assert.doesNotMatch(text,/276|first Indian|Later-section/);
   const evidence=[{id:'evidence',sourceUrl:entry.sourceUrl,text,textSha256:createHash('sha256').update(text).digest('hex'),status:'unreviewed',approval:'none'}];
-  const candidate=buildPreparedCandidate({id:'candidate',story:{id,title},scope,brandProfile:{},evidence});
+  const candidate=buildPreparedCandidate({id:'candidate',story:{id:"synthetic-selector",title},scope,brandProfile:{},evidence});
   assert.equal(validatePreparedCandidate(candidate,evidence),true);
   assert.equal(candidate.provenance.humanApproval,'none');assert.equal(candidate.provenance.modelCalls,0);
   assert.ok(candidate.excerpts.every(x=>text.slice(x.startOffset).startsWith(x.text)));
@@ -62,7 +62,7 @@ test('explicit after-heading selection keeps literal release paragraphs, Unicode
  const text=extractSourceText(html,'text/html',story.title,p);
  assert.equal(text,selected.join('\n'));assert.doesNotMatch(text,/About AMC|Cookie|pre-heading/);
  const evidence=[{id:'selected',sourceUrl:entry.sourceUrl,text,textSha256:createHash('sha256').update(text).digest('hex'),status:'unreviewed',approval:'none'}];
- const candidate=buildPreparedCandidate({id:'release',story,scope:finance,brandProfile:{},evidence});
+ const candidate=buildPreparedCandidate({id:'release',story:{...story,id:"synthetic-selector"},scope:finance,brandProfile:{},evidence});
  assert.equal(validatePreparedCandidate(candidate,evidence),true);
  assert.ok(candidate.excerpts.every(x=>text.slice(x.startOffset).startsWith(x.text)));
  assert.equal(candidate.provenance.humanApproval,'none');
@@ -80,8 +80,8 @@ test('explicit after-heading selection keeps literal release paragraphs, Unicode
 });
 
 
-test('explicit BR paragraphs select only the named primary alliance paragraphs and fail closed',()=>{
- const entry=catalogForStory({id:'story_nykaa_ipo',title:'Nykaa'},finance)[0],p=entry.passage;
+test('explicit opt-in BR fixture selects named paragraphs and fails closed without changing default HTML behavior',()=>{
+ const entry=catalogForStory({id:'story_nykaa_ipo',title:'Nykaa'},finance)[0],p={...entry.passage,lineBreakParagraphs:true,paragraphPrefixes:['Mumbai, October 6, 2022 :','Bringing its proven multi-brand beauty retail expertise','The technology-led company']};
  const selected=p.paragraphPrefixes.map((prefix,i)=>`${prefix} literal primary paragraph ${i} with Unicode GCC café.`);
  const html=`<a>${p.section}</a><h1>${p.section}</h1><p>${selected.join('<br />')}<br>As per a Red Seer report, excluded partner forecast.<br>About Apparel Group: excluded boilerplate.</p>`;
  assert.equal(extractSourceText(html,'text/html','',p),selected.join('\n'));

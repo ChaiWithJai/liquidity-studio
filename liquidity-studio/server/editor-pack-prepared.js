@@ -17,7 +17,7 @@ export function projectPreparedHistory(entries, scope) {
     exact(entry, ['candidate','evidence','revision','workingArtwork','editorialStatus','edits','prePromotionSourceClaims','promotionReceipts','forkRequest','forkAliases','replacement','derivation','prePromotionCampaign','restoredHistorical']);
     const candidate = entry.candidate;
     exact(candidate, ['schemaVersion','artworkProjectionVersion','sourceFieldMappings','id','organizationId','brandId','preset','storyId','contentRevision','inputFingerprint','brandRevision','jobId','itemId','attemptId','createdAt','excerpts','sourceSelection','artwork','provenance']);
-    if (![undefined,1,2].includes(candidate.artworkProjectionVersion)) throw fail(422,'Unknown historical artwork projection');
+    if (![undefined,1,2,3].includes(candidate.artworkProjectionVersion)) throw fail(422,'Unknown historical artwork projection');
     if (candidate.schemaVersion !== 1 || !candidate.id || ids.has(candidate.id) || !candidate.storyId ||
       candidate.organizationId !== scope.organizationId || candidate.brandId !== scope.brandId)
       throw fail(422, 'Foreign or duplicate prepared candidate');
@@ -66,7 +66,7 @@ export function projectPreparedHistory(entries, scope) {
         throw fail(422, 'Historical excerpt does not match retained evidence');
       return {...copy(excerpt),status:'unreviewed',clinicalReview:null};
     });
-    if (candidate.artworkProjectionVersion === 2)
+    if (candidate.artworkProjectionVersion >= 2)
       validatePreparedCandidate({...candidate,excerpts},evidence);
     const {jobId,itemId,attemptId,...historicalCandidate} = copy(candidate);
     return {schemaVersion:1,authority:'historical-only',sourceScope:{organizationId:originalScope.organizationId,brandId:originalScope.brandId},originalCandidateId,

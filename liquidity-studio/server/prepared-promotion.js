@@ -229,6 +229,7 @@ export class PreparedPromotionService {
           story,
           brandProfile: state.brandProfile,
           evidence: copy(original.evidence),
+          projectionFrom: original.candidate,
           jobId: null,
           itemId: null,
           attemptId: null,

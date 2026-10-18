@@ -402,7 +402,7 @@ test("reviewed copy digests ignore object key order but reject malformed or unre
     );
   }
 });
-test("explicit current-generation fork supports review-edit-review without overwriting its prior generation", async (t) => {
+test("explicit legacy-v1 current-generation fork supports review-edit-review without upgrading its prior projection", async (t) => {
   const { PreparedPromotionService } = await import("./prepared-promotion.js");
   const f = await fixture(t),
     job = await f.jobs.create(f.user, f.input);
@@ -427,6 +427,8 @@ test("explicit current-generation fork supports review-edit-review without overw
       clinicalReviewed: true,
     });
   };
+  // A genuine historical schema shape: preserve its projection on explicit fork.
+  await f.repo.mutate(state=>{const candidate=state.preparedSourceCandidates.find(entry=>entry.candidate.id===id).candidate;candidate.artwork=candidateArtwork(candidate.excerpts);delete candidate.artworkProjectionVersion;delete candidate.sourceFieldMappings;return state;});
   const first = await confirm(id),
     original = structuredClone(first.story.campaignDraft),
     forkInput = {
@@ -438,6 +440,7 @@ test("explicit current-generation fork supports review-edit-review without overw
     },
     fork = await service.fork(f.user, f.story.id, forkInput);
   assert.deepEqual(fork.story.campaignDraft, original);
+  assert.equal((await f.jobs.candidate(f.user,fork.candidateId)).candidate.artworkProjectionVersion,undefined);
   assert.equal(
     (await service.fork(f.user, f.story.id, forkInput)).candidateId,
     fork.candidateId,

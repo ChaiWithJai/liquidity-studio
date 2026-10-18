@@ -1,0 +1,40 @@
+[
+  {
+    "storyId": "story_beyonce_amc",
+    "sourceUrl": "https://investor.amctheatres.com/news-events/press-releases/detail/10/renaissance-a-film-by-beyonc-will-take-over-movie-theaters-worldwide-this-december",
+    "responseSha256": "7effa5ed07db9edb1b3ef7387a063ea5e7ad41e0e07f55b382118866e71032ac",
+    "retainedTextSha256": "c0dad6a5b7436962d51b9c54c3eeed08a1fa1e73029392c17b08dbc6cea209bb",
+    "startOffset": 0,
+    "text": "RENAISSANCE: A FILM BY BEYONCÉ",
+    "form": "label",
+    "provenance": "actual-worker-retained-source-text"
+  },
+  {
+    "storyId": "story_margot_luckychap",
+    "sourceUrl": "https://newsroom.hasbro.com/node/34741",
+    "responseSha256": "53f786ba7bd7641963e97efe0da9655b0ed7ca987107b3c229eba9198a3e8e90",
+    "retainedTextSha256": "eadfc5bbdb492a86cc7b8f5cab99d5866b5757f948f8faacf4397d7775ef5845",
+    "startOffset": 387,
+    "text": "Hasbro Entertainment will also produce.",
+    "form": "sentence",
+    "provenance": "actual-worker-retained-source-text"
+  },
+  {
+    "storyId": "research_1",
+    "sourceUrl": "https://explore.trin.cam.ac.uk/assets/ramanujan/",
+    "responseSha256": "a5a03ea6e72d653bf1b4076d8ab3e924eb5366175919502aabb2c2d95e9db0fd",
+    "retainedTextSha256": "efb0109a7d3e63204f0bc2a131f47cb7ba6b0be7eefe0eca7489e3f1131761b5",
+    "startOffset": 210,
+    "text": "G.H. Hardy called him a natural genius.",
+    "form": "sentence",
+    "provenance": "actual-worker-retained-source-text"
+  },
+  {
+    "storyId": "story_nykaa_ipo",
+    "sourceUrl": "https://www.apparelgroup.com/en/news/nykaa-enters-into-a-strategic-alliance-with-middle-east-based-apparel-group-to-recreate-omnichannel-beauty-retail-platform-in-the-gcc/",
+    "responseSha256": "7ed4c9697055bfe53288af3f77ba28eb091a924d7a1346820d94c57eaa047d3e",
+    "text": "October 6, 2022",
+    "form": "label",
+    "provenance": "actual-Neo-primary-DOM-and-same-origin-HTML; not a successful worker snapshot"
+  }
+]
