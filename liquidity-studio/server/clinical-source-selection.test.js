@@ -1,4 +1,4 @@
-// Actual short primary passages, plus controlled adversarial wrappers. No live HTTP/model calls.
+// Actual short primary passages, plus controlled evidence/transport envelopes and adversarial wrappers. No live HTTP/model calls; real raw XML is separately retained in ncbi-pubmed-source.test.js.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -7,6 +7,7 @@ import {catalogForStory,sourceCopySelection} from './source-catalog.js';
 import {buildPreparedCandidate,validatePreparedCandidate,validateCandidateLayout} from './prepared-source-candidate.js';
 import {projectPreparedHistory} from './editor-pack-prepared.js';
 import {extractSourceText} from './source-retrieval.js';
+import {NCBI_PROVIDER,NCBI_EXTRACTION,NCBI_SELECTION,ncbiRequest,ncbiSelectionDigest} from './ncbi-pubmed-source.js';
 import {BRAND_PRESETS} from './domain.js';
 import {DurableStore} from './storage.js';
 import {createPlatform} from './platform.js';
@@ -16,7 +17,7 @@ const topics=[['research_0','Ashwagandha','23439798'],['research_2','Bhramari','
 const hash=text=>createHash('sha256').update(text).digest('hex');
 function fixture(topic){
  const [id,title,pmid]=topic,source=passages.find(x=>x.pmid===pmid),scope={organizationId:'org',brandId:'brand',preset:'vedic_dharma'},story={id,title,revision:1};
- const text=source.paragraphs.join('\n'),evidence=[{schemaVersion:1,id:'evidence',sourceUrl:source.url,requestedUrl:source.url,retrievedAt:'2026-10-18T00:00:00Z',contentType:'text/html',responseSha256:hash(text),textSha256:hash(text),responseBytes:Buffer.byteLength(text),text,status:'unreviewed',approval:'none'}];
+ const text=source.paragraphs.join('\n'),evidence=[{schemaVersion:1,id:'evidence',sourceUrl:source.url,requestedUrl:ncbiRequest(source.url,{provider:NCBI_PROVIDER,pmid}).href,retrieval:{provider:NCBI_PROVIDER,pmid},extractionVersion:NCBI_EXTRACTION,selectionMethod:NCBI_SELECTION,selectionQuerySha256:ncbiSelectionDigest({provider:NCBI_PROVIDER,pmid}),retrievedAt:'2026-10-18T00:00:00Z',contentType:'text/xml',responseSha256:hash(text),textSha256:hash(text),responseBytes:Buffer.byteLength(text),text,status:'unreviewed',approval:'none'}];
  const candidate=buildPreparedCandidate({id:'candidate',scope,story,evidence,brandProfile:BRAND_PRESETS.vedic_dharma,createdAt:'2026-10-18T00:00:00Z'});
  return {scope,story,evidence,candidate,pointer:catalogForStory(story,scope)[0]};
 }

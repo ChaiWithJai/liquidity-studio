@@ -5,6 +5,7 @@ import { brandRevision } from "./multimodal-contract.js";
 import { renderSvg, sourcePrefixForLines } from "./artwork.js";
 import { storyContentDigest } from "./story-content-revision.js";
 import { catalogForStory, SOURCE_CATALOG_REVISION, sourceCopySelection, clinicalCopyBindings } from "./source-catalog.js";
+import { assertNcbiDescriptor, assertNcbiEvidence } from "./ncbi-pubmed-source.js";
 export const PREPARATION_PURPOSE = "source-preparation";
 export function preparationInput(story, scope) {
   return {
@@ -169,12 +170,16 @@ export function candidateArtworkV2(excerpts) {
 /** Reject classification or projection downgrades for newly introduced clinical sources. */
 export function assertClinicalSelectionBinding(sourceSelection,evidence,version) {
  const pointers=Array.isArray(sourceSelection)?sourceSelection:[];
+ for (const snapshot of Array.isArray(evidence)?evidence:[]) if(snapshot?.retrieval!==undefined)assertNcbiDescriptor(snapshot.retrieval);
  for(const bound of clinicalCopyBindings()) {
   const used=pointers.some(p=>p?.id===bound.catalogId||p?.artworkSelectionId===bound.id||p?.sourceUrl===bound.sourceUrl)||
-    (Array.isArray(evidence)&&evidence.some(e=>e?.sourceUrl===bound.sourceUrl));
+    (Array.isArray(evidence)&&evidence.some(e=>e?.sourceUrl===bound.sourceUrl||e?.retrieval?.pmid===bound.retrieval.pmid))||pointers.some(p=>p?.retrieval?.pmid===bound.retrieval.pmid);
   if(!used)continue;
   if(version!==3||pointers.length!==1||pointers[0]?.id!==bound.catalogId||pointers[0]?.artworkSelectionId!==bound.id||pointers[0]?.sourceUrl!==bound.sourceUrl||pointers[0]?.kind!=='clinical'||pointers[0]?.publisher!==bound.publisher)
    throw fail(422,'Pinned clinical source classification and projection required');
+  assertNcbiDescriptor(pointers[0].retrieval);
+  if(pointers[0].retrieval.pmid!==bound.retrieval.pmid||!Array.isArray(evidence)||evidence.length!==1)throw fail(422,'Pinned clinical transport required');
+  assertNcbiEvidence(bound.retrieval,evidence[0]);
  }
 }
 

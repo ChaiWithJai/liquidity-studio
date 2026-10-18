@@ -45,7 +45,7 @@ export function projectPreparedHistory(entries, scope) {
       throw fail(422, 'Historical prepared evidence required');
     const evidenceIds = new Set();
     const evidence = entry.evidence.map(snapshot => {
-      exact(snapshot, ['id','schemaVersion','requestedUrl','sourceUrl','retrievedAt','contentType','responseSha256','responseBytes','extractionVersion','selectionMethod','selectionQuerySha256','text','textSha256','status','approval']);
+      exact(snapshot, ['id','schemaVersion','requestedUrl','sourceUrl','retrievedAt','contentType','responseSha256','responseBytes','extractionVersion','selectionMethod','selectionQuerySha256','text','textSha256','status','approval','retrieval']);
       sourceUrl(snapshot.sourceUrl); sourceUrl(snapshot.requestedUrl);
       if (snapshot.schemaVersion !== 1 || !snapshot.id || evidenceIds.has(snapshot.id) ||
           typeof snapshot.text !== 'string' || snapshot.text.length > 24000 ||
