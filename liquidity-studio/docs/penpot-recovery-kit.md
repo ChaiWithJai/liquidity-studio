@@ -92,3 +92,11 @@ Pinned upstream source: [binfile command](https://github.com/penpot/penpot/blob/
 Retained actual 2.18.3 archive inspection confirms a plain UUID string in
 `manifest.files[].id`, `generatedBy: penpot/2.18.3`, and camelCase `fontId` custom
 references. The reader also accepts the corresponding kebab-case font key.
+
+## Explicit Studio reconnection (version 2 kits)
+
+After restoring fonts and importing the native archive, open the corresponding saved campaign in Studio. Expand **Reconnect an imported Penpot design**, choose `recovery-manifest.json`, paste the actual imported workspace link and choose **Inspect imported design**. Select the actual destination page for each format, then confirm **Reconnect this imported design**. The current configured profile/team/project is used; the URL cannot select another authority. Existing design records and native content remain unchanged. An unknown reply retains the same operation for retry.
+
+New exports include a versioned digest of only the four rendered campaign formats, excluding provenance, principals, source/destination scope and record identifiers. The current saved copy must match; ordinary source-review gates still apply. Version 1 archives and font sidecars remain valid for native recovery but do not qualify for this exact-copy reconnect action. The manifest archive SHA is a retained provenance reference, not proof of byte equality after Penpot import remaps IDs. Reconnection records fresh current-actor registration and no restored approval; it does not recreate pairing or grant access. Imported designs do not gain deterministic compiler token/layer mappings, so automatic Brand Kit color refresh stays unavailable for them.
+
+Source-only implementation and hosted regression sources; no runtime restore or reconnection is claimed by these instructions.

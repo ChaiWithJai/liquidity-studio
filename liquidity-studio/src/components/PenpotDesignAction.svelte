@@ -1,4 +1,5 @@
 <script>
+  import PenpotReconnect from './PenpotReconnect.svelte';
   import {onMount, onDestroy} from 'svelte';
   let {request, storyId, format, storyRevision, generationId, onStateChange = () => {}, compact = false} = $props();
   let loading = $state(true), busy = $state(false), error = $state(''), rejected = $state(false);
@@ -114,6 +115,7 @@
     {#if recoveryUrl && recoveryContext===currentRecoveryContext}<a href={recoveryUrl} target="_blank" rel="noopener noreferrer">Download prepared Penpot kit ↗</a><p>One use · expires in two minutes.</p>{/if}
     {#if recoveryError}<p role="alert">{recoveryError}</p>{/if}
   {/if}
+  {#if !loading && result?.reconnectAvailable}{#key JSON.stringify([storyId,generationId,storyRevision,format])}<PenpotReconnect {request} {storyId} {format} {storyRevision} {generationId} onconnected={(design)=>{result={...result,design};reportState(design);}}/>{/key}{/if}
   {#if styleCapability}<section class="style-handoff" aria-label="Apply saved Brand Kit colors">
     <ol>
       <li>Open this design’s Plugins menu and add the Studio plugin.</li>
