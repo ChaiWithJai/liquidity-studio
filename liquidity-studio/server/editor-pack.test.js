@@ -880,3 +880,37 @@ test("detached pack preserves accepted top-level and primitive-file key order", 
   assert.equal(JSON.stringify(snapshot), JSON.stringify(reordered));
   assert.equal(validateEditorPack(snapshot).pack.sha256, reordered.sha256);
 });
+
+test("token accounting preserves real exported pack size/checksum and corruption rejection", async (t) => {
+  const { accountPortableJson } = await import("./portable-json-accounting.js");
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor);
+  const result = accountPortableJson(pack, { omitRootKeys: ["sha256"] });
+  const { sha256, ...content } = pack;
+  assert.equal(result.bytes, Buffer.byteLength(JSON.stringify(pack), "utf8"));
+  assert.equal(result.contentSha256, jsonDigest(content));
+  assert.equal(result.contentSha256, sha256);
+  const corrupted = structuredClone(pack);
+  corrupted.documents[0].metadata.title += " unsealed";
+  assert.throws(() => validateEditorPack(corrupted), { status: 422 });
+});
+
+test("over-cap input fails before base64 decoding or restore reservation", async (t) => {
+  const target = await fixture(t, "liquidity_desk", true);
+  const before = Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)]));
+  // Shared fixture string avoids allocating a second48MiB reference serialization.
+  const block = "x".repeat(1024 * 1024);
+  const oversized = { schemaVersion: 2, files: Array.from({ length: 49 }, () => ({ base64: block })) };
+  let decoded = false;
+  const originalFrom = Buffer.from;
+  Buffer.from = function(value, encoding, ...rest) {
+    if (encoding === "base64") { decoded = true; throw new Error("unexpected decode"); }
+    return originalFrom.call(this, value, encoding, ...rest);
+  };
+  try {
+    await assert.rejects(target.service.install(actor, oversized, input), { status: 413 });
+  } finally { Buffer.from = originalFrom; }
+  assert.equal(decoded, false);
+  assert.deepEqual(Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)])), before);
+});
