@@ -170,6 +170,21 @@ export class HelperControlService {
       const seen = new Set(),
         preview = [];
       for (const [index, change] of input.changes.entries()) {
+        exact(change, [
+          "kind",
+          "storyId",
+          "expectedRevision",
+          "patch",
+          "assignmentId",
+          "expectedAssignmentRevision",
+          "unit",
+          "format",
+          "date",
+          "timeZone",
+          "targetBucketRevision",
+          "sourceBucketRevision",
+          "beforeAssignmentId",
+        ]);
         if (
           !grant.kinds.includes(change.kind) ||
           !grant.storyIds.includes(change.storyId) ||

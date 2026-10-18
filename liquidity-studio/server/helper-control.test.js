@@ -255,3 +255,23 @@ test("expiry and current membership revocation prevent new execution", async (t)
   );
   assert.equal((await f.repo.read()).backlog[0].revision, f.story.revision);
 });
+
+test("malformed helper observations fail as explicit client errors", async (t) => {
+  const f = await fixture(t);
+  for (const change of [
+    null,
+    [],
+    42,
+    { ...f.changes[0], actorId: f.owner.id },
+  ]) {
+    await assert.rejects(
+      f.control.propose(f.helper, {
+        grantId: f.grant.id,
+        epoch: 1,
+        changes: [change],
+      }),
+      (error) => error.status === 400,
+    );
+  }
+  assert.equal((await f.repo.read()).backlog[0].revision, f.story.revision);
+});
