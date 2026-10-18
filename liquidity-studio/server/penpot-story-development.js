@@ -25,8 +25,10 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
    const native={targetId:target.id,ownerPrincipal:target.ownerPrincipal,projectId:target.nativeProjectId,teamId:entry.teamId,fonts:structuredClone(fonts)};
    // get-project JSON has no permission DTO in pinned 2.18.3;
    // create-file independently enforces actual project edit ACL at the write.
-   const profile=await rpc(native,'get-profile',{}),project=await rpc(native,'get-project',{id:native.projectId});
-   if(profile.id!==native.ownerPrincipal||project.id!==native.projectId||project.teamId!==native.teamId||project.permissions?.canEdit===false)throw fail(403,'Current native owner or editable project is unavailable');
+   const profile=await rpc(native,'get-profile',{});
+   if(profile.id!==native.ownerPrincipal)throw fail(403,'Current native owner session is unavailable; renew the registered operator account');
+   const project=await rpc(native,'get-project',{id:native.projectId});
+   if(project.id!==native.projectId||project.teamId!==native.teamId||project.permissions?.canEdit===false)throw fail(403,'Current native owner or editable project is unavailable');
    const variants=await rpc(native,'get-font-variants',{'team-id':native.teamId});
    if(!Array.isArray(variants)||fonts.some(font=>!variants.some(v=>'custom-'+v.fontId===font.fontId&&v.fontFamily===font.family&&Number(v.fontWeight)===font.weight&&(configuration.version!==2||v.fontStyle==='normal'))))throw fail(422,'Current native team fonts differ from the configured fonts');
    // Serialize first registration. Existing revoked/stale registrations are never
