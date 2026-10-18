@@ -99,12 +99,37 @@
   ];
   let reviewDirty = $derived(reviewSignature(reviewClaims) !== savedReviewSignature);
   let nextWorkflowAction = $derived(editorConflictRevision ? "Resolve newer saved revision" : reviewDirty ? "Save source review" : !generationReview.ready ? "Review source prerequisites" : !campaign ? "Generate a draft" : pendingEdits ? "Save artwork changes" : "Inspect preview and validation before handoff");
+  let workflowContext = $state(null);
+  function measureWorkflowOffset(bar = workflowContext) {
+    if (!bar?.isConnected) return 16;
+    const style = getComputedStyle(bar);
+    const offset = style.position === "sticky"
+      ? Math.ceil(bar.getBoundingClientRect().height + (parseFloat(style.top) || 0) + 16)
+      : 16;
+    document.documentElement.style.setProperty("--workflow-offset", `${offset}px`);
+    return offset;
+  }
+  $effect(() => {
+    const bar = workflowContext;
+    if (!bar) return;
+    const update = () => measureWorkflowOffset(bar);
+    const observer = new ResizeObserver(update);
+    observer.observe(bar);
+    window.addEventListener("resize", update);
+    update();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+      document.documentElement.style.removeProperty("--workflow-offset");
+    };
+  });
   async function focusWorkflow(id) {
     await tick();
     const target = document.getElementById(id);
     if (!target) return;
     if (target.tagName === "DETAILS") target.open = true;
-    target.scrollIntoView({ block: "start", behavior: "instant" });
+    const offset = measureWorkflowOffset();
+    window.scrollTo({ top: Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset), behavior: "instant" });
     target.focus({ preventScroll: true });
   }
   let category = $state("Editorial");
@@ -1116,7 +1141,7 @@
           </div>
         {/if}
         {#if selectedStory}
-          <section class="workflow-context" aria-label="Current editorial task">
+          <section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
             <div class="workflow-identity"><strong title={selectedStory.title}>{selectedStory.title}</strong><span>{currentOrganization?.name} / {currentBrand?.name} · {formats.find(item => item.id === format)?.name} · revision {selectedStory.revision}</span></div>
             <p class="workflow-state" role="status">{pendingEdits ? "Unsaved artwork changes" : campaign ? "Artwork saved" : "No draft yet"} · {reviewDirty ? "Unsaved source review" : generationReview.ready ? "Source prerequisites saved" : `${generationReview.blockers.length} source prerequisite${generationReview.blockers.length === 1 ? "" : "s"} to review`}{editorConflictRevision ? ` · Newer saved revision ${editorConflictRevision}; resolve the conflict before saving.` : ""} · Next: {nextWorkflowAction}</p>
             <nav aria-label="Editorial task actions">

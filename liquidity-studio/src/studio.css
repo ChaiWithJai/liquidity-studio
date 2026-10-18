@@ -1626,6 +1626,6 @@ fieldset[id^="source-claim-"] { scroll-margin-top: 36vh; }
 @media (max-width: 1100px) { .preview-workspace { order: 1; } }
 @media (max-width: 760px), (max-height: 600px) { .workflow-context { position: static; } .workflow-target, #workflow-handoff { scroll-margin-top: 0; } }
 .workflow-target .generation-review-context--editor { position: static; max-height: none; }
-html:has(.workflow-context) { scroll-padding-top: 180px; }
+html:has(.workflow-context) { scroll-padding-top: var(--workflow-offset, 16px); }
 .workflow-context ~ :is(.format-tabs, .studio-toolbar) :is(button, a), .workflow-target :is(input, textarea, select, button, summary, a) { scroll-margin-top: 0; }
 @media (max-width: 760px), (max-height: 600px) { html:has(.workflow-context) { scroll-padding-top: 16px; } .workflow-context ~ :is(.format-tabs, .studio-toolbar) :is(button, a), .workflow-target :is(input, textarea, select, button, summary, a) { scroll-margin-top: 0; } }
