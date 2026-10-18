@@ -1432,9 +1432,11 @@ export function createHttpServer(
               !trustedTestMode,
           },
         });
-      if (storyDesigns && (route === "/api/studio/penpot/designs" || route === "/api/studio/penpot/designs/styles" || route === "/api/studio/penpot/designs/svg" || route === "/api/studio/penpot/designs/recovery" || /^\/api\/studio\/penpot\/designs\/styles\/[a-f0-9-]{36}\/reconcile$/.test(route))) {
+      if (storyDesigns && (route === "/api/studio/penpot/designs" || route === "/api/studio/penpot/designs/styles" || route === "/api/studio/penpot/designs/svg" || route === "/api/studio/penpot/designs/recovery" || route === "/api/studio/penpot/designs/reconnect-preview" || route === "/api/studio/penpot/designs/reconnect" || /^\/api\/studio\/penpot\/designs\/styles\/[a-f0-9-]{36}\/reconcile$/.test(route))) {
         const designs = await storyDesigns(scope);
         const sessionContext = createHash("sha256").update(token(req, identity.mode)).digest("hex");
+        if(route.endsWith("/reconnect-preview")&&req.method==="POST"&&designs.reconnect)return json(200,await designs.reconnect.preview(user,body,sessionContext));
+        if(route.endsWith("/reconnect")&&req.method==="POST"&&designs.reconnect)return json(200,await designs.reconnect.reconnect(user,body,sessionContext));
         if(route.endsWith("/recovery")&&req.method==="POST"&&designs.recovery)return json(200,await designs.recovery.prepare(user,body,sessionContext));
         if(route.endsWith("/svg")&&req.method==="POST"&&designs.svg)return json(200,await designs.svg.prepare(user,body,sessionContext));
         if(route.endsWith("/styles")&&req.method==="POST"&&designs.styles)return json(200,await designs.styles.prepare(user,body,sessionContext));
@@ -1442,7 +1444,7 @@ export function createHttpServer(
         if(route!=="/api/studio/penpot/designs")throw fail(404,"Not found");
         if (req.method === "GET") {
           const value = await designs.designs(user, {storyId:url.searchParams.get("storyId"),format:url.searchParams.get("format")}, sessionContext);
-          return json(200, {...value, svgAvailable:Boolean(designs.svg), recoveryAvailable:Boolean(designs.recovery)});
+          return json(200, {...value, svgAvailable:Boolean(designs.svg), recoveryAvailable:Boolean(designs.recovery), reconnectAvailable:Boolean(designs.reconnect)});
         }
         if (req.method === "POST") return json(201, await designs.createDesign(user, body, sessionContext));
         throw fail(404, "Not found");

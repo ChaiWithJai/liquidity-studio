@@ -1,3 +1,4 @@
+import {PenpotStoryReconnect} from './penpot-story-reconnect.js';
 import {PenpotStoryRecovery,storyRecoveryDispatcher} from './penpot-story-recovery.js';
 import {PenpotStorySvg,storySvgDispatcher} from './penpot-story-svg.js';
 import {PenpotStoryStyles,storyStylePluginTransport} from './penpot-story-styles.js';
@@ -56,7 +57,7 @@ export function createPenpotStoryProvider({store,identity,configuration,brandAcc
   // Only the constructor chooses paired access. The actor never selects an
   // operator identity, project, session, or alternate workspace in HTTP input.
   const brandAccess=brandAccessFor?await brandAccessFor({scope,workspaceFor:administrativeWorkspaceFor,rpc,repo,boundary,nativeSessions:configuration.sessions}):null;
-  const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess,nativeOrigin});if(localTools)service.styles=new PenpotStoryStyles({designs:service,sessions:configuration.sessions,grantKey,fetchImpl});if(localTools&&grantKey){service.svg=new PenpotStorySvg({designs:service,grantKey,fetchImpl});service.recovery=new PenpotStoryRecovery({designs:service,grantKey,fetchImpl});}services.set(key,service);return service;
+  const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess,nativeOrigin});if(localTools)service.styles=new PenpotStoryStyles({designs:service,sessions:configuration.sessions,grantKey,fetchImpl});if(localTools&&grantKey){service.svg=new PenpotStorySvg({designs:service,grantKey,fetchImpl});service.recovery=new PenpotStoryRecovery({designs:service,grantKey,fetchImpl});}service.reconnect=new PenpotStoryReconnect(service);services.set(key,service);return service;
  };
  if(localTools)provider.createStylePluginHost=()=>createPenpotPluginLocalHost(storyStylePluginTransport(services),{port:39039});
  if(localTools&&grantKey){provider.svgDownload=storySvgDispatcher(services,grantKey);provider.recoveryDownload=storyRecoveryDispatcher(services,grantKey);}
