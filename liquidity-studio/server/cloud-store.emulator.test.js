@@ -34,3 +34,24 @@ test('real Firestore emulator: restart, concurrent transactions, chunk shrink, s
     await second.close();
   }
 });
+
+
+test('real Firestore emulator: paired transactions retry against concurrent one-key native edits', { skip: !host, timeout: 60000 }, async () => {
+  const { Firestore } = await import('@google-cloud/firestore');
+  const collection = `review_${randomUUID().replaceAll('-', '')}`;
+  const store = new FirestoreStore({ firestore: new Firestore({ projectId: 'liquidity-emulator-contract' }), collection });
+  try {
+    await store.transact(['native', 'approval'], () => [{ revision: 1 }, { observed: 1, commits: 0 }]);
+    await Promise.all(Array.from({ length: 8 }, (_, i) => i % 2
+      ? store.update('native', value => ({ revision: value.revision + 1 }))
+      : store.transact(['native', 'approval'], ([native, approval]) => [native, { observed: native.revision, commits: approval.commits + 1 }])));
+    const final = await store.transact(['native', 'approval'], ([native, approval]) => [native, { ...approval, observed: native.revision }]);
+    assert.equal(final[0].revision, 5);
+    assert.equal(final[1].commits, 4);
+    assert.equal(final[1].observed, 5);
+    await assert.rejects(store.transact(['native', 'approval'], () => [{ revision: 999 }, undefined]), { code: 'INVALID_TRANSACTION' });
+    assert.equal((await store.get('native')).revision, 5);
+  } finally {
+    await store.delete('native'); await store.delete('approval'); await store.close();
+  }
+});

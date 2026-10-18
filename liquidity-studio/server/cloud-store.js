@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { transactionKeys, transactionValues } from './storage-transaction.js';
 
 const CHUNK_BYTES = 128000;
 const MAX_VALUE_BYTES = 4 * 1024 * 1024;
@@ -59,6 +60,26 @@ export class FirestoreStore {
       for (let i = chunks; i < current.chunkCount; i++) transaction.delete(ref.collection('chunks').doc(String(i)));
       transaction.set(ref, { schemaVersion: 1, key, revision: current.revision + 1, chunkCount: chunks, bytes: encoded.byteLength, sha256: digest });
       return JSON.parse(encoded.toString('utf8'));
+    }, { maxAttempts: 5 });
+  }
+
+  async transact(keys, callback) {
+    keys = transactionKeys(keys, callback);
+    const refs = keys.map(key => this.ref(key));
+    return this.firestore.runTransaction(async transaction => {
+      // Firestore requires every read (including chunk records) before any write.
+      const current = await Promise.all(keys.map((key, index) => this.read(transaction, refs[index], key)));
+      const encoded = transactionValues(callback(current.map(record => record.value)), keys.length);
+      const buffers = encoded.map(value => Buffer.from(value));
+      buffers.forEach((buffer, index) => {
+        const prior = current[index], ref = refs[index], digest = hash(buffer);
+        if (prior.sha256 === digest) return;
+        const chunks = Math.ceil(buffer.byteLength / CHUNK_BYTES);
+        for (let i = 0; i < chunks; i++) transaction.set(ref.collection('chunks').doc(String(i)), { bytes: buffer.subarray(i * CHUNK_BYTES, (i + 1) * CHUNK_BYTES) });
+        for (let i = chunks; i < prior.chunkCount; i++) transaction.delete(ref.collection('chunks').doc(String(i)));
+        transaction.set(ref, { schemaVersion: 1, key: keys[index], revision: prior.revision + 1, chunkCount: chunks, bytes: buffer.byteLength, sha256: digest });
+      });
+      return encoded.map(value => JSON.parse(value));
     }, { maxAttempts: 5 });
   }
 

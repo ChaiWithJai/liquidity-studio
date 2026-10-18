@@ -90,6 +90,13 @@ export class DurableStorePort {
   async delete(key) {
     throw new Error("Not implemented");
   }
+  /** Atomically read/replace 1–8 server-selected keys, total JSON <=4 MiB.
+   * Callback receives ordered values (missing = null), returns ordered replacements,
+   * must be pure/synchronous and may retry. No async work or side effects inside.
+   */
+  async transact(keys, mutate) {
+    throw new Error("Not implemented");
+  }
   async keys(prefix) {
     throw new Error("Not implemented");
   }

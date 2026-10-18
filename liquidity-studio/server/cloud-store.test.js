@@ -142,3 +142,30 @@ test('unchanged repository initialization does not rewrite chunks or increment t
   await store.update('scope:org:brand', current => current || { count: 0 });
   assert.deepEqual([...firestore.records.entries()], before);
 });
+
+test('SDK boundary: multi-key transaction reads all chunks before writes and atomically rolls back', async () => {
+  const firestore = fakeFirestore();
+  const run = firestore.runTransaction.bind(firestore);
+  firestore.runTransaction = callback => run(async transaction => {
+    let writing = false;
+    return callback({
+      get: (...args) => { assert.equal(writing, false); return transaction.get(...args); },
+      getAll: (...args) => { assert.equal(writing, false); return transaction.getAll(...args); },
+      set: (...args) => { writing = true; return transaction.set(...args); },
+      delete: (...args) => { writing = true; return transaction.delete(...args); },
+    });
+  });
+  const store = new FirestoreStore({ firestore });
+  await store.update('native', () => ({ revision: 3, text: 'x'.repeat(300000) }));
+  const before = structuredClone([...firestore.records]);
+  await assert.rejects(store.transact(['native', 'approval'], () => [{ revision: 4 }, undefined]), { code: 'INVALID_TRANSACTION' });
+  assert.deepEqual([...firestore.records], before);
+  await store.transact(['native', 'approval'], ([native]) => [native, { nativeRevision: native.revision }]);
+  assert.equal((await store.get('approval')).nativeRevision, 3);
+  const unchanged = structuredClone([...firestore.records]);
+  await store.transact(['native', 'approval'], values => values);
+  assert.deepEqual([...firestore.records], unchanged);
+  await assert.rejects(store.transact(['native', 'approval'], async values => values), { code: 'INVALID_TRANSACTION' });
+  await assert.rejects(store.transact(['native', 'approval'], () => [{ text: 'x'.repeat(4*1024*1024) }, {}]), { code: 'STORE_CAPACITY' });
+  assert.deepEqual([...firestore.records], unchanged);
+});
