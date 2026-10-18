@@ -116,7 +116,10 @@ test('calendar UI captures explicit revisions; campaign and format placement, cr
     const section = helper.locator(`section[aria-label="Proposal ${proposal.id}"]`);
     await section.getByRole('button', { name: 'Undo accepted changes', exact: true }).click();
     await expect.poll(async () => (await state()).workspace.assignments.filter(a => a.storyId === id && !a.deletedAt && a.unit === 'format' && a.format === 'reel').length).toBe(1);
-    await helper.reload(); await openFixture(helper);
+    await helper.reload();
+    await expect(helper.getByLabel('Headline', { exact: true })).toBeVisible();
+    await helper.getByRole('button', { name: 'Return to backlog', exact: true }).click();
+    await openFixture(helper);
     await expect(helper.getByRole('heading', { name: /Proposal · applied/ })).toHaveCount(7);
   } finally { await close(); }
 });

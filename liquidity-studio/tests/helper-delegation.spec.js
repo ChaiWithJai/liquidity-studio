@@ -88,7 +88,7 @@ for(const humanRole of ['founder','marketer']) test(`${humanRole} keeps dirty Re
   const a=bootstrap.backlog.find(s=>s.id===fixtureStoryId), b=bootstrap.backlog.find(s=>s.id===delegatedStoryId);
   expect(a.revision).toBe(Number(originalRevision));expect(b.campaignDraft).toBeFalsy();expect(b.sourceClaims[0].status).toBe('unreviewed');
   expect(b.revision).toBe(proposal.changes[0].expectedRevision+1);
-  await helper.reload();await openStory(helper,'Delegated backlog workflow fixture');await expect(grantRegion(helper,grant.id).getByRole('heading',{name:/Proposal · applied/})).toBeVisible();
+  await helper.reload();await expect(helper.locator('.workflow-context')).toContainText('Delegated backlog workflow fixture');await helper.getByRole('button',{name:'Return to backlog',exact:true}).click();await openStory(helper,'Delegated backlog workflow fixture');await expect(grantRegion(helper,grant.id).getByRole('heading',{name:/Proposal · applied/})).toBeVisible();
   await owner.getByRole('button',{name:'Return to backlog',exact:true}).click();
   await owner.getByLabel('Search stories',{exact:true}).fill('Delegated backlog workflow fixture');
   await expect(owner.locator(`.story-row[data-story-id="${delegatedStoryId}"]`)).toHaveAttribute('data-story-revision',String(b.revision));
