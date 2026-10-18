@@ -32,3 +32,22 @@
       (is (= false (:allowed (read-authority resource)))))
     (is (thrown? Exception (authority/create {::client/client native-client :grant-key (apply str (repeat 43 "a"))
                                              :callback-origin "http://other.test:39044"})))))
+(deftest completed-headers-do-not-run-blocked-body-inline-before-deadline
+  (let [gate (java.util.concurrent.CountDownLatch. 1)
+        closed (atom false)
+        input (proxy [java.io.InputStream] []
+                (read [] (.await gate 5 java.util.concurrent.TimeUnit/SECONDS) -1)
+                (close [] (reset! closed true) (.countDown gate)))
+        native-client (http/build-client {:follow-redirects :never})
+        read-authority (authority/create {::client/client native-client :grant-key (apply str (repeat 43 "a"))
+                                         :callback-origin "http://host.docker.internal:39044"})
+        profile (uuid/parse "33333333-3333-4333-8333-333333333333")
+        resource {:native-profile-id profile :native-team-id (uuid/parse "11111111-1111-4111-8111-111111111111") :operation :read
+                  :native-session {:id (uuid/parse "44444444-4444-4444-8444-444444444444") :profile-id profile}}
+        start (System/nanoTime)]
+    (with-redefs [http/send-async (fn [_ _] (CompletableFuture/completedFuture {:status 200 :body input}))]
+      (is (= false (:allowed (read-authority resource))))
+      (is @closed)
+      ;; A functional deadline check, not a latency/performance benchmark.
+      ;; The old inline body callback blocks for five seconds before get(timeout).
+      (is (< (/ (- (System/nanoTime) start) 1000000.0) 3000.0)))))
