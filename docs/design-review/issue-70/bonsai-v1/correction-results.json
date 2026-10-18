@@ -1,0 +1,44 @@
+{
+  "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+  "revision": "1c6cbae21f8c38830ce337972b46fdae7b18eaaa",
+  "runtime": {
+    "mlx-vlm": "0.7.8",
+    "mlx": "0.32.4",
+    "transformers": "5.20.1",
+    "huggingface-hub": "2.2.0"
+  },
+  "loadSeconds": 1.359938958004932,
+  "screenshotSha256": "4ea1ba5d625a3a3408c241fd9425755425b45b988cac5eab289c2c1422256a15",
+  "maxOutputTokens": 256,
+  "thinking": false,
+  "experimenterFeedback": "Use exactly one allowed decision enum (propose, refresh, reject), never review. Read observedTitle from the row beginning Current story, not the explanatory paragraph. Do not change any authority or revision rules.",
+  "seed": 42,
+  "processPeakRSSBytes": 1550876672,
+  "results": [
+    {
+      "case": "stale",
+      "expectedDecision": "refresh",
+      "rawOutput": "{\n  \"decision\": \"propose\",\n  \"observedTitle\": \"Current story: Angel City FC's $250M Control Deal & NWSL Media Boom \u00b7 revision 1\",\n  \"action\": {\n    \"kind\": \"story.patch\",\n    \"storyId\": \"story_angel_city\",\n    \"expectedRevision\": 1,\n    \"patch\": {\n      \"category\": \"Reviewed source notes\"\n    }\n  }\n}",
+      "jsonParseError": null,
+      "schemaValid": true,
+      "taskValid": false,
+      "elapsedSeconds": 13.093015125006787,
+      "observedTitleNeedsHumanReview": "Current story: Angel City FC's $250M Control Deal & NWSL Media Boom \u00b7 revision 1",
+      "generationTokens": 104,
+      "promptTokens": 1925,
+      "peakMemoryGB": 3.939822644,
+      "jsonValid": true,
+      "protocolValid": false,
+      "visualIdentityCorrect": false,
+      "completeTaskValid": false
+    }
+  ],
+  "limits": [
+    "no application action executed",
+    "fixture only",
+    "not customer/human usability",
+    "no WebGPU test",
+    "single sequential corpus pass",
+    "reported title requires separate visual correctness assessment"
+  ]
+}

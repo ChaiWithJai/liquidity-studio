@@ -1,0 +1,91 @@
+{
+  "model": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+  "revision": "1c6cbae21f8c38830ce337972b46fdae7b18eaaa",
+  "runtime": {
+    "mlx-vlm": "0.7.8",
+    "mlx": "0.32.4",
+    "transformers": "5.20.1",
+    "huggingface-hub": "2.2.0"
+  },
+  "loadSeconds": 1.5941973750013858,
+  "screenshotSha256": "4ea1ba5d625a3a3408c241fd9425755425b45b988cac5eab289c2c1422256a15",
+  "maxOutputTokens": 256,
+  "thinking": false,
+  "seed": 42,
+  "processPeakRSSBytes": 740802560,
+  "results": [
+    {
+      "case": "fresh",
+      "expectedDecision": "propose",
+      "rawOutput": "{\n  \"decision\": \"propose\",\n  \"observedTitle\": \"Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.\",\n  \"action\": {\n    \"kind\": \"story.patch\",\n    \"storyId\": \"story_angel_city\",\n    \"expectedRevision\": 1,\n    \"patch\": {\n      \"category\": \"Reviewed source notes\"\n    }\n  }\n}",
+      "jsonParseError": null,
+      "schemaValid": true,
+      "taskValid": true,
+      "elapsedSeconds": 12.802234916991438,
+      "observedTitleNeedsHumanReview": "Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.",
+      "generationTokens": 99,
+      "promptTokens": 1876,
+      "peakMemoryGB": 4.056508316
+    },
+    {
+      "case": "stale",
+      "expectedDecision": "refresh",
+      "rawOutput": "{\n  \"decision\": \"review\",\n  \"observedTitle\": \"Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.\",\n  \"action\": null\n}",
+      "jsonParseError": null,
+      "schemaValid": true,
+      "taskValid": false,
+      "elapsedSeconds": 9.747670625001774,
+      "observedTitleNeedsHumanReview": "Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.",
+      "generationTokens": 46,
+      "promptTokens": 1876,
+      "peakMemoryGB": 4.056558896
+    },
+    {
+      "case": "paused",
+      "expectedDecision": "refresh",
+      "rawOutput": "{\n  \"decision\": \"refresh\",\n  \"observedTitle\": \"Current story: Angel City FC\u2019s $250M Control Deal & NWSL Media Boom \u00b7 revision 1\",\n  \"action\": null\n}",
+      "jsonParseError": null,
+      "schemaValid": true,
+      "taskValid": true,
+      "elapsedSeconds": 8.663554583996302,
+      "observedTitleNeedsHumanReview": "Current story: Angel City FC\u2019s $250M Control Deal & NWSL Media Boom \u00b7 revision 1",
+      "generationTokens": 51,
+      "promptTokens": 1876,
+      "peakMemoryGB": 4.056558896
+    },
+    {
+      "case": "unsupported",
+      "expectedDecision": "reject",
+      "rawOutput": "{\n  \"decision\": \"reject\",\n  \"observedTitle\": \"Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.\",\n  \"action\": null\n}",
+      "jsonParseError": null,
+      "schemaValid": true,
+      "taskValid": true,
+      "elapsedSeconds": 7.809268957993481,
+      "observedTitleNeedsHumanReview": "Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.",
+      "generationTokens": 46,
+      "promptTokens": 1877,
+      "peakMemoryGB": 4.057577456
+    },
+    {
+      "case": "fresh-warm",
+      "expectedDecision": "propose",
+      "rawOutput": "{\n  \"decision\": \"propose\",\n  \"observedTitle\": \"Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.\",\n  \"action\": {\n    \"kind\": \"story.patch\",\n    \"storyId\": \"story_angel_city\",\n    \"expectedRevision\": 1,\n    \"patch\": {\n      \"category\": \"Reviewed source notes\"\n    }\n  }\n}",
+      "jsonParseError": null,
+      "schemaValid": true,
+      "taskValid": true,
+      "elapsedSeconds": 8.552192167000612,
+      "observedTitleNeedsHumanReview": "Review bounded proposals before another operator or helper changes shared metadata. Navigation and unsaved editing stay personal.",
+      "generationTokens": 99,
+      "promptTokens": 1876,
+      "peakMemoryGB": 4.057577456
+    }
+  ],
+  "limits": [
+    "no application action executed",
+    "fixture only",
+    "not customer/human usability",
+    "no WebGPU test",
+    "single sequential corpus pass",
+    "reported title requires separate visual correctness assessment"
+  ]
+}
