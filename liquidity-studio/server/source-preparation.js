@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
 import { brandRevision } from "./multimodal-contract.js";
 import { retrieveSource } from "./source-retrieval.js";
+import { catalogForStory } from "./source-catalog.js";
 import {
   buildPreparedCandidate,
   preparationFingerprint,
@@ -28,6 +29,9 @@ export class SourcePreparationService {
         await expected.assertCurrent?.();
         evidence.push({
           ...(await this.retrieve(url, {
+            passage: catalogForStory(story, this.scope).find(
+              (entry) => entry.sourceUrl === url,
+            )?.passage,
             query: [
               story.title,
               ...(story.sourceClaims || [])
