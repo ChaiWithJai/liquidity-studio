@@ -1,8 +1,6 @@
-import {
-  EditorPackService,
-  createEditorRestoreDestination,
-} from "./editor-pack-service.js";
-import { ScopedRepository } from "./repository.js";
+import {editorRestoreStatus} from './editor-recovery.js';
+import { EditorPackService, createEditorRestoreDestination } from './editor-pack-service.js';
+import { ScopedRepository } from './repository.js';
 import { brandRevision as nativeBrandRevision } from "./multimodal-contract.js";
 import { jobDispatcherConfiguration, dispatchJobs } from "./job-dispatcher.js";
 import { nativeFontCatalog } from "./native-editor-fonts.js";
@@ -508,6 +506,7 @@ export function createHttpServer(
         const methods = {
           "/api/admin/editor-pack/destinations": "POST",
           "/api/admin/editor-pack/export": "GET",
+          "/api/admin/editor-pack/status": "GET",
           "/api/admin/editor-pack/install": "POST",
           "/api/admin/editor-pack/rollback": "POST",
         };
@@ -519,6 +518,7 @@ export function createHttpServer(
             url.searchParams.get("organizationId"),
             url.searchParams.get("brandId"),
           );
+        if (route !== "/api/admin/editor-pack/status") {
         if (portableOperationActive) {
           res.setHeader("Retry-After", "1");
           if (req.method === "POST") {
@@ -551,6 +551,7 @@ export function createHttpServer(
           operationDone = true;
           release();
         };
+        }
       }
       const body =
         req.method === "POST"
@@ -617,33 +618,14 @@ export function createHttpServer(
       }
       if (route.startsWith("/api/admin/editor-pack/")) {
         founder();
-        if (
-          !nativeEditorEnabled ||
-          trustedTestMode ||
-          process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== "true"
-        )
-          throw fail(404, "Not found");
-        if (
-          route === "/api/admin/editor-pack/destinations" &&
-          req.method === "POST"
-        ) {
-          workspaceExact(body, ["organizationId", "name", "preset"]);
-          return json(
-            201,
-            await createEditorRestoreDestination({
-              store: platform.store,
-              identity,
-              actor: user,
-              ...body,
-            }),
-          );
+        if (!nativeEditorEnabled || trustedTestMode || process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== 'true') throw fail(404,'Not found');
+        if (route === '/api/admin/editor-pack/destinations' && req.method === 'POST') {
+          workspaceExact(body,['organizationId','name','preset','idempotencyKey']);
+          return json(201,await createEditorRestoreDestination({store:platform.store,identity,actor:user,...body}));
         }
-        const target = await identity.authorize(
-          user,
-          url.searchParams.get("organizationId"),
-          url.searchParams.get("brandId"),
-        );
-        const restoreRepo = new ScopedRepository(platform.store, target);
+        const target = await identity.authorize(user,url.searchParams.get('organizationId'),url.searchParams.get('brandId'));
+        if (route === '/api/admin/editor-pack/status' && req.method === 'GET') return json(200,await editorRestoreStatus({store:platform.store,identity,actor:user,scope:target}));
+        const restoreRepo = new ScopedRepository(platform.store,target);
         await restoreRepo.ready;
         const packService = new EditorPackService({
           native: platform.nativeEditor(target, restoreRepo),
@@ -660,12 +642,8 @@ export function createHttpServer(
             await packService.install(user, body.pack, body.options),
           );
         }
-        if (
-          route === "/api/admin/editor-pack/rollback" &&
-          req.method === "POST"
-        ) {
-          workspaceExact(body, ["idempotencyKey"]);
-          return json(200, await packService.rollback(user, body));
+        if (route === '/api/admin/editor-pack/rollback' && req.method === 'POST') {
+          workspaceExact(body,['idempotencyKey','installationId']);if(!body.idempotencyKey&&!body.installationId)throw fail(400,'A current recovery installation is required');return json(200,await packService.rollback(user,body));
         }
         throw fail(404, "Not found");
       }
@@ -1124,6 +1102,7 @@ export function createHttpServer(
           operatorCapabilities: {
             helperControl: helperControlEnabled && !trustedTestMode,
             nativeEditor: nativeEditorEnabled && !trustedTestMode,
+            nativePortable: nativeEditorEnabled && !trustedTestMode && process.env.STUDIO_NATIVE_PORTABLE_ENABLED === "true",
             penpot: penpotEnabled && !trustedTestMode && !process.env.K_SERVICE,
             sourcePreparation:
               process.env.STUDIO_SOURCE_PREPARATION_ENABLED === "true" &&
