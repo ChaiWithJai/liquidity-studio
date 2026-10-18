@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "kind": "controlled-password-fixture-functional-acceptance",
+  "sourceCommit": "4659423e9ebb9dbe73c1e80472823d2284c3e006",
+  "mergedMainCommit": "0ea0a916fe20dc6367840cbdc9af76511a1a85f6",
+  "pullRequest": "https://github.com/ChaiWithJai/liquidity-studio/pull/179",
+  "checkpoint": "https://github.com/ChaiWithJai/liquidity-studio/pull/179#issuecomment-6249767817",
+  "hostedChecks": {
+    "runId": 39125310390,
+    "head": "4659423e9ebb9dbe73c1e80472823d2284c3e006",
+    "allFivePassed": true
+  },
+  "originalFailures": {
+    "htmlJobs": 3,
+    "publicStatus": 502,
+    "originalReservations": 3,
+    "diagnosticRetries": 1,
+    "diagnosticSource": "research_0",
+    "diagnosticUpstreamStatus": 203,
+    "diagnosticEncodingCategory": "absent",
+    "otherUpstreamStatuses": "not observed",
+    "bodyCause": "not inferred"
+  },
+  "efetchRun": {
+    "newJobs": 3,
+    "completedFirstAttempt": 3,
+    "oldFailedJobsRetained": 3,
+    "oldAttemptsRetained": [
+      2,
+      1,
+      1
+    ],
+    "reservationsBefore": 4,
+    "reservationsAfter": 7,
+    "organizationDailyCap": 10,
+    "globalDailyCap": 20,
+    "quotaReset": false,
+    "automaticRetry": false,
+    "sourceApproval": false,
+    "clinicalConfirmation": false,
+    "promotion": false,
+    "paidProviderCalls": 0,
+    "modelCalls": 0,
+    "nativeEditorEnabled": false,
+    "maintainedDataChanged": false,
+    "googleAuthenticationClaim": false
+  },
+  "candidates": [
+    {
+      "storyId": "research_0",
+      "status": "ready",
+      "revision": 2,
+      "editorialStatus": "unreviewed",
+      "hasCampaign": false,
+      "publisher": "2012 clinical trial \u00b7 PMID 23439798",
+      "kind": "clinical",
+      "clinicalReview": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "excerptStatuses": [
+        "unreviewed",
+        "unreviewed",
+        "unreviewed",
+        "unreviewed"
+      ],
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/23439798/",
+      "requestedUrl": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=23439798&retmode=xml&tool=liquidity_studio",
+      "retrieval": {
+        "pmid": "23439798",
+        "provider": "ncbi-efetch-pubmed-v1"
+      },
+      "responseBytes": 10141,
+      "responseSha256": "36d778521db40f0cd7eb06c376690d66d52995fbd67b07f50482b3fb50829e3a",
+      "textSha256": "f0db2c4ca070d71f1fd612e1952e94f1f69531aa474e3a7f55c65669c69dbdae",
+      "savedHeadline": "Ashwagandha trial \u00b7 2012"
+    },
+    {
+      "storyId": "research_2",
+      "status": "ready",
+      "revision": 2,
+      "editorialStatus": "unreviewed",
+      "hasCampaign": false,
+      "publisher": "2010 immediate physiology study \u00b7 PMID 21446363",
+      "kind": "clinical",
+      "clinicalReview": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "excerptStatuses": [
+        "unreviewed",
+        "unreviewed",
+        "unreviewed",
+        "unreviewed"
+      ],
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/21446363/",
+      "requestedUrl": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=21446363&retmode=xml&tool=liquidity_studio",
+      "retrieval": {
+        "pmid": "21446363",
+        "provider": "ncbi-efetch-pubmed-v1"
+      },
+      "responseBytes": 4516,
+      "responseSha256": "3a9c3c2cc4da659d5183a0bb385cbe097959184b3fa510cb43d0921b50931367",
+      "textSha256": "0a02678e3c10765363c6983b478baba6943cc9e00c1c634dfce0da2bf9596d5b",
+      "savedHeadline": "Bhramari study \u00b7 2010"
+    },
+    {
+      "storyId": "research_3",
+      "status": "ready",
+      "revision": 2,
+      "editorialStatus": "unreviewed",
+      "hasCampaign": false,
+      "publisher": "2015 evening reading comparison \u00b7 PMID 25535358",
+      "kind": "clinical",
+      "clinicalReview": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "excerptStatuses": [
+        "unreviewed",
+        "unreviewed",
+        "unreviewed",
+        "unreviewed"
+      ],
+      "sourceUrl": "https://pubmed.ncbi.nlm.nih.gov/25535358/",
+      "requestedUrl": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=25535358&retmode=xml&tool=liquidity_studio",
+      "retrieval": {
+        "pmid": "25535358",
+        "provider": "ncbi-efetch-pubmed-v1"
+      },
+      "responseBytes": 23335,
+      "responseSha256": "c5acdf5372779f7a9312012a211453d8e83ee13525a8dfc02db0a75c4dc2144b",
+      "textSha256": "e0882786428325c62ff6f01789cc74b5bbc6f0bb1f6bc62ad68d59ed692cbfbf",
+      "savedHeadline": "Evening reading \u00b7 2015"
+    }
+  ],
+  "previewInspection": {
+    "candidateCount": 3,
+    "viewsPerCandidate": 9,
+    "totalDisplayedViews": 27,
+    "formats": {
+      "infographic": 1,
+      "carousel": 4,
+      "story": 1,
+      "reelBoards": 3
+    },
+    "dimensions": {
+      "feedAndCarousel": [
+        1080,
+        1350
+      ],
+      "storyAndReel": [
+        1080,
+        1920
+      ]
+    },
+    "previewErrorsObserved": 0,
+    "saveAndFullBrowserReloadPerCandidate": true,
+    "candidateRevisionAfterEdit": 2,
+    "queuedNoticePresentAtFinalReadback": false,
+    "notClaimed": [
+      "Native media export",
+      "Clinical accuracy or fact approval",
+      "Maintained Google-runtime acceptance",
+      "All-pixel visual equivalence",
+      "Video rendering"
+    ]
+  },
+  "independentReview": {
+    "ashwagandha": "Separate reviewer used ordinary UI and read-only API to inspect saved preview, full evidence, retrieval provenance and null clinical review",
+    "bhramariAndReader": "Separate reviewer viewed original saved Neo screenshots and read the result report"
+  },
+  "artifact": {
+    "buildSource": "b9531d40771fe98874a08590c6f3224783706710",
+    "runtimeSource": "4659423e9ebb9dbe73c1e80472823d2284c3e006",
+    "frontendBuildDependencyFilesCompared": 62,
+    "inputMismatches": 0,
+    "buildElapsedSeconds": 2.3,
+    "buildLargestSampledProcessGroupRssKiB": 307376,
+    "javascript": {
+      "file": "index-BYKWdl8l.js",
+      "sha256": "03613e3246d189c49ab1bbf987d52e13fb122c252f12d1d02cd47e4580ca431b"
+    },
+    "css": {
+      "file": "index-cJDKJPtg.css",
+      "sha256": "5d7d8d2625b0420af8b126dc57eeb336a997bcf9b0e75b81df260934e1562c65"
+    }
+  },
+  "runtime": {
+    "elapsedSeconds": 446.27,
+    "largestSampledRssKiB": 101280,
+    "rssSamplingIntervalSeconds": 5,
+    "v8OldSpaceMiB": 256,
+    "externalRssStopMiB": 512,
+    "deadlineSeconds": 1200,
+    "returnCode": 0,
+    "portReleased": true,
+    "neoTabBlanked": true,
+    "limits": "Largest sampled RSS is not a continuously measured peak. Runtime includes review pauses and is not a speed benchmark."
+  },
+  "backups": {
+    "onlineConsistent": {
+      "bytes": 81920,
+      "sha256": "4101b82613f1c2aea79f935e14b7173b2367f4218825c1b8b744eda6f7f83b01",
+      "capturedAt": "2026-10-18T12:10:29.425Z",
+      "method": "Owned process SIGUSR2 and SQLite VACUUM INTO while worker was still polling",
+      "integrity": "ok"
+    },
+    "quiescentExactCopy": {
+      "bytes": 135168,
+      "sha256": "09d70ea26a4f7e145bbae61d2995a7c9ebc255f9da11e9f80ce452050a7b598a",
+      "method": "Exact closed SQLite file copy after owned server and worker exit",
+      "integrity": "ok",
+      "documents": 6
+    },
+    "distinction": "Separate artifacts captured at different lifecycle points; no byte or logical equality claim and no timestamp normalization. Private database bytes are not published."
+  },
+  "screenshots": [
+    {
+      "file": "ash-reloaded.png",
+      "bytes": 250095,
+      "sha256": "da67d2a10aa9710226455c9c94649886680328b6295b55234b9bccaa44de2e0f",
+      "imagePixels": {
+        "width": 1860,
+        "height": 1536
+      },
+      "browserViewportCssPixels": {
+        "width": 1051,
+        "height": 868
+      },
+      "devicePixelRatio": 2,
+      "capture": "Original Neo screenshot; capture resized by browser tool, no image editing"
+    },
+    {
+      "file": "bhr-reloaded.png",
+      "bytes": 251668,
+      "sha256": "fff6fd06cc7509cd58a69e13de449bb81fcf73883a5ddf320ae6fc5c2d87ff53",
+      "imagePixels": {
+        "width": 1860,
+        "height": 1536
+      },
+      "browserViewportCssPixels": {
+        "width": 1051,
+        "height": 868
+      },
+      "devicePixelRatio": 2,
+      "capture": "Original Neo screenshot; capture resized by browser tool, no image editing"
+    },
+    {
+      "file": "reader-reloaded.png",
+      "bytes": 238547,
+      "sha256": "2832922fc334c6c5657fb208d7cd446edf74e39cdecb686c87a2712b2d9c7103",
+      "imagePixels": {
+        "width": 1860,
+        "height": 1536
+      },
+      "browserViewportCssPixels": {
+        "width": 1051,
+        "height": 868
+      },
+      "devicePixelRatio": 2,
+      "capture": "Original Neo screenshot; capture resized by browser tool, no image editing"
+    }
+  ],
+  "remaining": "Issue162 remains open for guarded maintained seed follow-through; clinical review authority is not granted by this evidence."
+}
