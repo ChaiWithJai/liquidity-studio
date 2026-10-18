@@ -299,7 +299,11 @@ export class NativeEditorService {
       if ([409, 422].includes(error.status)) sourceState = value.origin.requiresSourceReview === true ? "historical" : "changed";
       else throw error;
     }
-    return { ...(await this.publicRecord(actor, value)), sourceState };
+    return {
+      ...(await this.publicRecord(actor, value)),
+      sourceState,
+      currentBrandRevision: brandRevision(state.brandProfile),
+    };
   }
   request(actor, operation, input) {
     text(input.idempotencyKey, "idempotency key", 100);

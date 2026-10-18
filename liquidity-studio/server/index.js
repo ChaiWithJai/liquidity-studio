@@ -1,5 +1,8 @@
-import { EditorPackService, createEditorRestoreDestination } from './editor-pack-service.js';
-import { ScopedRepository } from './repository.js';
+import {
+  EditorPackService,
+  createEditorRestoreDestination,
+} from "./editor-pack-service.js";
+import { ScopedRepository } from "./repository.js";
 import { brandRevision as nativeBrandRevision } from "./multimodal-contract.js";
 import { jobDispatcherConfiguration, dispatchJobs } from "./job-dispatcher.js";
 import { nativeFontCatalog } from "./native-editor-fonts.js";
@@ -476,14 +479,21 @@ export function createHttpServer(
         req.method === "POST"
           ? await readBody(
               req,
-              ["/api/admin/import", "/api/admin/editor-pack/install"].includes(route)
-                ? (route === "/api/admin/editor-pack/install" ? 49 : 32) * 1024 * 1024
-                : nativeEditorEnabled && /^\/api\/studio\/native-editor\/documents\/[a-f0-9-]{36}\/exports$/.test(route)
-                  ? 6 * 1024 * 1024
+              ["/api/admin/import", "/api/admin/editor-pack/install"].includes(
+                route,
+              )
+                ? (route === "/api/admin/editor-pack/install" ? 49 : 32) *
+                    1024 *
+                    1024
                 : nativeEditorEnabled &&
-                    route.startsWith("/api/studio/native-editor/")
-                  ? 768 * 1024
-                  : 262144,
+                    /^\/api\/studio\/native-editor\/documents\/[a-f0-9-]{36}\/exports$/.test(
+                      route,
+                    )
+                  ? 6 * 1024 * 1024
+                  : nativeEditorEnabled &&
+                      route.startsWith("/api/studio/native-editor/")
+                    ? 768 * 1024
+                    : 262144,
             )
           : {};
       if (route === "/api/admin/organizations" && req.method === "POST") {
@@ -527,25 +537,59 @@ export function createHttpServer(
           }),
         );
       }
-      if (route.startsWith('/api/admin/editor-pack/')) {
+      if (route.startsWith("/api/admin/editor-pack/")) {
         founder();
-        if (!nativeEditorEnabled || trustedTestMode || process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== 'true') throw fail(404,'Not found');
-        if (route === '/api/admin/editor-pack/destinations' && req.method === 'POST') {
-          workspaceExact(body,['organizationId','name','preset']);
-          return json(201,await createEditorRestoreDestination({store:platform.store,identity,actor:user,...body}));
+        if (
+          !nativeEditorEnabled ||
+          trustedTestMode ||
+          process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== "true"
+        )
+          throw fail(404, "Not found");
+        if (
+          route === "/api/admin/editor-pack/destinations" &&
+          req.method === "POST"
+        ) {
+          workspaceExact(body, ["organizationId", "name", "preset"]);
+          return json(
+            201,
+            await createEditorRestoreDestination({
+              store: platform.store,
+              identity,
+              actor: user,
+              ...body,
+            }),
+          );
         }
-        const target = await identity.authorize(user,url.searchParams.get('organizationId'),url.searchParams.get('brandId'));
-        const restoreRepo = new ScopedRepository(platform.store,target);
+        const target = await identity.authorize(
+          user,
+          url.searchParams.get("organizationId"),
+          url.searchParams.get("brandId"),
+        );
+        const restoreRepo = new ScopedRepository(platform.store, target);
         await restoreRepo.ready;
-        const packService = new EditorPackService({native:platform.nativeEditor(target,restoreRepo)});
-        if (route === '/api/admin/editor-pack/export' && req.method === 'GET') return json(200,await packService.export(user));
-        if (route === '/api/admin/editor-pack/install' && req.method === 'POST') {
-          workspaceExact(body,['pack','options']);return json(200,await packService.install(user,body.pack,body.options));
+        const packService = new EditorPackService({
+          native: platform.nativeEditor(target, restoreRepo),
+        });
+        if (route === "/api/admin/editor-pack/export" && req.method === "GET")
+          return json(200, await packService.export(user));
+        if (
+          route === "/api/admin/editor-pack/install" &&
+          req.method === "POST"
+        ) {
+          workspaceExact(body, ["pack", "options"]);
+          return json(
+            200,
+            await packService.install(user, body.pack, body.options),
+          );
         }
-        if (route === '/api/admin/editor-pack/rollback' && req.method === 'POST') {
-          workspaceExact(body,['idempotencyKey']);return json(200,await packService.rollback(user,body));
+        if (
+          route === "/api/admin/editor-pack/rollback" &&
+          req.method === "POST"
+        ) {
+          workspaceExact(body, ["idempotencyKey"]);
+          return json(200, await packService.rollback(user, body));
         }
-        throw fail(404,'Not found');
+        throw fail(404, "Not found");
       }
       const scope = trustedTestMode
         ? { organizationId: "test", brandId: "test" }
@@ -831,24 +875,58 @@ export function createHttpServer(
         }
         const exportStageMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/exports$/);
         if (exportStageMatch && req.method === "GET")
-          return json(200, await platform.editorExport(scope, repo).list(user, exportStageMatch[1]));
+          return json(
+            200,
+            await platform
+              .editorExport(scope, repo)
+              .list(user, exportStageMatch[1]),
+          );
         if (exportStageMatch && req.method === "POST")
-          return json(201, await platform.editorExport(scope, repo).stage(user, exportStageMatch[1], body));
-        const exportArtifactMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/exports\/([a-f0-9]{64})(?:\/(signoff|complete))?$/);
+          return json(
+            201,
+            await platform
+              .editorExport(scope, repo)
+              .stage(user, exportStageMatch[1], body),
+          );
+        const exportArtifactMatch = route.match(
+          /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/exports\/([a-f0-9]{64})(?:\/(signoff|complete))?$/,
+        );
         if (exportArtifactMatch) {
-          const [,nativeId,artifactId,action] = exportArtifactMatch;
+          const [, nativeId, artifactId, action] = exportArtifactMatch;
           const exporter = platform.editorExport(scope, repo);
           if (!action && req.method === "GET") {
-            const {stage,bytes} = await exporter.bytes(user,nativeId,artifactId);
-            return json(200,{...exporter.dto(stage),base64:bytes.toString('base64')});
+            const { stage, bytes } = await exporter.bytes(
+              user,
+              nativeId,
+              artifactId,
+            );
+            return json(200, {
+              ...exporter.dto(stage),
+              base64: bytes.toString("base64"),
+            });
           }
-          if (action === 'signoff' && req.method === 'POST')
-            return json(200,await exporter.signoff(user,nativeId,artifactId,body));
-          if (action === 'complete' && req.method === 'POST') {
-            if(body?.artifactId!==artifactId)throw fail(400,'Export artifact does not match completion route');
-            return json(200,await exporter.complete(user,nativeId,body));
+          if (action === "signoff" && req.method === "POST")
+            return json(
+              200,
+              await exporter.signoff(user, nativeId, artifactId, body),
+            );
+          if (action === "complete" && req.method === "POST") {
+            if (body?.artifactId !== artifactId)
+              throw fail(
+                400,
+                "Export artifact does not match completion route",
+              );
+            return json(200, await exporter.complete(user, nativeId, body));
           }
         }
+        const brandTokensMatch = route.match(
+          /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/brand-tokens$/,
+        );
+        if (brandTokensMatch && req.method === "POST")
+          return json(
+            200,
+            await service.refreshBrandTokens(user, brandTokensMatch[1], body),
+          );
         const nativeMatch = route.match(
           /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})$/,
         );
