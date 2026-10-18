@@ -565,7 +565,106 @@ export function createHttpServer(
         batchProductionService: batch,
         adminObservabilityService: admin,
       } = activeContainer.services;
+      const queueIngestedPreparation = async (storyIds) => {
+        if (
+          trustedTestMode ||
+          process.env.STUDIO_SOURCE_PREPARATION_ENABLED !== "true" ||
+          process.env.STUDIO_OPERATOR_JOBS_ENABLED !== "true"
+        )
+          return null;
+        try {
+          const config = jobDispatcherConfiguration();
+          if (
+            config.mode === "cloud-tasks" &&
+            !config.scopes.some(
+              (allowed) =>
+                allowed.organizationId === scope.organizationId &&
+                allowed.brandId === scope.brandId,
+            )
+          )
+            return { state: "not_queued", code: "WORKER_SCOPE_REQUIRED" };
+          const job = await platform
+            .operatorJobs(scope, activeContainer)
+            .createForIngestion(user, storyIds);
+          if (!job)
+            return {
+              state: "source_attention",
+              code: "NO_NEW_ELIGIBLE_SOURCE",
+            };
+          try {
+            await dispatchJobs(repo, job.id);
+            return { state: "queued", jobId: job.id };
+          } catch {
+            return {
+              state: "delivery_pending",
+              jobId: job.id,
+              code: "DISPATCH_RETRY_REQUIRED",
+            };
+          }
+        } catch {
+          return { state: "not_queued", code: "PREPARATION_PLAN_REQUIRED" };
+        }
+      };
       if (route.startsWith("/api/admin/")) founder();
+      if (route.startsWith("/api/studio/preparations/")) {
+        if (
+          trustedTestMode ||
+          process.env.STUDIO_SOURCE_PREPARATION_ENABLED !== "true"
+        )
+          throw fail(404, "Not found");
+        const jobs = platform.operatorJobs(scope, activeContainer);
+        const forkRoute=route.match(/^\/api\/studio\/preparations\/stories\/([^/]+)\/fork$/);
+        if(forkRoute&&req.method==="POST")return json(201,await platform.preparedPromotion(scope,repo).fork(user,decodeURIComponent(forkRoute[1]),body));
+        const preparationStoryRoute = route.match(
+          /^\/api\/studio\/preparations\/stories\/([^/]+)$/,
+        );
+        if (preparationStoryRoute && req.method === "GET")
+          return json(
+            200,
+            await jobs.preparationForStory(
+              user,
+              decodeURIComponent(preparationStoryRoute[1]),
+            ),
+          );
+        const candidateRoute = route.match(
+          /^\/api\/studio\/preparations\/([a-f0-9-]{36})(?:\/(edit|review-plan|promote))?$/,
+        );
+        if (
+          candidateRoute &&
+          candidateRoute[2] === "review-plan" &&
+          req.method === "GET"
+        )
+          return json(
+            200,
+            await platform
+              .preparedPromotion(scope, repo)
+              .plan(user, candidateRoute[1]),
+          );
+        if (
+          candidateRoute &&
+          candidateRoute[2] === "promote" &&
+          req.method === "POST"
+        )
+          return json(
+            200,
+            await platform
+              .preparedPromotion(scope, repo)
+              .promote(user, candidateRoute[1], body),
+          );
+        if (candidateRoute && req.method === "GET" && !candidateRoute[2])
+          return json(200, await jobs.candidate(user, candidateRoute[1]));
+        if (
+          candidateRoute &&
+          req.method === "POST" &&
+          candidateRoute[2] === "edit"
+        )
+          return json(
+            200,
+            await jobs.editCandidate(user, candidateRoute[1], body),
+          );
+        throw fail(404, "Not found");
+      }
+
       if (
         route === "/api/studio/jobs" ||
         route.startsWith("/api/studio/jobs/")
@@ -860,6 +959,10 @@ export function createHttpServer(
             helperControl: helperControlEnabled && !trustedTestMode,
             nativeEditor: nativeEditorEnabled && !trustedTestMode,
             penpot: penpotEnabled && !trustedTestMode && !process.env.K_SERVICE,
+            sourcePreparation:
+              process.env.STUDIO_SOURCE_PREPARATION_ENABLED === "true" &&
+              process.env.STUDIO_OPERATOR_JOBS_ENABLED === "true" &&
+              !trustedTestMode,
           },
         });
       if (route.startsWith("/api/studio/penpot/")) {
@@ -1107,14 +1210,22 @@ export function createHttpServer(
         const sourceClaims = claims(body.sourceClaims);
         if (body.scheduledDay && !days.includes(body.scheduledDay))
           throw fail(400, "Invalid scheduled day");
-        return json(
-          201,
-          await backlog.addStory({
-            ...body,
-            title: text(body.title, "title"),
-            sourceClaims,
-          }),
-        );
+        const result = await backlog.addStory({
+          ...body,
+          title: text(body.title, "title"),
+          sourceClaims,
+        });
+        const preparation = await queueIngestedPreparation([result.story.id]);
+        if (preparation) {
+          result.backlog = await repo.listBacklog();
+          result.story = result.backlog.find(
+            (story) => story.id === result.story.id,
+          );
+        }
+        return json(201, {
+          ...result,
+          ...(preparation ? { preparation } : {}),
+        });
       }
       if (route === "/api/studio/source-claims" && req.method === "POST") {
         const sourceClaims = claims(body.sourceClaims).map((claim) => {
@@ -1301,9 +1412,15 @@ export function createHttpServer(
         return res.end(Buffer.from(asset.base64, "base64"));
       }
       if (route === "/api/studio/ingest" && req.method === "POST") {
-        return json(201, {
-          added: await repo.ingestStories(normalizeFeed(body)),
-        });
+        const sources = normalizeFeed(body),
+          added = await repo.ingestStories(sources),
+          sourceIds = new Set(sources.map((story) => story.sourceId));
+        const preparation = await queueIngestedPreparation(
+          (await repo.listBacklog())
+            .filter((story) => sourceIds.has(story.sourceId))
+            .map((story) => story.id),
+        );
+        return json(201, { added, ...(preparation ? { preparation } : {}) });
       }
       if (route === "/api/admin/discovery-config" && req.method === "POST") {
         const feedUrl = validateFeedUrl(body.feedUrl).href;

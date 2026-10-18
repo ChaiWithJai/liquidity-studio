@@ -7,6 +7,7 @@
   import JobsPane from "./components/JobsPane.svelte";
   import NativeEditorHost from "./components/NativeEditorHost.svelte";
   import PenpotPanel from "./components/PenpotPanel.svelte";
+  import PreparedSourcePanel from "./components/PreparedSourcePanel.svelte";
   import HelperControlPane from "./components/HelperControlPane.svelte";
   import { createWorkspaceClient } from "./lib/workspace-client.js";
   import { scopedRequest } from "./lib/scoped-request.js";
@@ -65,11 +66,15 @@
   let helperControlEnabled = $state(false);
   let nativeEditorEnabled = $state(false);
   let penpotEnabled = $state(false);
+  let sourcePreparationEnabled=$state(false),preparedDirty=$state(false),preparedEditingStoryId=$state(""),preparedForkIntent=$state(null);
+  let preparedWorkspace=$derived(sourcePreparationEnabled&&(!campaign||preparedEditingStoryId===selectedStory?.id));
   let nativeRecord = $state(null);
   let nativeHost = $state.raw(null);
   let nativeDirty = $state(false);
   let nativeSaveState = $state("idle");
   function leaveNativeEditor(discard = false) {
+    if(preparedDirty&&!discard){error="Save prepared preview edits or explicitly reload/discard them before leaving.";return false;}
+    if(discard)preparedDirty=false;
     if (nativeRecord && nativeDirty && !discard) {
       error = "Save native changes or explicitly discard them before leaving the native editor.";
       return false;
@@ -78,7 +83,7 @@
     return true;
   }
   $effect(() => {
-    if (!nativeDirty) return;
+    if (!nativeDirty && !preparedDirty) return;
     const protect = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
@@ -143,6 +148,33 @@
       if (workspaceClient === host.client && failure.code !== "REQUEST_CONTEXT_CHANGED") error = `Could not load current brand members: ${failure.message}`;
     });
   });
+  let preparedHost=$derived.by(()=>{
+    const client=workspaceClient,storyId=selectedStory?.id;
+    if(!client||!storyId)return null;
+    const current=()=>workspaceClient===client&&selectedStory?.id===storyId;
+    return {client,storyId,scopeKey:client.scopeKey,getScopeKey:()=>current()?client.scopeKey:"context-changed",request:(path,options)=>{
+      if(!current())return Promise.reject(Object.assign(new Error("Workspace changed"),{code:"REQUEST_CONTEXT_CHANGED"}));
+      if(path.endsWith("/promote")&&(reviewDirty||pendingEdits))return Promise.reject(Object.assign(new Error("Save or explicitly reload existing source/artwork edits before confirming this candidate."),{status:409}));
+      return request(path,options);
+    },onDirtyChange:dirty=>{if(current())preparedDirty=dirty;},onReturnToHandoff:()=>{if(current()&&!preparedDirty)preparedEditingStoryId="";},onStoryChanged:async()=>{if(current())await client.ensureStories([storyId],{force:true});},onPromoted:async result=>{
+      if(!current())return;preparedDirty=false;preparedEditingStoryId="";client.ingestStories([result.story]);
+      if(reviewDirty||pendingEdits){notice="Reviewed candidate saved. Your existing local edits are preserved; reload the current saved story explicitly before handoff.";return;}
+      selectStory(result.story);notice=result.promotionStillCurrent===false?"An earlier promotion receipt was recovered, but that generation changed afterward. The current handoff is shown; review its current state before continuing.":"Reviewed prepared copy saved. Continue to layout and artifact handoff; publication is not approved.";
+    }};
+  });
+  async function editReviewedCopy(){
+    if(busy||!preparedHost||!selectedStory)return;
+    if(pendingEdits||reviewDirty||preparedDirty){error="Save or explicitly discard local changes before opening a reviewed-copy draft.";return;}
+    const host=preparedHost,story=selectedStory;busy=true;error="";
+    try{
+      const body=preparedForkIntent?.storyId===story.id?preparedForkIntent.body:{idempotencyKey:crypto.randomUUID(),expectedRevision:story.revision,expectedContentRevision:story.contentRevision||1,generationId:story.generationId,brandRevision:(await host.request(`/api/studio/preparations/stories/${encodeURIComponent(story.id)}`)).brandRevision};
+      if(workspaceClient!==host.client||selectedStory?.id!==story.id)return;
+      preparedForkIntent={storyId:story.id,body};
+      const result=await host.request(`/api/studio/preparations/stories/${encodeURIComponent(story.id)}/fork`,{method:"POST",body:JSON.stringify(body)});
+      if(workspaceClient!==host.client||selectedStory?.id!==story.id)return;preparedForkIntent=null;host.client.ingestStories([result.story]);selectStory(result.story);if(result.forkStillCurrent===false){preparedEditingStoryId="";notice="The earlier review draft was recovered, but the generation changed afterward. The current handoff is shown.";return;}preparedEditingStoryId=story.id;notice="Edit this unreviewed draft, save it, then confirm its exact copy and evidence. The previous generation remains unchanged until confirmation.";
+    }catch(failure){if(workspaceClient===host.client){error=failure.message;if(failure.status>=400&&failure.status<500)preparedForkIntent=null;}}
+    finally{if(workspaceClient===host.client)busy=false;}
+  }
   let workspaceUnsubscribe;
   // Projection of one canonical entity map; editor fields are intentional transient buffers.
   let backlog = $derived(workspaceState ? [...workspaceState.entities.values()].filter(entry => entry.story?.revision === entry.revision).map(entry => entry.story) : []);
@@ -183,7 +215,7 @@
     { key: "bRollDirection", label: "B-roll direction", hint: "Describe the supporting shot. This does not generate footage." },
   ];
   let reviewDirty = $derived(reviewSignature(reviewClaims) !== savedReviewSignature);
-  let nextWorkflowAction = $derived(editorConflictRevision ? "Resolve newer saved revision" : reviewDirty ? "Save source review" : !generationReview.ready ? "Review source prerequisites" : !campaign ? "Generate a draft" : pendingEdits ? "Save artwork changes" : "Inspect preview and validation before handoff");
+  let nextWorkflowAction = $derived(editorConflictRevision ? "Resolve newer saved revision" : reviewDirty ? "Save source review" : preparedWorkspace ? "Inspect prepared preview and evidence" : !generationReview.ready ? "Review source prerequisites" : !campaign ? "Generate a draft" : pendingEdits ? "Save artwork changes" : "Inspect preview and validation before handoff");
   let workflowContext = $state(null);
   function measureWorkflowOffset(bar = workflowContext) {
     if (!bar?.isConnected) return 16;
@@ -248,7 +280,9 @@
     ),
   );
   let provenance = $derived(
-    campaign?.provenance?.mode === "synthetic"
+    campaign?.provenance?.mode === "human-reviewed-prepared-candidate"
+      ? "Human-reviewed prepared copy · layout approval required"
+      : campaign?.provenance?.mode === "synthetic"
       ? "Synthetic draft · source review required"
       : campaign?.provenance?.mode === "provider"
         ? "Provider draft · source review required"
@@ -349,7 +383,7 @@
     if (workspaceClient && stories) workspaceClient.ingestStories(stories, {replace});
   }
   function clearWorkspace() {
-    leaveNativeEditor(true); nativeEditorEnabled = false; penpotEnabled = false;
+    leaveNativeEditor(true); nativeEditorEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     requestSessionEpoch++;
     lastScopeToken++;
     scopeLoading = false;
@@ -532,7 +566,7 @@
     searchInput?.focus();
   }
   async function loadScope() {
-    leaveNativeEditor(true); nativeEditorEnabled = false; penpotEnabled = false;
+    leaveNativeEditor(true); nativeEditorEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
     const view = key === activeBacklogScopeKey
@@ -571,6 +605,7 @@
       helperControlEnabled = data.operatorCapabilities?.helperControl === true;
       nativeEditorEnabled = data.operatorCapabilities?.nativeEditor === true;
       penpotEnabled = data.operatorCapabilities?.penpot === true;
+      sourcePreparationEnabled=data.operatorCapabilities?.sourcePreparation===true;
       brandProfile = data.brandProfile;
       if (brandProfile) {
         brandProfile.fonts ||= { heading: "DejaVu Sans", body: "DejaVu Sans" };
@@ -632,6 +667,7 @@
     await loadScope();
   }
   function selectStory(story) {
+    if(story?.id!==selectedStory?.id){preparedEditingStoryId="";preparedForkIntent=null;}
     editorConflictRevision = null;
     selectedStory = story ? JSON.parse(JSON.stringify(story)) : null;
     campaign = selectedStory?.campaignDraft || null;
@@ -1224,9 +1260,10 @@
           </div>
         {/if}
         {#if selectedStory}
-          <section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
+          {#if preparedWorkspace}<div class="prepared-story-context"><strong>{selectedStory.title}</strong><button class="secondary" onclick={()=>navigateTab("backlog")}>Return to backlog</button></div>{/if}
+          {#if !(preparedWorkspace)}<section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
             <div class="workflow-identity"><strong title={selectedStory.title}>{selectedStory.title}</strong><span>{currentOrganization?.name} / {currentBrand?.name} · {formats.find(item => item.id === format)?.name} · revision {selectedStory.revision}</span></div>
-            <p class="workflow-state" role="status">{pendingEdits ? "Unsaved artwork changes" : campaign ? "Artwork saved" : "No draft yet"} · {reviewDirty ? "Unsaved source review" : generationReview.ready ? "Source prerequisites saved" : `${generationReview.blockers.length} source prerequisite${generationReview.blockers.length === 1 ? "" : "s"} to review`}{editorConflictRevision ? ` · Newer saved revision ${editorConflictRevision}; resolve the conflict before saving.` : ""} · Next: {nextWorkflowAction}</p>
+            <p class="workflow-state" role="status">{preparedDirty ? "Unsaved prepared preview" : pendingEdits ? "Unsaved artwork changes" : campaign ? "Artwork saved" : sourcePreparationEnabled ? selectedStory.preparationStatus==='ready' ? "Source preview saved" : "Source preparation workspace" : "No draft yet"} · {reviewDirty ? "Unsaved source review" : preparedWorkspace ? "Evidence awaits explicit human review" : generationReview.ready ? "Source prerequisites saved" : `${generationReview.blockers.length} source prerequisite${generationReview.blockers.length === 1 ? "" : "s"} to review`}{editorConflictRevision ? ` · Newer saved revision ${editorConflictRevision}; resolve the conflict before saving.` : ""} · Next: {nextWorkflowAction}</p>
             <nav aria-label="Editorial task actions">
               <button class="secondary" onclick={() => focusWorkflow("workflow-sources")}>Review sources</button>
               {#if campaign}<button class="secondary" onclick={() => focusWorkflow("workflow-editor")}>Edit wording</button><button class="secondary" onclick={() => focusWorkflow("workflow-preview")}>Preview & validation</button><button class="secondary" onclick={() => focusWorkflow("workflow-validation")}>Validation results</button>
@@ -1236,7 +1273,8 @@
               <button class="secondary" onclick={() => navigateTab("backlog")}>Return to backlog</button>
             </nav>
           </section>
-          <div class="studio-toolbar" id="workflow-handoff" tabindex="-1">
+          {/if}
+          {#if !preparedWorkspace}<div class="studio-toolbar" id="workflow-handoff" tabindex="-1">
             <div>
               <span class="eyebrow">ACTIVE STORY</span>
               <h2>{selectedStory.title}</h2>
@@ -1264,6 +1302,7 @@
               >
             </div>
           </div>
+          {/if}
           {#if nativeRecord && nativeHost}
             <section class="panel" aria-label="Native proposal workspace">
               <h3>Native {formats.find(item => item.id === nativeRecord.format)?.name} proposal</h3>
@@ -1275,23 +1314,24 @@
                 onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => { nativeSaveState = value.status; if (value.status === "saved" && error === "Save native changes or explicitly discard them before leaving the native editor.") error = ""; }} />{/key}
             </section>
           {/if}
-          {#if penpotEnabled && penpotHost && campaign && selectedStory && !nativeRecord}
+          {#if penpotEnabled && penpotHost && campaign && selectedStory && !nativeRecord && !preparedWorkspace}
             {#key penpotHost.client}{#key selectedStory.id}<PenpotPanel request={penpotHost.request} storyId={selectedStory.id} role={user.role} />{/key}{/key}
           {/if}
-          <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
+          {#if !preparedWorkspace}<div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>{/if}
           {#if exportUrl}<p class="download">
               <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
                 >Download ready</small
               >
             </p>{/if}
-          <details class="small muted workflow-boundaries"><summary>Saving, export and unsaved work</summary><p>Save before exporting. Calendar placement sets a date; export downloads a file. Neither publishes. Unsaved artwork stays in this tab when you visit the calendar or backlog; reloading discards it. Save or discard native editor changes before leaving that editor.</p></details>
-          <div class="format-tabs" aria-label="Campaign format">
+          {#if !(preparedWorkspace)}<details class="small muted workflow-boundaries"><summary>Saving, export and unsaved work</summary><p>Save before exporting. Calendar placement sets a date; export downloads a file. Neither publishes. Unsaved artwork stays in this tab when you visit the calendar or backlog; reloading discards it. Save or discard native editor changes before leaving that editor.</p></details>{/if}
+          {#if !preparedWorkspace}<div class="format-tabs" aria-label="Campaign format">
             {#each formats as item (item.id)}<button
                 class:active={format === item.id}
                 onclick={() => selectFormat(item.id)}
                 >{item.name}<small>{item.ratio}</small></button
               >{/each}
           </div>
+          {/if}
           {#if helperControlEnabled && helperHost}
             {#key helperHost.client}<details class="panel shared-helper-control" aria-label="Shared helper control">
               <summary>Shared control · bounded proposals</summary>
@@ -1299,7 +1339,7 @@
                 story={selectedStory} members={workspaceState?.members || []} onContentChanged={helperHost.onContentChanged} />
             </details>{/key}
           {/if}
-          {#if campaign}<div class="studio-grid">
+          {#if campaign&&!preparedWorkspace}<div class="studio-grid">
               <section class="editor-panel workflow-target" id="workflow-editor" aria-label="Campaign wording" tabindex="-1">
                 <div class="panel-heading">
                   <h3>Edit artwork text</h3>
@@ -1311,7 +1351,7 @@
                   Edit the wording, then save to update your preview and
                   exported artwork.
                 </p>
-                <div class="field-editor">
+                {#if sourcePreparationEnabled&&campaign?.provenance?.mode==="human-reviewed-prepared-candidate"}<p>Copy changes require a new review of the exact saved draft. Your current generation stays intact until confirmation.</p><button class="primary" disabled={busy} onclick={editReviewedCopy}>{preparedForkIntent?"Retry opening reviewed-copy draft":"Edit reviewed copy"}</button>{:else}<div class="field-editor">
                   {#if format === "infographic"}
                     <label
                       >Headline<textarea
@@ -1470,7 +1510,7 @@
                   class="primary"
                   disabled={!pendingEdits || busy}
                   onclick={saveEdit}>Save changes</button
-                >
+                >{/if}
                 <div class="schedule-box">
                   <label
                     >Assigned day<select
@@ -1569,7 +1609,8 @@
                   {pendingEdits}
                   onpreflight={recordPreflight}
                 />{/key}</section>
-            </div>{:else}<section class="panel workflow-target" id="workflow-sources" aria-label="Source prerequisites" tabindex="-1">
+            </div>{:else}
+            {#snippet manualSourcePrerequisites()}<section class="panel workflow-target" id="workflow-sources" aria-label="Source prerequisites" tabindex="-1">
               <h3>Review sources before generation</h3>
               <p class="muted">
                 Add a source link to each claim and choose its review status.
@@ -1640,7 +1681,14 @@
               <button class="primary" disabled={busy || !generationReview.ready} onclick={generate}
                 >{busy ? "Generating…" : "Generate four-format draft"}</button
               >
-            </div>{/if}
+            </div>{/snippet}
+            {#if sourcePreparationEnabled&&preparedHost}
+              <section id="workflow-preview" class="workflow-target" tabindex="-1" aria-label="Prepared preview workspace">
+              {#key preparedHost.client}{#key preparedHost.storyId}<PreparedSourcePanel request={preparedHost.request} storyId={preparedHost.storyId} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} {brandProfile} onDirtyChange={preparedHost.onDirtyChange} onStoryChanged={preparedHost.onStoryChanged} onPromoted={preparedHost.onPromoted} onReturnToHandoff={preparedHost.onReturnToHandoff}/>{/key}{/key}
+              </section>
+              <details open={reviewDirty}><summary>Manual source review and existing source edits</summary>{@render manualSourcePrerequisites()}</details>
+            {:else}{@render manualSourcePrerequisites()}{/if}
+            {/if}
         {:else}<div class="empty">
             <h2>No story selected</h2>
             <p>

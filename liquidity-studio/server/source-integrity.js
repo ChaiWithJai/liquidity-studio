@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from 'node:util';
+import {REVIEWED_CANDIDATE_MODE,validateReviewedPreparedCopy} from './prepared-copy-review.js';
 
 export class ContentIntegrityError extends Error {
   constructor(code, message) { super(message); this.code = code; }
@@ -39,6 +40,11 @@ export function campaignFromApprovedClaims(story) {
 }
 
 export function validateCampaign(output, story) {
+  if(output?.provenance?.mode===REVIEWED_CANDIDATE_MODE){
+    const claims=getApprovedClaims(story),{provenance,...copy}=output;
+    try{return validateReviewedPreparedCopy(copy,claims,provenance.reviewedCopy);}
+    catch{throw new ContentIntegrityError('UNSUPPORTED_GENERATED_CLAIM','Campaign must preserve every exact human-reviewed prepared copy field');}
+  }
   const expected = campaignFromApprovedClaims(story);
   const { provenance, ...copy } = output || {};
   if (!isDeepStrictEqual(copy, expected)) {
@@ -51,15 +57,16 @@ export function evaluateCampaign(campaign, story, brandProfile = {}) {
   let integrity = false;
   let errorCode = null;
   try { validateCampaign(campaign, story); integrity = true; } catch (error) { errorCode = error.code || 'SOURCE_REVIEW_REQUIRED'; }
-  const formatChecks = ['infographic', 'carousel', 'story', 'reel'].map(format => ({ format, passed: integrity, sourceExcerptsPreserved: integrity }));
+  const reviewedPreparedCopy=campaign?.provenance?.mode===REVIEWED_CANDIDATE_MODE;
+  const formatChecks = ['infographic', 'carousel', 'story', 'reel'].map(format => ({ format, passed: integrity, sourceExcerptsPreserved: integrity&&!reviewedPreparedCopy, ...(reviewedPreparedCopy?{reviewedCopyPreserved:integrity}:{}) }));
   return {
     overallPass: integrity,
     score: integrity ? 100 : 0,
-    scoreMeaning: 'source-excerpt contract coverage; not factual or clinical accuracy',
+    scoreMeaning: reviewedPreparedCopy ? 'exact human-reviewed copy-field coverage; not factual or clinical accuracy' : 'source-excerpt contract coverage; not factual or clinical accuracy',
     factualAccuracy: 'not_assessed',
     editorialReviewRequired: true,
     domain: brandProfile.contentDomain || 'general',
-    sourceReviewStatus: integrity ? 'approved_excerpts' : 'review_required',
+    sourceReviewStatus: integrity ? reviewedPreparedCopy ? 'reviewed_prepared_copy' : 'approved_excerpts' : 'review_required',
     errorCode,
     formatChecks
   };

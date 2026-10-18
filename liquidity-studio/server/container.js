@@ -10,7 +10,7 @@ import {
 } from "./multimodal-contract.js";
 import { createExport } from "./export-assets.js";
 import { discoverInto } from "./discovery.js";
-import { getApprovedClaims } from "./source-integrity.js";
+import { getApprovedClaims, validateCampaign } from "./source-integrity.js";
 import { randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
 import { AIGateway } from "./gateway.js";
@@ -317,6 +317,10 @@ export function createAppContainer(overrides = {}) {
       );
       if (!story?.campaignDraft) throw fail(404, "Draft not found");
       getApprovedClaims(story);
+      if (story.campaignDraft.provenance?.mode === "human-reviewed-prepared-candidate") {
+        try { validateCampaign(story.campaignDraft, story); }
+        catch { throw fail(409, "Reviewed prepared copy changed; review the exact saved copy again before export"); }
+      }
       const output = await createExport({
         brandProfile: await repo.getBrandProfile(),
         campaign: story.campaignDraft,

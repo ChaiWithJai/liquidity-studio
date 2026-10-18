@@ -6,6 +6,8 @@ import { EditorExportService } from "./editor-export.js";
 import { nativeFontRegistry } from "./native-editor-fonts.js";
 import { EditorBoundary, validateEditorTargets } from "./editor-boundary.js";
 import { DurableJobService } from "./operator-jobs.js";
+import { SourcePreparationService } from "./source-preparation.js";
+import { PreparedPromotionService } from "./prepared-promotion.js";
 import { WorkspaceService } from "./workspace.js";
 import { DurableStore } from "./storage.js";
 import { IdentityService } from "./auth.js";
@@ -21,6 +23,7 @@ export function createPlatform({
   editorTargets = JSON.parse(process.env.STUDIO_EDITOR_TARGETS_JSON || "[]"),
   editorTransport,
   editorNow,
+  sourceRetriever,
   nativeCutoutModel = createNativeCutoutModel({
     enabled: process.env.STUDIO_NATIVE_CUTOUT_ENABLED === "true",
     path: process.env.STUDIO_NATIVE_MODNET_PATH,
@@ -59,7 +62,14 @@ export function createPlatform({
       identity: platform.identity,
       scope,
       formatter: container.services.multiFormatFormatterService,
+      preparation: new SourcePreparationService({
+        repo: container.ports.repo,
+        scope,
+        retrieve: sourceRetriever,
+      }),
     });
+  platform.preparedPromotion = (scope, repo) =>
+    new PreparedPromotionService({ repo, scope, identity: platform.identity });
   platform.workspace = (scope, repo) =>
     new WorkspaceService({
       store: platform.store,
