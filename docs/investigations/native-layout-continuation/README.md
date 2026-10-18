@@ -26,6 +26,8 @@ through real prepare/review, native save, portable export, and fresh-scope insta
 services. It uses a nonclinical controlled source, no model call, and no maintained
 Google account or production data. The current licensed private native frame is
 reused without publishing or rebuilding its upstream-containing assets.
+The fixture uses isolated in-memory SQLite stores: page reload checks saved
+service state, rather than process-restart or disk-recovery durability.
 
 Native-menu PNG downloads demonstrate editable proposal pixels. They are distinct
 from a new exact-version Studio approval and verified PNG export. Static reel
