@@ -1,0 +1,30 @@
+[
+  {
+    "label": "original",
+    "format": "png",
+    "bytes": 48193,
+    "sha256": "d8fff4c3209a89bb287ecaa5a6a4cf425a60e3043d576679e1e79e84cec09e7d",
+    "containsHeadline": null
+  },
+  {
+    "label": "original",
+    "format": "svg",
+    "bytes": 5166,
+    "sha256": "52b48d3780757fcb0e697df93ea15d518d8e2715bec043a4afc50c08cabf907b",
+    "containsHeadline": true
+  },
+  {
+    "label": "repaired",
+    "format": "png",
+    "bytes": 48193,
+    "sha256": "d8fff4c3209a89bb287ecaa5a6a4cf425a60e3043d576679e1e79e84cec09e7d",
+    "containsHeadline": null
+  },
+  {
+    "label": "repaired",
+    "format": "svg",
+    "bytes": 5166,
+    "sha256": "3a46a3ce4bc8eca2ac5d6882820f28991cd636b46cd2331d073c8c830a5327ec",
+    "containsHeadline": true
+  }
+]

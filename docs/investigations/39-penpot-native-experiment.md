@@ -1,5 +1,7 @@
 # Investigation 39: actual local Penpot native-document experiment
 
+> Follow-up: the original failure below is preserved. A fresh-browser reproduction identified lost SVG tag keyword types and validated an explicit local post-import repair with identical PNG output; see [typed SVG restoration evidence](../design-review/issue-54/svg-restore-v1/README.md). Upstream unmodified imports still require normalization.
+
 Recorded 2026-10-18 UTC. This experiment used a disposable local Penpot 2.18.3 stack, not the Studio pilot, personal Google accounts, or GCP editor infrastructure. Its accounts, sessions, private files and credentials belong only to the isolated editor fixture. No background-removal model was downloaded or executed.
 
 ## Runtime and storage checkpoints
