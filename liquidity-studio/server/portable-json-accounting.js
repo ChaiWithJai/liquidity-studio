@@ -19,7 +19,6 @@ export function accountPortableJson(value, { maxBytes = MAX_BYTES, omitRootKeys 
   });
   const full = makeSink(new Set()), content = makeSink(new Set(omitRootKeys));
   const ancestors = new Set();
-  let nodes = 0;
   const emit = (token, sinks) => { for (const sink of sinks) sink.write(token); };
   function string(text, sinks) {
     emit('"', sinks);
@@ -43,7 +42,9 @@ export function accountPortableJson(value, { maxBytes = MAX_BYTES, omitRootKeys 
     return field;
   }
   function visit(item, sinks, depth) {
-    if (++nodes > 500000 || depth > 40) throw fail(413, "Editor pack complexity limit");
+    // The existing scanPortable(content) remains the node-count authority.
+    // Counting the full wrapper here would count sha256/omissions differently.
+    if (depth > 40) throw fail(413, "Editor pack complexity limit");
     if (item === null) return emit("null", sinks);
     if (typeof item === "string") return string(item, sinks);
     if (typeof item === "boolean") return emit(item ? "true" : "false", sinks);

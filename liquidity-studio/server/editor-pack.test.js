@@ -914,3 +914,26 @@ test("over-cap input fails before base64 decoding or restore reservation", async
   assert.equal(decoded, false);
   assert.deepEqual(Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)])), before);
 });
+
+test("token accounting preserves the exact existing500000 content-node acceptance boundary", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor);
+  // Extra plain historical-origin metadata is already accepted by the pack schema.
+  // These are hosted complexity fixtures, not claims of human edits or research.
+  pack.documents[0].metadata.origin.benchmarkNodes = [];
+  const count = value => 1 + (value && typeof value === "object"
+    ? Object.values(value).reduce((total, child) => total + count(child), 0)
+    : 0);
+  const contentOf = value => { const { sha256, ...content } = value; return content; };
+  const remaining = 500000 - count(contentOf(pack));
+  assert.ok(remaining > 0);
+  pack.documents[0].metadata.origin.benchmarkNodes = Array(remaining).fill(null);
+  pack.sha256 = jsonDigest(contentOf(pack));
+  assert.equal(count(contentOf(pack)), 500000);
+  assert.doesNotThrow(() => validateEditorPack(pack));
+  pack.documents[0].metadata.origin.benchmarkNodes.push(null);
+  pack.sha256 = jsonDigest(contentOf(pack));
+  assert.equal(count(contentOf(pack)), 500001);
+  assert.throws(() => validateEditorPack(pack), { status: 413, message: "Editor pack complexity limit" });
+});

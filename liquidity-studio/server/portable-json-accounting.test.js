@@ -50,3 +50,12 @@ test("byte ceiling stops during bounded tokens without building a whole serializ
   assert.equal(accountPortableJson(value, { maxBytes: length }).bytes, length);
   assert.throws(() => accountPortableJson(value, { maxBytes: length - 1 }), { status: 413 });
 });
+
+test("serialization does not introduce a second conflicting content-node cap", () => {
+  // Existing scanPortable separately counts omitted object values and skips holes.
+  const plain = { optional: undefined, holes: [, undefined], nested: { value: null } };
+  equivalent(plain);
+  const full = { sha256: "checksum", ...plain };
+  const result = accountPortableJson(full, { omitRootKeys: ["sha256"] });
+  assert.equal(result.contentSha256, hash(plain));
+});
