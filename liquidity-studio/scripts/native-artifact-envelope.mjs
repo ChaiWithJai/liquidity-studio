@@ -25,7 +25,7 @@ export async function open({input,output,envelope,privateKeyFile}){
  try{await pipeline(source,decipher,fs.createWriteStream(output,{fd}));if(bytes!==e.ciphertextBytes||hash.digest('hex')!==e.ciphertextSha256)throw Error('Ciphertext integrity mismatch');}
  catch(error){fs.rmSync(output,{force:true});throw error;}finally{key.fill(0);}
 }
-if(process.argv[1]===fileURLToPath(import.meta.url)){
+if(process.argv[1]&&fs.realpathSync(process.argv[1])===fileURLToPath(import.meta.url)){
  const [mode,input,output,envelope,keyFile]=process.argv.slice(2);
  try{if(mode==='seal')await seal({input,output,envelope,publicPem:Buffer.from(process.env.NATIVE_RECIPIENT_PUBLIC_KEY_BASE64||'','base64'),recipientSha256:process.env.NATIVE_RECIPIENT_SHA256});else if(mode==='open')await open({input,output,envelope,privateKeyFile:keyFile});else throw Error('Use seal input output envelope or open input output envelope privateKeyFile');}
  catch(error){console.error(error.message);process.exitCode=1;}
