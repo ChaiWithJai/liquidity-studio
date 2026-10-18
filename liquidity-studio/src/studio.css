@@ -1684,3 +1684,10 @@ html:has(.workflow-context) { scroll-padding-top: var(--workflow-offset, 16px); 
 .studio-grid + .studio-toolbar { margin-top: 16px; }
 @media (max-width: 1100px) { .studio-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 760px) { .campaign-design-toolbar .format-tabs, .campaign-design-toolbar .penpot-design-action { flex-basis: 100%; } }
+
+/* Keep the active native canvas above supporting editorial controls. */
+.workspace-header.native-focus-header { padding-block: 10px; margin-bottom: 8px; }
+.native-focus-header h1 { font-size: 20px; line-height: 1.25; margin-block: 4px 0; }
+.native-focus-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 8px; }
+.native-focus-toolbar > div { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.native-focus-toolbar [role="status"] { color: var(--text-muted, #737373); font-size: 12px; }

@@ -1362,12 +1362,12 @@
       </div>
     </aside>
     <main class="workspace">
-      <header class="workspace-header">
+      <header class="workspace-header" class:native-focus-header={tab === "studio" && !!nativeRecord}>
         <div>
           <span class="eyebrow"
             >{currentOrganization?.name || "ORGANIZATION"}{tab==='strategy'?'':` / ${currentBrand?.name||'BRAND'}`}</span
           >
-          <h1>{tab==='strategy'?'Defiant Strategy':tab === "backlog" ? "Story backlog" : tab === "calendar" ? "Content calendar" : tab === "studio" ? "Campaign Studio" : tab === "brand" ? "Brand Kit" : tab === "jobs" ? "Jobs" : "Operations"}</h1>
+          <h1>{tab === "studio" && nativeRecord ? selectedStory?.title || "Studio layout" : tab==='strategy'?'Defiant Strategy':tab === "backlog" ? "Story backlog" : tab === "calendar" ? "Content calendar" : tab === "studio" ? "Campaign Studio" : tab === "brand" ? "Brand Kit" : tab === "jobs" ? "Jobs" : "Operations"}</h1>
         </div>
       </header>
       {#if error}<div class="error banner" role="alert">
@@ -1478,12 +1478,12 @@
           </div>
         {/if}
         {#if selectedStory}
-          {#if selectedStory.draftBrief?.kind==='defiant-report'}<DraftBrief brief={selectedStory.draftBrief} reportHref={workflowHref(window.location.href,{organizationId:selectedStory.draftBrief.organizationId,tab:'strategy',strategy:{view:'report',reportId:selectedStory.draftBrief.reportId}})} onUseSource={useBriefSource} onReviewSources={()=>focusWorkflow("workflow-sources")} disabled={busy} />{/if}
-          {#if nativeEditorEnabled && preparedHost}{#key preparedHost.client}{#key `${selectedStory.id}:${format}`}
+          {#if !nativeRecord && selectedStory.draftBrief?.kind==='defiant-report'}<DraftBrief brief={selectedStory.draftBrief} reportHref={workflowHref(window.location.href,{organizationId:selectedStory.draftBrief.organizationId,tab:'strategy',strategy:{view:'report',reportId:selectedStory.draftBrief.reportId}})} onUseSource={useBriefSource} onReviewSources={()=>focusWorkflow("workflow-sources")} disabled={busy} />{/if}
+          {#if !nativeRecord && nativeEditorEnabled && preparedHost}{#key preparedHost.client}{#key `${selectedStory.id}:${format}`}
             <NativeLayoutHistory request={preparedHost.request} storyId={selectedStory.id} {format} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} onOpen={openNativeEditor} />
           {/key}{/key}{/if}
           {#if preparedWorkspace}<div class="prepared-story-context"><strong>{selectedStory.title}</strong><button class="secondary" onclick={()=>navigateTab("backlog")}>Return to backlog</button></div>{/if}
-          {#if !(preparedWorkspace)}<section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
+          {#if !nativeRecord && !(preparedWorkspace)}<section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
             <div class="workflow-identity"><h2 title={selectedStory.title}>{selectedStory.title}</h2><span>{currentOrganization?.name} / {currentBrand?.name} · {formats.find(item => item.id === format)?.name} · revision {selectedStory.revision}</span></div>
             <p class="workflow-state" role="status">{preparedDirty ? "Unsaved prepared preview" : pendingEdits ? "Unsaved artwork changes" : campaign ? "Artwork saved" : sourcePreparationEnabled ? selectedStory.preparationStatus==='ready' ? "Source preview saved" : "Source preparation workspace" : "No draft yet"} · {reviewDirty ? "Unsaved source review" : preparedWorkspace ? "Evidence awaits explicit human review" : generationReview.ready ? "Source prerequisites saved" : `${generationReview.blockers.length} source prerequisite${generationReview.blockers.length === 1 ? "" : "s"} to review`}{editorConflictRevision ? ` · Newer saved revision ${editorConflictRevision}; resolve the conflict before saving.` : ""} · Next: {nextWorkflowAction}</p>
             <nav aria-label="Editorial task actions">
@@ -1513,7 +1513,7 @@
               {:else}<button class="primary" onclick={()=>focusWorkflow("workflow-preview")}>Preview saved artwork</button>{/if}
             </section>
           {/if}
-          {#if !preparedWorkspace}<div class="campaign-design-toolbar"><div class="format-tabs" aria-label="Campaign format">
+          {#if !nativeRecord && !preparedWorkspace}<div class="campaign-design-toolbar"><div class="format-tabs" aria-label="Campaign format">
             {#each formats as item (item.id)}<button
                 class:active={format === item.id}
                 onclick={() => selectFormat(item.id)}
@@ -1528,11 +1528,12 @@
           {/if}
           </div>{/if}
           {#if nativeRecord && nativeHost}
-            <section class="panel" aria-label="Native proposal workspace">
-              <h3>{nativeRecord.sourceState === "historical" ? "Saved historical" : "Studio"} {formats.find(item => item.id === nativeRecord.format)?.name} layout</h3>
-              <p role="status">Native revision {nativeRecord.revision} · {nativeRecord.sourceState === "historical" ? "Read-only historical evidence" : nativeDirty ? "Unsaved native work" : "Native proposal saved"} · {nativeSaveState}. The saved campaign copy and its approval state are unchanged.</p>
-              <button class="secondary" disabled={nativeDirty} onclick={() => leaveNativeEditor()}>Return to saved copy and preview</button>
-              {#if nativeDirty}<button class="secondary" onclick={() => leaveNativeEditor(true)}>Discard local native changes and return</button>{/if}
+            <section class="native-focus-workspace" aria-label="Native proposal workspace">
+              <div class="native-focus-toolbar">
+                <div><strong>{formats.find(item => item.id === nativeRecord.format)?.name} layout</strong><span role="status">{nativeRecord.sourceState === "historical" ? "Historical · Read-only" : nativeDirty ? "Unsaved changes" : nativeSaveState === "saving" ? "Saving…" : "Saved"} · revision {nativeRecord.revision}</span></div>
+                <div><button class="secondary" disabled={nativeDirty} onclick={() => leaveNativeEditor()}>Return to saved copy and preview</button>
+                {#if nativeDirty}<button class="secondary" onclick={() => leaveNativeEditor(true)}>Discard local native changes and return</button>{/if}</div>
+              </div>
               {#key nativeHost}<NativeEditorHost record={nativeRecord} request={nativeHost.request} scopeKey={nativeHost.scopeKey} getScopeKey={nativeHost.getScopeKey}
                 onSaved={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.id) nativeRecord = saved; }}
                 canRebind={user.role === "founder"} canReviewSource={sourcePreparationEnabled}
@@ -1540,7 +1541,7 @@
                 onRebound={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.origin?.historicalRebind?.nativeId) { nativeRecord = saved; nativeHost = {...nativeHost}; nativeDirty = false; nativeSaveState = "idle"; notice = "New editable layout proposal created. Review this version before exporting; the historical layout is unchanged."; } }}
                 onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => { nativeSaveState = value.status; if (value.status === "saved" && error === "Save native changes or explicitly discard them before leaving the native editor.") error = ""; }} />{/key}
             </section>
-          {/if}
+          {:else}
           {#if campaign&&!preparedWorkspace}<div class="studio-grid">
               <section class="preview-workspace workflow-target" id="workflow-preview" aria-label="Preview and validation" tabindex="-1">{#key organizationId + brandId + selectedStory.id + format}<Emulator
                   {campaign}
@@ -1936,6 +1937,7 @@
               <HelperControlPane request={helperHost.request} scopeKey={`${user.id}:${helperHost.client.scopeKey}`} actorId={user.id}
                 story={selectedStory} members={workspaceState?.members || []} onContentChanged={helperHost.onContentChanged} />
             </details>{/key}
+          {/if}
           {/if}
         {:else}<div class="empty">
             <h2>No story selected</h2>
