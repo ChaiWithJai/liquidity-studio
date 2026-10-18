@@ -16,7 +16,7 @@ Jobs explicitly declare `purpose: source-preparation` or the existing `campaign-
 
 Evidence and candidate payloads live in a bounded scoped aggregate, separate from `campaignDraft`. Candidate identity includes organization, brand, story, preparation job/item/attempt, immutable preparation ID, content epoch, source fingerprint and brand revision. Only these small status fields are written to the story: `preparationStatus`, `preparationJobId`, `preparedCandidateId`, `preparationUpdatedAt`, and `preparationErrorCode`. They contain no hidden content. A commit rechecks the current actor, lease, content fingerprint/epoch and brand revision. A stale completion cannot overwrite a newer candidate or approved campaign.
 
-The candidate has an explicit machine-prepared/unreviewed provenance contract and source-linked excerpts. It contains no invented statistics, synthetic factual connective copy, or claim of human approval. The first visible preview and editing controls use this candidate independently from the approved campaign. Explicit adoption of candidate evidence writes normal unreviewed source claims through the existing revisioned source-review path. Human approval and later generation remain separate operations. Native layout and artifact sign-off remain bound to their exact approved source and native revisions.
+The candidate has an explicit machine-prepared/unreviewed provenance contract and source-linked excerpts. It contains no invented statistics, synthetic factual connective copy, or claim of human approval. The first visible preview and editing controls use this candidate independently from the approved campaign. A deliberate whole-draft human confirmation reviews the exact saved copy and evidence digests, mandatory content classification and current source/brand/content revisions. The server derives exact per-field editorial review records and promotes that saved copy without a model call. Clinical review requires its separate current-founder confirmation. These records are editorial source review, never automatically verified facts or clinical accuracy. A reconstructive validator rejects any campaign field differing from its reviewed field record. Promotion is atomic with current membership and the scoped state, respects the restore lock, and retains same-key receipts. Native layout and artifact sign-off remain bound to their exact approved source and native revisions.
 
 ## Client and recovery
 
@@ -27,3 +27,22 @@ Selection does not start a provider request from a Svelte mount. An ingestion or
 Tests must cover actual bounded retrieval and extraction, both brands, no provider invocation, machine/human provenance separation, tenant denial, content and brand conflicts, metadata-only planning drift, cancellation/retry, duplicate delivery, quota, retention, reload and candidate editing. Browser evidence must distinguish the actual HTTP fixture from live source retrieval. Final operator acceptance requires actual primary-source retrieval for each brand, compact artwork-first presentation at 883 × 695 and desktop widths, evidence inspection and explicit current sign-off. No test pass alone establishes publication readiness.
 
 A default-off feature gate preserves the existing campaign/export path. Disabling preparation stops new preparation plans without deleting evidence, candidates or receipts. Rollback never rewrites original generation content or turns candidates into approved campaigns.
+
+## Existing-state rollout
+
+Enable `STUDIO_SOURCE_PREPARATION_ENABLED=true` together with the existing `STUDIO_OPERATOR_JOBS_ENABLED=true` and configured dispatcher. The packaged operator command operates on an explicit existing scope and requires its current founder identity:
+
+```sh
+node server/run-source-preparation-bootstrap.js --organization ORG_ID --brand BRAND_ID
+node server/run-source-preparation-bootstrap.js --organization ORG_ID --brand BRAND_ID --apply
+```
+
+Set `STUDIO_PREPARATION_BOOTSTRAP_ACTOR_ID` privately. SQLite requires an explicit existing absolute `STUDIO_DATABASE_PATH`; Firestore uses the existing configured store. Plan performs no writes or dispatch. Apply only queues existing durable jobs and dispatches their outbox; it does not fetch from the command process, approve sources, replace a campaign, or invoke a model. Repeating apply skips any previous attempt at the same input fingerprint, including failures; deliberate retry uses the normal job control.
+
+The pilot-primary-v1 catalog selects three existing stories: Angel City ownership (club announcement), Huda Beauty ownership (issuer release dated June 3, 2025), and Yoga Sutras (historical translation). The remaining seven seeded topics explicitly need source research. Topic and brand must match the catalog pointer. Catalog coverage warns that the Huda release does not support the legacy 2024 date or margin estimates, and that the Angel City release does not establish legacy sponsorship/rights estimates. Existing claims and local editor buffers remain untouched by preparation.
+
+Primary sources: [Angel City announcement](https://angelcity.com/acfc-post/angel-city-ownership-agreement-announcement), [Huda Beauty issuer release](https://www.prnewswire.com/news-releases/huda-beauty-reclaims-full-ownership-as-an-independent-beauty-brand-302471853.html), [Yoga translation](https://www.gutenberg.org/cache/epub/2526/pg2526-images.html). Catalog inclusion is retrieval configuration, not factual approval.
+
+## Promotion and portability
+
+A review plan binds candidate revision, content epoch, brand revision, canonical copy SHA-256 and evidence SHA-256. The promotion body carries those exact fences, a unique idempotency key, `reviewed: true`, and a mandatory kind. The resulting provenance mode is `human-reviewed-prepared-candidate`; its manifest maps every approved copy field to an `editorial_copy` source record containing the current reviewer/time and evidence hashes. `verifiedFacts` stays empty. No native layout or publication approval is inferred. Portable imports must treat these records and promotion receipts as historical evidence; current-owner per-candidate reattestation is required before promotion authority can be recreated. The portable pack currently rejects unsupported preparation extensions rather than silently dropping them; its follow-up integration is explicit remaining work.

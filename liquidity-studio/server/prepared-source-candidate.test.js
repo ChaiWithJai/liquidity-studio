@@ -93,3 +93,40 @@ test("preparation fingerprint fences content while allowing planning metadata an
     /source URLs/,
   );
 });
+test("operator catalog prepares existing Huda topic without changing unsourced legacy claims or trusting other preset IDs", () => {
+  const huda = {
+    id: "story_huda_buyback",
+    title: "How Huda Kattan Bought Back 100% of Huda Beauty",
+    sourceClaims: [
+      {
+        id: "legacy",
+        text: "2024 and margin estimates remain unverified",
+        sourceUrl: null,
+        status: "unreviewed",
+      },
+    ],
+  };
+  const scope = {
+    organizationId: "org",
+    brandId: "brand",
+    preset: "liquidity_desk",
+  };
+  assert.ok(preparationUrls(huda, scope)[0].includes("huda-beauty-reclaims"));
+  assert.throws(() =>
+    preparationUrls(huda, { ...scope, preset: "vedic_dharma" }),
+  );
+  assert.equal(huda.sourceClaims[0].sourceUrl, null);
+  assert.equal(huda.sourceClaims[0].status, "unreviewed");
+  assert.notEqual(
+    preparationFingerprint(huda, scope),
+    preparationFingerprint(huda, { ...scope, preset: "vedic_dharma" }),
+  );
+});
+test('every prepared format uses the canonical renderer without invented filler or long title overflow',async()=>{
+ const {renderSvg}=await import('./artwork.js');
+ const longText=Array.from({length:3},(_,i)=>`Source paragraph ${i}: `+'An exact source word sequence. '.repeat(30)).join('\n');
+ const snapshots=[{...evidence[0],text:longText,textSha256:createHash('sha256').update(longText).digest('hex')}];
+ const candidate=buildPreparedCandidate({id:'candidate',scope:{organizationId:'org',brandId:'brand'},story,brandProfile:{},evidence:snapshots});
+ for(const format of ['infographic','carousel','story','reel'])assert.ok(renderSvg({campaign:candidate.artwork,brandProfile:{},format,slideIndex:0}).startsWith('<svg'));
+ assert.ok(candidate.excerpts.every(excerpt=>excerpt.text.length<=220));
+});

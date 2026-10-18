@@ -2,8 +2,8 @@
   let { summary, onclaim } = $props();
 </script>
 <section class="source-review-summary" aria-label="Generation prerequisites" aria-live="polite">
-  <strong>{summary.ready ? "Sources ready for generation" : "Source review required"}</strong>
-  <p>{summary.approved} of {summary.total} claims approved · {summary.excluded} excluded. Approval records editorial review, not verified factual or clinical accuracy.</p>
+  <strong>{summary.recordKind==='reviewed-copy' ? summary.ready ? "Saved copy review complete" : "Saved copy review required" : summary.ready ? "Sources ready for generation" : "Source review required"}</strong>
+  <p>{summary.approved} of {summary.total} {summary.recordKind==='reviewed-copy'?'copy fields reviewed':'claims approved'} · {summary.excluded} excluded. Approval records editorial review, not verified factual or clinical accuracy.</p>
   {#if summary.blockers.length}<ul>{#each summary.blockers as blocker, index (`${blocker.claimId || "review"}:${index}`)}<li>{#if blocker.claimId}<button class="secondary" onclick={() => onclaim(blocker.claimId)}>{blocker.message}</button>{:else}{blocker.message}{/if}</li>{/each}</ul>{/if}
 </section>
 <style>

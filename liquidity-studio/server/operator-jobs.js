@@ -5,11 +5,14 @@ import { brandRevision } from "./multimodal-contract.js";
 import { getApprovedClaims } from "./source-integrity.js";
 import { exact, hash } from "./workspace-schema.js";
 import { SourcePreparationService } from "./source-preparation.js";
+import { validateSourceUrl } from "./source-retrieval.js";
+import { catalogForStory } from "./source-catalog.js";
 import {
   PREPARATION_PURPOSE,
   preparationFingerprint,
   preparationUrls,
   validatePreparedCandidate,
+  validateCandidateLayout,
 } from "./prepared-source-candidate.js";
 
 const MAX_JOBS = 30,
@@ -48,6 +51,7 @@ function summary(job) {
     counts[item.state] = (counts[item.state] || 0) + 1;
   return {
     id: job.id,
+    purpose: job.purpose || "campaign-generation",
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
     state: job.state,
@@ -147,6 +151,36 @@ export class DurableJobService {
       canControl: job.actorId === user.id || user.role === "founder",
     };
   }
+  async preparationForStory(user, id) {
+    await this.authorize(user);
+    const state = await this.repo.read(),
+      story = state.backlog.find((story) => story.id === id);
+    if (!story) throw fail(404, "Story not found");
+    let sourceReady = true;
+    try {
+      preparationUrls(story, this.scope).forEach((url) =>
+        validateSourceUrl(url),
+      );
+    } catch {
+      sourceReady = false;
+    }
+    return {
+      storyId: story.id,
+      storyRevision: story.revision,
+      contentRevision: story.contentRevision || 1,
+      brandRevision: brandRevision(state.brandProfile),
+      sourceReady,
+      status:
+        story.preparationStatus ||
+        (sourceReady ? "not_prepared" : "source_needed"),
+      errorCode: story.preparationErrorCode || null,
+      jobId: story.preparationJobId || null,
+      catalog: catalogForStory(story, this.scope),
+      prepared: story.preparedCandidateId
+        ? await this.candidate(user, story.preparedCandidateId)
+        : null,
+    };
+  }
   async candidate(user, id) {
     await this.authorize(user);
     const state = await this.repo.read(),
@@ -159,7 +193,8 @@ export class DurableJobService {
     );
     const stale =
       !story ||
-      preparationFingerprint(story) !== entry.candidate.inputFingerprint ||
+      preparationFingerprint(story, this.scope) !==
+        entry.candidate.inputFingerprint ||
       brandRevision(state.brandProfile) !== entry.candidate.brandRevision;
     return {
       ...structuredClone(entry),
@@ -201,7 +236,8 @@ export class DurableJobService {
       );
       if (
         !story ||
-        preparationFingerprint(story) !== entry.candidate.inputFingerprint ||
+        preparationFingerprint(story, this.scope) !==
+          entry.candidate.inputFingerprint ||
         brandRevision(state.brandProfile) !== entry.candidate.brandRevision
       )
         throw fail(
@@ -240,6 +276,7 @@ export class DurableJobService {
           check(value[key], template[key], key);
       }
       check(input.artwork, entry.candidate.artwork);
+      validateCandidateLayout(input.artwork, state.brandProfile);
       if (entry.edits.length >= 30)
         throw fail(
           409,
@@ -267,7 +304,7 @@ export class DurableJobService {
     });
     return this.candidate(user, id);
   }
-  async create(user, input) {
+  async create(user, input, authorizationMode = "operator-plan") {
     user = await this.authorize(user);
     exact(input, [
       "idempotencyKey",
@@ -332,7 +369,31 @@ export class DurableJobService {
         if (!story || story.revision !== input.storyRevision)
           throw fail(409, "Story changed; review the plan again");
         if (purpose === PREPARATION_PURPOSE) {
-          preparationUrls(story);
+          if (story.campaignDraft)
+            throw fail(
+              409,
+              "A saved campaign already exists; preserve its current work",
+            );
+          if (
+            state.operatorJobs.some(
+              (job) =>
+                job.purpose === PREPARATION_PURPOSE &&
+                job.items.some(
+                  (item) =>
+                    item.storyId === story.id &&
+                    item.inputFingerprint ===
+                      preparationFingerprint(story, this.scope) &&
+                    ["queued", "running"].includes(item.state),
+                ),
+            )
+          )
+            throw fail(
+              409,
+              "Source preparation already queued; refresh its current job",
+            );
+          preparationUrls(story, this.scope).forEach((url) =>
+            validateSourceUrl(url),
+          );
           story.preparationStatus = "queued";
           story.preparationJobId = id;
           story.preparationUpdatedAt = createdAt;
@@ -342,7 +403,7 @@ export class DurableJobService {
         return {
           ...(purpose === PREPARATION_PURPOSE
             ? {
-                inputFingerprint: preparationFingerprint(story),
+                inputFingerprint: preparationFingerprint(story, this.scope),
                 contentRevision: story.contentRevision || 1,
               }
             : {}),
@@ -359,6 +420,7 @@ export class DurableJobService {
         id,
         schemaVersion: 1,
         purpose,
+        authorizationMode,
         actorId: user.id,
         idempotencyKey: input.idempotencyKey,
         requestHash,
@@ -378,6 +440,47 @@ export class DurableJobService {
       state.operatorJobs.find(
         (job) => job.idempotencyKey === input.idempotencyKey,
       ).id,
+    );
+  }
+  async createForIngestion(user, storyIds) {
+    await this.authorize(user);
+    const state = await this.repo.read();
+    const stories = state.backlog
+      .filter((story) => storyIds.includes(story.id) && !story.campaignDraft)
+      .filter((story) => {
+        try {
+          preparationUrls(story, this.scope).forEach((url) =>
+            validateSourceUrl(url),
+          );
+        } catch {
+          return false;
+        }
+        const fingerprint = preparationFingerprint(story, this.scope);
+        return !state.operatorJobs?.some(
+          (job) =>
+            job.purpose === PREPARATION_PURPOSE &&
+            job.items.some(
+              (item) =>
+                item.storyId === story.id &&
+                item.inputFingerprint === fingerprint,
+            ),
+        );
+      })
+      .slice(0, MAX_ITEMS);
+    if (!stories.length) return null;
+    return this.create(
+      user,
+      {
+        purpose: PREPARATION_PURPOSE,
+        idempotencyKey: randomUUID(),
+        reviewed: true,
+        brandRevision: brandRevision(state.brandProfile),
+        items: stories.map((story) => ({
+          storyId: story.id,
+          storyRevision: story.revision,
+        })),
+      },
+      "ingestion-policy",
     );
   }
   async control(user, id, action, input) {
@@ -428,11 +531,23 @@ export class DurableJobService {
           ) {
             if (item.state === "running") {
               item.attempts.at(-1).state = "cancelled";
-              item.attempts.at(-1).providerBillingMayBeUnknown = true;
+              item.attempts.at(-1).providerBillingMayBeUnknown =
+                job.purpose !== PREPARATION_PURPOSE;
             }
             item.state = "cancelled";
             item.fence++;
             delete item.lease;
+            if (job.purpose === PREPARATION_PURPOSE) {
+              const story = state.backlog.find(
+                (story) => story.id === item.storyId,
+              );
+              if (story?.preparationJobId === job.id) {
+                story.preparationStatus = "failed";
+                story.preparationErrorCode = "PREPARATION_CANCELLED";
+                story.preparationUpdatedAt = stamp();
+                story.revision++;
+              }
+            }
           }
       } else {
         if (action === "retry" && !input.itemIds?.length)
@@ -495,7 +610,9 @@ export class DurableJobService {
             item.error = {
               code: "WORKER_INTERRUPTED",
               message:
-                "Provider completion/billing may be unknown. Explicit retry may incur another request.",
+                job.purpose === PREPARATION_PURPOSE
+                  ? "Preparation worker interrupted; no candidate receipt committed. No model provider was called."
+                  : "Provider completion/billing may be unknown. Explicit retry may incur another request.",
             };
             item.attempts.at(-1).state = "unknown";
             delete item.lease;
@@ -746,7 +863,28 @@ export class DurableJobService {
       committed = false;
     try {
       await this.actor(job.actorId, job.createdAt);
+      const assertCurrent = async () => {
+        await this.actor(job.actorId, job.createdAt);
+        const state = await this.repo.read(),
+          liveJob = state.operatorJobs?.find((row) => row.id === job.id),
+          live = liveJob?.items.find((row) => row.id === item.id),
+          story = state.backlog.find((story) => story.id === item.storyId);
+        if (
+          !live ||
+          live.state !== "running" ||
+          live.fence !== item.fence ||
+          live.lease?.workerId !== workerId ||
+          live.lease.expiresAt <= this.now() ||
+          liveJob.cancelled ||
+          !story ||
+          story.preparationJobId !== job.id ||
+          preparationFingerprint(story, this.scope) !== item.inputFingerprint ||
+          brandRevision(state.brandProfile) !== job.brandRevision
+        )
+          throw fail(409, "Preparation permission or input changed");
+      };
       prepared = await this.preparation.prepare(item.storyId, {
+        assertCurrent,
         inputFingerprint: item.inputFingerprint,
         brandRevision: job.brandRevision,
         jobId: job.id,
@@ -756,6 +894,10 @@ export class DurableJobService {
       await this.actor(job.actorId, job.createdAt);
       await this.repo.assertGenerationReservation(prepared.reservation);
       validatePreparedCandidate(prepared.candidate, prepared.evidence);
+      validateCandidateLayout(
+        prepared.candidate.artwork,
+        (await this.repo.read()).brandProfile,
+      );
       await this.repo.mutate((state) => {
         const liveJob = state.operatorJobs?.find((row) => row.id === job.id),
           live = liveJob?.items.find((row) => row.id === item.id);
@@ -772,7 +914,7 @@ export class DurableJobService {
         if (
           !story ||
           story.preparationJobId !== job.id ||
-          preparationFingerprint(story) !== item.inputFingerprint ||
+          preparationFingerprint(story, this.scope) !== item.inputFingerprint ||
           brandRevision(state.brandProfile) !== job.brandRevision
         )
           throw fail(409, "Preparation input changed before commit");

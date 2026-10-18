@@ -4,6 +4,7 @@ import net from "node:net";
 import { createHash } from "node:crypto";
 import { fail } from "./auth.js";
 import { pinnedLookup } from "./discovery.js";
+import { DEFAULT_SOURCE_HOSTS } from "./source-catalog.js";
 
 const MAX_BYTES = 512 * 1024;
 const MAX_TEXT = 24000;
@@ -12,7 +13,7 @@ const sha = (value) => createHash("sha256").update(value).digest("hex");
 
 export function validateSourceUrl(
   value,
-  hosts = process.env.STUDIO_SOURCE_HOSTS || "",
+  hosts = process.env.STUDIO_SOURCE_HOSTS || DEFAULT_SOURCE_HOSTS,
 ) {
   if (typeof value !== "string" || value.length > 2048)
     throw fail(400, "Invalid source URL");

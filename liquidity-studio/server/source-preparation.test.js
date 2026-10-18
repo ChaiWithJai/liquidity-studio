@@ -9,6 +9,7 @@ import { brandRevision } from "./multimodal-contract.js";
 import { getApprovedClaims } from "./source-integrity.js";
 process.env.NODE_ENV = "test";
 process.env.STUDIO_SOURCE_PREPARATION_ENABLED = "true";
+process.env.STUDIO_SOURCE_HOSTS = "source.example";
 const text =
   "A primary source paragraph retrieved for human inspection, without any claim of approval.";
 function snapshot(url) {
@@ -227,4 +228,174 @@ test("candidate edits retain immutable source provenance and optimistic base wit
       .campaignDraft,
     null,
   );
+});
+test("whole saved draft promotion preserves edited copy, requires separate clinical signoff and has no model call", async (t) => {
+  const { PreparedPromotionService } = await import("./prepared-promotion.js");
+  const { validateCampaign } = await import("./source-integrity.js");
+  const f = await fixture(t),
+    job = await f.jobs.create(f.user, f.input);
+  await f.jobs.runNext("worker", job.id, job.items[0].id, 1);
+  const id = (await f.repo.read()).preparedSourceCandidates[0].candidate.id,
+    entry = await f.jobs.candidate(f.user, id),
+    artwork = structuredClone(entry.candidate.artwork);
+  artwork.infographic.headline = "Human edited source review draft";
+  await f.jobs.editCandidate(f.user, id, {
+    idempotencyKey: randomUUID(),
+    expectedRevision: 1,
+    artwork,
+  });
+  const service = new PreparedPromotionService({
+      repo: f.repo,
+      identity: f.platform.identity,
+      scope: f.scope,
+    }),
+    plan = await service.plan(f.user, id),
+    input = {
+      idempotencyKey: randomUUID(),
+      expectedCandidateRevision: plan.candidateRevision,
+      expectedContentRevision: plan.contentRevision,
+      brandRevision: plan.brandRevision,
+      copySha256: plan.copySha256,
+      evidenceSha256: plan.evidenceSha256,
+      reviewed: true,
+      kind: "general",
+    };
+  await assert.rejects(service.promote(f.user, id, input), { status: 403 });
+  const clinical = { ...input, kind: "clinical", clinicalReviewed: true },
+    promoted = await service.promote(f.user, id, clinical);
+  assert.equal(
+    promoted.story.campaignDraft.infographic.headline,
+    artwork.infographic.headline,
+  );
+  assert.equal(promoted.receipt.modelCalls, 0);
+  assert.equal(promoted.receipt.publicationApproved, false);
+  assert.equal(promoted.story.contentRevision, 2);
+  assert.equal(
+    validateCampaign(promoted.story.campaignDraft, promoted.story),
+    true,
+  );
+  assert.equal(f.modelCalls(), 0);
+  assert.equal(
+    (await service.promote(f.user, id, clinical)).receipt.generationId,
+    promoted.receipt.generationId,
+  );
+  const changed = structuredClone(promoted.story.campaignDraft);
+  changed.infographic.headline = "Unreviewed replacement";
+  assert.throws(() => validateCampaign(changed, promoted.story));
+  const missing = structuredClone(promoted.story);
+  missing.sourceClaims.pop();
+  assert.throws(() => validateCampaign(missing.campaignDraft, missing));
+  assert.equal(
+    (await f.repo.read()).preparedSourceCandidates[0]
+      .prePromotionSourceClaims[0].status,
+    "unreviewed",
+  );
+});
+test("promotion serializes competing confirmations and blocks a reserved restore destination", async (t) => {
+  const { PreparedPromotionService } = await import("./prepared-promotion.js");
+  const f = await fixture(t),
+    job = await f.jobs.create(f.user, f.input);
+  await f.jobs.runNext("worker", job.id, job.items[0].id, 1);
+  const id = (await f.repo.read()).preparedSourceCandidates[0].candidate.id,
+    service = new PreparedPromotionService({
+      repo: f.repo,
+      identity: f.platform.identity,
+      scope: f.scope,
+    }),
+    plan = await service.plan(f.user, id),
+    input = {
+      idempotencyKey: randomUUID(),
+      expectedCandidateRevision: plan.candidateRevision,
+      expectedContentRevision: plan.contentRevision,
+      brandRevision: plan.brandRevision,
+      copySha256: plan.copySha256,
+      evidenceSha256: plan.evidenceSha256,
+      reviewed: true,
+      kind: "clinical",
+      clinicalReviewed: true,
+    };
+  await f.repo.store.update(f.repo.key, (state) => ({
+    ...state,
+    editorRestore: { status: "installing" },
+  }));
+  await assert.rejects(service.promote(f.user, id, input), { status: 423 });
+  await f.repo.store.update(f.repo.key, (state) => {
+    delete state.editorRestore;
+    return state;
+  });
+  const outcomes = await Promise.allSettled([
+    service.promote(f.user, id, input),
+    service.promote(f.user, id, { ...input, idempotencyKey: randomUUID() }),
+  ]);
+  assert.equal(outcomes.filter((row) => row.status === "fulfilled").length, 1);
+  assert.equal(
+    outcomes.find((row) => row.status === "rejected").reason.status,
+    409,
+  );
+  const state = await f.repo.read();
+  assert.equal(state.preparedSourceCandidates[0].promotionReceipts.length, 1);
+  assert.equal(
+    state.backlog.find((row) => row.id === f.story.id).contentRevision,
+    2,
+  );
+});
+test("reviewed copy digests ignore object key order but reject malformed or unreviewed field authority", async (t) => {
+  const { copyDigest, validateReviewedPreparedCopy } = await import(
+    "./prepared-copy-review.js"
+  );
+  const { PreparedPromotionService } = await import("./prepared-promotion.js");
+  const f = await fixture(t),
+    job = await f.jobs.create(f.user, f.input);
+  await f.jobs.runNext("worker", job.id, job.items[0].id, 1);
+  const id = (await f.repo.read()).preparedSourceCandidates[0].candidate.id,
+    service = new PreparedPromotionService({
+      repo: f.repo,
+      identity: f.platform.identity,
+      scope: f.scope,
+    }),
+    plan = await service.plan(f.user, id),
+    promoted = await service.promote(f.user, id, {
+      idempotencyKey: randomUUID(),
+      expectedCandidateRevision: plan.candidateRevision,
+      expectedContentRevision: plan.contentRevision,
+      brandRevision: plan.brandRevision,
+      copySha256: plan.copySha256,
+      evidenceSha256: plan.evidenceSha256,
+      reviewed: true,
+      kind: "clinical",
+      clinicalReviewed: true,
+    }),
+    campaign = promoted.story.campaignDraft,
+    manifest = campaign.provenance.reviewedCopy;
+  assert.equal(
+    validateReviewedPreparedCopy(
+      Object.fromEntries(
+        Object.entries(campaign).filter(([key]) => key !== "provenance"),
+      ),
+      promoted.story.sourceClaims,
+      manifest,
+    ),
+    true,
+  );
+  assert.equal(
+    copyDigest({ a: 1, b: { x: 2, y: 3 } }),
+    copyDigest({ b: { y: 3, x: 2 }, a: 1 }),
+  );
+  for (const alter of [
+    (claims) => (claims[0].status = "unreviewed"),
+    (claims) => (claims[0].role = "fact"),
+    (claims) => (claims[0].reviewedBy = true),
+  ]) {
+    const claims = structuredClone(promoted.story.sourceClaims);
+    alter(claims);
+    assert.throws(() =>
+      validateReviewedPreparedCopy(
+        Object.fromEntries(
+          Object.entries(campaign).filter(([key]) => key !== "provenance"),
+        ),
+        claims,
+        manifest,
+      ),
+    );
+  }
 });

@@ -16,15 +16,16 @@ export class SourcePreparationService {
       story = state.backlog.find((story) => story.id === storyId);
     if (!story) throw fail(404, "Preparation story not found");
     if (
-      preparationFingerprint(story) !== expected.inputFingerprint ||
+      preparationFingerprint(story, this.scope) !== expected.inputFingerprint ||
       brandRevision(state.brandProfile) !== expected.brandRevision
     )
       throw fail(409, "Preparation input changed");
-    const urls = preparationUrls(story);
+    const urls = preparationUrls(story, this.scope);
     const reservation = await this.repo.reserveGeneration();
     try {
       const evidence = [];
-      for (const url of urls)
+      for (const url of urls) {
+        await expected.assertCurrent?.();
         evidence.push({
           ...(await this.retrieve(url, {
             query: [
@@ -36,6 +37,8 @@ export class SourcePreparationService {
           })),
           id: randomUUID(),
         });
+        await expected.assertCurrent?.();
+      }
       const candidate = buildPreparedCandidate({
         id: randomUUID(),
         scope: this.scope,

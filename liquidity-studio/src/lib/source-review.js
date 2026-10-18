@@ -20,5 +20,5 @@ export function sourceReviewSummary(claims = [], dirty = false) {
   }
   if (claims.length > 50) blockers.push({ message: "Keep at most 50 source claims." });
   if (dirty) blockers.push({ message: "Save source review changes before generating." });
-  return { approved: approved.length, total: claims.length, excluded: claims.length - approved.length, blockers, ready: blockers.length === 0 };
+  return { recordKind: claims.length&&claims.every(claim=>claim.purpose==='prepared-copy-review')?'reviewed-copy':'source-claims', approved: approved.length, total: claims.length, excluded: claims.length - approved.length, blockers, ready: blockers.length === 0 };
 }

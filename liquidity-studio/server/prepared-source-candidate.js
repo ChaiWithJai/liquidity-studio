@@ -2,27 +2,35 @@ import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { fail } from "./auth.js";
 import { brandRevision } from "./multimodal-contract.js";
+import { renderSvg } from "./artwork.js";
+import {storyContentDigest} from "./story-content-revision.js";
+import { catalogForStory, SOURCE_CATALOG_REVISION } from "./source-catalog.js";
 export const PREPARATION_PURPOSE = "source-preparation";
-export function preparationInput(story) {
+export function preparationInput(story, scope) {
   return {
     title: story.title,
+    contentDigest: storyContentDigest(story),
     sourceClaims: story.sourceClaims || [],
     contentRevision: story.contentRevision || 1,
+    catalog: catalogForStory(story, scope),
+    catalogRevision: SOURCE_CATALOG_REVISION,
   };
 }
-export function preparationFingerprint(story) {
+export function preparationFingerprint(story, scope) {
   return createHash("sha256")
-    .update(JSON.stringify(preparationInput(story)))
+    .update(JSON.stringify(preparationInput(story, scope)))
     .digest("hex");
 }
-export function preparationUrls(story) {
-  const urls = [
+export function preparationUrls(story, scope) {
+  let urls = [
     ...new Set(
       (story.sourceClaims || [])
         .map((claim) => claim.sourceUrl)
         .filter(Boolean),
     ),
   ];
+  if (!urls.length)
+    urls = catalogForStory(story, scope).map((entry) => entry.sourceUrl);
   if (!urls.length || urls.length > 2)
     throw fail(
       422,
@@ -38,7 +46,7 @@ function excerptsFor(evidence) {
         .filter((text) => text.length >= 40)
         .slice(0, 3)
         .map((text) => {
-          const excerpt = text.slice(0, 400);
+          const excerpt = text.slice(0, 140);
           return {
             evidenceId: snapshot.id,
             sourceUrl: snapshot.sourceUrl,
@@ -52,8 +60,10 @@ function excerptsFor(evidence) {
     .slice(0, 3);
 }
 export function candidateArtwork(excerpts) {
-  const texts = excerpts.map((excerpt) => excerpt.text),
-    first = texts[0];
+  const [first, second = first, third = first] = excerpts.map(
+    (excerpt) => excerpt.text,
+  );
+  const texts = [first, second, third];
   return {
     infographic: {
       headline: "Source excerpts · review required",
@@ -63,12 +73,21 @@ export function candidateArtwork(excerpts) {
     },
     carousel: {
       coverHook: "Retrieved source excerpts",
-      slides: texts.map((text, index) => ({
-        slideNumber: index + 1,
-        title: "Unreviewed excerpt",
-        bodyMetric: text,
-        visualNote: "Source excerpt text card",
-      })),
+      slides: [
+        ...texts.map((text, index) => ({
+          slideNumber: index + 1,
+          title: "Unreviewed excerpt",
+          bodyMetric: text,
+          visualNote: "Source excerpt text card",
+        })),
+        {
+          slideNumber: 4,
+          title: "Review the evidence",
+          bodyMetric:
+            "Inspect the original source before approving this draft.",
+          visualNote: "Editorial review step; no factual assertion",
+        },
+      ],
     },
     story: {
       hookBanner: "Source review candidate",
@@ -79,8 +98,8 @@ export function candidateArtwork(excerpts) {
       spokenHook0to3s: "Source review candidate.",
       beats: texts.map((text, index) => ({
         timecode: ["0:00-0:05", "0:05-0:15", "0:15-0:30"][index],
-        voiceover: text,
-        onScreenText: text,
+        voiceover: text.slice(0,100),
+        onScreenText: "Unreviewed source excerpt",
         bRollDirection: "Unreviewed source excerpt text card",
       })),
       closingCta: "Verify the original evidence before sharing.",
@@ -127,13 +146,16 @@ export function buildPreparedCandidate({
     ...scope,
     storyId: story.id,
     contentRevision: story.contentRevision || 1,
-    inputFingerprint: preparationFingerprint(story),
+    inputFingerprint: preparationFingerprint(story, scope),
     brandRevision: brandRevision(brandProfile),
     jobId,
     itemId,
     attemptId,
     createdAt,
     excerpts,
+    sourceSelection: catalogForStory(story, scope).filter((entry) =>
+      evidence.some((snapshot) => snapshot.sourceUrl === entry.sourceUrl),
+    ),
     artwork: candidateArtwork(excerpts),
     provenance: {
       purpose: PREPARATION_PURPOSE,
@@ -166,5 +188,26 @@ export function validatePreparedCandidate(candidate, evidence) {
     )
   )
     throw fail(422, "Candidate must preserve the retrieved excerpts exactly");
+  return true;
+}
+
+export function validateCandidateLayout(artwork, brandProfile = {}) {
+  try {
+    for (const format of ["infographic", "carousel", "story", "reel"]) {
+      const count =
+        format === "carousel"
+          ? artwork.carousel.slides.length
+          : format === "reel"
+            ? artwork.reel.beats.length
+            : 1;
+      for (let slideIndex = 0; slideIndex < count; slideIndex++)
+        renderSvg({ campaign: artwork, brandProfile, format, slideIndex });
+    }
+  } catch {
+    throw fail(
+      422,
+      "Candidate copy does not fit the artwork; shorten it and preserve local edits",
+    );
+  }
   return true;
 }
