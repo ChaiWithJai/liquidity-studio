@@ -41,6 +41,13 @@ jobs:
         run: npm run qa:loop
       - name: Require generated assets to match committed source
         run: git diff --exit-code -- dist
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: generated-frontend-mismatch-evidence
+          path: liquidity-studio/dist/
+          retention-days: 3
+          if-no-files-found: ignore
 
   browser:
     runs-on: ubuntu-latest
