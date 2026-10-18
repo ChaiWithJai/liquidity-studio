@@ -82,7 +82,8 @@ export class PenpotStorySvg {
   });
   const after=await this.current(row.actor,row.input,row.sessionContext);
   if(after.fingerprint!==row.fingerprint)throw fail(409,'The saved design changed during export; prepare it again');
-  const notice='\n<!-- Studio draft SVG. Not publication approval. Embedded font notices:\n'+[...notices].join('\n\n').replaceAll('--','- -')+'\n-->\n';
+  const noticeText='Studio draft SVG. Not publication approval. Embedded font notices:\n'+[...notices].join('\n\n');
+  const notice='\n<metadata id="studio-font-notices">'+noticeText.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')+'</metadata>\n';
   const svg=embedded.bytes.toString('utf8'),at=svg.indexOf('>')+1,bytes=Buffer.from(svg.slice(0,at)+notice+svg.slice(at));
   return {bytes,filename:name+'.svg',sha256:sha(bytes),nativeRevision:current.file.revn,draft:true};
  }

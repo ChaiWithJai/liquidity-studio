@@ -28,14 +28,14 @@ function fixture(){
   throw Error('Unexpected native request '+route);
  };
  let now=100;
- const service=new PenpotStorySvg({designs,grantKey:key,fetchImpl,now:()=>now,licensedFonts:()=>[{family:'Mona Sans',weight:400,extension:'ttf',sha256:sha(original),license:'OFL-1.1 retained notice'}]});
+ const service=new PenpotStorySvg({designs,grantKey:key,fetchImpl,now:()=>now,licensedFonts:()=>[{family:'Mona Sans',weight:400,extension:'ttf',sha256:sha(original),license:'OFL-1.1 retained notice --- licensed & original <font>'}]});
  const input={storyId:'story',format:'infographic',expectedRevision:2,generationId:'generation',expectedNativeRevision:3};
  return {service,input,calls,setRevision:v=>revision=v,setProfile:v=>profile=v,setNow:v=>now=v,setWrongOriginal:()=>wrongOriginal=true,setChangeDuringExport:()=>changeDuringExport=true};
 }
 test('one-use saved-board SVG uses presented human session and embeds exact licensed font with editable text',async()=>{
  const f=fixture(),permit=await f.service.prepare({id:id(20)},f.input,'s'.repeat(64)),token=new URL(permit.downloadUrl).searchParams.get('permit');
  const result=await f.service.download(key,token,cookie),svg=result.bytes.toString();
- assert.match(svg,/data:font\/woff;base64,/);assert.match(svg,/HUMAN ॐ &amp; text/);assert.match(svg,/OFL-1.1 retained notice/);assert.doesNotMatch(svg,/http:\/\/localhost:39008\/assets/);assert.equal(result.sha256,sha(result.bytes));
+ assert.match(svg,/data:font\/woff;base64,/);assert.match(svg,/HUMAN ॐ &amp; text/);assert.match(svg,/OFL-1.1 retained notice --- licensed &amp; original &lt;font&gt;/);assert.match(svg,/<metadata id="studio-font-notices">/);assert.doesNotMatch(svg,/http:\/\/localhost:39008\/assets/);assert.equal(result.sha256,sha(result.bytes));
  await assert.rejects(f.service.download(key,token,cookie),{status:410});
 });
 test('changed saved revision, expired permit and wrong native account stop before rendering',async()=>{
