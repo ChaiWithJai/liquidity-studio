@@ -55,3 +55,7 @@ The founder proposed $500/month plus a $1,500 bespoke setup fee, or $6,000 upfro
 The repository is public, but no open-source or commercial license has been selected. Code ownership, customer self-hosting rights, contribution terms and managed-service rights need an explicit license decision; this document grants no license. The pilot must not depend on a billing purchase to authenticate its two invited users.
 
 The original tenant handoff was a specification request. Multi-brand code now has implementation and test evidence described above; the handoff itself remains separate from that evidence. Medical, historical and numerical content claims need source review; keyword/number checks and synthetic examples cannot establish truth.
+
+## Native access module entry (2026-10-18)
+
+The remaining native-editor work for `identity-tenant-access` is tracked in [issue 52](https://github.com/ChaiWithJai/liquidity-studio/issues/52). Use its [approved native access specification](docs/specs/identity-tenant-access-native-editor.md), [pinned boundary audit](liquidity-studio/docs/investigations/52-native-command-boundary-audit.md), and [proposed Phase 2 plan](docs/plans/identity-tenant-access-native-editor/tasks/plan.md). This explicit module entry supersedes filename guessing; root `tasks/` remains Issue 56. Specification approval does not establish implemented native isolation or authorize this plan's execution. Earlier dated delivery descriptions above remain historical.

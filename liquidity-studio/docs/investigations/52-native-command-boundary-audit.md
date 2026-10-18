@@ -1,0 +1,69 @@
+# Native command boundary: remaining issue52 work
+
+Source-only audit, 2026-10-18. Studio baseline825120e; asset/export candidate PR140 frozen9edf780. No native mutation, new runtime, local test process or cloud change was performed for this audit. Issue52 remains open.
+
+The original acceptance explicitly includes foreign document reads/writes, room joins, comments, revocation, and public sharing disabled or authorized per brand. A transferred editable copy does not automatically exempt these online operations. Previously downloaded bytes cannot be recalled; that separate physical limitation does not establish continuing authority to use the governed native service.
+
+## Current paths and authority
+
+| Surface | Pinned upstream behavior | Studio integration result |
+| --- | --- | --- |
+| `/api/rpc/command/get-file`, fragments/page and libraries | Native file read permissions | No Studio membership check on this upstream RPC path |
+| `update-file`, token changes in file updates | Native edit permission and native revisions | Studio plugin actions are governed; direct native updates remain native-authorized |
+| Comment thread/read/write commands | Native file/comment permissions, with share-specific restrictions | No per-brand Studio comment transport enabled; upstream commands are still reachable |
+| `create-share-link`, `delete-share-link` | Native edit permission; deletion additionally checks link owner/admin | Native owner can independently create a share; Studio public-share404 does not disable this command |
+| `/ws/notifications` | File/team subscriptions authorized by native membership | Current ingress does not inspect WS messages or close existing subscriptions on Studio membership revocation |
+| `/assets/*` and native export | PR140 adds current Studio/native authority and registered resource checks | Actual two-brand owner/foreign/anonymous/revocation/expiry matrix applies here, not to all RPC/WS traffic |
+
+The pinned [file permission query](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/binfile/common.clj#L319-L389) combines native file, project and team relations; share links are another read path. These are Penpot identities, not Studio memberships. The registered finance and cultural fixtures use the same native owner/project: a valid native owner session therefore cannot itself demonstrate brand separation. A Studio-only membership removal leaves native relations unchanged.
+
+The [file commands](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/rpc/commands/files.clj) use native permission helpers; [comments](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/rpc/commands/comments.clj) resolve a comment/thread back to its file. A gateway must resolve indirect IDs too; trusting a caller-supplied file ID would be insufficient.
+
+The [share commands](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/rpc/commands/files_share.clj#L18-L74) allow an editor to create a native share without a Studio brand grant. Existing shares have not been inventoried in this source-only audit. Do not assert none exist.
+
+The [WebSocket implementation](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/http/websocket.clj#L84-L214) authorizes file/team subscription establishment, then forwards messages. The frontend subscribes to both topics. A handshake-only authorization callback cannot enforce later Studio revocation or prevent selecting another file/team on the same connection. The pinned nginx configuration forwards this socket directly. No upstream vulnerability is asserted: the missing policy is this integration's additional Studio boundary.
+
+## Minimal faithful remedy proposal
+
+Keep PR140's verified delivery separate. Add a disabled-by-default native command/session boundary using the existing server-owned binding registry and current actor authorization. Do not enable it on the maintained service until review and actual acceptance.
+
+1. Inventory the exact command/method/content-type set used by the owned native editor, including profile/bootstrap, file fragments, fonts, library resolution, thumbnails, saves, comments, import/export and indirect-ID operations. Obtain actual encoded DTOs through Neo, not guesses. Parse the pinned native protocol with a reviewed existing parser. Unknown commands, query aliases, unsupported batch/import and ambiguous resource resolution fail closed rather than forwarding arbitrary payloads.
+2. Bind a native session to a verified Studio actor through an explicit short-lived pairing established by current Google Studio authorization and presented native identity; do not infer the actor from a shared owner name. Keep authority outside portable documents. Every registered-file command resolves all referenced resources to registered brand scope, rechecks current membership and binding epoch, then forwards the original native cookie to the fixed upstream. Native ACL remains an additional check. Preserve the native revision/conflict contract and human buffers.
+3. For registered files, reject native share creation/public access until a reviewed explicit per-brand share capability exists. Inventory existing share links and project/team ACLs before enabling the boundary; do not silently delete or move human files. Libraries and team listings must not expose other-brand data through aggregate responses.
+4. Relay WS frames with bounded message parsing, fixed upstream and exact registered file/team mappings. Authorize each subscription and pointer action, filter outbound topics to the authorized binding, and close/revoke connections when the actor/session/binding is revoked. A bounded lease with a stated maximum revocation window may be implementable, but is not instantaneous revocation. Shared-team subscriptions require filtering or per-brand native project/team migration; blindly forwarding a team topic is insufficient.
+5. Preserve native editor bootstrap and legitimate unregistered personal work through an explicitly separate operator surface, not an undocumented bypass on the governed origin. Audit all published RPC/WS/share aliases and direct backend/storage ports. Decide this separation before rollout; do not globally disable native RPC/WS and call the editor functional.
+
+The first implementation slice should cover registered file reads/saves plus share denial and indirect resource resolution, followed by a real WS relay. Completion needs actual two brands/two actors/third-tenant transfer, foreign read/write/join/comment/share denials, live revocation and expiry, existing text/font/export compatibility, and rollback preserving originals. Constructor tests alone cannot establish these paths.
+
+Rollback removes only the owned experimental gateway overlay and its session grants after restoring the previous native frontend configuration. It must not delete Studio originals, native files, existing user memberships or delivered media. There is no new bucket/database/cloud cost in this proposal; the local proxy adds bounded connections and managed-identity checks whose timing/memory must be measured before enablement.
+
+## Prefer native ACL reconciliation before a protocol gateway
+
+The gateway above is a hypothesis, not an approved module boundary. A smaller native-policy approach should be evaluated first:
+
+| Approach | What native source already enforces | Remaining integration work |
+| --- | --- | --- |
+| One native project per brand within the current shared team | Native project/file grants exist | Team membership is also a file-read path; separate projects alone do not remove the shared-team access path |
+| One native team/workspace per brand, distinct paired native profile per Studio actor | Native file/comment/library and aggregate team APIs can use existing membership checks | Pair actual identities; reconcile current Studio grants into native membership; prevent unmanaged invitations/shares and handle current connections |
+| Full RPC plus WS protocol gateway | Can impose policy independently of native membership | Largest maintenance burden: command decoding, indirect IDs, aggregate filtering, protocol evolution and live message handling |
+| Native ACL reconciliation plus narrow session/revocation/share enforcement | Reuses native resource resolution and revisions | Likely smaller faithful remedy, subject to actual verification; must not rely solely on UI notifications |
+
+The file permission SQL is a union of file, project and team grants. A native team member has read access through the team path even if no per-file grant exists. Therefore merely registering distinct file IDs or creating separate projects under the same team is insufficient for foreign-brand read denial. Brand-separated native teams avoid that particular overlap. Native fonts are team-local, so a migration also needs explicit font-byte and mapping preservation, shared-library review, asset manifests, and registered file/project remapping. Do not move the existing human files or revoke their owner as a discovery experiment; use new owned copies after an approved migration plan.
+
+The pinned [team membership commands](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/rpc/commands/teams.clj#L958-L1018) support member role changes and removal by a native owner/admin. Removal clears native relations and publishes a membership notification. It prohibits self-removal; organization-owner read fallback also needs inventory. A shared native owner profile cannot represent separately revocable founder and marketer identities. Use an operator-controlled team owner plus actual paired human native members, with authority and reconciliation state kept outside portable content. Do not give ordinary Studio editors native owner/admin powers that can grant new members independently.
+
+A Studio revocation should first mark the integration grant unusable, reconcile the exact native membership, then verify the resulting native ACL before admitting new work. A pending/failed reconciliation must not be reported complete. A durable outbox can retry idempotently, but asynchronous reconciliation alone creates an authority window; a small current-grant admission check is still needed until native state is acknowledged. This is an architectural tradeoff to review, not an implemented service.
+
+The upstream [session manager](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/backend/src/app/http/session.clj#L187-L217) exposes internal session deletion/invalidation functions. Normal logout clears the caller's current session. This audit has not established a supported operator RPC that both invalidates a selected actor's session and forcibly closes all existing sockets. Invalidating an actor-wide native session also affects their other brands; it is not a precise per-brand revocation mechanism.
+
+The current WebSocket server checks membership when subscribing and retains the subscription channel. Team removal sends a message that the ordinary frontend can act upon, but that is not a server-enforced disconnect of a hostile or stale client. The narrow candidate is a reviewed upstream session/subscription revocation hook that closes only affected file/team subscriptions, combined with native ACL reconciliation. It avoids duplicating every Transit command. A socket-level lease/admission proxy is an alternative only if native hooks cannot provide a supported boundary. Neither implementation is claimed here.
+
+Native share creation still allows file editors to generate links. Separate teams do not solve that policy by themselves. A fixed denial of the pinned create-share command on the governed origin, plus inventory and explicit handling of existing links, may be smaller than parsing every command. Existing links and viewer routes need their own boundary; denying only future creation does not revoke previously created links. Native invitations, public library publishing and file moves must also be inventoried before treating the native ACL mirror as authoritative.
+
+Recommendation: first establish paired identities and disposable brand-separated native teams, inventory ACL/share/invitation endpoints and native connection invalidation support, and obtain actual negative evidence with unmodified native authorization. Implement only the missing narrow policy hooks after that inventory. Retain the full gateway as a fallback, not the default. No native user/team/project/session/file mutation has occurred during this comparison.
+
+## Introduction history and dependency impact
+
+Actual repository history introduces the Studio-owned registry/grant boundary in `f3b7f4d` and adds pre-dispatch reauthorization in `7311dd5`. These govern calls through `EditorBoundaryService`; they do not intercept the independent native frontend. The first private native ingress in `9538edf` protects asset paths; `1de2d9d` adds scoped native output registration and `99233d5` adds deterministic verified SVG embedding. None adds an RPC/WS membership mirror. This is an unfinished integration boundary, not a newly demonstrated regression in upstream native ACLs.
+
+Upstream dependencies are current Studio identity/membership, fixed native owner/project registration and the pinned native authorization/session model. Downstream effects include native comments/collaboration, intentional sharing, archive-import identity remapping and asset receipt authority. The current delivery proof can merge as a bounded improvement while these operations remain explicitly unaccepted; neither PNG rendering nor an unsupported-room response on the Studio API resolves the independent native path.
