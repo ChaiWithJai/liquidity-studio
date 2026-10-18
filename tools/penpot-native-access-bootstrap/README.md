@@ -20,9 +20,11 @@ maximum 16 KiB), owned by the native process user. Its exact JSON schema is:
 
 These are non-secret examples; generate a real private key separately. Duplicate team
 entries and unknown fields fail closed. The server derives UUID governed-team and
-team-to-operator maps, supplied to actual RPC methods and WS routes together with the
+team-to-operator maps, supplied to actual RPC methods, WS routes and asset routes together with the
 HTTP admission callback. RPC methods also receive the private reconciliation key and
-callback. Existing native HTTP client and session-manager references are preserved.
+callback. All three receive the shared live/context and live/session-current? functions.
+RPC status reports constructor hook versions v1 with assets false until the separate
+asset hook is installed; this is not a runtime fence measurement. Existing native HTTP client and session-manager references are preserved.
 The fixed callback is not browser configuration. No personal-team classification is
 fetched from Studio, no paired editing is enabled by this patch alone, and no generic
 RPC or asset relay is introduced. The C2 metadata-only operator exception remains

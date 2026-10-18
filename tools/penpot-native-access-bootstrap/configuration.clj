@@ -4,6 +4,7 @@
             [app.http.client :as client]
             [app.studio.access :as access]
             [app.studio.http-authority :as authority]
+            [app.studio.live :as live]
             [clojure.set :as set]
             [integrant.core :as ig])
   (:import [java.nio.file Files Path LinkOption OpenOption]
@@ -64,16 +65,20 @@
    (if (nil? filename)
      system
      (let [{:keys [governed-teams operators grant-key callback-origin]} (read-settings filename)
-           targets [:app.rpc/methods :app.http.websocket/routes]]
+           targets [:app.rpc/methods :app.http.websocket/routes :app.http.assets/routes]]
        (when-not (and (contains? system ::client/client)
                       (every? #(map? (get system %)) targets)) (invalid!))
        (let [common {::access/governed-teams governed-teams
                      ::access/operators operators
+                     ::access/capture-session live/context
+                     ::access/session-valid? live/session-current?
                      ::access/authorize (ig/ref ::authority)}]
          (-> system
              (assoc ::authority {::client/client (ig/ref ::client/client)
                                  :grant-key grant-key :callback-origin callback-origin})
              (update :app.rpc/methods merge common
-                     {::access/reconciliation-key grant-key
+                     {::access/installed-features {:rpc-policy "v1" :session "v1" :live "v1" :assets false}
+                      ::access/reconciliation-key grant-key
                       ::access/authorize-reconciliation (ig/ref ::authority)})
-             (update :app.http.websocket/routes merge common)))))))
+             (update :app.http.websocket/routes merge common)
+             (update :app.http.assets/routes merge common)))))))

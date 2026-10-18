@@ -32,13 +32,16 @@
       (let [session (ig/ref :app.http.session/manager)
             system {:app.http.client/client {:existing true}
                     :app.rpc/methods {:app.http.session/manager session}
-                    :app.http.websocket/routes {:app.http.session/manager session}}
+                    :app.http.websocket/routes {:app.http.session/manager session}
+                    :app.http.assets/routes {:app.http.session/manager session}}
             result (configuration/install system filename)]
-        (doseq [target [:app.rpc/methods :app.http.websocket/routes]]
+        (doseq [target [:app.rpc/methods :app.http.websocket/routes :app.http.assets/routes]]
           (is (= #{(java.util.UUID/fromString team)} (get-in result [target ::access/governed-teams])))
           (is (= {(java.util.UUID/fromString team) (java.util.UUID/fromString operator)}
                  (get-in result [target ::access/operators])))
           (is (= session (get-in result [target :app.http.session/manager])))
+          (is (fn? (get-in result [target ::access/capture-session])))
+          (is (fn? (get-in result [target ::access/session-valid?])))
           (is (= (ig/ref :app.studio.configuration/authority) (get-in result [target ::access/authorize]))))
         (is (= (:grantKey settings) (get-in result [:app.rpc/methods ::access/reconciliation-key])))
         (is (= (ig/ref :app.http.client/client)
