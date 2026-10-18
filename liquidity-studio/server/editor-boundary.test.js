@@ -24,6 +24,7 @@ function target(brandId) {
     nativeProjectId: `project_${brandId}`,
     nativeRoomId: `room_${brandId}`,
     nativeDocumentVersion: "1",
+    nativeVersionKind: "archive",
     editorVersion: "2.18.3",
     resources: kinds.map((kind) => ({
       id: kind,
@@ -125,6 +126,7 @@ async function fixture(t) {
     founder,
     marketer,
     calls,
+    transport,
     api,
     register,
     tick: (milliseconds) => (now += milliseconds),
@@ -459,4 +461,38 @@ test("operator registry refuses endpoints/credentials, malformed parents and dup
       }),
     /target changed/,
   );
+});
+
+test("membership or binding revocation during asynchronous validation prevents dispatch", async (t) => {
+  for (const revokeMembership of [true, false]) {
+    const f = await fixture(t);
+    const binding = await f.register();
+    f.transport.validateCommand = async () => {
+      if (revokeMembership) {
+        await f.platform.identity.setMembership(f.founder, {
+          userId: f.marketer.id,
+          organizationId: "org_default",
+          brandIds: [],
+        });
+      } else {
+        const app = await f.platform.forScope({
+          organizationId: "org_default",
+          brandId: "brand_default",
+        });
+        await f.platform
+          .editorBoundary(
+            { organizationId: "org_default", brandId: "brand_default" },
+            app.ports.repo,
+          )
+          .revoke(f.founder, binding.id);
+      }
+    };
+    const response = await f.api("marketer", `/${binding.id}/operations`, {
+      resourceId: "document",
+      kind: "document",
+      action: "write",
+    });
+    assert.equal(response.status, revokeMembership ? 403 : 404);
+    assert.equal(f.calls.length, 0);
+  }
 });

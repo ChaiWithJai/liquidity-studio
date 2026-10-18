@@ -53,6 +53,7 @@ export function validateEditorTargets(targets) {
       "nativeProjectId",
       "nativeRoomId",
       "nativeDocumentVersion",
+      "nativeVersionKind",
       "editorVersion",
       "resources",
     ]);
@@ -80,6 +81,11 @@ export function validateEditorTargets(targets) {
         target.editorVersion !== "27b6f68221fdbf1ef1bedc182e303210ca9e39f5")
     )
       throw new Error("Unsupported operator native target version");
+    if (
+      target.nativeVersionKind !==
+      (target.adapter === "penpot" ? "archive" : "document-schema")
+    )
+      throw new Error("Explicit native version kind is required");
     ids.add(target.id);
     const resources = new Set();
     for (const resource of target.resources) {
@@ -180,6 +186,7 @@ export class EditorBoundary {
       nativeProjectId: target.nativeProjectId,
       nativeRoomId: target.nativeRoomId,
       nativeDocumentVersion: target.nativeDocumentVersion,
+      nativeVersionKind: target.nativeVersionKind,
       editorVersion: target.editorVersion,
       resources: structuredClone(target.resources),
       epoch: 1,
@@ -239,6 +246,13 @@ export class EditorBoundary {
       action: input.action,
       command: input.command,
     });
+    const reauthorize = async () => {
+      await this.authorize(actor);
+      const current = this.binding(await this.read(), bindingId);
+      if (current.epoch !== binding.epoch)
+        throw fail(403, "Editor binding changed during operation");
+    };
+    await reauthorize();
     // A transport gets trusted mappings only; request metadata never selects native identity.
     const result = await this.transport.execute({
       binding: structuredClone(binding),
@@ -246,6 +260,7 @@ export class EditorBoundary {
       actor: { id: actor.id, role: actor.role },
       action: input.action,
       command,
+      reauthorize,
       cacheKey: `${this.scope.organizationId}:${this.scope.brandId}:${binding.id}:${binding.epoch}:${resource.kind}:${resource.id}`,
     });
     await this.authorize(actor);
@@ -289,6 +304,7 @@ export class EditorBoundary {
     const ttl = input.ttlSeconds ?? 60;
     if (!Number.isInteger(ttl) || ttl < 1 || ttl > 300)
       throw fail(400, "Asset grant TTL must be 1 to 300 seconds");
+    this.binding(await this.read(), bindingId);
     const { asset, bytes } = await this.asset(actor, input);
     const token = randomBytes(32).toString("base64url");
     const expiresAt = this.now() + ttl * 1000;
