@@ -229,3 +229,64 @@ test("lost queue response retries identical plan key and browser reload resolves
     jobs.at(-1).id,
   );
 });
+
+test('pending queue and same-key retry show progress; only a lost response offers recovery', async ({ page }) => {
+  await source('Pending progress campaign');
+  await login(page);
+  const before = (await (await page.request.get(base + '/api/studio/jobs' + scope)).json()).jobs.length;
+  await page.getByLabel('Plan Pending progress campaign', { exact: true }).check();
+  await page.getByLabel(/I reviewed these 1 campaigns/).check();
+  let release, entered;
+  const seen = new Promise(resolve => { entered = resolve; });
+  const held = new Promise(resolve => { release = resolve; });
+  let mode = 'pending', calls = 0;
+  const keys = [];
+  await page.route('**/api/studio/jobs?**', async route => {
+    if (route.request().method() !== 'POST') return route.continue();
+    calls++; keys.push(route.request().postDataJSON().idempotencyKey);
+    const response = await route.fetch();
+    if (mode === 'pending') { entered(); await held; await route.fulfill({ response }); }
+    else if (mode === 'lost') await route.abort('failed');
+    else { entered(); await held; await route.fulfill({ response }); }
+  });
+  try {
+    await page.getByRole('button', { name: 'Queue reviewed plan', exact: true }).click();
+    await seen;
+    await expect(page.getByRole('status').filter({ hasText: 'Saving job request…' })).toBeVisible();
+    await expect(page.getByText('The response may have been lost.', { exact: false })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Retry same job request', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Queue reviewed plan', exact: true })).toBeDisabled();
+    release();
+    await expect(page.getByRole('region', { name: 'Job details' })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: 'Saving job request…' })).toHaveCount(0);
+    await expect(page.getByText('The response may have been lost.', { exact: false })).toHaveCount(0);
+    expect(calls).toBe(1);
+    // A second real durable write loses its response; only then is its retained key uncertain.
+    await page.reload();
+    await page.getByLabel('Plan Pending progress campaign', { exact: true }).check();
+    await page.getByLabel(/I reviewed these 1 campaigns/).check();
+    mode = 'lost';
+    await page.getByRole('button', { name: 'Queue reviewed plan', exact: true }).click();
+    await expect(page.getByText('The response may have been lost.', { exact: false })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Retry same job request', exact: true })).toBeVisible();
+    await page.unroute('**/api/studio/jobs?**');
+    let resume, captured;
+    const retrySeen = new Promise(resolve => { captured = resolve; });
+    const retryHeld = new Promise(resolve => { resume = resolve; });
+    release = resume;
+    await page.route('**/api/studio/jobs?**', async route => {
+      if (route.request().method() !== 'POST') return route.continue();
+      calls++; keys.push(route.request().postDataJSON().idempotencyKey);
+      const response = await route.fetch(); captured(); await retryHeld; await route.fulfill({ response });
+    });
+    await page.getByRole('button', { name: 'Retry same job request', exact: true }).click();
+    await retrySeen;
+    await expect(page.getByRole('status').filter({ hasText: 'Saving job request…' })).toBeVisible();
+    await expect(page.getByText('The response may have been lost.', { exact: false })).toHaveCount(0);
+    resume();
+    await expect(page.getByRole('region', { name: 'Job details' })).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: 'Saving job request…' })).toHaveCount(0);
+    expect(keys).toHaveLength(3); expect(keys[1]).toBe(keys[2]); expect(keys[0]).not.toBe(keys[1]);
+    expect((await (await page.request.get(base + '/api/studio/jobs' + scope)).json()).jobs).toHaveLength(before + 2);
+  } finally { release?.(); }
+});
