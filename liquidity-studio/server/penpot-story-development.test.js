@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,writeFile,rm} from 'node:fs/promises';
+import {mkdtemp,writeFile,readFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {DurableStore} from './storage.js';
@@ -12,9 +12,9 @@ async function setup(t){
  const store=new DurableStore(join(dir,'studio.sqlite'));t.after(()=>store.close());const identity=new IdentityService(store);await identity.ready;
  await identity.provision({username:'local-founder',password:'controlled-password-only-1234567890',role:'founder'});const actor=(await store.get('identity')).users.find(u=>u.username==='local-founder');
  const config={version:1,targets:[{id:'local-native',organizationId:'org_default',brandId:'brand_default',adapter:'penpot',ownerPrincipal:owner,nativeProjectId:project,nativeRoomId:team,nativeDocumentVersion:'1',nativeVersionKind:'archive',editorVersion:'2.18.3',resources:[{id:'tokens',kind:'tokens',nativeId:file,nativeParentId:project}]}],sessions:[{ownerPrincipal:owner,cookie:'auth-token=controlled-native-session'}],manifests:[{targetId:'local-native',teamId:team,manifest:{ownerPrincipal:owner,projectId:project,fileId:file,layers:[{id:'layer'}],tokens:[1,2,3,4],fonts:{},nativeFonts:[{fontId:'custom-'+font,family:'Mona Sans',weight:400,license:'OFL-1.1',sha256:'a'.repeat(64)}],sourceApprovals:[],storyId:'legacy-only-not-new-story',generationId:'legacy-generation',storyRevision:1}}]};
- const path=join(dir,'operator.json');await writeFile(path,JSON.stringify(config),{mode:0o600});let profileId=owner,editable=true;const calls=[];
- const fetchImpl=async(url,options)=>{calls.push({url,options});const command=url.split('/').at(-1);return new Response(JSON.stringify(command==='get-profile'?{id:profileId}:command==='get-project'?{id:project,teamId:team,permissions:{canEdit:editable}}:[{fontId:font,fontFamily:'Mona Sans',fontWeight:'400'}]),{status:200});};
- const make=(options={})=>createDevelopmentPenpotStoryDesigns({store,identity,configurationPath:path,env:{NODE_ENV:'development'},fetchImpl,...options});return {store,identity,actor,path,make,calls,setProfile:id=>profileId=id,setEditable:value=>editable=value};
+ const path=join(dir,'operator.json');await writeFile(path,JSON.stringify(config),{mode:0o600});let profileId=owner,editable=true,fontStyle='normal';const calls=[];
+ const fetchImpl=async(url,options)=>{calls.push({url,options});const command=url.split('/').at(-1);return new Response(JSON.stringify(command==='get-profile'?{id:profileId}:command==='get-project'?{id:project,teamId:team,permissions:{canEdit:editable}}:[{fontId:font,fontFamily:'Mona Sans',fontWeight:'400',fontStyle}]),{status:200});};
+ const make=(options={})=>createDevelopmentPenpotStoryDesigns({store,identity,configurationPath:path,env:{NODE_ENV:'development'},fetchImpl,...options});return {store,identity,actor,path,make,calls,setProfile:id=>profileId=id,setEditable:value=>editable=value,setFontStyle:value=>fontStyle=value};
 }
 test('developer native workspace registers real scoped authority after native reads and observes later revocation',async t=>{
  const f=await setup(t),provider=await f.make(),service=await provider({organizationId:'org_default',brandId:'brand_default'});
@@ -49,4 +49,18 @@ test('paired provider retains the fixed administrative workspace without letting
  await assert.rejects(service.workspaceFor(marketer),/founder/i,'default developer path remains founder-only');
  await f.identity.setMembership(f.actor,{userId:marketer.id,organizationId:scope.organizationId,brandIds:[]});
  await assert.rejects(administrativeWorkspaceFor(marketer),e=>e.status===403);
+});
+
+test('fresh workspace-only provider registers without legacy file and refuses wrong current font style',async t=>{
+ const f=await setup(t),old=JSON.parse(await readFile(f.path,'utf8'));
+ const fonts=old.manifests[0].manifest.nativeFonts.map(x=>({...x,fontVariantId:'normal-400'}));
+ await writeFile(f.path,JSON.stringify({version:2,transportMode:'loopback',sessions:old.sessions,workspaces:[{id:'fresh-workspace',organizationId:'org_default',brandId:'brand_default',ownerPrincipal:owner,projectId:project,teamId:team,fonts}]}));
+ const provider=await f.make(),service=await provider({organizationId:'org_default',brandId:'brand_default'});
+ f.setFontStyle('italic');await assert.rejects(()=>service.workspaceFor(f.actor),/team fonts/);
+ assert.equal(await f.store.get('editor-security:org_default:brand_default'),null);
+ f.setFontStyle('normal');const workspace=await service.workspaceFor(f.actor);
+ assert.equal(workspace.teamId,team);assert.equal(workspace.projectId,project);
+ const state=await f.store.get('editor-security:org_default:brand_default');
+ assert.equal(state.bindings.length,1);
+ assert.ok(f.calls.every(c=>!['get-file','create-file','update-file'].includes(c.url.split('/').at(-1))));
 });

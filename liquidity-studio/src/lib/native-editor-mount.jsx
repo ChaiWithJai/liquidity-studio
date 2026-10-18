@@ -27,7 +27,7 @@ export function mountNativeEditor(element, props) {
     : null;
   function CutoutContext() {
     const current = useEditor();
-    const [status, setStatus] = useState("");
+    const [status, setStatus] = useState(props.cutoutUnavailableMessage || "");
     useEffect(() => {
       engine = current;
       reportStatus = setStatus;

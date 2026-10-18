@@ -24,6 +24,11 @@ test -f /hooks/penpot-live-fence/websocket.patch
 test -f /hooks/penpot-native-access-bootstrap/configuration.clj
 test -f /hooks/penpot-native-access-bootstrap/configuration_test.clj
 test -f /hooks/penpot-native-access-bootstrap/main.patch
+test -f /hooks/penpot-private-asset-access/apply.py
+test -f /hooks/penpot-private-asset-access/assets.clj
+test -f /hooks/penpot-private-asset-access/assets_test.clj
+test -f /hooks/penpot-private-asset-access/assets.patch
+test -f /hooks/penpot-private-asset-access/upstream-source.json
 test -z "${STUDIO_NATIVE_ACCESS_CONFIG:-}"
 
 # C2's reviewed apply script is exact-source guarded and registers only its
@@ -41,6 +46,9 @@ test ! -e /work/backend/src/app/studio/configuration.clj
 test ! -e /work/backend/test/app/studio/configuration_test.clj
 cp /hooks/penpot-native-access-bootstrap/configuration.clj /work/backend/src/app/studio/configuration.clj
 cp /hooks/penpot-native-access-bootstrap/configuration_test.clj /work/backend/test/app/studio/configuration_test.clj
+# The byte-delivery seam has its own exact upstream/source guards. Apply after
+# bootstrap configuration; it changes assets.clj, not the main/WS/RPC patches.
+python3 /hooks/penpot-private-asset-access/apply.py /work | tee /evidence/assets-application.json
 cp /recipe/kaocha.edn /work/backend/studio-hook-tests.edn
 mkdir -p /tmp/penpot
 cd /work/backend
@@ -49,7 +57,7 @@ cd /work/backend
 # modules; helper-only tests cannot silently skip their integration syntax.
 # The pinned backend :dev alias has :extra-paths ["test" "dev"], so -M:dev
 # includes these test namespaces without activating Kaocha's :test main opts.
-clojure -M:dev -e "(require 'app.studio.access 'app.studio.http-authority 'app.rpc.commands.studio-access 'app.studio.live 'app.http.websocket 'app.util.websocket 'app.studio.configuration 'app.main) (doseq [n '[app.studio.access-test app.studio.http-authority-test app.studio.reconciliation-test app.studio.live-test app.studio.configuration-test]] (require n) (let [tests (count (filter (comp :test meta) (vals (ns-interns n))))] (assert (pos? tests) (str n \" contains no tests\")) (println n :test-vars tests))) (println :native-hook-namespaces-loaded)" \
+clojure -M:dev -e "(require 'app.studio.access 'app.studio.http-authority 'app.rpc.commands.studio-access 'app.studio.live 'app.http.websocket 'app.util.websocket 'app.studio.configuration 'app.main 'app.studio.assets 'app.http.assets) (doseq [n '[app.studio.access-test app.studio.http-authority-test app.studio.reconciliation-test app.studio.live-test app.studio.configuration-test app.studio.assets-test]] (require n) (let [tests (count (filter (comp :test meta) (vals (ns-interns n))))] (assert (pos? tests) (str n \" contains no tests\")) (println n :test-vars tests))) (println :native-hook-namespaces-loaded)" \
   2>&1 | tee /evidence/namespace-compilation.log
 clojure -M:dev:test --config-file studio-hook-tests.edn \
   2>&1 | tee /evidence/focused-clojure-tests.log

@@ -1,4 +1,5 @@
 <script>
+  import DraftBrief from './components/defiant/DraftBrief.svelte';
   import DefiantWorkspace from './components/defiant/DefiantWorkspace.svelte';
   import {strategyOrganizationFor} from './lib/defiant-location.js';
   import PenpotConnection from "./components/PenpotConnection.svelte";
@@ -185,7 +186,7 @@
     return true;
   }
   $effect(() => {
-    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty) return;
+    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty && !strategyDirty) return;
     const protect = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
@@ -322,6 +323,10 @@
     { key: "bRollDirection", label: "B-roll direction", hint: "Describe the supporting shot. This does not generate footage." },
   ];
   let reviewDirty = $derived(reviewSignature(reviewClaims) !== savedReviewSignature);
+  let penpotDesignAction = $state(null);
+  function penpotConnectionChanged(client) {
+    if (workspaceClient === client) penpotDesignAction?.refreshAccess();
+  }
   let penpotTaskStatus = $state({key: "", status: "unknown"});
   const penpotTaskKey = $derived(JSON.stringify([penpotHost?.client.scopeKey, selectedStory?.id, selectedStory?.generationId, selectedStory?.revision, format]));
   function penpotStatusHandler(key) {
@@ -369,6 +374,7 @@
     const target = document.getElementById(id);
     if (!target) return;
     if (target.tagName === "DETAILS") target.open = true;
+    for (let ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement) if(ancestor.tagName==="DETAILS") ancestor.open=true;
     const offset = measureWorkflowOffset();
     window.scrollTo({ top: Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset), behavior: "instant" });
     target.focus({ preventScroll: true });
@@ -1015,6 +1021,12 @@
       busy = false;
     }
   }
+  function useBriefSource({text,sourceUrl}) {
+    if(!selectedStory?.draftBrief||busy)return;
+    if(!reviewClaims.some(claim=>claim.text===text&&claim.sourceUrl===sourceUrl))reviewClaims=[...reviewClaims,{id:crypto.randomUUID(),text,sourceUrl,kind:"",status:"unreviewed"}];
+    notice=text.length>2000?"Excerpt copied to source review. Shorten it to 2,000 characters, check its context, choose a classification and save your review.":"Excerpt copied to source review. Check its context, choose a classification and save your review.";
+    void focusWorkflow("workflow-sources");
+  }
   function addSourceClaim() {
     reviewClaims = [
       ...reviewClaims,
@@ -1330,12 +1342,12 @@
       </div>
       <nav aria-label="Main navigation">
         {#if currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable}<button class:active={tab==='strategy'} onclick={()=>navigateTab('strategy')}><span aria-hidden="true">◎</span>Strategy</button>{/if}
-        {#each [{ id: "backlog", label: "Story backlog", icon: "▤" }, { id: "calendar", label: "Content calendar", icon: "▦" }, { id: "studio", label: "Campaign Studio", icon: "◧" }, { id: "brand", label: "Brand Kit", icon: "◉" }, { id: "jobs", label: "Jobs", icon: "◷" }] as item (item.id)}<button
+        {#if brandId}{#each [{ id: "backlog", label: "Story backlog", icon: "▤" }, { id: "calendar", label: "Content calendar", icon: "▦" }, { id: "studio", label: "Campaign Studio", icon: "◧" }, { id: "brand", label: "Brand Kit", icon: "◉" }, { id: "jobs", label: "Jobs", icon: "◷" }] as item (item.id)}<button
             class:active={tab === item.id}
             disabled={!brandId}
             onclick={() => navigateTab(item.id)}
             ><span aria-hidden="true">{item.icon}</span>{item.label}</button
-          >{/each}{#if canAdmin}<button
+          >{/each}{/if}{#if canAdmin}<button
             class:active={tab === "admin"}
             disabled={scopeLoading}
             onclick={loadAdmin}
@@ -1465,6 +1477,7 @@
           </div>
         {/if}
         {#if selectedStory}
+          {#if selectedStory.draftBrief?.kind==='defiant-report'}<DraftBrief brief={selectedStory.draftBrief} reportHref={workflowHref(window.location.href,{organizationId:selectedStory.draftBrief.organizationId,tab:'strategy',strategy:{view:'report',reportId:selectedStory.draftBrief.reportId}})} onUseSource={useBriefSource} onReviewSources={()=>focusWorkflow("workflow-sources")} disabled={busy} />{/if}
           {#if nativeEditorEnabled && preparedHost}{#key preparedHost.client}{#key `${selectedStory.id}:${format}`}
             <NativeLayoutHistory request={preparedHost.request} storyId={selectedStory.id} {format} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} onOpen={openNativeEditor} />
           {/key}{/key}{/if}
@@ -1507,10 +1520,10 @@
               >{/each}
           </div>
           {#if penpotPairingEnabled && penpotHost && !preparedWorkspace}
-            {#key penpotHost.client}<PenpotConnection request={penpotHost.request} />{/key}
+            {#key penpotHost.client}<PenpotConnection request={penpotHost.request} onConnectionChange={() => penpotConnectionChanged(penpotHost.client)} />{/key}
           {/if}
           {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
-            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction compact request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
+            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction bind:this={penpotDesignAction} compact request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
           {/if}
           </div>{/if}
           {#if nativeRecord && nativeHost}

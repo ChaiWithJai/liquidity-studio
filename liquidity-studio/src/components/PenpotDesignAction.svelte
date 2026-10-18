@@ -3,8 +3,13 @@
   let {request, storyId, format, storyRevision, generationId, onStateChange = () => {}, compact = false} = $props();
   let loading = $state(true), busy = $state(false), error = $state(''), rejected = $state(false);
   let result = $state(null), attempt = $state(null);
-  let alive = true;
-  onDestroy(() => { alive = false; });
+  let alive = true, refreshPending = false, loadSequence = 0;
+  export function refreshAccess() {
+    if (!alive) return;
+    if (busy) { refreshPending = true; return; }
+    void load();
+  }
+  onDestroy(() => { alive = false; loadSequence++; });
   onMount(() => { void load(); });
   const nativeUrl = $derived(result?.design?.nativeUrl || '');
   const openUrl = $derived(result?.design?.status === 'ready' && nativeUrl.startsWith('http://localhost:39008/#/workspace?team-id=') ? nativeUrl : '');
@@ -12,12 +17,13 @@
     onStateChange(design?.status === 'ready' && design.nativeUrl?.startsWith('http://localhost:39008/#/workspace?team-id=') ? 'ready' : design?.status === 'pending' ? 'pending' : 'unknown');
   }
   async function load() {
+    const ticket = ++loadSequence;
     loading = true; error = ''; onStateChange('unknown');
     try {
       const value = await request(`/api/studio/penpot/designs?storyId=${encodeURIComponent(storyId)}&format=${encodeURIComponent(format)}`);
-      if (alive) { result = value; attempt = value.design?.retry || null; reportState(value.design); }
-    } catch (failure) { if (alive) error = failure.message; }
-    finally { if (alive) loading = false; }
+      if (alive && ticket === loadSequence) { result = value; attempt = value.design?.status === 'ready' ? null : attempt || value.design?.retry || null; reportState(value.design); }
+    } catch (failure) { if (alive && ticket === loadSequence) error = failure.message; }
+    finally { if (alive && ticket === loadSequence) loading = false; }
   }
   async function create() {
     if (busy || loading) return;
@@ -30,16 +36,16 @@
       reportState(design);
       attempt = design.status === 'pending' ? design.retry || attempt : null;
     } catch (failure) { if (alive) { onStateChange('unknown'); error = failure.message; rejected = Number.isInteger(failure.status) && failure.status >= 400 && failure.status < 500; } }
-    finally { if (alive) busy = false; }
+    finally { if (alive) { busy = false; if (refreshPending) { refreshPending = false; void load(); } } }
   }
 </script>
 <section class={["penpot-design-action", {compact}]} aria-label="Campaign design in Penpot">
   {#if !compact}<h3>Design your campaign</h3>{/if}
   {#if loading}<p role="status">Finding this campaign’s design…</p>
-  {:else if openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>
-  {:else if result?.available || attempt || result?.design}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Create an editable design from the saved copy and brand.</p>
+  {:else if !error && openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>
+  {:else if !error && (result?.available || attempt || result?.design)}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Create an editable design from the saved copy and brand.</p>
   {:else if result?.reason}<p>{result.reason}</p>{/if}
-  {#if error}<p role="alert">{error}</p>{#if rejected}<button onclick={()=>window.location.reload()}>Reload saved campaign</button>{:else if !attempt}<button disabled={loading||busy} onclick={load}>Check design again</button>{/if}{/if}
+  {#if error}<p role="alert">{error}</p>{#if rejected}<button onclick={()=>window.location.reload()}>Reload saved campaign</button>{:else}<button disabled={loading||busy} onclick={load}>Check design again</button>{/if}{/if}
 </section>
 <style>
   .penpot-design-action{display:grid;gap:.4rem;padding:.8rem 1rem;border:1px solid var(--border,#d1d5db);border-radius:.6rem}

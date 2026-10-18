@@ -1,5 +1,6 @@
 // Explicit local first-party native proof adapter. Never starts from the normal app.
 import http from 'node:http';
+import {createPenpotNativeAccessForwarder} from '../server/penpot-native-access-forwarder.js';
 import {loadNativePairingConfiguration} from './local-native-pairing.mjs';
 import {createNativeConnectHandler, createNativePairingProofSink, createNativePairingChallengeReader} from '../server/penpot-native-connect-proof.js';
 
@@ -17,9 +18,13 @@ const describeChallenge = createNativePairingChallengeReader({
   pairingKey: configuration.pairingKey,
   nativeInstanceId: configuration.nativeInstanceId,
 });
+const accessForwarder = configuration.grantKey ? createPenpotNativeAccessForwarder({studioOrigin: configuration.studioOrigin, grantKey: configuration.grantKey}) : null;
 const handler = createNativeConnectHandler({...configuration, recordProof, describeChallenge});
 const server = http.createServer({requestTimeout: 15000, headersTimeout: 10000, maxHeaderSize: 16384}, (req, res) => {
-  Promise.resolve(handler(req, res)).catch(() => {
+  Promise.resolve().then(async () => {
+    if (accessForwarder && await accessForwarder(req, res)) return;
+    await handler(req, res);
+  }).catch(() => {
     if (!res.headersSent) { res.writeHead(502, {'Cache-Control': 'no-store'}); res.end('Connection could not be verified. Return to Studio and try again.'); }
     else res.destroy();
   });

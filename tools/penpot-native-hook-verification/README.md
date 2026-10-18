@@ -8,7 +8,7 @@ application, or enables editing.
 
 Dispatch only after source review. `source_sha` must be the full reviewed Studio
 commit containing `tools/penpot-brand-access`, `tools/penpot-live-fence` and
-`tools/penpot-native-access-bootstrap`. The confirmation is
+`tools/penpot-native-access-bootstrap` and `tools/penpot-private-asset-access`. The confirmation is
 `verify-reviewed-penpot-native-hooks`. The recipe checkout is the workflow's own
 event commit; the independently pinned hook checkout is recorded in the artifact.
 No push or PR trigger exists. Do not dispatch a second run to conceal a failure.
@@ -24,7 +24,10 @@ The recipe requires `app.studio.configuration` and `app.main`, but never calls
 `start`, `resume`, Integrant initialization or `-main`. Pinned `app.main` defines
 those entry points as functions; requiring it constructs its configuration maps
 without invoking its listener/application startup. No native access config is
-supplied to the compile container. All five expected focused test namespaces must load and each
+supplied to the compile container. The asset apply script verifies its own pinned upstream/source/patch hashes and
+installs `app.studio.assets` plus its focused test. Namespace loading explicitly
+requires both `app.studio.assets` and the actual patched `app.http.assets`, so
+helper-only tests cannot skip the native byte-handler integration. All six expected focused test namespaces must load and each
 must contain at least one test var; a zero-test discovery cannot be called a pass.
 
 The pinned backend defines `clojure -M:dev:test` and Kaocha in its actual

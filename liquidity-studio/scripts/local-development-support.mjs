@@ -52,10 +52,10 @@ try {
  for(const role of ['founder','marketer']){const matches=identity.users.filter(x=>x.username===`local-${role}`);if(matches.length!==1||matches[0].role!==role)throw Error('Fixed chooser persona mismatch; no automatic repair');const check=await platform.identity.login(`local-${role}`,settings.passwords[role]);if(!check)throw Error('Stored chooser credential no longer matches; preserve profile for review');await platform.identity.logout(check.token);}
  // Memberships and extra users are current service-owned data, not startup defaults.
  const {localPenpotDevelopment}=await import('./local-penpot-development.mjs');
- const developmentPenpotStoryDesigns=await localPenpotDevelopment({configurationPath:penpotConfigurationPath,platform});
  const {localNativePairing}=await import('./local-native-pairing.mjs');
  const nativePairing=localNativePairing({configurationPath:nativePairingConfigurationPath,store,identity:platform.identity,origin});
- const api=createHttpServer(null,{platform,nativeEditorEnabled:!!nativeAssets,penpotEnabled:false,helperControlEnabled:true,developmentPenpotStoryDesigns,nativePairing});
+ const developmentPenpotStoryDesigns=await localPenpotDevelopment({configurationPath:penpotConfigurationPath,platform,nativePairing,nativePairingConfigurationPath});
+ const api=createHttpServer(null,{platform,nativeEditorEnabled:!!nativeAssets,penpotEnabled:false,helperControlEnabled:true,developmentPenpotStoryDesigns,nativePairing,nativeAccess:developmentPenpotStoryDesigns?.nativeAccess});
  server=http.createServer({requestTimeout:30000,headersTimeout:10000,maxHeaderSize:8192},async(req,res)=>{try{
   if(!requestAllowed(req,origin))throw Object.assign(Error('Loopback origin required'),{status:403});
   const url=new URL(req.url,origin);req.headers.cookie=mapRequestCookie(req.headers.cookie,profile);

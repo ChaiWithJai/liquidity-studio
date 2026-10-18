@@ -1,0 +1,29 @@
+{
+  "nativePin": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "files": {
+    "rpc.clj": {
+      "beforeSha256": "2856f53b0a1c1e64bc96e35ad6ae02c9603c91bd88fc7a67be0194c7562984fe",
+      "afterSha256": "9f1336c875bd527b6915e79b20320cc80da8be3a4c370ff18a6959931f1974ff"
+    },
+    "binfile/common.clj": {
+      "beforeSha256": "9d96fcd907d15cbbed3c2c4d2f83dd428642ee5cbfcff7f7520244e7899a69f9",
+      "afterSha256": "80ad59683349c645c3710690be365e0948fd4bdf40965d88d317375f59324c60"
+    },
+    "rpc/commands/teams.clj": {
+      "beforeSha256": "f4bd616639bb2fedc8126334bf484d9a0a7845ca193988855b1318c9a307a251",
+      "afterSha256": "f6d75aac939ea90572e4cc0430e6501c1e6479c4bbeafb6cc7a7e0ec66fefd04"
+    },
+    "rpc/commands/projects.clj": {
+      "beforeSha256": "7bc5ea75335795b3746b61ca873ed3c4c1fdc01255ab07e4a101aa7adc5fcbe6",
+      "afterSha256": "98d84cb92c52b5b6d080b56d58a5667f27ac0a4aebdf40feff79e87c18665350"
+    },
+    "rpc/commands/files.clj": {
+      "beforeSha256": "601b74767ecfdf8ad04291f4565dfa03288913b6f9dbfb076eec9e8e1c9fb938",
+      "afterSha256": "5a740b30fffd75b67e30634e81e76ae10160fe0fd2783b0e17420cbd14602fb6"
+    },
+    "rpc/commands/comments.clj": {
+      "beforeSha256": "45ba7141de32f8e08283c97be7fd1eced469f1641df35afa8cdd472932fa7046",
+      "afterSha256": "025dba44f0394e1181a5c9a56795f55ebefcd1f0f4eaaaa40a7eed9eda3173d3"
+    }
+  }
+}
