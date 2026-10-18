@@ -294,7 +294,24 @@
     { key: "bRollDirection", label: "B-roll direction", hint: "Describe the supporting shot. This does not generate footage." },
   ];
   let reviewDirty = $derived(reviewSignature(reviewClaims) !== savedReviewSignature);
-  let nextWorkflowAction = $derived(editorConflictRevision ? "Resolve newer saved revision" : reviewDirty ? "Save source review" : preparedWorkspace ? "Inspect prepared preview and evidence" : !generationReview.ready ? "Review source prerequisites" : !campaign ? "Generate a draft" : pendingEdits ? "Save artwork changes" : "Inspect preview and validation before handoff");
+  let penpotTaskStatus = $state({key: "", status: "unknown"});
+  const penpotTaskKey = $derived(JSON.stringify([penpotHost?.client.scopeKey, selectedStory?.id, selectedStory?.generationId, selectedStory?.revision, format]));
+  function penpotStatusHandler(key) {
+    return status => { penpotTaskStatus = {key, status}; };
+  }
+  const nextWorkflowAction = $derived.by(() => {
+    if (editorConflictRevision) return "Resolve newer saved revision";
+    if (reviewDirty) return "Save source review";
+    if (preparedWorkspace) return "Inspect prepared preview and evidence";
+    if (!generationReview.ready) return "Review source prerequisites";
+    if (!campaign) return "Generate a draft";
+    if (pendingEdits) return "Save artwork changes";
+    if (penpotTaskStatus.key === penpotTaskKey) {
+      if (penpotTaskStatus.status === "ready") return "Open your Penpot design";
+      if (penpotTaskStatus.status === "pending") return "Resume design creation";
+    }
+    return "Preview saved artwork";
+  });
   let workflowContext = $state(null);
   function measureWorkflowOffset(bar = workflowContext) {
     if (!bar?.isConnected) return 16;
@@ -1412,11 +1429,22 @@
             <p class="workflow-state" role="status">{preparedDirty ? "Unsaved prepared preview" : pendingEdits ? "Unsaved artwork changes" : campaign ? "Artwork saved" : sourcePreparationEnabled ? selectedStory.preparationStatus==='ready' ? "Source preview saved" : "Source preparation workspace" : "No draft yet"} · {reviewDirty ? "Unsaved source review" : preparedWorkspace ? "Evidence awaits explicit human review" : generationReview.ready ? "Source prerequisites saved" : `${generationReview.blockers.length} source prerequisite${generationReview.blockers.length === 1 ? "" : "s"} to review`}{editorConflictRevision ? ` · Newer saved revision ${editorConflictRevision}; resolve the conflict before saving.` : ""} · Next: {nextWorkflowAction}</p>
             <nav aria-label="Editorial task actions">
               <button class="secondary" onclick={() => focusWorkflow("workflow-sources")}>Review sources</button>
-              {#if campaign}<button class="secondary" onclick={() => focusWorkflow("workflow-editor")}>Edit wording</button><button class="secondary" onclick={() => focusWorkflow("workflow-preview")}>Preview & validation</button><button class="secondary" onclick={() => focusWorkflow("workflow-validation")}>Validation results</button>
-              <button class:primary={pendingEdits} class:secondary={!pendingEdits} disabled={!pendingEdits || busy || Boolean(editorConflictRevision)} onclick={saveEdit}>Save artwork changes</button>
-              <button class="secondary" onclick={() => focusWorkflow("workflow-handoff")}>Export handoff</button>{/if}
-              <button class="secondary" onclick={() => navigateTab("calendar")}>Plan in calendar</button>
-              <button class="secondary" onclick={() => navigateTab("backlog")}>Return to backlog</button>
+              {#if campaign}
+                <button class="secondary" onclick={() => focusWorkflow("workflow-editor")}>Edit wording</button>
+                <button class="secondary" onclick={() => focusWorkflow("workflow-preview")}>Preview & validation</button>
+                {#if pendingEdits}<button class="primary" disabled={busy || Boolean(editorConflictRevision)} onclick={saveEdit}>Save artwork changes</button>{/if}
+              {/if}
+              <details class="workflow-more-actions">
+                <summary>More actions</summary>
+                <div class="workflow-secondary-actions">
+                  {#if campaign}
+                    <button class="secondary" onclick={() => focusWorkflow("workflow-validation")}>Validation results</button>
+                    <button class="secondary" onclick={() => focusWorkflow("workflow-handoff")}>Export handoff</button>
+                  {/if}
+                  <button class="secondary" onclick={() => navigateTab("calendar")}>Plan in calendar</button>
+                  <button class="secondary" onclick={() => navigateTab("backlog")}>Return to backlog</button>
+                </div>
+              </details>
             </nav>
           </section>
           {/if}
@@ -1463,7 +1491,7 @@
           </div>
           {/if}
           {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
-            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} />{/key}
+            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
           {/if}
           {#if nativeRecord && nativeHost}
             <section class="panel" aria-label="Native proposal workspace">

@@ -1,6 +1,6 @@
 <script>
   import {onMount, onDestroy} from 'svelte';
-  let {request, storyId, format, storyRevision, generationId} = $props();
+  let {request, storyId, format, storyRevision, generationId, onStateChange = () => {}} = $props();
   let loading = $state(true), busy = $state(false), error = $state(''), rejected = $state(false);
   let result = $state(null), attempt = $state(null);
   let alive = true;
@@ -8,11 +8,14 @@
   onMount(() => { void load(); });
   const nativeUrl = $derived(result?.design?.nativeUrl || '');
   const openUrl = $derived(result?.design?.status === 'ready' && nativeUrl.startsWith('http://localhost:39008/#/workspace?team-id=') ? nativeUrl : '');
+  function reportState(design) {
+    onStateChange(design?.status === 'ready' && design.nativeUrl?.startsWith('http://localhost:39008/#/workspace?team-id=') ? 'ready' : design?.status === 'pending' ? 'pending' : 'unknown');
+  }
   async function load() {
-    loading = true; error = '';
+    loading = true; error = ''; onStateChange('unknown');
     try {
       const value = await request(`/api/studio/penpot/designs?storyId=${encodeURIComponent(storyId)}&format=${encodeURIComponent(format)}`);
-      if (alive) { result = value; attempt = value.design?.retry || null; }
+      if (alive) { result = value; attempt = value.design?.retry || null; reportState(value.design); }
     } catch (failure) { if (alive) error = failure.message; }
     finally { if (alive) loading = false; }
   }
@@ -24,8 +27,9 @@
       const design = await request('/api/studio/penpot/designs', {method:'POST', body:JSON.stringify(attempt)});
       if (!alive) return;
       result = {...result, design};
+      reportState(design);
       attempt = design.status === 'pending' ? design.retry || attempt : null;
-    } catch (failure) { if (alive) { error = failure.message; rejected = Number.isInteger(failure.status) && failure.status >= 400 && failure.status < 500; } }
+    } catch (failure) { if (alive) { onStateChange('unknown'); error = failure.message; rejected = Number.isInteger(failure.status) && failure.status >= 400 && failure.status < 500; } }
     finally { if (alive) busy = false; }
   }
 </script>

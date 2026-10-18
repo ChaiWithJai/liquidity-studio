@@ -1663,3 +1663,8 @@ html:has(.workflow-context) { scroll-padding-top: var(--workflow-offset, 16px); 
 .studio-toolbar .toolbar-actions button { width: auto; flex: 0 1 auto; padding: 7px 10px; min-height: 34px; }
 .completed-review { margin: 8px 0; font-size: 13px; }
 .completed-review > summary { cursor: pointer; color: #46543e; }
+
+.workflow-more-actions { margin: 0; }
+.workflow-more-actions > summary { padding: 5px 8px; min-height: 30px; font-size: 12px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+.workflow-more-actions > summary:focus-visible { outline: 2px solid var(--accent, #246b45); outline-offset: 2px; }
+.workflow-secondary-actions { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 6px; }
