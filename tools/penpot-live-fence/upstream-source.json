@@ -40,5 +40,19 @@
     }
   ],
   "runtimeChanged": false,
-  "localBuildOrTests": false
+  "localBuildOrTests": false,
+  "originalSources": [
+    {
+      "path": "live.clj",
+      "sha256": "b0e7686464b761fffa6a05451df515a9a805c9213cd7a27067945ab045fc7b80"
+    },
+    {
+      "path": "live_test.clj",
+      "sha256": "859b985ced9d62036f655c1ec2ada839ee16675420866f6962e1d5a4024cfad1"
+    },
+    {
+      "path": "websocket.patch",
+      "sha256": "98ae55c27823a0c87e21fe0528170d27304ff2621e657407bfcb3f048b168ca2"
+    }
+  ]
 }
