@@ -224,7 +224,7 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
   const data = await response.json();
   expect(data.receipt.modelCalls).toBe(0);
   expect(data.receipt.publicationApproved).toBe(false);
-  await expect(page.locator("#workflow-preview svg")).toContainText(
+  await expect(page.locator('#workflow-preview svg[role="img"]')).toContainText(
     /HUMAN.*EDITED/s,
   );
   await expect(
@@ -292,7 +292,7 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
   expect(replaced.status()).toBe(200);
   const updated = await replaced.json();
   expect(updated.receipt.generationId).not.toBe(data.receipt.generationId);
-  await expect(page.locator("#workflow-preview svg")).toContainText(
+  await expect(page.locator('#workflow-preview svg[role="img"]')).toContainText(
     /UPDATED.*AGAIN/s,
   );
   expect(paid).toEqual([]);
