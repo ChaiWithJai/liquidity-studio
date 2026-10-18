@@ -90,4 +90,5 @@ test('server-side design RPC carries a separate private acting profile without c
  assert.deepEqual(JSON.parse(requests[0].options.body),{id:id('8')});
  await rpc({ownerPrincipal:operator},'get-profile',{});
  assert.equal(requests[1].options.headers['X-Studio-Acting-Profile'],undefined);
+ assert.equal(requests[1].options.headers['X-Studio-Native-Grant-Key'],grantKey);
 });
