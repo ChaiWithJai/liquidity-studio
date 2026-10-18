@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "e49dab5e2a5028071d5203c67eb831227e9f202e",
+  "appAsset": "index-C318n7X3.js",
+  "browser": "BrowserOS Neo",
+  "viewport": {
+    "width": 1051,
+    "height": 868,
+    "dpr": 2
+  },
+  "authentication": "controlled local password fixture; not Google",
+  "storage": "owned disk-backed SQLite",
+  "delivery": "official local dispatcher and real source-preparation job service, restricted to explicit owned CWJ scope",
+  "retrieval": "default real HTTPS retriever; no text injection or model call",
+  "sourceCodeIdenticalTo": "ce31424cb990eebf3997bca686df4faa890bca6d",
+  "identicalFiles": [
+    "server/source-catalog.js",
+    "server/source-retrieval.js",
+    "server/source-preparation.js",
+    "server/prepared-source-candidate.js"
+  ],
+  "selectedPassage": "BOOK II, paragraphs 29, 30, 32, 46",
+  "candidate": {
+    "evidence": [
+      {
+        "responseBytes": 214464,
+        "responseSha256": "a2a10676c7d0c7eea96c81ea4c3ed49bea1fe0fd1e79768a4a665d5ca48ee985",
+        "retrievedAt": "2026-10-18T06:00:53.556Z",
+        "sourceUrl": "https://www.gutenberg.org/cache/epub/2526/pg2526-images.html",
+        "status": "unreviewed",
+        "textSha256": "9c7e27ec12f9fd47341573edef7e36f9b63bc4190305fbac66370dd4ce9cf7e5"
+      }
+    ],
+    "excerpts": [
+      {
+        "status": "unreviewed",
+        "text": "29. The eight means of Yoga are: the Commandments, the Rules, right Poise, right Control of the life-force, Withdrawal, Attention,"
+      },
+      {
+        "status": "unreviewed",
+        "text": "30. The Commandments are these: nom injury, truthfulness, abstaining from stealing, from impurity, from covetousness."
+      },
+      {
+        "status": "unreviewed",
+        "text": "32. The Rules are these: purity, serenity fervent aspiration, spiritual reading, and per feet obedience to the Master."
+      },
+      {
+        "status": "unreviewed",
+        "text": "46. Right poise must be firm and without strain."
+      }
+    ],
+    "id": "9a42fc98-3d9d-4e69-a814-41a44d90b97b",
+    "provenance": {
+      "evidenceIds": [
+        "02d510b0-9594-4202-8081-455a1321416a"
+      ],
+      "humanApproval": "none",
+      "mode": "extractive-unreviewed",
+      "modelCalls": 0,
+      "provider": "none",
+      "purpose": "source-preparation",
+      "requiresReview": true
+    },
+    "revision": 1
+  },
+  "keys": [
+    "storyId",
+    "storyRevision",
+    "contentRevision",
+    "brandRevision",
+    "sourceReady",
+    "hasCampaign",
+    "status",
+    "errorCode",
+    "jobId",
+    "catalog",
+    "prepared"
+  ],
+  "status": 200,
+  "limitations": [
+    "No current maintained-runtime Google login claim",
+    "No editorial/clinical approval or campaign promotion",
+    "Original screenshot includes unrelated prior-story success notice; separate maintenance issue",
+    "Full-page screenshots preserve actual viewport and do not substitute a 1280 baseline"
+  ],
+  "sourceBlobs": {
+    "server/prepared-source-candidate.js": "0d467f3afd7d7544cf02d668683e506dbb672883",
+    "server/source-catalog.js": "f12352ea1070195980dea71046730c1ad7d81ee8",
+    "server/source-preparation.js": "4cfa96da2bec03f7895492aff1b693dcd134e202",
+    "server/source-retrieval.js": "aa51f8f227fd4b0cb4e00082d43351fdeebd854c"
+  },
+  "screenshots": [
+    {
+      "file": "preview.png",
+      "sha256": "69b38532e41f0082a81246f0905baed15521b3a7424d77f2fc09974571bbf66e",
+      "bytes": 510475
+    },
+    {
+      "file": "preview-with-prior-notice.png",
+      "sha256": "eca1270136019ba70ba6978dc17184d5787069d3abcba093f33b125329a7a040",
+      "bytes": 528909
+    }
+  ]
+}
