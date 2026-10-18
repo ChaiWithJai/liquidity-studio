@@ -19,6 +19,7 @@ export function createNativeEditorBroker({
   onSaved = () => {},
   onState = () => {},
   onConflictResolve = () => {},
+  onReady = () => {},
 }) {
   const nonce = crypto.randomUUID();
   let active = true;
@@ -98,6 +99,10 @@ export function createNativeEditorBroker({
       ["reload", "save-as-copy"].includes(message.action)
     ) {
       onConflictResolve(message.action);
+      return;
+    }
+    if (message.type === "studio-native-ready") {
+      onReady();
       return;
     }
     if (message.type === "studio-native-state") {
@@ -286,6 +291,13 @@ export function createNativeFrameRequest({
           origin,
         );
       });
+    },
+    ready() {
+      if (active)
+        parentWindow.postMessage(
+          { type: "studio-native-ready", nonce },
+          origin,
+        );
     },
     state(state) {
       if (active)

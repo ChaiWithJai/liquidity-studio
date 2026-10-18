@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 const project = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -26,6 +27,26 @@ export function nativeEditorPlugin() {
         return this.resolve(path.join(source, id.slice(2)), importer, {
           skipSelf: true,
         });
+    },
+    buildStart() {
+      if (!local) return;
+      const manifest = JSON.parse(
+        fs.readFileSync(
+          path.resolve(
+            project,
+            "../docs/specs/doory-host-source-inventory.json",
+          ),
+          "utf8",
+        ),
+      );
+      const verify = (relative, expected) => {
+        const bytes = fs.readFileSync(path.join(source, relative));
+        if (createHash("sha256").update(bytes).digest("hex") !== expected)
+          throw new Error(`Native editor pinned source mismatch: ${relative}`);
+      };
+      for (const file of manifest.files) verify(file.path, file.sha256);
+      verify("LICENSE", manifest.licenseSha256);
+      verify("styles/tokens.css", manifest.styleTokensSha256);
     },
     configureServer(server) {
       if (!local) return;

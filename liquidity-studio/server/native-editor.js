@@ -97,6 +97,12 @@ export function validateHostedDocument(
         ].includes(key)
       )
         throw fail(422, "Unsupported native executable or resource field");
+      if (
+        ["fill", "stroke", "backgroundColor"].includes(key) &&
+        typeof child === "string" &&
+        /url\s*\(/i.test(child)
+      )
+        throw fail(422, "External native paint references are unavailable");
       if (["src", "docSrc"].includes(key)) {
         const match =
           typeof child === "string" &&
@@ -229,6 +235,32 @@ export class NativeEditorService {
       ...snapshot,
     };
     return { ...clone(result), document: clone(document) };
+  }
+  async list(actor, { storyId, format }) {
+    await this.authorize(actor);
+    text(storyId, "story ID");
+    if (!FORMATS.has(format)) throw fail(400, "Invalid native format");
+    const keys = await this.store.keys(`${this.prefix}document:`);
+    if (keys.length > 1000)
+      throw fail(413, "Native proposal history exceeds the bounded host limit");
+    const records = await Promise.all(keys.map((key) => this.store.get(key)));
+    await this.authorize(actor);
+    return {
+      documents: records
+        .filter(
+          (record) => record.storyId === storyId && record.format === format,
+        )
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .map((record) => ({
+          id: record.id,
+          revision: record.revision,
+          title: record.title,
+          updatedAt: record.updatedAt,
+          storyRevision: record.origin.storyRevision,
+          generationId: record.origin.generationId,
+          brandRevision: record.origin.brandRevision,
+        })),
+    };
   }
   async read(actor, id) {
     await this.authorize(actor);
@@ -511,6 +543,12 @@ export class NativeEditorService {
         throw fail(422, "Native document is too complex");
       if (!value || typeof value !== "object") return;
       if (typeof value.assetId === "string") ids.add(value.assetId);
+      for (const field of ["src", "docSrc"]) {
+        const match =
+          typeof value[field] === "string" &&
+          /^studio-asset:([a-f0-9]{32})$/.exec(value[field]);
+        if (match) ids.add(match[1]);
+      }
       for (const child of Object.values(value))
         if (child && typeof child === "object") visit(child, depth + 1);
     }
@@ -546,6 +584,7 @@ export class NativeEditorService {
       await this.authorize(actor);
       this.assertCurrent(await this.repo.read(), original.origin);
       let snapshot;
+      const updatedAt = this.now();
       const saved = await this.store.update(key, (current) => {
         if (!current) throw fail(404, "Native document not found");
         snapshot = this.replay(current, intent);
@@ -560,7 +599,7 @@ export class NativeEditorService {
           title: input.title,
           revision: current.revision + 1,
           updatedBy: actor.id,
-          updatedAt: this.now(),
+          updatedAt,
         };
         return {
           ...current,

@@ -49,7 +49,13 @@ window.addEventListener("message", async (event) => {
         revision: message.record.revision,
       },
       adapter,
-      onSaveStateChange: broker.state,
+      onSaveStateChange: (state) =>
+        broker.state({
+          ...state,
+          dirty:
+            editor?.isDirty() ??
+            ["dirty", "saving", "conflict"].includes(state.status),
+        }),
       onConflictResolve: (action) =>
         parent.postMessage(
           {
@@ -60,6 +66,7 @@ window.addEventListener("message", async (event) => {
           location.origin,
         ),
     });
+    broker.ready();
   } catch {
     document.getElementById("native-root").textContent =
       "Native editor is unavailable. Return to the original exporter; your campaign is unchanged.";

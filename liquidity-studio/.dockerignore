@@ -9,6 +9,7 @@
 !src/**
 !scripts/
 !scripts/build-dist.js
+!scripts/native-editor-vite.js
 !server/
 !server/*.js
 server/*test*.js

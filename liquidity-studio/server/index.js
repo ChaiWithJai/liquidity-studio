@@ -1,3 +1,4 @@
+import { brandRevision as nativeBrandRevision } from "./multimodal-contract.js";
 import { jobDispatcherConfiguration, dispatchJobs } from "./job-dispatcher.js";
 import { nativeFontCatalog } from "./native-editor-fonts.js";
 import { idempotencyKey as workspaceIdempotencyKey } from "./workspace-query.js";
@@ -624,10 +625,25 @@ export function createHttpServer(
           });
         if (
           route === "/api/studio/native-editor/documents" &&
+          req.method === "GET"
+        )
+          return json(
+            200,
+            await service.list(user, {
+              storyId: url.searchParams.get("storyId"),
+              format: url.searchParams.get("format"),
+            }),
+          );
+        if (
+          route === "/api/studio/native-editor/documents" &&
           req.method === "POST"
         )
           return json(201, await service.create(user, body));
-        if (route === "/api/studio/native-editor/assets" && req.method === "GET") return json(200, await service.listAssets(user));
+        if (
+          route === "/api/studio/native-editor/assets" &&
+          req.method === "GET"
+        )
+          return json(200, await service.listAssets(user));
         if (
           route === "/api/studio/native-editor/assets" &&
           req.method === "POST"
@@ -651,7 +667,10 @@ export function createHttpServer(
         if (trustedTestMode) throw fail(404, "Not found");
         const service = platform.workspace(scope, repo);
         const base = "/api/studio/workspace";
-        if (route === base + "/control" || route.startsWith(base + "/control/")) {
+        if (
+          route === base + "/control" ||
+          route.startsWith(base + "/control/")
+        ) {
           if (!helperControlEnabled) throw fail(404, "Not found");
           const control = new HelperControlService({ workspace: service });
           if (route === base + "/control" && req.method === "GET")
@@ -662,17 +681,30 @@ export function createHttpServer(
             return json(200, await control.heartbeat(user, body));
           if (route === base + "/control/proposals" && req.method === "POST")
             return json(201, await control.propose(user, body));
-          const grant = route.match(/^\/api\/studio\/workspace\/control\/grants\/([^/]+)\/(pause|stop|takeover|resume)$/);
+          const grant = route.match(
+            /^\/api\/studio\/workspace\/control\/grants\/([^/]+)\/(pause|stop|takeover|resume)$/,
+          );
           if (grant && req.method === "POST") {
             workspaceExact(body, ["expectedEpoch"]);
-            return json(200, await control.transition(user, grant[1], { ...body, action: grant[2] }));
+            return json(
+              200,
+              await control.transition(user, grant[1], {
+                ...body,
+                action: grant[2],
+              }),
+            );
           }
-          const proposal = route.match(/^\/api\/studio\/workspace\/control\/proposals\/([^/]+)\/(approve|apply)$/);
+          const proposal = route.match(
+            /^\/api\/studio\/workspace\/control\/proposals\/([^/]+)\/(approve|apply)$/,
+          );
           if (proposal && req.method === "POST") {
             if (proposal[2] === "approve")
               return json(200, await control.approve(user, proposal[1], body));
             workspaceExact(body, ["grantId", "epoch", "idempotencyKey"]);
-            return json(200, await control.apply(user, { ...body, proposalId: proposal[1] }));
+            return json(
+              200,
+              await control.apply(user, { ...body, proposalId: proposal[1] }),
+            );
           }
           throw fail(404, "Not found");
         }
@@ -727,8 +759,18 @@ export function createHttpServer(
           ...(await backlog.getStudioBootstrap()),
           ...(trustedTestMode ? {} : await session()),
           activeScope: scope,
+          ...(nativeEditorEnabled && !trustedTestMode
+            ? {
+                nativeEditorContext: {
+                  brandRevision: nativeBrandRevision(
+                    await repo.getBrandProfile(),
+                  ),
+                },
+              }
+            : {}),
           operatorCapabilities: {
             helperControl: helperControlEnabled && !trustedTestMode,
+            nativeEditor: nativeEditorEnabled && !trustedTestMode,
           },
         });
       if (route.startsWith("/api/studio/editor-bindings")) {

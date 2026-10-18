@@ -1,6 +1,8 @@
 {
   "sourceCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
   "method": "static literal imports from actual EditorApp; dynamic/generated references require separate review",
+  "licenseSha256": "677bf90df999ef9e3a7665ae146547ecb2af491b30b40c65cbf75786c7ee559d",
+  "styleTokensSha256": "9f9ba33eb58a49514f0ff67fdd54ba843fb21845acdc1b23e6f76498c17e4112",
   "packages": [
     "fabric",
     "fflate",

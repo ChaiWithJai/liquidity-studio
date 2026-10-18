@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
 import { createServer } from "node:http";
-import { createServer as createVite } from "vite";
+import { build } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { createPlatform } from "../server/platform.js";
@@ -16,7 +18,7 @@ test.skip(
   !existsSync(new URL("../.native-editor-source/PIN.json", import.meta.url)),
   "Requires locally prepared pinned upstream source; redistribution condition unresolved.",
 );
-let server, vite, store, base, platform;
+let server, store, base, platform, buildDirectory;
 const password = randomBytes(24).toString("base64url");
 const fixtures = [];
 test.beforeAll(async () => {
@@ -30,45 +32,65 @@ test.beforeAll(async () => {
     role: "founder",
   });
   const api = createHttpServer(null, { platform, nativeEditorEnabled: true });
-  vite = await createVite({
-    root: fileURLToPath(new URL("..", import.meta.url)),
-    configFile: false,
-    plugins: [svelte(), nativeEditorPlugin()],
-    esbuild: { jsx: "automatic" },
-    server: { middlewareMode: true, hmr: false },
-    appType: "custom",
-    logLevel: "error",
-  });
+  const root = fileURLToPath(new URL("..", import.meta.url));
+  buildDirectory = mkdtempSync(
+    path.join(tmpdir(), "liquidity-native-host-browser-"),
+  );
+  const priorEnvironment = process.env.NODE_ENV;
+  process.env.NODE_ENV = "production";
+  try {
+    await build({
+      root,
+      configFile: false,
+      plugins: [svelte(), nativeEditorPlugin()],
+      esbuild: { jsx: "automatic" },
+      logLevel: "error",
+      build: {
+        outDir: buildDirectory,
+        emptyOutDir: true,
+        rollupOptions: {
+          input: {
+            host: path.join(root, "tests/fixtures/native-editor-host.html"),
+            studio: path.join(root, "tests/fixtures/native-studio-host.html"),
+            frame: path.join(root, "native-editor-frame.html"),
+          },
+        },
+      },
+    });
+  } finally {
+    process.env.NODE_ENV = priorEnvironment;
+  }
   server = createServer((req, res) => {
     const route = req.url.split("?")[0];
     if (route.startsWith("/api/")) api.emit("request", req, res);
     else if (route === "/fixture-config") {
       res.setHeader("Content-Type", "application/json");
       res.end(JSON.stringify(fixtures));
-    } else if (
-      [
-        "/tests/fixtures/native-editor-host.html",
-        "/native-editor-frame.html",
-      ].includes(route)
-    ) {
-      vite
-        .transformIndexHtml(
-          route,
-          readFileSync(new URL(`..${route}`, import.meta.url), "utf8"),
-        )
-        .then((html) => {
-          res.setHeader("Content-Type", "text/html");
-          res.end(html);
-        })
-        .catch(() => {
-          res.statusCode = 500;
-          res.end("Fixture build failed");
-        });
-    } else
-      vite.middlewares(req, res, () => {
+    } else {
+      const file = path.resolve(buildDirectory, "." + route);
+      if (!file.startsWith(buildDirectory + path.sep)) {
         res.statusCode = 404;
         res.end("Not found");
-      });
+        return;
+      }
+      try {
+        res.setHeader(
+          "Content-Type",
+          {
+            ".html": "text/html",
+            ".js": "application/javascript",
+            ".css": "text/css",
+            ".ttf": "font/ttf",
+            ".otf": "font/otf",
+            ".txt": "text/plain",
+          }[path.extname(file)] || "application/octet-stream",
+        );
+        res.end(readFileSync(file));
+      } catch {
+        res.statusCode = 404;
+        res.end("Fixture not found");
+      }
+    }
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   base = `http://127.0.0.1:${server.address().port}`;
@@ -129,7 +151,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(async () => {
   await new Promise((resolve) => server?.close(resolve));
-  await vite?.close();
+  if (buildDirectory) rmSync(buildDirectory, { recursive: true, force: true });
   store?.close();
 });
 test("actual EditorApp edits, saves and reloads both brands across all four native formats", async ({
@@ -299,6 +321,7 @@ test("foreign pasted pattern is blocked before network and rejected by native sa
     const blocked = [];
     page.on("console", (message) => {
       if (
+        message.text().includes(`:${sentinel.address().port}/sentinel.png`) &&
         /Content Security Policy|content security policy|violates.*policy/i.test(
           message.text(),
         )
@@ -428,4 +451,97 @@ test("native concurrent writer yields conflict and explicit reload adopts saved 
     ).document.pages[0].objects.find((object) => object.id === "headline_layer")
       .text,
   ).toBe("EXTERNAL NATIVE WRITER");
+});
+
+test("actual Studio mounts and resumes native proposal without mutating original campaign", async ({
+  page,
+}) => {
+  await page.request.post(`${base}/api/auth/login`, {
+    data: { username: "native-host-fixture", password },
+  });
+  await page.goto(`${base}/tests/fixtures/native-studio-host.html`);
+  await page.getByRole("button", { name: /Campaign Studio/ }).click();
+  await page
+    .getByRole("button", { name: "Open native design editor", exact: true })
+    .click();
+  const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
+  await expect(
+    frame.getByRole("button", { name: "Layers", exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  let releaseSave;
+  const saveGate = new Promise((resolve) => {
+    releaseSave = resolve;
+  });
+  await page.route("**/api/studio/native-editor/documents/*", async (route) => {
+    if (route.request().method() === "POST") await saveGate;
+    await route.continue();
+  });
+  const art = await frame.locator("[data-artboard]").first().boundingBox();
+  await page.mouse.dblclick(
+    art.x + art.width * 0.5,
+    art.y + (art.height * 365) / 1350,
+  );
+  await expect(
+    frame.locator('textarea[data-fabric="textarea"]'),
+  ).toBeAttached();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("ACTUAL STUDIO NATIVE PROPOSAL");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("region", { name: "Native proposal workspace" }),
+  ).toContainText("Unsaved native work");
+  await page.getByRole("button", { name: /Story backlog/ }).click();
+  await expect(
+    page
+      .getByRole("alert")
+      .filter({
+        hasText:
+          "Save native changes or explicitly discard them before leaving the native editor.",
+      }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Native proposal workspace" }),
+  ).toBeVisible();
+  releaseSave();
+  await expect(
+    page.getByRole("region", { name: "Native proposal workspace" }),
+  ).toContainText("Native proposal saved", { timeout: 15000 });
+  await page
+    .getByRole("button", {
+      name: "Return to original campaign and exporter",
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.locator('iframe[title="Native Doory design canvas"]'),
+  ).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Open native design editor", exact: true })
+    .click();
+  await expect(
+    frame.getByRole("button", { name: "Layers", exact: true }),
+  ).toBeVisible();
+  const history = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/documents?organizationId=org_default&brandId=brand_default&storyId=native-fixture&format=infographic`,
+    )
+  ).json();
+  const native = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/documents/${history.documents[0].id}?organizationId=org_default&brandId=brand_default`,
+    )
+  ).json();
+  expect(
+    native.document.pages[0].objects.find(
+      (object) => object.id === "headline_layer",
+    ).text,
+  ).toBe("ACTUAL STUDIO NATIVE PROPOSAL");
+  const bootstrap = await (
+    await page.request.get(
+      `${base}/api/studio/bootstrap?organizationId=org_default&brandId=brand_default`,
+    )
+  ).json();
+  expect(bootstrap.backlog[0].campaignDraft.infographic.headline).toBe(
+    "SOURCE NOTES",
+  );
 });

@@ -29,6 +29,8 @@ while queue:
 print(json.dumps({
     'sourceCommit': '27b6f68221fdbf1ef1bedc182e303210ca9e39f5',
     'method': 'static literal imports from actual EditorApp; dynamic/generated references require separate review',
+    'licenseSha256': hashlib.sha256((root.parent.parent / 'LICENSE').read_bytes()).hexdigest(),
+    'styleTokensSha256': hashlib.sha256((root / 'styles/tokens.css').read_bytes()).hexdigest(),
     'packages': sorted(packages), 'unresolved': missing,
     'files': [{'path': str(path.relative_to(root)), 'bytes': path.stat().st_size,
                'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in sorted(seen)]

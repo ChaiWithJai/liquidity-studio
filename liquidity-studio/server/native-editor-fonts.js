@@ -2,10 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
-const directory = path.resolve(
+const publicDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../public/fonts",
 );
+const directory = fs.existsSync(publicDirectory)
+  ? publicDirectory
+  : "/usr/local/share/fonts/liquidity";
 const entries = [
   [
     "Instrument Serif",
