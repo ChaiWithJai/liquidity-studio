@@ -15,6 +15,7 @@ const recordProof = createNativePairingProofSink({
 const describeChallenge = createNativePairingChallengeReader({
   callbackUrl: configuration.studioOrigin + '/api/native/penpot/pairing/challenge',
   pairingKey: configuration.pairingKey,
+  nativeInstanceId: configuration.nativeInstanceId,
 });
 const handler = createNativeConnectHandler({...configuration, recordProof, describeChallenge});
 const server = http.createServer({requestTimeout: 15000, headersTimeout: 10000, maxHeaderSize: 16384}, (req, res) => {
