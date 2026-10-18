@@ -4,6 +4,12 @@
   let loading = $state(true), busy = $state(false), error = $state(''), rejected = $state(false);
   let result = $state(null), attempt = $state(null);
   let styleAttempt=$state(null),styleReceipt=$state(null),styleCapability=$state(''),styleError=$state(''),styleNotice=$state(''),styleRejected=$state(false);
+  let copyNotice=$state('');
+  const pluginManifestUrl='http://localhost:39039/manifest.json';
+  async function copyStyleValue(value,label){
+    try{await navigator.clipboard.writeText(value);if(alive)copyNotice=`${label} copied.`;}
+    catch{if(alive)copyNotice=`Copy unavailable. Select the ${label.toLowerCase()} field and copy it manually.`;}
+  }
   const savedStyleAction=$derived(styleReceipt||result?.design?.styles?.action);
   let alive = true, refreshPending = false, loadSequence = 0;
   export function refreshAccess() {
@@ -60,12 +66,25 @@
   {:else if !error && openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>{#if result.design.styles?.needsRefresh}<p>Brand Kit styles changed. This existing design and your Penpot edits are preserved.</p>{#if result.design.styles.refreshAvailable}<button class="secondary" disabled={busy||loading} onclick={prepareStyles}>{busy?'Preparing colors…':styleRejected?'Prepare a new color update':styleAttempt?'Retry same color update':'Refresh Brand Kit colors'}</button><button class="secondary" disabled={busy||loading} onclick={checkStyles}>Check saved colors</button>{/if}{/if}
   {:else if !error && (result?.available || attempt || result?.design)}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Create an editable design from the saved copy and brand.</p>
   {:else if result?.reason}<p>{result.reason}</p>{/if}
-  {#if styleCapability}<section aria-label="Apply saved Brand Kit colors"><label>One-use Penpot code<input readonly value={styleCapability} aria-label="One-use Penpot code"/></label><p>In this design’s Penpot Plugins menu, add the local Studio plugin using <code>http://localhost:39039/manifest.json</code>. Paste this code and apply it. The plugin changes bound colors in the current editor; it does not replace text or layout.</p><p>Then return here and choose Check saved colors. Codes expire after one minute.</p></section>{/if}
+  {#if styleCapability}<section class="style-handoff" aria-label="Apply saved Brand Kit colors">
+    <ol>
+      <li>Open this design’s Plugins menu and add the Studio plugin.</li>
+      <li>Paste the one-use code into the plugin and apply colors.</li>
+      <li>Return here and choose Check saved colors.</li>
+    </ol>
+    <label>Plugin manifest<input readonly value={pluginManifestUrl} aria-label="Plugin manifest URL"/></label>
+    <button class="secondary" onclick={()=>copyStyleValue(pluginManifestUrl,'Manifest URL')}>Copy manifest URL</button>
+    <label>One-use Penpot code<input readonly value={styleCapability} aria-label="One-use Penpot code"/></label>
+    <button class="secondary" onclick={()=>copyStyleValue(styleCapability,'Code')}>Copy code</button>
+    <p>Code expires after one minute. Only bound colors change; text and layout stay intact.</p>
+    {#if copyNotice}<p role="status">{copyNotice}</p>{/if}
+  </section>{/if}
   {#if styleError}<p role="alert">{styleError}</p>{/if}{#if styleNotice}<p role="status">{styleNotice}</p>{/if}
   {#if error}<p role="alert">{error}</p>{#if rejected}<button onclick={()=>window.location.reload()}>Reload saved campaign</button>{:else}<button disabled={loading||busy} onclick={load}>Check design again</button>{/if}{/if}
 </section>
 <style>
   .penpot-design-action{display:grid;gap:.4rem;padding:.8rem 1rem;border:1px solid var(--border,#d1d5db);border-radius:.6rem}
+  .style-handoff{display:grid;gap:.4rem}.style-handoff ol{margin:.2rem 0;padding-left:1.4rem}.style-handoff label{display:grid;gap:.2rem}.style-handoff input{width:100%;min-width:0;box-sizing:border-box}
   h3,p{margin:0}a,button{justify-self:start;min-height:42px;align-content:center}
   .compact{border:0;padding:0;gap:.3rem .65rem;align-content:center}
   .compact a,.compact button{min-height:34px}
