@@ -1,0 +1,11 @@
+{
+  "stepId": "S21",
+  "canonicalAnnotationIds": [
+    "review-13"
+  ],
+  "fixture": "new controlled source-backed synthetic campaign, not the baseline recovery story",
+  "capturedAt": "2026-10-18T01:29:41.258Z",
+  "identity": "The Liquidity Desk · Selected: Reel\n\nShowing: Reel · board 1 · simulated Instagram surface\n\nSaved revision 2 · Saved artwork\n\nArtifact details",
+  "artifactDetails": "Artifact details e26cfef4-6ae1-4459-861a-b40de11568c9 · generation 12b14fda-eda9-41fa-b0df-91dec0cd5aa4 · saved revision 2 Artwork reel-page-1 · measurement e26cfef4-6ae1-4459-861a-b40de11568c9:2:96f55f42-cd4f-46d3-96b1-aa0e18d88e40Text elements: reel-page-1-provenance ",
+  "preflight": "Measured preflight\nMeasure again\n\nMeasured Reel · board 1 · saved revision 2 · measurement 3\n\n1\ntext boxes in chrome zones\n0\ntext boxes outside artwork\n9.73:1\nminimum text/background contrast\n9:16\ntarget ratio · matched\n41\ncaption characters before simulated fold\nLocate text\n“SYNTHETIC DRAFT · REVIEW REQUIRED” · Overlaps simulated app controls or safe zones. Fixed renderer label: this form has no direct copy edit for it. Review the highlighted layout before export. Measurement 3 · saved revision 2\n\nHighlighted “SYNTHETIC DRAFT · REVIEW REQUIRED”. Fixed renderer label: this form has no direct copy edit for it. Review the highlighted layout before export. This preview does not modify artwork.\n\nMeasured SVG text boxes and fill contrast against the base background; images, glyph shapes and all native app variations are not covered. Review required. No confidence score is inferred."
+}

@@ -9,6 +9,8 @@
     format = "infographic",
     backlog = [],
     activeStoryId,
+    storyRevision = null,
+    pendingEdits = false,
     onpreflight = () => {},
   } = $props();
   let mode = $state("instagram");
@@ -35,6 +37,53 @@
   let pointerStart = 0;
   let artworkElement = $state();
   let evidence = $state(null);
+  let focusedTarget = $state(null);
+  let focusedElement = $derived(
+    focusedTarget?.key === renderKey ? focusedTarget.id : "",
+  );
+  let measurementStatus = $state(null);
+  let measurementSequence = 0;
+  let completedMeasurements = 0;
+  let formatLabel = $derived(
+    {
+      infographic: "Feed infographic",
+      carousel: "Carousel",
+      story: "Story",
+      reel: "Reel",
+    }[format],
+  );
+  let pageLabel = $derived(
+    format === "reel" ? `board ${beat + 1}` : `page ${slide + 1}`,
+  );
+  let disposed = false;
+  let artifactIdentity = $derived(
+    `${activeStoryId || "unassigned"} · generation ${campaign?.provenance?.generationId || "unavailable"} · saved revision ${storyRevision ?? "unavailable"}`,
+  );
+  let renderKey = $derived(
+    JSON.stringify([
+      artifactHtml,
+      artifactIdentity,
+      brandProfile,
+      format,
+      mode,
+      phoneWidth,
+      zoom,
+      slide,
+      captionThreshold,
+      beat,
+      storyFrame,
+      poll,
+      expanded,
+      liked,
+      saved,
+      following,
+      comments.length,
+      pendingEdits,
+    ]),
+  );
+  let currentEvidence = $derived(
+    evidence?.renderKey === renderKey ? evidence : null,
+  );
   // Only the canonical renderer's XML-escaped, fixed SVG markup reaches @html.
   // Never pass user HTML or provider-supplied markup through this boundary.
   function artwork(props) {
@@ -56,8 +105,7 @@
     const beats = campaign?.reel?.beats || [];
     for (let i = beats.length - 1; i >= 0; i--) {
       const start = beats[i].timecode?.match(/^(\d+):(\d+)/);
-      if (start && reelTime >= Number(start[1]) * 60 + Number(start[2]))
-        return i;
+      if (start && reelTime >= Number(start[1]) * 60 + Number(start[2])) return i;
     }
     return 0;
   });
@@ -71,24 +119,50 @@
   );
   let reelBeats = $derived(campaign?.reel?.beats || []);
   let carouselSlides = $derived(campaign?.carousel?.slides || []);
-  const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const weekDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
   let gridItems = $derived([
-    { id: "active", campaignDraft: campaign, title: "Active campaign", gridLabel: "Active" },
+    {
+      id: activeStoryId,
+      revision: storyRevision,
+      campaignDraft: campaign,
+      title: "Active campaign",
+      gridLabel: "Active",
+    },
     ...backlog
-      .filter((story) => story.id !== activeStoryId && story.campaignDraft &&
-        ["Scheduled", "Exported"].includes(story.status))
+      .filter(
+        (story) =>
+          story.id !== activeStoryId &&
+          story.campaignDraft &&
+          ["Scheduled", "Exported"].includes(story.status),
+      )
       .sort((a, b) => {
         if (a.status !== b.status) return a.status === "Scheduled" ? -1 : 1;
-        if (a.status === "Scheduled") return weekDays.indexOf(a.scheduledDay) - weekDays.indexOf(b.scheduledDay);
+        if (a.status === "Scheduled")
+          return (
+            weekDays.indexOf(a.scheduledDay) - weekDays.indexOf(b.scheduledDay)
+          );
         return (Date.parse(b.exportedAt) || 0) - (Date.parse(a.exportedAt) || 0);
       })
       .slice(0, 8)
-      .map((story) => ({ ...story, gridLabel: story.status === "Scheduled"
-        ? `Scheduled · ${story.scheduledDay}`
-        : `Exported${story.exportedAt ? ` · ${new Date(story.exportedAt).toLocaleString()}` : " · time unavailable"}` })),
+      .map((story) => ({
+        ...story,
+        gridLabel:
+          story.status === "Scheduled"
+            ? `Scheduled · ${story.scheduledDay}`
+            : `Exported${story.exportedAt ? ` · ${new Date(story.exportedAt).toLocaleString()}` : " · time unavailable"}`,
+      })),
   ]);
 
   $effect(() => {
+    renderKey;
     JSON.stringify(campaign);
     format;
     mode;
@@ -104,6 +178,12 @@
     saved;
     following;
     comments.length;
+    measurementSequence++;
+    for (const node of artworkElement?.querySelectorAll(
+      "[data-preflight-highlight]",
+    ) || [])
+      node.removeAttribute("data-preflight-highlight");
+    onpreflight(null);
     // Track discrete frames and interactions, not the quarter-second playback clock.
     const timer = setTimeout(() => {
       measure();
@@ -127,6 +207,8 @@
     }, 250);
     document.fonts.addEventListener("loadingdone", measure);
     return () => {
+      disposed = true;
+      measurementSequence++;
       clearInterval(timer);
       document.fonts.removeEventListener("loadingdone", measure);
     };
@@ -138,10 +220,7 @@
   }
   function navigate(direction) {
     if (format === "carousel")
-      slide = Math.max(
-        0,
-        Math.min(carouselSlides.length - 1, slide + direction),
-      );
+      slide = Math.max(0, Math.min(carouselSlides.length - 1, slide + direction));
     if (format === "story") {
       storyFrame = (storyFrame + direction + 4) % 4;
       storyTime = 0;
@@ -164,22 +243,50 @@
       : null;
   }
   async function measure() {
+    evidence = null;
+    onpreflight(null);
+    const sequence = ++measurementSequence;
+    const key = renderKey;
+    const isCurrent = () =>
+      !disposed && sequence === measurementSequence && key === renderKey;
     await tick();
     await document.fonts.ready;
-    if (!artworkElement || mode === "grid") {
+    if (!isCurrent()) return;
+    if (!artworkElement || mode === "grid" || pendingEdits) {
       evidence = null;
       return;
     }
     const rect = artworkElement.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
+    if (!rect.width || !rect.height) {
+      evidence = null;
+      measurementStatus = {
+        key,
+        message: "Artwork has no measurable dimensions.",
+      };
+      return;
+    }
     const texts = [...artworkElement.querySelectorAll("svg text")];
+    if (!texts.length) {
+      evidence = null;
+      measurementStatus = {
+        key,
+        message:
+          "No rendered SVG text is available to measure. Resolve the artwork layout first.",
+      };
+      return;
+    }
     const background = rgbToHex(
-      artworkElement.querySelector("svg rect")?.getAttribute("fill") ||
-        "#141513",
+      artworkElement.querySelector("svg rect")?.getAttribute("fill") || "#141513",
     );
     const textBoxes = texts.map((node) => {
       const box = node.getBoundingClientRect();
       return {
+        ...(node.dataset.artworkId
+          ? {
+              artworkElementId: node.dataset.artworkId,
+              text: node.textContent.slice(0, 240),
+            }
+          : {}),
         x: box.x - rect.x,
         y: box.y - rect.y,
         width: box.width,
@@ -226,6 +333,8 @@
       captionLimit: Number(captionThreshold),
       viewContext: {
         mode,
+        measurementRevision: `${activeStoryId}:${storyRevision}:${crypto.randomUUID()}`,
+        artworkId: `${format}-page-${(format === "reel" ? beat : slide) + 1}`,
         frameIndex: format === "reel" ? beat : slide,
         storyFrame,
         pollVote: poll,
@@ -233,10 +342,53 @@
       },
     };
     const result = computePreflight(payload);
-    evidence = result.metrics;
-    onpreflight(payload);
+    if (!isCurrent()) return;
+    evidence = {
+      ...result.metrics,
+      violations: result.violations,
+      renderKey: key,
+      revision: payload.viewContext.measurementRevision,
+      number: ++completedMeasurements,
+      label: `${formatLabel} · ${pageLabel}`,
+      artworkId: payload.viewContext.artworkId,
+    };
+    onpreflight(payload, isCurrent);
   }
 
+  function issueMessage(issue) {
+    return {
+      "chrome-zone": "Overlaps simulated app controls or safe zones.",
+      "artwork-overflow": "Extends outside the artwork.",
+      "low-contrast": "Low contrast against the base background.",
+    }[issue];
+  }
+  function violationAction(violation) {
+    if (violation.issues.includes("low-contrast"))
+      return "Review the text and background colors in Brand Kit, save, and measure again.";
+    if (/-brand$|-provenance$/.test(violation.artworkElementId))
+      return "Fixed renderer label: this form has no direct copy edit for it. Review the highlighted layout before export.";
+    return "Shorten the related copy in the editor, save, and measure again.";
+  }
+  function locateViolation(violation) {
+    if (!currentEvidence) return;
+    const node = [...artworkElement.querySelectorAll("[data-artwork-id]")].find(
+      (node) => node.dataset.artworkId === violation.artworkElementId,
+    );
+    if (!node) return;
+    for (const text of artworkElement.querySelectorAll(
+      "[data-preflight-highlight]",
+    ))
+      text.removeAttribute("data-preflight-highlight");
+    node.setAttribute("data-preflight-highlight", "true");
+    focusedTarget = {
+      key: renderKey,
+      id: violation.artworkElementId,
+      text: violation.text,
+      action: violationAction(violation),
+    };
+    node.focus({ preventScroll: true });
+    node.scrollIntoView({ block: "center", behavior: "instant" });
+  }
   function addComment() {
     if (!comment.trim()) return;
     comments = [...comments, comment.trim()];
@@ -267,6 +419,16 @@
     <button class:active={mode === "grid"} onclick={() => setMode("grid")}
       >3×3 Profile Grid</button
     >
+  </div>
+  <div class="artifact-identity" aria-label="Preview artifact identity">
+    <b>{brandProfile?.brandName} · Selected: {formatLabel}</b>
+    <p>{mode === "grid" ? "Showing: feed infographic projection (4:5), not the selected format. No carousel, Story or Reel verification in this grid." : `Showing: ${formatLabel} · ${pageLabel} · ${mode === "design" ? "design surface" : "simulated Instagram surface"}`}</p>
+    <p>Saved revision {storyRevision ?? "unavailable"} · {pendingEdits ? "Editor has unsaved changes; saved artwork shown. Save before measuring." : "Saved artwork"}</p>
+    <details data-testid="artifact-details"><summary>Artifact details</summary>
+      <p>{artifactIdentity}</p>
+      {#if currentEvidence}<p>Artwork {currentEvidence.artworkId} · measurement {currentEvidence.revision}</p><p>Text elements: {currentEvidence.violations.map(item => item.artworkElementId).join(", ") || "No measured violations"}</p>{/if}
+      {#if mode === "grid"}<ul>{#each gridItems as item (item.id)}<li>{item.title} · story {item.id} · saved revision {item.revision ?? "unavailable"} · generation {item.campaignDraft?.provenance?.generationId || "unavailable"} · feed infographic</li>{/each}</ul>{/if}
+    </details>
   </div>
   <div class="preview-controls">
     <label
@@ -334,14 +496,18 @@
         <div class="profile-grid">
           {#each Array(9) as _, i (i)}<div
               class="grid-cell"
-              title={gridItems[i]?.title || "Empty slot"}
+              aria-label={gridItems[i] ? `${gridItems[i].title} · feed infographic projection` : "Empty slot"}
+              title={gridItems[i] ? `${gridItems[i].title} · feed infographic · saved revision ${gridItems[i].revision ?? "unavailable"}` : "Empty slot"}
+              data-story-id={gridItems[i]?.id}
+              data-generation-id={gridItems[i]?.campaignDraft?.provenance?.generationId}
+              data-story-revision={gridItems[i]?.revision}
               class:current={i === 0}
             >
               {#if gridItems[i]}{@html artwork({
                   campaign: gridItems[i].campaignDraft,
                   brandProfile,
                   format: "infographic",
-                })}<span>{gridItems[i].gridLabel}</span>{:else}<span
+                })}<span>{gridItems[i].gridLabel} · feed · r{gridItems[i].revision ?? "?"}</span>{:else}<span
                   class="empty-cell">No scheduled or exported post</span
                 >{/if}
             </div>{/each}
@@ -374,7 +540,7 @@
             notice = "Liked in this simulation";
           }}
         >
-          <div class="artwork" bind:this={artworkElement}>
+          <div class="artwork" bind:this={artworkElement} data-highlight={focusedElement}>
             {@html artifactHtml}
           </div>
           {#if mode === "instagram" && format === "carousel"}<span
@@ -601,39 +767,54 @@
   </div>
   <div class="evidence">
     <div class="evidence-title">
-      <b>Measured preflight</b><button onclick={measure}>Measure again</button>
+      <b>Measured preflight</b><button disabled={pendingEdits || mode === "grid"} onclick={measure}>Measure again</button>
     </div>
-    {#if evidence}<div class="measurements">
+    {#if currentEvidence}<p class="small">Measured {currentEvidence.label} · saved revision {storyRevision ?? "unavailable"} · measurement {currentEvidence.number}</p><div class="measurements">
         <span
-          ><b>{evidence.occludedElementsCount}</b> text boxes in chrome zones</span
+          ><b>{currentEvidence.occludedElementsCount}</b> text boxes in chrome zones</span
         ><span
-          ><b>{evidence.overflowElementsCount}</b> text boxes outside artwork</span
+          ><b>{currentEvidence.overflowElementsCount}</b> text boxes outside artwork</span
         ><span
           ><b
-            >{evidence.contrastRatio ?? "Unmeasured"}{evidence.contrastRatio !==
+            >{currentEvidence.contrastRatio ?? "Unmeasured"}{currentEvidence.contrastRatio !==
             null
               ? ":1"
               : ""}</b
           >
-          minimum text/background contrast{evidence.unmeasuredColorCount
-            ? ` · ${evidence.unmeasuredColorCount} unmeasured`
+          minimum text/background contrast{currentEvidence.unmeasuredColorCount
+            ? ` · ${currentEvidence.unmeasuredColorCount} unmeasured`
             : ""}</span
         ><span
-          ><b>{evidence.expectedAspectRatio}</b> target ratio · {evidence.aspectRatioDeviation <=
+          ><b>{currentEvidence.expectedAspectRatio}</b> target ratio · {currentEvidence.aspectRatioDeviation <=
           0.01
             ? "matched"
             : "check dimensions"}</span
         ><span
-          ><b>{evidence.firstLookCharacters}</b> caption characters before simulated
+          ><b>{currentEvidence.firstLookCharacters}</b> caption characters before simulated
           fold</span
         >
       </div>
+      <ul class="violation-list" aria-label="Artwork issues">
+        {#each currentEvidence.violations as violation (violation.artworkElementId)}
+          <li><button aria-label={`Locate text: ${violation.text.slice(0, 80)}`} data-artwork-target={violation.artworkElementId} onclick={() => locateViolation(violation)}>Locate text</button><span>“{violation.text}” · {violation.issues.map(issueMessage).join(" ")} {violationAction(violation)} Measurement {currentEvidence.number} · saved revision {storyRevision ?? "unavailable"}</span></li>
+        {/each}
+      </ul>
+      {#if focusedElement}<p role="status">Highlighted “{focusedTarget?.text}”. {focusedTarget?.action} This preview does not modify artwork.</p>{/if}
       <p class="small muted">
         Measured SVG text boxes and fill contrast against the base background;
         images, glyph shapes and all native app variations are not covered.
         Review required. No confidence score is inferred.
       </p>{:else}<p class="small muted">
-        Open a design or Instagram surface to measure the rendered SVG.
+        {pendingEdits ? "Save editor changes before measuring saved artwork." : mode === "grid" ? "Grid projection is not measured. Open Design Mode or In-Situ Instagram for the selected artifact." : measurementStatus?.key === renderKey ? measurementStatus.message : "Waiting for current artwork measurement. No current result is available."}
       </p>{/if}
   </div>
 </section>
+
+<style>
+  .artifact-identity { padding: 12px; border: 1px solid #71836b; border-radius: 8px; margin: 12px 0; overflow-wrap: anywhere; }
+  .artifact-identity p { margin: 6px 0; }
+  .violation-list { padding-left: 20px; }
+  .violation-list li { margin: 10px 0; }
+  .violation-list span { display: block; overflow-wrap: anywhere; }
+  :global([data-preflight-highlight="true"]) { outline: 3px solid #e436c2; outline-offset: 5px; }
+</style>

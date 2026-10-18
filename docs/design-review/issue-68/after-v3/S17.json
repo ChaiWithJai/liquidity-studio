@@ -1,0 +1,9 @@
+{
+  "stepId": "S17",
+  "canonicalAnnotationIds": [],
+  "fixture": "new controlled source-backed synthetic campaign, not the baseline recovery story",
+  "capturedAt": "2026-10-18T01:33:08.520Z",
+  "identity": "The Liquidity Desk · Selected: Carousel\n\nShowing: Carousel · page 1 · design surface\n\nSaved revision 2 · Saved artwork\n\nArtifact details",
+  "artifactDetails": "Artifact details 43d8cd17-480b-4381-afa9-1d614d54b9dd · generation 0c883302-35ac-4314-b00c-4c4ae1955ae0 · saved revision 2 Artwork carousel-page-1 · measurement 43d8cd17-480b-4381-afa9-1d614d54b9dd:2:a30175e8-f62c-42b5-bdad-7b2ff0edec9dText elements: No measured violations ",
+  "preflight": "Measured preflight\nMeasure again\n\nMeasured Carousel · page 1 · saved revision 2 · measurement 2\n\n0\ntext boxes in chrome zones\n0\ntext boxes outside artwork\n9.73:1\nminimum text/background contrast\n4:5\ntarget ratio · matched\n41\ncaption characters before simulated fold\n\nMeasured SVG text boxes and fill contrast against the base background; images, glyph shapes and all native app variations are not covered. Review required. No confidence score is inferred."
+}

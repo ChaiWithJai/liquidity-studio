@@ -797,20 +797,34 @@
       busy = false;
     }
   }
-  async function recordPreflight(payload) {
+  async function recordPreflight(payload, isCurrent = () => true) {
+    if (!payload) {
+      preflightSequence++;
+      preflight = null;
+      return;
+    }
     if (!selectedStory || !user) return;
     const sequence = ++preflightSequence;
     const token = lastScopeToken;
+    const storyId = selectedStory.id,
+      revision = selectedStory.revision,
+      selectedFormat = format;
+    const current = () =>
+      sequence === preflightSequence &&
+      token === lastScopeToken &&
+      selectedStory?.id === storyId &&
+      selectedStory?.revision === revision &&
+      format === selectedFormat &&
+      isCurrent();
     try {
       const result = await post("/api/studio/preflight", {
         storyId: selectedStory.id,
         expectedRevision: selectedStory.revision,
         ...payload,
       });
-      if (sequence === preflightSequence && token === lastScopeToken)
-        preflight = result;
+      if (current()) preflight = result;
     } catch (failure) {
-      if (token === lastScopeToken) preflight = { error: failure.message };
+      if (current()) preflight = { error: failure.message };
     }
   }
 </script>
@@ -1097,7 +1111,7 @@
               >
             </div>
           </div>
-          <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
+          <div class="generation-review-context" class:generation-review-context--sticky={!campaign}><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
           {#if exportUrl}<p class="download">
               <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
                 >Actual exported artifact · scope authorization required</small
@@ -1298,6 +1312,7 @@
                 </div>
                 <details class="sources">
                   <summary>Review source claims</summary>
+                  <div class="generation-review-context generation-review-context--editor"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
                   <p class="small muted">
                     Approve a claim only after reviewing its linked source and
                     meaning. Clinical claims require a separate clinical review.
@@ -1364,6 +1379,9 @@
                     Preflight recorded for this brand. Editorial review
                     required.
                   </p>{/if}
+                {#if preflight?.artifact}
+                  <p class="small muted" data-testid="recorded-preflight">Recorded {preflight.artifact.format} · saved revision {preflight.artifact.storyRevision}</p>
+                {/if}
               </section>
               {#key organizationId + brandId + selectedStory.id + format}<Emulator
                   {campaign}
@@ -1371,6 +1389,8 @@
                   {format}
                   {backlog}
                   activeStoryId={selectedStory.id}
+                  storyRevision={selectedStory.revision}
+                  {pendingEdits}
                   onpreflight={recordPreflight}
                 />{/key}
             </div>{:else}<section class="panel">

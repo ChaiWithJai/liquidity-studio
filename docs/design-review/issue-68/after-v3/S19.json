@@ -1,0 +1,9 @@
+{
+  "stepId": "S19",
+  "canonicalAnnotationIds": [],
+  "fixture": "new controlled source-backed synthetic campaign, not the baseline recovery story",
+  "capturedAt": "2026-10-18T01:33:09.122Z",
+  "identity": "The Liquidity Desk · Selected: Story\n\nShowing: Story · page 1 · simulated Instagram surface\n\nSaved revision 2 · Saved artwork\n\nArtifact details",
+  "artifactDetails": "Artifact details 43d8cd17-480b-4381-afa9-1d614d54b9dd · generation 0c883302-35ac-4314-b00c-4c4ae1955ae0 · saved revision 2 Artwork story-page-1 · measurement 43d8cd17-480b-4381-afa9-1d614d54b9dd:2:0d6f0241-f2c9-4cf0-b96a-e7263adc18a7Text elements: No measured violations ",
+  "preflight": "Measured preflight\nMeasure again\n\nMeasured Story · page 1 · saved revision 2 · measurement 2\n\n0\ntext boxes in chrome zones\n0\ntext boxes outside artwork\n9.73:1\nminimum text/background contrast\n9:16\ntarget ratio · matched\n41\ncaption characters before simulated fold\n\nMeasured SVG text boxes and fill contrast against the base background; images, glyph shapes and all native app variations are not covered. Review required. No confidence score is inferred."
+}

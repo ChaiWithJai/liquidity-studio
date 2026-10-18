@@ -1,0 +1,96 @@
+{
+  "evidenceVersion": "issue-68/after-v1",
+  "baselineSourceCommit": "50b393577a2d50b30a16665d68afc0187685715f",
+  "runtime": "isolated source build; ephemeral loopback API and in-memory SQLite; not a deployed image",
+  "fixture": "controlled source excerpt with explicit synthetic mode; not original issue39 recovery story",
+  "canonicalAnnotationIds": [
+    "review-11",
+    "review-13"
+  ],
+  "verification": {
+    "baselineBrowserReproduction": {
+      "passed": 1
+    },
+    "candidateBrowserApiJourneys": {
+      "passed": 11
+    },
+    "node22ServerTests": {
+      "passed": 112,
+      "skipped": 1,
+      "skipReason": "separate Firestore emulator contract"
+    }
+  },
+  "sources": {
+    "liquidity-studio/src/App.svelte": "a9fc31d171bdb3beb388a5236e56138d0c12ecc75d99951e30bcfeb2be32a107",
+    "liquidity-studio/src/Emulator.svelte": "57a4b87d78da0f46682414d3144c5ab5ffcda365a78c2aa59ebe3532602f9d38",
+    "liquidity-studio/server/artwork.js": "ff77dbe8073913d118a09850a1bed7962853e765619e2ee9303999df782a8e6e",
+    "liquidity-studio/server/preflight.js": "3fd312338a6f13d6bc6212d214dcfd4c215697d5c13c5355c13dc13c306614ee",
+    "liquidity-studio/server/index.js": "c456e1313221350e18bd3d203303652f6a02e19a7dd30a2c4371fd459ec8575e"
+  },
+  "builtAssets": {
+    "liquidity-studio/dist/assets/index-3IEkPfWD.js": "76d60fd26e510db4f24348cc5f7e135a3e25c3769158d1d7a5c5723ec9e3f29a",
+    "liquidity-studio/dist/assets/index-DIyIJmDB.css": "0ddbcf259f7dd57268861a4c387951bc074c2b84b1de5c9f15b91e3d53c3b13f"
+  },
+  "files": [
+    {
+      "file": "S17.json",
+      "sha256": "72fff67f5adbd90535153e40d6c1bf3f5bc204620468f53c5036fed5d28ac921",
+      "bytes": 963
+    },
+    {
+      "file": "S17.png",
+      "sha256": "8efb793f6e6953740621ac21835274ff3d5d09dcedde85573e5d9aef3219e410",
+      "bytes": 103833,
+      "width": 646,
+      "height": 1263
+    },
+    {
+      "file": "S18.json",
+      "sha256": "4df5253a264d35fda81d60192b94e0ec465f55fa32224925f00e3384038c6e50",
+      "bytes": 679
+    },
+    {
+      "file": "S18.png",
+      "sha256": "c304112184d7fdff4931189014800ed7fab19460b40780ed2f968ae2f9be5389",
+      "bytes": 92965,
+      "width": 646,
+      "height": 1302
+    },
+    {
+      "file": "S19.json",
+      "sha256": "4ff5a6ad06a1e2bfc2ee248a50406e37934053c6edf3ea1afc286a67106035f0",
+      "bytes": 968
+    },
+    {
+      "file": "S19.png",
+      "sha256": "b8fc69aa1cf7245865974376eb33f8b09e2b4fd463ca90444e652b4388846c12",
+      "bytes": 134602,
+      "width": 646,
+      "height": 1489
+    },
+    {
+      "file": "S20.json",
+      "sha256": "0e2fb14719c777086438eae5f8dfcbe27d7ec094215ca6da40461cceee572354",
+      "bytes": 1243
+    },
+    {
+      "file": "S20.png",
+      "sha256": "2d13b70c0ce04d9874ca570d7a80a1383eefa1cf963f7cc1755146bc139f7448",
+      "bytes": 149205,
+      "width": 646,
+      "height": 1590
+    },
+    {
+      "file": "S21.json",
+      "sha256": "ba2a57e603d99d39a01c5b3224b07dccc462af52f01e0e3c6af26954354d113c",
+      "bytes": 1380
+    },
+    {
+      "file": "S21.png",
+      "sha256": "ec2fc396ec885f74b717dd96b0236dea6ee4fc89447de2be5475ac9c4d33170d",
+      "bytes": 154815,
+      "width": 646,
+      "height": 1620
+    }
+  ]
+}

@@ -78,3 +78,50 @@ test("a measured poll obstruction can block text inside the nominal clear zone",
   assert.equal(result.metrics.occludedElementsCount, 1);
   assert.equal(result.metrics.obstructionElementsCount, 1);
 });
+
+test("violations retain stable artwork identity, copy and all measured reasons", () => {
+  const result = computePreflight({
+    ...input,
+    foreground: "#777777",
+    background: "#888888",
+    textBoxes: [
+      {
+        artworkElementId: "reel-page-1-heading",
+        text: "Locate this heading",
+        x: 350,
+        y: 20,
+        width: 80,
+        height: 40,
+      },
+    ],
+  });
+  assert.deepEqual(result.violations[0], {
+    artworkElementId: "reel-page-1-heading",
+    text: "Locate this heading",
+    issues: ["chrome-zone", "artwork-overflow", "low-contrast"],
+    box: { x: 350, y: 20, width: 80, height: 40 },
+  });
+  assert.deepEqual(
+    computePreflight({ ...input, textBoxes: [] }).violations,
+    [],
+  );
+  assert.throws(
+    () =>
+      computePreflight({
+        ...input,
+        textBoxes: [1, 2].map(() => ({
+          ...input.textBoxes[0],
+          artworkElementId: "reel-page-1-heading",
+        })),
+      }),
+    /Duplicate/,
+  );
+  assert.throws(
+    () =>
+      computePreflight({
+        ...input,
+        textBoxes: [{ ...input.textBoxes[0], artworkElementId: "<script>" }],
+      }),
+    /Invalid/,
+  );
+});
