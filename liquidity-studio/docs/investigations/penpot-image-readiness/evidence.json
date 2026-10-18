@@ -68,5 +68,24 @@
     "No new native content, media upload, GCS write or managed Google browser sign-in occurred",
     "No fresh-owner native archive/font recovery proof",
     "Current native RPC/WS/share Studio boundary still incomplete"
-  ]
+  ],
+  "artifactReceipt": {
+    "kind": "native-export",
+    "status": "verified",
+    "createdAt": 1792313418738,
+    "expiresAt": 1792314018738,
+    "sourceSha256": "d18ade182f78fbef65e9e4b8af64f075f289b6ee3afe6e5a93e787485c663363",
+    "manifestSha256": "a3cefd8a7acb2323bee49f5b37caf51bc1570a1beb813fd10396d5823fd08977",
+    "nativeRevision": 9,
+    "nativeSha256": "0924e4b45f7c9100a5ec104578796c8bc8df3e5a1f58ddbc6c245111a7e2735c",
+    "contentType": "image/png",
+    "size": 138103,
+    "sha256": "87257a42a362e184dcc9e703101ddfb1825dbd54ef315a8bc80963d7739d4c49"
+  },
+  "independentReview": {
+    "method": "Root independently hashed the downloaded PNG and viewed the actual file through Neo",
+    "portraitVisible": true,
+    "nativeCwjOmTitleBodyFooterVisible": true,
+    "qualityClaim": false
+  }
 }
