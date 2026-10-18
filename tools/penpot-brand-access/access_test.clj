@@ -60,7 +60,8 @@
 (deftest rpc-context-uses-authenticated-profile-and-captured-session
   (let [operator (uuid/parse "55555555-5555-4555-8555-555555555555")
         key (apply str (repeat 43 "a"))
-        request {::session/session {:id team :profile-id operator}
+        request {::session/profile-id operator
+                 ::session/session {:id team :profile-id operator}
                  :headers {"x-studio-native-grant-key" key "x-studio-acting-profile" (str profile)}}
         cfg {::access/governed-teams #{team} ::access/reconciliation-key key
              ::access/capture-session (fn [r] (is (= request r)) :captured)

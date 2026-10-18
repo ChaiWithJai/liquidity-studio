@@ -103,6 +103,7 @@
   (when-not (and (access/private-key? (::access/reconciliation-key cfg)
                     (get-in (meta params) [::http/request :headers "x-studio-native-grant-key"]))
                  (access/governed-team? cfg team-id)
+                 (= profile-id (:actual-profile-id access/*request-context*))
                  (= profile-id (get (::access/operators cfg) team-id))
                  (access/current-rpc-session?))
     (access/denied!))

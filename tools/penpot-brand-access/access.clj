@@ -119,7 +119,7 @@
     f
     (fn [native-cfg params]
       (let [request (::http/request (meta params))
-            actual (::rpc/profile-id params)
+            actual (::session/profile-id request)
             native-session (::session/session request)
             session-context (when-let [capture (::capture-session cfg)] (capture request))
             key? (private-key? (::reconciliation-key cfg) (get-in request [:headers "x-studio-native-grant-key"]))
