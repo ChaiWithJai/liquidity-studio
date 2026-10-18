@@ -6,6 +6,7 @@
   import WorkspaceCalendar from "./components/WorkspaceCalendar.svelte";
   import JobsPane from "./components/JobsPane.svelte";
   import NativeEditorHost from "./components/NativeEditorHost.svelte";
+  import PenpotPanel from "./components/PenpotPanel.svelte";
   import HelperControlPane from "./components/HelperControlPane.svelte";
   import { createWorkspaceClient } from "./lib/workspace-client.js";
   import { scopedRequest } from "./lib/scoped-request.js";
@@ -63,6 +64,7 @@
   let workspaceState = $state(null);
   let helperControlEnabled = $state(false);
   let nativeEditorEnabled = $state(false);
+  let penpotEnabled = $state(false);
   let nativeRecord = $state(null);
   let nativeHost = $state.raw(null);
   let nativeDirty = $state(false);
@@ -108,6 +110,14 @@
     finally { if (workspaceClient === client) busy = false; }
   }
 
+  let penpotHost = $derived.by(() => {
+    const client = workspaceClient;
+    if (!client) return null;
+    return { client, request: (path, options) => {
+      if (workspaceClient !== client) return Promise.reject(Object.assign(new Error("Workspace changed"), {code:"REQUEST_CONTEXT_CHANGED"}));
+      return request(path, options);
+    } };
+  });
   // One stable transport/callback pair for this authenticated canonical client.
   let helperHost = $derived.by(() => {
     const client = workspaceClient;
@@ -339,7 +349,7 @@
     if (workspaceClient && stories) workspaceClient.ingestStories(stories, {replace});
   }
   function clearWorkspace() {
-    leaveNativeEditor(true); nativeEditorEnabled = false;
+    leaveNativeEditor(true); nativeEditorEnabled = false; penpotEnabled = false;
     requestSessionEpoch++;
     lastScopeToken++;
     scopeLoading = false;
@@ -522,7 +532,7 @@
     searchInput?.focus();
   }
   async function loadScope() {
-    leaveNativeEditor(true); nativeEditorEnabled = false;
+    leaveNativeEditor(true); nativeEditorEnabled = false; penpotEnabled = false;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
     const view = key === activeBacklogScopeKey
@@ -560,6 +570,7 @@
       if (token !== lastScopeToken) return;
       helperControlEnabled = data.operatorCapabilities?.helperControl === true;
       nativeEditorEnabled = data.operatorCapabilities?.nativeEditor === true;
+      penpotEnabled = data.operatorCapabilities?.penpot === true;
       brandProfile = data.brandProfile;
       if (brandProfile) {
         brandProfile.fonts ||= { heading: "DejaVu Sans", body: "DejaVu Sans" };
@@ -1263,6 +1274,9 @@
                 onSaved={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.id) nativeRecord = saved; }}
                 onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => { nativeSaveState = value.status; if (value.status === "saved" && error === "Save native changes or explicitly discard them before leaving the native editor.") error = ""; }} />{/key}
             </section>
+          {/if}
+          {#if penpotEnabled && penpotHost && campaign && selectedStory && !nativeRecord}
+            {#key penpotHost.client}{#key selectedStory.id}<PenpotPanel request={penpotHost.request} storyId={selectedStory.id} role={user.role} />{/key}{/key}
           {/if}
           <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
           {#if exportUrl}<p class="download">
