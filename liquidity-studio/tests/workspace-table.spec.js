@@ -327,7 +327,15 @@ for (const movedFocus of [false, true]) test(`delayed canonical sort ${movedFocu
   await page.getByRole("button", { name: "Sign in →" }).click();
   await page.getByRole("combobox", { name: "Brand", exact: true }).selectOption(brand.id);
   await expect(page.locator(".story-row")).toHaveCount(5);
+  const sortedResponse = page.waitForResponse(response => {
+    if (!response.url().includes("/api/studio/workspace/query?")) return false;
+    const url = new URL(response.url());
+    return url.searchParams.get("brandId") === brand.id && response.request().method() === "POST" && response.request().postDataJSON()?.sort?.[0]?.field === "category";
+  });
   await page.getByLabel("Sort stories", { exact: true }).selectOption("category");
+  const sortedRows = (await (await sortedResponse).json()).rows;
+  await expect(page.locator("[data-detail-story]").first()).toHaveAttribute("data-detail-story", sortedRows[0].id);
+  await expect(page.locator(".table-scroll")).toHaveAttribute("aria-busy", "false");
   const opener = page.locator("[data-detail-story]").first();
   const id = await opener.getAttribute("data-detail-story");
   await opener.click();
