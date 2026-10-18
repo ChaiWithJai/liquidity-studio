@@ -1,3 +1,4 @@
+import { assertRestoreAvailable } from './restore-gate.js';
 import { createHash, randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
 import {
@@ -182,11 +183,21 @@ export class NativeEditorService {
       this.scope.organizationId,
       this.scope.brandId,
     );
+    if (this.repo.key) assertRestoreAvailable(await this.store.get(this.repo.key));
   }
   key(id) {
     if (typeof id !== "string" || !/^[a-f0-9-]{36}$/.test(id))
       throw fail(404, "Native document not found");
     return `${this.prefix}document:${id}`;
+  }
+  async commitScoped(key, mutate, origin) {
+    if (!this.repo.key) return this.store.update(key, mutate);
+    const result = await this.store.transact([this.repo.key, key], ([source, current]) => {
+      assertRestoreAvailable(source);
+      if (origin) this.assertCurrent(source, origin);
+      return [source, mutate(current)];
+    });
+    return result[1];
   }
   async persistDocument(document) {
     const bytes = Buffer.from(JSON.stringify(document));
@@ -201,7 +212,7 @@ export class NativeEditorService {
         ),
       };
     const key = `${this.prefix}payload:${id}`;
-    await this.store.update(key, () => ({
+    await this.commitScoped(key, () => ({
       document: clone(document),
       sha256: hash(document),
     }));
@@ -296,6 +307,7 @@ export class NativeEditorService {
     return receipt?.snapshot;
   }
   assertCurrent(state, origin) {
+    assertRestoreAvailable(state);
     const story = state.backlog.find((item) => item.id === origin.storyId);
     if (
       !story ||
@@ -370,14 +382,14 @@ export class NativeEditorService {
         updatedAt: this.now(),
       };
       let snapshot;
-      const saved = await this.store.update(key, (current) => {
+      const saved = await this.commitScoped(key, (current) => {
         snapshot = this.replay(current, intent);
         if (snapshot) return current;
         if (current) throw fail(409, "Native create collision");
         const { origin, ...receiptSnapshot } = record;
         snapshot = receiptSnapshot;
         return { ...record, receipts: [{ ...intent, snapshot }] };
-      });
+      }, native.manifest);
       retained =
         saved.documentRef.key === documentRef.key &&
         saved.documentRef.artifact?.object === documentRef.artifact?.object;
@@ -527,7 +539,7 @@ export class NativeEditorService {
       await this.authorize(actor);
       const saved = commitGuard
         ? await this.commitGuardedAsset(key, asset, commitGuard)
-        : await this.store.update(key, (prior) => {
+        : await this.commitScoped(key, (prior) => {
             if (prior && prior.fingerprint !== intent.fingerprint)
               throw fail(409, "Upload key was used for different content");
             return prior || asset;
@@ -624,7 +636,7 @@ export class NativeEditorService {
       this.assertCurrent(await this.repo.read(), original.origin);
       let snapshot;
       const updatedAt = this.now();
-      const saved = await this.store.update(key, (current) => {
+      const saved = await this.commitScoped(key, (current) => {
         if (!current) throw fail(404, "Native document not found");
         snapshot = this.replay(current, intent);
         if (snapshot) return current;
@@ -645,7 +657,7 @@ export class NativeEditorService {
           ...snapshot,
           receipts: [...current.receipts, { ...intent, snapshot }].slice(-100),
         };
-      });
+      }, original.origin);
       retained =
         saved.documentRef.key === documentRef.key &&
         saved.documentRef.artifact?.object === documentRef.artifact?.object;

@@ -1,3 +1,5 @@
+import { EditorPackService, createEditorRestoreDestination } from './editor-pack-service.js';
+import { ScopedRepository } from './repository.js';
 import { brandRevision as nativeBrandRevision } from "./multimodal-contract.js";
 import { jobDispatcherConfiguration, dispatchJobs } from "./job-dispatcher.js";
 import { nativeFontCatalog } from "./native-editor-fonts.js";
@@ -473,8 +475,8 @@ export function createHttpServer(
         req.method === "POST"
           ? await readBody(
               req,
-              route === "/api/admin/import"
-                ? 32 * 1024 * 1024
+              ["/api/admin/import", "/api/admin/editor-pack/install"].includes(route)
+                ? (route === "/api/admin/editor-pack/install" ? 49 : 32) * 1024 * 1024
                 : nativeEditorEnabled &&
                     route.startsWith("/api/studio/native-editor/")
                   ? 768 * 1024
@@ -521,6 +523,26 @@ export function createHttpServer(
             brandIds: body.brandIds,
           }),
         );
+      }
+      if (route.startsWith('/api/admin/editor-pack/')) {
+        founder();
+        if (!nativeEditorEnabled || trustedTestMode || process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== 'true') throw fail(404,'Not found');
+        if (route === '/api/admin/editor-pack/destinations' && req.method === 'POST') {
+          workspaceExact(body,['organizationId','name','preset']);
+          return json(201,await createEditorRestoreDestination({store:platform.store,identity,actor:user,...body}));
+        }
+        const target = await identity.authorize(user,url.searchParams.get('organizationId'),url.searchParams.get('brandId'));
+        const restoreRepo = new ScopedRepository(platform.store,target);
+        await restoreRepo.ready;
+        const packService = new EditorPackService({native:platform.nativeEditor(target,restoreRepo)});
+        if (route === '/api/admin/editor-pack/export' && req.method === 'GET') return json(200,await packService.export(user));
+        if (route === '/api/admin/editor-pack/install' && req.method === 'POST') {
+          workspaceExact(body,['pack','options']);return json(200,await packService.install(user,body.pack,body.options));
+        }
+        if (route === '/api/admin/editor-pack/rollback' && req.method === 'POST') {
+          workspaceExact(body,['idempotencyKey']);return json(200,await packService.rollback(user,body));
+        }
+        throw fail(404,'Not found');
       }
       const scope = trustedTestMode
         ? { organizationId: "test", brandId: "test" }
