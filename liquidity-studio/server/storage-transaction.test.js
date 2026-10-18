@@ -40,3 +40,32 @@ test('invalid multi-record callbacks and capacity errors never partially commit'
     assert.deepEqual(store.transact(['a'], ([a]) => [a]), [{ value: 1 }]);
   } finally { store.close(); }
 });
+
+test('two independent SQLite writers cannot tear paired source/native commits', async () => {
+  const { mkdtempSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { spawn } = await import('node:child_process');
+  const directory = mkdtempSync(join(tmpdir(), 'liquidity-multikey-'));
+  const filename = join(directory, 'db.sqlite');
+  let store;
+  try {
+    store = new DurableStore(filename);
+    store.transact(['source', 'native'], () => [{ revision: 0 }, { revision: 0 }]);
+    store.close(); store = null;
+    const script = `import {DurableStore} from ${JSON.stringify(new URL('./storage.js', import.meta.url).href)};
+      const store=new DurableStore(process.argv[1]);
+      for(let i=0;i<50;i++) store.transact(['source','native'], ([source,native])=>{
+        if(source.revision!==native.revision) throw new Error('torn pair');
+        return [{revision:source.revision+1},{revision:native.revision+1}];
+      }); store.close();`;
+    await Promise.all([0, 1].map(() => new Promise((resolve, reject) => {
+      const child=spawn(process.execPath,['--input-type=module','-e',script,filename],{stdio:['ignore','ignore','pipe']});
+      let errors=''; child.stderr.on('data', value => errors+=value);
+      child.on('error',reject); child.on('exit',code => code===0 ? resolve() : reject(new Error(errors)));
+    })));
+    store = new DurableStore(filename);
+    assert.deepEqual(store.get('source'), { revision: 100 });
+    assert.deepEqual(store.get('native'), { revision: 100 });
+  } finally { store?.close(); rmSync(directory,{recursive:true,force:true}); }
+});

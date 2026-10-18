@@ -26,7 +26,7 @@ Follow existing fail(status, message), exact-field validation, async ports, and 
 
 ## Commands and verification
 
-From liquidity-studio with Node 22: `npm ci --engine-strict`; `node --test server/editor-approval.test.js`; `npm test`; `npm run build`; `npx playwright test tests/editor-approval.spec.js`; `npm run qa:loop`. Run official Svelte MCP checks after component changes. Preserve all five existing hosted CI gates.
+From liquidity-studio with Node 22: `npm ci --engine-strict`; `node --test server/editor-approval.test.js`; `node --test server/*.test.js`; `npm run build`; `npx playwright test tests/editor-approval.spec.js`; `npm run qa:loop`. Run official Svelte MCP checks after component changes. Preserve all five existing hosted CI gates.
 
 Meaningful domain/HTTP tests cover both actors, forged/foreign/expired envelopes, revoked binding/member, stale source/native/brand revisions, same-key replay and mismatch, concurrent approve/edit, duplicate/out-of-order/retry/uncertain completion, byte/hash failure, approval invalidation and journal recovery after process restart. Actual built-App browser journeys cover founder and marketer roles, visible pending/approved/stale states, denial/error recovery, scheduling separately from export, and reopening saved work. Actual private artifact retrieval must match the committed SHA and MIME; schema tests alone cannot close #56. Existing Google pilot and complete native export/ejection checks remain required downstream acceptance.
 
