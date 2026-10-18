@@ -192,6 +192,7 @@ test("lost destination and install replies retain exact intents across reload wi
     .setInputFiles(path);
   const creates = [],
     installs = [];
+  let handledInstallReplies = 0;
   await page.route(
     "**/api/admin/editor-pack/destinations?**",
     async (route) => {
@@ -223,6 +224,7 @@ test("lost destination and install replies retain exact intents across reload wi
     const response = await route.fetch();
     if (installs.length === 1) await route.abort("failed");
     else await route.fulfill({ response });
+    handledInstallReplies++;
   });
   await panel.getByRole("checkbox").check();
   await panel
@@ -246,6 +248,9 @@ test("lost destination and install replies retain exact intents across reload wi
     .getByRole("button", { name: "Retry retained recovery request" })
     .click();
   await expect.poll(() => installs.length).toBe(2);
+  // Request capture happens before the 2.4 MiB replay is sent/read. Do not
+  // close the fixture server while route.fetch/fulfill is still handling it.
+  await expect.poll(() => handledInstallReplies).toBe(2);
   expect(installs[1]).toEqual(installs[0]);
   expect(
     (await platform.store.get("identity")).organizations[0].brands,
