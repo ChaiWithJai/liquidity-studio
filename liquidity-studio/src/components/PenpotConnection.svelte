@@ -88,12 +88,13 @@
     {#if connectUrl}<a class="primary" href={connectUrl} target="_blank" rel="noopener noreferrer">Continue in Penpot ↗</a>{:else}<p>This pending request was restored. Start a new connection to get a fresh link.</p><button class="secondary" disabled={busy} onclick={start}>Start a new connection</button>{/if}
     <button class="secondary" disabled={busy} onclick={disconnect}>Cancel connection</button>
   {:else if info}
-    {#if info.state === 'expired' || pollingStopped}<p>The connection request expired or checking stopped. Start again when you are ready.</p>{:else}<p>Use your own Penpot account. This does not change your personal designs or enable editing.</p>{/if}
+    {#if info.state === 'expired' || pollingStopped}<p>The connection request expired or checking stopped. Start again when you are ready.</p>{/if}
     <button class="secondary" disabled={busy} onclick={start}>{busy ? 'Preparing connection…' : 'Connect my account'}</button>
+    <details class="connection-help"><summary>About shared access</summary><p>Connect your own Penpot account for shared brand access. Your personal designs stay unchanged. You can still open an existing linked design if you already have access.</p></details>
   {/if}
   {#if error}<p role="alert">{error}</p><button class="secondary" disabled={loading || busy} onclick={() => load()}>Check connection again</button>{/if}
 </section>
 <style>
-  .penpot-connection { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem .75rem; padding:0; border:0; margin:0; flex:1 1 260px; }
-  summary { cursor:pointer; font-size:13px; } details button { margin-top:.5rem; } p { margin:0; font-size:13px; flex:1 1 300px; } button,a { min-height:36px; padding:7px 10px; font-size:13px; } a { display:inline-flex; align-items:center; }
+  .penpot-connection { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem .75rem; padding:0; border:0; margin:0; flex:0 1 auto; }
+  .connection-help { position:relative; } .connection-help[open] p { max-width:28rem; margin-top:.5rem; } summary { cursor:pointer; font-size:13px; } details button { margin-top:.5rem; } p { margin:0; font-size:13px; flex:1 1 300px; } button,a { min-height:36px; padding:7px 10px; font-size:13px; } a { display:inline-flex; align-items:center; }
 </style>
