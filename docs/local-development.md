@@ -27,7 +27,7 @@ Cookies use the fixed profile name `studio_dev_<profile>`. The developer wrapper
 
 The child process receives a small operating-system environment allowlist. Google/ADC, provider API keys, remote storage/dispatcher settings, and operator configurations are not inherited. Generation uses the existing gateway's **offline-synthetic** fallback with `AI_ALLOW_SYNTHETIC=true`; its existing approved-source requirements and provenance remain in force. No human review or publication approval is invented. Remote model/provider `fetch` calls are denied in this developer process. Public source preparation is enabled through the existing HTTPS host, DNS-pinning, byte, status, and deadline guards. It does not use a paid model provider. This is an application boundary, not an operating-system network firewall.
 
-Source jobs, source preparation, and typed helper controls are enabled. The existing durable local worker runs sequentially in the API/Vite process, with no separate service or new queue architecture. Preexisting queued work is paused on restart by the existing worker contract until explicitly resumed. Shutdown aborts and waits for that worker before closing SQLite; a10-second drain failure stops the child with an error and preserves its profile for recovery. Embedded native editing, portable recovery, and cutout remain disabled. Penpot Create/Open is disabled by default and can be enabled with the explicit local option below. These profiles emulate the local role/session/data workflow, not full deployed feature parity or licensed native media distribution. No model, held upstream frame, or new service is downloaded or started. Vite HMR uses the same guarded loopback HTTP server and its cache remains profile-specific.
+Source jobs, source preparation, and typed helper controls are enabled. The existing durable local worker runs sequentially in the API/Vite process, with no separate service or new queue architecture. Preexisting queued work is paused on restart by the existing worker contract until explicitly resumed. Shutdown aborts and waits for that worker before closing SQLite; a10-second drain failure stops the child with an error and preserves its profile for recovery. Embedded native editing, portable recovery, and cutout remain disabled unless explicitly opted in below. Penpot Create/Open is disabled by default and can be enabled with the explicit local option below. These profiles emulate the local role/session/data workflow, not full deployed feature parity or licensed native media distribution. No model, held upstream frame, or new service is downloaded or started. Vite HMR uses the same guarded loopback HTTP server and its cache remains profile-specific.
 
 Stop with Ctrl+C. The launcher drains its local worker, then closes its Vite server and SQLite connection and removes only its own PID lock. A crash can leave `launcher.lock`: verify the recorded PID is no longer the owned launcher before manually removing **that lock only**. Never delete or replace the database to clear a lock. If startup left a marker but no database, preserve the directory for inspection; the launcher reports a marker mismatch rather than silently initializing over it. Bind failures and missing dependencies are reported without installing or changing a maintained service.
 
@@ -89,3 +89,23 @@ A generated nonpersonal fixture proves tool operation, not consenting-human
 quality or conversion provenance. Held editor distribution/license conditions
 remain unchanged. Stopping and restarting without these options disables this
 local feature and preserves profile data.
+
+### Portable recovery with the private editor
+
+Add `--portable-recovery` alongside the existing `--native-assets` option to make
+Operations → Portable brand recovery available in this local profile:
+
+```sh
+npm run dev -- --profile development --port 3002 \
+  --native-assets /absolute/private/native-dist --portable-recovery
+```
+
+The flag enables the existing export/recovery endpoints and UI; it creates no
+service, account or destination. It requires the matching private editor assets
+so restored native work can be opened. The ordinary launcher remains off by
+default, and inherited environment variables cannot enable it. To restore a
+readable recovery kit, extract its ZIP and select `studio-editor-pack.json` in
+Operations. Follow its included `RESTORE.md`; fonts are already available from
+the current repository's `liquidity-studio/public/fonts` in this local launcher.
+The restore service still compares the exact font and OFL bytes from the pack.
+Source, image/cutout and approval/review semantics are unchanged.

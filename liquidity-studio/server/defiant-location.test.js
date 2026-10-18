@@ -38,3 +38,11 @@ test('strategy filters and search roundtrip without leaking into publishing URLs
  const route=readWorkflowLocation(url);assert.deepEqual(route.strategy.kinds,['artist']);assert.equal(route.strategy.showExamples,false);assert.equal(route.strategy.query,'London producer');
  const published=new URL(workflowHref(url,{organizationId:'org_default',brandId:'brand_default',tab:'studio'}));for(const key of ['kinds','examples','find'])assert.equal(published.searchParams.has(key),false);
 });
+
+
+test('ordered route IDs roundtrip with bounded syntax and stay out of publishing URLs',()=>{
+ const input={organizationId:'defiant_org',tab:'strategy',strategy:{view:'map',routeEdgeIds:['route:ab','route:bc']}};
+ const url=workflowHref('http://localhost/',input);assert.deepEqual(readWorkflowLocation(url).strategy.routeEdgeIds,input.strategy.routeEdgeIds);
+ const published=new URL(workflowHref(url,{organizationId:'org_default',brandId:'brand_default',tab:'studio'}));assert.equal(published.searchParams.has('path'),false);
+ for(const path of ['route:ab,route:ab','route:ab,<bad>',Array.from({length:17},(_,i)=>'edge:'+i).join(',')])assert.equal(readWorkflowLocation('http://localhost/?tab=strategy&path='+encodeURIComponent(path)).strategy.routeEdgeIds,undefined);
+});
