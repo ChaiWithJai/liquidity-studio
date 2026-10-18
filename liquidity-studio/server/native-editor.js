@@ -111,11 +111,9 @@ export function validateHostedDocument(
         if (!match || !assetIds.has(match[1]))
           throw fail(422, "Native asset is not owned by this scope");
       }
-      if (
-        ["source", "url"].includes(key) &&
-        typeof child === "string" &&
-        /^(?:https?:|\/\/|data:|blob:|javascript:)/i.test(child)
-      )
+      // Fabric pattern sources resolve relative URLs too; no arbitrary source/url field
+      // is part of this host's opaque private-image contract.
+      if (["source", "url"].includes(key))
         throw fail(422, "External native resources are unavailable");
       walk(child, depth + 1);
     }
@@ -449,15 +447,27 @@ export class NativeEditorService {
       );
     const sharp = (await import("sharp")).default;
     let metadata;
-    if (activeImageDecodes >= 2) throw fail(429, "Image decoding is busy; retry this upload shortly");
+    if (activeImageDecodes >= 2)
+      throw fail(429, "Image decoding is busy; retry this upload shortly");
     activeImageDecodes++;
     try {
-      metadata = await sharp(bytes, { limitInputPixels: 4000000, animated: false }).metadata();
+      metadata = await sharp(bytes, {
+        limitInputPixels: 4000000,
+        animated: false,
+      }).metadata();
       // Decode validation produces a tiny sample, never a full uncompressed raster buffer.
-      await sharp(bytes, { limitInputPixels: 4000000, animated: false }).resize(1,1).raw().toBuffer();
+      await sharp(bytes, { limitInputPixels: 4000000, animated: false })
+        .resize(1, 1)
+        .raw()
+        .toBuffer();
     } catch {
-      throw fail(422, "Image could not be safely decoded; use an image up to four megapixels");
-    } finally { activeImageDecodes--; }
+      throw fail(
+        422,
+        "Image could not be safely decoded; use an image up to four megapixels",
+      );
+    } finally {
+      activeImageDecodes--;
+    }
     if (
       { png: "image/png", jpeg: "image/jpeg", webp: "image/webp" }[
         metadata.format

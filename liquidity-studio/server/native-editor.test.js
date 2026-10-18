@@ -408,9 +408,38 @@ test("real authenticated HTTP saves native proposals; anonymous and wrong-brand 
     idempotencyKey: "http_bad_image_upload",
   });
   assert.equal(badImage.status, 422);
-  const oversizedPixels = await sharp({ create: { width: 3000, height: 2000, channels: 4, background: '#123456' } }).png().toBuffer();
-  const largeImage = await api("assets", { ...upload, base64: oversizedPixels.toString("base64"), idempotencyKey: "http_large_image_upload" });
+  const oversizedPixels = await sharp({
+    create: { width: 3000, height: 2000, channels: 4, background: "#123456" },
+  })
+    .png()
+    .toBuffer();
+  const largeImage = await api("assets", {
+    ...upload,
+    base64: oversizedPixels.toString("base64"),
+    idempotencyKey: "http_large_image_upload",
+  });
   assert.equal(largeImage.status, 422);
 
   assert.equal((await api("fonts")).data.results.length, 4);
+});
+
+test("native pattern source and URL fields reject same-origin and relative resource paths", async () => {
+  const f = fixture();
+  const { document } = await f.create("story");
+  for (const field of ["source", "url"]) {
+    for (const value of [
+      "/api/private-other-brand",
+      "relative-image.png",
+      "../private.png",
+      "studio-asset:owned",
+      { src: "relative-image.png" },
+    ]) {
+      const copy = structuredClone(document);
+      copy.pages[0].objects[0].fill = { type: "pattern", [field]: value };
+      assert.throws(
+        () => validateHostedDocument(copy, { assets: [{ id: "owned" }] }),
+        { status: 422 },
+      );
+    }
+  }
 });
