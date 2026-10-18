@@ -5,7 +5,8 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 export default defineConfig({
   plugins: [svelte(), nativeEditorPlugin()],
-  esbuild: { jsx: "automatic" },
+  // Keep every legal notice while avoiding platform-dependent placement of duplicate comments.
+  esbuild: { jsx: "automatic", legalComments: "eof" },
   build: {
     rollupOptions: {
       input:
