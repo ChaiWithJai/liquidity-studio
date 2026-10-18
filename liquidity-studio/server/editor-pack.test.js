@@ -148,7 +148,7 @@ test("tampered bytes/version/credentials/foreign references and missing explicit
     target = await fixture(t, "liquidity_desk", true),
     before = target.store.keys("");
   for (const change of [
-    (p) => (p.schemaVersion = 2),
+    (p) => (p.schemaVersion = 3),
     (p) => (p.files[0].base64 = "AAAA"),
     (p) => (p.documents[0].metadata.brandId = "foreign"),
     (p) => (p.documents[0].metadata.origin.credentials = "secret"),
@@ -610,4 +610,82 @@ test("re-ejection retains original authors, original source binding and historic
     undefined,
   );
   assert.deepEqual(final.store.keys("editor-review:"), []);
+});
+
+test('portable export rejects unsupported current and retained historical fonts without changing native save', async t => {
+  const f = await fixture(t);
+  const state = await f.repo.read();
+  const created = await f.native.create(actor, {storyId:'story', format:'infographic', expectedRevision:state.backlog[0].revision, generationId:'gen', expectedBrandRevision:brandRevision(state.brandProfile), idempotencyKey:'font_portability_create'});
+  const document = structuredClone(created.document);
+  document.pages[0].objects.find(o => o.id === 'headline_layer').fontFamily = 'Uninstalled Custom Font';
+  const saved = await f.native.save(actor, created.id, {expectedRevision:1, title:created.title, document, idempotencyKey:'font_portability_save'});
+  assert.equal(saved.document.pages[0].objects.find(o => o.id === 'headline_layer').fontFamily, 'Uninstalled Custom Font');
+  await assert.rejects(f.service.export(actor), /font not included/);
+  document.pages[0].objects.find(o => o.id === 'headline_layer').fontFamily = 'Inter';
+  await f.native.save(actor, created.id, {expectedRevision:2, title:created.title, document, idempotencyKey:'font_portability_supported_save'});
+  await assert.rejects(f.service.export(actor), /font not included/);
+});
+
+test('completed signed-off PNG survives fresh-scope install as exact historical bytes without live export authority', async t => {
+  const {EditorApprovalService}=await import('./editor-approval.js');
+  const {EditorExportService}=await import('./editor-export.js');
+  const sharp=(await import('sharp')).default;
+  const f=await fixture(t),[native]=await allFormats(f);
+  const approval=new EditorApprovalService({repo:f.repo,scope:f.scope,identity:f.identity,native:f.native});
+  let revision=0;
+  for(const action of ['create','start','submit','approve'])await approval.transition(actor,native.id,{action,expectedRevision:revision++,expectedNativeRevision:2,idempotencyKey:`pack_review_${action}_unique`});
+  const exporter=new EditorExportService({approval});
+  const bytes=await sharp({create:{width:1080,height:1350,channels:3,background:'#f2a93b'}}).png().toBuffer();
+  const staged=await exporter.stage(actor,native.id,{expectedReviewRevision:4,expectedNativeRevision:2,pageIndex:0,base64:bytes.toString('base64'),idempotencyKey:'pack_final_png_stage_unique'});
+  const envelope=await exporter.signoff(actor,native.id,staged.artifactId,{sha256:staged.sha256,reviewed:true});
+  const receipt=await exporter.complete(actor,native.id,envelope);
+  const newer=structuredClone(native.document);newer.pages[0].objects.find(object=>object.id==='headline_layer').text='Edited after the completed export';
+  await f.native.save(actor,native.id,{expectedRevision:2,title:native.title,document:newer,idempotencyKey:'edited_after_completed_png'});
+  await approval.transition(actor,native.id,{action:'restart',expectedRevision:4,expectedNativeRevision:3,idempotencyKey:'restart_after_completed_png'});
+  assert.equal((await approval.read(actor,native.id)).exports,undefined);
+  assert.equal((await f.store.get(`editor-export:organization:brand:events:${native.id}`)).events.length,1);
+  const pack=await f.service.export(actor);
+  assert.equal(pack.schemaVersion,2);assert.equal(pack.documents.find(doc=>doc.metadata.id===native.id).finalExports.length,1);assert.deepEqual(pack.documents.find(doc=>doc.metadata.id===native.id).finalExports[0].receipt,receipt);
+  assert.equal(JSON.stringify(pack).includes(envelope.signature),false);
+  const target=await fixture(t,'liquidity_desk',true,'restored-final');
+  await target.service.install(actor,pack,{...input,target:{organizationId:'organization',brandId:'restored-final'}});
+  const historical=await target.service.historicalExportBytes(actor,native.id,receipt.artifactId);
+  assert.deepEqual(Buffer.from(historical.base64,'base64'),bytes);assert.equal(historical.authority,'historical-only');
+  assert.equal(historical.receipt.signedOffBy,'owner');
+  assert.equal((await target.store.keys(`editor-review:organization:restored-final:`)).length,0);
+  assert.equal((await target.store.keys(`editor-export:organization:restored-final:`)).length,0);
+  const repeated=await target.service.export(actor);
+  assert.deepEqual(repeated.documents.find(doc=>doc.metadata.id===native.id).finalExports[0].receipt,receipt);
+  const current=await target.native.read(actor,native.id);
+  current.document.pages[0].objects.find(o=>o.id==='headline_layer').text='Editable restored human layout';
+  await target.native.save(actor,native.id,{expectedRevision:current.revision,title:current.title,document:current.document,idempotencyKey:'restored_layout_after_final_png'});
+  assert.deepEqual(Buffer.from((await target.service.historicalExportBytes(actor,native.id,receipt.artifactId)).base64,'base64'),bytes);
+});
+
+test('unfinished prepared evidence and saved copy restore as historical, survive repeated ejection and never import execution receipts', async t => {
+ const {digest}=await import('./editor-pack.js');
+ const source=await fixture(t),state=await source.repo.read(),story=state.backlog[0],text=story.sourceClaims[0].text;
+ const candidate={schemaVersion:1,id:'unfinished-candidate',...source.scope,storyId:story.id,contentRevision:story.contentRevision||1,inputFingerprint:'a'.repeat(64),brandRevision:brandRevision(state.brandProfile),jobId:'old-job',itemId:'old-item',attemptId:'old-attempt',createdAt:'2026-10-18T00:00:00Z',excerpts:[{evidenceId:'evidence',sourceUrl:'https://example.org/portable',text,startOffset:0,status:'unreviewed',clinicalReview:null}],artwork:campaignFromApprovedClaims(story),provenance:{purpose:'source-preparation',mode:'extractive-unreviewed',humanApproval:'none',requiresReview:true,provider:'none',modelCalls:0,evidenceIds:['evidence']}};
+ const evidence={id:'evidence',schemaVersion:1,requestedUrl:'https://example.org/portable',sourceUrl:'https://example.org/portable',retrievedAt:'2026-10-18T00:00:00Z',contentType:'text/plain',responseSha256:digest(Buffer.from(text)),responseBytes:Buffer.byteLength(text),text,textSha256:digest(Buffer.from(text)),status:'unreviewed',approval:'none'};
+ const workingArtwork=structuredClone(candidate.artwork);workingArtwork.infographic.headline='Retained unfinished human copy';
+ await source.repo.mutate(state=>({...state,preparedSourceCandidates:[{candidate,evidence:[evidence],revision:2,workingArtwork,editorialStatus:'unreviewed',edits:[{id:'old-edit',actorId:'owner'}],promotionReceipts:[]}]}));
+ const pack=await source.service.export(actor),target=await fixture(t,'liquidity_desk',true,'prepared-target');
+ await target.service.install(actor,pack,{...input,target:{organizationId:'organization',brandId:'prepared-target'}});
+ const restored=(await target.repo.read()).preparedSourceCandidates[0];
+ assert.equal(restored.candidate.id,candidate.id);assert.equal(restored.candidate.brandId,'prepared-target');
+ assert.equal(restored.workingArtwork.infographic.headline,'Retained unfinished human copy');
+ assert.deepEqual(restored.evidence,[evidence]);assert.equal(restored.restoredHistorical.packSha256,pack.sha256);
+ assert.equal(restored.candidate.jobId,null);assert.equal(restored.edits,undefined);assert.equal(restored.promotionReceipts,undefined);
+ const second=await target.service.export(actor),validated=validateEditorPack(second),history=validated.json(second.preparedHistory);
+ assert.equal(history[0].sourceScope.brandId,'brand');assert.equal(history[0].authority,'historical-only');
+ assert.deepEqual(history[0].workingArtwork,workingArtwork);
+});
+
+test('version 1 editor packs remain restorable without silently accepting version 2 fields',async t=>{
+ const source=await fixture(t);await allFormats(source);
+ const exported=await source.service.export(actor),{preparedHistory,...legacy}=structuredClone(exported);
+ legacy.schemaVersion=1;for(const doc of legacy.documents)delete doc.finalExports;
+ const {sha256,...content}=legacy;legacy.sha256=jsonDigest(content);
+ const target=await fixture(t,'liquidity_desk',true);await target.service.install(actor,legacy,input);
+ assert.equal((await target.native.list(actor,{storyId:'story',format:'carousel'})).documents.length,1);
 });

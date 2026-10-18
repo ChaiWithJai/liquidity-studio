@@ -14,6 +14,8 @@ import {
   jsonDigest,
   exact,
 } from "./editor-pack.js";
+import { projectFinalPngs, validateFinalPng } from "./editor-pack-exports.js";
+import { projectPreparedHistory, restorePreparedHistory } from "./editor-pack-prepared.js";
 import { nativeFontCatalog } from "./native-editor-fonts.js";
 const sourceDirectory = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -109,6 +111,9 @@ export class EditorPackService {
     await this.native.authorize(actor);
     const sourceFingerprint = jsonDigest(await this.repo.read());
     const repository = await this.repo.exportData();
+    const preparedHistory = projectPreparedHistory(repository.data.preparedSourceCandidates || [], this.scope);
+    delete repository.data.preparedSourceCandidates;
+    repository.sha256 = jsonDigest(repository.data);
     const files = [],
       documents = [],
       assets = [],
@@ -116,6 +121,9 @@ export class EditorPackService {
     const nativeKeys = (await this.store.keys(this.native.prefix)).sort();
     const reviewPrefix = `editor-review:${this.scope.organizationId}:${this.scope.brandId}:`;
     const reviewKeys = (await this.store.keys(reviewPrefix)).sort();
+    const exportPrefix = `editor-export:${this.scope.organizationId}:${this.scope.brandId}:`;
+    const exportKeys = (await this.store.keys(exportPrefix)).sort();
+    if (exportKeys.length > 22000) throw fail(413, "Native export collection limit");
     if (nativeKeys.length > 22000 || reviewKeys.length > 100)
       throw fail(413, "Editor history collection limit");
     const documentKeys = nativeKeys.filter((key) =>
@@ -127,7 +135,7 @@ export class EditorPackService {
     if (documentKeys.length > 100 || assetKeys.length > 100)
       throw fail(413, "Editor pack collection limit");
     const captured = await Promise.all(
-      [...documentKeys, ...assetKeys, ...reviewKeys].map(async (key) => [
+      [...documentKeys, ...assetKeys, ...reviewKeys, ...exportKeys].map(async (key) => [
         key,
         jsonDigest(await this.store.get(key)),
       ]),
@@ -189,8 +197,27 @@ export class EditorPackService {
       const metadata = pick(record, portableDocumentFields);
       if (metadata.portableHistory)
         delete metadata.portableHistory.reviewHistory;
+      const ledger = await this.store.get(exportPrefix+'events:'+record.id);
+      if (ledger && (!Array.isArray(ledger.events) || ledger.events.length > 256 || ledger.events.some(event=>!event?.receipt)))
+        throw fail(422,"Invalid completed export receipt ledger");
+      if (!ledger && review?.exports?.length) throw fail(422,"Completed export receipt ledger is missing");
+      // Active review transitions intentionally reset their projection. Durable receipts retain
+      // completed artifacts after later edits/restarts without reviving completion credentials.
+      const completed = await projectFinalPngs({nativeId:record.id,format:record.format,receipts:(ledger?.events || []).map(event=>event.receipt),
+        loadStage:artifactId=>this.store.get(exportPrefix+artifactId),
+        loadBytes:async stage=>stage.reference.artifact
+          ? this.store.downloadArtifact(this.scope,stage.reference.artifact)
+          : Buffer.from((await this.store.get(stage.reference.key))?.base64 || "","base64")});
+      for (const item of record.restoredExports || []) {
+        const chunks = await Promise.all(item.bytesKeys.map(key=>this.store.get(key)));
+        const bytes = Buffer.concat(chunks.map(chunk=>Buffer.from(chunk?.base64 || "","base64")));
+        await validateFinalPng(bytes,item.receipt,{nativeId:record.id,format:record.format});
+        completed.push({...copy(item),bytes});
+      }
+      const finalExports = completed.map(({bytes,bytesKeys,...item})=>({...item,file:addFile(files,bytes,"final-png")}));
       documents.push({
         metadata,
+        finalExports,
         current: await scene(record.documentRef),
         initial: await scene(record.initialDocumentRef),
         history,
@@ -225,8 +252,9 @@ export class EditorPackService {
         });
       }
     const pack = sealEditorPack({
-      schemaVersion: 1,
+      schemaVersion: 2,
       kind: "studio-native-editor-pack",
+      preparedHistory: preparedHistory.length ? addFile(files,Buffer.from(JSON.stringify(preparedHistory)),"history") : null,
       scope: {
         organizationId: this.scope.organizationId,
         brandId: this.scope.brandId,
@@ -246,7 +274,8 @@ export class EditorPackService {
       jsonDigest(nativeKeys) !==
         jsonDigest((await this.store.keys(this.native.prefix)).sort()) ||
       jsonDigest(reviewKeys) !==
-        jsonDigest((await this.store.keys(reviewPrefix)).sort())
+        jsonDigest((await this.store.keys(reviewPrefix)).sort()) ||
+      jsonDigest(exportKeys) !== jsonDigest((await this.store.keys(exportPrefix)).sort())
     )
       throw fail(409, "Editor collection changed during ejection");
     if (sourceFingerprint !== jsonDigest(await this.repo.read()))
@@ -256,6 +285,28 @@ export class EditorPackService {
         throw fail(409, "Native document changed during editor ejection");
     await this.principal(actor);
     return pack;
+  }
+  async historicalExports(actor, nativeId) {
+    await this.native.authorize(actor);
+    const record = await this.store.get(this.native.key(nativeId));
+    if (!record || record.organizationId !== this.scope.organizationId || record.brandId !== this.scope.brandId) throw fail(404,"Native document not found");
+    await this.native.authorize(actor);
+    return (record.restoredExports || []).map(({bytesKeys,...item})=>copy(item));
+  }
+  async historicalExportBytes(actor, nativeId, artifactId) {
+    await this.native.authorize(actor);
+    const key = this.native.key(nativeId), record = await this.store.get(key);
+    if (!record || record.organizationId !== this.scope.organizationId || record.brandId !== this.scope.brandId) throw fail(404,"Native document not found");
+    const item = record.restoredExports?.find(item=>item.receipt.artifactId===artifactId);
+    if (!item) throw fail(404,"Historical PNG not found");
+    const chunks = await Promise.all(item.bytesKeys.map(key=>this.store.get(key)));
+    const bytes = Buffer.concat(chunks.map(chunk=>Buffer.from(chunk?.base64 || "","base64")));
+    await validateFinalPng(bytes,item.receipt,{nativeId,format:record.format});
+    await this.native.authorize(actor);
+    const current = await this.store.get(key);
+    if (!current || jsonDigest(current.restoredExports) !== jsonDigest(record.restoredExports)) throw fail(409,"Historical export changed during retrieval");
+    const {bytesKeys,...metadata}=item;
+    return {...copy(metadata),base64:bytes.toString("base64")};
   }
   validateTarget(pack, input, actor) {
     exact(input, [
@@ -342,8 +393,16 @@ export class EditorPackService {
       copy(validated.repository),
       { remapScope: true },
     );
-    for (const doc of pack.documents)
-      this.native.assertCurrent(validated.repository.data, doc.metadata.origin);
+    for (const doc of pack.documents) {
+      if (doc.metadata.origin.requiresSourceReview !== true)
+        this.native.assertCurrent(validated.repository.data, doc.metadata.origin);
+      for (const item of doc.finalExports || [])
+        await validateFinalPng(validated.bytes(item.file),item.receipt,{nativeId:doc.metadata.id,format:doc.metadata.format});
+    }
+    const preparedHistory = pack.preparedHistory ? validated.json(pack.preparedHistory) : [];
+    const restoredPrepared = restorePreparedHistory(preparedHistory,{scope:{organizationId:this.scope.organizationId,brandId:this.scope.brandId},sourceScope:pack.scope,packSha256:pack.sha256});
+    // Re-project validates archived evidence, scope and excerpt hashes before reserving the target.
+    projectPreparedHistory(restoredPrepared, this.scope);
     for (const asset of pack.assets) {
       const image = sharp(validated.bytes(asset.file), {
         limitInputPixels: 4_000_000,
@@ -398,7 +457,14 @@ export class EditorPackService {
     // Native review and receipt authority starts again; exact imported evidence remains in the archive.
     for (const story of state.backlog) {
       delete story.assigneeId;
+      const preparedCopy = story.campaignDraft?.provenance?.mode === "human-reviewed-prepared-candidate" || story.sourceClaims?.some(claim=>claim.purpose === "prepared-copy-review");
       for (const claim of story.sourceClaims || []) {
+        if (preparedCopy) {
+          claim.status = "unreviewed";
+          claim.historicalReview = {originalReviewedBy:claim.historicalReview?.originalReviewedBy || claim.reviewedBy || null,originalReviewedAt:claim.historicalReview?.originalReviewedAt || claim.reviewedAt || null};
+          delete claim.reviewedBy; delete claim.reviewedAt; delete claim.clinicalReview;
+          continue;
+        }
         if (claim.status === "approved" && claim.kind === "clinical")
           throw fail(
             422,
@@ -434,6 +500,7 @@ export class EditorPackService {
     };
     remap(state);
     if (state.workspace) delete state.workspace.receipts;
+    if (restoredPrepared.length) state.preparedSourceCandidates = restoredPrepared;
     const payload = (hash) => {
       const key = `${this.native.prefix}payload:${id}-${hash}`;
       if (!planned.some((item) => item.key === key))
@@ -496,6 +563,17 @@ export class EditorPackService {
       record.documentRef = payload(doc.current);
       record.initialDocumentRef = payload(doc.initial);
       record.receipts = [];
+      record.restoredExports = [];
+      for (const item of doc.finalExports || []) {
+        const bytes = validated.bytes(item.file), bytesKeys=[];
+        for(let offset=0,index=0;offset<bytes.length;offset+=1024*1024,index++) {
+          const key = `${this.native.prefix}historical-export:${id}-${item.file}-${index}`;
+          if(!planned.some(entry=>entry.key===key))planned.push({key,value:{base64:bytes.subarray(offset,offset+1024*1024).toString("base64")}});
+          bytesKeys.push(key);
+        }
+        const {file,...historical}=copy(item);
+        record.restoredExports.push({...historical,bytesKeys});
+      }
       // Retain history as non-replayable snapshots, not source actor idempotency receipts.
       record.restoredHistory = doc.history.map((snapshot) => ({
         ...copy(snapshot),
@@ -509,6 +587,7 @@ export class EditorPackService {
           : null,
       };
       const story = state.backlog.find((item) => item.id === record.storyId);
+      if (story.campaignDraft?.provenance?.mode === "human-reviewed-prepared-candidate" || story.sourceClaims.some(claim=>claim.purpose === "prepared-copy-review")) record.origin.requiresSourceReview = true;
       record.origin.sourceContentRevision = story.contentRevision || 1;
       record.origin.sourceApprovals = copy(
         story.sourceClaims.filter((c) => c.status === "approved"),
