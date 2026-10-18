@@ -97,7 +97,10 @@ export function createPenpotStoryRpc({sessions,transportMode='loopback',grantKey
   const payload=JSON.stringify(body);if(Buffer.byteLength(payload)>2*1024*1024)throw fail(413,'Native design exceeds the bounded RPC request');
   const actingHeaders=grantKey?{'X-Studio-Native-Grant-Key':grantKey,...(uuid(workspace.actingNativeProfileId)?{'X-Studio-Acting-Profile':workspace.actingNativeProfileId}:{})}:{};
   const response=await fetchImpl(`${origin}/api/rpc/command/${operation}`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Origin:'http://localhost:39008',Cookie:session.cookie,...actingHeaders},body:payload,redirect:'error',signal:AbortSignal.timeout(15000)});
-  if(!response.ok){await response.body?.cancel().catch(()=>{});throw fail(response.status===404?404:[401,403].includes(response.status)?403:response.status===409?409:502,'Native design request did not complete; preserve the operation key');}
+  if(!response.ok){
+   if([401,403].includes(response.status))console.warn(JSON.stringify({event:'native_design_authority_denied',operation,status:response.status}));
+   await response.body?.cancel().catch(()=>{});throw fail(response.status===404?404:[401,403].includes(response.status)?403:response.status===409?409:502,'Native design request did not complete; preserve the operation key');
+  }
   let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>2*1024*1024){await response.body.cancel?.().catch(()=>{});throw fail(502,'Native design readback exceeds the bounded response');}chunks.push(chunk);}
   try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw fail(502,'Native design response was not valid JSON');}
  };
