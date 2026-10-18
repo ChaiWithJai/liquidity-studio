@@ -9,7 +9,7 @@ expected="$(cat /review-tools/verified-pnpm.sha256)"
 [[ "$(readlink -f -- "$real")" == "$real" ]] || exit 1
 actual="$(sha256sum -- "$real")"
 [[ "${actual%% *}" == "$expected" ]] || { echo 'Verified pnpm bytes changed' >&2; exit 1; }
-[[ "$($real --version)" == 12.5.1 ]] || { echo 'Pinned pnpm version mismatch' >&2; exit 1; }
+[[ "$("$real" --version)" == 12.5.1 ]] || { echo 'Pinned pnpm version mismatch' >&2; exit 1; }
 install=false
 for arg in "$@"; do
   case "$arg" in
