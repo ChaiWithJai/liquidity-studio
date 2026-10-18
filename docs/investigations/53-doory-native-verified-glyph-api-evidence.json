@@ -1,0 +1,146 @@
+{
+  "sourceCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "checks": [
+    "actual_two_owner_csrf_sessions",
+    "uploaded_font_bytes_hash_match",
+    "both_presets_four_native_formats_create_read_exact",
+    "registered_boundary_human_edit_reload",
+    "optimistic_stale_patch_409",
+    "brand_swatch_native_update_preserves_human_text",
+    "registered_native_json_copy_exact",
+    "native_outsider_owner_404",
+    "studio_other_brand_membership_denied",
+    "foreign_resource_denied",
+    "wrong_native_owner_session_denied"
+  ],
+  "fonts": [
+    {
+      "verifiedCodepoints": [
+        "U+0043",
+        "U+0057",
+        "U+004A",
+        "U+0020",
+        "U+002F"
+      ],
+      "family": "Instrument Serif",
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88",
+      "license": "InstrumentSerif-OFL.txt",
+      "source": "Studio bundled licensed bytes; uploaded and hash-matched on owned local Doory"
+    },
+    {
+      "verifiedCodepoints": [
+        "U+0043",
+        "U+0057",
+        "U+004A",
+        "U+0020",
+        "U+002F"
+      ],
+      "family": "Mona Sans",
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39",
+      "license": "MonaSans-OFL.txt",
+      "source": "Studio bundled licensed bytes; uploaded and hash-matched on owned local Doory"
+    },
+    {
+      "verifiedCodepoints": [
+        "U+0043",
+        "U+0057",
+        "U+004A",
+        "U+0020",
+        "U+002F"
+      ],
+      "family": "Inter",
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+      "license": "Inter-LICENSE.txt",
+      "source": "Studio bundled licensed bytes; uploaded and hash-matched on owned local Doory"
+    },
+    {
+      "verifiedCodepoints": [
+        "U+0043",
+        "U+0057",
+        "U+004A",
+        "U+0020",
+        "U+002F",
+        "U+0950"
+      ],
+      "family": "Noto Sans Devanagari",
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e",
+      "license": "NotoSansDevanagari-OFL.txt",
+      "source": "Studio bundled licensed bytes; uploaded and hash-matched on owned local Doory"
+    }
+  ],
+  "native": [
+    {
+      "preset": "liquidity_desk",
+      "format": "infographic",
+      "nativeId": "f4dd9613-8fd2-452d-9261-5d078fadb192",
+      "revision": 3,
+      "pageCount": 1,
+      "sha256": "7e99b5b4c41e0d96e3693fc239185ddc83248a568d403ca5272b7716f095d711",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "carousel",
+      "nativeId": "15f904d6-1777-491c-b180-4cc1069028ef",
+      "revision": 3,
+      "pageCount": 4,
+      "sha256": "6f6c24bfee82da93c648a043afca6d8861277df0cfc4de37041fce28c7089870",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "story",
+      "nativeId": "fb7037a3-7d87-4488-a951-c68b84f2452a",
+      "revision": 3,
+      "pageCount": 1,
+      "sha256": "3a11ae5c47574341bb75320ccc034b54000940259854562cf571313794f805de",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "reel",
+      "nativeId": "a8caace5-887a-4c51-8a99-2a46f278b437",
+      "revision": 3,
+      "pageCount": 3,
+      "sha256": "86b25053f6cf47ccb10f335d198449cddb41b37257b14a87784976172b7ab4c5",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "infographic",
+      "nativeId": "15472f99-6e64-47e3-a9de-537de9439672",
+      "revision": 3,
+      "pageCount": 1,
+      "sha256": "0b8ecf319a69e0356ec9fc08cf56ef500ac6a0b98435a1a6b19ba24fb4d8fb59",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "carousel",
+      "nativeId": "ec05321f-10f5-4589-a2e5-444ffb271cb9",
+      "revision": 3,
+      "pageCount": 4,
+      "sha256": "d1ffe8f87ec222d39be1c7dc950bb457e92dbb346bb3c23eee487049bb54d61f",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "story",
+      "nativeId": "a490743c-229b-4042-9166-03d6f84b064d",
+      "revision": 3,
+      "pageCount": 1,
+      "sha256": "5797733522e50ade123000857974a0f4381710d3bf3dc84583231feedf16fe89",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "reel",
+      "nativeId": "bca6cf3c-6e97-437d-96a5-892d94cecb63",
+      "revision": 3,
+      "pageCount": 3,
+      "sha256": "d37a4ac38544d04e30eb3ddfcc0c8284c34755983a4dadad6a42f0d993b7fef1",
+      "sourceCampaignSha256": "300f14aba394fbe986bdfc0e8baa535b615156eb0de91e02a0b64d4d5b6a1ff9"
+    }
+  ],
+  "limits": "Operator local bootstrap plus registered Studio boundary with actual Doory sessions. Studio identities are isolated test-mode fixtures, not managed Google. Native JSON copy is not a self-contained archive; browser hydration, pixels, media/cutouts and commercial licensing are separate acceptance."
+}
