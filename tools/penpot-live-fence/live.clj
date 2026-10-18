@@ -36,33 +36,35 @@
   {:kind :team :topic team-id :native-team-id team-id})
 
 (defn allowed?
-  "One bounded current check. Ungoverned personal teams stay on native ACLs.
-   The constructor callback is also required to have an interruptible <=1s I/O
-   deadline; this outer deadline denies and cancels instead of caching authority."
+  "One bounded current check. Resolve ownership before classifying personal work.
+   The constructor callback must also have interruptible <=1s I/O; this outer
+   deadline denies/cancels a stalled native lookup or authority request."
   [cfg wsp resource operation]
-  (if-not (access/governed-team? cfg (:native-team-id resource))
-    true
-    (let [work (future
-                 (try
-                   (let [{:keys [native-profile-id native-session]} (::context wsp)
-                         current (when (:id native-session)
-                                   (session/read-session (::session/manager cfg) (:id native-session)))]
-                     (and (uuid? native-profile-id)
-                          (= (:id native-session) (:id current))
-                          (= native-profile-id (:profile-id current))
-                          ;; A moved/deleted file cannot retain its old scope.
-                          (or (= :team (:kind resource))
-                              (= (:native-team-id resource)
-                                 (access/file-team (::db/pool cfg) (:topic resource))))
-                          (true? (:allowed
-                                   (access/authorize-resource cfg
-                                     {:native-profile-id native-profile-id
-                                      :native-team-id (:native-team-id resource)
-                                      :native-session (select-keys current [:id :profile-id :created-at :modified-at])
-                                      :operation operation})))))
-                   (catch Throwable _ false)))]
-      (try (true? (deref work 1000 false))
-           (finally (when-not (realized? work) (future-cancel work)))))))
+  (let [work (future
+               (try
+                 (let [same-team? (case (:kind resource)
+                                    :team true
+                                    :file (= (:native-team-id resource)
+                                             (access/file-team (::db/pool cfg) (:topic resource)))
+                                    false)]
+                   (and same-team?
+                        (if-not (access/governed-team? cfg (:native-team-id resource))
+                          true
+                          (let [{:keys [native-profile-id native-session]} (::context wsp)
+                                current (when (:id native-session)
+                                          (session/read-session (::session/manager cfg) (:id native-session)))]
+                            (and (uuid? native-profile-id)
+                                 (= (:id native-session) (:id current))
+                                 (= native-profile-id (:profile-id current))
+                                 (true? (:allowed
+                                          (access/authorize-resource cfg
+                                            {:native-profile-id native-profile-id
+                                             :native-team-id (:native-team-id resource)
+                                             :native-session (select-keys current [:id :profile-id :created-at :modified-at])
+                                             :operation operation})))))))
+                 (catch Throwable _ false)))]
+    (try (true? (deref work 1000 false))
+         (finally (when-not (realized? work) (future-cancel work))))))
 
 (defn- subscription-key [resource]
   (if (= :file (:kind resource))

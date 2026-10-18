@@ -68,6 +68,26 @@
     (with-redefs [access/file-team (fn [_ _] personal)]
       (is (false? (live/allowed? cfg wsp {:kind :file :topic file :native-team-id team} :read))))))
 
+(deftest personal-file-moved-into-governed-team-or-deleted-loses-old-classification
+  (let [{:keys [cfg wsp calls]} (fixture)
+        resource {:kind :file :topic file :native-team-id personal}
+        channel (sp/chan)
+        purged (atom [])]
+    (swap! (::ws/state wsp) assoc :app.http.websocket/file-subscription
+      {:topic file :channel channel ::live/resource resource})
+    (with-redefs [access/file-team (fn [_ _] personal)]
+      (is (live/allowed? cfg wsp resource :read))
+      (is (empty? @calls) "Unchanged personal files do not call Studio"))
+    (with-redefs [access/file-team (fn [_ _] team)
+                  mbus/purge! (fn [_ channels] (swap! purged into channels))]
+      (is (false? (live/allowed? cfg wsp resource :write)))
+      (is (false? (live/allow-output? cfg wsp {::live/resource resource :type :file-change})))
+      (is (nil? (:app.http.websocket/file-subscription @(::ws/state wsp))))
+      (is (= [channel] @purged)))
+    (with-redefs [access/file-team (fn [_ _] nil)]
+      (is (false? (live/allowed? cfg wsp resource :read))))
+    (is (empty? @calls) "A changed/deleted file is fenced before Studio admission")))
+
 (deftest pointer-must-match-authorized-current-subscription-and-client-tags-are-stripped
   (let [{:keys [cfg wsp]} (fixture)
         resource {:kind :file :topic file :native-team-id team}
