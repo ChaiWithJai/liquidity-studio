@@ -139,7 +139,8 @@ test("saved Reel motion and simulated waveform share a pausable scrubber; only p
   expect(response.status()).toBe(200);
   expect((await response.json()).artifact.viewContext.playheadSeconds).toBe(Number(paused));
   const body = response.request().postDataJSON();
-  for (const playheadSeconds of [-1, 31, '3', null]) {
+  // Twenty seconds is numerically valid but belongs to a different saved beat.
+  for (const playheadSeconds of [-1, 31, '3', null, 20]) {
     const rejected = await page.request.post(response.url(), { data: { ...body, viewContext: { ...body.viewContext, playheadSeconds } } });
     expect(rejected.status()).toBe(400);
   }

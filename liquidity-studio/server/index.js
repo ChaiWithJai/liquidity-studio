@@ -1777,6 +1777,20 @@ export function createHttpServer(
         const context = viewContext(body.viewContext);
         if (context?.playheadSeconds !== undefined && body.format !== "reel")
           throw fail(400, "Only Reel preflight has a motion playhead");
+        if (context?.playheadSeconds !== undefined) {
+          const beats = story.campaignDraft?.reel?.beats || [];
+          let frame = 0;
+          for (let index = beats.length - 1; index >= 0; index--) {
+            const start = typeof beats[index].timecode === "string"
+              ? beats[index].timecode.match(/^(\d+):(\d+)/) : null;
+            if (start && context.playheadSeconds >= Number(start[1]) * 60 + Number(start[2])) {
+              frame = index;
+              break;
+            }
+          }
+          if (context.frameIndex !== frame)
+            throw fail(400, "Reel preflight frame does not match its saved playhead");
+        }
         const lastFrame =
           body.format === "carousel" ? 3 : body.format === "reel" ? 2 : 0;
         if (context && context.frameIndex > lastFrame)
