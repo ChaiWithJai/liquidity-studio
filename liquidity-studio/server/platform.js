@@ -27,7 +27,13 @@ export function createPlatform({
       transport: editorTransport,
       now: editorNow,
     });
-  platform.workspace = (scope, repo) => new WorkspaceService({store:platform.store,identity:platform.identity,scope,repo});
+  platform.workspace = (scope, repo) =>
+    new WorkspaceService({
+      store: platform.store,
+      identity: platform.identity,
+      scope,
+      repo,
+    });
   const initialize = async (activeStore) => {
     platform.store = activeStore;
     if (authMode === "google")

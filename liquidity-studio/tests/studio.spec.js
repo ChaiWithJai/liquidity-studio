@@ -671,3 +671,34 @@ test("draft blocker link opens collapsed review and focuses the stable claim", a
   await expect(page.locator("#source-claim-collapsed-claim textarea")).toBeFocused();
   await expect(page.locator("#source-claim-collapsed-claim textarea")).toBeVisible();
 });
+
+test("calendar assignment preserves newer local text while applying revision-checked metadata", async ({page}) => {
+  await signIn(page);
+  await seed(page);
+  let release;
+  const held = new Promise(resolve => release = resolve);
+  let started;
+  const pending = new Promise(resolve => started = resolve);
+  await page.route("**/api/studio/schedule?*", async route => {
+    const body=route.request().postDataJSON();
+    expect(body.expectedRevision).toBeGreaterThan(0);
+    expect(body.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/);
+    const response=await route.fetch();
+    started();
+    await held;
+    await route.fulfill({response});
+  });
+  await page.getByLabel("Assigned day").selectOption("Thursday");
+  await page.getByRole("button",{name:"Assign to calendar",exact:true}).click();
+  await pending;
+  await page.getByLabel("Headline",{exact:true}).fill("Typing while schedule saves");
+  release();
+  await expect(page.getByRole("status").filter({hasText:"Assigned to Thursday as an undated weekday."})).toBeVisible();
+  await expect(page.getByLabel("Headline",{exact:true})).toHaveValue("Typing while schedule saves");
+  await page.getByRole("button",{name:"Save changes",exact:true}).click();
+  await expect(page.getByRole("status").filter({hasText:"Changes saved."})).toBeVisible();
+  await page.reload();
+  await page.getByRole("button",{name:"Campaign Studio",exact:true}).click();
+  await expect(page.getByLabel("Headline",{exact:true})).toHaveValue("Typing while schedule saves");
+  await expect(page.getByLabel("Assigned day")).toHaveValue("Thursday");
+});

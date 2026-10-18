@@ -466,17 +466,51 @@ export function createHttpServer(
         if (trustedTestMode) throw fail(404, "Not found");
         const service = platform.workspace(scope, repo);
         const base = "/api/studio/workspace";
-        if (route === base + "/members" && req.method === "GET") return json(200,{members:await service.members(user)});
-        if (route === base + "/query" && req.method === "POST") return json(200, await service.query(user, body));
-        if (route === base + "/calendar" && req.method === "GET") return json(200, await service.calendar(user, {startDate:url.searchParams.get("startDate"),endDate:url.searchParams.get("endDate"),timeZone:url.searchParams.get("timeZone")}));
-        if (route === base + "/mutations" && req.method === "POST") return json(200, await service.mutate(user,body));
-        const detail = route.match(/^\/api\/studio\/workspace\/stories\/([^/]+)$/);
-        if(detail && req.method === "GET") return json(200,await service.detail(user,detail[1]));
-        const operation = route.match(/^\/api\/studio\/workspace\/operations\/([^/]+)\/undo$/);
-        if(operation && req.method === "POST") return json(200,await service.undo(user,operation[1],body));
-        const view = route.match(/^\/api\/studio\/workspace\/views(?:\/([^/]+)(?:\/(delete|restore))?)?$/);
-        if(view){if(!view[1]&&req.method==='GET')return json(200,{views:await service.views.list(user)});if(req.method==='POST')return json(view[1]?200:201,await service.views.write(user,view[1],view[2]||(view[1]?'update':'create'),body));}
-        throw fail(404,"Not found");
+        if (route === base + "/members" && req.method === "GET")
+          return json(200, { members: await service.members(user) });
+        if (route === base + "/query" && req.method === "POST")
+          return json(200, await service.query(user, body));
+        if (route === base + "/calendar" && req.method === "GET")
+          return json(
+            200,
+            await service.calendar(user, {
+              startDate: url.searchParams.get("startDate"),
+              endDate: url.searchParams.get("endDate"),
+              timeZone: url.searchParams.get("timeZone"),
+            }),
+          );
+        if (route === base + "/mutations" && req.method === "POST")
+          return json(200, await service.mutate(user, body));
+        const detail = route.match(
+          /^\/api\/studio\/workspace\/stories\/([^/]+)$/,
+        );
+        if (detail && req.method === "GET")
+          return json(200, await service.detail(user, detail[1]));
+        if (route === base + "/operations" && req.method === "GET")
+          return json(200, { operations: await service.operations(user) });
+        const operation = route.match(
+          /^\/api\/studio\/workspace\/operations\/([^/]+)\/undo$/,
+        );
+        if (operation && req.method === "POST")
+          return json(200, await service.undo(user, operation[1], body));
+        const view = route.match(
+          /^\/api\/studio\/workspace\/views(?:\/([^/]+)(?:\/(delete|restore))?)?$/,
+        );
+        if (view) {
+          if (!view[1] && req.method === "GET")
+            return json(200, { views: await service.views.list(user) });
+          if (req.method === "POST")
+            return json(
+              view[1] ? 200 : 201,
+              await service.views.write(
+                user,
+                view[1],
+                view[2] || (view[1] ? "update" : "create"),
+                body,
+              ),
+            );
+        }
+        throw fail(404, "Not found");
       }
       if (route === "/api/studio/bootstrap" && req.method === "GET")
         return json(200, {
@@ -735,16 +769,54 @@ export function createHttpServer(
         });
       }
       if (route === "/api/studio/schedule" && req.method === "POST") {
-        if(Object.keys(body).some(key=>!['storyId','status','scheduledDay','expectedRevision','idempotencyKey'].includes(key)) || body.status!=="Scheduled") throw fail(400,"Only an undated Scheduled assignment is supported");
-        if(trustedTestMode){
-          workspaceIdempotencyKey(body.idempotencyKey);workspaceRevision(body.expectedRevision);
-          const story=(await repo.listBacklog()).find(story=>story.id===body.storyId);
-          if(!story)throw fail(404,"Story not found");if((story.revision||0)!==body.expectedRevision)throw fail(409,"Story revision changed");
-          const result=await backlog.scheduleStory(body);result.story.revision=(story.revision||0)+1;return json(200,result);
+        if (
+          Object.keys(body).some(
+            (key) =>
+              ![
+                "storyId",
+                "status",
+                "scheduledDay",
+                "expectedRevision",
+                "idempotencyKey",
+              ].includes(key),
+          ) ||
+          body.status !== "Scheduled"
+        )
+          throw fail(400, "Only an undated Scheduled assignment is supported");
+        if (trustedTestMode) {
+          workspaceIdempotencyKey(body.idempotencyKey);
+          workspaceRevision(body.expectedRevision);
+          const story = (await repo.listBacklog()).find(
+            (story) => story.id === body.storyId,
+          );
+          if (!story) throw fail(404, "Story not found");
+          if ((story.revision || 0) !== body.expectedRevision)
+            throw fail(409, "Story revision changed");
+          const result = await backlog.scheduleStory(body);
+          result.story.revision = (story.revision || 0) + 1;
+          return json(200, result);
         }
-        const receipt=await platform.workspace(scope,repo).mutate(user,{idempotencyKey:body.idempotencyKey,changes:[{kind:'legacy.schedule',storyId:body.storyId,expectedRevision:body.expectedRevision,scheduledDay:body.scheduledDay}]});
-        const outcome=receipt.outcomes[0];if(outcome.status!=='applied')throw fail(outcome.code,outcome.message);
-        return json(200,{...(await backlog.getStudioBootstrap()),story:(await repo.listBacklog()).find(story=>story.id===body.storyId),receipt});
+        const receipt = await platform.workspace(scope, repo).mutate(user, {
+          idempotencyKey: body.idempotencyKey,
+          changes: [
+            {
+              kind: "legacy.schedule",
+              storyId: body.storyId,
+              expectedRevision: body.expectedRevision,
+              scheduledDay: body.scheduledDay,
+            },
+          ],
+        });
+        const outcome = receipt.outcomes[0];
+        if (outcome.status !== "applied")
+          throw fail(outcome.code, outcome.message);
+        return json(200, {
+          ...(await backlog.getStudioBootstrap()),
+          story: (await repo.listBacklog()).find(
+            (story) => story.id === body.storyId,
+          ),
+          receipt,
+        });
       }
       if (route === "/api/studio/generate-campaign" && req.method === "POST")
         return json(200, {

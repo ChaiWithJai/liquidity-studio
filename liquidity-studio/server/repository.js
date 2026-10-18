@@ -439,7 +439,11 @@ export class ScopedRepository {
     const data = await this.read();
     if (data.workspace) {
       delete data.workspace.receipts;
-      data.workspace=portableWorkspace(data.workspace,new Set(data.backlog.map(story=>story.id)),this.scope);
+      data.workspace = portableWorkspace(
+        data.workspace,
+        new Set(data.backlog.map((story) => story.id)),
+        this.scope,
+      );
       delete data.workspace.receipts;
     }
     data.telemetry.backpropDataset =
@@ -627,11 +631,18 @@ export class ScopedRepository {
         .filter((key) => bundle.data[key] !== undefined)
         .map((key) => [key, bundle.data[key]]),
     );
-    if(data.workspace) data.workspace=portableWorkspace(data.workspace,new Set(data.backlog.map(story=>story.id)),bundle.scope,{remapTo:remapScope?this.scope:undefined});
+    if (data.workspace)
+      data.workspace = portableWorkspace(
+        data.workspace,
+        new Set(data.backlog.map((story) => story.id)),
+        bundle.scope,
+        { remapTo: remapScope ? this.scope : undefined },
+      );
     for (const job of data.jobs) {
       if (job.status === "RUNNING") job.status = "INTERRUPTED";
     }
     if (remapScope) {
+      for (const story of data.backlog) delete story.assigneeId;
       for (const record of records) {
         if (record.organizationId)
           record.organizationId = this.scope.organizationId;
