@@ -33,12 +33,12 @@
     busy=true;styleError='';styleNotice='';
     try{const value=await request('/api/studio/penpot/designs/styles',{method:'POST',body:JSON.stringify(styleAttempt)});if(!alive)return;styleReceipt=value;styleCapability=value.nativeActionCapability||'';styleRejected=false;styleNotice=value.status==='native-state-verified'?'Saved native colors were verified.':'Color update prepared. Apply the one-use code in the linked Penpot design, then check saved colors.';if(value.status==='native-state-verified'){styleAttempt=null;await load();}}
     catch(failure){if(alive){styleError=failure.message;styleRejected=Number.isInteger(failure.status)&&failure.status>=400&&failure.status<500;if(styleRejected){styleAttempt=null;styleCapability='';}else styleNotice='The reply was interrupted. Retry this same color update or check its saved outcome.';}}
-    finally{if(alive)busy=false;}
+    finally{if(alive){busy=false;if(refreshPending){refreshPending=false;void load();}}}
   }
   async function checkStyles(){
     if(busy||loading)return;busy=true;styleError='';
     try{if(savedStyleAction){const value=await request(`/api/studio/penpot/designs/styles/${savedStyleAction.id}/reconcile`,{method:'POST',body:'{}'});if(!alive)return;styleReceipt=value;if(value.status==='native-state-verified'){styleAttempt=null;styleCapability='';styleNotice='Saved native colors were verified. Your design remains the same file.';}else styleNotice='The new colors are not saved yet. Apply the pending update in Penpot before checking again.';}await load();}
-    catch(failure){if(alive)styleError=failure.message;}finally{if(alive)busy=false;}
+    catch(failure){if(alive)styleError=failure.message;}finally{if(alive){busy=false;if(refreshPending){refreshPending=false;void load();}}}
   }
   async function create() {
     if (busy || loading) return;
