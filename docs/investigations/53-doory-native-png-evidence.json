@@ -1,0 +1,24 @@
+{
+  "checkpointDate": "2026-10-18",
+  "nativeSourceCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "nativeDesignId": "15472f99-6e64-47e3-a9de-537de9439672",
+  "scope": "controlled CWJ infographic fixture",
+  "export": {
+    "format": "PNG",
+    "scale": 1,
+    "width": 1080,
+    "height": 1350,
+    "bytes": 150788,
+    "sha256": "23567ba8268b95e4751916867d52c4084a103dd3b2ca35c58f658d29313be906"
+  },
+  "operatorObserved": [
+    "browser native reload",
+    "Noto Sans Devanagari/Mona Sans/Inter FontFace loaded",
+    "Sanskrit Om U+0950 visibly rendered",
+    "human-edited heading preserved",
+    "three metric rows and supplemental copy visible",
+    "explicit missing-subject placeholder rect retained"
+  ],
+  "independentVerification": "PNG signature, dimensions, byte count and SHA256 independently checked from downloaded bytes",
+  "limits": "One actual infographic PNG export. Does not establish all formats, browser edit/save on every campaign, video/cutout execution, a native portable asset archive or hosted commercial readiness."
+}
