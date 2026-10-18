@@ -1,0 +1,50 @@
+[
+  {
+    "family": "Mona Sans",
+    "weight": 400,
+    "sourceFile": "MonaSans-Regular.otf",
+    "bytes": 113784,
+    "sourceSha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39",
+    "servedSha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39",
+    "sourceBytesMatchServed": true,
+    "registeredVariantPresent": true,
+    "licenseFile": "MonaSans-OFL.txt",
+    "licenseSha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+  },
+  {
+    "family": "Mona Sans",
+    "weight": 700,
+    "sourceFile": "MonaSans-Bold.otf",
+    "bytes": 116248,
+    "sourceSha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641",
+    "servedSha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641",
+    "sourceBytesMatchServed": true,
+    "registeredVariantPresent": true,
+    "licenseFile": "MonaSans-OFL.txt",
+    "licenseSha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+  },
+  {
+    "family": "Inter",
+    "weight": 400,
+    "sourceFile": "InterVariable.ttf",
+    "bytes": 879708,
+    "sourceSha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+    "servedSha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+    "sourceBytesMatchServed": true,
+    "registeredVariantPresent": true,
+    "licenseFile": "Inter-LICENSE.txt",
+    "licenseSha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+  },
+  {
+    "family": "Instrument Serif",
+    "weight": 400,
+    "sourceFile": "InstrumentSerif-Regular.ttf",
+    "bytes": 70012,
+    "sourceSha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88",
+    "servedSha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88",
+    "sourceBytesMatchServed": true,
+    "registeredVariantPresent": true,
+    "licenseFile": "InstrumentSerif-OFL.txt",
+    "licenseSha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+  }
+]

@@ -1,0 +1,31 @@
+{
+  "fileId": "e749cfb6-8499-8002-8008-ce64b590bf0c",
+  "revision": 5,
+  "pages": 9,
+  "headingId": "bb08ef28-bb14-56be-a4f2-cc2db99821e7",
+  "headingText": [
+    "NATIVE ADAPTER BROWSER VERIFIED"
+  ],
+  "headingNativeType": "text",
+  "badgeAppliedTokens": {
+    "fill": "studio.color1"
+  },
+  "badgeParagraphFill": [
+    {
+      "fillColor": "#e85d04",
+      "fillOpacity": 1
+    }
+  ],
+  "tokenColor1": {
+    "$value": "#E85D04",
+    "$type": "color",
+    "$description": ""
+  },
+  "activeThemes": [
+    "Studio/Brand"
+  ],
+  "activeSets": [
+    "Studio"
+  ],
+  "boundary": "Independent read-only model after operator browser native edit and token edit; no mutation by this verifier"
+}

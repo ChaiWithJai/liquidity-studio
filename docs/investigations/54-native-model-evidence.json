@@ -1,0 +1,158 @@
+[
+  {
+    "brand": "liquidity_desk",
+    "fileId": "e749cfb6-8499-8002-8008-ce64b58b8398",
+    "revision": 1,
+    "pages": [
+      {
+        "format": "infographic",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "story",
+        "width": 1080,
+        "height": 1920,
+        "timecode": null
+      },
+      {
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "timecode": {
+          "startSeconds": 0,
+          "endSeconds": 3
+        }
+      },
+      {
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "timecode": {
+          "startSeconds": 3,
+          "endSeconds": 15
+        }
+      },
+      {
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "timecode": {
+          "startSeconds": 15,
+          "endSeconds": 30
+        }
+      }
+    ],
+    "nativeText": 50,
+    "mainComponents": 9,
+    "svgRaw": 0,
+    "activeTokenSet": "Studio",
+    "activeTheme": "Studio/Brand",
+    "completeSourceCampaignPersisted": true,
+    "stableLogicalIdsPersisted": true,
+    "boundary": "Native model GET only; visual/live palette/archive/export acceptance pending"
+  },
+  {
+    "brand": "vedic_dharma",
+    "fileId": "e749cfb6-8499-8002-8008-ce64b590bf0c",
+    "revision": 1,
+    "pages": [
+      {
+        "format": "infographic",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "carousel",
+        "width": 1080,
+        "height": 1350,
+        "timecode": null
+      },
+      {
+        "format": "story",
+        "width": 1080,
+        "height": 1920,
+        "timecode": null
+      },
+      {
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "timecode": {
+          "startSeconds": 0,
+          "endSeconds": 3
+        }
+      },
+      {
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "timecode": {
+          "startSeconds": 3,
+          "endSeconds": 15
+        }
+      },
+      {
+        "format": "reel",
+        "width": 1080,
+        "height": 1920,
+        "timecode": {
+          "startSeconds": 15,
+          "endSeconds": 30
+        }
+      }
+    ],
+    "nativeText": 50,
+    "mainComponents": 9,
+    "svgRaw": 0,
+    "activeTokenSet": "Studio",
+    "activeTheme": "Studio/Brand",
+    "completeSourceCampaignPersisted": true,
+    "stableLogicalIdsPersisted": true,
+    "boundary": "Native model GET only; visual/live palette/archive/export acceptance pending"
+  }
+]
