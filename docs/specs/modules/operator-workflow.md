@@ -1,12 +1,14 @@
-# Spec: durable-storage
+# Spec: operator-workflow
 
-Status: proposed, awaiting specification approval. Module ID: `durable-storage` in [CAPABILITY-MAP.md](CAPABILITY-MAP.md). The module order is approved; this specification is not yet approved. Companion [pathway](docs/TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](docs/TENANCY-EVIDENCE.md) separates actual implementation from requests.
+Historical proposal, retained from the 2026-10-17 planning baseline. Its status and implementation descriptions below are historical, not current release claims or new approval gates. See the [current system map](../../architecture/system-map.md) and [documentation index](../../README.md).
+
+Status: proposed, awaiting specification approval. Module ID: `operator-workflow` in [CAPABILITY-MAP.md](../../architecture/capability-map.md). The module order is approved; this specification is not yet approved. Companion [pathway](../../TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](../../TENANCY-EVIDENCE.md) separates actual implementation from requests.
 
 ## Objective
 
-Persist organization/brand-owned content and telemetry with restart recovery and a portable backup/import contract.
+Provide source-backed multi-brand editing, generation, calendar assignment and real exports for founder and marketer.
 
-Dependencies: container-runtime; must expose scoped repository contracts for identity-tenant-access.
+Dependencies: identity-tenant-access; produces pilot acceptance workflows for gcp-pilot.
 
 ## Tech stack and project structure
 
@@ -46,9 +48,10 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Success criteria
 
-- Choose and document a local-first transactional storage engine and asset store; provider-specific naming must not imply unimplemented cloud integration.
-- Store organization/brand ownership, stable IDs, draft versions and generation/edit/export lineage; reject orphaned or mixed-scope imports.
-- Rehearse backup, restart, schema upgrade and restore with matching application versions, record counts and checksums; publish recovery limits.
+- Both approved brand presets coexist with separate brand revisions, strategies, value groups/pillars and source records; CWJ identity follows the pathway document.
+- No fabricated source defaults or unreviewed clinical assertions enter generation/publication. Provenance and degraded/provider failure states remain visible.
+- Saved edits survive navigation, reload and restart; actual downloadable artifacts are authorized and calendar assignment is visibly distinct from publishing.
+- Run real browser scenarios, negative scope tests, complete feedback export and idempotent authorized batch tests before operator acceptance.
 
 ## Boundaries
 
@@ -58,6 +61,6 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Open questions
 
-Storage engine and schema, asset locations, encryption/key custody, backup retention, acceptable recovery point/time and concurrency/conflict policy.
+Exact approved CWJ strategy/source text, export formats, publishing integrations if any, conflict resolution and editorial approval responsibilities.
 
 Review of this specification is the next gate. No implementation tasks or architecture code are authorized by this document alone.

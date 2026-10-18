@@ -1,5 +1,7 @@
 # Liquidity Studio capability map
 
+Historical planning and evidence snapshot. For current navigation use the [capability map](../architecture/capability-map.md). Later native-access addenda are retained as recorded.
+
 Status: module order and epic execution authorized by the founder on 2026-10-17; Organization → Brand clarification implemented in the delivery branch. Local acceptance and independent review are underway, with final remote CI and cloud deployment evidence still required. GitHub Issues is the task source of truth, with #12 as the rolling tracker and #18/#19 as sprint items 12/13.
 
 | Module id | Responsibility | Depends on | Issues |
@@ -58,4 +60,4 @@ The original tenant handoff was a specification request. Multi-brand code now ha
 
 ## Native access module entry (2026-10-18)
 
-The remaining native-editor work for `identity-tenant-access` is tracked in [issue 52](https://github.com/ChaiWithJai/liquidity-studio/issues/52). Use its [approved native access specification](docs/specs/identity-tenant-access-native-editor.md), [pinned boundary audit](liquidity-studio/docs/investigations/52-native-command-boundary-audit.md), and [proposed Phase 2 plan](docs/plans/identity-tenant-access-native-editor/tasks/plan.md). This explicit module entry supersedes filename guessing; root `tasks/` remains Issue 56. Specification approval does not establish implemented native isolation or authorize this plan's execution. Earlier dated delivery descriptions above remain historical.
+The remaining native-editor work for `identity-tenant-access` is tracked in [issue 52](https://github.com/ChaiWithJai/liquidity-studio/issues/52). Use its [approved native access specification](../specs/identity-tenant-access-native-editor.md), [pinned boundary audit](../../liquidity-studio/docs/investigations/52-native-command-boundary-audit.md), and [proposed Phase 2 plan](../plans/identity-tenant-access-native-editor/tasks/plan.md). This explicit module entry supersedes filename guessing; root `tasks/` remains Issue 56. Specification approval does not establish implemented native isolation or authorize this plan's execution. Earlier dated delivery descriptions above remain historical.

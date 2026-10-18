@@ -1,12 +1,14 @@
-# Spec: identity-tenant-access
+# Spec: durable-storage
 
-Status: proposed, awaiting specification approval. Module ID: `identity-tenant-access` in [CAPABILITY-MAP.md](CAPABILITY-MAP.md). The module order is approved; this specification is not yet approved. Companion [pathway](docs/TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](docs/TENANCY-EVIDENCE.md) separates actual implementation from requests.
+Historical proposal, retained from the 2026-10-17 planning baseline. Its status and implementation descriptions below are historical, not current release claims or new approval gates. See the [current system map](../../architecture/system-map.md) and [documentation index](../../README.md).
+
+Status: proposed, awaiting specification approval. Module ID: `durable-storage` in [CAPABILITY-MAP.md](../../architecture/capability-map.md). The module order is approved; this specification is not yet approved. Companion [pathway](../../TENANCY-PATHWAY.md) defines shared authorization, migration, rollback and ejection requirements; [audit](../../TENANCY-EVIDENCE.md) separates actual implementation from requests.
 
 ## Objective
 
-Allow founder and marketer to collaborate across authorized brands without cross-organization or cross-brand access.
+Persist organization/brand-owned content and telemetry with restart recovery and a portable backup/import contract.
 
-Dependencies: durable-storage; supplies authenticated scoped context to operator-workflow.
+Dependencies: container-runtime; must expose scoped repository contracts for identity-tenant-access.
 
 ## Tech stack and project structure
 
@@ -46,9 +48,9 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Success criteria
 
-- Organization owns brands; organization membership and narrower brand grants are distinct. Brand presets cannot authorize a request.
-- Every protected API/object/asset/cache/export/job uses server-authorized immutable context; absent, foreign or revoked grants deny with no side effects.
-- Pass negative API and browser tests with two organizations and two brands each; no first-story fallback, process-global selected brand or unaudited platform override.
+- Choose and document a local-first transactional storage engine and asset store; provider-specific naming must not imply unimplemented cloud integration.
+- Store organization/brand ownership, stable IDs, draft versions and generation/edit/export lineage; reject orphaned or mixed-scope imports.
+- Rehearse backup, restart, schema upgrade and restore with matching application versions, record counts and checksums; publish recovery limits.
 
 ## Boundaries
 
@@ -58,6 +60,6 @@ Use Node's built-in test runner for service/adapter contracts, isolated ephemera
 
 ## Open questions
 
-Approve role/export/invite matrix, owner recovery and revocation semantics. Verify Clerk integration/exit requirements from official docs before selecting its SDK or billing features.
+Storage engine and schema, asset locations, encryption/key custody, backup retention, acceptable recovery point/time and concurrency/conflict policy.
 
 Review of this specification is the next gate. No implementation tasks or architecture code are authorized by this document alone.
