@@ -621,6 +621,23 @@ export class NativeEditorService {
     await this.authorize(actor);
     return { ...dto, base64: bytes.toString("base64") };
   }
+  /** Trusted adapter-only transfer DTO. Storage references and credentials stay
+   * private; the immutable storage generation is bound independently of bytes.
+   * This method is not an HTTP route and does not expand asset access.
+   */
+  async assetForNativeTransfer(actor, id, withBytes = true) {
+    const dto = await this.asset(actor, id, withBytes);
+    const asset = await this.store.get(`${this.prefix}asset:${id}`);
+    if (!asset || asset.sha256 !== dto.sha256)
+      throw fail(409, "Private asset changed during native transfer");
+    const generation = asset.artifactRef
+      ? asset.artifactRef.generation
+      : `local:${asset.sha256}`;
+    if (typeof generation !== "string" || !generation.length || generation.length > 200)
+      throw fail(422, "Private asset storage generation is unavailable");
+    await this.authorize(actor);
+    return { ...dto, generation };
+  }
   async resolveAsset(actor, id, input) {
     exact(input, ["intent", "documentId", "expectedNativeRevision", "generationId"]);
     if (!["library-preview", "document-usage"].includes(input.intent))

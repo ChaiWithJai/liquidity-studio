@@ -1,0 +1,69 @@
+{
+  "source": "99233d5b608659a4d63ce0c7deecc6e45c2da7c0",
+  "method": "Actual Neo native owner export; deterministic authorized embedding; standalone file:// screenshot inspection",
+  "results": [
+    {
+      "brand": "finance",
+      "bytes": 407568,
+      "sha256": "65b2e3f82f29bb1a73500a9b2d856285c1e26253a9bc242679c7c1fc6feb533e",
+      "textNodes": 6,
+      "protectedURLs": 0,
+      "resources": [
+        {
+          "contentType": "font/woff",
+          "size": 67680,
+          "sha256": "0d5cef74b39b09f4c7be39d8f567f3d6cd1171da85ebad58524102559ef2310f"
+        },
+        {
+          "contentType": "font/woff",
+          "size": 33276,
+          "sha256": "08e70c726d977ef8ee57d29b16fdc68e62fa24f7b9f6ab484fbedc0f383b8b48"
+        },
+        {
+          "contentType": "image/png",
+          "size": 198985,
+          "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d"
+        }
+      ],
+      "standaloneNeoVisual": "portrait and native serif/sans or cultural glyphs visible",
+      "anonymousEmbeddedURL": 401,
+      "foreignManagedNativeQA2EmbeddedURL": 403,
+      "rawOriginalOutputOwner": 403
+    },
+    {
+      "brand": "cultural",
+      "bytes": 942697,
+      "sha256": "e9837693963bc11ccc0404f9581558e061d4ffe8b0eeb71daf5710c584ae2db7",
+      "textNodes": 7,
+      "protectedURLs": 0,
+      "resources": [
+        {
+          "contentType": "font/woff",
+          "size": 432716,
+          "sha256": "953d38e4d38f94f97a35ef6879672c4b4e768db46d463bcb1c70210f68e15ce5"
+        },
+        {
+          "contentType": "font/woff",
+          "size": 68756,
+          "sha256": "e24a5d77ba4a59f0bc9992c0be8475c0a09e1adfe30d4ceef7d7bed6c8b64a61"
+        },
+        {
+          "contentType": "image/png",
+          "size": 198985,
+          "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d"
+        }
+      ],
+      "standaloneNeoVisual": "portrait and native serif/sans or cultural glyphs visible",
+      "anonymousEmbeddedURL": 401,
+      "foreignManagedNativeQA2EmbeddedURL": 403,
+      "rawOriginalOutputOwner": 403
+    }
+  ],
+  "privacyCaveat": "Initial old-public-font browser-cache read returned200/max-age; forced network cache:no-store returned403/private-no-store. No revocation of already-delivered copies claimed.",
+  "qa1Restored": true,
+  "rollback": "Frontend base restored before callback41991 stopped",
+  "PNGStatus": "cultural image paint failure remains separate/unresolved",
+  "recordedAt": "2026-10-18T08:19:24.326900+00:00",
+  "authorityBoundary": "Managed Google operator configuration plus actual native-owner browser; no normal Google picker or Nicole sign-in claim",
+  "remaining": "Current scoped Penpot membership revocation readback pending; cultural PNG paint and native archive/fonts remain separate"
+}

@@ -1,0 +1,12 @@
+# Reviewed opt-in overlay only. The callback is the owned Studio candidate on
+# port39038; maintain no other backend/exporter/storage published ports.
+# No service, image, network or volume is created by this overlay.
+services:
+  penpot-frontend:
+    volumes:
+      - type: bind
+        source: ../../tools/penpot-private-ingress/server.conf
+        target: /etc/nginx/overrides/server.d/studio-private-assets.conf
+        read_only: true
+        bind:
+          create_host_path: false

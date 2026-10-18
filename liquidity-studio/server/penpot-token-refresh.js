@@ -3,6 +3,10 @@ import { isDeepStrictEqual } from "node:util";
 import { fail } from "./auth.js";
 import { compileMultimodalBundle } from "./multimodal-contract.js";
 import { compilePenpotNative } from "./penpot-native.js";
+import {
+  penpotRasterFields,
+  validatePenpotRasterCommand,
+} from "./penpot-action-ledger.js";
 
 const FIELDS = [
   "operation",
@@ -37,6 +41,9 @@ export class PenpotTokenRefreshTransport {
     ttlMs = 60_000,
     onIssued = async () => {},
     onVerified = async () => {},
+    prepareRaster = null,
+    revalidateRaster = null,
+    privateRasterSupported = false,
   }) {
     if (
       typeof onIssued !== "function" ||
@@ -55,10 +62,16 @@ export class PenpotTokenRefreshTransport {
     this.now = now;
     this.ttlMs = ttlMs;
     this.pending = new Map();
+    this.rasterPreparing = new Set();
     this.onIssued = onIssued;
     this.onVerified = onVerified;
+    this.prepareRaster = prepareRaster;
+    this.revalidateRaster = revalidateRaster;
+    this.privateRasterSupported = privateRasterSupported === true;
   }
   validateCommand({ binding, resource, action, command }) {
+    const raster = command?.operation === "import-private-raster";
+    const fields = raster ? penpotRasterFields : FIELDS;
     if (
       binding.adapter !== "penpot" ||
       binding.editorVersion !== "2.18.3" ||
@@ -72,9 +85,11 @@ export class PenpotTokenRefreshTransport {
       !command ||
       Array.isArray(command) ||
       typeof command !== "object" ||
-      Object.keys(command).some((key) => !FIELDS.includes(key)) ||
-      FIELDS.some((key) => !(key in command)) ||
-      command.operation !== "refresh-brand-tokens" ||
+      Object.keys(command).some((key) => !fields.includes(key)) ||
+      fields.some((key) => !(key in command)) ||
+      !["refresh-brand-tokens", "import-private-raster"].includes(
+        command.operation,
+      ) ||
       !Number.isInteger(command.expectedRevision) ||
       command.expectedRevision < 1 ||
       !Number.isInteger(command.expectedNativeRevision) ||
@@ -86,6 +101,17 @@ export class PenpotTokenRefreshTransport {
       !/^[a-f0-9]{64}$/.test(command.expectedBrandRevision)
     )
       throw fail(400, "Invalid Penpot token refresh command");
+    if (
+      raster &&
+      (!this.privateRasterSupported ||
+        typeof this.prepareRaster !== "function" ||
+        typeof this.revalidateRaster !== "function")
+    )
+      throw fail(
+        422,
+        "Private native raster delivery is unsupported by the current native server",
+      );
+    if (raster) validatePenpotRasterCommand(command);
     return structuredClone(command);
   }
   async context(input) {
@@ -134,8 +160,12 @@ export class PenpotTokenRefreshTransport {
       })),
     };
   }
-  async snapshot(input, manifest, colors) {
-    const snapshot = await this.nativeSnapshot(input, { manifest, colors });
+  async snapshot(input, manifest, colors, raster = null) {
+    const snapshot = await this.nativeSnapshot(input, {
+      manifest,
+      colors,
+      raster,
+    });
     if (
       snapshot.ownerPrincipal !== manifest.ownerPrincipal ||
       snapshot.fileId !== manifest.fileId ||
@@ -150,6 +180,28 @@ export class PenpotTokenRefreshTransport {
       if (row.expiresAt <= this.now()) this.pending.delete(key);
   }
   async execute(input) {
+    this.validateCommand(input);
+    if (input.command.operation !== "import-private-raster")
+      return this.issue(input);
+    const id = input.durableActionId;
+    if (
+      typeof id !== "string" ||
+      !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(id)
+    )
+      throw fail(400, "Durable server raster reservation required");
+    this.prune();
+    if (this.rasterPreparing.has(id))
+      throw fail(409, "This saved image action is already preparing");
+    if (this.pending.size + this.rasterPreparing.size >= 100)
+      throw fail(429, "Native action queue full");
+    this.rasterPreparing.add(id);
+    try {
+      return await this.issue(input);
+    } finally {
+      this.rasterPreparing.delete(id);
+    }
+  }
+  async issue(input) {
     this.validateCommand(input);
     this.prune();
     if (this.pending.size >= 100) throw fail(429, "Native action queue full");
@@ -172,10 +224,16 @@ export class PenpotTokenRefreshTransport {
     );
     if (snapshot.revision !== input.command.expectedNativeRevision)
       throw fail(409, "Native revision changed");
+    const raster =
+      input.command.operation === "import-private-raster"
+        ? await this.prepareRaster(input, context, snapshot)
+        : null;
+    if (raster && !isDeepStrictEqual(await this.context(input), context))
+      throw fail(409, "Source or registration changed before action issue");
     await input.reauthorize();
     const capability = randomBytes(32).toString("base64url");
     const receipt = {
-      id: randomUUID(),
+      id: raster ? input.durableActionId : randomUUID(),
       status: "pending-native-action",
       editorialReviewRequired: true,
       publicationApproved: false,
@@ -188,6 +246,10 @@ export class PenpotTokenRefreshTransport {
     // No await separates this capacity check from insertion. Concurrent context
     // lookups may all pass the inexpensive admission check above.
     this.prune();
+    if (raster)
+      for (const [key, row] of this.pending)
+        if (row.input.durableActionId === input.durableActionId)
+          this.pending.delete(key);
     if (this.pending.size >= 100) throw fail(429, "Native action queue full");
     this.pending.set(digest(capability), {
       input,
@@ -195,6 +257,7 @@ export class PenpotTokenRefreshTransport {
       receipt,
       expiresAt: receipt.expiresAt,
       state: "pending",
+      raster,
     });
     try {
       await this.onIssued({
@@ -231,6 +294,7 @@ export class PenpotTokenRefreshTransport {
     row.state = "checking";
     try {
       const current = await this.context(row.input);
+      if (row.raster) await this.revalidateRaster(row.input, row.raster);
       if (
         !sameIdentity(current.bundle, row.context.bundle) ||
         !isDeepStrictEqual(current.manifest, row.context.manifest)
@@ -258,6 +322,20 @@ export class PenpotTokenRefreshTransport {
       this.lookup(capability);
       row.state = "claimed";
       row.acknowledgement = randomBytes(32).toString("base64url");
+      if (row.raster)
+        return {
+          operation: "import-private-raster",
+          receiptId: row.receipt.id,
+          expiresAt: row.receipt.expiresAt,
+          fileId,
+          ownerPrincipal,
+          editorVersion: "2.18.3",
+          pageId: row.input.command.pageId,
+          frameId: row.input.command.frameId,
+          placement: structuredClone(row.input.command.placement),
+          media: structuredClone(row.raster.media),
+          acknowledgement: row.acknowledgement,
+        };
       return {
         receiptId: row.receipt.id,
         fileId,
@@ -288,6 +366,7 @@ export class PenpotTokenRefreshTransport {
     row.state = "verifying";
     try {
       const current = await this.context(row.input);
+      if (row.raster) await this.revalidateRaster(row.input, row.raster);
       if (
         !sameIdentity(current.bundle, row.context.bundle) ||
         !isDeepStrictEqual(current.manifest, row.context.manifest)
@@ -300,17 +379,21 @@ export class PenpotTokenRefreshTransport {
         row.input,
         current.manifest,
         current.colors,
+        row.raster ? { ...row.raster, receiptId: row.receipt.id } : null,
       );
       if (
         snapshot.revision <= row.input.command.expectedNativeRevision ||
-        !isDeepStrictEqual(
-          snapshot.tokenValues,
-          current.colors.map((color) => color.hex),
-        ) ||
-        snapshot.boundPaintsMatch !== true
+        (row.raster
+          ? snapshot.imageMatches !== true ||
+            snapshot.originalsPreserved !== true
+          : !isDeepStrictEqual(
+              snapshot.tokenValues,
+              current.colors.map((color) => color.hex),
+            ) || snapshot.boundPaintsMatch !== true)
       )
         throw fail(409, "Native paint propagation not yet verified");
       await row.input.reauthorize();
+      if (row.raster) await this.revalidateRaster(row.input, row.raster);
       this.lookup(capability);
       const finalContext = await this.context(row.input);
       if (

@@ -1,0 +1,65 @@
+{
+  "method": "Actual Neo fresh network reads, real native QA1 owner; operator-managed Google fixture membership only",
+  "source": "99233d5b608659a4d63ce0c7deecc6e45c2da7c0",
+  "before": {
+    "nativeOwnerVerified": true,
+    "observedAt": "2026-10-18T08:28:57.404Z",
+    "reads": [
+      {
+        "brand": "finance",
+        "cache": "no-cache, private, no-store",
+        "size": 198985,
+        "status": 200
+      },
+      {
+        "brand": "cultural",
+        "cache": "no-cache, private, no-store",
+        "size": 198985,
+        "status": 200
+      }
+    ]
+  },
+  "revoked": {
+    "observedAt": "2026-10-18T08:29:06.894Z",
+    "reads": [
+      {
+        "brand": "finance",
+        "cache": "private, no-store",
+        "status": 403
+      },
+      {
+        "brand": "cultural",
+        "cache": "no-cache, private, no-store",
+        "status": 200
+      }
+    ]
+  },
+  "restoredAndNaturalExpiry": {
+    "expiredOutputs": [
+      {
+        "actuallyExpired": true,
+        "brandId": "brand_default",
+        "cache": "no-store, private, no-store",
+        "expiresAt": "2026-10-18T08:25:24.555Z",
+        "status": 403
+      },
+      {
+        "actuallyExpired": true,
+        "brandId": "brand_vedic",
+        "cache": "no-store, private, no-store",
+        "expiresAt": "2026-10-18T08:26:59.470Z",
+        "status": 403
+      }
+    ],
+    "observedAt": "2026-10-18T08:29:14.813Z",
+    "restoredFinance": 200
+  },
+  "operatorReceipt": {
+    "identityHashRestoredExactly": true,
+    "otherRecordChanges": 0,
+    "providerMutation": false,
+    "rolesChanged": false,
+    "clockAdvanced": false
+  },
+  "rollback": "Frontend upstream base restored before callback stopped; no export or native modification"
+}

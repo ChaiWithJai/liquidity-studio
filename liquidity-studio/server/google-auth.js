@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 import { IdentityService, fail } from "./auth.js";
 
 function email(value) {
@@ -75,6 +76,7 @@ export class GoogleIdentityService extends IdentityService {
     this.configuration = configuration;
     this.verifier = verifyIdToken;
     this.lookupJobUser = lookupJobUser;
+    this.managedLookupPhases = new AsyncLocalStorage();
     const baseReady = this.ready;
     this.ready = (async () => {
       await baseReady;
@@ -161,6 +163,35 @@ export class GoogleIdentityService extends IdentityService {
       })();
     return this.managedAuthPromise;
   }
+  /** Trusted, finite server phase only. Never caches an authorization decision.
+   * A later phase/request performs a fresh provider lookup; local identity and
+   * approval-time checks still run on every authorizeJobActor invocation.
+   */
+  async runManagedJobLookupPhase(work) {
+    if (typeof work !== "function")
+      throw new TypeError("Authority phase required");
+    const phase = { active: true, pending: new Map() };
+    return this.managedLookupPhases.run(phase, async () => {
+      try {
+        return await work();
+      } finally {
+        phase.active = false;
+        phase.pending.clear();
+      }
+    });
+  }
+  async lookupManagedJobUser(address) {
+    const lookup = async () =>
+      this.lookupJobUser
+        ? this.lookupJobUser(address)
+        : (await this.getManagedAuth()).getUserByEmail(address);
+    const phase = this.managedLookupPhases.getStore();
+    if (!phase?.active) return lookup();
+    const key = email(address);
+    if (!phase.pending.has(key))
+      phase.pending.set(key, Promise.resolve().then(lookup));
+    return phase.pending.get(key);
+  }
   async authorizeJobActor(id, approvedAt) {
     await this.ready;
     const user = (await this.store.get("identity")).users.find(
@@ -176,9 +207,7 @@ export class GoogleIdentityService extends IdentityService {
       throw fail(403, "Job principal is no longer allowed");
     let managed;
     try {
-      managed = this.lookupJobUser
-        ? await this.lookupJobUser(user.email)
-        : await (await this.getManagedAuth()).getUserByEmail(user.email);
+      managed = await this.lookupManagedJobUser(user.email);
     } catch {
       throw fail(403, "Managed Google account could not be verified");
     }

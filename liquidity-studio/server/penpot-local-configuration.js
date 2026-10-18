@@ -33,6 +33,7 @@ export async function loadPenpotLocalConfiguration(path, env = process.env) {
       "sessions",
       "manifests",
       "transportMode",
+      "legacyMedia",
     ]) ||
     value.version !== 1 ||
     !Array.isArray(value.sessions) ||
@@ -100,5 +101,52 @@ export async function loadPenpotLocalConfiguration(path, env = process.env) {
   }
   if (targets.some((target) => !manifests.has(target.id)))
     throw new Error("Every native target needs its private verified manifest");
-  return { targets, sessions, manifests, transportMode };
+  const legacyMedia = value.legacyMedia || [];
+  if (!Array.isArray(legacyMedia) || legacyMedia.length > 100)
+    throw new Error("Bounded native legacy image inventory required");
+  const seenLegacy = new Set();
+  for (const entry of legacyMedia) {
+    if (
+      !exact(entry, [
+        "targetId",
+        "resourceId",
+        "fileMediaId",
+        "objectId",
+        "sha256",
+        "rightsDeclaration",
+        "consent",
+      ])
+    )
+      throw new Error("Unknown native legacy image inventory field");
+    const target = targets.find((target) => target.id === entry.targetId);
+    const resource = target?.resources.find(
+      (resource) =>
+        resource.id === entry.resourceId && resource.kind === "document",
+    );
+    const key = `${entry.targetId}:${entry.fileMediaId}`;
+    if (
+      !target ||
+      !resource ||
+      !uuid(resource.nativeId) ||
+      !uuid(entry.fileMediaId) ||
+      (entry.objectId !== null && !uuid(entry.objectId)) ||
+      !/^[a-f0-9]{64}$/.test(entry.sha256) ||
+      typeof entry.rightsDeclaration !== "string" ||
+      !entry.rightsDeclaration.trim() ||
+      entry.rightsDeclaration.length > 500 ||
+      !["confirmed", "not_personal_data"].includes(entry.consent) ||
+      seenLegacy.has(key)
+    )
+      throw new Error(
+        "Legacy image must bind exact registered file, media, rights and hash",
+      );
+    seenLegacy.add(key);
+  }
+  return {
+    targets,
+    sessions,
+    manifests,
+    transportMode,
+    legacyMedia: structuredClone(legacyMedia),
+  };
 }
