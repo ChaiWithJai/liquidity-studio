@@ -62,7 +62,7 @@ test.beforeAll(async () => {
         const send = () =>
           json({
             bindings: registered ? [binding] : [],
-            targets: [{ id: "original-target", registered }],
+            targets: [{ id: "original-target", storyId: command.storyId, registered }],
             actions,
           });
         if (held) {
@@ -143,9 +143,11 @@ test("component HTTP fixture registers target, prepares code and distinguishes o
   page,
 }) => {
   await page.goto(base + "/tests/fixtures/penpot-panel-host.html");
+  await page.getByText("Connect an existing design", { exact: true }).click();
   await page
-    .getByRole("button", { name: "Register configured target original-target" })
+    .getByRole("button", { name: "Connect original-target" })
     .click();
+  await page.getByText("Update colors or send an image", { exact: true }).click();
   await page
     .getByRole("button", { name: "Prepare color refresh", exact: true })
     .click();
@@ -153,6 +155,7 @@ test("component HTTP fixture registers target, prepares code and distinguishes o
     "original-component-fixture-code",
   );
   await page.getByRole("button", { name: "Check saved native state" }).click();
+  await page.getByText("Update history", { exact: true }).click();
   await expect(
     page.getByText("native-state-verified", { exact: true }),
   ).toBeVisible();
@@ -182,12 +185,14 @@ test("lost preparation response retries identical key, rejoins history and fence
     },
   );
   await page.goto(base + "/tests/fixtures/penpot-panel-host.html");
+  await page.getByText("Update colors or send an image", { exact: true }).click();
   await page
     .getByRole("button", { name: "Prepare color refresh", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Recover exact preparation attempt" })
     .click();
+  await page.getByText("Update history", { exact: true }).click();
   await expect(
     page.getByText("pending-native-action", { exact: true }),
   ).toBeVisible();
@@ -196,17 +201,19 @@ test("lost preparation response retries identical key, rejoins history and fence
   expect(actions).toHaveLength(1);
   await expect(page.getByLabel("One-use native action code")).toHaveCount(0);
   await page.reload();
+  await page.getByText("Update history", { exact: true }).click();
   await expect(
     page.getByText("pending-native-action", { exact: true }),
   ).toBeVisible();
   let entered;
   const waiting = new Promise((resolve) => (entered = resolve));
   held = { entered };
-  await page.getByRole("button", { name: "Refresh native context" }).click();
+  await page.getByRole("button", { name: "Refresh connection" }).click();
   await waiting;
   await page.locator("#switch-scope").click();
+  await page.getByText("Update history", { exact: true }).click();
   await expect(
-    page.getByText("No action history for this story."),
+    page.getByText("No updates for this story."),
   ).toBeVisible();
   held.release();
   held = null;
@@ -214,6 +221,6 @@ test("lost preparation response retries identical key, rejoins history and fence
     page.getByText("pending-native-action", { exact: true }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("link", { name: "Open registered native document" }),
+    page.getByRole("link", { name: "Open in Penpot ↗" }),
   ).toHaveCount(0);
 });

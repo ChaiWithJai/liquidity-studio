@@ -2,8 +2,8 @@
   import { onMount, onDestroy, untrack } from 'svelte';
   import { renderSvg } from '../../server/artwork.js';
   const QUEUED_NOTICE='Source preparation queued. You can leave and rejoin this durable job.';
-  let {request,storyId,scopeKey,getScopeKey,brandProfile,onDirtyChange=()=>{},onPromoted=()=>{},onStoryChanged=()=>{},onReturnToHandoff=()=>{}}=$props();
-  let info=$state(null),working=$state(null),savedSignature=$state(''),format=$state('infographic'),page=$state(0),pending=$state(false),error=$state(''),notice=$state(''),retained=$state(null),kind=$state(''),reviewPlan=$state(null),reviewed=$state(false),clinicalReviewed=$state(false);
+  let {request,storyId,scopeKey,getScopeKey,brandProfile,format=$bindable('infographic'),page=$bindable(0),onDirtyChange=()=>{},onPromoted=()=>{},onStoryChanged=()=>{},onReturnToHandoff=()=>{}}=$props();
+  let info=$state(null),working=$state(null),savedSignature=$state(''),pending=$state(false),error=$state(''),notice=$state(''),retained=$state(null),kind=$state(''),reviewPlan=$state(null),reviewed=$state(false),clinicalReviewed=$state(false);
   let closed=false,sequence=0;
   const capturedScope=untrack(()=>scopeKey),capturedStory=untrack(()=>storyId);
   const current=()=>!closed&&getScopeKey()===capturedScope;

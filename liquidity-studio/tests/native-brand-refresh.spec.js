@@ -197,7 +197,7 @@ test("actual Brand Kit refresh preserves edited native copy across both brands a
       .getByRole("button", { name: new RegExp("^" + labels[format]) })
       .click();
     await page
-      .getByRole("button", { name: "Open native design editor", exact: true })
+      .getByRole("button", { name: "Edit layout in Studio", exact: true })
       .click();
     await expect(
       frame.getByRole("button", { name: "Layers", exact: true }),
@@ -221,7 +221,7 @@ test("actual Brand Kit refresh preserves edited native copy across both brands a
   async function leave() {
     await page
       .getByRole("button", {
-        name: "Return to original campaign and exporter",
+        name: "Return to saved copy and preview",
         exact: true,
       })
       .click();
@@ -388,7 +388,7 @@ test("a lost refresh response retries the same intent and adopts only its saved 
   await page.getByRole("button", {name: /Campaign Studio/}).click();
   await page.locator(".format-tabs").getByRole("button", {name: /^Feed post/}).click();
   await page
-    .getByRole("button", { name: "Open native design editor", exact: true })
+    .getByRole("button", { name: "Edit layout in Studio", exact: true })
     .click();
   const styles = page.getByRole("region", {
     name: "Native brand styles",
@@ -462,7 +462,7 @@ test("an edit begun during refresh keeps the live native buffer instead of adopt
   await page.getByRole("button", {name: /Campaign Studio/}).click();
   await page.locator(".format-tabs").getByRole("button", {name: /^Feed post/}).click();
   await page
-    .getByRole("button", { name: "Open native design editor", exact: true })
+    .getByRole("button", { name: "Edit layout in Studio", exact: true })
     .click();
   const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
   const styles = page.getByRole("region", {

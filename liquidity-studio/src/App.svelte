@@ -1,5 +1,6 @@
 <script>
   import { onMount, tick } from "svelte";
+  import { readWorkflowLocation, workflowHref } from "./lib/workflow-location.js";
   import { SvelteMap } from "svelte/reactivity";
   import Emulator from "./Emulator.svelte";
   import WorkspaceTable from "./WorkspaceTable.svelte";
@@ -62,6 +63,75 @@
   let error = $state("");
   let notice = $state("");
   let tab = $state("backlog");
+  let preparedPage = $state(0), promotedStoryId = $state("");
+  let workflowMounted = $state(false), workflowRestoring = $state(false);
+  let pendingWorkflowLocation = $state.raw(null);
+  let workflowHistoryIndex = 0, acceptedWorkflowHref = "", restoringHistory = false;
+  function workflowState() {
+    return {organizationId,brandId,tab,storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",page:preparedPage};
+  }
+  $effect(() => {
+    const state=workflowState();
+    if(!workflowMounted||!user||booting||scopeLoading||scopeLoadError||busy||workflowRestoring||pendingWorkflowLocation)return;
+    const href=workflowHref(window.location.href,state);
+    if(href===acceptedWorkflowHref)return;
+    const initial=!acceptedWorkflowHref;
+    if(!initial)workflowHistoryIndex++;
+    window.history[initial?"replaceState":"pushState"]({...window.history.state,studioWorkflowIndex:workflowHistoryIndex},"",href);
+    acceptedWorkflowHref=href;
+  });
+  onMount(() => {
+    workflowMounted=true;
+    workflowHistoryIndex=Number.isInteger(window.history.state?.studioWorkflowIndex)?window.history.state.studioWorkflowIndex:0;
+    const pop=async(event)=>{
+      if(restoringHistory){restoringHistory=false;return;}
+      const index=event.state?.studioWorkflowIndex;
+      const refuse=()=>{
+        if(Number.isInteger(index)&&index!==workflowHistoryIndex){restoringHistory=true;window.history.go(workflowHistoryIndex-index);}
+        else if(acceptedWorkflowHref)window.history.replaceState({...window.history.state,studioWorkflowIndex:workflowHistoryIndex},"",acceptedWorkflowHref);
+      };
+      if(!user||booting)return;
+      if(workflowRestoring||scopeLoading||busy||pendingEdits||preparedDirty||reviewDirty||nativeDirty){error="Save or discard your current edits before using browser navigation.";refuse();return;}
+      const route=readWorkflowLocation(window.location.href);
+      const org=organizations.find(item=>item.id===route.organizationId),brand=org?.brands.find(item=>item.id===route.brandId);
+      if(!brand){error="That workspace is unavailable for your current account.";refuse();return;}
+      workflowRestoring=true;
+      const actor=user.id,session=requestSessionEpoch;
+      try{
+        if(organizationId!==org.id||brandId!==brand.id){rememberBacklogView();organizationId=org.id;brandId=brand.id;pendingWorkflowLocation=route;await loadScope();}
+        else await restoreWorkflowLocation(route);
+        if(user?.id!==actor||requestSessionEpoch!==session)return;
+        workflowHistoryIndex=Number.isInteger(index)?index:workflowHistoryIndex;
+        acceptedWorkflowHref=workflowHref(window.location.href,workflowState());
+        window.history.replaceState({...window.history.state,studioWorkflowIndex:workflowHistoryIndex},"",acceptedWorkflowHref);
+      }finally{workflowRestoring=false;}
+    };
+    window.addEventListener("popstate",pop);
+    return()=>{workflowMounted=false;window.removeEventListener("popstate",pop);};
+  });
+  async function restoreWorkflowLocation(route) {
+    const client=workspaceClient;
+    if(!client||!leaveNativeEditor())return;
+    preparedEditingStoryId="";
+    format=route.format;
+    if(route.storyId){
+      try{await client.ensureStories([route.storyId],{force:true});}catch(failure){if(workspaceClient===client){selectStory(null);tab="backlog";error=failure.message||"That story could not be loaded. Try again from the backlog.";}return;}
+      if(workspaceClient!==client)return;
+      const story=client.getStory(route.storyId);
+      if(!story){selectedStory=null;campaign=null;tab="backlog";error="That story is no longer available in this workspace.";return;}
+      selectStory(story);
+    }
+    preparedPage=Math.min(route.page,format==="carousel"?3:format==="reel"?2:0);
+    tab=route.tab==="admin"&&!canAdmin?"backlog":route.tab;
+    if(route.editor==="prepared"&&sourcePreparationEnabled&&selectedStory)preparedEditingStoryId=selectedStory.id;
+    if(route.nativeId&&tab==="studio"&&selectedStory){
+      if(nativeEditorEnabled)await openNativeEditor(route.nativeId);
+      else error="This saved layout is unavailable here. The saved story remains available.";
+    }
+    if(tab==="admin")await loadAdmin();
+    if(route.unavailable)error="That workspace is unavailable for your current account. Your permitted workspace is shown.";
+  }
+
   let brandProfile = $state(null);
   let workspaceClient = $state(null);
   let workspaceState = $state(null);
@@ -86,7 +156,7 @@
     return true;
   }
   $effect(() => {
-    if (!nativeDirty && !preparedDirty) return;
+    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty) return;
     const protect = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
@@ -166,7 +236,7 @@
     },onDirtyChange:dirty=>{if(current())preparedDirty=dirty;},onReturnToHandoff:()=>{if(current()&&!preparedDirty)preparedEditingStoryId="";},onStoryChanged:async()=>{if(current())await client.ensureStories([storyId],{force:true});},onPromoted:async result=>{
       if(!current())return;preparedDirty=false;preparedEditingStoryId="";client.ingestStories([result.story]);
       if(reviewDirty||pendingEdits){notice="Reviewed candidate saved. Your existing local edits are preserved; reload the current saved story explicitly before handoff.";return;}
-      selectStory(result.story);notice=result.promotionStillCurrent===false?"An earlier promotion receipt was recovered, but that generation changed afterward. The current handoff is shown; review its current state before continuing.":"Reviewed prepared copy saved. Continue to layout and artifact handoff; publication is not approved.";
+      selectStory(result.story);promotedStoryId=result.story.id;notice=result.promotionStillCurrent===false?"An earlier promotion receipt was recovered, but that generation changed afterward. The current handoff is shown; review its current state before continuing.":"Reviewed prepared copy saved. Continue to layout and artifact handoff; publication is not approved.";
     }};
   });
   async function editReviewedCopy(){
@@ -349,6 +419,10 @@
       session.activeScope?.brandId ||
       organizations.find((org) => org.id === organizationId)?.brands?.[0]?.id ||
       "";
+    const route=readWorkflowLocation(window.location.href);
+    const requestedOrg=organizations.find(org=>org.id===route.organizationId);
+    if(requestedOrg?.brands.some(brand=>brand.id===route.brandId)){organizationId=requestedOrg.id;brandId=route.brandId;pendingWorkflowLocation=route;}
+    else pendingWorkflowLocation={...route,organizationId,brandId,storyId:"",nativeId:"",tab:route.organizationId?"backlog":route.tab,unavailable:Boolean(route.organizationId||route.brandId)};
   }
   function invalidateGoogleLoginAttempt() {
     googleLoginSequence++;
@@ -570,6 +644,7 @@
     });
   }
   async function navigateTab(next) {
+    if(workflowRestoring)return;
     if (!leaveNativeEditor()) return;
     if (tab === "backlog") rememberBacklogView();
     tab = next;
@@ -590,6 +665,7 @@
     searchInput?.focus();
   }
   async function loadScope() {
+    const workflowTarget=pendingWorkflowLocation;
     leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
@@ -673,6 +749,9 @@
       if (token === lastScopeToken) {
         busy = false;
         scopeLoading = false;
+        if(workflowTarget&&workflowTarget.organizationId===organizationId&&workflowTarget.brandId===brandId){
+          try{if(!scopeLoadError)await restoreWorkflowLocation(workflowTarget);}finally{if(token===lastScopeToken)pendingWorkflowLocation=null;}
+        }
         await tick();
         if (token === lastScopeToken && tab === "backlog" && !scopeLoadError) {
           window.scrollTo(0, view?.scrollY || 0);
@@ -681,6 +760,7 @@
     }
   }
   async function switchOrganization(event) {
+    if(workflowRestoring)return;
     if (!leaveNativeEditor()) { event.currentTarget.value = organizationId; return; }
     const selector = event.currentTarget;
     const requestedOrganizationId = selector.value;
@@ -697,6 +777,7 @@
     await loadScope();
   }
   async function switchBrand(event) {
+    if(workflowRestoring)return;
     if (!leaveNativeEditor()) { event.currentTarget.value = brandId; return; }
     const selector = event.currentTarget;
     const requestedBrandId = selector.value;
@@ -710,7 +791,7 @@
     await loadScope();
   }
   function selectStory(story) {
-    if(story?.id!==selectedStory?.id){notice="";preparedEditingStoryId="";preparedForkIntent=null;}
+    if(story?.id!==selectedStory?.id){notice="";promotedStoryId="";preparedPage=0;preparedEditingStoryId="";preparedForkIntent=null;}
     editorConflictRevision = null;
     selectedStory = story ? JSON.parse(JSON.stringify(story)) : null;
     campaign = selectedStory?.campaignDraft || null;
@@ -749,6 +830,7 @@
     pendingEdits = true;
   }
   async function openStory(story) {
+    if(workflowRestoring)return;
     if (!leaveNativeEditor()) return;
     if (pendingEdits && !(await saveEdit())) return;
     rememberBacklogView();
@@ -757,9 +839,10 @@
     tab = "studio";
   }
   async function selectFormat(next) {
+    if(workflowRestoring)return;
     if (!leaveNativeEditor()) return;
     if (pendingEdits && !(await saveEdit())) return;
-    format = next;
+    format = next;preparedPage=0;
     exportUrl = "";
     syncEditor();
   }
@@ -1341,31 +1424,37 @@
               >
             </div>
             <div class="toolbar-actions">
-              {#if nativeEditorEnabled && campaign && !nativeRecord}<button class="secondary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Open native design editor</button>{/if}
+              {#if nativeEditorEnabled && campaign && !nativeRecord}<button class="secondary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Edit layout in Studio</button>{/if}
               <button class="secondary" disabled={busy || !generationReview.ready} onclick={generate}
                 >{busy
                   ? "Working…"
                   : campaign
                     ? "Regenerate draft"
                     : "Generate draft"}</button
-              ><button
+              >{#if !nativeRecord}<button
                 class="primary"
                 disabled={busy || !campaign}
                 onclick={exportAsset}
-                >Export {nativeRecord ? "original " : ""}{format === "carousel"
+                >Export {format === "carousel"
                   ? "ZIP"
                   : format === "reel"
                     ? "script"
                     : "PNG"} ↗</button
-              >
+              >{/if}
             </div>
           </div>
           {/if}
+          {#if campaign && promotedStoryId===selectedStory.id && !nativeRecord && !preparedWorkspace}
+            <section class="panel" aria-label="Continue to design"><h3>Your reviewed copy is saved</h3><p>Choose a layout next. Layout approval and publication remain separate.</p>
+              {#if nativeEditorEnabled}<button class="primary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Edit design</button>
+              {:else}<button class="primary" onclick={()=>focusWorkflow("workflow-preview")}>Preview saved artwork</button>{/if}
+            </section>
+          {/if}
           {#if nativeRecord && nativeHost}
             <section class="panel" aria-label="Native proposal workspace">
-              <h3>{nativeRecord.sourceState === "historical" ? "Historical" : "Native"} {formats.find(item => item.id === nativeRecord.format)?.name} {nativeRecord.sourceState === "historical" ? "layout" : "proposal"}</h3>
+              <h3>{nativeRecord.sourceState === "historical" ? "Saved historical" : "Studio"} {formats.find(item => item.id === nativeRecord.format)?.name} layout</h3>
               <p role="status">Native revision {nativeRecord.revision} · {nativeRecord.sourceState === "historical" ? "Read-only historical evidence" : nativeDirty ? "Unsaved native work" : "Native proposal saved"} · {nativeSaveState}. The saved campaign copy and its approval state are unchanged.</p>
-              <button class="secondary" disabled={nativeDirty} onclick={() => leaveNativeEditor()}>Return to original campaign and exporter</button>
+              <button class="secondary" disabled={nativeDirty} onclick={() => leaveNativeEditor()}>Return to saved copy and preview</button>
               {#if nativeDirty}<button class="secondary" onclick={() => leaveNativeEditor(true)}>Discard local native changes and return</button>{/if}
               {#key nativeHost}<NativeEditorHost record={nativeRecord} request={nativeHost.request} scopeKey={nativeHost.scopeKey} getScopeKey={nativeHost.getScopeKey}
                 onSaved={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.id) nativeRecord = saved; }}
@@ -1375,7 +1464,7 @@
                 onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => { nativeSaveState = value.status; if (value.status === "saved" && error === "Save native changes or explicitly discard them before leaving the native editor.") error = ""; }} />{/key}
             </section>
           {/if}
-          {#if penpotEnabled && penpotHost && campaign && selectedStory && !nativeRecord && !preparedWorkspace}
+          {#if penpotEnabled && penpotHost && campaign && selectedStory && !preparedWorkspace}
             {#key penpotHost.client}{#key selectedStory.id}<PenpotPanel request={penpotHost.request} storyId={selectedStory.id} role={user.role} />{/key}{/key}
           {/if}
           {#if !preparedWorkspace}<div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>{/if}
@@ -1745,7 +1834,7 @@
             </div>{/snippet}
             {#if sourcePreparationEnabled&&preparedHost}
               <section id="workflow-preview" class="workflow-target" tabindex="-1" aria-label="Prepared preview workspace">
-              {#key preparedHost.client}{#key preparedHost.storyId}<PreparedSourcePanel request={preparedHost.request} storyId={preparedHost.storyId} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} {brandProfile} onDirtyChange={preparedHost.onDirtyChange} onStoryChanged={preparedHost.onStoryChanged} onPromoted={preparedHost.onPromoted} onReturnToHandoff={preparedHost.onReturnToHandoff}/>{/key}{/key}
+              {#key preparedHost.client}{#key preparedHost.storyId}<PreparedSourcePanel request={preparedHost.request} storyId={preparedHost.storyId} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} {brandProfile} bind:format bind:page={preparedPage} onDirtyChange={preparedHost.onDirtyChange} onStoryChanged={preparedHost.onStoryChanged} onPromoted={preparedHost.onPromoted} onReturnToHandoff={preparedHost.onReturnToHandoff}/>{/key}{/key}
               </section>
               <details open={reviewDirty}><summary>Manual source review and existing source edits</summary>{@render manualSourcePrerequisites()}</details>
             {:else}{@render manualSourcePrerequisites()}{/if}
