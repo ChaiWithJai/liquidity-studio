@@ -30,6 +30,7 @@ test('pull and startup never contact Docker after a failed host capacity gate', 
           ...process.env,
           PATH: `${temporary}:${path.dirname(process.execPath)}:${process.env.PATH}`,
           PENPOT_REQUIRED_FREE_GIB: '1000000000',
+          PENPOT_DOCKER_DATA_PATH: os.tmpdir(),
           PENPOT_QA_ENV_FILE: '/private/unused-fixture.env',
         },
       });
@@ -37,6 +38,29 @@ test('pull and startup never contact Docker after a failed host capacity gate', 
       assert.equal(JSON.parse(result.stdout).status, 'blocked');
       assert.equal(fs.existsSync(marker), false);
     }
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
+
+test('the explicitly configured Docker backing filesystem is also checked before Docker', () => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'capacity-data-boundary-'));
+  const marker = path.join(temporary, 'docker-called');
+  fs.writeFileSync(path.join(temporary, 'docker'), `#!/bin/sh\ntouch '${marker}'\n`, { mode: 0o755 });
+  try {
+    const result = spawnSync('bash', [path.join(directory, 'penpot-local.sh'), 'pull'], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        PATH: `${temporary}:${path.dirname(process.execPath)}:${process.env.PATH}`,
+        PENPOT_REQUIRED_FREE_GIB: '0.000001',
+        PENPOT_DOCKER_DATA_PATH: path.join(temporary, 'missing-docker-virtual-disk'),
+        PENPOT_QA_ENV_FILE: '/private/unused-fixture.env',
+      },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /missing-docker-virtual-disk/);
+    assert.equal(fs.existsSync(marker), false);
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });
   }
