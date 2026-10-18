@@ -1,0 +1,739 @@
+{
+  "_schemaVersion": "1.0.0-mongodb-graph-normalized",
+  "_engine": "vertex-ai-gemini-2.5-flash-youtube-grounding",
+  "_description": "Normalized MongoDB & Property-Graph Seed for Root Tenant 'defiant_records' (Steven 'Steve-O' Carless), Child Tenant 'xxl_media', 6-Region YouTube Native Scout, Cross-System Arbitrage Simulator, and Pre-Made 380K Catalog / Studio Chemistry Connectors.",
+  "collections": {
+    "tenants": [
+      {
+        "_id": "tenant_defiant_records",
+        "tenantId": "defiant_records",
+        "parentTenantId": null,
+        "hierarchyLevel": "ROOT_HOLDING",
+        "name": "Defiant Records (Steven 'Steve-O' Carless A&R & Catalog Command)",
+        "websiteUrl": "https://www.defiantxrecords.com/story",
+        "motto": "THE MAINSTREAM IS THE ENEMY—AT LEAST FOR TODAY.",
+        "catalogTotalTracks": 380000,
+        "childTenantIds": [
+          "tenant_xxl_media",
+          "tenant_marathon_nipsey_catalog",
+          "tenant_liquidity_desk",
+          "tenant_vedic_dharma"
+        ]
+      },
+      {
+        "_id": "tenant_xxl_media",
+        "tenantId": "xxl_media",
+        "parentTenantId": "tenant_defiant_records",
+        "hierarchyLevel": "RECURSIVE_MEDIA_SUBSIDIARY",
+        "name": "XXL Media (Freshman Class, Cypher Vault & Inside Track IP)",
+        "websiteUrl": "https://www.xxlmag.com/freshman/",
+        "foundedYear": 1997,
+        "youtubeChannelVideosCount": 1700,
+        "flagshipCypherPeakViews": 200000000,
+        "keyFreshmanClasses": [
+          {
+            "year": 2010,
+            "alumni": [
+              "Nipsey Hussle",
+              "J. Cole",
+              "Big Sean",
+              "Freddie Gibbs",
+              "Jay Rock",
+              "Wiz Khalifa"
+            ]
+          },
+          {
+            "year": 2011,
+            "alumni": [
+              "Kendrick Lamar",
+              "YG",
+              "Meek Mill",
+              "Mac Miller",
+              "Big K.R.I.T."
+            ]
+          },
+          {
+            "year": 2016,
+            "alumni": [
+              "21 Savage",
+              "Denzel Curry",
+              "Lil Uzi Vert",
+              "Lil Yachty",
+              "Kodak Black"
+            ]
+          },
+          {
+            "year": 2020,
+            "alumni": [
+              "Polo G",
+              "Jack Harlow",
+              "Rod Wave",
+              "Latto",
+              "Baby Keem",
+              "Fivio Foreign"
+            ]
+          }
+        ]
+      },
+      {
+        "_id": "tenant_marathon_nipsey_catalog",
+        "tenantId": "marathon_nipsey_catalog",
+        "parentTenantId": "tenant_defiant_records",
+        "hierarchyLevel": "FLAGSHIP_ESTATE_CATALOG",
+        "name": "The Marathon Catalog (Nipsey Hussle / All Money In Grammy Revival Engine)",
+        "executiveProducers": [
+          "Ermias 'Nipsey Hussle' Asghedom",
+          "Steven 'Steve-O' Carless",
+          "Samiel 'Blacc Sam' Asghedom"
+        ],
+        "flagshipReleases": [
+          "Victory Lap (2018)",
+          "Prolific (w/ Bino Rideaux)",
+          "Crenshaw ($100 Mixtape, 2013)",
+          "Mailbox Money ($1,000 Mixtape, 2014)"
+        ]
+      }
+    ],
+    "city_nodes": [
+      {
+        "_id": "node_lagos",
+        "city": "Lagos",
+        "country": "Nigeria",
+        "regionCode": "NG-LA",
+        "sonicDNA": [
+          "Afrobeats",
+          "Alté",
+          "Fuji-Amapiano Fusion",
+          "Street-Pop"
+        ],
+        "bpmRange": [
+          108,
+          118
+        ],
+        "baselineCpmUsd": 2.4,
+        "viralVelocityIndex": 0.94,
+        "youtubeNativeSearchQuery": "site:youtube.com \"Lagos\" (\"live session\" OR \"rooftop\" OR \"acoustic\" OR \"freestyle\" OR \"Alté\" OR \"Afro\") -vevo",
+        "ownedNetworkAssets": [
+          "Victoria Island Live Session Hub",
+          "Eko Street DJ Pool",
+          "Mainland Dance Collective"
+        ]
+      },
+      {
+        "_id": "node_london",
+        "city": "London",
+        "country": "United Kingdom",
+        "regionCode": "GB-LDN",
+        "sonicDNA": [
+          "Afro-Swing",
+          "UK Drill",
+          "Garage/Jungle",
+          "Diaspora R&B/Soul"
+        ],
+        "bpmRange": [
+          112,
+          144
+        ],
+        "baselineCpmUsd": 11.8,
+        "viralVelocityIndex": 0.89,
+        "youtubeNativeSearchQuery": "site:youtube.com \"London\" (\"hoods hottest\" OR \"live mic\" OR \"cypher\" OR \"Peckham\" OR \"Afro-Swing\" OR \"UK Drill\")",
+        "ownedNetworkAssets": [
+          "1Xtra / Capital Xtra DJ Syndicate",
+          "Peckham & Shoreditch Sound System Collective",
+          "Defiant London Docklands 24/7 Studio"
+        ]
+      },
+      {
+        "_id": "node_atlanta",
+        "city": "Atlanta",
+        "country": "United States",
+        "regionCode": "US-ATL",
+        "sonicDNA": [
+          "Melodic Trap",
+          "Southern Street Rap",
+          "808 Club Bounce",
+          "R&B Trap"
+        ],
+        "bpmRange": [
+          126,
+          152
+        ],
+        "baselineCpmUsd": 14.5,
+        "viralVelocityIndex": 0.91,
+        "youtubeNativeSearchQuery": "site:youtube.com \"Atlanta\" (\"street freestyle\" OR \"in the booth\" OR \"live performance\" OR \"underground cypher\")",
+        "ownedNetworkAssets": [
+          "ATL Club DJ Coalition (Magic City / Cascade)",
+          "Patchwerk & West End Producer Camp",
+          "A3C Tastemaker Network"
+        ]
+      },
+      {
+        "_id": "node_toronto",
+        "city": "Toronto",
+        "country": "Canada",
+        "regionCode": "CA-TOR",
+        "sonicDNA": [
+          "Nocturnal Melodic R&B",
+          "Patois-Infused Road Rap",
+          "Bricks In The 6 Drill",
+          "Punjabi-Trap Crossover"
+        ],
+        "bpmRange": [
+          110,
+          142
+        ],
+        "baselineCpmUsd": 12.2,
+        "viralVelocityIndex": 0.87,
+        "youtubeNativeSearchQuery": "site:youtube.com \"Toronto\" (\"6ix\" OR \"Scarborough\" OR \"Rexdale\" OR \"live session\" OR \"freestyle\")",
+        "ownedNetworkAssets": [
+          "GTA Caribbean & East African Sound Crews",
+          "Brampton/Mississauga Desi-Wave Network",
+          "Toronto Late-Night Studio Collective"
+        ]
+      },
+      {
+        "_id": "node_mumbai",
+        "city": "Mumbai",
+        "country": "India",
+        "regionCode": "IN-BOM",
+        "sonicDNA": [
+          "Gully Hip-Hop",
+          "Tabla-Drill",
+          "Hinglish Melodic Trap",
+          "Indo-Afro Bounce"
+        ],
+        "bpmRange": [
+          94,
+          142
+        ],
+        "baselineCpmUsd": 1.9,
+        "viralVelocityIndex": 0.96,
+        "youtubeNativeSearchQuery": "site:youtube.com \"Mumbai\" (\"Gully\" OR \"Dharavi\" OR \"Colaba\" OR \"cypher\" OR \"Hindi rap live\")",
+        "ownedNetworkAssets": [
+          "Dharavi & Bandra Cypher Circuit",
+          "Mumbai College Fest Headliner Pipeline",
+          "Desi Short-Form Creator Guild"
+        ]
+      },
+      {
+        "_id": "node_kingston",
+        "city": "Kingston",
+        "country": "Jamaica",
+        "regionCode": "JM-KIN",
+        "sonicDNA": [
+          "Modern Dancehall",
+          "Trap-Dancehall",
+          "Roots Dub Revival",
+          "Riddim Vocal"
+        ],
+        "bpmRange": [
+          96,
+          110
+        ],
+        "baselineCpmUsd": 2.8,
+        "viralVelocityIndex": 0.92,
+        "youtubeNativeSearchQuery": "site:youtube.com \"Kingston\" (\"yard session\" OR \"dubplate\" OR \"riddim freestyle\" OR \"live acoustic dancehall\")",
+        "ownedNetworkAssets": [
+          "Kingston Dubplate & Sound System Authority",
+          "Vybz Kartel / Defiant Caribbean Pipeline",
+          "Waterhouse & Uptown Riddim Studios"
+        ]
+      }
+    ],
+    "corridor_edges": [
+      {
+        "_id": "edge_lagos_to_london",
+        "sourceNodeId": "node_lagos",
+        "targetNodeId": "node_london",
+        "corridorName": "UkNaija / Peckham-Victoria Island Corridor",
+        "transferProbability": 0.78,
+        "avgAudienceMultiplier": 3.2,
+        "playbookId": "carless_pb_01_the_gift_lagos_bridge",
+        "whatItTakesStrategy": "Pair Lagos raw vocal with a UK Afro-Swing/Drill 16-bar verse; seed via Peckham sound systems and 1Xtra specialist radio."
+      },
+      {
+        "_id": "edge_london_to_toronto",
+        "sourceNodeId": "node_london",
+        "targetNodeId": "node_toronto",
+        "corridorName": "Commonwealth Road-Rap & Patois Bridge",
+        "transferProbability": 0.72,
+        "avgAudienceMultiplier": 2.4,
+        "playbookId": "carless_pb_03_defiant_presents_collision",
+        "whatItTakesStrategy": "Cross-pollinate London club edits into Caribana / GTA sound crews and Defiant Presents: Bricks In The 6 slots."
+      },
+      {
+        "_id": "edge_london_to_atlanta",
+        "sourceNodeId": "node_london",
+        "targetNodeId": "node_atlanta",
+        "corridorName": "Transatlantic 808 & Melodic Crossover Bridge",
+        "transferProbability": 0.65,
+        "avgAudienceMultiplier": 3.5,
+        "playbookId": "carless_pb_01_the_gift_lagos_bridge",
+        "whatItTakesStrategy": "Lock a 48-hour Atlanta-London studio camp (Patchwerk + Docklands) and drop an XXL-co-signed visual."
+      },
+      {
+        "_id": "edge_lagos_to_atlanta",
+        "sourceNodeId": "node_lagos",
+        "targetNodeId": "node_atlanta",
+        "corridorName": "Detty December to A-Town Club Bridge (The Gift Model)",
+        "transferProbability": 0.64,
+        "avgAudienceMultiplier": 3.8,
+        "playbookId": "carless_pb_01_the_gift_lagos_bridge",
+        "whatItTakesStrategy": "Add 808 sub-bass weight to Lagos log-drum stems; service to Atlanta club DJs and diaspora lounges."
+      },
+      {
+        "_id": "edge_kingston_to_london",
+        "sourceNodeId": "node_kingston",
+        "targetNodeId": "node_london",
+        "corridorName": "Windrush Sound-System & Jungle/Bashment Bridge",
+        "transferProbability": 0.76,
+        "avgAudienceMultiplier": 2.9,
+        "playbookId": "carless_pb_02_kingston_kartel_corridor",
+        "whatItTakesStrategy": "Cut custom dubplates in Kingston; flip into a 140 BPM UK club/jungle edit and 106 BPM bashment original."
+      },
+      {
+        "_id": "edge_kingston_to_toronto",
+        "sourceNodeId": "node_kingston",
+        "targetNodeId": "node_toronto",
+        "corridorName": "Kingston-to-6ix Patois & Riddim Highway",
+        "transferProbability": 0.81,
+        "avgAudienceMultiplier": 3.1,
+        "playbookId": "carless_pb_02_kingston_kartel_corridor",
+        "whatItTakesStrategy": "Blend Kingston dancehall hook with nocturnal Toronto R&B/Trap chords; premiere across GTA sound systems."
+      },
+      {
+        "_id": "edge_mumbai_to_london",
+        "sourceNodeId": "node_mumbai",
+        "targetNodeId": "node_london",
+        "corridorName": "South Asian Diaspora / BBC Asian Network Corridor",
+        "transferProbability": 0.74,
+        "avgAudienceMultiplier": 3.4,
+        "playbookId": "carless_pb_03_defiant_presents_collision",
+        "whatItTakesStrategy": "Fuse Mumbai Gully/Tabla pocket with UK Drill sliding 808s via West London diaspora producers."
+      },
+      {
+        "_id": "edge_mumbai_to_toronto",
+        "sourceNodeId": "node_mumbai",
+        "targetNodeId": "node_toronto",
+        "corridorName": "Desi-Wave Global Streaming Superhighway",
+        "transferProbability": 0.79,
+        "avgAudienceMultiplier": 3.9,
+        "playbookId": "carless_pb_03_defiant_presents_collision",
+        "whatItTakesStrategy": "Pair Mumbai street lyricist with Toronto/Brampton melodic hook producer; launch synchronized YouTube Shorts + Reels."
+      }
+    ],
+    "step1_youtube_scout_signals_6_regions": [
+      {
+        "_id": "yt_sig_lagos_01",
+        "artistName": "Teniola Vibe",
+        "focalNodeId": "node_lagos",
+        "focalCity": "Lagos",
+        "cadence": "weekly_batch_and_on_demand",
+        "youtubeVideoTitle": "Teniola Vibe - Midnight in Surulere (Live Rooftop One-Take)",
+        "youtubeUrl": "https://www.youtube.com/watch?v=lagos_surulere_01",
+        "metrics": {
+          "views7d": 48200,
+          "commentToViewRatio": 0.068,
+          "repeatReplayEstimate": 0.44,
+          "subscriberCount": 4100,
+          "accelerationMultiple": 4.9
+        },
+        "sonicProfile": {
+          "style": "Alté / Fuji-Amapiano Fusion",
+          "bpm": 113,
+          "vocalPocket": "Yoruba-Pidgin melodic cadence with acoustic guitar & log-drum pocket"
+        }
+      },
+      {
+        "_id": "yt_sig_london_01",
+        "artistName": "Kairo SE15",
+        "focalNodeId": "node_london",
+        "focalCity": "London",
+        "cadence": "weekly_batch_and_on_demand",
+        "youtubeVideoTitle": "Kairo SE15 - Rye Lane Rain (Peckham Live Mic Session)",
+        "youtubeUrl": "https://www.youtube.com/watch?v=london_peckham_01",
+        "metrics": {
+          "views7d": 54900,
+          "commentToViewRatio": 0.064,
+          "repeatReplayEstimate": 0.46,
+          "subscriberCount": 5300,
+          "accelerationMultiple": 4.7
+        },
+        "sonicProfile": {
+          "style": "Afro-Swing / Melodic UK Road Rap",
+          "bpm": 116,
+          "vocalPocket": "Gritty South London storytelling over warm Fender Rhodes & syncopated rimshots"
+        }
+      },
+      {
+        "_id": "yt_sig_atlanta_01",
+        "artistName": "Lil Vonn WestEnd",
+        "focalNodeId": "node_atlanta",
+        "focalCity": "Atlanta",
+        "cadence": "weekly_batch_and_on_demand",
+        "youtubeVideoTitle": "Lil Vonn WestEnd - Cascade Bounce (One-Mic Warehouse Freestyle)",
+        "youtubeUrl": "https://www.youtube.com/watch?v=atlanta_cascade_01",
+        "metrics": {
+          "views7d": 62100,
+          "commentToViewRatio": 0.072,
+          "repeatReplayEstimate": 0.49,
+          "subscriberCount": 6800,
+          "accelerationMultiple": 5.3
+        },
+        "sonicProfile": {
+          "style": "Melodic Trap / 808 Club Bounce",
+          "bpm": 140,
+          "vocalPocket": "Double-time Atlanta triplet pocket with brass-heavy 808 low end"
+        }
+      },
+      {
+        "_id": "yt_sig_toronto_01",
+        "artistName": "Desta 6ix",
+        "focalNodeId": "node_toronto",
+        "focalCity": "Toronto",
+        "cadence": "weekly_batch_and_on_demand",
+        "youtubeVideoTitle": "Desta 6ix - Lawrence East 3AM (Live Studio Take)",
+        "youtubeUrl": "https://www.youtube.com/watch?v=toronto_lawrence_01",
+        "metrics": {
+          "views7d": 44800,
+          "commentToViewRatio": 0.069,
+          "repeatReplayEstimate": 0.47,
+          "subscriberCount": 3900,
+          "accelerationMultiple": 4.8
+        },
+        "sonicProfile": {
+          "style": "Nocturnal East-African/Caribbean Melodic Trap",
+          "bpm": 118,
+          "vocalPocket": "Atmospheric minor-key vocal run blending Toronto R&B with East African pentatonic phrasing"
+        }
+      },
+      {
+        "_id": "yt_sig_mumbai_01",
+        "artistName": "Raghav & The Colaba Cypher",
+        "focalNodeId": "node_mumbai",
+        "focalCity": "Mumbai",
+        "cadence": "weekly_batch_and_on_demand",
+        "youtubeVideoTitle": "Colaba Causeway Cypher Ep. 4 - Tabla & 808s (Uncut Street Session)",
+        "youtubeUrl": "https://www.youtube.com/watch?v=mumbai_colaba_04",
+        "metrics": {
+          "views7d": 71500,
+          "commentToViewRatio": 0.081,
+          "repeatReplayEstimate": 0.51,
+          "subscriberCount": 6200,
+          "accelerationMultiple": 5.6
+        },
+        "sonicProfile": {
+          "style": "Tabla-Drill / Hinglish Gully Rap",
+          "bpm": 140,
+          "vocalPocket": "Rapid-fire Marathi-Hindi-English internal rhymes over live tabla and sliding drill bass"
+        }
+      },
+      {
+        "_id": "yt_sig_kingston_01",
+        "artistName": "Zahara Sound",
+        "focalNodeId": "node_kingston",
+        "focalCity": "Kingston",
+        "cadence": "weekly_batch_and_on_demand",
+        "youtubeVideoTitle": "Zahara Sound - Spanish Town Road Dubplate (Live Yard Session)",
+        "youtubeUrl": "https://www.youtube.com/watch?v=kingston_yard_01",
+        "metrics": {
+          "views7d": 39400,
+          "commentToViewRatio": 0.074,
+          "repeatReplayEstimate": 0.49,
+          "subscriberCount": 2900,
+          "accelerationMultiple": 4.4
+        },
+        "sonicProfile": {
+          "style": "Roots-Trap Dancehall",
+          "bpm": 102,
+          "vocalPocket": "Raspy Patois singjay delivery with heavy sub-bass dub drop"
+        }
+      }
+    ],
+    "step2_emerging_artist_cross_system_simulations": [
+      {
+        "_id": "sim_click_lagos_teniola",
+        "sourceSignalId": "yt_sig_lagos_01",
+        "artistName": "Teniola Vibe",
+        "focalNodeId": "node_lagos",
+        "compoundNetworkGrowthMultiple": 4.04,
+        "whatTheyLookLikeInOtherNodes": [
+          {
+            "targetNodeId": "node_london",
+            "corridorEdgeId": "edge_lagos_to_london",
+            "hopType": "1-HOP_PRIMARY_BRIDGE",
+            "projectedNewListeners90d": 173242,
+            "projectedCpmLift": "2.40 USD -> 11.80 USD (4.9x monetization lift)",
+            "sonicTransformation": "Keep Teniola's Yoruba-Pidgin chorus intact; add Kairo SE15 (London) 16-bar Afro-Swing verse + Kofi 'Bridge' Mensah UK low-end mix.",
+            "matchedCatalogConnectorId": "conn_cat_nipsey_london_marsha_real_big",
+            "matchedXxlConnectorId": "conn_xxl_global_freshman_cypher",
+            "matchedStudioConnectorId": "conn_studio_kofi_mensah_ldn"
+          },
+          {
+            "targetNodeId": "node_atlanta",
+            "corridorEdgeId": "edge_lagos_to_atlanta",
+            "hopType": "1-HOP_SECONDARY_BRIDGE",
+            "projectedNewListeners90d": 168905,
+            "projectedCpmLift": "2.40 USD -> 14.50 USD (6.0x monetization lift)",
+            "sonicTransformation": "Layer Patchwerk 808 sub-bass underneath the Surulere acoustic guitar loop; service to ATL diaspora lounges.",
+            "matchedCatalogConnectorId": "conn_cat_nipsey_hussle_and_motivate",
+            "matchedXxlConnectorId": "conn_xxl_inside_track_co_sign",
+            "matchedStudioConnectorId": "conn_studio_kofi_mensah_ldn"
+          },
+          {
+            "targetNodeId": "node_toronto",
+            "corridorEdgeId": "edge_london_to_toronto",
+            "hopType": "2-HOP_EXPANSION (Lagos -> London -> Toronto)",
+            "projectedNewListeners90d": 263410,
+            "projectedCpmLift": "2.40 USD -> 12.20 USD (5.1x monetization lift)",
+            "sonicTransformation": "Cross-pollinate with Desta 6ix on a 'Bricks In The 6 x Eko' remix.",
+            "matchedCatalogConnectorId": "conn_cat_nipsey_toronto_murda_pnd",
+            "matchedXxlConnectorId": "conn_xxl_global_freshman_cypher",
+            "matchedStudioConnectorId": "conn_studio_kofi_mensah_ldn"
+          }
+        ]
+      },
+      {
+        "_id": "sim_click_mumbai_raghav",
+        "sourceSignalId": "yt_sig_mumbai_01",
+        "artistName": "Raghav & The Colaba Cypher",
+        "focalNodeId": "node_mumbai",
+        "compoundNetworkGrowthMultiple": 4.65,
+        "whatTheyLookLikeInOtherNodes": [
+          {
+            "targetNodeId": "node_toronto",
+            "corridorEdgeId": "edge_mumbai_to_toronto",
+            "hopType": "1-HOP_PRIMARY_BRIDGE",
+            "projectedNewListeners90d": 332610,
+            "projectedCpmLift": "1.90 USD -> 12.20 USD (6.4x monetization lift)",
+            "sonicTransformation": "Pair Raghav's 140 BPM Marathi-Hindi bars with a Brampton/GTA melodic trap chorus; drop synchronized Reels.",
+            "matchedCatalogConnectorId": "conn_cat_nipsey_hussle_and_motivate",
+            "matchedXxlConnectorId": "conn_xxl_global_freshman_cypher",
+            "matchedStudioConnectorId": "conn_studio_rohan_varma_bom_ldn"
+          },
+          {
+            "targetNodeId": "node_london",
+            "corridorEdgeId": "edge_mumbai_to_london",
+            "hopType": "1-HOP_SECONDARY_BRIDGE",
+            "projectedNewListeners90d": 272296,
+            "projectedCpmLift": "1.90 USD -> 11.80 USD (6.2x monetization lift)",
+            "sonicTransformation": "Route stems to Rohan Varma (London/Mumbai Sub-Bass Architect) for a BBC Asian Network / 1Xtra drill flip.",
+            "matchedCatalogConnectorId": "conn_cat_nipsey_hussle_and_motivate",
+            "matchedXxlConnectorId": "conn_xxl_global_freshman_cypher",
+            "matchedStudioConnectorId": "conn_studio_rohan_varma_bom_ldn"
+          }
+        ]
+      },
+      {
+        "_id": "sim_click_kingston_zahara",
+        "sourceSignalId": "yt_sig_kingston_01",
+        "artistName": "Zahara Sound",
+        "focalNodeId": "node_kingston",
+        "compoundNetworkGrowthMultiple": 4.15,
+        "whatTheyLookLikeInOtherNodes": [
+          {
+            "targetNodeId": "node_toronto",
+            "corridorEdgeId": "edge_kingston_to_toronto",
+            "hopType": "1-HOP_PRIMARY_BRIDGE",
+            "projectedNewListeners90d": 147462,
+            "projectedCpmLift": "2.80 USD -> 12.20 USD (4.35x monetization lift)",
+            "sonicTransformation": "Blend Zahara's Spanish Town dubplate with Desta 6ix nocturnal chords for GTA Caribbean sound systems.",
+            "matchedCatalogConnectorId": "conn_cat_nipsey_succa_proof_konshens",
+            "matchedXxlConnectorId": "conn_xxl_2010_nipsey_freshman_vault",
+            "matchedStudioConnectorId": "conn_studio_kofi_mensah_ldn"
+          },
+          {
+            "targetNodeId": "node_london",
+            "corridorEdgeId": "edge_kingston_to_london",
+            "hopType": "1-HOP_SECONDARY_BRIDGE",
+            "projectedNewListeners90d": 129534,
+            "projectedCpmLift": "2.80 USD -> 11.80 USD (4.21x monetization lift)",
+            "sonicTransformation": "Cut a 1Xtra / Peckham sound-system dubplate + 140 BPM jungle remix at Defiant London Docklands Studio.",
+            "matchedCatalogConnectorId": "conn_cat_nipsey_succa_proof_konshens",
+            "matchedXxlConnectorId": "conn_xxl_inside_track_co_sign",
+            "matchedStudioConnectorId": "conn_studio_kofi_mensah_ldn"
+          }
+        ]
+      }
+    ],
+    "step3_premade_connectors": [
+      {
+        "_id": "conn_cat_nipsey_succa_proof_konshens",
+        "connectorType": "CATALOG_380K_STEM_CONNECTOR",
+        "ownerTenantId": "tenant_marathon_nipsey_catalog",
+        "parentTenantId": "tenant_defiant_records",
+        "assetTitle": "Nipsey Hussle — 'Succa Proof' (feat. Konshens & J-Black) [Victory Lap Master Stems]",
+        "catalogFunnelRank": 2,
+        "compositeArbitrageScore": 95.1,
+        "preClearedNodes": [
+          "node_kingston",
+          "node_london",
+          "node_toronto"
+        ],
+        "bpm": 100,
+        "studioTurnaroundHours": 48,
+        "whyItConnects": "Pre-existing Jamaican dancehall collaboration with Konshens on Grammy-nominated Victory Lap; pairs directly with Defiant Records' Vybz Kartel Kingston pipeline and emerging Kingston signal Zahara Sound."
+      },
+      {
+        "_id": "conn_cat_nipsey_toronto_murda_pnd",
+        "connectorType": "CATALOG_380K_STEM_CONNECTOR",
+        "ownerTenantId": "tenant_marathon_nipsey_catalog",
+        "parentTenantId": "tenant_defiant_records",
+        "assetTitle": "Nipsey Hussle — 'Grinding All My Life' (prod. Murda Beatz) & 'Young Nigga' (PND/40 'West District' Sample)",
+        "catalogFunnelRank": 1,
+        "compositeArbitrageScore": 97.4,
+        "preClearedNodes": [
+          "node_toronto",
+          "node_atlanta",
+          "node_london"
+        ],
+        "bpm": 116,
+        "studioTurnaroundHours": 48,
+        "whyItConnects": "Native Canadian/6ix sonic DNA (Murda Beatz, Belly, PartyNextDoor, Noah '40' Shebib) already inside Victory Lap; bridges directly into Defiant Presents: 'Bricks In The 6'."
+      },
+      {
+        "_id": "conn_cat_nipsey_london_marsha_real_big",
+        "connectorType": "CATALOG_380K_STEM_CONNECTOR",
+        "ownerTenantId": "tenant_marathon_nipsey_catalog",
+        "parentTenantId": "tenant_defiant_records",
+        "assetTitle": "Nipsey Hussle — 'Real Big' (feat. London's Marsha Ambrosius) & 'Victory Lap' (Arctic Monkeys Interpolation)",
+        "catalogFunnelRank": 3,
+        "compositeArbitrageScore": 94.6,
+        "preClearedNodes": [
+          "node_london",
+          "node_lagos",
+          "node_toronto"
+        ],
+        "bpm": 92,
+        "studioTurnaroundHours": 24,
+        "whyItConnects": "Direct UK Soul & Rock lineage on Victory Lap; connects seamlessly with Defiant London Docklands Studio and UK Road Rap's adoption of Nipsey's $100 Crenshaw 'Proud 2 Pay' ownership ethos."
+      },
+      {
+        "_id": "conn_cat_nipsey_hussle_and_motivate",
+        "connectorType": "CATALOG_380K_STEM_CONNECTOR",
+        "ownerTenantId": "tenant_marathon_nipsey_catalog",
+        "parentTenantId": "tenant_defiant_records",
+        "assetTitle": "Nipsey Hussle — 'Hussle & Motivate' & 'Prolific' (w/ Bino Rideaux) Interpolation Stems",
+        "catalogFunnelRank": 4,
+        "compositeArbitrageScore": 96.2,
+        "preClearedNodes": [
+          "node_mumbai",
+          "node_london",
+          "node_atlanta"
+        ],
+        "bpm": 140,
+        "studioTurnaroundHours": 48,
+        "whyItConnects": "High-energy underdog anthem; 140 BPM double-time pocket locks directly into Mumbai Gully / Tabla-Drill ('Raghav & The Colaba Cypher') and Rohan Varma's sub-bass production."
+      },
+      {
+        "_id": "conn_xxl_2010_nipsey_freshman_vault",
+        "connectorType": "XXL_MEDIA_IP_CONNECTOR",
+        "ownerTenantId": "tenant_xxl_media",
+        "parentTenantId": "tenant_defiant_records",
+        "assetTitle": "XXL 2010 Freshman Class Vault (Nipsey Hussle Cover, Freestyle & Unseen Outtakes)",
+        "historicalReachViews": 45000000,
+        "linkedNodes": [
+          "node_kingston",
+          "node_toronto",
+          "node_london",
+          "node_mumbai",
+          "node_atlanta",
+          "node_lagos"
+        ],
+        "whyItConnects": "Anchors Grammy-window catalog revival in XXL's canonical 2010 Freshman stamp—connecting Nipsey's early grind to the next generation of global freshmen."
+      },
+      {
+        "_id": "conn_xxl_global_freshman_cypher",
+        "connectorType": "XXL_MEDIA_IP_CONNECTOR",
+        "ownerTenantId": "tenant_xxl_media",
+        "parentTenantId": "tenant_defiant_records",
+        "assetTitle": "XXL Global Diaspora Cypher Format (Modeled on the 200M+ View 2016 XXL Cypher)",
+        "historicalReachViews": 200000000,
+        "linkedNodes": [
+          "node_mumbai",
+          "node_lagos",
+          "node_kingston",
+          "node_london",
+          "node_toronto",
+          "node_atlanta"
+        ],
+        "whyItConnects": "Places 3–5 regional YouTube breakouts over a single anchor producer's beat (MCVERTT / Rohan Varma / Kofi Mensah) under the XXL banner for zero-CAC viral debate and replay velocity."
+      },
+      {
+        "_id": "conn_xxl_inside_track_co_sign",
+        "connectorType": "XXL_MEDIA_IP_CONNECTOR",
+        "ownerTenantId": "tenant_xxl_media",
+        "parentTenantId": "tenant_defiant_records",
+        "assetTitle": "XXL 'Inside Track' Executive Co-Sign Series (Steve 'Steve-O' Carless & Vanessa Satten)",
+        "historicalReachViews": 12000000,
+        "linkedNodes": [
+          "node_london",
+          "node_atlanta",
+          "node_toronto",
+          "node_kingston"
+        ],
+        "whyItConnects": "Provides executive storytelling around catalog equity, rehearsal discipline, and 'The Marathon' vertical integration."
+      },
+      {
+        "_id": "conn_studio_kofi_mensah_ldn",
+        "connectorType": "INTERNAL_STUDIO_CHEMISTRY_CONNECTOR",
+        "ownerTenantId": "tenant_defiant_records",
+        "assetTitle": "Kofi 'Bridge' Mensah + Defiant London Docklands 24/7 Studio",
+        "linkedNodes": [
+          "node_lagos",
+          "node_london",
+          "node_toronto"
+        ],
+        "bpmSweetSpot": [
+          108,
+          122
+        ],
+        "chemistryScore": 94,
+        "turnaroundHours": 24
+      },
+      {
+        "_id": "conn_studio_rohan_varma_bom_ldn",
+        "connectorType": "INTERNAL_STUDIO_CHEMISTRY_CONNECTOR",
+        "ownerTenantId": "tenant_defiant_records",
+        "assetTitle": "Rohan Varma (Desi-Drill & Tabla Sub-Bass Architect — Mumbai/London)",
+        "linkedNodes": [
+          "node_mumbai",
+          "node_london",
+          "node_toronto"
+        ],
+        "bpmSweetSpot": [
+          132,
+          146
+        ],
+        "chemistryScore": 96,
+        "turnaroundHours": 48
+      }
+    ],
+    "hitl_benchmarks_and_seed_tickets": [
+      {
+        "_id": "ticket_defiant_seed_001",
+        "ticketId": "DEFIANT-SEED-001",
+        "tenantId": "defiant_records",
+        "step": "Step 1: 6-Region YouTube Native Scout",
+        "goalBenchmark": "Weekly cron + on-demand Gemini YouTube Grounding across Lagos, London, Atlanta, Toronto, Mumbai, Kingston returning >= 0.44 repeatReplayEstimate and >= 4.4x accelerationMultiple.",
+        "status": "SEEDED_AND_PASSING"
+      },
+      {
+        "_id": "ticket_defiant_seed_002",
+        "ticketId": "DEFIANT-SEED-002",
+        "tenantId": "defiant_records",
+        "step": "Step 2: Click-to-Simulate Emerging Artist Across Nodes",
+        "goalBenchmark": "Clicking any emerging signal (e.g., yt_sig_lagos_01, yt_sig_mumbai_01, yt_sig_kingston_01) computes 1-hop & 2-hop listener projections, CPM monetization lift, and sonic transformation.",
+        "status": "SEEDED_AND_PASSING"
+      },
+      {
+        "_id": "ticket_defiant_seed_003",
+        "ticketId": "DEFIANT-SEED-003",
+        "tenantId": "xxl_media",
+        "step": "Step 3: Pre-Made Connectors (380K Catalog + XXL IP + Studio Chemistry -> 1-Click Grammy Campaign)",
+        "goalBenchmark": "Connects Nipsey Hussle's Victory Lap / Prolific stems + XXL 2010/2016/2020 IP to Kingston (4.15x), Toronto (3.95x), London (4.30x), and Mumbai (4.65x) and generates a 4-format campaign in 1 click.",
+        "status": "SEEDED_AND_PASSING"
+      }
+    ]
+  }
+}
