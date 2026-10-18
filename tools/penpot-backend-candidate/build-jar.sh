@@ -30,3 +30,6 @@ cp /work/common/deps.edn /output/common-deps.edn
 # correspondence. Never include .git, build caches, private config or test data.
 tar -C /work -czf /output/corresponding-source.tar.gz backend/src backend/resources backend/build.clj backend/deps.edn common/src common/target/classes common/deps.edn common/build.clj LICENSE CHANGES.md
 python3 /recipe/check-jar.py /work /output
+# tools.build merges this one standard resource. Inspect actual EDN maps,
+# without evaluating reader symbols, and preserve all original mappings.
+clojure -M /recipe/check-readers.clj /work/backend/src/data_readers.clj /output/penpot.jar /output/data-readers-merge.json
