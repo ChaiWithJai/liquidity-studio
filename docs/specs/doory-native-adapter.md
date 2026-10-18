@@ -29,8 +29,8 @@ The first font-byte HTTP check failed404: production Gunicorn does not serve the
 | Boundary | Evidence / remaining acceptance |
 | --- | --- |
 | Native schema/API and scoped registered operations | Actual local API checks above plus Node22 regression suite. |
-| Native browser hydration, text editing, save/reload | Pending independent browser acceptance on these generated campaign documents; prior tiny fixture evidence is separate. |
-| Swatch reaches rendered pixels, fonts/glyphs/layout | Native saved properties and font bytes verified; browser/export pixel and glyph checks still required. |
+| Native browser hydration, text editing, save/reload | Independent operator opened and fully reloaded the new CWJ infographic, preserving its native heading, three metrics and supplemental copy. Browser edit/save on these generated campaigns and the remaining formats still require acceptance; prior tiny-fixture editing evidence is separate. |
+| Swatch reaches rendered pixels, fonts/glyphs/layout | Native saved properties and font bytes verified. The new CWJ infographic independently loaded Noto Sans Devanagari, Mona Sans and Inter; the operator visually confirmed the intended Om glyph. Exported glyph/pixel and swatch comparisons still require separate checks. |
 | Native export | JSON API copy verified; not a self-contained native archive. Actual rendered SVG/PNG/MP4 on these campaigns remains separate. |
 | Media/cutout/30-second video | Not implemented or proven by canvas JSON or durations. |
 | Hosted identity, assets and licensing | Local test sessions/whitelisted licensed fonts only. Protected production asset delivery, managed identity federation, upstream UI/AAL and commercial licensing remain unresolved. |
@@ -56,3 +56,5 @@ The local script uploads only bundled licensed fonts if missing, checks stored/s
 Follow-up source inspection used a read-only GET of the preserved original browser-edited fixture to capture actual Fabric7 serialization defaults. The sanitized textbox regression fixture retains those property shapes with controlled replacement text/ID. It proves validator compatibility with that saved shape and token-update preservation; it is not independent browser acceptance of all generated campaign documents.
 
 The explicit badge font is bundled `NotoSansDevanagari.ttf` under its accompanying OFL license. Actual fontTools inspection in the owned backend found `uni0950` and the badge's Latin/slash/space codepoints. Uploaded and whitelist-served bytes match SHA256 `14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e`. This proves registered file coverage and transport bytes, not pixel identity. The reproducer uses distinct verified-glyph document titles/evidence filenames and preserves prior native fixtures.
+
+Independent browser checkpoint (2026-10-18): the operator opened and fully reloaded the new CWJ infographic `15472f99-6e64-47e3-a9de-537de9439672`. Read-only FontFace inspection reported Noto Sans Devanagari, Mona Sans and Inter loaded; the native badge visually showed the intended Sanskrit Om. The human-edited heading, three metrics and supplemental source copy remained visible. The old fallback fixture was not changed. This is native browser rendering/font-load evidence for that document, not full portable export, all-format browser editing or a media-generation result.
