@@ -1,6 +1,6 @@
 # Spec: Defiant strategy workspace
 
-**Status:** Proposed for human review, 2026-10-18. No feature implementation or Phase 2 planning is authorized by this document. Existing module: **operator-workflow**. Trackers: [#211](https://github.com/ChaiWithJai/liquidity-studio/issues/211), [#214](https://github.com/ChaiWithJai/liquidity-studio/issues/214); parent [#209](https://github.com/ChaiWithJai/liquidity-studio/issues/209). The native-access approval in #190 does not approve this feature.
+**Status:** Human approved on 2026-10-18. The direct response “Approve spec” approved this specification and the requested planning and implementation without further planning approvals; [approval record](https://github.com/ChaiWithJai/liquidity-studio/pull/222#issuecomment-6253074556). Record the scoped plan and issue-backed tasks before feature code. Runtime operations remain separately coordinated. Existing module: **operator-workflow**. Trackers: [#211](https://github.com/ChaiWithJai/liquidity-studio/issues/211), [#214](https://github.com/ChaiWithJai/liquidity-studio/issues/214); parent [#209](https://github.com/ChaiWithJai/liquidity-studio/issues/209). This feature has its own approval, separate from native access #190.
 
 ## Objective
 
@@ -99,4 +99,4 @@ Acceptance requires all of the following:
 - **Ask before expanding:** paid/provider automation, new dependencies/storage services, cross-organization sharing, social-account publishing, forecast models or transferring restricted media. Normal implementation choices within an approved spec belong to its plan.
 - **Never:** treat demo metrics/rights as facts, fabricate success or human approval, bypass source/tenant checks, rewrite existing pilot data, expose private relationships/credentials, or start implementation before this feature spec is approved.
 
-**Decision requested:** approve this single integrated capability and the recommended defaults above, or request changes. No additional product question blocks the spec: actual Defiant organization, people, evidence and destinations are provisioned explicitly during authorized implementation/acceptance, never inferred from the seed. This document ends Specify; no Phase 2 plan, task execution or feature code is included.
+**Approved scope:** this single integrated capability and the recommended defaults above. No additional product question blocks the spec: actual Defiant organization, people, evidence and destinations are provisioned explicitly during authorized implementation/acceptance, never inferred from the seed. This document records Specify and its approval; the scoped plan and issue-backed tasks follow separately. Approval does not claim implementation or acceptance is complete.
