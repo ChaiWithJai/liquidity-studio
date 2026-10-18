@@ -97,6 +97,15 @@ export class PenpotFontRecovery {
   async status() {
     const variants = await this.context(), journal = await this.journal();
     this.preflight(variants, journal);
+    if (journal?.completed) {
+      for (const font of this.pack.fonts) {
+        const saved = journal.items[key(font)];
+        const row = variants.find(v => v.id === saved?.receipt?.variantId);
+        if (saved?.phase !== 'verified' || !row) throw fail(409, 'A previously restored font is missing');
+        await this.verify(row, font);
+      }
+      await this.context();
+    }
     return { packSha256: this.packSha256, target: this.target, archiveSha256: this.pack.archive.sha256,
       fonts: this.pack.fonts.map(f => ({ family: f.family, weight: f.weight, style: f.style || 'normal',
         sourceName: f.sourceName, sourceSha256: f.sourceSha256, licenseSha256: f.licenseSha256 })),

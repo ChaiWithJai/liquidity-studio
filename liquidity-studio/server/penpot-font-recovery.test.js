@@ -65,6 +65,9 @@ test('font sidecar roundtrip preserves original bytes/notices; fresh restore pre
   assert.ok(result.fonts.every(x => x.fontId === 'custom-' + ids.font));
   await f.service.restore(input(f.service));
   assert.equal(f.calls.filter(c => c.op === 'create-font-variant').length, 2);
+  assert.equal((await f.service.status()).completed, true);
+  f.variants.splice(0, 1);
+  await assert.rejects(f.service.status(), /previously restored font is missing/);
 });
 
 test('all UUID conflicts are rejected before any upload, even when later family is the conflicting one', async () => {
