@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assertOriginalOnlyNativeBundle } from "../scripts/native-editor-vite.js";
+import {
+  assertOriginalOnlyNativeBundle,
+  canonicalizeLegalFooter,
+} from "../scripts/native-editor-vite.js";
 test("original-only build blocks upstream source, dependencies and emitted frame assets", () => {
   assert.doesNotThrow(() =>
     assertOriginalOnlyNativeBundle({
@@ -28,4 +31,19 @@ test("original-only build blocks upstream source, dependencies and emitted frame
       () => assertOriginalOnlyNativeBundle({ asset: { fileName } }),
       /Upstream native asset/,
     );
+});
+
+test("legal footer canonicalization preserves all notices and executable bytes across traversal order", () => {
+  const body = 'const text = "/* ordinary inline data */"; console.log(text);';
+  const a = "/** @license Copyright A */";
+  const b = "/** @license Copyright B */";
+  assert.equal(
+    canonicalizeLegalFooter(body + "\n" + a + "\n" + b),
+    canonicalizeLegalFooter(body + "\n" + b + "\n" + a + "\n" + a),
+  );
+  assert.equal(
+    canonicalizeLegalFooter(body + "\n" + a + "\n" + b),
+    body + "\n" + a + "\n" + b + "\n",
+  );
+  assert.equal(canonicalizeLegalFooter(body), body);
 });

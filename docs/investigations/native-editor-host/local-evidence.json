@@ -32,8 +32,8 @@
       "reactOrFabric": false,
       "editorFrameOrLicenseAsset": false,
       "assets": [
-        "index-DxFD7tsP.css",
-        "index-b5EjexDj.js"
+        "index-CO_hWq8f.js",
+        "index-DxFD7tsP.css"
       ],
       "enforcedBy": "scripts/native-editor-vite.js generateBundle default-mode guard",
       "buildOnlyFollowupCommit": "1695cb3",
@@ -41,9 +41,10 @@
         "uniqueBefore": 8,
         "uniqueAfter": 8,
         "missing": 0,
-        "placement": "eof",
+        "placement": "eof with sorted canonical footer",
         "reason": "Ubuntu/macOS differed only in placement of a duplicated notice"
-      }
+      },
+      "canonicalUbuntuEqualsActualMac": true
     }
   },
   "nativePng": {

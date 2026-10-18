@@ -23,6 +23,26 @@ export function assertOriginalOnlyNativeBundle(bundle) {
     }
   }
 }
+/** Canonicalize only esbuild's trailing legal-comment footer, before Rollup hashes the chunk. */
+export function canonicalizeLegalFooter(code) {
+  let body = code.trimEnd();
+  const notices = [];
+  while (body.endsWith("*/")) {
+    const start = body.lastIndexOf("/*");
+    if (start < 0) break;
+    const notice = body.slice(start);
+    if (
+      !notice.includes("@license") &&
+      !notice.includes("@preserve") &&
+      !notice.startsWith("/*!")
+    )
+      break;
+    notices.push(notice);
+    body = body.slice(0, start).trimEnd();
+  }
+  if (!notices.length) return code;
+  return body + "\n" + [...new Set(notices)].sort().join("\n") + "\n";
+}
 export function nativeEditorPlugin() {
   const local = process.env.STUDIO_NATIVE_EDITOR_LOCAL_BUILD === "true";
   const source = path.join(project, ".native-editor-source");
@@ -73,6 +93,13 @@ export function nativeEditorPlugin() {
         res.setHeader("Content-Type", "text/plain; charset=utf-8");
         res.end(fs.readFileSync(path.join(source, "LICENSE")));
       });
+    },
+    renderChunk: {
+      order: "post",
+      handler(code) {
+        if (local) return null;
+        return { code: canonicalizeLegalFooter(code), map: null };
+      },
     },
     generateBundle(_, bundle) {
       if (!local) {

@@ -30,55 +30,7 @@ var Vv=Object.defineProperty;var Hv=Object.getPrototypeOf;var Wv=Reflect.get;var
                     ${xn??""}`)},[()=>n(kt).retryOfJobId?` · Retry of ${n(kt).retryOfJobId.slice(0,8)}`:""]),p(Dt,Tn)},Dt=>{var kt=uI();p(Dt,kt)});var ot=s(ma,2),Yt=s(f(ot),2),or=f(Yt),br=s(f(or)),Jr=s(Yt,2),Wn=f(Jr),Ne=f(Wn),yr=s(Ne),Yr=s(Wn),vn=s(f(Yr)),zt=f(vn);zt.value=zt.__value="liquidity_desk";var Rr=s(zt);Rr.value=Rr.__value="vedic_dharma",Mt(vn);var Oa=s(ot,2),Sn=s(f(Oa),2),fa=f(Sn),ii=f(fa),xo=I(ii,!0),xi=s(fa,2),Us=f(xi),ps=I(Us,!0),zs=s(xi,2),Co=f(zs),Ro=I(Co,!0),pl=s(Sn,4),dc=f(pl),mt=s(f(dc));Ee(mt,21,()=>{var Dt,kt;return((kt=(Dt=n(kr))==null?void 0:Dt.observability)==null?void 0:kt.traces)||[]},Dt=>Dt.traceId,(Dt,kt)=>{var Tn=dI(),Xr=f(Tn),Ar=I(Xr,!0),vr=s(Xr),Kn=I(vr,!0),va=s(vr),ba=I(va,!0),Va=s(va),xn=I(Va);C(()=>{b(Ar,n(kt).status),b(Kn,n(kt).provider),b(ba,n(kt).model),b(xn,`${n(kt).latencyMs??""} ms`)}),p(Dt,Tn)},Dt=>{var kt=fI();p(Dt,kt)});var Gt=s(pl,2),fr=s(f(Gt),2),hn=I(fr,!0),En=s(Oa,2),Gn=s(f(En),2),Ln=I(Gn,!0);C((Dt,kt,Tn,Xr)=>{var Ar,vr,Kn,va,ba,Va,xn,Un,Ci,Ri,Yi,$s,Xi,Ai;b(Lr,((Ar=n(gt))==null?void 0:Ar.status)||"Unknown"),b(Vn,((Kn=(vr=n(gt))==null?void 0:vr.checks)==null?void 0:Kn.repository)||"Unknown"),b(Kr,((ba=(va=n(gt))==null?void 0:va.checks)==null?void 0:ba.generationProvider)||"Not checked"),b(Ti,Dt),da.disabled=n(J),Se(tn,"href",kt),b(Ne,`New brand in ${((Va=n(zr))==null?void 0:Va.name)??""}`),b(xo,((Ci=(Un=(xn=n(kr))==null?void 0:xn.observability)==null?void 0:Un.traces)==null?void 0:Ci.length)||0),b(ps,((Yi=(Ri=n(kr))==null?void 0:Ri.observability)==null?void 0:Yi.usageEvents)||0),b(Ro,((Ai=(Xi=($s=n(kr))==null?void 0:$s.observability)==null?void 0:Xi.operationalEvents)==null?void 0:Ai.length)||0),b(hn,Tn),b(Ln,Xr)},[()=>JSON.stringify(n(gt),null,2),()=>"/api/admin/backprop-jsonl?"+xr(),()=>JSON.stringify(n(kr),null,2),()=>JSON.stringify(n(Nr),null,2)]),T("click",ft,qr),T("click",da,()=>We()),pa("submit",Yt,yn),St(br,()=>n(Ve),Dt=>l(Ve,Dt)),pa("submit",Jr,Nn),St(yr,()=>n(jt),Dt=>l(jt,Dt)),Er(vn,()=>n(pr),Dt=>l(pr,Dt)),p(ne,ie)};W(Jt,ne=>{n(rt)?ne(nt):n(lr)?ne(sn,1):n(H)==="backlog"?ne(on,2):n(H)==="calendar"?ne(Vr,3):n(H)==="jobs"?ne(Wt,4):n(H)==="studio"?ne(Mr,5):n(H)==="brand"&&n(X)?ne(Hr,6):n(H)==="admin"&&n(Zt)&&ne(ja,7)})}C(ne=>{var ie,_e;Le!==(Le=n(R))&&(Oe.value=(Oe.__value=Le)??"",$a(Oe,Le)),Ue!==(Ue=n(B))&&(pe.value=(pe.__value=Ue)??"",$a(pe,Ue)),b(Mn,ne),b(ni,n(k).username),b(y,n(k).role),b(dt,`${(((ie=n(zr))==null?void 0:ie.name)||"ORGANIZATION")??""} / ${(((_e=n(Qn))==null?void 0:_e.name)||"BRAND")??""}`),b(xt,n(H)==="backlog"?"Good stories, next up.":n(H)==="calendar"?"Make room for the week.":n(H)==="studio"?"Campaign Studio":n(H)==="brand"?"Your brand, clearly.":n(H)==="jobs"?"Work in progress.":"Studio operations"),b(Nt,n(H)==="studio"?"Edit the substance. Inspect the surface. Export with context.":"A focused workspace for source-backed editorial work.")},[()=>{var ne;return(ne=n(k).username)==null?void 0:ne.slice(0,2)}]),T("click",se,ne=>{ne.preventDefault(),dn("backlog")}),T("change",Oe,Bn),T("change",pe,la),T("click",D,Vt),p(h,m)};W(wn,h=>{n(le)?h(ea):n(k)?h(fn,-1):h(ca,1)})}p(t,Dn),Ji()}Ls(["click","change","input"]);dp(pI,{target:document.getElementById("app")});
 /**
  * @license
- * Copyright 2025 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/**
- * @license
  * Copyright 2017 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/**
- * @license
- * Copyright 2022 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-/**
- * @license
- * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,6 +78,54 @@ var Vv=Object.defineProperty;var Hv=Object.getPrototypeOf;var Wv=Reflect.get;var
  */
 /**
  * @license
+ * Copyright 2020 Google LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * @license
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * @license
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * @license
  * Copyright 2023 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -142,7 +142,7 @@ var Vv=Object.defineProperty;var Hv=Object.getPrototypeOf;var Wv=Reflect.get;var
  */
 /**
  * @license
- * Copyright 2020 Google LLC.
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
