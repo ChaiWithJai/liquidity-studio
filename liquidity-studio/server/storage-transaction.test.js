@@ -31,12 +31,12 @@ test('invalid multi-record callbacks and capacity errors never partially commit'
   const store = new DurableStore(':memory:');
   try {
     store.update('a', () => ({ value: 1 }));
-    for (const callback of [() => undefined, () => Promise.resolve([{}, {}]), () => [{}], () => [{}, undefined], () => [{}, { big: 'x'.repeat(4 * 1024 * 1024) }], () => { throw new Error('abort'); }]) {
+    for (const callback of [() => undefined, () => Promise.resolve([{}, {}]), () => Promise.reject(new Error("invalid async rejection")), () => [{}], () => [{}, undefined], () => [{}, { big: 'x'.repeat(4 * 1024 * 1024) }], () => { throw new Error('abort'); }]) {
       assert.throws(() => store.transact(['a', 'b'], callback));
       assert.deepEqual(store.get('a'), { value: 1 });
       assert.equal(store.get('b'), null);
     }
-    for (const keys of [[], ['a', 'a'], [''], ['x'.repeat(513)], Array.from({length: 9}, (_, i) => String(i))]) assert.throws(() => store.transact(keys, () => []));
+    for (const keys of [[], Array(1), ['a', 'a'], [''], ['x'.repeat(513)], Array.from({length: 9}, (_, i) => String(i))]) assert.throws(() => store.transact(keys, () => []));
     assert.deepEqual(store.transact(['a'], ([a]) => [a]), [{ value: 1 }]);
   } finally { store.close(); }
 });
