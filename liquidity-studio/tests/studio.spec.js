@@ -635,3 +635,38 @@ test("late source review save cannot restore a story from the previous brand", a
   await expect(page.getByRole("heading",{name:"Delayed review fixture",exact:true})).toHaveCount(0);
   await expect(page.locator("#source-claim-late-review")).toHaveCount(0);
 });
+
+test("late review response preserves newer same-story typing", async ({page}) => {
+  await signIn(page);
+  const response=await page.request.post(base+"/api/studio/backlog"+scope,{data:{title:"Typing during review save",category:"Review",scheduledDay:"Monday",sourceClaims:[{id:"typing-claim",text:"Original review text.",sourceUrl:"https://example.org/review",kind:"general",status:"unreviewed"}]}});
+  expect(response.status()).toBe(201);
+  await page.reload();
+  await page.locator(".story-row").filter({hasText:"Typing during review save"}).getByRole("button",{name:"Open story"}).click();
+  await page.getByLabel("Review status",{exact:true}).selectOption("approved");
+  let release, captured;
+  const held=new Promise(resolve=>{release=resolve});const seen=new Promise(resolve=>{captured=resolve});
+  await page.route("**/api/studio/source-claims?*",async route=>{const response=await route.fetch();captured();await held;await route.fulfill({response});});
+  await page.getByRole("button",{name:"Save source review",exact:true}).click();await seen;
+  await page.getByLabel("Claim text",{exact:true}).fill("Newer unsaved typing must survive.");
+  release();await page.unrouteAll({behavior:"wait"});
+  await expect(page.getByRole("status").filter({hasText:"Source review saved. Only approved sourced claims can enter generation."})).toBeVisible();
+  await expect(page.getByLabel("Claim text",{exact:true})).toHaveValue("Newer unsaved typing must survive.");
+  await expect(page.getByRole("button",{name:"Generate draft",exact:true})).toBeDisabled();
+  await expect(page.getByText("Save source review changes before generating.",{exact:true}).first()).toBeVisible();
+});
+
+test("draft blocker link opens collapsed review and focuses the stable claim", async ({page}) => {
+  await signIn(page);
+  const source={id:"collapsed-claim",text:"Approved excerpt for disclosure test.",sourceUrl:"https://example.org/review",kind:"general",status:"approved"};
+  const response=await page.request.post(base+"/api/studio/backlog"+scope,{data:{title:"Collapsed review fixture",category:"Review",scheduledDay:"Monday",sourceClaims:[source]}});
+  const story=(await response.json()).story;
+  const generated=await page.request.post(base+"/api/studio/generate-campaign"+scope,{data:{storyId:story.id}});expect(generated.ok()).toBe(true);
+  const saved=(await (await page.request.get(base+"/api/studio/bootstrap"+scope)).json()).backlog.find(item=>item.id===story.id);
+  const changed=await page.request.post(base+"/api/studio/source-claims"+scope,{data:{storyId:story.id,expectedRevision:saved.revision,sourceClaims:[{...source,status:"unreviewed"}]}});expect(changed.ok()).toBe(true);
+  await page.reload();await page.locator(".story-row").filter({hasText:"Collapsed review fixture"}).getByRole("button",{name:"Open draft"}).click();
+  await expect(page.locator("details.sources")).not.toHaveAttribute("open","");
+  await page.getByRole("button",{name:/Approve at least one sourced claim/}).click();
+  await expect(page.locator("details.sources")).toHaveAttribute("open","");
+  await expect(page.locator("#source-claim-collapsed-claim textarea")).toBeFocused();
+  await expect(page.locator("#source-claim-collapsed-claim textarea")).toBeVisible();
+});

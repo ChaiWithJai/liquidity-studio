@@ -77,6 +77,8 @@
   let generationReview = $derived(sourceReviewSummary(reviewClaims, reviewSignature(reviewClaims) !== savedReviewSignature));
   function focusSourceClaim(id) {
     const target = document.getElementById(`source-claim-${encodeURIComponent(id)}`);
+    const disclosure = target?.closest("details");
+    if (disclosure) disclosure.open = true;
     target?.scrollIntoView({ block: "center", behavior: "smooth" });
     (target?.querySelector("textarea, input, select") || target)?.focus();
   }
@@ -637,6 +639,7 @@
     error = "";
     const token = lastScopeToken;
     const storyId = selectedStory.id;
+    const submittedSignature = reviewSignature(reviewClaims);
     try {
       const result = await post("/api/studio/source-claims", {
         storyId,
@@ -646,8 +649,10 @@
       if (token !== lastScopeToken || selectedStory?.id !== storyId) return;
       if (result.story) {
         selectedStory = result.story;
-        reviewClaims = (result.story.sourceClaims || []).map((claim) => ({ ...claim }));
-        savedReviewSignature = reviewSignature(reviewClaims);
+        const savedClaims = (result.story.sourceClaims || []).map((claim) => ({ ...claim }));
+        const unchanged = reviewSignature(reviewClaims) === submittedSignature;
+        if (unchanged) reviewClaims = savedClaims;
+        savedReviewSignature = reviewSignature(savedClaims);
         const index = backlog.findIndex(
           (story) => story.id === selectedStory.id,
         );
