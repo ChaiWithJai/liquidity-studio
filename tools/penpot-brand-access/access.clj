@@ -18,6 +18,11 @@
   (:team-id (db/exec-one! pool
               ["SELECT p.team_id FROM file f JOIN project p ON p.id=f.project_id WHERE f.id=?" id])))
 
+(defn current-file-team [pool id]
+  (when-not (uuid? id) (denied!))
+  (:team-id (db/exec-one! pool
+              ["SELECT p.team_id FROM file f JOIN project p ON p.id=f.project_id WHERE f.id=? AND f.deleted_at IS NULL AND p.deleted_at IS NULL" id])))
+
 (defn project-team [pool id]
   (when-not (uuid? id) (denied!))
   (:team-id (db/exec-one! pool

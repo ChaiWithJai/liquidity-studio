@@ -60,11 +60,12 @@
 (deftest rpc-context-uses-authenticated-profile-and-captured-session
   (let [operator (uuid/parse "55555555-5555-4555-8555-555555555555")
         key (apply str (repeat 43 "a"))
+        captured (atom [])
         request {::session/profile-id operator
                  ::session/session {:id team :profile-id operator}
                  :headers {"x-studio-native-grant-key" key "x-studio-acting-profile" (str profile)}}
         cfg {::access/governed-teams #{team} ::access/reconciliation-key key
-             ::access/capture-session (fn [r] (is (= request r)) :captured)
+             ::access/capture-session (fn [r] (swap! captured conj r) :captured)
              ::access/session-valid? (fn [_ c] (= c :captured))
              ::access/authorize (fn [r]
                                   (is (= profile (:native-profile-id r)))
@@ -74,5 +75,6 @@
         handler (access/wrap-rpc cfg (fn [_ _] (access/context-team-allowed? team)) {::sv/name "get-file"})
         params (with-meta {::rpc/profile-id operator} {::http/request request})]
     (is (handler cfg params))
+    (is (= [request] @captured))
     (is (thrown? Exception (handler cfg (with-meta {::rpc/profile-id operator}
                                          {::http/request (assoc-in request [:headers "x-studio-native-grant-key"] "invalid")}))))))
