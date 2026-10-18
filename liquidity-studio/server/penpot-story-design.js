@@ -29,6 +29,7 @@ export class PenpotStoryDesigns{
  async context(actor,storyId){
   this.identity.requireFounder(actor);const currentActor=(await this.store.get('identity'))?.users?.find(x=>x.id===actor.id);if(currentActor?.role!=='founder')throw fail(403,'Current founder permission required');await this.identity.authorize(actor,this.scope.organizationId,this.scope.brandId);
   const workspace=await this.workspaceFor(actor,this.scope),state=await this.repo.read();assertRestoreAvailable(state);
+  const liveIdentity=await this.store.get('identity');if(liveIdentity?.users?.find(x=>x.id===actor.id)?.role!=='founder'||!liveIdentity.memberships?.some(x=>x.userId===actor.id&&x.organizationId===this.scope.organizationId&&x.brandIds.includes(this.scope.brandId)))throw fail(403,'Current founder or brand membership changed');
   const story=state.backlog.find(x=>x.id===storyId);if(!story)throw fail(404,'Saved story not found');
   if(!story.campaignDraft||!story.generationId)throw fail(422,'Review and hand off the saved campaign before creating its Penpot design');
   const bundle=compileMultimodalBundle({scope:this.scope,brandProfile:state.brandProfile,story,request:{schemaVersion:1,storyId:story.id,expectedRevision:story.revision,generationId:story.generationId,expectedBrandRevision:brandRevision(state.brandProfile),requiredCapabilities:[]}});
