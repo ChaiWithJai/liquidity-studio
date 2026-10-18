@@ -684,6 +684,9 @@ export function createHttpServer(
           ...(await backlog.getStudioBootstrap()),
           ...(trustedTestMode ? {} : await session()),
           activeScope: scope,
+          operatorCapabilities: {
+            helperControl: helperControlEnabled && !trustedTestMode,
+          },
         });
       if (route.startsWith("/api/studio/editor-bindings")) {
         if (!editorBoundaryEnabled || trustedTestMode)
