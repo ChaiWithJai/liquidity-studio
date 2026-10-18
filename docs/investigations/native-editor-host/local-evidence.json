@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedAt": "2026-10-18T02:52:41.318959+00:00",
-  "functionalCommit": "37a556c684f54926b483d9f357d3965edf0f986f",
+  "functionalCommit": "0a38184f8a7c4b1074f8e6dfeadd68c5559412bf",
   "upstreamCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
   "scope": "Author-run local production-compiled EditorApp with disposable QA password identity; not Google or deployment acceptance",
   "sourceHashes": {
@@ -14,26 +14,26 @@
   },
   "checks": {
     "node22": {
-      "passed": 178,
+      "passed": 184,
       "skipped": 1,
       "skip": "separate Firestore emulator"
     },
     "chromium": {
       "passed": 6,
-      "durationSeconds": 42.4
+      "durationSeconds": 45.7
     },
     "svelteMcp": {
       "issues": 0
     },
     "publicDefaultBundle": {
-      "transformedModules": 152,
-      "auditedChunkModules": 89,
+      "transformedModules": 154,
+      "auditedChunkModules": 91,
       "upstreamSource": false,
       "reactOrFabric": false,
       "editorFrameOrLicenseAsset": false,
       "assets": [
-        "index-C4IAeV4A.js",
-        "index-DxFD7tsP.css"
+        "index-B1KkZSH7.css",
+        "index-D4c4hasO.js"
       ],
       "enforcedBy": "scripts/native-editor-vite.js generateBundle default-mode guard",
       "buildOnlyFollowupCommit": "9e20cf2",
@@ -44,7 +44,7 @@
         "placement": "eof with sorted canonical footer",
         "reason": "Ubuntu/macOS differed only in placement of a duplicated notice"
       },
-      "canonicalUbuntuEqualsActualMac": true
+      "canonicalPriorUbuntuEqualsActualPriorMac": true
     }
   },
   "nativePng": {
@@ -63,5 +63,5 @@
   },
   "runtimeChanges": false,
   "paidCalls": 0,
-  "baseCommit": "6d0240dd32e41a550a32a722738d7a1226aac3c8"
+  "baseCommit": "a439acb5cffa7260744ef1058b8e74dd51c7147a"
 }
