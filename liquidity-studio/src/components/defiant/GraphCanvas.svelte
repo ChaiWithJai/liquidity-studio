@@ -10,7 +10,7 @@
   function fit(){zoom=1;pan={x:0,y:0};}
   function wheel(e){if(e.ctrlKey||e.metaKey){e.preventDefault();zoom=Math.max(.65,Math.min(1.6,zoom-e.deltaY*.003));}}
 </script>
-<div class="graph-canvas" bind:this={surface} role="region" aria-label="Opportunity graph. Tab through nodes and routes. Drag empty space to pan." onpointerdown={pointerDown} onpointermove={move} onpointerup={()=>end()} onpointercancel={()=>end()} onwheel={wheel}>
+<div class="graph-canvas" bind:this={surface} role="region" aria-label="Opportunity graph. Tab through nodes and relationships. Drag empty space to pan." onpointerdown={pointerDown} onpointermove={move} onpointerup={()=>end()} onpointercancel={()=>end()} onwheel={wheel}>
   <div class="graph-world" style:transform={`translate(${pan.x}px,${pan.y}px) scale(${zoom})`}>
     <svg class="connections" viewBox="0 0 1000 650" preserveAspectRatio="none" aria-label="Graph relationships">
       <defs><marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#b9c2c0"/></marker><marker id="arrow-active" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#467966"/></marker></defs>
@@ -19,14 +19,14 @@
         {#if a&&b}
           {@const d=`M${a.x*10},${a.y*6.5} C${(a.x+b.x)*5},${a.y*6.5} ${(a.x+b.x)*5},${b.y*6.5} ${b.x*10},${b.y*6.5}`}
           <path class="edge-line" class:chosen={selectedId===edge.id} class:match={edge.kind==='match'} d={d} marker-end={selectedId===edge.id?'url(#arrow-active)':'url(#arrow)'}/>
-          {#if edge.kind==='route'}<path class="edge-hit" data-edge={edge.id} d={d} role="button" tabindex="0" aria-label={`Inspect route ${edge.name}`} onclick={()=>onselect(edge.id)} onkeydown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onselect(edge.id);}}}/>{/if}
+          <path class="edge-hit" data-edge={edge.id} d={d} role="button" tabindex="0" aria-label={`Inspect ${edge.kind} ${edge.name}`} onclick={()=>onselect(edge.id)} onkeydown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onselect(edge.id);}}}/>
         {/if}
       {/each}
     </svg>
     {#each nodes as node (node.id)}
       <button class="graph-node" class:chosen={selectedId===node.id} class:artist={node.kind==='artist'} class:person={node.kind==='person'} style:left={`${node.x}%`} style:top={`${node.y}%`} data-node-id={node.id} aria-label={`Explore ${node.name}, ${node.kind}`} aria-pressed={selectedId===node.id} onpointerdown={e=>nodeDown(e,node)} onpointermove={e=>{e.stopPropagation();move(e);}} onpointerup={e=>{e.stopPropagation();const moved=end();if(!moved)onselect(node.id);}} onpointercancel={()=>end()} onclick={e=>{if(e.detail===0)onselect(node.id);}}>
         <span class="node-icon"><Icon name={node.kind==='region'?'globe':node.kind==='artist'?'music':'person'} size={18}/></span>
-        <span class="node-text"><strong>{node.name}</strong><small>{node.kind==='region'?node.subtitle:node.kind==='artist'?'Emerging artist':'Possible collaborator'}</small></span>
+        <span class="node-text"><strong>{node.name}</strong><small>{node.kind==='region'?node.subtitle:node.subtitle||({artist:'Artist',person:'Collaborator',signal:'Signal',resource:'Resource',format:'Media concept',catalog:'Catalog reference',external:'External reference'}[node.kind]||node.kind)}</small></span>
         {#if planIds.includes(node.id)}<span class="node-added"><Icon name="check" size={12}/></span>{/if}
       </button>
     {/each}
