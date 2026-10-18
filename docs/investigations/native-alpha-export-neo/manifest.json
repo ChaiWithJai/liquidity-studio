@@ -1,0 +1,111 @@
+{
+  "observedAt": "2026-10-18",
+  "issue": 55,
+  "scenario": "Actual restored finance Feed, existing generated nonpersonal portrait derivative; native revision4 proposal/finalSignoffnot_granted",
+  "output": {
+    "file": "finance-transparent.png",
+    "bytes": 491669,
+    "sha256": "872ae64829d430d8f977324582464c6e1671598d5a0408911203bef782580f74",
+    "width": 1080,
+    "height": 1350,
+    "transparentPixels": 1254758,
+    "partialAlphaPixels": 174015,
+    "opaquePixels": 29227,
+    "cornerAlpha": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "method": "Actual browser PNG decode and RGBA counts"
+  },
+  "nativeDerivative": {
+    "sha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+    "inputSha256": "50db12119d03be4f4a2736586210f0eac990a667e7ea0d7a0d5469268dd93c5e",
+    "rights": "Existing owner-declared generated synthetic portrait with no actual personal identity, not_personal_data; no new consent assertion",
+    "inferencePerformedDuringThisSlice": false
+  },
+  "ui": {
+    "type": "PNG",
+    "scale": 1,
+    "transparentSwitchConfirmedChecked": true,
+    "pages": "All pages (1)",
+    "ordinaryNativeDownload": true
+  },
+  "serialization": {
+    "allBelowTarget": true,
+    "bytes": 9062,
+    "documentUnchanged": true,
+    "finalSignoff": "not_granted",
+    "firstMs": 0,
+    "images": [
+      {
+        "height": 384,
+        "id": "6678d96c-ef75-40cf-af6f-4a33361a54fe",
+        "left": 540,
+        "scaleX": 1.4063,
+        "scaleY": 1.4063,
+        "src": "studio-asset:bcdc3cd1730362c6c1a0020a2d57d6e0",
+        "top": 675,
+        "width": 384
+      }
+    ],
+    "maxMs": 0.10000002384185792,
+    "method": "JSON.stringify of actual authorized saved DoryDocument; parse/fetch/compile/export excluded",
+    "nativeRevision": 4,
+    "pages": 1,
+    "status": "proposal",
+    "targetMs": 15,
+    "timerResolution": "browserperformance.nowquantization",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+    "warmMedianMs": 0,
+    "warmP95Ms": 0.09999999403953552,
+    "warmSamplesMs": [
+      0,
+      0,
+      0,
+      0.09999999403953552,
+      0,
+      0,
+      0.10000002384185792,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0.09999999403953552,
+      0,
+      0,
+      0,
+      0,
+      0.09999999403953552,
+      0,
+      0
+    ]
+  },
+  "exportObservation": {
+    "observedPreparing": true,
+    "preparingToDialogCloseMs": 1087.9000000059605
+  },
+  "negative": {
+    "bytes": 456313,
+    "sha256": "3f1a3848501f4ce1942467e06f849693e8ba5b7626cb40aaf978e975f80b0d22",
+    "alpha": "all opaque",
+    "switchCheckedBeforeFirstDownload": "not captured; not proof of renderer defect",
+    "preservedPrivately": true
+  },
+  "backup": {
+    "bytes": 1196032,
+    "sha256": "534c3486cc6f1902960d19e3b4f76a640fc42166d170f09858a0e3e4efe05f04",
+    "recordCount": 49,
+    "integrity": "ok"
+  },
+  "limits": [
+    "No new inference, audio or real-person consent",
+    "Serialization measures only JSON.stringify of this saved DoryDocument; fetch/parse/compile/render excluded",
+    "Preparing interval excludes browser download completion and total operator time",
+    "Transparent export includes native text and subject; no ground-truth alpha-mask or every-pixel fidelity assertion",
+    "Native proposal unapproved; local draft download is not verified PNG signoff/publication",
+    "Private upstream license/distribution hold unchanged"
+  ]
+}
