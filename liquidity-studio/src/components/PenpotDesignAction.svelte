@@ -30,14 +30,14 @@
   }
 </script>
 <section class="penpot-design-action" aria-label="Campaign design in Penpot">
-  <h3>Penpot</h3>
+  <h3>Design your campaign</h3>
   {#if loading}<p role="status">Finding this campaign’s design…</p>
-  {:else if openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Your changes are saved in Penpot. Return here to reopen the same design.</p>
-  {:else if result?.available || attempt || result?.design}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Start with this campaign’s saved copy and brand.</p>
+  {:else if openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>
+  {:else if result?.available || attempt || result?.design}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Create an editable design from the saved copy and brand.</p>
   {:else if result?.reason}<p>{result.reason}</p>{/if}
   {#if error}<p role="alert">{error}</p>{#if rejected}<button onclick={()=>window.location.reload()}>Reload saved campaign</button>{:else if !attempt}<button disabled={loading||busy} onclick={load}>Check design again</button>{/if}{/if}
 </section>
 <style>
-  .penpot-design-action{display:grid;gap:.65rem;padding:1rem;border:1px solid var(--border,#d1d5db);border-radius:.6rem}
+  .penpot-design-action{display:grid;gap:.4rem;padding:.8rem 1rem;border:1px solid var(--border,#d1d5db);border-radius:.6rem}
   h3,p{margin:0}a,button{justify-self:start;min-height:42px;align-content:center}
 </style>

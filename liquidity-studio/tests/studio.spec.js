@@ -123,7 +123,7 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
     "true",
   );
   console.log("Navigation reload and feed interactions verified");
-  await page.getByRole("button", { name: "Export PNG" }).click();
+  await page.getByRole("button", { name: "Export Studio preview PNG" }).click();
   await expect(page.locator(".download a")).toBeVisible();
   const file = await page.request.get(
     base + (await page.locator(".download a").getAttribute("href")),

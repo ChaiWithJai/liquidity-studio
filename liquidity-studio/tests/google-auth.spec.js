@@ -100,7 +100,7 @@ test('real Auth Emulator Google popup verifies backend access, persistence, expo
   expect((await page.request.post(base + '/api/studio/generate-campaign' + scope,{headers,data:{storyId:story.id}})).status()).toBe(200);
   await page.reload();
   await page.locator('.story-row').filter({hasText:'Google authenticated export fixture'}).getByRole('button',{name:'Open draft'}).click();
-  await page.getByRole('button',{name:'Export PNG',exact:false}).click();
+  await page.getByRole('button',{name:'Export Studio preview PNG',exact:false}).click();
   const downloadPromise = page.waitForEvent('download');
   await page.locator('.download a').click();
   const download = await downloadPromise;
