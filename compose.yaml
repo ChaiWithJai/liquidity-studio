@@ -4,6 +4,7 @@ services:
     build:
       context: ./liquidity-studio
     image: liquidity-studio:local
+    restart: unless-stopped
     ports:
       - "127.0.0.1:${STUDIO_LOCAL_PORT:-3001}:8080"
     environment:
