@@ -85,7 +85,7 @@ function entities(text) {
 }
 
 /** Plain extractive evidence, never markup or an approved factual assertion. */
-export function extractSourceText(body, contentType, query = "") {
+export function extractSourceText(body, contentType, query = "", passage) {
   const type = contentType.split(";")[0].trim().toLowerCase();
   if (!["text/plain", "text/html", "application/xhtml+xml"].includes(type))
     throw fail(422, "Source must return HTML or plain text");
@@ -103,6 +103,19 @@ export function extractSourceText(body, contentType, query = "") {
           .trim()
           .slice(0, 180);
   if (type !== "text/plain") {
+    if (passage) {
+      // Match actual section headings, not duplicate table-of-contents links.
+      const headings = [...text.matchAll(/<h[1-6]\b[^>]*>[\s\S]*?<\/h[1-6]\s*>/gi)].map((match) => ({
+        text: entities(match[0].replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim(),
+        start: match.index,
+        end: match.index + match[0].length,
+      }));
+      const starts = headings.filter((item) => item.text === passage.section);
+      const ends = headings.filter((item) => item.text === passage.nextSection);
+      if (starts.length !== 1 || ends.length !== 1 || starts[0].start >= ends[0].start)
+        throw fail(422, "Selected source passage boundaries are missing or ambiguous; source research required");
+      text = text.slice(starts[0].start, ends[0].end);
+    }
     const article = text.match(/<article\b[^>]*>([\s\S]*?)<\/article\s*>/i);
     const main = text.match(/<main\b[^>]*>([\s\S]*?)<\/main\s*>/i);
     text = article?.[1] || main?.[1] || text;
@@ -126,6 +139,23 @@ export function extractSourceText(body, contentType, query = "") {
         .trim(),
     )
     .filter(Boolean);
+  if (passage) {
+    const starts = paragraphs.flatMap((line, index) => line === passage.section ? [index] : []);
+    const ends = paragraphs.flatMap((line, index) => line === passage.nextSection ? [index] : []);
+    if (starts.length !== 1 || ends.length !== 1 || ends[0] <= starts[0])
+      throw fail(422, "Selected source passage boundaries are missing or ambiguous; source research required");
+    const section = paragraphs.slice(starts[0] + 1, ends[0]);
+    const selected = passage.paragraphPrefixes.map((prefix) => {
+      const matches = section.filter((line) => line.startsWith(`${prefix} `));
+      if (matches.length !== 1)
+        throw fail(422, "Selected source passage is missing or ambiguous; source research required");
+      return matches[0];
+    });
+    const selectedText = selected.join("\n");
+    if (selectedText.length < 40 || selectedText.length > MAX_TEXT)
+      throw fail(422, "Selected source passage exceeds readable evidence bounds");
+    return selectedText;
+  }
   // Retrieval selects source text, not assertions. Every selected word remains an exact excerpt.
   const terms = [
     ...new Set(
@@ -168,6 +198,7 @@ export async function retrieveSource(
     get = https.get,
     now = () => new Date().toISOString(),
     query = "",
+    passage,
   } = {},
 ) {
   const url = validateSourceUrl(value, hosts);
@@ -242,6 +273,7 @@ export async function retrieveSource(
         response.bytes.toString("utf8"),
         response.type,
         query,
+        passage,
       );
       return {
         schemaVersion: 1,
@@ -252,10 +284,10 @@ export async function retrieveSource(
         responseSha256: sha(response.bytes),
         responseBytes: response.bytes.length,
         extractionVersion: "plain-excerpts-v1",
-        selectionMethod: query
+        selectionMethod: passage ? "operator-selected-passage-v1" : query
           ? "topic-keyword-overlap-v1"
           : "document-order-v1",
-        selectionQuerySha256: sha(String(query)),
+        selectionQuerySha256: sha(passage ? JSON.stringify({ query, passage }) : String(query)),
         text,
         textSha256: sha(text),
         status: "unreviewed",

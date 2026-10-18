@@ -34,6 +34,12 @@ const entries = Object.freeze([
     topicTerms: ["yoga", "sutra"],
     sourceUrl: "https://www.gutenberg.org/cache/epub/2526/pg2526-images.html",
     publisher: "Charles Johnston translation via Project Gutenberg",
+    passage: {
+      version: "yoga-book-ii-29-30-32-46-v1",
+      section: "BOOK II",
+      nextSection: "INTRODUCTION TO BOOK III",
+      paragraphPrefixes: ["29.", "30.", "32.", "46."],
+    },
     kind: "cultural",
     coverage:
       "Historical text translation for cultural review. This is not clinical evidence or a medical outcome claim.",

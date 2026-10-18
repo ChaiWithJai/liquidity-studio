@@ -120,3 +120,27 @@ fresh-owner source-review-to-new-copy path, unchanged original history, same-key
 recovery, authority/concurrency negatives, and actual native edit/save/reload/PNG
 proof when the private licensed acceptance environment is available. Maintained
 runtime rollout and the upstream distribution hold remain separate.
+
+### HTTP admission and body deadline
+
+The HTTP server admits one portable-pack operation at a time, across export,
+install, rollback, and empty-destination creation. Authentication, founder access,
+feature flags, the known route/method, and existing-scope membership are checked
+before admission and before collecting a body. An occupied slot returns HTTP 429
+with `Retry-After: 1`; the caller can retry the same install idempotency key after
+the active operation finishes. Rejection does not start JSON collection or an
+installation journal. Transport bytes may be discarded without retaining them so
+HTTP clients can receive the response while uploading.
+
+The slot remains occupied until both server work has settled and the response
+has finished or closed. Disconnecting an export client does not admit another
+export while the original work continues. Aborted or failed body collection
+releases its slot; portable POST body collection has a 15-second deadline. The
+49 MiB install body limit and all archive limits remain unchanged. Ordinary
+non-pack routes are not serialized by this guard.
+
+This is a per-server-instance overlap control, not a hard 512 MiB memory limit or
+an aggregate spend guarantee. JSON parsing, validation, archive serialization,
+and transport still have memory costs; multi-instance scaling and instance-level
+capacity require separate operational limits. Regression tests use tiny held
+requests and a held HTTP response, rather than allocating maximum-size packs.
