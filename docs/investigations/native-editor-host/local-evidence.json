@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-18T02:52:41.318959+00:00",
+  "functionalCommit": "78b7cf832148bdd94e14bcc052058c7f46b563e1",
+  "upstreamCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "scope": "Author-run local production-compiled EditorApp with disposable QA password identity; not Google or deployment acceptance",
+  "sourceHashes": {
+    "liquidity-studio/server/native-editor.js": "cba26eb698f2ab7495616b45e8012ab311767e99bfa35d57ca7bd5cf12ac4273",
+    "liquidity-studio/src/App.svelte": "a513e6dcd4b64cb3e0c1ef8e4ee3c030519562835e67fe4b3b58efe70b1108e6",
+    "liquidity-studio/src/components/NativeEditorHost.svelte": "558754f6c32f6c48d0c6f1a745665b24ddd86559526c3fec53cc069ce99129fb",
+    "liquidity-studio/src/lib/native-editor-broker.js": "86a4a75a0061d3f0d1fc824bfa6ec2be757a3d75307c2791f555f1e17766057b",
+    "liquidity-studio/src/lib/native-editor-adapter.js": "5765ec1ff9387df71a59b112fe3b5c022f5b86d640cc13ca1cfe98fd98095b70",
+    "liquidity-studio/tests/native-editor-host.spec.js": "3d228dfbbc87cab238ffaead5079730af8b07ade9a2e6a21ddcf373e3f14e2e0"
+  },
+  "checks": {
+    "node22": {
+      "passed": 174,
+      "skipped": 1,
+      "skip": "separate Firestore emulator"
+    },
+    "chromium": {
+      "passed": 5,
+      "durationSeconds": 45.8
+    },
+    "svelteMcp": {
+      "issues": 0
+    },
+    "publicDefaultBundle": {
+      "transformedModules": 152,
+      "auditedChunkModules": 89,
+      "upstreamSource": false,
+      "reactOrFabric": false,
+      "editorFrameOrLicenseAsset": false,
+      "assets": [
+        "index-DldolBLq.js",
+        "index-DxFD7tsP.css"
+      ]
+    }
+  },
+  "nativePng": {
+    "sha256": "2b33b49af162ce0078b84620666382a0d79067621ba03242f1ea7ed4db745d33",
+    "bytes": 142231,
+    "width": 1080,
+    "height": 1350,
+    "hasAlpha": true,
+    "bounds": "Actual upstream quick PNG; centered owned procedural image obscures copy. Operational evidence only, not portrait/cutout or layout quality."
+  },
+  "distribution": {
+    "copiedSourcePublished": false,
+    "upstreamBundlePublished": false,
+    "unresolved": "Pinned AAL GPG-signed text condition",
+    "nativeEnabledByDefault": false
+  },
+  "runtimeChanges": false,
+  "paidCalls": 0
+}
