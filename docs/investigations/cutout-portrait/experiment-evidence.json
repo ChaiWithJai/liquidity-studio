@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-18T03:02:45.601205+00:00",
+  "sourceCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "scope": "Local dedicated worker investigation, one synthetic portrait; not deployed or complete native UI cutout acceptance",
+  "runs": {
+    "u2netp": {
+      "browserVersion": "156.0.8078.4",
+      "input": {
+        "bytes": 1147913,
+        "sha256": "b614ff30258ad627172f0c4c23df65718c808cec1a6917b49471c86d6a95d6da",
+        "width": 768,
+        "height": 768
+      },
+      "inputUnchanged": true,
+      "cacheEntry": true,
+      "modelRequests": 1,
+      "blockedExternalOrigins": [],
+      "crossOriginIsolated": false,
+      "hardwareConcurrency": 12,
+      "model": {
+        "id": "u2netp",
+        "bytes": 4574861,
+        "sha256": "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8",
+        "input": {
+          "name": "input.1",
+          "size": 320,
+          "mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "std": [
+            0.229,
+            0.224,
+            0.225
+          ],
+          "rescale": "max"
+        },
+        "output": "1959"
+      },
+      "results": [
+        {
+          "name": "cold-download-and-worker",
+          "status": "complete",
+          "elapsedMs": 2407.2999999970198,
+          "bytes": 747807,
+          "sha256": "39fa128b5a9cb5e457e1377155500d067775d5062eff3d992c07fedd207a7dc6",
+          "width": 768,
+          "height": 768,
+          "alpha": {
+            "transparent": 268899,
+            "partial": 24678,
+            "opaque": 296247,
+            "min": 0,
+            "max": 255
+          }
+        },
+        {
+          "name": "warm-same-worker",
+          "status": "complete",
+          "elapsedMs": 1442.300000011921,
+          "bytes": 747807,
+          "sha256": "39fa128b5a9cb5e457e1377155500d067775d5062eff3d992c07fedd207a7dc6",
+          "width": 768,
+          "height": 768,
+          "alpha": {
+            "transparent": 268899,
+            "partial": 24678,
+            "opaque": 296247,
+            "min": 0,
+            "max": 255
+          }
+        },
+        {
+          "name": "verified-cache-new-worker",
+          "status": "complete",
+          "elapsedMs": 1806.7000000029802,
+          "bytes": 747807,
+          "sha256": "39fa128b5a9cb5e457e1377155500d067775d5062eff3d992c07fedd207a7dc6",
+          "width": 768,
+          "height": 768,
+          "alpha": {
+            "transparent": 268899,
+            "partial": 24678,
+            "opaque": 296247,
+            "min": 0,
+            "max": 255
+          }
+        },
+        {
+          "name": "cancel-after-processing10",
+          "status": "failed",
+          "elapsedMs": 10.799999997019768,
+          "abortLatencyMs": 0.5,
+          "error": {
+            "name": "AbortError",
+            "message": "Explicit synthetic portrait QA cancellation"
+          }
+        },
+        {
+          "name": "recovery-after-cancel",
+          "status": "complete",
+          "elapsedMs": 1478.7000000029802,
+          "bytes": 747807,
+          "sha256": "39fa128b5a9cb5e457e1377155500d067775d5062eff3d992c07fedd207a7dc6",
+          "width": 768,
+          "height": 768,
+          "alpha": {
+            "transparent": 268899,
+            "partial": 24678,
+            "opaque": 296247,
+            "min": 0,
+            "max": 255
+          }
+        }
+      ]
+    },
+    "modnet": {
+      "browserVersion": "156.0.8078.4",
+      "input": {
+        "bytes": 1147913,
+        "sha256": "b614ff30258ad627172f0c4c23df65718c808cec1a6917b49471c86d6a95d6da",
+        "width": 768,
+        "height": 768
+      },
+      "inputUnchanged": true,
+      "cacheEntry": true,
+      "modelRequests": 1,
+      "blockedExternalOrigins": [],
+      "crossOriginIsolated": false,
+      "hardwareConcurrency": 12,
+      "model": {
+        "id": "modnet",
+        "bytes": 25888640,
+        "sha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9",
+        "input": {
+          "name": "input",
+          "size": 512,
+          "mean": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "std": [
+            0.5,
+            0.5,
+            0.5
+          ],
+          "rescale": "255"
+        },
+        "output": "output"
+      },
+      "results": [
+        {
+          "name": "cold-download-and-worker",
+          "status": "complete",
+          "elapsedMs": 1756.0999999940395,
+          "bytes": 765442,
+          "sha256": "b8f767f8f206e10e343764c2d3fe284d0124fe3979c0631e9a01d126b1a4b170",
+          "width": 768,
+          "height": 768,
+          "alpha": {
+            "transparent": 264511,
+            "partial": 34896,
+            "opaque": 290417,
+            "min": 0,
+            "max": 255
+          }
+        },
+        {
+          "name": "warm-same-worker",
+          "status": "complete",
+          "elapsedMs": 1236,
+          "bytes": 765442,
+          "sha256": "b8f767f8f206e10e343764c2d3fe284d0124fe3979c0631e9a01d126b1a4b170",
+          "width": 768,
+          "height": 768,
+          "alpha": {
+            "transparent": 264511,
+            "partial": 34896,
+            "opaque": 290417,
+            "min": 0,
+            "max": 255
+          }
+        },
+        {
+          "name": "verified-cache-new-worker",
+          "status": "complete",
+          "elapsedMs": 1602.5,
+          "bytes": 765442,
+          "sha256": "b8f767f8f206e10e343764c2d3fe284d0124fe3979c0631e9a01d126b1a4b170",
+          "width": 768,
+          "height": 768,
+          "alpha": {
+            "transparent": 264511,
+            "partial": 34896,
+            "opaque": 290417,
+            "min": 0,
+            "max": 255
+          }
+        },
+        {
+          "name": "cancel-after-processing10",
+          "status": "failed",
+          "elapsedMs": 10.400000005960464,
+          "abortLatencyMs": 0.20000000298023224,
+          "error": {
+            "name": "AbortError",
+            "message": "Explicit synthetic portrait QA cancellation"
+          }
+        },
+        {
+          "name": "recovery-after-cancel",
+          "status": "complete",
+          "elapsedMs": 1359.5,
+          "bytes": 765442,
+          "sha256": "b8f767f8f206e10e343764c2d3fe284d0124fe3979c0631e9a01d126b1a4b170",
+          "width": 768,
+          "height": 768,
+          "alpha": {
+            "transparent": 264511,
+            "partial": 34896,
+            "opaque": 290417,
+            "min": 0,
+            "max": 255
+          }
+        }
+      ]
+    }
+  },
+  "reference": {
+    "scriptUrl": "https://raw.githubusercontent.com/ZHKKKe/MODNet/28165a451e4610c9d77cfdf925a94610bb2810fb/onnx/inference_onnx.py",
+    "scriptSha256": "86051781d6a956b85451aa98f999688121f6d426063c9d6cfd73ca7426c73593",
+    "alphaSha256": "a4086fc3ab9202d862821408b0d63f93243a934949b3ffd04be7ebc5fc5fcaeb",
+    "alphaMeanAbsoluteDifference": 2.677193535698785,
+    "pixelsDifferent": 330229,
+    "totalPixels": 589824,
+    "metricMeaning": "Implementation agreement, not accuracy against ground truth",
+    "versions": {
+      "onnxruntime": "1.23.2",
+      "opencv": "4.12.0",
+      "numpy": "2.2.6",
+      "Pillow": "11.3.0"
+    }
+  },
+  "artifacts": {
+    "u2netp-host-on-dark.jpg": {
+      "bytes": 124694,
+      "sha256": "9bea2f1fda575b9c8424e0aba4193e48400979c0a65de6ae21d44d72a30f3c58",
+      "width": 768,
+      "height": 768
+    },
+    "modnet-reference-on-dark.jpg": {
+      "bytes": 125805,
+      "sha256": "a47e68c9fe39d15a8167cf41dbdaae5cfec6ad735d1a85de3f7389ea4aba83a1",
+      "width": 768,
+      "height": 768
+    },
+    "modnet-host-on-dark.jpg": {
+      "bytes": 124343,
+      "sha256": "2e9df02ae6e4e2c0e6be94f30a99778d44959f9cfbfa3f23e2805e51c8eb7dcb",
+      "width": 768,
+      "height": 768
+    },
+    "synthetic-portrait-input.png": {
+      "bytes": 1147913,
+      "sha256": "b614ff30258ad627172f0c4c23df65718c808cec1a6917b49471c86d6a95d6da",
+      "width": 768,
+      "height": 768
+    }
+  },
+  "unchangedRuntime": {
+    "studioCutoutHookEnabled": false,
+    "cloudMutations": false,
+    "modelWeightsCommitted": false,
+    "doorySourceOrBundleCommitted": false,
+    "qualityAccepted": false
+  },
+  "publicReproducer": {
+    "kind": "u2netp",
+    "state": "complete",
+    "modelRequests": 1,
+    "inputSha256": "b614ff30258ad627172f0c4c23df65718c808cec1a6917b49471c86d6a95d6da",
+    "completedOutputSha256": [
+      "39fa128b5a9cb5e457e1377155500d067775d5062eff3d992c07fedd207a7dc6",
+      "39fa128b5a9cb5e457e1377155500d067775d5062eff3d992c07fedd207a7dc6",
+      "39fa128b5a9cb5e457e1377155500d067775d5062eff3d992c07fedd207a7dc6",
+      "39fa128b5a9cb5e457e1377155500d067775d5062eff3d992c07fedd207a7dc6"
+    ],
+    "sameAsOriginalSequence": true
+  }
+}
