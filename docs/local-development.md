@@ -32,3 +32,28 @@ Source jobs, source preparation, and typed helper controls are enabled. The exis
 Stop with Ctrl+C. The launcher drains its local worker, then closes its Vite server and SQLite connection and removes only its own PID lock. A crash can leave `launcher.lock`: verify the recorded PID is no longer the owned launcher before manually removing **that lock only**. Never delete or replace the database to clear a lock. If startup left a marker but no database, preserve the directory for inspection; the launcher reports a marker mismatch rather than silently initializing over it. Bind failures and missing dependencies are reported without installing or changing a maintained service.
 
 The loopback wrapper rejects foreign Host/Origin values and forwarded headers before the backend or Vite handler. Persona selection requires a same-origin bounded form with exactly one of the two fixed persona names. This developer-only picker is not a production authentication mode or a remotely deployable login bypass. Do not expose it through a tunnel or reverse proxy.
+
+
+### Optional local Penpot Create/Open
+
+To connect the developer profile to an existing local Penpot workspace, explicitly
+pass a private operator configuration file:
+
+```sh
+npm run dev -- --profile development --port 3002 --penpot-config /absolute/private/operator.json
+```
+
+The file uses the existing pinned Penpot operator configuration schema, must be
+private, and must select the fixed loopback service at `localhost:39008`. Its
+per-brand workspace, native owner session and verified team-local fonts are server
+configuration. They are never chosen by the browser. A current local founder can
+create and reopen a design from saved, reviewed campaign copy. Marketers cannot
+create designs through this developer adapter. Ordinary native project edit ACLs
+still apply to creation.
+
+This enables only Create/Open. It does not enable the full Penpot token, media,
+callback or export integration, change production Google authentication, or prove
+Studio-to-native human identity pairing. The developer profile and native owner
+are separate identities. With no `--penpot-config`, the existing launcher behavior
+is unchanged. Restart with the same profile and private configuration to recover
+pending creation or reopen its existing saved native design.

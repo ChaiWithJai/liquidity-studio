@@ -1,4 +1,5 @@
 <script>
+  import PenpotDesignAction from "./components/PenpotDesignAction.svelte";
   import { onMount, tick } from "svelte";
   import { readWorkflowLocation, workflowHref } from "./lib/workflow-location.js";
   import { SvelteMap } from "svelte/reactivity";
@@ -138,7 +139,7 @@
   let helperControlEnabled = $state(false);
   let nativeEditorEnabled = $state(false);
   let nativePortableEnabled = $state(false);
-  let penpotEnabled = $state(false);
+  let penpotEnabled = $state(false), penpotStoryDesignsEnabled = $state(false);
   let sourcePreparationEnabled=$state(false),preparedDirty=$state(false),preparedEditingStoryId=$state(""),preparedForkIntent=$state(null);
   let preparedWorkspace=$derived(sourcePreparationEnabled&&(!campaign||preparedEditingStoryId===selectedStory?.id));
   let nativeRecord = $state(null);
@@ -480,7 +481,7 @@
     if (workspaceClient && stories) workspaceClient.ingestStories(stories, {replace});
   }
   function clearWorkspace() {
-    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
+    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     requestSessionEpoch++;
     lastScopeToken++;
     scopeLoading = false;
@@ -666,7 +667,7 @@
   }
   async function loadScope() {
     const workflowTarget=pendingWorkflowLocation;
-    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
+    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
     const view = key === activeBacklogScopeKey
@@ -707,6 +708,7 @@
       nativeEditorEnabled = data.operatorCapabilities?.nativeEditor === true;
       nativePortableEnabled = data.operatorCapabilities?.nativePortable === true;
       penpotEnabled = data.operatorCapabilities?.penpot === true;
+      penpotStoryDesignsEnabled = data.operatorCapabilities?.penpotStoryDesigns === true;
       sourcePreparationEnabled=data.operatorCapabilities?.sourcePreparation===true;
       brandProfile = data.brandProfile;
       if (brandProfile) {
@@ -1453,6 +1455,9 @@
               {:else}<button class="primary" onclick={()=>focusWorkflow("workflow-preview")}>Preview saved artwork</button>{/if}
             </section>
           {/if}
+          {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
+            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} />{/key}
+          {/if}
           {#if nativeRecord && nativeHost}
             <section class="panel" aria-label="Native proposal workspace">
               <h3>{nativeRecord.sourceState === "historical" ? "Saved historical" : "Studio"} {formats.find(item => item.id === nativeRecord.format)?.name} layout</h3>
@@ -1487,7 +1492,7 @@
           {/if}
           {#if helperControlEnabled && helperHost}
             {#key helperHost.client}<details class="panel shared-helper-control" aria-label="Shared helper control">
-              <summary>Shared control · bounded proposals</summary>
+              <summary>Assistant actions</summary>
               <HelperControlPane request={helperHost.request} scopeKey={`${user.id}:${helperHost.client.scopeKey}`} actorId={user.id}
                 story={selectedStory} members={workspaceState?.members || []} onContentChanged={helperHost.onContentChanged} />
             </details>{/key}

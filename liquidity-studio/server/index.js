@@ -206,6 +206,7 @@ export function createHttpServer(
       "true",
     nativeEditorEnabled = process.env.STUDIO_NATIVE_EDITOR_ENABLED === "true",
     penpotEnabled = process.env.STUDIO_PENPOT_ENABLED === "true",
+    developmentPenpotStoryDesigns = null,
     editorContractEnabled = process.env.STUDIO_EDITOR_CONTRACT_ENABLED ===
       "true",
   } = {},
@@ -222,6 +223,10 @@ export function createHttpServer(
     throw new Error(
       "Portable body deadline must be between 1 and 15000 milliseconds",
     );
+  if (developmentPenpotStoryDesigns &&
+      (typeof developmentPenpotStoryDesigns !== "function" || process.env.NODE_ENV !== "development" ||
+       process.env.K_SERVICE || platform?.identity?.mode !== "password" || trustedTestMode))
+    throw new Error("Developer Penpot requires the explicit local development runtime");
   // One bounded portable operation per server, including response serialization/backpressure.
   let portableOperationActive = false;
   const server = http.createServer(async (req, res) => {
@@ -1339,12 +1344,21 @@ export function createHttpServer(
               !trustedTestMode &&
               process.env.STUDIO_NATIVE_PORTABLE_ENABLED === "true",
             penpot: penpotEnabled && !trustedTestMode && !process.env.K_SERVICE,
+            penpotStoryDesigns: Boolean(developmentPenpotStoryDesigns) && user.role === "founder",
             sourcePreparation:
               process.env.STUDIO_SOURCE_PREPARATION_ENABLED === "true" &&
               process.env.STUDIO_OPERATOR_JOBS_ENABLED === "true" &&
               !trustedTestMode,
           },
         });
+      if (developmentPenpotStoryDesigns && route === "/api/studio/penpot/designs") {
+        const designs = await developmentPenpotStoryDesigns(scope);
+        if (req.method === "GET") return json(200, await designs.designs(user, {
+          storyId: url.searchParams.get("storyId"), format: url.searchParams.get("format"),
+        }));
+        if (req.method === "POST") return json(201, await designs.createDesign(user, body));
+        throw fail(404, "Not found");
+      }
       if (route.startsWith("/api/studio/penpot/")) {
         if (
           !penpotEnabled ||
@@ -1400,6 +1414,13 @@ export function createHttpServer(
           await service.imageContext(user, context);
           return json(200, asset);
         }
+        if (route === "/api/studio/penpot/designs" && req.method === "GET")
+          return json(200, await runtime.designs(user, scope, {
+            storyId: url.searchParams.get("storyId"),
+            format: url.searchParams.get("format"),
+          }));
+        if (route === "/api/studio/penpot/designs" && req.method === "POST")
+          return json(201, await runtime.createDesign(user, scope, body));
         if (route === "/api/studio/penpot/bindings" && req.method === "GET")
           return json(200, await runtime.bindings(user, scope));
         if (route === "/api/studio/penpot/bindings" && req.method === "POST")
