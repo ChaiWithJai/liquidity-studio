@@ -1,0 +1,125 @@
+{
+  "recordedDate": "2026-10-18",
+  "scope": "Disposable local Penpot2.18.3 same-server fresh-owner fixture; not production or issue52 pairing",
+  "upstreamCommit": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "buildRun": 39120379123,
+  "buildHead": "c8307769e7916180a9cbed0a04599c75b4dea2aa",
+  "buildConclusion": "success",
+  "artifactZip": {
+    "bytes": 336114582,
+    "sha256": "48e6616349c1f654dbe567d0ca47e6fb77a975395cca8cb1d05851adbaed4885"
+  },
+  "candidateTarSha256": "2f2d5852d076a8fe5a6e642b2ff97931b2254f17042aaf140eb2278659e47f52",
+  "candidateGraph": {
+    "files": 900,
+    "bytes": 251827069,
+    "allHashesVerified": true,
+    "baselineUnchangedFilesVerified": 876,
+    "readonlyChangedFiles": 24,
+    "baselineRuntimeFilesPreserved": 3
+  },
+  "input": {
+    "name": "InterVariable.ttf",
+    "bytes": 879708,
+    "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+    "hostHashCheckedBeforeSelection": true,
+    "nativeFileInput": true,
+    "nativeHandlerClearedInput": true,
+    "internalFileReaderHashInstrumented": false
+  },
+  "candidateBrowserAssets": {
+    "main-dashboard.js": {
+      "bytes": 595861,
+      "sha256": "cf381f2d5563c1455250e8cf2e8ad420c69b06d2a98bd9d99f7429339b2801a7"
+    },
+    "shared.js": {
+      "bytes": 20364807,
+      "sha256": "c8e0d797b26347b921ce85b442b4efa60bfc03482c599d4f65f7019ed0406941"
+    }
+  },
+  "normalNeo": {
+    "qa1Preview": {
+      "family": "Inter Variable",
+      "style": "Regular",
+      "filename": "InterVariable.ttf",
+      "uploadAvailable": true,
+      "dismissedWithoutUpload": true
+    },
+    "qa2UploadAndReload": {
+      "normalUiLogin": true,
+      "previewFamily": "Inter Variable",
+      "normalUiUploadClicks": 1,
+      "apiFontWriteBypass": false,
+      "familyRenamed": false,
+      "installedAfterFullReload": true,
+      "pendingCleared": true
+    },
+    "qa1Restored": true
+  },
+  "storage": {
+    "variantsBefore": 3,
+    "variantsAfter": 4,
+    "original3Unchanged": true,
+    "family": "Inter Variable",
+    "weight": 400,
+    "style": "normal",
+    "formats": [
+      {
+        "format": "ttf_file_id",
+        "bytes": 879708,
+        "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+        "first16Hex": "00010000001301000004003047444546"
+      },
+      {
+        "format": "otf_file_id",
+        "bytes": 598868,
+        "sha256": "c5a0ea9a80dc5f8181feeaca5828e86b21c55da82f4b18f63eec3c62ff5d36d7",
+        "first16Hex": "4f54544f000d00800003005043464620"
+      },
+      {
+        "format": "woff1_file_id",
+        "bytes": 432716,
+        "sha256": "953d38e4d38f94f97a35ef6879672c4b4e768db46d463bcb1c70210f68e15ce5",
+        "first16Hex": "774f46460001000000069a4c00130000"
+      }
+    ],
+    "originalTtfExact": true,
+    "fourNativeDocumentFingerprintsUnchanged": true,
+    "documentRevisions": [
+      17,
+      9,
+      18,
+      9
+    ]
+  },
+  "screenshots": {
+    "pending": "6724ec0d1f419a49a637892a90e0449011267097d33064d593c08b10dd51d8a3",
+    "installed": "4875c4369e4b95f059ba70de2fa02adb8edaa1e6c98e68188ba45f9b04cc9ba6"
+  },
+  "restoration": {
+    "pass": true,
+    "original900And3FilesExact": true,
+    "onlyFrontendContainerChanged": true,
+    "neoBaselineAsset": {
+      "bytes": 593668,
+      "sha256": "2cfd85b1077d8ed6345fcc1ebdd2d681ba9a2c1b322ec88e85cd3f8abb4db6c3"
+    },
+    "pageCacheRestored": true
+  },
+  "remaining": [
+    "Cultural restored-layout font binding/rendered glyphs and final exports not yet performed",
+    "Issue166 and54 remain open",
+    "No production/frontend rollout or issue52 identity pairing claim",
+    "Browser internal FileReader hash was not instrumented"
+  ],
+  "generatedGraphCleanup": {
+    "pass": true,
+    "verifiedFiles": 900,
+    "verifiedDirectories": 44,
+    "runningContainerReferences": 0,
+    "logicalBytesRemoved": 251827069,
+    "verifiedZipAndEvidencePreserved": true,
+    "observedFreedBytes": 188141568,
+    "noDockerPruneOrUnrelatedDeletion": true
+  }
+}
