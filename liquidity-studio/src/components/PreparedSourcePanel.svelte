@@ -1,6 +1,7 @@
 <script>
   import { onMount, onDestroy, untrack } from 'svelte';
   import { renderSvg } from '../../server/artwork.js';
+  const QUEUED_NOTICE='Source preparation queued. You can leave and rejoin this durable job.';
   let {request,storyId,scopeKey,getScopeKey,brandProfile,onDirtyChange=()=>{},onPromoted=()=>{},onStoryChanged=()=>{},onReturnToHandoff=()=>{}}=$props();
   let info=$state(null),working=$state(null),savedSignature=$state(''),format=$state('infographic'),page=$state(0),pending=$state(false),error=$state(''),notice=$state(''),retained=$state(null),kind=$state(''),reviewPlan=$state(null),reviewed=$state(false),clinicalReviewed=$state(false);
   let closed=false,sequence=0;
@@ -24,7 +25,7 @@
       if(!current()||ticket!==sequence)return;
       if(dirty&&!discard&&(next.prepared?.candidate.id!==info?.prepared?.candidate.id||next.prepared?.revision!==info?.prepared?.revision)){notice='A newer candidate is saved. Your local edits keep their original revision; save will report a conflict.';return;}
       const changed=next.prepared?.candidate.id!==info?.prepared?.candidate.id||next.prepared?.revision!==info?.prepared?.revision;
-      info=next;if(discard||changed||!working)replacePrepared(next.prepared);
+      info=next;if(next.status==='ready'&&notice===QUEUED_NOTICE)notice='';if(discard||changed||!working)replacePrepared(next.prepared);
     }catch(failure){if(current()&&ticket===sequence)error=failure.message;}
   }
   function edit(path,value) {
@@ -43,7 +44,7 @@
       if(intent.operation==='promote'){onDirtyChange(false);await onPromoted(result);notice=result.promotionStillCurrent===false?'The earlier promotion was recovered, but this story changed afterward. Reload its current handoff before continuing.':'Reviewed copy promoted. Native layout and publication approval remain separate.';}
       else if(intent.operation==='historical-fork'){await onStoryChanged();if(!current())return;await load(true);if(current())notice=result.forkStillCurrent===false?'The saved continuation was recovered, but the story changed afterward. Inspect the current saved story before continuing.':'Restored saved copy is now an unreviewed draft in this workspace. Save any changes and explicitly review its evidence before handoff.';}
       else if(intent.operation==='save'){info={...info,prepared:result};replacePrepared(result);notice='Preview edits saved. Source and publication approval are unchanged.';}
-      else{notice=result.dispatchError||'Source preparation queued. You can leave and rejoin this durable job.';await load();await onStoryChanged();}
+      else{notice=result.dispatchError||QUEUED_NOTICE;await load();await onStoryChanged();}
     }catch(failure){if(current()){error=failure.message;if(failure.status>=400&&failure.status<500)retained=null;}}
     finally{if(current())pending=false;}
   }
