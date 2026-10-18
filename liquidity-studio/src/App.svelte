@@ -295,6 +295,10 @@
     { key: "bRollDirection", label: "B-roll direction", hint: "Describe the supporting shot. This does not generate footage." },
   ];
   let reviewDirty = $derived(reviewSignature(reviewClaims) !== savedReviewSignature);
+  let penpotDesignAction = $state(null);
+  function penpotConnectionChanged(client) {
+    if (workspaceClient === client) penpotDesignAction?.refreshAccess();
+  }
   let penpotTaskStatus = $state({key: "", status: "unknown"});
   const penpotTaskKey = $derived(JSON.stringify([penpotHost?.client.scopeKey, selectedStory?.id, selectedStory?.generationId, selectedStory?.revision, format]));
   function penpotStatusHandler(key) {
@@ -1464,10 +1468,10 @@
               >{/each}
           </div>
           {#if penpotPairingEnabled && penpotHost && !preparedWorkspace}
-            {#key penpotHost.client}<PenpotConnection request={penpotHost.request} />{/key}
+            {#key penpotHost.client}<PenpotConnection request={penpotHost.request} onConnectionChange={() => penpotConnectionChanged(penpotHost.client)} />{/key}
           {/if}
           {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
-            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction compact request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
+            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction bind:this={penpotDesignAction} compact request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
           {/if}
           </div>{/if}
           {#if nativeRecord && nativeHost}

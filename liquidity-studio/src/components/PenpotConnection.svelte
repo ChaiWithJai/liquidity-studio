@@ -1,6 +1,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
-  let { request } = $props();
+  let { request, onConnectionChange = () => {} } = $props();
+  let reportedStatus;
   let info = $state(null), loading = $state(true), busy = $state(false), error = $state('');
   let connectUrl = $state(''), pollingStopped = $state(false);
   let alive = true, sequence = 0, timer, pollUntil = 0;
@@ -16,7 +17,7 @@
     if (Date.now() >= pollUntil) { pollingStopped = true; connectUrl = ''; return; }
     timer = setTimeout(() => void load(false), Math.min(2000, pollUntil - Date.now()));
   }
-  async function load(showLoading = true) {
+  async function load(showLoading = true, notify = true) {
     const ticket = ++sequence;
     if (showLoading) loading = true;
     try {
@@ -24,6 +25,9 @@
       if (!alive || ticket !== sequence) return;
       if (!states.has(result.state)) throw new Error('Connection status is unavailable. Check again.');
       info = result; error = '';
+      const status = JSON.stringify([result.state, result.connection?.nativeProfileId, result.editingEnabled === true, result.accessReason]);
+      if (notify && reportedStatus !== undefined && reportedStatus !== status) onConnectionChange();
+      reportedStatus = status;
       if (result.state !== 'pending') connectUrl = '';
       schedule();
     } catch (failure) { if (alive && ticket === sequence) { error = failure.message; stopPolling(); } }
@@ -52,7 +56,7 @@
     stopPolling(); const ticket = ++sequence; const challengeId = info.challenge.id; busy = true; error = '';
     try {
       await request('/api/studio/penpot/access/complete', { method: 'POST', body: JSON.stringify({ challengeId }) });
-      if (alive && ticket === sequence) await load();
+      if (alive && ticket === sequence) { onConnectionChange(); await load(true, false); }
     } catch (failure) { if (alive && ticket === sequence) error = failure.message; }
     finally { if (alive) busy = false; }
   }
@@ -61,7 +65,7 @@
     stopPolling(); const ticket = ++sequence; busy = true; error = ''; connectUrl = '';
     try {
       await request('/api/studio/penpot/access/disconnect', { method: 'POST', body: '{}' });
-      if (alive && ticket === sequence) { pollUntil = 0; pollingStopped = false; await load(); }
+      if (alive && ticket === sequence) { pollUntil = 0; pollingStopped = false; onConnectionChange(); await load(true, false); }
     } catch (failure) { if (alive && ticket === sequence) error = failure.message; }
     finally { if (alive) busy = false; }
   }
@@ -69,12 +73,12 @@
   onDestroy(() => { alive = false; sequence++; stopPolling(); });
 </script>
 
+<svelte:window onfocus={() => { if (!loading && !busy) void load(false); }} />
 <section class="penpot-connection" aria-label="Your Penpot account">
-  <h3>Connect your Penpot account</h3>
   {#if loading}<p role="status">Checking your connection…</p>
   {:else if info?.state === 'connected'}
-    <p role="status">Connected{info.connection?.nativeProfileName ? ` as ${info.connection.nativeProfileName}` : ''}. Design access is not enabled yet.</p>
-    <button class="secondary" disabled={busy} onclick={disconnect}>Disconnect my account</button>
+    <p role="status">Penpot connected{info.connection?.nativeProfileName ? ` as ${info.connection.nativeProfileName}` : ''}. {info.editingEnabled === true ? 'Ready to edit this brand’s designs.' : info.accessReason || 'Design access is not enabled yet.'}</p>
+    <details><summary>Account connection</summary><button class="secondary" disabled={busy} onclick={disconnect}>Disconnect my account</button></details>
   {:else if info?.state === 'native-confirmed'}
     <p>Penpot confirmed {info.challenge?.nativeProfileName || 'your account'}. Confirm here to connect it to your current Studio account.</p>
     <button class="primary" disabled={busy} onclick={complete}>{busy ? 'Confirming…' : 'Confirm connection'}</button>
@@ -90,6 +94,6 @@
   {#if error}<p role="alert">{error}</p><button class="secondary" disabled={loading || busy} onclick={() => load()}>Check connection again</button>{/if}
 </section>
 <style>
-  .penpot-connection { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem .75rem; padding:.8rem 1rem; border:1px solid var(--line,#d1d5db); border-radius:10px; margin-block:.75rem; }
-  h3 { font-size:15px; margin:0; } p { margin:0; font-size:13px; flex:1 1 300px; } button,a { min-height:36px; padding:7px 10px; font-size:13px; } a { display:inline-flex; align-items:center; }
+  .penpot-connection { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem .75rem; padding:0; border:0; margin:0; flex:1 1 260px; }
+  summary { cursor:pointer; font-size:13px; } details button { margin-top:.5rem; } p { margin:0; font-size:13px; flex:1 1 300px; } button,a { min-height:36px; padding:7px 10px; font-size:13px; } a { display:inline-flex; align-items:center; }
 </style>
