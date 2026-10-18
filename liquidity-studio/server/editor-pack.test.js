@@ -639,8 +639,13 @@ test('completed signed-off PNG survives fresh-scope install as exact historical 
   const staged=await exporter.stage(actor,native.id,{expectedReviewRevision:4,expectedNativeRevision:2,pageIndex:0,base64:bytes.toString('base64'),idempotencyKey:'pack_final_png_stage_unique'});
   const envelope=await exporter.signoff(actor,native.id,staged.artifactId,{sha256:staged.sha256,reviewed:true});
   const receipt=await exporter.complete(actor,native.id,envelope);
+  const newer=structuredClone(native.document);newer.pages[0].objects.find(object=>object.id==='headline_layer').text='Edited after the completed export';
+  await f.native.save(actor,native.id,{expectedRevision:2,title:native.title,document:newer,idempotencyKey:'edited_after_completed_png'});
+  await approval.transition(actor,native.id,{action:'restart',expectedRevision:4,expectedNativeRevision:3,idempotencyKey:'restart_after_completed_png'});
+  assert.equal((await approval.read(actor,native.id)).exports,undefined);
+  assert.equal((await f.store.get(`editor-export:organization:brand:events:${native.id}`)).events.length,1);
   const pack=await f.service.export(actor);
-  assert.equal(pack.schemaVersion,2);assert.deepEqual(pack.documents.find(doc=>doc.metadata.id===native.id).finalExports[0].receipt,receipt);
+  assert.equal(pack.schemaVersion,2);assert.equal(pack.documents.find(doc=>doc.metadata.id===native.id).finalExports.length,1);assert.deepEqual(pack.documents.find(doc=>doc.metadata.id===native.id).finalExports[0].receipt,receipt);
   assert.equal(JSON.stringify(pack).includes(envelope.signature),false);
   const target=await fixture(t,'liquidity_desk',true,'restored-final');
   await target.service.install(actor,pack,{...input,target:{organizationId:'organization',brandId:'restored-final'}});

@@ -197,7 +197,13 @@ export class EditorPackService {
       const metadata = pick(record, portableDocumentFields);
       if (metadata.portableHistory)
         delete metadata.portableHistory.reviewHistory;
-      const completed = await projectFinalPngs({nativeId:record.id,format:record.format,receipts:review?.exports || [],
+      const ledger = await this.store.get(exportPrefix+'events:'+record.id);
+      if (ledger && (!Array.isArray(ledger.events) || ledger.events.length > 256 || ledger.events.some(event=>!event?.receipt)))
+        throw fail(422,"Invalid completed export receipt ledger");
+      if (!ledger && review?.exports?.length) throw fail(422,"Completed export receipt ledger is missing");
+      // Active review transitions intentionally reset their projection. Durable receipts retain
+      // completed artifacts after later edits/restarts without reviving completion credentials.
+      const completed = await projectFinalPngs({nativeId:record.id,format:record.format,receipts:(ledger?.events || []).map(event=>event.receipt),
         loadStage:artifactId=>this.store.get(exportPrefix+artifactId),
         loadBytes:async stage=>stage.reference.artifact
           ? this.store.downloadArtifact(this.scope,stage.reference.artifact)
