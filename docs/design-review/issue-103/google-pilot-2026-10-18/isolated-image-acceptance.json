@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "0dea05bc9c1a4b8f5310f5afc7174863b3d39e41",
+  "image": "liquidity-studio:prepared-0dea05b",
+  "expectedImage": "sha256:958e6ee2bff52d2f21a858e3b45480c4225337c3a7046b0a061d4db97c444e24",
+  "scope": "immutable production-built Docker image with explicit local NODE_ENV=test password-fixture authentication; not production Google acceptance",
+  "startedAt": "2026-10-18T04:47:26.900Z",
+  "checks": [
+    {
+      "name": "immutable Linux image and nonroot process",
+      "status": "passed",
+      "detail": "sha256:958e6ee2bff52d2f21a858e3b45480c4225337c3a7046b0a061d4db97c444e24"
+    },
+    {
+      "name": "anonymous protected API denied",
+      "status": "passed",
+      "detail": 401
+    },
+    {
+      "name": "existing ten-story plan and durable enqueue",
+      "status": "passed",
+      "detail": {
+        "eligible": 3,
+        "attention": 7
+      }
+    },
+    {
+      "name": "actual Docker HTTPS worker retrieval, both brands and three primary sources",
+      "status": "passed",
+      "detail": {
+        "prepared": 3,
+        "modelCalls": 0
+      }
+    },
+    {
+      "name": "SQLite saved candidate survives actual container restart and authenticated App rejoin",
+      "status": "passed",
+      "detail": true
+    },
+    {
+      "name": "actual image App review/edit/save/reload/resume/re-review",
+      "status": "passed",
+      "detail": {
+        "priorGeneration": "7c2e5598-11ca-4226-98af-75e522d41632",
+        "newGeneration": "13f59e43-50dc-4d44-a9b6-d7083b18f449"
+      }
+    },
+    {
+      "name": "actual image CWJ explicit cultural review",
+      "status": "passed",
+      "detail": {
+        "generation": "db953d87-45c3-470e-9c01-50badd4a745b",
+        "publicationApproved": false
+      }
+    },
+    {
+      "name": "no generation provider request",
+      "status": "passed",
+      "detail": 0
+    },
+    {
+      "name": "critical source files match frozen commit",
+      "status": "passed",
+      "detail": 4
+    }
+  ],
+  "sources": [
+    {
+      "brand": "brand_default",
+      "storyId": "story_huda_buyback",
+      "url": "https://www.prnewswire.com/news-releases/huda-beauty-reclaims-full-ownership-as-an-independent-beauty-brand-302471853.html",
+      "responseSha256": "16ea70d9fd02c8ca4cbf700a8ca28d582cd16682e7e58e5eeb61d672d5c0e118",
+      "textSha256": "c0474cef4e954ede98dbd87c596745dc3d99ce1c3f97c625bc4eb728ed9371ff",
+      "responseBytes": 221186
+    },
+    {
+      "brand": "brand_default",
+      "storyId": "story_angel_city",
+      "url": "https://angelcity.com/acfc-post/angel-city-ownership-agreement-announcement",
+      "responseSha256": "f2365cad4639c15b4389ad19ae0e7a814f9c99daa25c3e300657300833d34e08",
+      "textSha256": "0653dd2fab9eb35810ec5e00027dc248a5436151184404a33bc50a86aedf5ed5",
+      "responseBytes": 256573
+    },
+    {
+      "brand": "brand_vedic",
+      "storyId": "research_4",
+      "url": "https://www.gutenberg.org/cache/epub/2526/pg2526-images.html",
+      "responseSha256": "a2a10676c7d0c7eea96c81ea4c3ed49bea1fe0fd1e79768a4a665d5ca48ee985",
+      "textSha256": "1c258526d885c45d65e5151102886c9c7c4767f680d7a7229b5a9f074f96ba21",
+      "responseBytes": 214464
+    }
+  ],
+  "modelCalls": 0,
+  "imageId": "sha256:958e6ee2bff52d2f21a858e3b45480c4225337c3a7046b0a061d4db97c444e24",
+  "ownedPort": 61159,
+  "restartPorts": {
+    "before": 61118,
+    "after": 61159
+  },
+  "fileHashes": [
+    {
+      "path": "server/prepared-promotion.js",
+      "sha256": "bf1491842a4d631548c2de7da165a514035ce2bc67742df0e938a4d9a248e324"
+    },
+    {
+      "path": "server/operator-jobs.js",
+      "sha256": "faf1363c0be884770d93def025bbbc2ba09f8dadabb37ff5fb77fd149fba6707"
+    },
+    {
+      "path": "server/source-retrieval.js",
+      "sha256": "369f04af160b56cc42c7f853f3b881dc261eebada857f06587587f87b9b3ff1f"
+    },
+    {
+      "path": "server/prepared-source-candidate.js",
+      "sha256": "c70b8f07e2b05693348dbf499e89b5d64339ba4fd1683cfe99753a965d706d19"
+    }
+  ],
+  "status": "passed",
+  "finishedAt": "2026-10-18T04:47:39.003Z",
+  "cleanup": "owned test container, named volume and temporary credentials removed",
+  "platform": "linux/amd64",
+  "artifacts": [
+    {
+      "filename": "huda-source-image.png",
+      "sha256": "64fb66238115b0c24f89f6a3e94a44abe13f425659dfe88f8499d448c02fa19b",
+      "width": 883,
+      "height": 695
+    },
+    {
+      "filename": "cwj-source-image.png",
+      "sha256": "866c13f952587adac5cbad19d6b5ce320c2511d6a81fef159957b79bed25e5fa",
+      "width": 883,
+      "height": 695
+    }
+  ]
+}
