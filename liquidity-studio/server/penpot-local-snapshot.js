@@ -1,8 +1,18 @@
 import { fail } from "./auth.js";
-const BASE = "http://localhost:39008/api/rpc/command/";
+const ENDPOINTS = Object.freeze({
+  loopback: "http://localhost:39008/api/rpc/command/",
+  "docker-host": "http://host.docker.internal:39008/api/rpc/command/",
+});
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 /** Private owner sessions are constructor-only. No arbitrary native host or URL. */
-export function createPenpotLocalSnapshot({ sessions, fetchImpl = fetch }) {
+export function createPenpotLocalSnapshot({
+  sessions,
+  fetchImpl = fetch,
+  transportMode = "loopback",
+}) {
+  if (!Object.hasOwn(ENDPOINTS, transportMode))
+    throw new Error("Unsupported fixed native transport mode");
+  const BASE = ENDPOINTS[transportMode];
   return async (input, { manifest, colors }) => {
     const session = sessions.get(input.binding.ownerPrincipal);
     if (

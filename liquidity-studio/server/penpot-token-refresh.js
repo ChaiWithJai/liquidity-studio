@@ -35,8 +35,12 @@ export class PenpotTokenRefreshTransport {
     authorizeActor,
     now = Date.now,
     ttlMs = 60_000,
+    onIssued = async () => {},
+    onVerified = async () => {},
   }) {
     if (
+      typeof onIssued !== "function" ||
+      typeof onVerified !== "function" ||
       typeof authorizeActor !== "function" ||
       typeof resolveContext !== "function" ||
       typeof nativeSnapshot !== "function" ||
@@ -51,6 +55,8 @@ export class PenpotTokenRefreshTransport {
     this.now = now;
     this.ttlMs = ttlMs;
     this.pending = new Map();
+    this.onIssued = onIssued;
+    this.onVerified = onVerified;
   }
   validateCommand({ binding, resource, action, command }) {
     if (
@@ -147,7 +153,17 @@ export class PenpotTokenRefreshTransport {
     this.validateCommand(input);
     this.prune();
     if (this.pending.size >= 100) throw fail(429, "Native action queue full");
-    input = { ...input, authorizedAt: new Date(this.now()).toISOString() };
+    // A durable caller carries its original server-owned intent time across restarts.
+    // No HTTP field may supply this trusted authorization context.
+    if (
+      input.authorizedAt !== undefined &&
+      !Number.isFinite(Date.parse(input.authorizedAt))
+    )
+      throw fail(400, "Invalid server native authorization context");
+    input = {
+      ...input,
+      authorizedAt: input.authorizedAt || new Date(this.now()).toISOString(),
+    };
     const context = await this.context(input);
     const snapshot = await this.snapshot(
       input,
@@ -180,6 +196,16 @@ export class PenpotTokenRefreshTransport {
       expiresAt: receipt.expiresAt,
       state: "pending",
     });
+    try {
+      await this.onIssued({
+        input,
+        receipt: structuredClone(receipt),
+        context,
+      });
+    } catch (error) {
+      this.pending.delete(digest(capability));
+      throw error;
+    }
     // Deliberately returned only to the currently authorized caller. This ephemeral
     // capability is never persisted, logged or exported. Restart drops all grants.
     return {
@@ -295,6 +321,13 @@ export class PenpotTokenRefreshTransport {
           409,
           "Source or registration changed during native verification",
         );
+      this.lookup(capability);
+      await this.onVerified({
+        input: row.input,
+        receipt: structuredClone(row.receipt),
+        context: finalContext,
+        nativeRevision: snapshot.revision,
+      });
       this.lookup(capability);
       this.pending.delete(digest(capability));
       return {

@@ -77,3 +77,48 @@ test("fixed native endpoint validates actual owner/project and rich-text paints 
     /mismatch/,
   );
 });
+
+test("Docker Desktop mode selects only the fixed host endpoint and preserves browser origin/owner checks", async () => {
+  const calls = [];
+  const reader = createPenpotLocalSnapshot({
+    transportMode: "docker-host",
+    sessions: new Map([[owner, { cookie: "private-fixture-cookie" }]]),
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return Response.json(
+        url.endsWith("get-profile")
+          ? { id: owner }
+          : {
+              id: fileId,
+              projectId: "project",
+              revn: 1,
+              data: { pagesIndex: {}, tokensLib: {} },
+            },
+      );
+    },
+  });
+  await reader(
+    {
+      binding: { ownerPrincipal: owner, nativeProjectId: "project" },
+      resource: { nativeId: fileId },
+    },
+    { manifest: { layers: [] }, colors: [] },
+  );
+  assert.equal(calls.length, 2);
+  assert.ok(
+    calls.every(
+      (call) =>
+        call.url.startsWith(
+          "http://host.docker.internal:39008/api/rpc/command/",
+        ) &&
+        call.options.headers.Origin === "http://localhost:39008" &&
+        call.options.redirect === "error",
+    ),
+  );
+  for (const mode of ["http://example.com", "metadata", "docker-host/../../"])
+    assert.throws(
+      () =>
+        createPenpotLocalSnapshot({ sessions: new Map(), transportMode: mode }),
+      /Unsupported/,
+    );
+});

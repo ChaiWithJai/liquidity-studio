@@ -24,9 +24,24 @@ export function createPlatform({
     enabled: process.env.STUDIO_NATIVE_CUTOUT_ENABLED === "true",
     path: process.env.STUDIO_NATIVE_MODNET_PATH,
   }),
+  penpotConfigurationPath = process.env.STUDIO_PENPOT_OPERATOR_CONFIG,
 } = {}) {
   const targets = validateEditorTargets(editorTargets);
   const platform = { store: null, identity: null };
+  let penpotRuntime;
+  platform.getPenpotRuntime = async () => {
+    await platform.ready;
+    if (process.env.K_SERVICE)
+      throw new Error("Local Penpot integration is unavailable in Cloud Run");
+    penpotRuntime ||= import("./penpot-studio-runtime.js").then((module) =>
+      module.createPenpotStudioRuntime({
+        store: platform.store,
+        identity: platform.identity,
+        configurationPath: penpotConfigurationPath,
+      }),
+    );
+    return penpotRuntime;
+  };
   platform.editorBoundary = (scope, repo) =>
     new EditorBoundary({
       store: platform.store,
