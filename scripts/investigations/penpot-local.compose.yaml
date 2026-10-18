@@ -1,0 +1,82 @@
+# Disposable localhost-only #39 experiment; not a deployment template.
+# Use penpot-local.sh with private PENPOT_QA_ENV_FILE and explicit PENPOT_DOCKER_DATA_PATH so capacity gates run first.
+x-common: &common
+  PENPOT_PUBLIC_URI: http://localhost:39008
+  PENPOT_FLAGS: enable-login-with-password enable-registration disable-email-verification disable-secure-session-cookies disable-smtp disable-telemetry disable-google-fonts-provider disable-dashboard-templates-section
+  PENPOT_TELEMETRY_ENABLED: "false"
+  PENPOT_SECRET_KEY: ${PENPOT_QA_SECRET:?private ephemeral key required}
+services:
+  penpot-frontend:
+    image: penpotapp/frontend@sha256:bb8abe27d53de84c95597f2c02c0e702b2779971fb0703e543f9ecf183e999f6
+    platform: linux/arm64
+    ports: ["127.0.0.1:39008:8080"]
+    mem_limit: 128m
+    cpus: 0.25
+    environment:
+      <<: *common
+      PENPOT_BACKEND_URI: http://penpot-backend:6060
+      PENPOT_EXPORTER_URI: http://penpot-exporter:6061
+      PENPOT_HTTP_SERVER_MAX_BODY_SIZE: "10485760"
+    volumes: ["assets:/opt/data/assets"]
+    depends_on: [penpot-backend, penpot-exporter]
+  penpot-backend:
+    image: penpotapp/backend@sha256:2df1b3440d2a82cc3571db211b4ffdfa2b89ccc910759e8d5e9387fb62971b5c
+    platform: linux/arm64
+    mem_limit: 2g
+    cpus: 1.5
+    environment:
+      <<: *common
+      PENPOT_DATABASE_URI: postgresql://penpot-postgres/penpot
+      PENPOT_DATABASE_USERNAME: penpot
+      PENPOT_DATABASE_PASSWORD: ${PENPOT_QA_DB_PASSWORD:?private ephemeral DB password required}
+      PENPOT_REDIS_URI: redis://penpot-valkey/0
+      PENPOT_OBJECTS_STORAGE_BACKEND: fs
+      PENPOT_OBJECTS_STORAGE_FS_DIRECTORY: /opt/data/assets
+      PENPOT_HTTP_SERVER_MAX_BODY_SIZE: "10485760"
+    volumes: ["assets:/opt/data/assets"]
+    depends_on:
+      penpot-postgres: {condition: service_healthy}
+      penpot-valkey: {condition: service_healthy}
+  penpot-exporter:
+    image: penpotapp/exporter@sha256:418232d6ca3120b1c2bfde298a56a05a1f41f567cd8494deac3fe7fbc186cfbd
+    platform: linux/arm64
+    mem_limit: 1g
+    cpus: 1.5
+    shm_size: 256m
+    environment:
+      <<: *common
+      PENPOT_INTERNAL_URI: http://penpot-frontend:8080
+      PENPOT_REDIS_URI: redis://penpot-valkey/0
+    depends_on:
+      penpot-valkey: {condition: service_healthy}
+  penpot-postgres:
+    image: postgres@sha256:c961aa287d8698297cb26cdfadfbe9fd2cbaf77e53cfffe9636e8d8a1e4d842c
+    platform: linux/arm64
+    mem_limit: 384m
+    cpus: 0.5
+    environment:
+      POSTGRES_DB: penpot
+      POSTGRES_USER: penpot
+      POSTGRES_PASSWORD: ${PENPOT_QA_DB_PASSWORD:?private ephemeral DB password required}
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes: ["database:/var/lib/postgresql/data"]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U penpot"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    stop_signal: SIGINT
+  penpot-valkey:
+    image: valkey/valkey@sha256:640c5e62cea04b6d6f2084232651d0cc70362d31f4f805e7be94dbed6855e8f2
+    platform: linux/arm64
+    mem_limit: 192m
+    cpus: 0.25
+    command: [valkey-server, --maxmemory, 128mb, --maxmemory-policy, volatile-lfu]
+    healthcheck:
+      test: [CMD, valkey-cli, ping]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+volumes:
+  database: {}
+  assets: {}
