@@ -97,6 +97,7 @@ function viewContext(value) {
           "measuredAt",
           "measurementRevision",
           "artworkId",
+          "playheadSeconds",
         ].includes(key),
     ) ||
     (value.measurementRevision !== undefined &&
@@ -107,6 +108,8 @@ function viewContext(value) {
         !/^(infographic|carousel|story|reel)-page-[1-4]$/.test(
           value.artworkId,
         ))) ||
+    (value.playheadSeconds !== undefined &&
+      (!Number.isFinite(value.playheadSeconds) || value.playheadSeconds < 0 || value.playheadSeconds > 30)) ||
     !["instagram", "design"].includes(value.mode) ||
     !Number.isInteger(value.frameIndex) ||
     value.frameIndex < 0 ||
@@ -1772,6 +1775,8 @@ export function createHttpServer(
           throw fail(400, "Invalid preflight measurements");
         }
         const context = viewContext(body.viewContext);
+        if (context?.playheadSeconds !== undefined && body.format !== "reel")
+          throw fail(400, "Only Reel preflight has a motion playhead");
         const lastFrame =
           body.format === "carousel" ? 3 : body.format === "reel" ? 2 : 0;
         if (context && context.frameIndex > lastFrame)
