@@ -37,6 +37,6 @@ test('actual local wrapper requires its profile session before serving private n
  const anonymous=await fetch(runtime.origin+'/native-editor-frame.html');assert.equal(anonymous.status,401);
  const login=await fetch(runtime.origin+'/__dev/session',{method:'POST',redirect:'manual',headers:{Origin:runtime.origin,'Content-Type':'application/x-www-form-urlencoded'},body:'persona=founder'});assert.equal(login.status,303);const cookie=login.headers.get('set-cookie').split(';')[0];
  const frame=await fetch(runtime.origin+'/native-editor-frame.html',{headers:{Cookie:cookie}});assert.equal(frame.status,200);assert.match(frame.headers.get('content-security-policy'),/wasm-unsafe-eval/);assert.match(await frame.text(),/native-root/);
- const bootstrap=await fetch(runtime.origin+'/api/studio/bootstrap',{headers:{Cookie:cookie}});assert.equal(bootstrap.status,200);assert.equal((await bootstrap.json()).operatorCapabilities.nativeEditor,true);
+ const bootstrap=await fetch(runtime.origin+'/api/studio/bootstrap?organizationId=org_default&brandId=brand_default',{headers:{Cookie:cookie}});assert.equal(bootstrap.status,200);assert.equal((await bootstrap.json()).operatorCapabilities.nativeEditor,true);
  const hidden=await fetch(runtime.origin+'/studio-native-assets.json',{headers:{Cookie:cookie}});assert.notEqual(hidden.status,200,'the private filesystem manifest is never served');
 });
