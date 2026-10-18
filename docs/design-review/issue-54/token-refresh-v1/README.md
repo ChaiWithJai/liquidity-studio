@@ -119,3 +119,6 @@ The earlier export failures remain part of the evidence: missing saved native la
 
 
 Native exported SVG styles still reference the recovered team's loopback font assets. These raw exporter SVGs are **not self-contained distributable font packages** and require those served font URLs for their specified faces. The outer recovery pack separately carries licensed source font bytes and the tested fresh-team rebind path; PNG output is self-contained. No claim of offline standalone SVG font embedding is made.
+
+
+The current optional-module receipt is ephemeral: a successful acknowledgement deletes its in-memory grant, so losing that acknowledgement response cannot be recovered by repeating the capability. A process restart also drops pending grants. Integration must add an authenticated durable receipt/status and read-only native reconciliation path before presenting durable completion. A retry must not blindly reapply the native action. The local proofs above observed the acknowledgement response directly and do not prove lost-response or process-restart recovery.
