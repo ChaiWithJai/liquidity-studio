@@ -89,6 +89,11 @@ const fonts = [
   ["Mona Sans", "MonaSans-Regular.otf", "MonaSans-OFL.txt"],
   ["Inter", "InterVariable.ttf", "Inter-LICENSE.txt"],
 ];
+fonts.push([
+  "Noto Sans Devanagari",
+  "NotoSansDevanagari.ttf",
+  "NotoSansDevanagari-OFL.txt",
+]);
 const availableFonts = [];
 const fontBridge = {};
 for (const [family, file, license] of fonts) {
@@ -146,7 +151,22 @@ for (const [family, file, license] of fonts) {
       .digest("hex"),
     fontBridge[url].sha256,
   );
+  const coverage = JSON.parse(
+    execFileSync(
+      "docker",
+      [
+        "exec",
+        "-i",
+        "doory-native39-api-1",
+        "python",
+        "-c",
+        "import sys,io,json;from fontTools.ttLib import TTFont;c=TTFont(io.BytesIO(sys.stdin.buffer.read())).getBestCmap();print(json.dumps(['U+%04X'%x for x in [0x43,0x57,0x4a,0x20,0x2f,0x950] if x in c]))",
+      ],
+      { input: targetBytes },
+    ).toString(),
+  );
   availableFonts.push({
+    verifiedCodepoints: coverage,
     family,
     sha256: createHash("sha256").update(bytes).digest("hex"),
     license,
@@ -229,13 +249,18 @@ for (const [preset, brandId] of [
     },
   });
   for (const format of ["infographic", "carousel", "story", "reel"]) {
-    const compiled = compileDooryDocument({ spec, format, availableFonts });
+    const compiled = compileDooryDocument({
+      spec,
+      brandProfile: profile,
+      format,
+      availableFonts,
+    });
     // Explicit operator create first: Doory assigns IDs; callers cannot self-register native ownership.
     const created = await a.call(
       "POST",
       "/designs/",
       {
-        title: `Studio adapter ${preset} ${format}`,
+        title: `Studio verified-glyph adapter ${preset} ${format}`,
         document: compiled.document,
       },
       201,
@@ -361,12 +386,18 @@ for (const [preset, brandId] of [
       (error) => error.status === 404,
     );
     fs.writeFileSync(
-      path.join(evidenceDir, `adapter-${preset}-${format}-native.json`),
+      path.join(
+        evidenceDir,
+        `adapter-verified-glyph-${preset}-${format}-native.json`,
+      ),
       JSON.stringify(exported.document, null, 2),
       { mode: 0o600 },
     );
     fs.writeFileSync(
-      path.join(evidenceDir, `adapter-${preset}-${format}-manifest.json`),
+      path.join(
+        evidenceDir,
+        `adapter-verified-glyph-${preset}-${format}-manifest.json`,
+      ),
       JSON.stringify(refreshed.manifest, null, 2),
       { mode: 0o600 },
     );
@@ -404,7 +435,7 @@ const evidence = {
     "Operator local bootstrap plus registered Studio boundary with actual Doory sessions. Studio identities are isolated test-mode fixtures, not managed Google. Native JSON copy is not a self-contained archive; browser hydration, pixels, media/cutouts and commercial licensing are separate acceptance.",
 };
 fs.writeFileSync(
-  path.join(evidenceDir, "doory-adapter-evidence.json"),
+  path.join(evidenceDir, "doory-adapter-verified-glyph-evidence.json"),
   JSON.stringify(evidence, null, 2),
   { mode: 0o600 },
 );
