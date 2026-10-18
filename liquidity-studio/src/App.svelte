@@ -4,6 +4,7 @@
   import Emulator from "./Emulator.svelte";
   import WorkspaceTable from "./WorkspaceTable.svelte";
   import WorkspaceCalendar from "./components/WorkspaceCalendar.svelte";
+  import JobsPane from "./components/JobsPane.svelte";
   import { createWorkspaceClient } from "./lib/workspace-client.js";
   import { scopedRequest } from "./lib/scoped-request.js";
   import SourceReviewSummary from "./SourceReviewSummary.svelte";
@@ -1004,7 +1005,7 @@
         >
       </div>
       <nav aria-label="Main navigation">
-        {#each [{ id: "backlog", label: "Story backlog", icon: "▤" }, { id: "calendar", label: "Content calendar", icon: "▦" }, { id: "studio", label: "Campaign Studio", icon: "◧" }, { id: "brand", label: "Brand Kit", icon: "◉" }] as item (item.id)}<button
+        {#each [{ id: "backlog", label: "Story backlog", icon: "▤" }, { id: "calendar", label: "Content calendar", icon: "▦" }, { id: "studio", label: "Campaign Studio", icon: "◧" }, { id: "brand", label: "Brand Kit", icon: "◉" }, { id: "jobs", label: "Jobs", icon: "◷" }] as item (item.id)}<button
             class:active={tab === item.id}
             onclick={() => navigateTab(item.id)}
             ><span aria-hidden="true">{item.icon}</span>{item.label}</button
@@ -1037,7 +1038,7 @@
                   ? "Campaign Studio"
                   : tab === "brand"
                     ? "Your brand, clearly."
-                    : "Studio operations"}
+                    : tab === "jobs" ? "Work in progress." : "Studio operations"}
           </h1>
           <p>
             {tab === "studio"
@@ -1134,6 +1135,8 @@
             onOpenStory={openWorkspaceStory}
             onReceipt={() => {}} />
         {/if}
+      {:else if tab === "jobs"}
+        {#if workspaceClient}{#key workspaceClient}<JobsPane {request} scopeKey={workspaceClient.scopeKey} onOpenStory={openWorkspaceStory} />{/key}{/if}
       {:else if tab === "studio"}
         {#if selectedStory && editorConflictRevision}
           <div class="workspace-conflict" role="alert">A newer saved revision {editorConflictRevision} is available. Your local edits still use revision {selectedStory.revision}; they cannot overwrite the newer work.

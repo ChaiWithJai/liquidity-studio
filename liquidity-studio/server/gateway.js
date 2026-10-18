@@ -35,7 +35,9 @@ export class AIGateway {
     this.accessTokenProvider = config.accessTokenProvider;
     this.adcTokenProvider = config.adcTokenProvider;
     if (process.env.AI_VERTEX_USE_ADC === "true" && process.env.K_SERVICE)
-      throw new Error("Local Vertex ADC is forbidden on Cloud Run; use metadata identity");
+      throw new Error(
+        "Local Vertex ADC is forbidden on Cloud Run; use metadata identity",
+      );
     this.maxInputBytes = Number(process.env.AI_MAX_INPUT_BYTES || 32768);
     this.maxOutputTokensLimit = Number(
       process.env.AI_MAX_OUTPUT_TOKENS || 8192,
@@ -189,6 +191,7 @@ export class AIGateway {
         trace: { ...baseTrace(), status: "error", error: error.code },
       });
     }
+    let providerUsage = null;
     const finish = (output, mode, reason = null) => {
       validateCampaign(output, traceMeta.story);
       const provenance = {
@@ -210,6 +213,8 @@ export class AIGateway {
           provider: mode === "synthetic" ? "offline-synthetic" : provider,
           status: mode === "synthetic" ? "degraded" : "success",
           provenance,
+          usage: providerUsage,
+          usageProvider: providerUsage ? provider : null,
         },
       };
     };
@@ -273,11 +278,20 @@ export class AIGateway {
                 throw new Error("Metadata identity unavailable");
               token = (await tokenResponse.json()).access_token;
             }
-            if (!token && process.env.AI_VERTEX_USE_ADC === "true" && process.env.AI_VERTEX_USE_METADATA !== "true") {
+            if (
+              !token &&
+              process.env.AI_VERTEX_USE_ADC === "true" &&
+              process.env.AI_VERTEX_USE_METADATA !== "true"
+            ) {
               if (process.env.K_SERVICE)
-                throw Object.assign(new Error("Local ADC is forbidden on Cloud Run"), {code:"PROVIDER_CONFIG_INVALID"});
+                throw Object.assign(
+                  new Error("Local ADC is forbidden on Cloud Run"),
+                  { code: "PROVIDER_CONFIG_INVALID" },
+                );
               this.adcTokenProvider ||= createLocalADCTokenProvider();
-              token = await this.adcTokenProvider({signal:controller.signal});
+              token = await this.adcTokenProvider({
+                signal: controller.signal,
+              });
             }
             base = vertexOpenAIBase(
               this.config.projectId,
@@ -356,6 +370,27 @@ export class AIGateway {
             throw new Error("Provider response exceeds limit");
         }
         const data = JSON.parse(text);
+        const usage =
+          provider === "gcp-gemini" ? data.usageMetadata : data.usage;
+        const counters =
+          provider === "gcp-gemini"
+            ? {
+                inputTokens: usage?.promptTokenCount,
+                outputTokens: usage?.candidatesTokenCount,
+                totalTokens: usage?.totalTokenCount,
+              }
+            : {
+                inputTokens: usage?.prompt_tokens ?? usage?.input_tokens,
+                outputTokens: usage?.completion_tokens ?? usage?.output_tokens,
+                totalTokens: usage?.total_tokens,
+              };
+        if (
+          Object.values(counters).every(
+            (value) => Number.isSafeInteger(value) && value >= 0,
+          )
+        )
+          providerUsage = counters;
+
         const raw =
           provider === "gcp-gemini"
             ? data?.candidates?.[0]?.content?.parts
@@ -391,7 +426,13 @@ export class AIGateway {
             : "AI generation failed; check provider configuration or retry";
       throw Object.assign(new Error(message), {
         code,
-        trace: { ...baseTrace(), status: "error", error: code },
+        trace: {
+          ...baseTrace(),
+          status: "error",
+          error: code,
+          usage: providerUsage,
+          usageProvider: providerUsage ? provider : null,
+        },
       });
     } finally {
       clearTimeout(timer);

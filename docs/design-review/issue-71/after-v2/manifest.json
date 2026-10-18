@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "source": "mounted actual App + real HTTP/SQLite + independent child worker",
+  "records": [
+    {
+      "id": "S13",
+      "sha256": "9eaa748416837d378fdcdc13704862bf8fa7600dcde74c6f2545f04a7c85a499",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true,
+      "state": "Same completed job after independent worker + browser rejoin",
+      "actor": "isolated fixture founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "provider": "explicit offline-synthetic",
+      "jobId": "e66aa837-2f51-408a-95ca-c0a985d8d893",
+      "pngDimensions": {
+        "width": 1280,
+        "height": 954
+      },
+      "capturedAt": "2026-10-18T02:24:01.915205+00:00"
+    },
+    {
+      "id": "S14",
+      "sha256": "851cc8433ecb7313215a0fcab3b6e5bb489a8d857b4a9837e08ac8136b4bf60a",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true,
+      "state": "Refresh jobs keyboard focus; provider readiness remains execution-specific",
+      "actor": "isolated fixture founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "provider": "explicit offline-synthetic",
+      "jobId": "e66aa837-2f51-408a-95ca-c0a985d8d893",
+      "pngDimensions": {
+        "width": 1280,
+        "height": 954
+      },
+      "capturedAt": "2026-10-18T02:24:01.977805+00:00"
+    }
+  ],
+  "sourceCommit": "85e192a2f12db110d77baef779d3ed1def1fd9de",
+  "baselineCommit": "273cdde3fba60e1c6c46de84721b07db88b3241f",
+  "annotationIds": ["review-15", "review-16"],
+  "supersedes": "after-v1 UI labels only; earlier runtime evidence is preserved",
+  "auth": "explicit isolated test password adapter; no production identity or token",
+  "humanUsability": "not evaluated",
+  "paidCalls": 0,
+  "servedAssets": {
+    "index-BOA4V0nU.css": "15495d682dea8ce4c1127eedaeaf7e4736c69c832df34cff42e462af419d3b5e",
+    "index-eBkul45O.js": "65ba4a935abb0f23eb52737234e0d645c0453007f75cdb786cfaa262bb1f1260"
+  }
+}

@@ -536,3 +536,70 @@ test("operator input/output budgets cannot be bypassed by a brand output setting
         : (process.env[key] = value);
   }
 });
+test("provider token usage is recorded only from complete nonnegative actual counters", async () => {
+  const oldFetch = globalThis.fetch,
+    oldKey = process.env.AI_GATEWAY_KEY;
+  process.env.AI_GATEWAY_KEY = "isolated-usage-fixture";
+  try {
+    for (const [usage, expected] of [
+      [
+        { prompt_tokens: 11, completion_tokens: 5, total_tokens: 16 },
+        { inputTokens: 11, outputTokens: 5, totalTokens: 16 },
+      ],
+      [{ prompt_tokens: -1, completion_tokens: 5, total_tokens: 4 }, null],
+    ]) {
+      globalThis.fetch = async () => ({
+        ok: true,
+        text: async () =>
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify(campaignFromApprovedClaims(story)),
+                },
+              },
+            ],
+            usage,
+          }),
+      });
+      const result = await run(gateway());
+      assert.deepEqual(result.trace.usage, expected);
+    }
+  } finally {
+    globalThis.fetch = oldFetch;
+    if (oldKey === undefined) delete process.env.AI_GATEWAY_KEY;
+    else process.env.AI_GATEWAY_KEY = oldKey;
+  }
+});
+test("reported provider usage survives discarded output and synthetic fallback without claiming synthetic work was free", async () => {
+  const oldFetch = globalThis.fetch,
+    oldKey = process.env.AI_GATEWAY_KEY;
+  process.env.AI_GATEWAY_KEY = "isolated-discard-usage";
+  try {
+    globalThis.fetch = async () => ({
+      ok: true,
+      text: async () =>
+        JSON.stringify({
+          choices: [{ message: { content: "{}" } }],
+          usage: { prompt_tokens: 11, completion_tokens: 5, total_tokens: 16 },
+        }),
+    });
+    const result = await run(gateway({ allowSynthetic: true }));
+    assert.equal(result.output.provenance.mode, "synthetic");
+    assert.deepEqual(result.trace.usage, {
+      inputTokens: 11,
+      outputTokens: 5,
+      totalTokens: 16,
+    });
+    assert.equal(result.trace.usageProvider, "openai-gateway");
+    await assert.rejects(run(gateway({ allowSynthetic: false })), (error) => {
+      assert.equal(error.trace.usage.totalTokens, 16);
+      assert.equal(error.trace.usageProvider, "openai-gateway");
+      return true;
+    });
+  } finally {
+    globalThis.fetch = oldFetch;
+    if (oldKey === undefined) delete process.env.AI_GATEWAY_KEY;
+    else process.env.AI_GATEWAY_KEY = oldKey;
+  }
+});

@@ -253,3 +253,44 @@ test("unconfigured default Google mode fails readiness and API safely while live
   assert.equal((await fetch(base + "/readyz")).status, 503);
   assert.ok((await fetch(base + "/api/auth/config")).status >= 500);
 });
+test("walk-away jobs revalidate the current managed Google principal without persisting bearer credentials", async (t) => {
+  const store = new DurableStore(":memory:");
+  t.after(() => store.close());
+  let managed = {
+    email: "founder@example.com",
+    emailVerified: true,
+    disabled: false,
+    providerData: [{ providerId: "google.com" }],
+    tokensValidAfterTime: "1970-01-01T00:00:00Z",
+  };
+  const identity = new GoogleIdentityService(store, {
+    configuration,
+    lookupJobUser: async () => managed,
+  });
+  await identity.ready;
+  const user = (await store.get("identity")).users.find(
+    (user) => user.email === "founder@example.com",
+  );
+  const approvedAt = "2026-10-17T00:00:00Z";
+  assert.equal(
+    (await identity.authorizeJobActor(user.id, approvedAt)).id,
+    user.id,
+  );
+  managed = { ...managed, disabled: true };
+  await assert.rejects(identity.authorizeJobActor(user.id, approvedAt), {
+    status: 403,
+  });
+  managed = {
+    ...managed,
+    disabled: false,
+    tokensValidAfterTime: "2026-10-18T00:00:00Z",
+  };
+  await assert.rejects(identity.authorizeJobActor(user.id, approvedAt), {
+    status: 403,
+  });
+  assert.equal((await store.keys("session:")).length, 0);
+  assert.equal(
+    (await store.get("identity")).users.some((user) => user.passwordHash),
+    false,
+  );
+});

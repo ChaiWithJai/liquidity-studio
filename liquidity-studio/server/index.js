@@ -1,3 +1,4 @@
+import { jobDispatcherConfiguration, dispatchJobs } from "./job-dispatcher.js";
 import { idempotencyKey as workspaceIdempotencyKey } from "./workspace-query.js";
 import { revision as workspaceRevision } from "./workspace-schema.js";
 import http from "node:http";
@@ -298,6 +299,71 @@ export function createHttpServer(
         return stream.pipe(res);
       }
       if (platform?.ready) await platform.ready;
+      if (route === "/api/internal/operator-job" && req.method === "POST") {
+        const configuration = jobDispatcherConfiguration();
+        if (
+          configuration.mode !== "cloud-tasks" ||
+          process.env.STUDIO_OPERATOR_JOBS_ENABLED !== "true"
+        )
+          throw fail(404, "Not found");
+        await verifySchedulerIdentity(
+          (req.headers.authorization || "").replace(/^Bearer /, ""),
+          { audience: configuration.endpoint, email: configuration.email },
+        );
+        const input = await readBody(req, 4096);
+        if (
+          Object.keys(input).some(
+            (key) =>
+              ![
+                "organizationId",
+                "brandId",
+                "jobId",
+                "itemId",
+                "nextAttempt",
+                "deliveryEpoch",
+              ].includes(key),
+          ) ||
+          ![input.jobId, input.itemId].every(
+            (id) => typeof id === "string" && /^[0-9a-f-]{36}$/i.test(id),
+          ) ||
+          !Number.isInteger(input.nextAttempt) ||
+          input.nextAttempt < 1 ||
+          !Number.isInteger(input.deliveryEpoch) ||
+          input.deliveryEpoch < 1
+        )
+          throw fail(400, "Invalid job delivery");
+        const configured = JSON.parse(process.env.STUDIO_JOB_SCOPES || "[]");
+        if (
+          !configured.some(
+            (scope) =>
+              scope.organizationId === input.organizationId &&
+              scope.brandId === input.brandId,
+          )
+        )
+          throw fail(403, "Worker scope denied");
+        const identities = await platform.store.get("identity"),
+          org = identities.organizations.find(
+            (org) => org.id === input.organizationId,
+          ),
+          brand = org?.brands.find((brand) => brand.id === input.brandId);
+        if (!brand) throw fail(403, "Worker scope no longer exists");
+        const scope = {
+            organizationId: org.id,
+            brandId: brand.id,
+            preset: brand.preset,
+          },
+          container = await platform.forScope(scope);
+        const result = await platform
+          .operatorJobs(scope, container)
+          .runNext(
+            undefined,
+            input.jobId,
+            input.itemId,
+            input.nextAttempt,
+            input.deliveryEpoch,
+          );
+        return json(200, { delivered: true, job: result });
+      }
       if (route === "/api/internal/scheduled-batch" && req.method === "POST") {
         await verifySchedulerIdentity(
           (req.headers.authorization || "").replace(/^Bearer /, ""),
@@ -462,6 +528,79 @@ export function createHttpServer(
         adminObservabilityService: admin,
       } = activeContainer.services;
       if (route.startsWith("/api/admin/")) founder();
+      if (
+        route === "/api/studio/jobs" ||
+        route.startsWith("/api/studio/jobs/")
+      ) {
+        if (
+          trustedTestMode ||
+          process.env.STUDIO_OPERATOR_JOBS_ENABLED !== "true"
+        )
+          throw fail(404, "Not found");
+        const jobs = platform.operatorJobs(scope, activeContainer);
+        if (route === "/api/studio/jobs/plan" && req.method === "GET") {
+          let dispatcher;
+          try {
+            const configuration = jobDispatcherConfiguration();
+            dispatcher = {
+              configured: true,
+              mode: configuration.mode,
+              message:
+                configuration.mode === "local"
+                  ? "A separate local worker must be running."
+                  : "Cloud Tasks delivery configured; inspect job delivery status.",
+            };
+          } catch {
+            dispatcher = {
+              configured: false,
+              message:
+                "Ask the operator to configure a durable worker before queueing. Provider readiness is checked only when an item executes.",
+            };
+          }
+          return json(200, { ...(await jobs.plan(user)), dispatcher });
+        }
+        if (route === "/api/studio/jobs" && req.method === "GET")
+          return json(200, { jobs: await jobs.list(user) });
+        if (route === "/api/studio/jobs" && req.method === "POST") {
+          const dispatcherConfiguration = jobDispatcherConfiguration();
+          if (
+            dispatcherConfiguration.mode === "cloud-tasks" &&
+            !dispatcherConfiguration.scopes.some(
+              (allowed) =>
+                allowed.organizationId === scope.organizationId &&
+                allowed.brandId === scope.brandId,
+            )
+          )
+            throw fail(403, "Worker scope is not configured");
+          const job = await jobs.create(user, body);
+          let dispatchError = null;
+          try {
+            await dispatchJobs(repo, job.id);
+          } catch {
+            dispatchError =
+              "Queue delivery pending; operator must retry delivery. The reviewed job is saved.";
+          }
+          return json(202, { job, dispatchError });
+        }
+        const match = route.match(
+          /^\/api\/studio\/jobs\/([0-9a-f-]{36})(?:\/(cancel|resume|retry))?$/i,
+        );
+        if (match && !match[2] && req.method === "GET")
+          return json(200, { job: await jobs.detail(user, match[1]) });
+        if (match?.[2] && req.method === "POST") {
+          const job = await jobs.control(user, match[1], match[2], body);
+          let dispatchError = null;
+          try {
+            await dispatchJobs(repo, job.id);
+          } catch {
+            dispatchError =
+              "Queue delivery pending; retry the same control request.";
+          }
+          return json(200, { job, dispatchError });
+        }
+        throw fail(404, "Job operation not found");
+      }
+
       if (route.startsWith("/api/studio/workspace/")) {
         if (trustedTestMode) throw fail(404, "Not found");
         const service = platform.workspace(scope, repo);

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "source": "mounted actual App + real HTTP/SQLite + independent child worker",
+  "records": [
+    {
+      "id": "S13",
+      "sha256": "72730dd24b2aa3e2acf2fb34ff88ef4bf51aeada2ab43fc8abb9f80c50cf1782",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true,
+      "state": "Same completed job after independent worker + browser rejoin",
+      "actor": "isolated fixture founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "provider": "explicit offline-synthetic",
+      "jobId": "c297d912-d996-431f-b5d2-0b3375a9f640",
+      "pngDimensions": {
+        "width": 1280,
+        "height": 954
+      },
+      "capturedAt": "2026-10-18T02:19:59.667636+00:00"
+    },
+    {
+      "id": "S14",
+      "sha256": "a003042d551d256a0e85ad562303f8fc163958346c67ba867259f662272da1ed",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true,
+      "state": "Refresh jobs keyboard focus; provider readiness remains execution-specific",
+      "actor": "isolated fixture founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "provider": "explicit offline-synthetic",
+      "jobId": "c297d912-d996-431f-b5d2-0b3375a9f640",
+      "pngDimensions": {
+        "width": 1280,
+        "height": 954
+      },
+      "capturedAt": "2026-10-18T02:19:59.733286+00:00"
+    }
+  ],
+  "sourceCommit": "57f8f8fac6dd59be76993d4937e5ec245742aeef",
+  "baselineCommit": "273cdde3fba60e1c6c46de84721b07db88b3241f",
+  "annotationIds": ["review-15", "review-16"],
+  "auth": "explicit isolated test password adapter; no production identity or token",
+  "humanUsability": "not evaluated",
+  "paidCalls": 0,
+  "servedAssets": {
+    "index-CPuv2lX_.js": "cb84863eba147b398198fd59d2e527ccc06cc3d97f7927128edf317bb77ec2e7",
+    "index-BOA4V0nU.css": "15495d682dea8ce4c1127eedaeaf7e4736c69c832df34cff42e462af419d3b5e"
+  }
+}

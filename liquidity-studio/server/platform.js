@@ -1,4 +1,5 @@
 import { EditorBoundary, validateEditorTargets } from "./editor-boundary.js";
+import { DurableJobService } from "./operator-jobs.js";
 import { WorkspaceService } from "./workspace.js";
 import { DurableStore } from "./storage.js";
 import { IdentityService } from "./auth.js";
@@ -26,6 +27,13 @@ export function createPlatform({
       targets,
       transport: editorTransport,
       now: editorNow,
+    });
+  platform.operatorJobs = (scope, container) =>
+    new DurableJobService({
+      repo: container.ports.repo,
+      identity: platform.identity,
+      scope,
+      formatter: container.services.multiFormatFormatterService,
     });
   platform.workspace = (scope, repo) =>
     new WorkspaceService({

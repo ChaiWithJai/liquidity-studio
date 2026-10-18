@@ -1,0 +1,9 @@
+# Explicit local-only opt-in. Does not launch a worker in the web request process.
+# A separate `docker compose ... run --rm --no-deps studio node server/job-worker.js`
+# shares studio-data and any explicitly selected Google ADC overlay.
+services:
+  studio:
+    environment:
+      STUDIO_OPERATOR_JOBS_ENABLED: "true"
+      STUDIO_JOB_DISPATCHER: local
+      STUDIO_GLOBAL_DAILY_GENERATION_LIMIT: ${STUDIO_GLOBAL_DAILY_GENERATION_LIMIT:-20}

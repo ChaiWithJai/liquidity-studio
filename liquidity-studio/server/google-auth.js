@@ -59,7 +59,11 @@ export function googleAuthConfiguration(env = process.env) {
 export class GoogleIdentityService extends IdentityService {
   constructor(
     store,
-    { configuration = googleAuthConfiguration(), verifyIdToken } = {},
+    {
+      configuration = googleAuthConfiguration(),
+      verifyIdToken,
+      lookupJobUser,
+    } = {},
   ) {
     super(store);
     if (
@@ -70,6 +74,7 @@ export class GoogleIdentityService extends IdentityService {
     this.mode = "google";
     this.configuration = configuration;
     this.verifier = verifyIdToken;
+    this.lookupJobUser = lookupJobUser;
     const baseReady = this.ready;
     this.ready = (async () => {
       await baseReady;
@@ -137,16 +142,67 @@ export class GoogleIdentityService extends IdentityService {
     if (!this.verifierPromise)
       this.verifierPromise = (async () => {
         if (this.verifier) return this.verifier;
-        const { initializeApp } = await import("firebase-admin/app");
-        const { getAuth } = await import("firebase-admin/auth");
-        const app = initializeApp(
-          { projectId: this.configuration.firebase.projectId },
-          `studio-${randomUUID()}`,
-        );
-        const auth = getAuth(app);
+        const auth = await this.getManagedAuth();
         return (token, checkRevoked) => auth.verifyIdToken(token, checkRevoked);
       })();
     return this.verifierPromise;
+  }
+  async getManagedAuth() {
+    if (!this.managedAuthPromise)
+      this.managedAuthPromise = (async () => {
+        const { initializeApp } = await import("firebase-admin/app");
+        const { getAuth } = await import("firebase-admin/auth");
+        return getAuth(
+          initializeApp(
+            { projectId: this.configuration.firebase.projectId },
+            `studio-${randomUUID()}`,
+          ),
+        );
+      })();
+    return this.managedAuthPromise;
+  }
+  async authorizeJobActor(id, approvedAt) {
+    await this.ready;
+    const user = (await this.store.get("identity")).users.find(
+      (user) => user.id === id,
+    );
+    const allowed =
+      user &&
+      this.configuration.principals.find(
+        (principal) =>
+          principal.email === user.email && principal.role === user.role,
+      );
+    if (!allowed || user.authProvider !== "google")
+      throw fail(403, "Job principal is no longer allowed");
+    let managed;
+    try {
+      managed = this.lookupJobUser
+        ? await this.lookupJobUser(user.email)
+        : await (await this.getManagedAuth()).getUserByEmail(user.email);
+    } catch {
+      throw fail(403, "Managed Google account could not be verified");
+    }
+    if (
+      managed.disabled ||
+      !managed.emailVerified ||
+      managed.email?.toLowerCase() !== user.email ||
+      !managed.providerData?.some(
+        (provider) => provider.providerId === "google.com",
+      ) ||
+      (approvedAt &&
+        Date.parse(managed.tokensValidAfterTime || "1970-01-01") >
+          Date.parse(approvedAt))
+    )
+      throw fail(
+        403,
+        "Managed Google account is disabled or its job authorization was revoked",
+      );
+    return {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      email: user.email,
+    };
   }
   async authenticate(token) {
     await this.ready;

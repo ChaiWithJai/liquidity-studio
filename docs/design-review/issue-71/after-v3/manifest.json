@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "source": "mounted actual App + real HTTP/SQLite + independent child worker",
+  "records": [
+    {
+      "id": "S13",
+      "sha256": "2b369908deb5441d916d165d238ab31d51b63a97d6e0f63f43ca08084583a810",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true,
+      "state": "Same completed job after independent worker + browser rejoin",
+      "actor": "isolated fixture founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "provider": "explicit offline-synthetic",
+      "jobId": "ba8b9310-6a57-4c3f-8371-7a9a7ce6f388",
+      "pngDimensions": {
+        "width": 1280,
+        "height": 954
+      },
+      "capturedAt": "2026-10-18T02:27:41.621744+00:00"
+    },
+    {
+      "id": "S14",
+      "sha256": "3096e306e907426178ee5ed4cde5320a81ff1d0ac6ea076cbc12a3d4aeb09306",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fullPage": true,
+      "state": "Refresh jobs keyboard focus; provider readiness remains execution-specific",
+      "actor": "isolated fixture founder",
+      "organization": "org_default",
+      "brand": "brand_default",
+      "provider": "explicit offline-synthetic",
+      "jobId": "ba8b9310-6a57-4c3f-8371-7a9a7ce6f388",
+      "pngDimensions": {
+        "width": 1280,
+        "height": 954
+      },
+      "capturedAt": "2026-10-18T02:27:41.687241+00:00"
+    }
+  ],
+  "sourceCommit": "6cf3f19",
+  "baseCommit": "1e670df",
+  "baselineCommit": "273cdde3fba60e1c6c46de84721b07db88b3241f",
+  "annotationIds": ["review-15", "review-16"],
+  "supersedes": "after-v2 combined App base now includes editor task context #69; earlier evidence preserved",
+  "auth": "explicit isolated test password adapter; no production identity or token",
+  "humanUsability": "not evaluated",
+  "paidCalls": 0,
+  "servedAssets": {
+    "index-TDxjnKj5.css": "73304f80385cbb5e8172f966c3279ba3a7da7a8d0f3a7c92949cde580b77839a",
+    "index-Ch7FE1Wk.js": "5da78603b9ac102f71828fba1bb9058ac6438c38ddac067d4633a3dd9e2d82c4"
+  }
+}
