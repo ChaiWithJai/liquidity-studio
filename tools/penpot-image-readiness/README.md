@@ -1,6 +1,6 @@
 # Owned Penpot image readiness experiment
 
-Source-only candidate for Penpot 2.18.3 at upstream commit `ff7a66f51938b2293260ea27a64e2c4e0833b5e3`. Nothing in this directory establishes repaired PNG pixels or starts a renderer.
+Source-only candidate for Penpot 2.18.3 at upstream commit `ff7a66f51938b2293260ea27a64e2c4e0833b5e3`. The recipe does not start a renderer. One separately authorized controlled Neo PNG trial is recorded in `liquidity-studio/docs/investigations/penpot-image-readiness/`; it is not a general rendering guarantee.
 
 The pinned [bitmap exporter](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/exporter/src/app/render/bitmap.cljs) waits for navigation, fonts and a visible capture target before taking its screenshot. A successful image HTTP response does not itself establish image decode completion. Our cultural PNG omitted a successfully delivered image; existing second-resolution logs cannot establish causality. This experiment tests that hypothesis while preserving the original screenshot function and ClojureScript arity dispatch.
 

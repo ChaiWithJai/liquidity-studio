@@ -1,0 +1,72 @@
+{
+  "method": "One genuine Neo native PNG export after private pinned exporter readiness hook; normal native owner session, operator-registered fixture. No model call or new source asset.",
+  "sourceCommit": "34324c9bd13474e0504cc73e527437eb64245e33",
+  "upstreamCommit": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "officialExporterDigest": "sha256:418232d6ca3120b1c2bfde298a56a05a1f41f567cd8494deac3fe7fbc186cfbd",
+  "originalAppSha256": "1dcf708c47a47c2f2c6e858553359b2a22b1a6ace6cd92fec7e481cafdbab02f",
+  "candidateAppSha256": "58a93b1176feb612ee089693d6394f177165b052fe984f5596a634f7bcaf95b0",
+  "output": {
+    "bytes": 138103,
+    "width": 1080,
+    "height": 1350,
+    "sha256": "87257a42a362e184dcc9e703101ddfb1825dbd54ef315a8bc80963d7739d4c49",
+    "portraitVisible": true,
+    "nativeTextAndGlyphsVisible": true
+  },
+  "priorMissingPortrait": {
+    "bytes": 71394,
+    "sha256": "8198b1468e18d196ac2210d7ab41c4742e7a5d5bd39883e25e54c66da6bec2f5"
+  },
+  "timing": [
+    {
+      "event": "ready",
+      "nodeEnteredAt": 1792313417380,
+      "images": 1,
+      "enteredAt": 1792313417389,
+      "enteredMs": 4230,
+      "decodedAt": 1792313417882,
+      "decodedMs": 4723.199999999255,
+      "resources": [
+        {
+          "index": 0,
+          "width": 384,
+          "height": 384,
+          "responseEndAtEntryMs": null,
+          "decodeStartedMs": 4231.300000000745,
+          "decodedMs": 4707.099999997765
+        }
+      ]
+    },
+    {
+      "event": "captured",
+      "images": 1,
+      "captureStartedAt": 1792313417885,
+      "capturedAt": 1792313417986
+    }
+  ],
+  "deliveryChecks": {
+    "owner": {
+      "status": 200,
+      "bytes": 198985,
+      "cacheControl": "no-cache, private, no-store"
+    },
+    "anonymous": {
+      "status": 403,
+      "cacheControl": "private, no-store"
+    },
+    "foreignPrincipal": "Not repeated during this trial; prior PR140 matrix remains separate"
+  },
+  "rollback": {
+    "originalExporterHashVerified": true,
+    "frontendBaseSyntaxPassed": true,
+    "frontendRestoredBeforeCallbackStopped": true
+  },
+  "limits": [
+    "One cultural frame and one image, not a broad rendering benchmark",
+    "Initial candidate startup failed from relative Compose bind resolution; no export occurred, full rollback preserved",
+    "The observed repaired pixels support the image readiness hypothesis; original second-resolution logs do not independently prove the exact historical race",
+    "No new native content, media upload, GCS write or managed Google browser sign-in occurred",
+    "No fresh-owner native archive/font recovery proof",
+    "Current native RPC/WS/share Studio boundary still incomplete"
+  ]
+}
