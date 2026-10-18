@@ -1,26 +1,26 @@
 {
   "schemaVersion": 1,
   "generatedAt": "2026-10-18T02:52:41.318959+00:00",
-  "functionalCommit": "78b7cf832148bdd94e14bcc052058c7f46b563e1",
+  "functionalCommit": "5ea0f92eb0ef733d5a03e979f4faa7f99a2df9c5",
   "upstreamCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
   "scope": "Author-run local production-compiled EditorApp with disposable QA password identity; not Google or deployment acceptance",
   "sourceHashes": {
-    "liquidity-studio/server/native-editor.js": "cba26eb698f2ab7495616b45e8012ab311767e99bfa35d57ca7bd5cf12ac4273",
+    "liquidity-studio/server/native-editor.js": "d91193643836d12c43a78d5ca469124f6f0b175183df3d243b3e43419fd974a7",
     "liquidity-studio/src/App.svelte": "a513e6dcd4b64cb3e0c1ef8e4ee3c030519562835e67fe4b3b58efe70b1108e6",
     "liquidity-studio/src/components/NativeEditorHost.svelte": "558754f6c32f6c48d0c6f1a745665b24ddd86559526c3fec53cc069ce99129fb",
     "liquidity-studio/src/lib/native-editor-broker.js": "86a4a75a0061d3f0d1fc824bfa6ec2be757a3d75307c2791f555f1e17766057b",
-    "liquidity-studio/src/lib/native-editor-adapter.js": "5765ec1ff9387df71a59b112fe3b5c022f5b86d640cc13ca1cfe98fd98095b70",
+    "liquidity-studio/src/lib/native-editor-adapter.js": "5a52157a4b1b81ff5337a238f2a3ca12055a90be308a499ff22cf2f8f7d8750f",
     "liquidity-studio/tests/native-editor-host.spec.js": "3d228dfbbc87cab238ffaead5079730af8b07ade9a2e6a21ddcf373e3f14e2e0"
   },
   "checks": {
     "node22": {
-      "passed": 174,
+      "passed": 177,
       "skipped": 1,
       "skip": "separate Firestore emulator"
     },
     "chromium": {
       "passed": 5,
-      "durationSeconds": 45.8
+      "durationSeconds": 40.1
     },
     "svelteMcp": {
       "issues": 0
@@ -32,9 +32,10 @@
       "reactOrFabric": false,
       "editorFrameOrLicenseAsset": false,
       "assets": [
-        "index-DldolBLq.js",
+        "index-D7NzBZh_.js",
         "index-DxFD7tsP.css"
-      ]
+      ],
+      "enforcedBy": "scripts/native-editor-vite.js generateBundle default-mode guard"
     }
   },
   "nativePng": {
@@ -52,5 +53,6 @@
     "nativeEnabledByDefault": false
   },
   "runtimeChanges": false,
-  "paidCalls": 0
+  "paidCalls": 0,
+  "baseCommit": "6d0240dd32e41a550a32a722738d7a1226aac3c8"
 }
