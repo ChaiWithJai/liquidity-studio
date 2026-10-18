@@ -77,12 +77,14 @@ export function createPenpotLocalSnapshot({ sessions, fetchImpl = fetch }) {
         }
         if (!value || typeof value !== "object") return;
         if (Array.isArray(value.fills)) {
-          count++;
+          if (value.fills.length === 0) boundPaintsMatch = false;
+          else count++;
           if (
             value.fills.some(
               (fill) =>
-                fill.fillColor?.toLowerCase() !==
-                colors[index].hex.toLowerCase(),
+                typeof fill?.fillColor !== "string" ||
+                fill.fillColor.toLowerCase() !==
+                  colors[index].hex.toLowerCase(),
             )
           )
             boundPaintsMatch = false;

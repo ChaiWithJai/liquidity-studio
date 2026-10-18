@@ -63,6 +63,12 @@ test("fixed native endpoint validates actual owner/project and rich-text paints 
   file.data.pagesIndex.page.objects.text.content.children[0].fills[0].fillColor =
     "#ffffff";
   assert.equal((await reader(input, context)).boundPaintsMatch, false);
+  for (const fills of [[], [null], [{ fillColor: 123 }], [{}]]) {
+    shape.content.children[0].fills = fills;
+    assert.equal((await reader(input, context)).boundPaintsMatch, false);
+  }
+  shape.content.children[0].fills = [{ fillColor: "#123456" }];
+  assert.equal((await reader(input, context)).boundPaintsMatch, true);
   await assert.rejects(
     reader(
       { ...input, binding: { ...input.binding, nativeProjectId: "foreign" } },

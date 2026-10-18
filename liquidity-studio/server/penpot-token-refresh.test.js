@@ -417,3 +417,24 @@ test("source revision changed during held native verification cannot receive a c
   release();
   await assert.rejects(verification, (error) => error.status === 409);
 });
+
+test("acknowledgement rejects operator manifest drift from the claimed action", async () => {
+  const f = fixture();
+  const pending = await f.transport.execute(f.input);
+  const claimed = await f.transport.claim(pending.nativeActionCapability, {
+    fileId: "file",
+    ownerPrincipal: "owner",
+  });
+  f.manifest.themeId = "different-operator-theme";
+  f.snapshot.revision = 6;
+  f.snapshot.tokenValues = f.bundle.tokens.colors.map((color) => color.hex);
+  f.snapshot.boundPaintsMatch = true;
+  await assert.rejects(
+    () =>
+      f.transport.acknowledge(
+        pending.nativeActionCapability,
+        claimed.acknowledgement,
+      ),
+    (error) => error.status === 409,
+  );
+});

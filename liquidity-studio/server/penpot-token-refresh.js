@@ -262,8 +262,14 @@ export class PenpotTokenRefreshTransport {
     row.state = "verifying";
     try {
       const current = await this.context(row.input);
-      if (!sameIdentity(current.bundle, row.context.bundle))
-        throw fail(409, "Source revisions changed during native action");
+      if (
+        !sameIdentity(current.bundle, row.context.bundle) ||
+        !isDeepStrictEqual(current.manifest, row.context.manifest)
+      )
+        throw fail(
+          409,
+          "Source or native registration changed during native action",
+        );
       const snapshot = await this.snapshot(
         row.input,
         current.manifest,
