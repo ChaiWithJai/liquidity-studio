@@ -1,4 +1,5 @@
 <script>
+  import PenpotConnection from "./components/PenpotConnection.svelte";
   import PenpotDesignAction from "./components/PenpotDesignAction.svelte";
   import { onMount, tick } from "svelte";
   import { readWorkflowLocation, workflowHref } from "./lib/workflow-location.js";
@@ -139,7 +140,7 @@
   let helperControlEnabled = $state(false);
   let nativeEditorEnabled = $state(false);
   let nativePortableEnabled = $state(false);
-  let penpotEnabled = $state(false), penpotStoryDesignsEnabled = $state(false);
+  let penpotEnabled = $state(false), penpotStoryDesignsEnabled = $state(false), penpotPairingEnabled = $state(false);
   let sourcePreparationEnabled=$state(false),preparedDirty=$state(false),preparedEditingStoryId=$state(""),preparedForkIntent=$state(null);
   let preparedWorkspace=$derived(sourcePreparationEnabled&&(!campaign||preparedEditingStoryId===selectedStory?.id));
   let nativeRecord = $state(null);
@@ -498,7 +499,7 @@
     if (workspaceClient && stories) workspaceClient.ingestStories(stories, {replace});
   }
   function clearWorkspace() {
-    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
+    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; penpotPairingEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     requestSessionEpoch++;
     lastScopeToken++;
     scopeLoading = false;
@@ -684,7 +685,7 @@
   }
   async function loadScope() {
     const workflowTarget=pendingWorkflowLocation;
-    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
+    leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; penpotPairingEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
     const view = key === activeBacklogScopeKey
@@ -726,6 +727,7 @@
       nativePortableEnabled = data.operatorCapabilities?.nativePortable === true;
       penpotEnabled = data.operatorCapabilities?.penpot === true;
       penpotStoryDesignsEnabled = data.operatorCapabilities?.penpotStoryDesigns === true;
+      penpotPairingEnabled = data.operatorCapabilities?.penpotPairing === true;
       sourcePreparationEnabled=data.operatorCapabilities?.sourcePreparation===true;
       brandProfile = data.brandProfile;
       if (brandProfile) {
@@ -1461,6 +1463,9 @@
                 >{item.name}<small>{item.ratio}</small></button
               >{/each}
           </div>
+          {#if penpotPairingEnabled && penpotHost && !preparedWorkspace}
+            {#key penpotHost.client}<PenpotConnection request={penpotHost.request} />{/key}
+          {/if}
           {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
             {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction compact request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
           {/if}
