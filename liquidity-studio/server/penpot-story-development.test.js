@@ -14,7 +14,7 @@ async function setup(t){
  const config={version:1,targets:[{id:'local-native',organizationId:'org_default',brandId:'brand_default',adapter:'penpot',ownerPrincipal:owner,nativeProjectId:project,nativeRoomId:team,nativeDocumentVersion:'1',nativeVersionKind:'archive',editorVersion:'2.18.3',resources:[{id:'tokens',kind:'tokens',nativeId:file,nativeParentId:project}]}],sessions:[{ownerPrincipal:owner,cookie:'auth-token=controlled-native-session'}],manifests:[{targetId:'local-native',teamId:team,manifest:{ownerPrincipal:owner,projectId:project,fileId:file,layers:[{id:'layer'}],tokens:[1,2,3,4],fonts:{},nativeFonts:[{fontId:'custom-'+font,family:'Mona Sans',weight:400,license:'OFL-1.1',sha256:'a'.repeat(64)}],sourceApprovals:[],storyId:'legacy-only-not-new-story',generationId:'legacy-generation',storyRevision:1}}]};
  const path=join(dir,'operator.json');await writeFile(path,JSON.stringify(config),{mode:0o600});let profileId=owner,editable=true;const calls=[];
  const fetchImpl=async(url,options)=>{calls.push({url,options});const command=url.split('/').at(-1);return new Response(JSON.stringify(command==='get-profile'?{id:profileId}:command==='get-project'?{id:project,teamId:team,permissions:{canEdit:editable}}:[{fontId:font,fontFamily:'Mona Sans',fontWeight:'400'}]),{status:200});};
- const make=()=>createDevelopmentPenpotStoryDesigns({store,identity,configurationPath:path,env:{NODE_ENV:'development'},fetchImpl});return {store,identity,actor,path,make,calls,setProfile:id=>profileId=id,setEditable:value=>editable=value};
+ const make=(options={})=>createDevelopmentPenpotStoryDesigns({store,identity,configurationPath:path,env:{NODE_ENV:'development'},fetchImpl,...options});return {store,identity,actor,path,make,calls,setProfile:id=>profileId=id,setEditable:value=>editable=value};
 }
 test('developer native workspace registers real scoped authority after native reads and observes later revocation',async t=>{
  const f=await setup(t),provider=await f.make(),service=await provider({organizationId:'org_default',brandId:'brand_default'});
@@ -29,4 +29,24 @@ test('developer native configuration and current native/Studio authority fail cl
  const provider=await f.make(),service=await provider({organizationId:'org_default',brandId:'brand_default'});f.setProfile(team);await assert.rejects(()=>service.workspaceFor(f.actor),/native owner/);assert.equal(await f.store.get('editor-security:org_default:brand_default'),null);
  f.setProfile(owner);f.setEditable(false);await assert.rejects(()=>service.workspaceFor(f.actor),/editable project/);
  await f.identity.provision({username:'local-marketer',password:'controlled-password-only-1234567890',role:'marketer'});const marketer=(await f.store.get('identity')).users.find(u=>u.username==='local-marketer');await assert.rejects(()=>service.workspaceFor(marketer),/founder/i);await assert.rejects(()=>provider({organizationId:'org_default',brandId:'brand_vedic'}),/exactly one/);
+});
+test('paired provider retains the fixed administrative workspace without letting a marketer set it up',async t=>{
+ const f=await setup(t),scope={organizationId:'org_default',brandId:'brand_default'};
+ await f.identity.provision({username:'paired-marketer',password:'controlled-paired-marketer-password',role:'marketer'});
+ const marketer=(await f.store.get('identity')).users.find(x=>x.username==='paired-marketer');
+ await f.identity.setMembership(f.actor,{userId:marketer.id,organizationId:scope.organizationId,brandIds:[scope.brandId]});
+ let administrativeWorkspaceFor;
+ const admission={require:async()=>{throw Object.assign(Error('Native live enforcement pending'),{status:503});}};
+ const provider=await f.make({brandAccessFor:async dependencies=>{administrativeWorkspaceFor=dependencies.workspaceFor;return admission;}});
+ const service=await provider(scope);
+ assert.equal(service.brandAccess,admission);
+ await assert.rejects(administrativeWorkspaceFor(marketer),/founder/i);
+ assert.equal(await f.store.get('editor-security:org_default:brand_default'),null);
+ const registered=await service.workspaceFor(f.actor);
+ const shared=await administrativeWorkspaceFor(marketer);
+ assert.equal(shared.ownerPrincipal,owner);assert.equal(shared.bindingId,registered.bindingId);
+ assert.equal(shared.teamId,registered.teamId);assert.equal(shared.projectId,registered.projectId);
+ await assert.rejects(service.workspaceFor(marketer),/founder/i,'default developer path remains founder-only');
+ await f.identity.setMembership(f.actor,{userId:marketer.id,organizationId:scope.organizationId,brandIds:[]});
+ await assert.rejects(administrativeWorkspaceFor(marketer),e=>e.status===403);
 });

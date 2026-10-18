@@ -1381,10 +1381,11 @@ export function createHttpServer(
         });
       if (developmentPenpotStoryDesigns && route === "/api/studio/penpot/designs") {
         const designs = await developmentPenpotStoryDesigns(scope);
+        const sessionContext = createHash("sha256").update(token(req, identity.mode)).digest("hex");
         if (req.method === "GET") return json(200, await designs.designs(user, {
           storyId: url.searchParams.get("storyId"), format: url.searchParams.get("format"),
-        }));
-        if (req.method === "POST") return json(201, await designs.createDesign(user, body));
+        }, sessionContext));
+        if (req.method === "POST") return json(201, await designs.createDesign(user, body, sessionContext));
         throw fail(404, "Not found");
       }
       if (route.startsWith("/api/studio/penpot/")) {
