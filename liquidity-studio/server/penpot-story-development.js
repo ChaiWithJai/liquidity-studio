@@ -14,7 +14,7 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
  // Same strict private-file schema; this does not change process feature flags.
  const configuration=await loadDevelopmentPenpotConfiguration(configurationPath,{STUDIO_PENPOT_ENABLED:'true'});
  if(configuration.transportMode!=='loopback')throw Error('Developer Penpot requires fixed loopback transport');
- return createPenpotStoryProvider({store,identity,configuration,brandAccessFor,grantKey,fetchImpl});
+ return createPenpotStoryProvider({store,identity,configuration,brandAccessFor,grantKey,fetchImpl,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.nativeOrigin||null,localTools:configuration.localTools!==false});
 }
 /** Shared composition; callers validate their deployment-specific configuration. */
 export function createPenpotStoryProvider({store,identity,configuration,brandAccessFor=null,grantKey=null,fetchImpl=fetch,nativeOrigin='http://localhost:39008',rpcOrigin=null,localTools=true}) {

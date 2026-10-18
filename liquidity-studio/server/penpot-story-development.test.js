@@ -64,3 +64,14 @@ test('fresh workspace-only provider registers without legacy file and refuses wr
  assert.equal(state.bindings.length,1);
  assert.ok(f.calls.every(c=>!['get-file','create-file','update-file'].includes(c.url.split('/').at(-1))));
 });
+
+
+test('explicit fresh loopback provider uses its owner and exposes no colliding local tool host',async t=>{
+ const f=await setup(t),old=JSON.parse(await readFile(f.path,'utf8'));
+ const fonts=old.manifests[0].manifest.nativeFonts.map(x=>({...x,fontVariantId:'normal-400'}));
+ await writeFile(f.path,JSON.stringify({version:2,transportMode:'loopback',nativeOrigin:'http://127.0.0.1:39046',localTools:false,sessions:old.sessions,workspaces:[{id:'fresh-destination',organizationId:'org_default',brandId:'brand_default',ownerPrincipal:owner,projectId:project,teamId:team,fonts}]}));
+ const provider=await f.make(),service=await provider({organizationId:'org_default',brandId:'brand_default'});
+ const actual=await service.workspaceFor(f.actor);assert.equal(actual.ownerPrincipal,owner);
+ assert.equal(service.nativeOrigin,'http://127.0.0.1:39046');assert.equal(provider.createStylePluginHost,undefined);assert.equal(provider.svgDownload,undefined);assert.equal(service.styles,undefined);assert.equal(service.svg,undefined);assert.equal(service.recovery,undefined);
+ assert.ok(f.calls.every(call=>call.url.startsWith('http://127.0.0.1:39046/api/rpc/command/')&&call.options.headers.Origin==='http://127.0.0.1:39046'));
+});
