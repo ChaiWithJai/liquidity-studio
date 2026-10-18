@@ -33,7 +33,7 @@ test('brandless organization uses real enable/import/graph and restores the sele
  await expect(page.getByLabel('Selection details',{exact:true})).toContainText('Our imported producer');
  await expect(page.getByLabel('Selection details',{exact:true})).toContainText('User-reported reference');
  await page.getByText('Add references',{exact:true}).click();await workspace.getByRole('button',{name:'Preview sample map',exact:true}).click();await workspace.getByRole('button',{name:'Add these references',exact:true}).click();
- await workspace.getByRole('button',{name:'Explore Lagos, region',exact:true}).click();await expect(page).toHaveURL(/select=node_lagos/);
+ await workspace.getByRole('button',{name:'Lagos',exact:true}).click();await expect(page).toHaveURL(/select=node_lagos/);
  await page.goBack();await expect(page).toHaveURL(/select=owned%3Aproducer/);await expect(page.getByLabel('Selection details',{exact:true})).toContainText('Our imported producer');
  await page.goForward();await expect(page).toHaveURL(/select=node_lagos/);
  expect(brandBootstraps).toEqual([]);expect(platform.store.keys(`scope:${org.id}:`)).toEqual([]);
