@@ -1,3 +1,4 @@
+import {setNativeTool, closeNativeTools} from './native-host-tools.js';
 import sharp from "sharp";
 import { createHash } from "node:crypto";
 import { test, expect } from "@playwright/test";
@@ -259,9 +260,7 @@ test.beforeAll(async ({ browser }) => {
     await expect(
       frame.getByRole("button", { name: "Images", exact: true }),
     ).toBeVisible({ timeout: 30000 });
-    await sourcePage
-      .getByText("Image rights and consent", { exact: true })
-      .click();
+    await setNativeTool(sourcePage, 'images');
     await sourcePage
       .getByRole("textbox", { name: "Rights declaration" })
       .fill(
@@ -273,9 +272,7 @@ test.beforeAll(async ({ browser }) => {
     await sourcePage
       .getByRole("checkbox", { name: /I confirm the selected image/ })
       .check();
-    await sourcePage
-      .getByText("Image rights and consent", { exact: true })
-      .click();
+    await closeNativeTools(sourcePage);
     await frame.getByRole("button", { name: "Layers", exact: true }).click();
     await frame.locator("[data-artboard]").first().scrollIntoViewIfNeeded();
     const art = await frame.locator("[data-artboard]").first().boundingBox();

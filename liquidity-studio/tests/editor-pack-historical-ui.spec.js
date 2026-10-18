@@ -48,7 +48,7 @@ test('historical native recovery shows its reason without writable frame, broker
   await expect(page.getByRole('status').filter({hasText:'This restored layout is historical evidence'})).toBeVisible();
   await expect(page.getByTitle('Native Doory design canvas')).toHaveCount(0);
   await expect(page.getByRole('region',{name:'Saved layout review'})).toHaveCount(0);
-  await expect(page.getByText('Image rights and consent',{exact:true})).toHaveCount(0);
+  await expect(page.locator('.native-tools > details[data-native-tool="images"]')).toHaveCount(0);
   await expect(page.getByRole('button',{name:/stage|sign off|approve/i})).toHaveCount(0);
  }
  expect(calls.some(route=>route==='/native-editor-frame.html'||route.includes('/review')||route.includes('/exports')||route.includes('/cutout'))).toBe(false);

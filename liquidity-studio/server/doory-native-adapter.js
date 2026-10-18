@@ -80,16 +80,16 @@ function textbox(id, text, y, size, width, fill, font, height = size * 2.4) {
   };
 }
 function additionalCopy(format, source, index) {
+  // Art direction stays in semantic page notes, not in customer-facing artwork.
   if (format === "infographic")
     return [source.bottomTakeaway, source.caption].filter(Boolean).join("\n\n");
   if (format === "carousel")
-    return [source.slides[index].visualNote, source.coverHook, source.caption]
+    return [source.coverHook, source.caption]
       .filter(Boolean)
       .join("\n\n");
   if (format === "story") return source.interactiveStickerPrompt || "";
   return [
     index === 0 ? source.spokenHook0to3s : "",
-    source.beats[index].bRollDirection,
     index === 2 ? source.closingCta : "",
   ]
     .filter(Boolean)

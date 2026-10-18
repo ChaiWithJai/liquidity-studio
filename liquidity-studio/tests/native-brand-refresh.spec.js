@@ -1,3 +1,4 @@
+import {setNativeTool, closeNativeTools} from './native-host-tools.js';
 import { test, expect } from "@playwright/test";
 import { unzipSync } from "fflate";
 import { createServer } from "node:http";
@@ -204,6 +205,7 @@ test("actual Brand Kit refresh preserves edited native copy across both brands a
     ).toBeVisible({ timeout: 30000 });
   }
   async function png() {
+    await closeNativeTools(page);
     await frame.getByRole("button", { name: "Download", exact: true }).click();
     const event = page.waitForEvent("download");
     await frame.getByRole("menuitem", { name: /^PNG/ }).click();
@@ -281,6 +283,7 @@ test("actual Brand Kit refresh preserves edited native copy across both brands a
     ).toBeVisible();
     for (const format of Object.keys(labels)) {
       await studio(format);
+      await setNativeTool(page, 'brand');
       const styles = page.getByRole("region", {
         name: "Native brand styles",
         exact: true,
@@ -390,6 +393,7 @@ test("a lost refresh response retries the same intent and adopts only its saved 
   await page
     .getByRole("button", { name: "Edit layout in Studio", exact: true })
     .click();
+  await setNativeTool(page, 'brand');
   const styles = page.getByRole("region", {
     name: "Native brand styles",
     exact: true,
@@ -465,6 +469,7 @@ test("an edit begun during refresh keeps the live native buffer instead of adopt
     .getByRole("button", { name: "Edit layout in Studio", exact: true })
     .click();
   const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
+  await setNativeTool(page, 'brand');
   const styles = page.getByRole("region", {
     name: "Native brand styles",
     exact: true,
@@ -490,6 +495,7 @@ test("an edit begun during refresh keeps the live native buffer instead of adopt
     .getByRole("button", { name: "Refresh saved brand styles", exact: true })
     .click();
   await committedSignal;
+  await closeNativeTools(page);
   await frame.locator("[data-artboard]").first().scrollIntoViewIfNeeded();
   const art = await frame.locator("[data-artboard]").first().boundingBox();
   await page.mouse.dblclick(
@@ -500,6 +506,7 @@ test("an edit begun during refresh keeps the live native buffer instead of adopt
   await expect(textarea).toBeAttached();
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.type("LATE HUMAN BUFFER MUST SURVIVE");
+  await setNativeTool(page, 'brand');
   release();
   await expect(
     page

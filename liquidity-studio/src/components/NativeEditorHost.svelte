@@ -132,8 +132,22 @@
     <p role="status">This restored layout is historical evidence. Its original source must be reviewed and adopted before creating a new editable layout. Live editing, cutout, approval and export actions are unavailable here.</p>
     <NativeRebindPanel {record} {request} {scopeKey} {getScopeKey} {canRebind} {canReviewSource} {onRebound} {onReviewSource} />
   {:else}
-  <details>
-    <summary>Image rights and consent</summary>
+  <div class="native-tools" role="group" aria-label="Layout tools">
+    <span class="editor-status" role="status">{loading?'Opening editor…':editorDirty?'Unsaved layout changes':'Layout tools'}</span>
+    <details name={`native-tools-${record.id}`} data-native-tool="review"><summary>Review saved layout</summary><div class="tool-panel">
+  <EditorReviewPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} refreshKey={exportReceiptEpoch} />
+    </div></details>
+    <details name={`native-tools-${record.id}`} data-native-tool="export"><summary>PNG export</summary><div class="tool-panel">
+  {#key `${scopeKey}:${record.id}:${(localRecord?.id === record.id ? localRecord : record).revision}`}
+    <EditorExportPanel record={localRecord?.id === record.id ? localRecord : record} stages={exportStages} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} onExported={()=>exportReceiptEpoch++} />
+  {/key}
+    </div></details>
+    <details name={`native-tools-${record.id}`} data-native-tool="brand"><summary>Brand styles</summary><div class="tool-panel">
+  {#key `${scopeKey}:${record.id}:${(localRecord?.id === record.id ? localRecord : record).revision}`}
+    <NativeBrandRefreshPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} getCanvasEpoch={() => canvasEpoch} onRefreshed={refreshedBrand} />
+  {/key}
+    </div></details>
+    <details name={`native-tools-${record.id}`} data-native-tool="images"><summary>Image rights</summary><div class="tool-panel image-rights">
     <label>Rights declaration <input bind:value={rightsDeclaration} maxlength="500" placeholder="Describe your permission to use uploaded images" /></label>
     <label>Consent
       <select bind:value={consent}>
@@ -144,22 +158,24 @@
     </label>
     <label><input type="checkbox" bind:checked={cutoutConfirmed} /> I confirm the selected image’s recorded rights and consent permit background removal.</label>
     <p>Uploads support PNG, JPEG and WebP up to 512 KiB and four megapixels. When configured locally, background removal preserves pixel dimensions and rejects PNG output above 512 KiB. It never silently resizes or overwrites the original; native Undo restores the original reference.</p>
-  </details>
-  {#if loading}<p role="status">Opening native editor…</p>{/if}
-  {#key `${scopeKey}:${record.id}:${(localRecord?.id === record.id ? localRecord : record).revision}`}
-    <NativeBrandRefreshPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} getCanvasEpoch={() => canvasEpoch} onRefreshed={refreshedBrand} />
-  {/key}
-  <EditorReviewPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} refreshKey={exportReceiptEpoch} />
-  {#key `${scopeKey}:${record.id}:${(localRecord?.id === record.id ? localRecord : record).revision}`}
-    <EditorExportPanel record={localRecord?.id === record.id ? localRecord : record} stages={exportStages} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} onExported={()=>exportReceiptEpoch++} />
-  {/key}
+    </div></details>
+  </div>
   <iframe title="Native Doory design canvas" bind:this={frame} sandbox="allow-scripts allow-same-origin allow-downloads" referrerpolicy="no-referrer"></iframe>
   {/if}
 </section>
 
 <style>
   .native-editor-shell { min-width: 0; background: #fff; color: #15171b; }
-  .attribution, details { margin: 0; padding: .6rem 1rem; background: #f0f2f5; font: 14px/1.5 sans-serif; }
+  .attribution { margin: 0; padding: .3rem .75rem; background: #f8f9fb; font: 11px/1.5 sans-serif; border-bottom: 1px solid #e0e3e8; }
+  .native-tools { position: relative; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; padding: .45rem .75rem; border-bottom: 1px solid #c9cdd4; background: #f6f8fb; font: 12px/1.5 sans-serif; }
+  .editor-status { margin-inline-end: auto; color: #59616b; }
+  .native-tools > details { margin: 0; }
+  .native-tools summary { cursor: pointer; padding: .3rem .55rem; border: 1px solid #c9cdd4; border-radius: .35rem; background: #fff; color: #15171b; }
+  .native-tools details[open] > summary { background: #e9eef6; border-color: #69717c; }
+  .native-tools summary:focus-visible { outline: 2px solid #174ba7; outline-offset: 2px; }
+  .tool-panel { position: absolute; inset-inline: 0; top: 100%; z-index: 5; max-height: min(60dvh, 520px); overflow: auto; background: #fff; border: 1px solid #c9cdd4; box-shadow: 0 10px 24px #15171b20; }
+  .image-rights { padding: .75rem 1rem; font: 13px/1.5 sans-serif; }
+  @media(max-width:600px) { .editor-status { flex-basis: 100%; } .native-tools { gap: .3rem; } }
   .attribution a { color: #174ba7; text-decoration: underline; }
   label { display: block; margin: .4rem 0; }
   input, select { margin-inline-start: .5rem; max-width: 100%; }

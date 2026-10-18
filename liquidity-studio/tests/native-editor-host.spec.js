@@ -1,3 +1,4 @@
+import {setNativeTool, closeNativeTools} from './native-host-tools.js';
 import { test, expect } from "@playwright/test";
 import { createServer } from "node:http";
 import { build } from "vite";
@@ -264,13 +265,14 @@ test("actual native image upload remains private across save/reload and native P
   await expect(
     frame.getByRole("button", { name: "Images", exact: true }),
   ).toBeVisible({ timeout: 30000 });
-  await page.getByText("Image rights and consent", { exact: true }).click();
+  await setNativeTool(page, 'images');
   await page
     .getByRole("textbox", { name: "Rights declaration" })
     .fill("Procedural owned fixture image created for this integration test.");
   await page
     .getByRole("combobox", { name: "Consent", exact: true })
     .selectOption("not_personal_data");
+  await closeNativeTools(page);
   await frame.getByRole("button", { name: "Images", exact: true }).click();
   const chooser = page.waitForEvent("filechooser");
   await frame.getByTestId("upload-zone").click();
@@ -648,6 +650,7 @@ test("saved layout review rejects dirty/stale versions and approves the acknowle
     data: { username: "native-host-fixture", password },
   });
   await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
+  await setNativeTool(page, 'review');
   const panel = page.getByRole("region", {
     name: "Saved layout review",
     exact: true,
@@ -682,6 +685,7 @@ test("saved layout review rejects dirty/stale versions and approves the acknowle
       await route.continue();
     },
   );
+  await closeNativeTools(page);
   const art = await frame.locator("[data-artboard]").first().boundingBox();
   await page.mouse.dblclick(
     art.x + art.width * 0.5,
@@ -693,6 +697,7 @@ test("saved layout review rejects dirty/stale versions and approves the acknowle
   await page.keyboard.press("ControlOrMeta+A");
   await page.keyboard.type("FINAL SAVED REVIEW VERSION");
   await page.keyboard.press("Escape");
+  await setNativeTool(page, 'review');
   try {
     await expect(
       panel.getByRole("button", { name: "Approve saved layout", exact: true }),
@@ -763,6 +768,7 @@ test("marketer submits a saved layout and a separate founder session approves it
   await page
     .getByRole("combobox", { name: "Native fixture", exact: true })
     .selectOption(fixture.id);
+  await setNativeTool(page, 'review');
   const panel = page.getByRole("region", {
     name: "Saved layout review",
     exact: true,
@@ -806,6 +812,7 @@ test("marketer submits a saved layout and a separate founder session approves it
     await founderPage
       .getByRole("combobox", { name: "Native fixture", exact: true })
       .selectOption(fixture.id);
+    await setNativeTool(founderPage, 'review');
     await founderPage
       .getByRole("region", { name: "Saved layout review", exact: true })
       .getByRole("button", { name: "Approve saved layout", exact: true })
@@ -833,6 +840,7 @@ test("a lost review response retries the same intent without a second transition
   await page
     .getByRole("combobox", { name: "Native fixture", exact: true })
     .selectOption(fixture.id);
+  await setNativeTool(page, 'review');
   const panel = page.getByRole("region", {
     name: "Saved layout review",
     exact: true,
@@ -912,7 +920,7 @@ test("reference-correct MODNet replaces a private portrait through native undo/s
   await expect(
     frame.getByRole("button", { name: "Images", exact: true }),
   ).toBeVisible({ timeout: 30000 });
-  await page.getByText("Image rights and consent", { exact: true }).click();
+  await setNativeTool(page, 'images');
   await page
     .getByRole("textbox", { name: "Rights declaration" })
     .fill(
@@ -924,6 +932,7 @@ test("reference-correct MODNet replaces a private portrait through native undo/s
   await page
     .getByRole("checkbox", { name: /I confirm the selected image/ })
     .check();
+  await closeNativeTools(page);
   await frame.getByRole("button", { name: "Images", exact: true }).click();
   const chooser = page.waitForEvent("filechooser");
   await frame.getByTestId("upload-zone").click();
@@ -1083,10 +1092,11 @@ test("reference-correct MODNet replaces a private portrait through native undo/s
   expect(Buffer.from(retained.base64, "base64")).toEqual(input);
   // A new iframe creates a fresh loader/worker: this path must verify and use
   // the persisted origin-local model cache, not the prior loader's memory.
-  await page.getByText("Image rights and consent", { exact: true }).click();
+  await setNativeTool(page, 'images');
   await page
     .getByRole("checkbox", { name: /I confirm the selected image/ })
     .check();
+  await closeNativeTools(page);
   await frame.getByRole("button", { name: "Layers", exact: true }).click();
   await frame.getByRole("treeitem").filter({ hasText: original.name }).click();
   const cachedStarted = Date.now();
@@ -1159,7 +1169,7 @@ test("oversized native cutout is rejected without silently resizing or replacing
   await expect(
     frame.getByRole("button", { name: "Images", exact: true }),
   ).toBeVisible({ timeout: 30000 });
-  await page.getByText("Image rights and consent", { exact: true }).click();
+  await setNativeTool(page, 'images');
   await page
     .getByRole("textbox", { name: "Rights declaration" })
     .fill(
@@ -1171,6 +1181,7 @@ test("oversized native cutout is rejected without silently resizing or replacing
   await page
     .getByRole("checkbox", { name: /I confirm the selected image/ })
     .check();
+  await closeNativeTools(page);
   await frame.getByRole("button", { name: "Images", exact: true }).click();
   const chooser = page.waitForEvent("filechooser");
   await frame.getByTestId("upload-zone").click();
