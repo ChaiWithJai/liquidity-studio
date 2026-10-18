@@ -25,6 +25,12 @@ The pinned backend defines `clojure -M:dev:test` and Kaocha in its actual
 `backend/deps.edn`. The small supplied config restricts namespace discovery to
 `test/app/studio`, avoiding unrelated database/Redis suites while retaining those
 same aliases/dependencies. It is not a mock replacement for the compiler.
+The separate `-M:dev -e` namespace-load command includes test sources because the
+pinned `:dev` alias explicitly adds `test` and `dev` to its classpath. It does not
+combine `-e` with Kaocha's `:test` main options. If the mounted checkout's actual
+UID differs from the container process UID, the recipe records both and applies
+one disposable `safe.directory=/work` Git override; it never trusts all paths or
+writes global Git configuration.
 `backend/tests.edn`, both deps files and all tracked lock/package files must remain
 unchanged. No new runtime dependency is introduced.
 
