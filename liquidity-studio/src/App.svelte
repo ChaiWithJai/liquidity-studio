@@ -1,4 +1,6 @@
 <script>
+  import DefiantWorkspace from './components/defiant/DefiantWorkspace.svelte';
+  import {strategyOrganizationFor} from './lib/defiant-location.js';
   import PenpotConnection from "./components/PenpotConnection.svelte";
   import PenpotDesignAction from "./components/PenpotDesignAction.svelte";
   import { onMount, tick } from "svelte";
@@ -69,8 +71,20 @@
   let workflowMounted = $state(false), workflowRestoring = $state(false);
   let pendingWorkflowLocation = $state.raw(null);
   let workflowHistoryIndex = 0, acceptedWorkflowHref = "", restoringHistory = false;
+  let strategyLocation=$state({view:'map',focus:'',selected:'',savedViewId:'',reportId:'',destinationBrandId:''});
+  let strategyDirty=$state(false);
+  const strategyHost=$derived.by(()=>{
+    if(!user||!organizationId)return null;
+    const org=organizationId,actor=user.id,epoch=requestSessionEpoch,auth=googleAuth,google=authMode==='google';
+    const key=`${epoch}:${actor}:${org}`;
+    return {key,request:(suffix='',options={})=>scopedRequest({path:`/api/studio/strategy/${encodeURIComponent(org)}${suffix}`,options,scoped:false,
+      context:{sessionEpoch:key},getContext:()=>({sessionEpoch:`${requestSessionEpoch}:${user?.id}:${organizationId}`}),
+      authorize:async()=>google?{Authorization:`Bearer ${await auth.getToken()}`}:{},onUnauthorized:clearWorkspace})};
+  });
+  function strategyNavigation(next){strategyLocation=next;}
+  async function refreshStrategyOrganizations(){const session=await request('/api/auth/session',{},false);organizations=session.organizations||organizations;}
   function workflowState() {
-    return {organizationId,brandId,tab,storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",page:preparedPage};
+    return {organizationId,brandId,tab,...(tab==="strategy"?{strategy:strategyLocation}:{}),storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",page:preparedPage};
   }
   $effect(() => {
     const state=workflowState();
@@ -93,9 +107,18 @@
         else if(acceptedWorkflowHref)window.history.replaceState({...window.history.state,studioWorkflowIndex:workflowHistoryIndex},"",acceptedWorkflowHref);
       };
       if(!user||booting)return;
-      if(workflowRestoring||scopeLoading||busy||pendingEdits||preparedDirty||reviewDirty||nativeDirty){error="Save or discard your current edits before using browser navigation.";refuse();return;}
+      if(workflowRestoring||scopeLoading||busy||pendingEdits||preparedDirty||reviewDirty||nativeDirty||strategyDirty){error="Save or discard your current edits before using browser navigation.";refuse();return;}
       const route=readWorkflowLocation(window.location.href);
       const org=organizations.find(item=>item.id===route.organizationId),brand=org?.brands.find(item=>item.id===route.brandId);
+      if(route.tab==='strategy'){
+        if(!strategyOrganizationFor(route,organizations)){error='That strategy workspace is unavailable for your current account.';refuse();return;}
+        if(!leaveNativeEditor())return;
+        if(organizationId!==org.id){rememberBacklogView();organizationId=org.id;brandId='';lastScopeToken++;disposeWorkspaceClient();selectedStory=null;campaign=null;}
+        strategyLocation=route.strategy;tab='strategy';scopeLoadError='';pendingWorkflowLocation=null;
+        workflowHistoryIndex=Number.isInteger(index)?index:workflowHistoryIndex;
+        acceptedWorkflowHref=workflowHref(window.location.href,workflowState());
+        window.history.replaceState({...window.history.state,studioWorkflowIndex:workflowHistoryIndex},'',acceptedWorkflowHref);return;
+      }
       if(!brand){error="That workspace is unavailable for your current account.";refuse();return;}
       workflowRestoring=true;
       const actor=user.id,session=requestSessionEpoch;
@@ -112,6 +135,10 @@
     return()=>{workflowMounted=false;window.removeEventListener("popstate",pop);};
   });
   async function restoreWorkflowLocation(route) {
+    if(route.tab==='strategy'){
+      if(!strategyOrganizationFor(route,organizations)||!leaveNativeEditor())return;
+      strategyLocation=route.strategy;tab='strategy';return;
+    }
     const client=workspaceClient;
     if(!client||!leaveNativeEditor())return;
     preparedEditingStoryId="";
@@ -440,7 +467,9 @@
       "";
     const route=readWorkflowLocation(window.location.href);
     const requestedOrg=organizations.find(org=>org.id===route.organizationId);
-    if(requestedOrg?.brands.some(brand=>brand.id===route.brandId)){organizationId=requestedOrg.id;brandId=route.brandId;pendingWorkflowLocation=route;}
+    if(strategyOrganizationFor(route,organizations)){organizationId=requestedOrg.id;brandId='';tab='strategy';strategyLocation=route.strategy;pendingWorkflowLocation=null;}
+    else if(requestedOrg?.brands.some(brand=>brand.id===route.brandId)){organizationId=requestedOrg.id;brandId=route.brandId;pendingWorkflowLocation=route;}
+    else if(!brandId&&(organizations.find(org=>org.id===organizationId)?.strategy?.enabled||organizations.find(org=>org.id===organizationId)?.strategy?.canEnable)){tab='strategy';pendingWorkflowLocation=null;}
     else pendingWorkflowLocation={...route,organizationId,brandId,storyId:"",nativeId:"",tab:route.organizationId?"backlog":route.tab,unavailable:Boolean(route.organizationId||route.brandId)};
   }
   function invalidateGoogleLoginAttempt() {
@@ -512,6 +541,7 @@
     statusFilter = "All";
     user = null;
     organizations = [];
+    strategyDirty=false;strategyLocation={view:'map',focus:'',selected:'',savedViewId:'',reportId:'',destinationBrandId:''};
     permissions = {};
     organizationId = "";
     brandId = "";
@@ -664,6 +694,9 @@
   }
   async function navigateTab(next) {
     if(workflowRestoring)return;
+    if(strategyDirty){error='Finish or clear your reference import before leaving strategy.';return;}
+    if(next==='strategy'&&!currentOrganization?.strategy?.enabled&&!currentOrganization?.strategy?.canEnable)return;
+    if(!brandId&&next!=='strategy'&&next!=='admin'){error='Choose a publishing brand to open that workspace.';return;}
     if (!leaveNativeEditor()) return;
     if (tab === "backlog") rememberBacklogView();
     tab = next;
@@ -685,6 +718,12 @@
   }
   async function loadScope() {
     const workflowTarget=pendingWorkflowLocation;
+    if(!brandId&&(currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable)){
+      disposeWorkspaceClient();lastScopeToken++;scopeLoading=false;scopeLoadError='';tab='strategy';
+      if(workflowTarget?.tab==='strategy')strategyLocation=workflowTarget.strategy;
+      pendingWorkflowLocation=null;return;
+    }
+    if(!brandId){scopeLoadError='This organization has no publishing brand yet.';return;}
     leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; penpotPairingEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
@@ -783,7 +822,7 @@
     }
   }
   async function switchOrganization(event) {
-    if(workflowRestoring){event.currentTarget.value=organizationId;return;}
+    if(workflowRestoring||strategyDirty){event.currentTarget.value=organizationId;if(strategyDirty)error='Finish or clear your reference import before switching organization.';return;}
     if (!leaveNativeEditor()) { event.currentTarget.value = organizationId; return; }
     const selector = event.currentTarget;
     const requestedOrganizationId = selector.value;
@@ -796,11 +835,12 @@
     brandId =
       organizations.find((org) => org.id === organizationId)?.brands?.[0]?.id ||
       "";
+    strategyDirty=false;strategyLocation={view:'map',focus:'',selected:'',savedViewId:'',reportId:'',destinationBrandId:''};
     tab = "backlog";
     await loadScope();
   }
   async function switchBrand(event) {
-    if(workflowRestoring){event.currentTarget.value=brandId;return;}
+    if(workflowRestoring||strategyDirty){event.currentTarget.value=brandId;if(strategyDirty)error='Finish or clear your reference import before switching brand.';return;}
     if (!leaveNativeEditor()) { event.currentTarget.value = brandId; return; }
     const selector = event.currentTarget;
     const requestedBrandId = selector.value;
@@ -1277,7 +1317,7 @@
                 >{org.name}</option
               >{/each}</select
           ></label
-        ><label
+        >{#if currentOrganization?.brands?.length}<label
           >Brand<select
             aria-label="Brand"
             value={brandId}
@@ -1286,11 +1326,13 @@
                 value={brand.id}>{brand.name}</option
               >{/each}</select
           ></label
-        >
+        >{/if}
       </div>
       <nav aria-label="Main navigation">
+        {#if currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable}<button class:active={tab==='strategy'} onclick={()=>navigateTab('strategy')}><span aria-hidden="true">◎</span>Strategy</button>{/if}
         {#each [{ id: "backlog", label: "Story backlog", icon: "▤" }, { id: "calendar", label: "Content calendar", icon: "▦" }, { id: "studio", label: "Campaign Studio", icon: "◧" }, { id: "brand", label: "Brand Kit", icon: "◉" }, { id: "jobs", label: "Jobs", icon: "◷" }] as item (item.id)}<button
             class:active={tab === item.id}
+            disabled={!brandId}
             onclick={() => navigateTab(item.id)}
             ><span aria-hidden="true">{item.icon}</span>{item.label}</button
           >{/each}{#if canAdmin}<button
@@ -1310,10 +1352,9 @@
       <header class="workspace-header">
         <div>
           <span class="eyebrow"
-            >{currentOrganization?.name || "ORGANIZATION"} / {currentBrand?.name ||
-              "BRAND"}</span
+            >{currentOrganization?.name || "ORGANIZATION"}{tab==='strategy'?'':` / ${currentBrand?.name||'BRAND'}`}</span
           >
-          <h1>{tab === "backlog" ? "Story backlog" : tab === "calendar" ? "Content calendar" : tab === "studio" ? "Campaign Studio" : tab === "brand" ? "Brand Kit" : tab === "jobs" ? "Jobs" : "Operations"}</h1>
+          <h1>{tab==='strategy'?'Defiant Strategy':tab === "backlog" ? "Story backlog" : tab === "calendar" ? "Content calendar" : tab === "studio" ? "Campaign Studio" : tab === "brand" ? "Brand Kit" : tab === "jobs" ? "Jobs" : "Operations"}</h1>
         </div>
       </header>
       {#if error}<div class="error banner" role="alert">
@@ -1326,7 +1367,9 @@
             onclick={() => (notice = "")}>×</button
           >
         </div>{/if}
-      {#if scopeLoading}
+      {#if tab==='strategy'&&strategyHost&&(currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable)}
+        {#key strategyHost.key}<DefiantWorkspace request={strategyHost.request} location={strategyLocation} onNavigate={strategyNavigation} onDirtyChange={value=>strategyDirty=value} canEnable={currentOrganization.strategy.canEnable} onEnabled={refreshStrategyOrganizations}/>{/key}
+      {:else if scopeLoading}
         <div class="panel" role="status">Loading {currentBrand?.name || "brand"} workspace…</div>
       {:else if lockedRecovery && canAdmin}
         <section class="panel" aria-label="Locked brand recovery">
