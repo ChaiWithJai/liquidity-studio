@@ -1,12 +1,12 @@
 {
-  "runId": 39148079704,
-  "sourceSha": "d825cd2e4640f1471153cd48cf89116b44071fae",
+  "runId": 39152925930,
+  "sourceSha": "923b0e5c7eeda722b539191a8d8fa6eb304753bd",
   "upstreamSha": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
-  "manifestSha256": "4d5ded9c386bce4840ef052ad57241d6e49b04f215bbebf7c488444ea49e5290",
+  "manifestSha256": "40cadef68bd9629a09c8919db0279cfbe953739e88a4fce092de04ebd5c8d485",
   "namespaces": 6,
-  "tests": 33,
-  "assertions": 181,
+  "tests": 36,
+  "assertions": 196,
   "failures": 0,
-  "runtimeActivated": false,
-  "acceptance": "Compiled native integration and focused hosted checks only. Same-file shared editing and actual revocation remain pending."
+  "runtimeActivated": true,
+  "acceptance": "Compiled native integration and focused hosted checks. Candidate activated locally; real create/edit/save/reopen founder journey and distinct marketer save observed in BrowserOS neo. Broader deployment and live collaboration acceptance remain separate."
 }

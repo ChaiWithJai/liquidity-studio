@@ -1,0 +1,52 @@
+{
+  "scope": "Owned local QA only; not customer or learner acceptance",
+  "nativePin": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "imageRun": 39153128667,
+  "imageId": "sha256:b40129fcce77fa0eea3ad0ab58222c48d5319676885a351af6a544978052a911",
+  "sourceSha": "923b0e5c7eeda722b539191a8d8fa6eb304753bd",
+  "browser": "BrowserOS neo",
+  "workspaceRegistrationStatus": 200,
+  "policyAcceptance": {
+    "kind": "owned-qa",
+    "customerAccepted": false,
+    "measuredRevocation": false,
+    "workspaceEpoch": 2,
+    "receiptSha256": "640eca17ddf6c347e1e6d3b25ded4d781064377d85153cb17f3d68612793892e"
+  },
+  "founder": {
+    "nativeProfileId": "e749cfb6-8499-8002-8008-ce61c98b40b3",
+    "operatorSeparate": true,
+    "pairing": "ordinary native consent and Studio confirmation",
+    "membershipAcknowledged": true,
+    "grantEpoch": 1,
+    "editingEnabled": true
+  },
+  "createDesign": {
+    "completed": true,
+    "fileId": "ee5c666a-8132-4664-8b10-2596aa90685e",
+    "storyId": "research_4",
+    "format": "infographic",
+    "pendingIntentPreserved": true,
+    "founderEditSavedAndReopened": true,
+    "founderSavedRevision": 3,
+    "marketerSeparateSessionEditSaved": true,
+    "marketerSavedRevision": 4
+  },
+  "existingPersonalFilesUnchanged": [
+    {
+      "fileId": "fc4e327b-7b6b-424e-95c0-3b1c5a6fcc28",
+      "revision": 3,
+      "dataSha256": "fec9b59e2949151b4999751678c5e77adbd41321fd427353182fcf320a7fddfa"
+    },
+    {
+      "fileId": "fc2c7ee2-8835-4413-82d8-19fa1ec69e58",
+      "revision": 3,
+      "dataSha256": "abf2675012a2db5d55932b21b1722c331b372b8bfdb765cabecc3b17d34c3bf7"
+    }
+  ],
+  "remaining": [
+    "Live file-change propagation was not observed; retain as follow-up rather than block content authoring",
+    "Portable and managed deployment acceptance"
+  ],
+  "deliveryScope": "Account QA is no longer a delivery gate. This checkpoint records completed local editing behavior only; it does not assert every access or recovery scenario."
+}
