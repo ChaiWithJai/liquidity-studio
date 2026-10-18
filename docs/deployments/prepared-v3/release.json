@@ -1,0 +1,114 @@
+{
+  "source": "281119d343301e155aa4ba4a0129b130ad229bd8",
+  "build": {
+    "elapsedSeconds": 3.6152450420195237,
+    "id": "sha256:bc1d8de99367276403b9c3a6c4a2b2ce21dd4285a2ba8faad4eb2df58b05d78d",
+    "architecture": "amd64",
+    "user": "node",
+    "labels": {
+      "org.opencontainers.image.revision": "281119d343301e155aa4ba4a0129b130ad229bd8",
+      "studio.build.base": "sha256:be0c23690ddb781a15efa62c5132f1f31c109d50be6390a553cd9e30334eba21",
+      "studio.build.base-source": "27c4db0f0399eb068a5c656a24e20c449c38cdaa",
+      "studio.build.method": "unchanged-installed-dependencies-reviewed-committed-public-dist"
+    },
+    "cmd": [
+      "node",
+      "server/index.js"
+    ]
+  },
+  "imageFilesystem": {
+    "filesMatched": 194,
+    "installedEntriesExact": 343,
+    "neverStarted": true,
+    "privateFrameAbsent": true
+  },
+  "localBackup": {
+    "integrity": "ok",
+    "records": 9,
+    "bytes": 548864,
+    "sha256": "817fcf946d5da1228a7c1384c8afe081cc90d66809e9f4e33c81b517138a0bff"
+  },
+  "localMetadata": {
+    "containers": {
+      "studio": {
+        "image": true,
+        "env": true,
+        "mounts": true,
+        "ports": true,
+        "running": true,
+        "health": "healthy"
+      },
+      "studio-worker": {
+        "image": true,
+        "env": true,
+        "mounts": true,
+        "ports": true,
+        "running": true,
+        "health": null
+      }
+    },
+    "http": {
+      "/api/ready": {
+        "status": 200,
+        "sha256": "7651556ffac6b089bcb046bb55dd3428ecfbe110480f147f30cfbd5930032aa8"
+      },
+      "/api/auth/config": {
+        "status": 200,
+        "sha256": "813c4634fde0a0c214faecb0b782435ff40f7568d88c06630e0adec1b06fe625",
+        "googleMode": true,
+        "emulatorAbsent": true
+      },
+      "/api/studio/bootstrap": {
+        "status": 401,
+        "sha256": "4f18928a98d315c520a95892178d83d170bd7c63ce46d9591b223400edd66810"
+      },
+      "/": {
+        "status": 200,
+        "sha256": "63f578352a1d0db86ddb415bbf095fa9580a28ed1128f1fe809ab708e2d1cfeb"
+      },
+      "asset": {
+        "name": "/assets/index-DiUzGbQ7.js",
+        "sha256": "4a4e27392806d24c097947d5a7b1ecc35e5dab019fc408f30375a48d93b316ab",
+        "bytes": 438219,
+        "matchesSource": true
+      }
+    }
+  },
+  "canonicalCompose": {
+    "beforeSha256": "56ccdba351c1bdc7db7ff899a4ded7c13b8a56e5543b2ad07062af2f8896ea8f",
+    "afterSha256": "1858a847851d534844116855ec613da671d823dbfef15cc541ac35d6c1ad93d9",
+    "bytes": 6201,
+    "onlyTwoImageFields": true,
+    "image": "sha256:bc1d8de99367276403b9c3a6c4a2b2ce21dd4285a2ba8faad4eb2df58b05d78d"
+  },
+  "cloudBackup": {
+    "done": true,
+    "state": "SUCCESSFUL",
+    "documents": {
+      "completedWork": "18"
+    },
+    "bytes": {
+      "completedWork": "231473"
+    }
+  },
+  "promotion": {
+    "at": 1792321114.1779451,
+    "source": "281119d343301e155aa4ba4a0129b130ad229bd8",
+    "revision": "liquidity-studio-00031-van",
+    "percent": 100,
+    "image": "sha256:929e8a2c0489e32c33a144db16835b185ef9d01ae3cbd4ce8daee849a5872160",
+    "runtimeTemplateUnchanged": true,
+    "canonicalUrl": "https://liquidity-studio-x4fdad2sga-uk.a.run.app",
+    "freshAuthenticatedGoogleClaim": false
+  },
+  "rootNeoStage": {
+    "ready": 200,
+    "anonymousBootstrap": 401,
+    "googleMode": true,
+    "assetName": "index-DiUzGbQ7.js",
+    "assetBytes": 438219,
+    "assetSha256": "4a4e27392806d24c097947d5a7b1ecc35e5dab019fc408f30375a48d93b316ab",
+    "freshAuthenticatedGoogleClaim": false
+  },
+  "noNewProviderCall": true
+}
