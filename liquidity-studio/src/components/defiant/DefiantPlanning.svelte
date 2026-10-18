@@ -1,0 +1,45 @@
+<script>
+ import {untrack} from 'svelte';
+ let {state:workspace,location,planIds,positions,request,onSaved,onNavigate,onRestoreView,onDirtyChange=()=>{}}=$props();
+ let noteTarget=$state(''),note=$state(''),noteKind=$state('note'),viewName=$state(''),title=$state(''),thesis=$state('');
+ let busy=$state(false),error=$state(''),notice=$state(''),intent=$state(null),unknown=$state(false),loadedReport=$state(''),baseTitle=$state(''),baseThesis=$state('');
+ const report=$derived(workspace.reports.find(r=>r.id===location.reportId));
+ const selectedNotes=$derived(workspace.annotations.filter(a=>a.targetId===location.selected));
+ const dirty=$derived(Boolean(note.trim()||viewName.trim()||title!==baseTitle||thesis!==baseThesis||intent));
+ $effect(()=>{onDirtyChange(dirty);});
+ $effect(()=>{const id=report?.id||'';untrack(()=>{if(id!==loadedReport&&!dirty){loadedReport=id;title=report?.title||'';thesis=report?.thesis||'';baseTitle=title;baseThesis=thesis;}});});
+ function edit(){notice='';if(!unknown)intent=null;}
+ function editNote(){if(!noteTarget)noteTarget=location.selected;if(!note.trim())noteTarget='';edit();}
+ async function send(path,payload,kind){
+  if(busy||unknown)return;intent={path,body:{expectedRevision:workspace.revision,idempotencyKey:crypto.randomUUID(),...payload},kind};await submit();
+ }
+ async function submit(){
+  if(!intent||busy)return;busy=true;error='';notice='';
+  try{const ack=await request(intent.path,{method:'POST',body:JSON.stringify(intent.body)});const kind=intent.kind;intent=null;unknown=false;
+   if(kind==='note'){note='';noteTarget='';}if(kind==='view')viewName='';if(kind==='report'){title=ack.report.title;thesis=ack.report.thesis;baseTitle=title;baseThesis=thesis;loadedReport=ack.report.id;onNavigate({...location,view:'report',reportId:ack.report.id});}
+   notice=kind==='refresh'?'Saved a new report snapshot':kind==='note'?'Note saved':kind==='view'?'View saved':'Report saved';try{await onSaved(ack);}catch{error='Your save succeeded, but current references could not reload. Reload to see the saved version.';}
+  }catch(failure){error=failure.status===409?'The workspace changed. Your text is retained. Reload current references, then save again.':failure.message;unknown=!(Number.isInteger(failure.status)&&failure.status>=400&&failure.status<500);}
+  finally{busy=false;}
+ }
+ async function reload(){if(busy||unknown)return;intent=null;try{await onSaved();}catch(failure){error=failure.message;}}
+ function openView(view){if(dirty){error='Save or clear your working text before opening another view.';return;}onRestoreView(view);}
+ function openReport(id){if(dirty){error='Save or clear your working text before opening a report.';return;}onNavigate({...location,view:'report',reportId:id});}
+</script>
+<section class="planning" aria-label="Shared planning">
+ {#if error}<p role="alert">{error}</p>{/if}{#if notice}<p role="status">{notice}</p>{/if}
+ {#if unknown}<p>The reply was interrupted. Retry this same save to check its outcome.</p><button disabled={busy} onclick={submit}>Retry same save</button>{:else if error}<button disabled={busy} onclick={reload}>Reload current references</button>{/if}
+ <details open={Boolean(location.selected)}><summary>Notes on this selection <span>{selectedNotes.length}</span></summary>
+ {#if location.selected}<div class="notes">{#each selectedNotes as saved(saved.id)}<article><strong>{saved.kind}</strong><p>{saved.text}</p><small>Saved · revision {saved.revision}</small></article>{/each}</div>
+ <label>Note type<select bind:value={noteKind} disabled={busy||unknown}><option value="note">Note</option><option value="question">Question</option><option value="hypothesis">Hypothesis</option><option value="decision">Decision</option></select></label>{#if noteTarget&&noteTarget!==location.selected}<p>Your working note remains attached to {workspace.items.find(item=>item.id===noteTarget)?.name||'its original selection'}.</p>{/if}<label>Your note<textarea bind:value={note} oninput={editNote} disabled={busy||unknown} rows="3" maxlength="6000"></textarea></label><button disabled={busy||unknown||!note.trim()} onclick={()=>send('/annotations',{annotation:{targetId:noteTarget||location.selected,kind:noteKind,text:note}},'note')}>Save note</button>{:else}<p>Select a reference or relationship to add a shared note.</p>{/if}</details>
+ <details><summary>Saved views <span>{workspace.views.length}</span></summary><div class="saved-list">{#each workspace.views as view(view.id)}<button disabled={busy||unknown} onclick={()=>openView(view)}>{view.name}</button>{/each}</div><label>Name this view<input bind:value={viewName} oninput={edit} disabled={busy||unknown} maxlength="200"/></label><button disabled={busy||unknown||!viewName.trim()} onclick={()=>send('/views',{view:{name:viewName,focus:location.focus,selected:location.selected,planIds,positions}},'view')}>Save current view</button></details>
+ <details open={location.view==='report'}><summary>Reports <span>{workspace.reports.length}</span></summary><div class="saved-list">{#each workspace.reports as saved(saved.id)}<button disabled={busy||unknown} onclick={()=>openReport(saved.id)}>{saved.title}</button>{/each}</div>
+ {#if location.view==='report'&&location.reportId&&!report}<p>This report is unavailable in the current organization.</p>{/if}
+ {#if report}<article class="report"><h3>{report.title}</h3><p>{report.thesis}</p><small>Snapshot revision {report.revision} · source revision {report.sourceRevision}. Changes to references do not update this report automatically.</small>{#each report.findings as finding(finding.id)}<section><h4>{finding.name}</h4><p>{finding.description}</p>{#each finding.notes as saved(saved.id)}<blockquote>{saved.text}</blockquote>{/each}{#each finding.evidence as evidence(evidence.id)}<p>{evidence.title}{#if evidence.sourceUrl} · <a href={evidence.sourceUrl} target="_blank" rel="noopener noreferrer">Source</a>{/if}</p>{/each}</section>{/each}{#if report.annotations?.length}<details><summary>Included notes</summary>{#each report.annotations as saved(saved.id)}<p>{saved.text}</p>{/each}</details>{/if}<p>{report.history.length} earlier snapshots retained.</p><button disabled={busy||unknown||!planIds.length} onclick={()=>send(`/reports/${report.id}/refresh`,{expectedReportRevision:report.revision,planIds},'refresh')}>Refresh from current shortlist</button><button disabled={busy||unknown||dirty} onclick={()=>onNavigate({...location,view:'map',reportId:''})}>Back to map</button></article>{/if}
+ <label>Report title<input bind:value={title} oninput={edit} disabled={busy||unknown} maxlength="300"/></label><label>Working thesis<textarea bind:value={thesis} oninput={edit} disabled={busy||unknown} rows="3" maxlength="12000"></textarea></label>
+ <button disabled={busy||unknown||!title.trim()||(!report&&!planIds.length)} onclick={()=>send('/reports',{report:{...(report?{id:report.id,expectedReportRevision:report.revision}:{planIds}),title,thesis}},'report')}>{report?'Save report wording':'Save shortlist as report'}</button><p>{report?'Saving wording preserves the findings snapshot. Refresh only when you want to capture current references.':'Choose at least one finding for your shortlist. Reports retain the evidence and notes from the time you save.'}</p>
+ </details>
+ {#if dirty&&!unknown}<button class="quiet" disabled={busy} onclick={()=>{note='';noteTarget='';viewName='';title=baseTitle;thesis=baseThesis;intent=null;error='';}}>Clear working text</button>{/if}
+</section>
+<style>
+.planning{padding:16px 20px;border-top:1px solid #dedfd8;background:#fcfcf9;font-size:12px}.planning>details{padding:10px 0;border-bottom:1px solid #e4e6df}.planning summary{cursor:pointer;font-weight:650}.planning summary span{font-weight:400;color:#69765f;margin-left:6px}.planning label{display:block;margin:12px 0 6px}.planning textarea,.planning input,.planning select{display:block;width:100%;margin-top:5px;font:inherit}.planning button{margin:8px 8px 0 0}.planning p{line-height:1.65}.notes article,.report section{border-left:2px solid #bdcbb4;padding-left:12px;margin:12px 0}.saved-list{display:flex;gap:6px;flex-wrap:wrap}.report{padding-top:12px}.report h3{font-size:20px}.report small{color:#69765f}.planning blockquote{margin:8px 0;color:#596a51}.quiet{background:transparent}
+</style>

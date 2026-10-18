@@ -38,5 +38,10 @@ test('brandless organization uses real enable/import/graph and restores the sele
  await page.goForward();await expect(page).toHaveURL(/select=node_lagos/);
  expect(brandBootstraps).toEqual([]);expect(platform.store.keys(`scope:${org.id}:`)).toEqual([]);
  expect((await platform.store.get('identity')).organizations.find(x=>x.id===org.id).brands).toEqual([]);
- await expect(workspace.getByRole('button',{name:'Build a plan',exact:true})).toBeDisabled();
+ await workspace.getByRole('button',{name:'Explore Our imported producer, person',exact:true}).click();
+ const planning=workspace.getByRole('region',{name:'Shared planning',exact:true});
+ await planning.getByLabel('Your note',{exact:true}).fill('Check production availability before any outreach.');await planning.getByRole('button',{name:'Save note',exact:true}).click();await expect(planning.getByRole('status')).toHaveText('Note saved');
+ await workspace.getByRole('button',{name:'Add to shortlist',exact:true}).click();
+ await planning.getByText('Saved views',{exact:false}).first().click();await planning.getByLabel('Name this view',{exact:true}).fill('Producer research');await planning.getByRole('button',{name:'Save current view',exact:true}).click();await expect(planning.getByRole('status')).toHaveText('View saved');
+ await planning.getByText('Reports',{exact:false}).first().click();await planning.getByLabel('Report title',{exact:true}).fill('Production research plan');await planning.getByLabel('Working thesis',{exact:true}).fill('A working hypothesis, not verified availability.');await planning.getByRole('button',{name:'Save shortlist as report',exact:true}).click();await expect(page).toHaveURL(/view=report/);await expect(planning.getByRole('status')).toHaveText('Report saved');await page.reload();await expect(page.getByRole('region',{name:'Shared planning'})).toContainText('Check production availability before any outreach.');
 });
