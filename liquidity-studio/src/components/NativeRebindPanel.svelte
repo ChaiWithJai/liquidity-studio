@@ -31,14 +31,14 @@
   }
 </script>
 <section aria-label="Historical layout recovery" class="rebind-panel">
-  <h4>Create a reviewed-source copy</h4>
-  <p>The historical layout stays unchanged. Review and adopt its saved campaign copy first. The new editable layout keeps human wording and geometry, adopts current brand styles, and needs a new layout review.</p>
+  <h4>Continue saved layout</h4>
+  <p>Review the saved campaign copy first, then create a new editable layout. Your wording and layout stay intact; current Brand Kit styles are applied. The old version is kept unchanged. The new copy needs its own layout review.</p>
   {#if error}<p role="alert">{error}</p>{/if}
   {#if notice}<p role="status">{notice}</p>{/if}
   {#if canReviewSource}<button type="button" disabled={busy||!!pending} onclick={onReviewSource}>Review current campaign copy</button>{:else}<p>Source review is unavailable in this workspace. A founder must restore it before creating an editable copy.</p>{/if}
   {#if canRebind}
-    <button type="button" disabled={busy||!!pending} onclick={check}>{busy&&!pending?'Checking source binding…':'Check source binding'}</button>
-    {#if plan}<p>Historical layout version {plan.historicalRevision} → current story revision {plan.storyRevision}, {plan.pageCount} page{plan.pageCount===1?'':'s'}. No old approval is transferred.</p>{/if}
+    <button type="button" disabled={busy||!!pending} onclick={check}>{busy&&!pending?'Checking reviewed copy…':'Check reviewed source'}</button>
+    {#if plan}<p>{plan.pageCount} page{plan.pageCount===1?'':'s'} ready to copy. Previous approvals stay with the old version.</p><details><summary>Version details</summary><p>Saved layout version {plan.historicalRevision}; current story revision {plan.storyRevision}.</p></details>{/if}
     {#if plan||pending}<button type="button" disabled={busy} onclick={createCopy}>{busy?'Creating editable copy…':pending?'Retry creating editable copy':'Create editable copy'}</button>{/if}
   {:else}<p>A founder must review the saved source copy and create the new layout proposal.</p>{/if}
 </section>

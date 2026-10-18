@@ -104,7 +104,7 @@ for (const preset of ["liquidity_desk", "vedic_dharma"])
     ).toBeVisible();
     await expect(page.getByTitle("Native Doory design canvas")).toHaveCount(0);
     await page
-      .getByRole("button", { name: "Check source binding", exact: true })
+      .getByRole("button", { name: "Check reviewed source", exact: true })
       .click();
     await expect(
       page
@@ -113,7 +113,7 @@ for (const preset of ["liquidity_desk", "vedic_dharma"])
     ).toBeVisible();
     await reviewSource(page);
     await page
-      .getByRole("button", { name: "Check source binding", exact: true })
+      .getByRole("button", { name: "Check reviewed source", exact: true })
       .click();
     const created = page.waitForResponse(
       (response) =>
@@ -152,7 +152,7 @@ test("lost creation reply retries the same committed new-copy intent", async ({
   await enter(page, "liquidity_desk");
   await f.reviewCurrent();
   await page
-    .getByRole("button", { name: "Check source binding", exact: true })
+    .getByRole("button", { name: "Check reviewed source", exact: true })
     .click();
   const bodies = [];
   let lost = true;
@@ -189,7 +189,7 @@ test("a committed reply held across a brand switch never opens its old-brand lay
   await enter(page, "liquidity_desk");
   await f.reviewCurrent();
   await page
-    .getByRole("button", { name: "Check source binding", exact: true })
+    .getByRole("button", { name: "Check reviewed source", exact: true })
     .click();
   let release, committed;
   const reached = new Promise((resolve) => (committed = resolve)),
@@ -237,7 +237,7 @@ test("known brand/font rejection clears confirmation without offering an uncerta
   await enter(page, "liquidity_desk");
   await f.reviewCurrent();
   await page
-    .getByRole("button", { name: "Check source binding", exact: true })
+    .getByRole("button", { name: "Check reviewed source", exact: true })
     .click();
   await f.repo.mutate((state) => {
     state.brandProfile.fonts.heading = "Uninstalled Custom Font";
