@@ -4,6 +4,8 @@ Parent: #39. Baseline review, not current-release proof. IDs are stable within t
 
 ### review-1
 
+**Delivery children:** [66](https://github.com/ChaiWithJai/liquidity-studio/issues/66)
+
 **Step:** [S01](sequences.md#s01) · **Theme:** T3 · Work surfaces
 
 Tall backlog rows show only three of five stories at 1280×720. No visible column controls, selection, saved views or bulk actions.
@@ -13,6 +15,8 @@ Rectangle: `{"h": 0.5833333333333334, "w": 0.7421875, "x": 0.21484375, "y": 0.38
 [Original full frame](shots/S01.jpg) · [DOM evidence](shots/S01.txt)
 
 ### review-2
+
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64), [66](https://github.com/ChaiWithJai/liquidity-studio/issues/66)
 
 **Step:** [S02](sequences.md#s02) · **Theme:** T1 · Observable state
 
@@ -24,6 +28,8 @@ Rectangle: `{"h": 0.2916666666666667, "w": 0.7421875, "x": 0.21484375, "y": 0.26
 
 ### review-3
 
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64), [66](https://github.com/ChaiWithJai/liquidity-studio/issues/66), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
+
 **Step:** [S04](sequences.md#s04) · **Theme:** T4 · Fluidity
 
 Positive: Huda search survives editor → backlog. Preserve continuity in detail drawers and per-brand views.
@@ -33,6 +39,8 @@ Rectangle: `{"h": 0.08333333333333333, "w": 0.2421875, "x": 0.72265625, "y": 0.2
 [Original full frame](shots/S04.jpg) · [DOM evidence](shots/S04.txt)
 
 ### review-4
+
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64)
 
 **Step:** [S05](sequences.md#s05) · **Theme:** T1 · Observable state
 
@@ -44,6 +52,8 @@ Rectangle: `{"h": 0.3402777777777778, "w": 0.7421875, "x": 0.21484375, "y": 0.38
 
 ### review-5
 
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64)
+
 **Step:** [S09](sequences.md#s09) · **Theme:** T4 · Fluidity
 
 Search crosses brand boundary and repeats false empty state. S05 → S09 → S10 demonstrates a recurring recovery burden.
@@ -53,6 +63,8 @@ Rectangle: `{"h": 0.4513888888888889, "w": 0.7421875, "x": 0.21484375, "y": 0.27
 [Original full frame](shots/S09.jpg) · [DOM evidence](shots/S09.txt)
 
 ### review-6
+
+**Delivery children:** [65](https://github.com/ChaiWithJai/liquidity-studio/issues/65)
 
 **Step:** [S03](sequences.md#s03) · **Theme:** T1 · Observable state
 
@@ -64,6 +76,8 @@ Rectangle: `{"h": 0.06944444444444445, "w": 0.21875, "x": 0.7421875, "y": 0.3333
 
 ### review-7
 
+**Delivery children:** [65](https://github.com/ChaiWithJai/liquidity-studio/issues/65), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
+
 **Step:** [S08](sequences.md#s08) · **Theme:** T4 · Fluidity
 
 Long source review separates generation controls from prerequisites. Keep review summary and task actions visible without weakening source gates.
@@ -73,6 +87,8 @@ Rectangle: `{"h": 0.5069444444444444, "w": 0.7421875, "x": 0.21484375, "y": 0.47
 [Original full frame](shots/S08.jpg) · [DOM evidence](shots/S08.txt)
 
 ### review-8
+
+**Delivery children:** [67](https://github.com/ChaiWithJai/liquidity-studio/issues/67)
 
 **Step:** [S06](sequences.md#s06) · **Theme:** T3 · Work surfaces
 
@@ -84,6 +100,8 @@ Rectangle: `{"h": 0.5625, "w": 0.7421875, "x": 0.21484375, "y": 0.34722222222222
 
 ### review-9
 
+**Delivery children:** [67](https://github.com/ChaiWithJai/liquidity-studio/issues/67)
+
 **Step:** [S22](sequences.md#s22) · **Theme:** T3 · Work surfaces
 
 Monday already stacks two cards: preserve existing stacking. Add direct move/reorder affordances and explicit dates/timezone. Assignments only is useful truthful copy.
@@ -93,6 +111,8 @@ Rectangle: `{"h": 0.6458333333333334, "w": 0.12109375, "x": 0.21484375, "y": 0.2
 [Original full frame](shots/S22.jpg) · [DOM evidence](shots/S22.txt)
 
 ### review-10
+
+**Delivery children:** [70](https://github.com/ChaiWithJai/liquidity-studio/issues/70)
 
 **Step:** [S16](sequences.md#s16) · **Theme:** T2 · Shared control
 
@@ -104,6 +124,8 @@ Rectangle: `{"h": 0.1111111111111111, "w": 0.7421875, "x": 0.21484375, "y": 0.33
 
 ### review-11
 
+**Delivery children:** [68](https://github.com/ChaiWithJai/liquidity-studio/issues/68)
+
 **Step:** [S18](sequences.md#s18) · **Theme:** T1 · Observable state
 
 Carousel selected while profile grid shows feed artwork. Clarify feed-grid projection so users do not verify the wrong format.
@@ -113,6 +135,8 @@ Rectangle: `{"h": 0.7986111111111112, "w": 0.7421875, "x": 0.21484375, "y": 0.19
 [Original full frame](shots/S18.jpg) · [DOM evidence](shots/S18.txt)
 
 ### review-12
+
+**Delivery children:** [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
 
 **Step:** [S19](sequences.md#s19) · **Theme:** T4 · Fluidity
 
@@ -124,6 +148,8 @@ Rectangle: `{"h": 0.1527777777777778, "w": 0.40625, "x": 0.5390625, "y": 0.40277
 
 ### review-13
 
+**Delivery children:** [68](https://github.com/ChaiWithJai/liquidity-studio/issues/68)
+
 **Step:** [S21](sequences.md#s21) · **Theme:** T1 · Observable state
 
 Preflight reports one text box in chrome zones. Provide jump/highlight to offending text rather than requiring manual search.
@@ -133,6 +159,8 @@ Rectangle: `{"h": 0.3125, "w": 0.3984375, "x": 0.54296875, "y": 0.68055555555555
 [Original full frame](shots/S21.jpg) · [DOM evidence](shots/S21.txt)
 
 ### review-14
+
+**Delivery children:** [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
 
 **Step:** [S21](sequences.md#s21) · **Theme:** T4 · Fluidity
 
@@ -144,6 +172,8 @@ Rectangle: `{"h": 0.3194444444444444, "w": 0.25, "x": 0.23828125, "y": 0.5277777
 
 ### review-15
 
+**Delivery children:** [70](https://github.com/ChaiWithJai/liquidity-studio/issues/70), [71](https://github.com/ChaiWithJai/liquidity-studio/issues/71)
+
 **Step:** [S13](sequences.md#s13) · **Theme:** T2 · Shared control
 
 Batch history and telemetry exist. No visible helper ownership, plan preview or pause/takeover in inspected empty state. Backend durability cannot be inferred.
@@ -154,6 +184,8 @@ Rectangle: `{"h": 0.5902777777777778, "w": 0.7421875, "x": 0.21484375, "y": 0.31
 
 ### review-16
 
+**Delivery children:** [71](https://github.com/ChaiWithJai/liquidity-studio/issues/71)
+
 **Step:** [S14](sequences.md#s14) · **Theme:** T2 · Shared control
 
 Service/repository/provider readiness distinction is useful. not_checked needs an actionable next step; walk-away jobs need durable detail and resumption tests.
@@ -163,6 +195,8 @@ Rectangle: `{"h": 0.2916666666666667, "w": 0.7421875, "x": 0.21484375, "y": 0}`
 [Original full frame](shots/S14.jpg) · [DOM evidence](shots/S14.txt)
 
 ### review-17
+
+**Delivery children:** [67](https://github.com/ChaiWithJai/liquidity-studio/issues/67), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
 
 **Step:** [S23](sequences.md#s23) · **Theme:** T3 · Work surfaces
 

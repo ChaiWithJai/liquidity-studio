@@ -4,6 +4,8 @@ Each state links an action to its visible result, preceding/following capture, f
 
 ### S01
 
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64), [66](https://github.com/ChaiWithJai/liquidity-studio/issues/66)
+
 **Backlog entry** · A — Find and inspect a story
 
 Action: Open studio
@@ -15,6 +17,8 @@ Capture: 2026-10-18T00:59:38.829Z · http://localhost:3001/
 Annotations: [review-1](annotations.md#review-1)
 
 ### S02
+
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64), [66](https://github.com/ChaiWithJai/liquidity-studio/issues/66)
 
 **Search narrows the backlog** · A — Find and inspect a story
 
@@ -28,6 +32,8 @@ Annotations: [review-2](annotations.md#review-2)
 
 ### S03
 
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64), [65](https://github.com/ChaiWithJai/liquidity-studio/issues/65), [66](https://github.com/ChaiWithJai/liquidity-studio/issues/66), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
+
 **Open filtered story** · A — Find and inspect a story
 
 Action: Open the only matching story
@@ -39,6 +45,8 @@ Capture: 2026-10-18T00:59:44.872Z · http://localhost:3001/
 Annotations: [review-6](annotations.md#review-6)
 
 ### S04
+
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64), [66](https://github.com/ChaiWithJai/liquidity-studio/issues/66), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
 
 **Return preserves the search** · A — Find and inspect a story
 
@@ -52,6 +60,8 @@ Annotations: [review-3](annotations.md#review-3)
 
 ### S05
 
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64)
+
 **Search empty state** · A — Find and inspect a story
 
 Action: Replace search with unmatched text
@@ -63,6 +73,8 @@ Capture: 2026-10-18T00:59:50.192Z · http://localhost:3001/
 Annotations: [review-4](annotations.md#review-4)
 
 ### S06
+
+**Delivery children:** [67](https://github.com/ChaiWithJai/liquidity-studio/issues/67)
 
 **Calendar overview** · B — Schedule and inspect content
 
@@ -76,6 +88,8 @@ Annotations: [review-8](annotations.md#review-8)
 
 ### S07
 
+**Delivery children:** [65](https://github.com/ChaiWithJai/liquidity-studio/issues/65), [67](https://github.com/ChaiWithJai/liquidity-studio/issues/67)
+
 **Calendar card opens source review** · B — Schedule and inspect content
 
 Action: Open Tuesday card
@@ -87,6 +101,8 @@ Capture: 2026-10-18T00:59:56.491Z · http://localhost:3001/
 Annotations: No region annotation; retained for sequence context.
 
 ### S08
+
+**Delivery children:** [65](https://github.com/ChaiWithJai/liquidity-studio/issues/65), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
 
 **Keyboard reaches generation below source review** · B — Schedule and inspect content
 
@@ -100,6 +116,8 @@ Annotations: [review-7](annotations.md#review-7)
 
 ### S09
 
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64)
+
 **Switch to an existing brand** · C — Inspect an existing campaign
 
 Action: Select Chai With Jai
@@ -111,6 +129,8 @@ Capture: 2026-10-18T00:59:56.691Z · http://localhost:3001/
 Annotations: [review-5](annotations.md#review-5)
 
 ### S10
+
+**Delivery children:** [64](https://github.com/ChaiWithJai/liquidity-studio/issues/64), [66](https://github.com/ChaiWithJai/liquidity-studio/issues/66)
 
 **Clear inherited search in the other brand** · C — Inspect an existing campaign
 
@@ -124,6 +144,8 @@ Annotations: No region annotation; retained for sequence context.
 
 ### S11
 
+**Delivery children:** [65](https://github.com/ChaiWithJai/liquidity-studio/issues/65)
+
 **Existing brand first story** · C — Inspect an existing campaign
 
 Action: Open first story
@@ -135,6 +157,8 @@ Capture: 2026-10-18T01:00:01.433Z · http://localhost:3001/
 Annotations: No region annotation; retained for sequence context.
 
 ### S12
+
+**Delivery children:** [71](https://github.com/ChaiWithJai/liquidity-studio/issues/71)
 
 **Brand configuration** · D — Configuration and operations
 
@@ -148,6 +172,8 @@ Annotations: No region annotation; retained for sequence context.
 
 ### S13
 
+**Delivery children:** [70](https://github.com/ChaiWithJai/liquidity-studio/issues/70), [71](https://github.com/ChaiWithJai/liquidity-studio/issues/71)
+
 **Operations entry** · D — Configuration and operations
 
 Action: Open Operations
@@ -159,6 +185,8 @@ Capture: 2026-10-18T01:00:02.138Z · http://localhost:3001/
 Annotations: [review-15](annotations.md#review-15)
 
 ### S14
+
+**Delivery children:** [71](https://github.com/ChaiWithJai/liquidity-studio/issues/71)
 
 **Readiness detail receives keyboard focus** · D — Configuration and operations
 
@@ -186,6 +214,8 @@ Annotations: No region annotation; retained for sequence context.
 
 ### S16
 
+**Delivery children:** [68](https://github.com/ChaiWithJai/liquidity-studio/issues/68), [70](https://github.com/ChaiWithJai/liquidity-studio/issues/70), [71](https://github.com/ChaiWithJai/liquidity-studio/issues/71)
+
 **Recovery story editor** · E — Recover existing work
 
 Action: Open existing recovery story
@@ -197,6 +227,8 @@ Capture: 2026-10-18T01:00:08.085Z · http://localhost:3001/
 Annotations: [review-10](annotations.md#review-10)
 
 ### S17
+
+**Delivery children:** [68](https://github.com/ChaiWithJai/liquidity-studio/issues/68)
 
 **Carousel design preview** · E — Recover existing work
 
@@ -210,6 +242,8 @@ Annotations: No region annotation; retained for sequence context.
 
 ### S18
 
+**Delivery children:** [68](https://github.com/ChaiWithJai/liquidity-studio/issues/68), [70](https://github.com/ChaiWithJai/liquidity-studio/issues/70)
+
 **Profile grid comparison** · E — Recover existing work
 
 Action: Switch to 3×3 Profile Grid
@@ -221,6 +255,8 @@ Capture: 2026-10-18T01:00:14.599Z · http://localhost:3001/
 Annotations: [review-11](annotations.md#review-11)
 
 ### S19
+
+**Delivery children:** [68](https://github.com/ChaiWithJai/liquidity-studio/issues/68), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
 
 **Story safe-zone inspection** · E — Recover existing work
 
@@ -234,6 +270,8 @@ Annotations: [review-12](annotations.md#review-12)
 
 ### S20
 
+**Delivery children:** [68](https://github.com/ChaiWithJai/liquidity-studio/issues/68)
+
 **Reel inspection** · E — Recover existing work
 
 Action: Select Reel
@@ -245,6 +283,8 @@ Capture: 2026-10-18T01:00:15.854Z · http://localhost:3001/
 Annotations: No region annotation; retained for sequence context.
 
 ### S21
+
+**Delivery children:** [68](https://github.com/ChaiWithJai/liquidity-studio/issues/68), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69)
 
 **Reel playback controls and preflight** · E — Recover existing work
 
@@ -258,6 +298,8 @@ Annotations: [review-13](annotations.md#review-13), [review-14](annotations.md#r
 
 ### S22
 
+**Delivery children:** [67](https://github.com/ChaiWithJai/liquidity-studio/issues/67)
+
 **Existing campaign calendar** · E — Recover existing work
 
 Action: Return to calendar
@@ -269,6 +311,8 @@ Capture: 2026-10-18T01:00:21.434Z · http://localhost:3001/
 Annotations: [review-9](annotations.md#review-9)
 
 ### S23
+
+**Delivery children:** [67](https://github.com/ChaiWithJai/liquidity-studio/issues/67), [69](https://github.com/ChaiWithJai/liquidity-studio/issues/69), [70](https://github.com/ChaiWithJai/liquidity-studio/issues/70)
 
 **Scheduling control after opening calendar card** · E — Recover existing work
 

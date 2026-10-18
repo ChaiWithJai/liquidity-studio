@@ -1,0 +1,42 @@
+{
+  "search": {
+    "number": 64,
+    "id": 5904856265,
+    "url": "https://github.com/ChaiWithJai/liquidity-studio/issues/64"
+  },
+  "prerequisites": {
+    "number": 65,
+    "id": 5904856427,
+    "url": "https://github.com/ChaiWithJai/liquidity-studio/issues/65"
+  },
+  "table": {
+    "number": 66,
+    "id": 5904856603,
+    "url": "https://github.com/ChaiWithJai/liquidity-studio/issues/66"
+  },
+  "calendar": {
+    "number": 67,
+    "id": 5904856752,
+    "url": "https://github.com/ChaiWithJai/liquidity-studio/issues/67"
+  },
+  "preview": {
+    "number": 68,
+    "id": 5904856913,
+    "url": "https://github.com/ChaiWithJai/liquidity-studio/issues/68"
+  },
+  "fluidity": {
+    "number": 69,
+    "id": 5904857088,
+    "url": "https://github.com/ChaiWithJai/liquidity-studio/issues/69"
+  },
+  "collaboration": {
+    "number": 70,
+    "id": 5904857247,
+    "url": "https://github.com/ChaiWithJai/liquidity-studio/issues/70"
+  },
+  "jobs": {
+    "number": 71,
+    "id": 5904857402,
+    "url": "https://github.com/ChaiWithJai/liquidity-studio/issues/71"
+  }
+}
