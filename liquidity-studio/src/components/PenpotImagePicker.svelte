@@ -9,6 +9,13 @@
   const boards = $derived(binding.imageBoards || []);
   const board = $derived(boards.find(item => `${item.pageId}:${item.frameId}` === boardKey) || boards[0]);
   const image = $derived(images.find(item => item.id === selected));
+  function context() {
+    return { bindingId: binding.id, resourceId: binding.resourceId,
+      command: structuredClone($state.snapshot(binding.command)) };
+  }
+  function scopedAssetPath(path) {
+    return `${path}?context=${encodeURIComponent(JSON.stringify(context()))}`;
+  }
   onMount(() => {
     alive = true;
     boardKey = boards[0] ? `${boards[0].pageId}:${boards[0].frameId}` : "";
@@ -19,7 +26,7 @@
     const version = ++sequence;
     loading = true; error = "";
     try {
-      const result = await request("/api/studio/penpot/assets");
+      const result = await request(scopedAssetPath("/api/studio/penpot/assets"));
       if (!alive || version !== sequence) return;
       images = result.assets;
       if (!images.some(item => item.id === selected)) { selected = ""; preview = null; }
@@ -31,7 +38,7 @@
     preview = null; error = ""; loading = true;
     try {
       if (!id) return;
-      const result = await request(`/api/studio/penpot/assets/${id}`);
+      const result = await request(scopedAssetPath(`/api/studio/penpot/assets/${id}`));
       if (!alive || version !== sequence || selected !== id) return;
       if (result.id !== id || !["image/png", "image/jpeg", "image/webp"].includes(result.contentType) || result.size > 512 * 1024)
         throw new Error("Saved image preview is unavailable.");
@@ -51,8 +58,8 @@
         let binary = "";
         for (let offset = 0; offset < bytes.length; offset += 8192)
           binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
-        uploadAttempt = { name: currentFile.name, contentType: currentFile.type, base64: btoa(binary),
-          rightsDeclaration: declaration, consent: currentConsent, idempotencyKey: crypto.randomUUID() };
+        uploadAttempt = { context: context(), asset: { name: currentFile.name, contentType: currentFile.type, base64: btoa(binary),
+          rightsDeclaration: declaration, consent: currentConsent, idempotencyKey: crypto.randomUUID() } };
       }
       if (!alive || version !== sequence) return;
       const submitted = $state.snapshot(uploadAttempt);
@@ -61,7 +68,7 @@
       });
       if (!alive || version !== sequence) return;
       images = [...images.filter(item => item.id !== result.id), result]; selected = result.id;
-      preview = { id: result.id, src: `data:${submitted.contentType};base64,${submitted.base64}` };
+      preview = { id: result.id, src: `data:${submitted.asset.contentType};base64,${submitted.asset.base64}` };
       file = null; rights = ""; consent = ""; uploadAttempt = null;
     } catch (failure) { if (alive && version === sequence) {
       if (failure.status >= 400 && failure.status < 500) uploadAttempt = null;
@@ -111,7 +118,7 @@
     <label>Consent <select bind:value={consent} disabled={disabled || loading || !!uploadAttempt}><option value="">Choose a consent declaration</option><option value="not_personal_data">Contains no personal data</option><option value="confirmed">Required consent is confirmed</option></select></label>
     <p>PNG, JPEG or WebP up to 512 KiB. Saving an image does not approve the design.</p>
     {#if uploadAttempt && !loading}<p role="status">The save response was not confirmed. Retry the same image before saving another.</p>{/if}
-    <button disabled={disabled || loading || (!uploadAttempt && (!file || !rights.trim() || !consent))} onclick={upload}>{loading ? "Saving image…" : uploadAttempt ? "Retry image save" : "Save image privately"}</button>
+    <button disabled={disabled || loading || (!uploadAttempt && (!file || !rights.trim() || !consent))} onclick={upload}>{loading && uploadAttempt ? "Saving image…" : uploadAttempt ? "Retry image save" : "Save image privately"}</button>
   </details>
   {#if image}<details><summary>Image provenance</summary><p>{image.rightsDeclaration}</p><p>Permission declaration retained with this saved image.</p></details>{/if}
 </section>

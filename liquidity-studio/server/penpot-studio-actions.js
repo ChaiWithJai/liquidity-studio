@@ -68,6 +68,22 @@ export class PenpotStudioActions {
       },
     };
   }
+  async imageContext(actor, context) {
+    if (
+      !context ||
+      Array.isArray(context) ||
+      Object.keys(context).sort().join() !== "bindingId,command,resourceId" ||
+      context.command?.operation !== "refresh-brand-tokens"
+    )
+      throw fail(400, "Current registered image context required");
+    const input = await this.input(actor, {
+      ...context,
+      createdAt: new Date().toISOString(),
+    });
+    this.transport.validateCommand(input);
+    await this.transport.context(input);
+    return input;
+  }
   async create(actor, intent) {
     if (
       !intent ||

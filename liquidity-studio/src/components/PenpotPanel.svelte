@@ -48,7 +48,15 @@
       notice = result.capabilityAvailable ? "One-use native action prepared. Open the registered document and apply it through the local plugin." : "This attempt already has a durable record. Check saved native state; the action was not reapplied.";
       await refresh();
     } catch (failure) {
-      if (alive && current === sequence) { error = failure.message; notice = "The outcome may be unknown. Recover this exact attempt before starting another."; }
+      if (alive && current === sequence) {
+        error = failure.message;
+        if (Number.isInteger(failure.status) && failure.status >= 400 && failure.status < 500) {
+          attempt = null;
+          notice = "The action was rejected. Refresh the native context and address the reason before preparing another action.";
+        } else {
+          notice = "The outcome may be unknown. Recover this exact attempt before starting another.";
+        }
+      }
     } finally { if (alive) busy = false; }
   }
   function prepareImage(command) {

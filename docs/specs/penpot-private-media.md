@@ -16,6 +16,8 @@ The official frontend supports `server.d` overrides. The supplied override guard
 
 The callback strips unrelated cookies/Google bearers and accepts only the native `auth-token` session for fixed local RPCs. It serves no bytes or credentials. File permission responses are bounded to2MiB; larger native files explicitly fail closed. There are at most eight in-flight permission checks per process. Native RPCs have10-second deadlines; account lookup lifetime follows the existing managed-identity client, so no claim of cancellation is made when an upstream request outlives a disconnected caller.
 
+The initial candidate denies thumbnail derivatives until their exact storage/reference mapping is independently inventoried; this may make the media-library thumbnail unavailable, and is not claimed as full library support. Original image fills and enumerated font objects are the intended first acceptance path.
+
 Asset URLs must use the exact UUID paths without query parameters. This intentionally rejects cache-busting/share query strings rather than silently accepting a new access path. Inspected official font construction and observed native image URLs use those unqueried paths. Native exports must be checked too: the pinned exporter creates native session cookies, but source compatibility is not an observed successful export through this new ingress.
 
 ## Inventory before enablement

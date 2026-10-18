@@ -336,17 +336,36 @@ export function createHttpServer(
         return stream.pipe(res);
       }
       if (platform?.ready) await platform.ready;
-      if (route === "/api/internal/penpot-asset-authorize" && req.method === "GET") {
-        if (!penpotEnabled || trustedTestMode || process.env.K_SERVICE ||
+      if (
+        route === "/api/internal/penpot-asset-authorize" &&
+        req.method === "GET"
+      ) {
+        if (
+          !penpotEnabled ||
+          trustedTestMode ||
+          process.env.K_SERVICE ||
           process.env.STUDIO_PENPOT_PRIVATE_INGRESS !== "true" ||
-          platform.identity.configuration?.mode !== "google" || url.search)
+          platform.identity.configuration?.mode !== "google" ||
+          url.search
+        )
           throw fail(404, "Not found");
         const runtime = await platform.getPenpotRuntime();
-        await runtime.authorizeMediaRead({
-          path: req.headers["x-studio-native-path"],
-          cookie: req.headers["x-studio-native-session"],
+        try {
+          await runtime.authorizeMediaRead({
+            path: req.headers["x-studio-native-path"],
+            cookie: req.headers["x-studio-native-session"],
+          });
+        } catch (error) {
+          // nginx auth_request accepts only 2xx/401/403. Unknown failures stay
+          // unavailable; expected missing/foreign media is an explicit denial.
+          if ([400, 401, 403, 404].includes(error.status))
+            throw fail(403, "Native asset access denied");
+          throw error;
+        }
+        res.writeHead(204, {
+          "Cache-Control": "private, no-store",
+          Vary: "Cookie",
         });
-        res.writeHead(204, { "Cache-Control": "private, no-store", Vary: "Cookie" });
         return res.end();
       }
       if (route === "/api/internal/operator-job" && req.method === "POST") {
@@ -586,10 +605,10 @@ export function createHttpServer(
                   ? 6 * 1024 * 1024
                   : penpotEnabled && route === "/api/studio/penpot/assets"
                     ? 768 * 1024
-                  : nativeEditorEnabled &&
-                      route.startsWith("/api/studio/native-editor/")
-                    ? 768 * 1024
-                    : 262144,
+                    : nativeEditorEnabled &&
+                        route.startsWith("/api/studio/native-editor/")
+                      ? 768 * 1024
+                      : 262144,
               portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
@@ -987,6 +1006,14 @@ export function createHttpServer(
           req.method === "POST"
         )
           return json(201, await service.uploadAsset(user, body));
+        const nativeAssetResolve = route.match(
+          /^\/api\/studio\/native-editor\/assets\/([a-f0-9]{32})\/resolve$/,
+        );
+        if (nativeAssetResolve && req.method === "POST")
+          return json(
+            200,
+            await service.resolveAsset(user, nativeAssetResolve[1], body),
+          );
         const nativeAssetMatch = route.match(
           /^\/api\/studio\/native-editor\/assets\/([a-f0-9]{32})$/,
         );
@@ -1083,6 +1110,17 @@ export function createHttpServer(
             200,
             await service.refreshBrandTokens(user, brandTokensMatch[1], body),
           );
+        const rebindMatch = route.match(
+          /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/(rebind-plan|rebind)$/,
+        );
+        if (
+          rebindMatch &&
+          rebindMatch[2] === "rebind-plan" &&
+          req.method === "GET"
+        )
+          return json(200, await service.rebindPlan(user, rebindMatch[1]));
+        if (rebindMatch && rebindMatch[2] === "rebind" && req.method === "POST")
+          return json(201, await service.rebind(user, rebindMatch[1], body));
         const nativeMatch = route.match(
           /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})$/,
         );
@@ -1221,21 +1259,50 @@ export function createHttpServer(
           throw fail(404, "Not found");
         const runtime = await platform.getPenpotRuntime();
         const service = runtime.forScope(scope);
+        const imageContext = () => {
+          const value = url.searchParams.get("context");
+          if (!value || value.length > 4096)
+            throw fail(400, "Current registered image context required");
+          try {
+            return JSON.parse(value);
+          } catch {
+            throw fail(400, "Invalid registered image context");
+          }
+        };
         if (route === "/api/studio/penpot/assets" && req.method === "GET") {
-          await service.ledger.permitted(user);
+          const context = imageContext();
+          await service.imageContext(user, context);
           const catalog = await service.assets.listAssets(user);
-          return json(200, { assets: await Promise.all(catalog.results.map(asset =>
-            service.assets.assetForNativeTransfer(user, asset.id, false))) });
+          const assets = await Promise.all(
+            catalog.results.map((asset) =>
+              service.assets.assetForNativeTransfer(user, asset.id, false),
+            ),
+          );
+          await service.imageContext(user, context);
+          return json(200, { assets });
         }
         if (route === "/api/studio/penpot/assets" && req.method === "POST") {
-          await service.ledger.permitted(user);
-          const asset = await service.assets.uploadAsset(user, body);
-          return json(201, await service.assets.assetForNativeTransfer(user, asset.id, false));
+          if (!body || Object.keys(body).sort().join() !== "asset,context")
+            throw fail(400, "Saved image and registered context required");
+          await service.imageContext(user, body.context);
+          const asset = await service.assets.uploadAsset(user, body.asset);
+          return json(
+            201,
+            await service.assets.assetForNativeTransfer(user, asset.id, false),
+          );
         }
-        const privateAsset = route.match(/^\/api\/studio\/penpot\/assets\/([a-f0-9]{32})$/);
+        const privateAsset = route.match(
+          /^\/api\/studio\/penpot\/assets\/([a-f0-9]{32})$/,
+        );
         if (privateAsset && req.method === "GET") {
-          await service.ledger.permitted(user);
-          return json(200, await service.assets.assetForNativeTransfer(user, privateAsset[1]));
+          const context = imageContext();
+          await service.imageContext(user, context);
+          const asset = await service.assets.assetForNativeTransfer(
+            user,
+            privateAsset[1],
+          );
+          await service.imageContext(user, context);
+          return json(200, asset);
         }
         if (route === "/api/studio/penpot/bindings" && req.method === "GET")
           return json(200, await runtime.bindings(user, scope));
