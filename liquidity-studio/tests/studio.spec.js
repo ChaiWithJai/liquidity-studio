@@ -502,3 +502,73 @@ test("seeded finance claims can be reduced to one supported reviewed source", as
   expect(saved.sourceClaims).toHaveLength(1);
   expect(saved.sourceClaims[0].status).toBe("approved");
 });
+
+test("scope loading hides previous brand data and actions until real bootstrap completes", async ({ page }) => {
+  await signIn(page);
+  await expect(page.locator(".story-row").first()).toBeVisible();
+  const oldTitle = await page.locator(".story-row h3").first().textContent();
+  const targetResponse = await page.request.get(base + "/api/studio/bootstrap?organizationId=org_default&brandId=brand_vedic");
+  expect(targetResponse.status()).toBe(200);
+  const target = await targetResponse.json();
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  await page.route("**/api/studio/bootstrap?*", async route => {
+    const response = await route.fetch();
+    await held;
+    await route.fulfill({ response });
+  });
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
+  await expect(page.getByRole("status")).toContainText("Loading Chai With Jai workspace");
+  await expect(page.locator(".story-row")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Open (story|draft)/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Brand Kit", exact: false }).click();
+  await expect(page.getByLabel("Brand name", { exact: true })).toHaveCount(0);
+  release();
+  await expect(page.getByRole("status").filter({ hasText: "Loading" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Story backlog", exact: false }).click();
+  await expect(page.locator(".story-row")).toHaveCount(target.backlog.length);
+  await expect(page.locator(".story-row").filter({ hasText: target.backlog[0].title })).toBeVisible();
+  await expect(page.locator(".story-row").filter({ hasText: oldTitle })).toHaveCount(0);
+});
+
+test("failed scope bootstrap leaves an error without previous brand data", async ({ page }) => {
+  await signIn(page);
+  await expect(page.locator(".story-row").first()).toBeVisible();
+  await page.route("**/api/studio/bootstrap?*", route => route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:"Scope bootstrap unavailable"})}));
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
+  await expect(page.getByRole("alert")).toContainText("Scope bootstrap unavailable");
+  await expect(page.locator(".story-row")).toHaveCount(0);
+  await expect(page.getByRole("status").filter({ hasText: "Loading" })).toHaveCount(0);
+});
+
+test("reversed scope responses cannot replace the latest brand or clear its loading state", async ({ page }) => {
+  await signIn(page);
+  await expect(page.locator(".story-row").first()).toBeVisible();
+  const oldTitle = await page.locator(".story-row h3").first().textContent();
+  const pending = [];
+  await page.route("**/api/studio/bootstrap?*", async route => {
+    const response = await route.fetch();
+    await new Promise(resolve => pending.push(async () => { await route.fulfill({response}); resolve(); }));
+  });
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
+  await expect.poll(() => pending.length).toBe(1);
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_default");
+  await expect.poll(() => pending.length).toBe(2);
+  await pending[1]();
+  await expect(page.locator(".story-row").filter({ hasText: oldTitle })).toBeVisible();
+  await pending[0]();
+  await expect(page.getByLabel("Brand", { exact: true })).toHaveValue("brand_default");
+  await expect(page.locator(".story-row").filter({ hasText: oldTitle })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  // An older response settling first must not dismiss the latest pending view either.
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_vedic");
+  await expect.poll(() => pending.length).toBe(3);
+  await page.getByLabel("Brand", { exact: true }).selectOption("brand_default");
+  await expect.poll(() => pending.length).toBe(4);
+  await pending[2]();
+  await expect(page.getByRole("status")).toContainText("Loading");
+  await expect(page.locator(".story-row")).toHaveCount(0);
+  await pending[3]();
+  await expect(page.locator(".story-row").filter({ hasText: oldTitle })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Loading" })).toHaveCount(0);
+});

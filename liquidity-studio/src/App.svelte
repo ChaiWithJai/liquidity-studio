@@ -74,6 +74,7 @@
   let preflight = $state(null);
   let exportUrl = $state("");
   let exportName = $state("");
+  let scopeLoading = $state(false);
   let lastScopeToken = 0;
   let preflightSequence = 0;
   let currentOrganization = $derived(
@@ -160,6 +161,7 @@
   }
   function clearWorkspace() {
     lastScopeToken++;
+    scopeLoading = false;
     user = null;
     organizations = [];
     permissions = {};
@@ -299,6 +301,12 @@
   }
   async function loadScope() {
     const token = ++lastScopeToken;
+    scopeLoading = true;
+    backlog = [];
+    calendar = [];
+    brandProfile = null;
+    reviewClaims = [];
+    notice = "";
     error = "";
     busy = true;
     selectedStory = null;
@@ -330,7 +338,10 @@
         brandProfile = null;
       }
     } finally {
-      if (token === lastScopeToken) busy = false;
+      if (token === lastScopeToken) {
+        busy = false;
+        scopeLoading = false;
+      }
     }
   }
   async function switchOrganization(event) {
@@ -781,6 +792,7 @@
             ><span aria-hidden="true">{item.icon}</span>{item.label}</button
           >{/each}{#if canAdmin}<button
             class:active={tab === "admin"}
+            disabled={scopeLoading}
             onclick={loadAdmin}
             ><span aria-hidden="true">⌘</span>Operations</button
           >{/if}
@@ -827,7 +839,9 @@
             onclick={() => (notice = "")}>×</button
           >
         </div>{/if}
-      {#if tab === "backlog"}
+      {#if scopeLoading}
+        <div class="panel" role="status">Loading {currentBrand?.name || "brand"} workspace…</div>
+      {:else if tab === "backlog"}
         <div class="section-line">
           <div>
             <h2>Story backlog <span class="count">{backlog.length}</span></h2>
