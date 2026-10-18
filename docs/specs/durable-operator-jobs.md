@@ -1,5 +1,7 @@
 # Reviewed durable operator jobs
 
+> Current rollout: Cloud Tasks is now provisioned and live-tested on GCP. The earlier implementation checkpoint below is historical. See [actual rollout and browser-close/provider/recovery evidence](../deployments/operator-jobs-pilot.md), including final scope cleanup.
+
 Tracks #71. This optional path is distinct from legacy founder-only weekly batch execution and shared-control browser grants. Source baseline: main `9017682`. No production configuration, live data, cloud queues, model calls, or deployed UI were changed by these experiments.
 
 ## History and system position
