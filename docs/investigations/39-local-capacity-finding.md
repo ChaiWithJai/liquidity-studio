@@ -21,3 +21,14 @@ Before resuming, separately confirm Docker Desktop VM backing-store free capacit
 Once recovery and the Doory resource handoff are confirmed, inspect the pulled backend launch script/JVM heap against its container limit, start only the capped isolated stack, then complete actual native SVG/text/token import, edit, real artifact export and native bundle restore. Every one of those runtime results remains pending here.
 
 Validation: `node --test scripts/local-capacity.test.mjs` exercises invalid/insufficient/missing-filesystem failures and proves that both wrapper phases never invoke even a fake Docker executable after a failed gate, including an unavailable explicitly selected backing-disk filesystem. This test does not contact the daemon or prove capacity for the editor.
+
+Example after daemon recovery and a verified local backing-disk location:
+
+```bash
+export PENPOT_QA_ENV_FILE=/absolute/private/path/penpot.env
+export PENPOT_DOCKER_DATA_PATH=/absolute/verified/path/to/Docker.raw
+bash scripts/investigations/penpot-local.sh pull
+bash scripts/investigations/penpot-local.sh up
+```
+
+The private environment file supplies `PENPOT_QA_SECRET` and `PENPOT_QA_DB_PASSWORD`; generate fresh random values and restrict the file to its operator. These credentials belong only to the disposable external editor, not the Google-only Studio pilot. Do not launch until the separate daemon/VM health and coordinated resource handoff are verified.

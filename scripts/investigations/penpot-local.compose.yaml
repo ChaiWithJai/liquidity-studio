@@ -1,5 +1,5 @@
 # Disposable localhost-only #39 experiment; not a deployment template.
-# docker compose --env-file /private/path/penpot.env -p penpot-native39 -f scripts/investigations/penpot-local.compose.yaml up -d
+# Use penpot-local.sh with private PENPOT_QA_ENV_FILE and explicit PENPOT_DOCKER_DATA_PATH so capacity gates run first.
 x-common: &common
   PENPOT_PUBLIC_URI: http://localhost:39008
   PENPOT_FLAGS: enable-login-with-password enable-registration disable-email-verification disable-secure-session-cookies disable-smtp disable-telemetry disable-google-fonts-provider disable-dashboard-templates-section
