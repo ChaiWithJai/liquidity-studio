@@ -1,0 +1,114 @@
+{
+  "sourceCommit": "719a4e0acd0f83571a10f0bce7fd3f264261e26f",
+  "image": "sha256:be0c23690ddb781a15efa62c5132f1f31c109d50be6390a553cd9e30334eba21",
+  "registryDigest": "sha256:d88c71b9c78bcc1aefab70c5fefbbacf1ce6ae904558be5ebe919f9c1608ec87",
+  "localMetadata": {
+    "at": 1792319509.503673,
+    "containers": {
+      "studio": {
+        "exactImage": true,
+        "envUnchanged": true,
+        "mountsUnchanged": true,
+        "portsUnchanged": true,
+        "commandUnchanged": true,
+        "running": true,
+        "health": "healthy"
+      },
+      "studio-worker": {
+        "exactImage": true,
+        "envUnchanged": true,
+        "mountsUnchanged": true,
+        "portsUnchanged": true,
+        "commandUnchanged": true,
+        "running": true,
+        "health": null
+      }
+    },
+    "http": {
+      "/api/ready": {
+        "status": 200,
+        "sha256": "7651556ffac6b089bcb046bb55dd3428ecfbe110480f147f30cfbd5930032aa8"
+      },
+      "/api/auth/config": {
+        "status": 200,
+        "sha256": "813c4634fde0a0c214faecb0b782435ff40f7568d88c06630e0adec1b06fe625",
+        "googleMode": true,
+        "emulatorAbsent": true
+      },
+      "/api/studio/bootstrap": {
+        "status": 401,
+        "sha256": "e6fb4f9f298110d9b9435aa922b9891e18342c437e757de0cf38eb9e2cbd9d01"
+      },
+      "/": {
+        "status": 200,
+        "sha256": "8faa35b8e842d86f321658fed2de0e7fdd79df0aabe9f061d2868bb605d6de7b"
+      },
+      "publicAsset": {
+        "matchesCommittedSource": true,
+        "sha256": "b2bb131cf83c9229a170c459bc4efe3253660ef4f33399009c669941686e78e0"
+      }
+    },
+    "notGoogleHumanAcceptance": true
+  },
+  "cloudMetadata": {
+    "at": 1792319819.670402,
+    "anonymousMetadataOnly": true,
+    "results": {
+      "/api/ready": {
+        "status": 200,
+        "sha256": "732709d3a6af00e86546ce3ef3199a2e96a64ea6d366f33d380b25af095f3366"
+      },
+      "/api/auth/config": {
+        "status": 200,
+        "sha256": "813c4634fde0a0c214faecb0b782435ff40f7568d88c06630e0adec1b06fe625",
+        "googleMode": true,
+        "emulatorAbsent": true
+      },
+      "/api/studio/bootstrap": {
+        "status": 401,
+        "sha256": "6b09934d7f618acecd6fdb7cfb1b31fff84781847d5c1fd3cd2b102d0e34e151"
+      },
+      "/": {
+        "status": 200,
+        "sha256": "8faa35b8e842d86f321658fed2de0e7fdd79df0aabe9f061d2868bb605d6de7b"
+      },
+      "asset": {
+        "sha256": "b2bb131cf83c9229a170c459bc4efe3253660ef4f33399009c669941686e78e0",
+        "matches719": true
+      }
+    }
+  },
+  "promotion": {
+    "at": 1792319811.567104,
+    "revision": "liquidity-studio-00029-laz",
+    "percent": 100,
+    "image": "sha256:d88c71b9c78bcc1aefab70c5fefbbacf1ce6ae904558be5ebe919f9c1608ec87",
+    "runtimeTemplateUnchanged": true,
+    "canonicalUrl": "https://liquidity-studio-x4fdad2sga-uk.a.run.app",
+    "freshHumanLoginObserved": false
+  },
+  "localBackup": {
+    "at": 1792319422.154735,
+    "sha256": "4f3bbc28c4ff6de5bf4b800d5a09044176f44ee798e68a6d6076a6f24ca96cfc",
+    "bytes": 548864,
+    "records": 9,
+    "integrity": "ok",
+    "onlineConsistentBackup": true
+  },
+  "build": {
+    "exitCode": 0,
+    "elapsedSeconds": 2.59455275000073,
+    "noRuntimeOrPush": true
+  },
+  "sourceProof": {
+    "image": "sha256:be0c23690ddb781a15efa62c5132f1f31c109d50be6390a553cd9e30334eba21",
+    "neverStarted": true,
+    "sourceFilesVerified": 191,
+    "installedEntriesExactVersions": 343,
+    "publicIndexSha256": "8faa35b8e842d86f321658fed2de0e7fdd79df0aabe9f061d2868bb605d6de7b",
+    "privateFrameAbsent": true,
+    "inspectionContainerRemoved": true
+  },
+  "freshHumanGoogleLoginClaimed": false,
+  "providerCallsDuringRollout": false
+}
