@@ -4,4 +4,9 @@
 services:
   penpot-frontend:
     volumes:
-      - ../../tools/penpot-private-ingress/server.conf:/etc/nginx/overrides/server.d/studio-private-assets.conf:ro
+      - type: bind
+        source: ../../tools/penpot-private-ingress/server.conf
+        target: /etc/nginx/overrides/server.d/studio-private-assets.conf
+        read_only: true
+        bind:
+          create_host_path: false
