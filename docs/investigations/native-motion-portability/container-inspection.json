@@ -1,0 +1,93 @@
+{
+  "observedAt": "2026-10-18",
+  "method": "BrowserOS Neo static local file input, bounded4MiB parser, sequential four owned original downloads; SHA verified separately by shell",
+  "notFullFrameDecode": true,
+  "files": [
+    {
+      "bytes": 684811,
+      "container": "MP4",
+      "file": "finance-motion.mp4",
+      "method": "bounded metadata inspection; not full frame decode",
+      "sha256": "d041df8c3bd700f55b07d4d48c646c488dbf6efe44985beeb9d23f86c83ed7a5",
+      "tracks": [
+        {
+          "durationUnits": 900,
+          "kind": "vide",
+          "sampleCount": 900,
+          "seconds": 30,
+          "timeRuns": [
+            {
+              "count": 900,
+              "duration": 1
+            }
+          ],
+          "timedSamples": 900,
+          "timedSeconds": 30,
+          "timescale": 30
+        }
+      ]
+    },
+    {
+      "bytes": 745641,
+      "container": "MP4",
+      "file": "cultural-motion.mp4",
+      "method": "bounded metadata inspection; not full frame decode",
+      "sha256": "cbcda8f5132b0d10545f43edbd2efb34c58bb0fee8c69233549ee9520fbd77d0",
+      "tracks": [
+        {
+          "durationUnits": 900,
+          "kind": "vide",
+          "sampleCount": 900,
+          "seconds": 30,
+          "timeRuns": [
+            {
+              "count": 900,
+              "duration": 1
+            }
+          ],
+          "timedSamples": 900,
+          "timedSeconds": 30,
+          "timescale": 30
+        }
+      ]
+    },
+    {
+      "bytes": 1368415,
+      "container": "WebM",
+      "file": "finance-motion.webm",
+      "infoDurationSeconds": 30,
+      "method": "bounded EBML metadata and block inspection; no lacing accepted; not full frame decode",
+      "sha256": "ff56f90bc6126e832a8128604331a89ba80873ca36c85b50d21a602c74e60e3e",
+      "timecodeScaleNs": 1000000,
+      "tracks": [
+        {
+          "blocks": 900,
+          "defaultDurationNs": 33333333,
+          "firstTimestampMs": 0,
+          "lastTimestampMs": 29966,
+          "number": 1,
+          "type": 1
+        }
+      ]
+    },
+    {
+      "bytes": 1341109,
+      "container": "WebM",
+      "file": "cultural-motion.webm",
+      "infoDurationSeconds": 30,
+      "method": "bounded EBML metadata and block inspection; no lacing accepted; not full frame decode",
+      "sha256": "f82fedc74e506c09151eb9759530692ba6fadcb26d975c06fb07cef5117c5f1f",
+      "timecodeScaleNs": 1000000,
+      "tracks": [
+        {
+          "blocks": 900,
+          "defaultDurationNs": 33333333,
+          "firstTimestampMs": 0,
+          "lastTimestampMs": 29966,
+          "number": 1,
+          "type": 1
+        }
+      ]
+    }
+  ]
+}
