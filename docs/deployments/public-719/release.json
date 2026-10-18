@@ -110,5 +110,30 @@
     "inspectionContainerRemoved": true
   },
   "freshHumanGoogleLoginClaimed": false,
-  "providerCallsDuringRollout": false
+  "providerCallsDuringRollout": false,
+  "canonicalComposeReconciliation": {
+    "status": "reconciled",
+    "beforeSha256": "fda8d6441ea5bc7ad1442a36f6e8da70c494047899ecf9a49988650410d88932",
+    "afterSha256": "56ccdba351c1bdc7db7ff899a4ded7c13b8a56e5543b2ad07062af2f8896ea8f",
+    "changedFields": [
+      "services.studio.image",
+      "services.studio-worker.image"
+    ],
+    "image": "sha256:be0c23690ddb781a15efa62c5132f1f31c109d50be6390a553cd9e30334eba21",
+    "bytes": 6201
+  },
+  "canonicalComposeIndependentRead": {
+    "onlyTwoImageFieldsChanged": true,
+    "sha256": "56ccdba351c1bdc7db7ff899a4ded7c13b8a56e5543b2ad07062af2f8896ea8f",
+    "bytes": 6201,
+    "mode": 384
+  },
+  "rootNeoCanonicalPostPromotion": {
+    "ready": 200,
+    "googleMode": true,
+    "anonymousBootstrap": 401,
+    "revision": "liquidity-studio-00029-laz",
+    "assetSha256": "b2bb131cf83c9229a170c459bc4efe3253660ef4f33399009c669941686e78e0",
+    "freshHumanGoogleLoginClaimed": false
+  }
 }
