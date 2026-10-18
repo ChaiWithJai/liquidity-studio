@@ -1,5 +1,6 @@
 // Deliberate draft destinations and report handoff; never changes publishing defaults.
 import {createHash} from 'node:crypto';
+import {neutralBrandKit} from '../src/lib/neutral-brand-kit.js';
 import {fail} from './auth.js';
 import {exact} from './defiant-strategy-notes.js';
 import {scopeKey} from './repository.js';
@@ -14,7 +15,7 @@ function member(identity,state,actor,orgId,founder=false){
 }
 function replay(state,actor,input,requestHash){const prior=state.receipts.find(r=>r.id===input.idempotencyKey);if(prior){if(prior.actorId!==actor.id||prior.requestHash!==requestHash)throw fail(409,'Request key belongs to different content');return clone(prior.result);}if(state.revision!==input.expectedRevision)throw fail(409,'Strategy changed; preserve your draft and compare the saved report');if(state.receipts.length>=128)throw fail(429,'Strategy request capacity reached');return null;}
 function ack(state,actor,input,requestHash,value){state.revision++;const result={organizationId:state.organizationId,revision:state.revision,...value};state.receipts.push({id:input.idempotencyKey,actorId:actor.id,requestHash,result:clone(result)});if(Buffer.byteLength(JSON.stringify(state))>2*1024*1024)throw fail(413,'Strategy workspace capacity reached');return result;}
-function emptyDestination(id,name){return {schemaVersion:1,brandProfile:{id,brandName:name,contentDomain:'general',logoText:'',websiteUrl:'',tagline:'',mission:'',fonts:{heading:'DejaVu Sans',body:'DejaVu Sans'},colors:[],ExportFormats:[]},backlog:[],telemetry:{traces:[],batchJobs:[],backpropDataset:[]},jobs:[],assets:[],preflights:[],usage:[]};}
+function emptyDestination(id,name){return {schemaVersion:1,brandProfile:{id,brandName:name,contentDomain:'general',logoText:'',websiteUrl:'',tagline:'',mission:'',...neutralBrandKit(),ExportFormats:[]},backlog:[],telemetry:{traces:[],batchJobs:[],backpropDataset:[]},jobs:[],assets:[],preflights:[],usage:[]};}
 export async function createDraftDestination(service,actor,input){
  exact(input,['expectedRevision','idempotencyKey','name']);intent(input);if(typeof input.name!=='string'||!input.name.trim()||input.name.length>200)throw fail(422,'Name the draft destination');await service.authority(actor,true);
  const brandId=stableId({operation:'defiant-destination',organizationId:service.organizationId,actorId:actor.id,key:input.idempotencyKey}),key=scopeKey({organizationId:service.organizationId,brandId}),requestHash=hash({operation:'destination',input});let result;

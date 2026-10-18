@@ -22,6 +22,7 @@
   import SourceReviewSummary from "./SourceReviewSummary.svelte";
   import { sourceReviewSummary, reviewSignature } from "./lib/source-review.js";
   import { createGoogleAuth } from "./lib/google-auth.js";
+  import { neutralBrandKit } from "./lib/neutral-brand-kit.js";
   import "./studio.css";
 
   const supportedFonts = [
@@ -1980,6 +1981,13 @@
                 >{/each}</select
             ></label
           >
+          {#if !brandProfile.colors?.length}
+            <div class="full">
+              <p>This kit has no colors yet. Start with neutral colors and Mona Sans / Inter, then adjust them for this brand.</p>
+              <button type="button" onclick={() => { const kit = neutralBrandKit(); brandProfile.colors = kit.colors; brandProfile.fonts = kit.fonts; }}>Set up neutral Brand Kit</button>
+              <p class="small muted">Changes are saved only when you choose Save Brand Kit.</p>
+            </div>
+          {/if}
           <div class="full color-list">
             {#each brandProfile.colors || [] as color (color.name)}<label
                 >{color.name}
