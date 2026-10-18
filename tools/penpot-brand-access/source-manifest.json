@@ -1,12 +1,12 @@
 {
   "nativePin": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
   "files": {
-    "access.clj": "d2c65e88dc3f35df93d48c4cc58fc7006d8c7f75bd249116f3c25d1c6e202e72",
+    "access.clj": "faff065ab70765f1b457969e31b7dd091e17deb75a2160905587dbf5ef139955",
     "access_test.clj": "42cb72694c7603598bce1fd0abc0b5f9064980da65734bccc7b5dd9f07e894a1",
     "http_authority.clj": "740bfc66743b39486b8498fdb88229ee5c267063255a0588fac0ea1c8fe26238",
     "http_authority_test.clj": "0742811435d527313f6153621ac0184a260f35bdf9aa74ac1ded00ef653d24b9",
-    "reconciliation_test.clj": "2ed264643fb001b046e52dcea32c05a14f00bad77fa46679134f90026e834c94",
-    "studio_access.clj": "7ef0b73daef7e0701d3d6551cfd1632f1a912e2971e9faad5029063c27d227e5"
+    "reconciliation_test.clj": "7e2ebb950745a90f14f044b2926fe9ef5444a9ca1ea8e003c417db416cca93aa",
+    "studio_access.clj": "4a6a16af593c6504c9b586e112cf03b94380b4b1d9ba39ee2b2b56f75f160870"
   },
   "permissionsPatchSha256": "da1e21eb1061f73682d9d116bbfb199be032ae537be69deb6be725223f1473cb",
   "upstreamManifestSha256": "b76992071c7bca42f1cd931bc9365d856ef7e9b9d17761171b062673c2cee470"

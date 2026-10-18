@@ -69,14 +69,18 @@
 (defn- operation []
   (if (.startsWith ^String (:command *request-context* "") "get-") :read :write))
 
+(defn current-rpc-session? []
+  (let [{:keys [cfg session-context]} *request-context*]
+    (and (::session-valid? cfg)
+         (try (true? ((::session-valid? cfg) cfg session-context)) (catch Exception _ false)))))
+
 (defn context-team-allowed? [team-id]
   (if-not *request-context*
     true
     (let [{:keys [cfg resource private-key command actual-profile-id session-context]} *request-context*]
       (if-not (governed-team? cfg team-id)
         true
-        (and (::session-valid? cfg)
-             (try (true? ((::session-valid? cfg) cfg session-context)) (catch Exception _ false))
+        (and (current-rpc-session?)
              (not (contains? denied-governed-mutations command))
              (or
               ;; Exact private administrative metadata only; not files/content,

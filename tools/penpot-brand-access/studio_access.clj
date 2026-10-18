@@ -88,3 +88,27 @@
             (conflict!)))
         {:acknowledged true :team-id team-id :member-id member-id
          :intent-id intent-id :grant-epoch grant-epoch :present present}))))
+
+
+(defn installed-features [cfg]
+  ;; Constructor facts only. Absence is false, never inferred from a request or
+  ;; treated as measured revocation/asset acceptance evidence.
+  (let [features (::access/installed-features cfg)]
+    (into {} (map (fn [feature] [feature (if (= "v1" (get features feature)) "v1" false)])
+                  [:rpc-policy :session :live :assets]))))
+
+(sv/defmethod ::studio-access-status
+  {::sm/params [:map {:title "studio-access-status"} [:team-id ::sm/uuid]]}
+  [{:keys [::db/pool] :as cfg} {:keys [::rpc/profile-id team-id] :as params}]
+  (when-not (and (access/private-key? (::access/reconciliation-key cfg)
+                    (get-in (meta params) [::http/request :headers "x-studio-native-grant-key"]))
+                 (access/governed-team? cfg team-id)
+                 (= profile-id (get (::access/operators cfg) team-id))
+                 (access/current-rpc-session?))
+    (access/denied!))
+  (let [owner (db/exec-one! pool ["SELECT is_owner FROM team_profile_rel WHERE team_id=? AND profile_id=?" team-id profile-id])]
+    (when-not (true? (:is-owner owner)) (access/denied!))
+    {:native-pin "ff7a66f51938b2293260ea27a64e2c4e0833b5e3"
+     :team-id team-id :operator-profile-id profile-id
+     :installed-features (installed-features cfg)
+     :measured-revocation-proof false}))
