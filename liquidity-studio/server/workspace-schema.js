@@ -88,7 +88,7 @@ export function workspace(state) {
 }
 export function validateQuery(input = {}) {
   exact(input, ["filters", "sort", "groupBy", "columns", "limit", "cursor"]);
-  const filters = input.filters || {};
+  const filters = input.filters === undefined ? {} : input.filters;
   exact(filters, [
     "search",
     "statuses",
@@ -125,11 +125,14 @@ export function validateQuery(input = {}) {
     throw fail(400, "Invalid review readiness filter");
   if (filters.exported !== undefined && typeof filters.exported !== "boolean")
     throw fail(400, "Invalid export filter");
-  if (filters.dateFrom) localDate(filters.dateFrom);
-  if (filters.dateTo) localDate(filters.dateTo);
+  if (filters.dateFrom !== undefined) localDate(filters.dateFrom);
+  if (filters.dateTo !== undefined) localDate(filters.dateTo);
   if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo)
     throw fail(400, "Invalid date range");
-  const sort = input.sort || [{ field: "title", direction: "asc" }];
+  const sort =
+    input.sort === undefined
+      ? [{ field: "title", direction: "asc" }]
+      : input.sort;
   if (
     !Array.isArray(sort) ||
     sort.length > 3 ||
@@ -142,7 +145,7 @@ export function validateQuery(input = {}) {
     })
   )
     throw fail(400, "Invalid sort");
-  const columns = input.columns || COLUMNS;
+  const columns = input.columns === undefined ? COLUMNS : input.columns;
   if (
     !Array.isArray(columns) ||
     !columns.length ||

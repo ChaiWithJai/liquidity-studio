@@ -562,3 +562,18 @@ test("undo keys cannot be reused for another operation or mutation", async (t) =
     409,
   );
 });
+
+test("query rejects malformed nullable collections and non-date bounds", async (t) => {
+  const f = await fixture(t);
+  for (const input of [
+    { filters: null },
+    { sort: null },
+    { columns: null },
+    { filters: { dateFrom: 0 } },
+    { filters: { dateTo: null } },
+  ])
+    assert.equal(
+      (await f.api("/api/studio/workspace/query", input)).status,
+      400,
+    );
+});
