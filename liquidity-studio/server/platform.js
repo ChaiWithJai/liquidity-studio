@@ -1,4 +1,5 @@
 import { NativeEditorService } from "./native-editor.js";
+import { EditorApprovalService } from "./editor-approval.js";
 import { nativeFontRegistry } from "./native-editor-fonts.js";
 import { EditorBoundary, validateEditorTargets } from "./editor-boundary.js";
 import { DurableJobService } from "./operator-jobs.js";
@@ -51,6 +52,9 @@ export function createPlatform({
       scope,
       availableFonts: nativeFontRegistry(),
     });
+  platform.editorApproval = (scope, repo) => new EditorApprovalService({
+    repo, scope, identity: platform.identity, native: platform.nativeEditor(scope, repo),
+  });
   const initialize = async (activeStore) => {
     platform.store = activeStore;
     if (authMode === "google")

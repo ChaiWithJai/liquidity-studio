@@ -305,6 +305,22 @@ test("real authenticated HTTP saves native proposals; anonymous and wrong-brand 
   const id = created.data.id;
   assert.equal(created.data.document.pages.length, 4);
   assert.equal("documentRef" in created.data, false);
+  assert.equal((await api(`documents/${id}/review`)).data, null);
+  for (const [index, action] of ["create", "start", "submit", "approve"].entries()) {
+    const result = await api(`documents/${id}/review`, {
+      action, expectedRevision: index, expectedNativeRevision: 1,
+      idempotencyKey: `http_review_${action}_unique`,
+    });
+    assert.equal(result.status, 200, JSON.stringify(result.data));
+    assert.equal(result.data.revision, index + 1);
+  }
+  const review = await api(`documents/${id}/review`);
+  assert.equal(review.data.stage, "Approved");
+  assert.equal(review.data.stale, false);
+  assert.equal(review.data.approval.nativeRevision, 1);
+  assert.equal(review.data.canApprove, true);
+  assert.equal((await api(`documents/${id}/review`, undefined, "brand_vedic")).status, 404);
+  assert.equal((await api(`documents/${id}/review`, undefined, "brand_default", false)).status, 401);
   assert.equal(
     (await api(`documents/${id}`, undefined, "brand_vedic")).status,
     404,
