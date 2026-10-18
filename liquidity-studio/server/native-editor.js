@@ -280,6 +280,7 @@ export class NativeEditorService {
             : { sourceContentRevision: record.origin.sourceContentRevision }),
           generationId: record.origin.generationId,
           brandRevision: record.origin.brandRevision,
+          requiresSourceReview: record.origin.requiresSourceReview === true,
         })),
     };
   }
