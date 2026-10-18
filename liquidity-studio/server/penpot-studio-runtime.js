@@ -15,6 +15,7 @@ import { penpotActionDigest } from "./penpot-action-ledger.js";
 import {
   createPenpotMediaAuthorizer,
   createPenpotNativeReader,
+  parsePenpotMediaPath,
 } from "./penpot-media-authorization.js";
 import { createPenpotNativeExports } from "./penpot-native-export.js";
 import { brandRevision } from "./multimodal-contract.js";
@@ -225,6 +226,7 @@ export async function createPenpotStudioRuntime({
       fileMediaId: entry.fileMediaId,
       objectId: entry.objectId,
       sha256: entry.sha256,
+      contentType: entry.contentType,
       rightsDeclaration: entry.rightsDeclaration,
       consent: entry.consent,
     };
@@ -263,6 +265,13 @@ export async function createPenpotStudioRuntime({
           fileId: entry.manifest.fileId,
           projectId: target.nativeProjectId,
           ownerPrincipal: target.ownerPrincipal,
+          sha256: font.persistedByteHashes?.[field],
+          contentType: {
+            ttfFileId: "font/ttf",
+            otfFileId: "font/otf",
+            woff1FileId: "font/woff",
+            woff2FileId: "font/woff2",
+          }[field],
         });
         fonts.set(id, records);
       }
@@ -372,6 +381,37 @@ export async function createPenpotStudioRuntime({
     store,
     transportMode: configuration.transportMode,
     authorizeContext: authorizeExportContext,
+    resolveSvgResource: async ({ resource, context, cookie }) => {
+      const requested = parsePenpotMediaPath(resource.path);
+      await authorizeMediaRead({ path: resource.path, cookie });
+      const record = await resolveMediaRecord(
+        requested,
+        context.ownerPrincipal,
+        context,
+      );
+      if (
+        !record ||
+        (resource.kind === "font"
+          ? record.kind !== "font"
+          : ["font", "native-export"].includes(record.kind))
+      )
+        throw fail(403, "Native SVG resource is not registered to this file");
+      let sha256 = record.sha256,
+        contentType = record.contentType;
+      if (resource.kind === "image" && record.actionId) {
+        const action = await serviceFor(record).get(
+          { id: record.actorId },
+          record.actionId,
+        );
+        sha256 = action.media?.sha256;
+        contentType = action.media?.descriptor?.mtype;
+      }
+      if (resource.kind === "image" && record.kind === "legacy-native-copy")
+        contentType = record.contentType;
+      if (!/^[a-f0-9]{64}$/.test(sha256 || ""))
+        throw fail(422, "Verified native resource byte hash is required");
+      return { sha256, contentType };
+    },
     reauthorizeContext: async (context) => {
       const current = await exportSourceContext(context.request);
       const { nativeRevision, nativeSha256, ...source } = context;
@@ -429,6 +469,44 @@ export async function createPenpotStudioRuntime({
       throw fail(403, "Native private media registration changed");
     await service.revalidateRaster(input, action.media);
   }
+  async function resolveMediaRecord(
+    requested,
+    ownerPrincipal,
+    requiredContext = null,
+  ) {
+    if (!privateIngress || requested.thumbnail) return null;
+    const exported = await nativeExports.resolve(requested, ownerPrincipal);
+    if (exported) return exported;
+    const copies =
+      (await store.get(
+        `penpot-media-security:${requested.kind}:${requested.id}`,
+      )) || [];
+    const records = [
+      ...copies,
+      ...(legacy.get(`${requested.kind}:${requested.id}`) || []),
+      ...(requested.kind === "by-id" ? fonts.get(requested.id) || [] : []),
+    ];
+    for (const record of records.filter(
+      (record) =>
+        record.ownerPrincipal === ownerPrincipal &&
+        (!requiredContext ||
+          [
+            "organizationId",
+            "brandId",
+            "fileId",
+            "projectId",
+            "ownerPrincipal",
+          ].every((key) => record[key] === requiredContext[key])),
+    )) {
+      try {
+        await authorizeMediaRecord(record);
+        return record;
+      } catch (error) {
+        if (![401, 403, 404, 409, 422].includes(error.status)) throw error;
+      }
+    }
+    return null;
+  }
   const authorizeMediaRead = createPenpotMediaAuthorizer({
     transportMode: configuration.transportMode,
     runAuthorityPhase: (work) =>
@@ -436,31 +514,7 @@ export async function createPenpotStudioRuntime({
         ? identity.runManagedJobLookupPhase(work)
         : work(),
     authorize: authorizeMediaRecord,
-    resolve: async (requested, ownerPrincipal) => {
-      if (!privateIngress || requested.thumbnail) return null;
-      const exported = await nativeExports.resolve(requested, ownerPrincipal);
-      if (exported) return exported;
-      const copies =
-        (await store.get(
-          `penpot-media-security:${requested.kind}:${requested.id}`,
-        )) || [];
-      const records = [
-        ...copies,
-        ...(legacy.get(`${requested.kind}:${requested.id}`) || []),
-        ...(requested.kind === "by-id" ? fonts.get(requested.id) || [] : []),
-      ];
-      for (const record of records.filter(
-        (record) => record.ownerPrincipal === ownerPrincipal,
-      )) {
-        try {
-          await authorizeMediaRecord(record);
-          return record;
-        } catch (error) {
-          if (![401, 403, 404, 409, 422].includes(error.status)) throw error;
-        }
-      }
-      return null;
-    },
+    resolve: resolveMediaRecord,
   });
   return {
     transport,

@@ -237,3 +237,157 @@ test("failed output verification never admits its durable receipt", async () => 
   );
   assert.equal([...records.values()][0].records[0].status, "failed");
 });
+
+test("embedded SVG delivery rechecks owner/context and original/resource hashes without persisting payloads or exposing raw bytes", async () => {
+  const { createHash } = await import("node:crypto");
+  const hash = (value) => createHash("sha256").update(value).digest("hex");
+  const records = new Map();
+  const store = {
+    get: (key) => structuredClone(records.get(key)),
+    update: (key, fn) => {
+      const value = fn(structuredClone(records.get(key)));
+      records.set(key, structuredClone(value));
+      return value;
+    },
+  };
+  const asset = Buffer.from("controlled source image"),
+    assetHash = hash(asset);
+  const original = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg"><image href="http://localhost:39008/assets/by-file-media-id/${ids.object}"/><text x="80">HUMAN TEXT</text></svg>`,
+  );
+  let sourceRevision = 4,
+    changedOriginal = false,
+    changedAsset = false,
+    clock = 1000,
+    service;
+  service = createPenpotNativeExports({
+    store,
+    now: () => clock,
+    authorizeContext: async (cookie, request) => {
+      assert.equal(cookie, "auth-token=native-session");
+      return { ...context(request), nativeRevision: sourceRevision };
+    },
+    reauthorizeContext: async () => {},
+    resolveSvgResource: async ({ resource, context: current, cookie }) => {
+      assert.equal(cookie, "auth-token=native-session");
+      assert.equal(resource.path, `/assets/by-file-media-id/${ids.object}`);
+      assert.equal(current.fileId, ids.file);
+      return { sha256: assetHash, contentType: "image/png" };
+    },
+    fetchImpl: async (url, options) => {
+      const path = new URL(url).pathname;
+      if (path === "/__studio_native_export") {
+        await service.authorizeRelay({
+          capability: options.headers["X-Studio-Export-Relay"],
+          cookie: options.headers.Cookie,
+          method: "POST",
+          path,
+          contentType: options.headers["Content-Type"],
+          bodyHash: options.headers["X-Studio-Export-Body-Sha256"],
+        });
+        return new Response(
+          JSON.stringify({
+            "~:mtype": "image/svg+xml",
+            "~:name": "Original fixture",
+            "~:filename": "Original fixture.svg",
+            "~:id": "~u" + ids.task,
+            "~:uri": {
+              "~#uri": `http://localhost:39008/assets/by-id/${ids.output}`,
+            },
+          }),
+          { headers },
+        );
+      }
+      if (path === `/__studio_native_export_output/${ids.output}`) {
+        await service.authorizeRelay({
+          capability: options.headers["X-Studio-Export-Relay"],
+          cookie: options.headers.Cookie,
+          method: "GET",
+          path,
+        });
+        return new Response(
+          changedOriginal ? Buffer.from("changed") : original,
+          {
+            headers: {
+              "Content-Type": "image/svg+xml",
+              "Content-Disposition": "attachment",
+            },
+          },
+        );
+      }
+      assert.equal(path, `/assets/by-file-media-id/${ids.object}`);
+      return new Response(changedAsset ? Buffer.from("tampered") : asset);
+    },
+  });
+  const value = envelope();
+  value["~:exports"][0]["~:type"] = "~:svg";
+  const response = await service.execute({
+    body: body(value),
+    contentType: headers["content-type"],
+    cookie: "auth-token=native-session",
+    origin: "http://localhost:39008",
+  });
+  assert.equal(
+    JSON.parse(response.body)["~:uri"]["~#uri"],
+    `http://localhost:39008/__studio_native_embedded_svg/${ids.output}`,
+  );
+  assert.equal(
+    await service.resolve({ kind: "by-id", id: ids.output }, ids.profile),
+    null,
+  );
+  const first = await service.readEmbedded({
+    id: ids.output,
+    cookie: "auth-token=native-session",
+  });
+  assert.match(first.bytes.toString(), /data:image\/png;base64,/);
+  assert.match(first.bytes.toString(), /HUMAN TEXT/);
+  assert.equal(
+    JSON.stringify([...records.values()]).includes(asset.toString("base64")),
+    false,
+  );
+  assert.equal(
+    JSON.stringify([...records.values()]).includes("native-session"),
+    false,
+  );
+  changedOriginal = true;
+  await assert.rejects(
+    service.readEmbedded({
+      id: ids.output,
+      cookie: "auth-token=native-session",
+    }),
+    { status: 409 },
+  );
+  changedOriginal = false;
+  changedAsset = true;
+  await assert.rejects(
+    service.readEmbedded({
+      id: ids.output,
+      cookie: "auth-token=native-session",
+    }),
+    { status: 409 },
+  );
+  changedAsset = false;
+  sourceRevision++;
+  await assert.rejects(
+    service.readEmbedded({
+      id: ids.output,
+      cookie: "auth-token=native-session",
+    }),
+    { status: 409 },
+  );
+  sourceRevision--;
+  await assert.rejects(
+    service.readEmbedded({
+      id: ids.output,
+      cookie: "auth-token=other-session",
+    }),
+  );
+  clock += 600001;
+  await assert.rejects(
+    service.readEmbedded({
+      id: ids.output,
+      cookie: "auth-token=native-session",
+    }),
+    { status: 403 },
+  );
+});

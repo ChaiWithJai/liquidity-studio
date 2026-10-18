@@ -369,6 +369,35 @@ export function createHttpServer(
         });
         return res.end();
       }
+      const embeddedPenpotSvg =
+        /^\/api\/internal\/penpot-embedded-svg\/([a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})$/.exec(
+          route,
+        );
+      if (embeddedPenpotSvg) {
+        if (
+          !penpotEnabled ||
+          trustedTestMode ||
+          process.env.K_SERVICE ||
+          process.env.STUDIO_PENPOT_PRIVATE_INGRESS !== "true" ||
+          platform.identity.configuration?.mode !== "google" ||
+          url.search
+        )
+          throw fail(404, "Not found");
+        if (req.method !== "GET")
+          throw fail(405, "Native SVG method unsupported");
+        const runtime = await platform.getPenpotRuntime();
+        const result = await runtime.nativeExports.readEmbedded({
+          id: embeddedPenpotSvg[1],
+          cookie: req.headers["x-studio-native-session"],
+        });
+        res.writeHead(200, {
+          "Content-Type": "image/svg+xml",
+          "Content-Disposition": `attachment; filename="${result.filename.replace(/[^a-zA-Z0-9._ -]/g, "_")}"`,
+          "Cache-Control": "private, no-store",
+          "Content-Length": result.bytes.length,
+        });
+        return res.end(result.bytes);
+      }
       if (
         [
           "/api/internal/penpot-native-export",

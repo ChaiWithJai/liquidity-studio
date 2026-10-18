@@ -1,3 +1,4 @@
+import { embedPenpotSvg } from "./penpot-svg-embed.js";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { fail } from "./auth.js";
@@ -184,6 +185,7 @@ export function createPenpotNativeExports({
   store,
   authorizeContext,
   reauthorizeContext,
+  resolveSvgResource,
   transportMode = "loopback",
   fetchImpl = fetch,
   now = Date.now,
@@ -277,7 +279,7 @@ export function createPenpotNativeExports({
       if (
         !record ||
         record.id !== entry.receiptId ||
-        record.status !== "pending" ||
+        record.status !== (entry.expectedStatus || "pending") ||
         !isDeepStrictEqual(record.context, entry.context) ||
         record.expiresAt <= now()
       )
@@ -290,6 +292,7 @@ export function createPenpotNativeExports({
   }
   async function authorizeRecord(record) {
     if (
+      !record ||
       record.kind !== "native-export" ||
       record.status !== "verified" ||
       record.expiresAt <= now() ||
@@ -299,6 +302,39 @@ export function createPenpotNativeExports({
       throw fail(403, "Native export receipt unavailable");
     await reauthorizeContext(record.context);
   }
+  async function embed(bytes, session, context, expected = null) {
+    if (typeof resolveSvgResource !== "function")
+      throw fail(422, "Portable native SVG resources are not configured");
+    return embedPenpotSvg(
+      bytes,
+      async (resource) => {
+        const before = await authorizeContext(session, context.request);
+        if (!isDeepStrictEqual(before, context))
+          throw fail(409, "Native SVG source changed");
+        const descriptor = await resolveSvgResource({
+          resource,
+          context,
+          cookie: session,
+        });
+        const response = await fetchImpl(`${origin}${resource.path}`, {
+          headers: { Cookie: session },
+          redirect: "error",
+          signal: AbortSignal.timeout(15000),
+          cache: "no-store",
+        });
+        if (!response.ok)
+          throw fail(403, "Registered native SVG resource unavailable");
+        const resourceBytes = await bounded(response, 512 * 1024);
+        if (hash(resourceBytes) !== descriptor.sha256)
+          throw fail(409, "Native SVG resource bytes changed");
+        const after = await authorizeContext(session, context.request);
+        if (!isDeepStrictEqual(after, context))
+          throw fail(409, "Native SVG authority changed");
+        return { ...descriptor, bytes: resourceBytes };
+      },
+      expected,
+    );
+  }
   return {
     authorizeRelay,
     authorizeRecord,
@@ -306,8 +342,64 @@ export function createPenpotNativeExports({
       if (requested.kind !== "by-id" || requested.thumbnail) return null;
       const record = await readRecord(requested.id);
       if (!record || record.ownerPrincipal !== ownerPrincipal) return null;
+      if (record.embeddedSvg) return null;
       await authorizeRecord(record);
       return record;
+    },
+    async readEmbedded({ id, cookie }) {
+      if (!UUID.test(id || "")) throw fail(404, "Native SVG unavailable");
+      if (active >= 1) throw fail(503, "Native export relay is busy");
+      active++;
+      try {
+        const session = penpotPresentedSession(cookie),
+          record = await readRecord(id);
+        if (!record?.embeddedSvg) throw fail(404, "Native SVG unavailable");
+        await authorizeRecord(record);
+        const current = await authorizeContext(session, record.context.request);
+        if (!isDeepStrictEqual(current, record.context))
+          throw fail(409, "Native SVG context changed");
+        const probe = issue("output", session, record.context, {
+          objectId: id,
+          receiptId: record.id,
+          expectedStatus: "verified",
+        });
+        const response = await fetchImpl(
+          `${origin}/__studio_native_export_output/${id}`,
+          {
+            headers: { Cookie: session, "X-Studio-Export-Relay": probe },
+            redirect: "error",
+            signal: AbortSignal.timeout(30000),
+            cache: "no-store",
+          },
+        );
+        if (
+          !response.ok ||
+          response.headers.get("content-type")?.split(";")[0] !==
+            "image/svg+xml"
+        )
+          throw fail(502, "Original native SVG unavailable");
+        const original = await bounded(response, 1024 * 1024);
+        if (hash(original) !== record.originalSha256)
+          throw fail(409, "Original native SVG changed");
+        const result = await embed(
+          original,
+          session,
+          record.context,
+          record.resources,
+        );
+        if (
+          hash(result.bytes) !== record.sha256 ||
+          result.bytes.length !== record.size
+        )
+          throw fail(409, "Embedded native SVG changed");
+        const final = await authorizeContext(session, record.context.request);
+        if (!isDeepStrictEqual(final, record.context))
+          throw fail(409, "Native SVG changed before delivery");
+        await authorizeRecord(await readRecord(id));
+        return { bytes: result.bytes, filename: record.filename };
+      } finally {
+        active--;
+      }
     },
     async execute({ body, contentType, cookie, origin: presentedOrigin }) {
       if (presentedOrigin !== "http://localhost:39008")
@@ -388,7 +480,9 @@ export function createPenpotNativeExports({
             ?.startsWith("attachment")
         )
           throw fail(502, "Owned native export output was not confirmed");
-        const bytes = await bounded(bytesResponse, 6 * 1024 * 1024);
+        let bytes = await bounded(bytesResponse, 6 * 1024 * 1024);
+        const originalSha256 = hash(bytes);
+        let embedding = null;
         if (!bytes.length) throw fail(502, "Native export output was empty");
         if (
           request.format === "png" &&
@@ -402,6 +496,10 @@ export function createPenpotNativeExports({
           !/<svg(?:\s|>)/.test(bytes.subarray(0, 2048).toString("utf8"))
         )
           throw fail(502, "Native SVG root invalid");
+        if (request.format === "svg") {
+          embedding = await embed(bytes, session, context);
+          bytes = embedding.bytes;
+        }
         const checked = await authorizeContext(session, request);
         if (!isDeepStrictEqual(checked, context))
           throw fail(409, "Native source changed before export delivery");
@@ -417,8 +515,25 @@ export function createPenpotNativeExports({
             status: "verified",
             size: bytes.length,
             sha256: hash(bytes),
+            ...(embedding
+              ? {
+                  embeddedSvg: true,
+                  originalSha256,
+                  resources: embedding.resources,
+                  decodedBytes: embedding.decodedBytes,
+                }
+              : {}),
           };
         });
+        if (embedding) {
+          const dto = JSON.parse(responseBytes.toString("utf8"));
+          dto["~:uri"]["~#uri"] =
+            `http://localhost:39008/__studio_native_embedded_svg/${output.objectId}`;
+          return {
+            body: Buffer.from(JSON.stringify(dto)),
+            contentType: "application/transit+json",
+          };
+        }
         return { body: responseBytes, contentType: "application/transit+json" };
       } catch (error) {
         if (record) {
