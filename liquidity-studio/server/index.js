@@ -478,6 +478,8 @@ export function createHttpServer(
               req,
               ["/api/admin/import", "/api/admin/editor-pack/install"].includes(route)
                 ? (route === "/api/admin/editor-pack/install" ? 49 : 32) * 1024 * 1024
+                : nativeEditorEnabled && /^\/api\/studio\/native-editor\/documents\/[a-f0-9-]{36}\/exports$/.test(route)
+                  ? 6 * 1024 * 1024
                 : nativeEditorEnabled &&
                     route.startsWith("/api/studio/native-editor/")
                   ? 768 * 1024
@@ -720,6 +722,26 @@ export function createHttpServer(
               .editorApproval(scope, repo)
               .transition(user, reviewMatch[1], body),
           );
+        const exportStageMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/exports$/);
+        if (exportStageMatch && req.method === "GET")
+          return json(200, await platform.editorExport(scope, repo).list(user, exportStageMatch[1]));
+        if (exportStageMatch && req.method === "POST")
+          return json(201, await platform.editorExport(scope, repo).stage(user, exportStageMatch[1], body));
+        const exportArtifactMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/exports\/([a-f0-9]{64})(?:\/(signoff|complete))?$/);
+        if (exportArtifactMatch) {
+          const [,nativeId,artifactId,action] = exportArtifactMatch;
+          const exporter = platform.editorExport(scope, repo);
+          if (!action && req.method === "GET") {
+            const {stage,bytes} = await exporter.bytes(user,nativeId,artifactId);
+            return json(200,{...exporter.dto(stage),base64:bytes.toString('base64')});
+          }
+          if (action === 'signoff' && req.method === 'POST')
+            return json(200,await exporter.signoff(user,nativeId,artifactId,body));
+          if (action === 'complete' && req.method === 'POST') {
+            if(body?.artifactId!==artifactId)throw fail(400,'Export artifact does not match completion route');
+            return json(200,await exporter.complete(user,nativeId,body));
+          }
+        }
         const nativeMatch = route.match(
           /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})$/,
         );

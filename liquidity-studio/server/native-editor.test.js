@@ -7,6 +7,8 @@ import {
 import { BRAND_PRESETS } from "./domain.js";
 import { campaignFromApprovedClaims } from "./source-integrity.js";
 import { brandRevision } from "./multimodal-contract.js";
+import {DurableStore} from './storage.js';
+import {ScopedRepository} from './repository.js';
 
 function fixture(preset = "liquidity_desk") {
   const actor = { id: "operator" };
@@ -212,7 +214,7 @@ test("native resource validator rejects foreign fetches and accepts only owned i
 
 test("source and palette drift do not silently replace or rebase native proposals", async () => {
   for (const change of [
-    (s) => s.backlog[0].revision++,
+    (s) => { s.backlog[0].revision++; s.backlog[0].contentRevision = (s.backlog[0].contentRevision || 1) + 1; },
     (s) => (s.brandProfile.colors[0].hex = "#123456"),
     (s) => (s.backlog[0].sourceClaims[0].text = "Changed approval"),
   ]) {
@@ -458,4 +460,38 @@ test("native pattern source and URL fields reject same-origin and relative resou
       );
     }
   }
+});
+
+
+test("planning metadata preserves content-bound proposals while legacy origins remain strict", async () => {
+  const f = fixture();
+  const native = await f.create("story");
+  Object.assign(f.state().backlog[0], {revision:3,status:"Scheduled",scheduledDay:"Tuesday",scheduleSchemaVersion:1,updatedAt:"2026-10-18T04:00:00Z"});
+  assert.equal((await f.service.read(f.actor,native.id)).sourceState,"current");
+  const legacy = {...native.origin}; delete legacy.sourceContentRevision;
+  assert.throws(()=>f.service.assertCurrent(f.state(),legacy),{status:409});
+  const saved = await f.service.save(f.actor,native.id,{expectedRevision:1,title:native.title,document:native.document,idempotencyKey:"metadata_preserves_native"});
+  assert.equal(saved.revision,2);assert.equal(saved.origin.storyRevision,2);assert.equal(saved.origin.sourceContentRevision,1);
+  f.state().backlog[0].contentRevision=2;
+  assert.equal((await f.service.read(f.actor,native.id)).sourceState,"changed");
+});
+
+test('atomic native creation uses the content epoch when a calendar edit races its commit',async()=>{
+ const f=fixture(),store=new DurableStore(':memory:'),scope={organizationId:'org',brandId:'brand',preset:'liquidity_desk'};
+ const repo=new ScopedRepository(store,scope);
+ try{
+  await repo.ready;await repo.mutate(state=>({...state,...structuredClone(f.state())}));
+  const service=new NativeEditorService({repo,scope,identity:f.service.identity,availableFonts:f.service.availableFonts});
+  const transact=store.transact.bind(store);let moved=false;
+  store.transact=async(keys,callback)=>{
+   if(!moved&&keys.some(key=>key.startsWith(service.prefix+'document:'))){
+    moved=true;await repo.updateStory('story',story=>{story.status='Scheduled';story.scheduledDay='Tuesday';});
+   }
+   return transact(keys,callback);
+  };
+  const result=await service.create(f.actor,{storyId:'story',format:'story',expectedRevision:2,generationId:'gen',expectedBrandRevision:brandRevision(f.state().brandProfile),idempotencyKey:'create_racing_calendar_metadata'});
+  assert.equal(moved,true);assert.equal(result.origin.sourceContentRevision,1);
+  assert.equal((await service.read(f.actor,result.id)).sourceState,'current');
+  assert.equal((await repo.read()).backlog[0].revision,3);
+ }finally{store.close();}
 });

@@ -151,6 +151,7 @@ test("source revision drift prevents output commit without leaving an asset", as
     const before = f.store.keys(`${f.native.prefix}asset:`);
     f.store.update(f.repo.key, (s) => {
       s.backlog[0].revision++;
+      s.backlog[0].contentRevision = (s.backlog[0].contentRevision || 1) + 1;
       return s;
     });
     await assert.rejects(

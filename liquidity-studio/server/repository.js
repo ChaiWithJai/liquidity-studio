@@ -1,4 +1,5 @@
-import { assertRestoreAvailable } from './restore-gate.js';
+import { assertRestoreAvailable } from "./restore-gate.js";
+import { captureContentRevisions, applyContentRevisions } from "./story-content-revision.js";
 import { portableWorkspace } from "./workspace-schema.js";
 import { randomUUID, createHash } from "node:crypto";
 import {
@@ -68,7 +69,8 @@ export class ScopedRepository {
     await this.ready;
     return this.store.update(this.key, state => {
       assertRestoreAvailable(state);
-      return callback(state);
+      const before = captureContentRevisions(state);
+      return applyContentRevisions(callback(state), before);
     });
   }
   async getBrandProfile() {
@@ -703,7 +705,7 @@ export class ScopedRepository {
     }
     await this.store.update(this.key, current => {
       assertRestoreAvailable(current);
-      return data;
+      return applyContentRevisions(data,captureContentRevisions(current || {backlog:[]}));
     });
     return { imported: true };
   }

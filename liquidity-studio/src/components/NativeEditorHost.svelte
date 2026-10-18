@@ -2,6 +2,7 @@
   import { untrack } from 'svelte';
   import { createNativeEditorBroker } from '../lib/native-editor-broker.js';
   import EditorReviewPanel from './EditorReviewPanel.svelte';
+  import EditorExportPanel from './EditorExportPanel.svelte';
 
   let {
     record, request, scopeKey, getScopeKey,
@@ -20,6 +21,8 @@
   let recoveryMessage = $state('');
   let editorDirty = $state(false);
   let editorReady = $state(false);
+  let exportStages = $state.raw([]);
+  let exportReceiptEpoch = $state(0);
 
   $effect(() => {
     if (!frame) return;
@@ -51,6 +54,7 @@
           onSaved(saved);
         },
         onReady() { clearTimeout(watchdog); loading = false; editorReady = true; },
+        onExportStaged(stage) { if(current())exportStages=[...exportStages.filter(item=>item.artifactId!==stage.artifactId),stage].slice(-32); },
         async onConflictResolve(action) {
           if (action !== 'reload') {
             recoveryMessage = 'Saving a separate native copy is unavailable in this host. Your local edits remain open; export your work before reloading.';
@@ -120,7 +124,10 @@
     <p>Uploads support PNG, JPEG and WebP up to 512 KiB and four megapixels. When configured locally, background removal preserves pixel dimensions and rejects PNG output above 512 KiB. It never silently resizes or overwrites the original; native Undo restores the original reference.</p>
   </details>
   {#if loading}<p role="status">Opening native editor…</p>{/if}
-  <EditorReviewPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} />
+  <EditorReviewPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} refreshKey={exportReceiptEpoch} />
+  {#key `${scopeKey}:${record.id}:${(localRecord?.id === record.id ? localRecord : record).revision}`}
+    <EditorExportPanel record={localRecord?.id === record.id ? localRecord : record} stages={exportStages} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} onExported={()=>exportReceiptEpoch++} />
+  {/key}
   <iframe title="Native Doory design canvas" bind:this={frame} sandbox="allow-scripts allow-same-origin allow-downloads" referrerpolicy="no-referrer"></iframe>
 </section>
 
