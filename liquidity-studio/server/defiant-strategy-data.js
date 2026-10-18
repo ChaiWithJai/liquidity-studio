@@ -662,18 +662,19 @@ export function assertReferences(data){
  if(data.nodes.length>256||data.edges.length>512||Buffer.byteLength(JSON.stringify(data))>1024*1024)bad('Strategy exceeds supported capacity');
 }
 export function projectGraph(state,{focusId='',selectedId='',query=''}={}){
- const all=state.graph.nodes.map(n=>({...n,sourceId:n.seedRef||n.id})),allEdges=state.graph.edges.map(e=>({...e,sourceId:e.seedRef||e.id})),items=[...all,...allEdges],find=id=>items.find(x=>x.id===id),focus=find(focusId),regions=all.filter(x=>x.kind==='region');
- if(focusId&&!focus)throw fail(404,'Selected graph focus no longer exists');if(selectedId&&!find(selectedId))throw fail(404,'Selected finding no longer exists');
+ const all=state.graph.nodes.map(n=>({...n,sourceId:n.seedRef||n.id})),allEdges=state.graph.edges.map(e=>({...e,sourceId:e.seedRef||e.id})),items=[...all,...allEdges,...state.graph.clusters],find=id=>items.find(x=>x.id===id),focus=find(focusId),regions=all.filter(x=>x.kind==='region');
+ if(focus&&allEdges.some(e=>e.id===focus.id))throw fail(422,'Focus a node or working group; select a relationship for its details');if(focusId&&!focus)throw fail(404,'Selected graph focus no longer exists');if(selectedId&&!find(selectedId))throw fail(404,'Selected finding no longer exists');
  const ring=nodes=>nodes.map((n,i)=>({...n,x:50+32*Math.cos(i*2*Math.PI/Math.max(1,nodes.length)),y:50+32*Math.sin(i*2*Math.PI/Math.max(1,nodes.length))}));
  let nodes=ring(regions.length?regions:all.slice(0,24)),visible=new Set(nodes.map(n=>n.id)),edges=allEdges.filter(e=>visible.has(e.from)&&visible.has(e.to));
- const city=focus?.kind==='region'?focus:all.find(n=>n.id===focus?.regionId),artist=['artist','signal'].includes(focus?.kind)?focus:all.find(n=>n.kind==='artist'&&n.regionId===city?.id);
+ const city=focus?.kind==='region'?focus:all.find(n=>n.id===focus?.regionId),artist=['artist','signal'].includes(focus?.kind)?focus:city?all.find(n=>n.kind==='artist'&&n.regionId===city.id):null;
  const related=(artist?.relatedResourceIds||[]).map(resourceId=>{const resource=state.resources.find(r=>r.id===resourceId);const node=resource&&find(resource.nodeId);return node?{...resource,...node,resourceId:resource.id,suggestion:true}:null;}).filter(Boolean);
- if(focus&&focus.kind!=='route'&&!city){
+ if(focus&&focus.kind!=='cluster'&&focus.kind!=='route'&&!city){
   // A real imported person/signal need not have a geographic association. Show
   // its actual incident neighborhood rather than inventing a region or hiding it.
   const incident=allEdges.filter(e=>e.from===focus.id||e.to===focus.id),neighborIds=[focus.id,...new Set(incident.flatMap(e=>[e.from,e.to]).filter(id=>id!==focus.id))].slice(0,24);
   nodes=ring(neighborIds.map(find).filter(Boolean));visible=new Set(nodes.map(n=>n.id));edges=incident.filter(e=>visible.has(e.from)&&visible.has(e.to));
  }
+ if(focus?.kind==='cluster'){nodes=ring(focus.nodeIds.map(find).filter(Boolean));visible=new Set(nodes.map(n=>n.id));edges=allEdges.filter(e=>visible.has(e.from)&&visible.has(e.to));}
  if(city){const routes=allEdges.filter(e=>e.kind==='route'&&e.from===city.id),targets=[...new Set(routes.map(e=>e.to))].map(find).filter(Boolean);nodes=[{...city,x:18,y:46},...(artist?[{...artist,x:44,y:46}]:[]),...targets.map((n,i)=>({...n,x:78,y:targets.length===1?46:23+i*47/Math.max(1,targets.length-1)}))];edges=routes.map(e=>({...e,from:artist?.id||city.id,sourceRegion:e.from}));if(artist)edges.push({id:`discovery:${artist.id}`,from:city.id,to:artist.id,kind:'discovery',label:'Referenced in',verification:artist.verification});if(focus.kind==='artist'&&related[0]){const n=related.find(x=>x.kind==='person')||related[0];nodes.push({...n,x:45,y:79});edges.push({id:`suggestion:${artist.id}:${n.id}`,from:artist.id,to:n.id,kind:'match',label:'Possible collaboration',suggestion:true,verification:'unverified'});}}
  return {revision:state.revision,nodes,edges,selectedItem:find(selectedId)?{...find(selectedId),resource:state.resources.find(r=>r.nodeId===selectedId)||null,evidence:state.evidence.filter(e=>(find(selectedId).evidenceIds||[]).includes(e.id))}:null,matches:query.trim()?items.filter(n=>n.name.toLowerCase().includes(query.trim().toLowerCase())).slice(0,20):[],relatedResources:related};
 }

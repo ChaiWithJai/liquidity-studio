@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {fail} from './auth.js';
-import {exact as planningExact,annotationRecord,viewRecord,reportRecord} from './defiant-strategy-notes.js';
+import {exact as planningExact,annotationRecord,viewRecord,reportRecord,clusterRecord} from './defiant-strategy-notes.js';
 import {demoData,normalizeIntake,assertReferences,projectGraph} from './defiant-strategy-data.js';
 const clone=value=>structuredClone(value),hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const keyFor=id=>`defiant-strategy:${id}`;
@@ -29,7 +29,7 @@ export class DefiantStrategyService {
  }
  async read(actor){
   const {state,organization,membership}=await this.raw(actor),{receipts,...publicState}=clone(state),nodes=publicState.graph.nodes.map(n=>({...n,sourceId:n.seedRef||n.id})),edges=publicState.graph.edges.map(e=>({...e,sourceId:e.seedRef||e.id}));
-  return {...publicState,items:[...nodes,...edges],regions:nodes.filter(n=>n.kind==='region'),artists:nodes.filter(n=>n.kind==='artist'),corridors:edges.filter(e=>e.kind==='route'),resources:publicState.resources.map(r=>({...nodes.find(n=>n.id===r.nodeId),...r})),destinations:organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(({id,name})=>({id,name,socialConnectionVerified:false}))};
+  return {...publicState,items:[...nodes,...edges,...publicState.graph.clusters],regions:nodes.filter(n=>n.kind==='region'),artists:nodes.filter(n=>n.kind==='artist'),corridors:edges.filter(e=>e.kind==='route'),resources:publicState.resources.map(r=>({...nodes.find(n=>n.id===r.nodeId),...r})),destinations:organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(({id,name})=>({id,name,socialConnectionVerified:false}))};
  }
 
  async graph(actor,input={}){
@@ -45,6 +45,13 @@ export class DefiantStrategyService {
  }
  combine(state,incoming){
   const before=dataOf(state),result={};for(const name of Object.keys(before)){const seen=new Map(before[name].map(row=>[row.id,row]));for(const row of incoming[name]){const old=seen.get(row.id);if(old&&hash(old)!==hash(row))throw fail(409,`Existing ${name} record changed; preserve its saved interpretation`);if(!old)seen.set(row.id,row);}result[name]=[...seen.values()];}return result;
+ }
+ async saveCluster(actor,input){
+  planningExact(input,['expectedRevision','idempotencyKey','cluster']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'cluster',input});let result;
+  await this.store.transact(['identity',this.key],([identity,state])=>{
+   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
+   const record=clusterRecord(state,input.cluster,actor,this.now());state.graph.clusters=state.graph.clusters.filter(c=>c.id!==record.id);state.graph.clusters.push(record);result=planningAck(state,actor,input,requestHash,{cluster:record});return [identity,state];
+  });return result;
  }
  async annotate(actor,input){
   planningExact(input,['expectedRevision','idempotencyKey','annotation']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'annotation',input});let result;
