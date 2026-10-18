@@ -123,7 +123,7 @@ export function candidateArtwork(excerpts) {
 }
 /** Version2 changes only new source-derived artwork, never historical human work. */
 export function candidateArtworkV2(excerpts) {
-  const [heading, first = heading, second = first, third = first] = excerpts;
+  const [heading, first = heading, second = first, third = second] = excerpts;
   const sourceFieldMappings = [];
   const value = (fieldPath, excerpt, width, size, maxLines) => {
     const text = maxLines ? sourcePrefixForLines(excerpt.text, {width,size,maxLines}) : excerpt.text;
@@ -131,7 +131,7 @@ export function candidateArtworkV2(excerpts) {
     return text;
   };
   const h = path => value(path,heading,900,52,2);
-  const rows = [first,second,third];
+  const rows = excerpts.length >= 3 ? excerpts.slice(-3) : [first,second,third];
   const artwork = {
     infographic: {
       headline:h("infographic.headline"),
@@ -241,9 +241,13 @@ export function validatePreparedCandidate(candidate, evidence) {
     candidate.provenance.modelCalls !== 0
   )
     throw fail(422, "Candidate cannot claim human approval or model execution");
-  const version = candidate.artworkProjectionVersion ?? 1;
+  const version = candidate.artworkProjectionVersion === undefined ? 1 : candidate.artworkProjectionVersion;
   if (version !== 1 && version !== 2) throw fail(422, "Unknown candidate artwork projection version");
+  if (!Array.isArray(evidence) || !evidence.length || evidence.length > 2 ||
+      evidence.some(snapshot => !snapshot || typeof snapshot.text !== "string"))
+    throw fail(422, "Invalid candidate evidence shape");
   const excerpts = excerptsFor(evidence);
+  if (!excerpts.length) throw fail(422, "Candidate source excerpts required");
   const projection = version === 2 ? candidateArtworkV2(excerpts) : {artwork:candidateArtwork(excerpts)};
   if ((version === 1 && candidate.sourceFieldMappings !== undefined) ||
       (version === 2 && !isDeepStrictEqual(candidate.sourceFieldMappings, projection.sourceFieldMappings)))

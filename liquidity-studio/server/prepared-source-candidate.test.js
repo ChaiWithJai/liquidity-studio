@@ -209,3 +209,22 @@ test('historical version1 retains original artwork and fingerprint semantics wit
  assert.equal(JSON.stringify(candidate),before);assert.equal(preparationFingerprint(story),fingerprint);
  candidate.artworkProjectionVersion=1;assert.equal(validatePreparedCandidate(candidate,evidence),true);
 });
+
+
+test('version dispatch rejects null, strings, zero and unknown versions rather than treating them as historical',()=>{
+ const candidate=buildPreparedCandidate({id:'version',scope:{organizationId:'org',brandId:'brand'},story,brandProfile:{},evidence});
+ for(const version of [null,'2',0,3])assert.throws(()=>validatePreparedCandidate({...candidate,artworkProjectionVersion:version},evidence),error=>error.status===422);
+});
+
+test('three retained primary paragraphs become three distinct source rows and timed facts without duplicate padding',()=>{
+ const paragraphs=['First institutional paragraph records a planned alliance with explicit limits and no completed-outcome claim.','Second primary paragraph describes the geographic scope of the historical announcement for human review.','Third primary paragraph explains the planned retail offering without importing a partner market forecast.'];
+ const text=paragraphs.join('\n'),snapshots=[{...evidence[0],text,textSha256:createHash('sha256').update(text).digest('hex')}];
+ const candidate=buildPreparedCandidate({id:'three',scope:{organizationId:'org',brandId:'brand'},story,brandProfile:{},evidence:snapshots});
+ assert.equal(validatePreparedCandidate(candidate,snapshots),true);assert.doesNotThrow(()=>validateCandidateLayout(candidate.artwork));
+ assert.equal(new Set(candidate.artwork.infographic.statRows).size,3);
+ for(let i=0;i<3;i++){
+  const map=candidate.sourceFieldMappings.find(m=>m.fieldPath===`infographic.statRows.${i}`);
+  assert.equal(map.startOffset,text.indexOf(paragraphs[i]));assert.equal(candidate.artwork.infographic.statRows[i],text.slice(map.startOffset,map.startOffset+map.textLength));
+  assert.ok(paragraphs[i].startsWith(candidate.artwork.reel.beats[i].onScreenText));
+ }
+});

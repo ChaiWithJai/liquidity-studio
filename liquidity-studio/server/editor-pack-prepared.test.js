@@ -54,3 +54,11 @@ test('version2 prefix mappings survive historical portable roundtrip without tra
  const bad=structuredClone(entries);bad[0].candidate.sourceFieldMappings[0].textLength++;
  assert.throws(()=>projectPreparedHistory(bad,scope));
 });
+
+
+test('malformed version2 history always fails as bounded422 before reconstruction and never emits authority',()=>{
+ const entries=fixture();entries[0].candidate=buildPreparedCandidate({id:'new',scope,story:{id:'story',revision:1},brandProfile:{},evidence:entries[0].evidence,createdAt:'2026-10-18T00:00:00Z'});
+ for(const change of [e=>delete e[0].candidate.provenance,e=>delete e[0].evidence,e=>e[0].evidence=null,e=>e[0].evidence=[null],e=>e[0].evidence[0].text=null,e=>e[0].candidate.excerpts=null,e=>e[0].candidate.excerpts=[],e=>e[0].candidate.artworkProjectionVersion=null]){
+  const copy=structuredClone(entries);change(copy);assert.throws(()=>projectPreparedHistory(copy,scope),error=>error.status===422);
+ }
+});
