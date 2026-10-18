@@ -31,7 +31,7 @@ async function openStory(page, title) {
   await expect(page.locator('.story-row')).toHaveCount(1);
   await page.locator('.story-row').getByRole('button', { name: /Open (draft|story) ↗/ }).click();
   await expect(page.locator('.workflow-context')).toContainText(title);
-  await page.getByText('Shared control · bounded proposals', { exact: true }).click();
+  await page.getByText('Assistant actions', { exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Shared control', exact: true })).toBeVisible();
 }
 async function login(page, username) {
@@ -118,7 +118,7 @@ test('delegation picker clears stale choices, reports failed searches and fences
  await page.getByLabel('Brand',{exact:true}).selectOption('brand_vedic');await expect(page.locator('.story-row')).toHaveCount(5);
  release();await done;await page.unroute(pattern);
  await page.locator('.story-row').first().getByRole('button',{name:/Open story ↗/}).click();
- await page.getByText('Shared control · bounded proposals',{exact:true}).click();await page.getByLabel('Grant target',{exact:true}).selectOption('other');
+ await page.getByText('Assistant actions',{exact:true}).click();await page.getByLabel('Grant target',{exact:true}).selectOption('other');
  await expect(page.getByLabel('Find story for delegation',{exact:true})).toHaveValue('');await expect(page.getByLabel('Story to delegate',{exact:true})).toHaveCount(0);
  await expect(page.getByRole('article')).toHaveCount(0);
 });

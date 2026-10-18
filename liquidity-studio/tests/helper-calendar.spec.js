@@ -29,7 +29,7 @@ async function openFixture(page) {
   await expect(page.locator('.story-row')).toHaveCount(1);
   await page.getByRole('button', { name: 'Open draft ↗', exact: true }).click();
   await expect(page.getByLabel('Headline', { exact: true })).toBeVisible();
-  await page.getByText('Shared control · bounded proposals', { exact: true }).click();
+  await page.getByText('Assistant actions', { exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Shared control', exact: true })).toBeVisible();
 }
 async function login(page, username) {
