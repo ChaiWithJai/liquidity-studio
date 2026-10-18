@@ -1,0 +1,107 @@
+--- a/frontend/src/app/main/data/workspace/thumbnails.cljs
++++ b/frontend/src/app/main/data/workspace/thumbnails.cljs
+@@ -24,7 +24,6 @@
+    [app.main.render :as render]
+    [app.main.repo :as rp]
+    [app.util.queue :as q]
+-   [app.util.storage :as storage]
+    [app.util.timers :as tm]
+    [app.util.webapi :as wapi]
+    [beicon.v2.core :as rx]
+@@ -291,35 +290,45 @@
+                   (mapcat get-frame-ids-cached))
+             changes))))
+ 
+-;; Board thumbnails used to render text shapes without position-data as
+-;; nothing instead of falling back to the foreignObject renderer (see
+-;; frame-imposter in app.main.render), so any board thumbnail cached before
+-;; that fix may be missing its text. The backend doesn't tell the client
+-;; when a fetched thumbnail was generated, so we can't tell stale apart from
+-;; fresh by inspecting it; instead each board thumbnail with text content is
+-;; regenerated at most once per browser, tracked via local-storage so repeat
+-;; visits (once healed) don't keep re-rendering it.
+-(def ^:private healed-storage-key ::healed-text-thumbnails)
+-
++(defn- clear-local-thumbnail
++  "Hide only this browser's stale bitmap. Retain its URI so the frame's initial
++  mount fallback cannot mistake invalidation for a missing server thumbnail."
++  [object-id]
++  (ptk/reify ::clear-local-thumbnail
++    cljs.core/IDeref
++    (-deref [_] object-id)
++    ptk/UpdateEvent
++    (update [_ state]
++      (assoc-in state [:thumbnails object-id :stale?] true))))
++
++(defn- refresh-local-thumbnail
++  "Render through the existing bounded queue, without persisting a server thumbnail."
++  [file-id page-id frame-id]
++  (let [object-id (thc/fmt-object-id file-id page-id frame-id "frame")]
++    (ptk/reify ::refresh-local-thumbnail
++      cljs.core/IDeref
++      (-deref [_] object-id)
++      ptk/WatchEvent
++      (watch [_ state stream]
++        (->> (request-thumbnail state file-id page-id frame-id "frame")
++             (rx/map #(assoc-thumbnail object-id (wapi/create-uri %)))
++             (rx/catch (fn [_] (rx/empty)))
++             (rx/take-until
++              (->> stream
++                   (rx/filter #(or (ptk/type? ::dwpg/finalize-page %)
++                                   (and (ptk/type? ::clear-thumbnail %) (= (deref %) object-id)))))))))))
++
++;; A permanent browser-local healed marker cannot prove a stored bitmap is current.
+ (defn- frame-has-text?
+   [objects frame-id]
+   (->> (cfh/get-children-with-self objects frame-id)
+        (some cfh/text-shape?)
+        (some?)))
+ 
+-(defn- unhealed-text-thumbnail?
+-  [state object-id]
+-  (and (some? (dm/get-in state [:thumbnails object-id :uri]))
+-       (not (contains? (get @storage/global healed-storage-key) object-id))))
+-
+-(defn- mark-thumbnail-healed!
+-  [object-id]
+-  (swap! storage/global update healed-storage-key (fnil conj #{}) object-id))
+-
+ (defn- heal-stale-text-thumbnails
+-  "Emits an `update-thumbnail` for every board on the page that has text
+-  content and hasn't already been healed (see `healed-storage-key`) in this
+-  browser."
++  "Discard cached text-board bitmaps once on page entry and refresh locally.
++  Failed rasterization leaves live document content visible. No cache upload,
++  remote deletion or thumbnail-change subscription is created by this read."
+   [state file-id page-id]
+   (let [objects   (-> (dsh/lookup-file-data state file-id)
+                       (dsh/get-page page-id)
+@@ -330,13 +339,13 @@
+                    (keep
+                     (fn [frame-id]
+                       (let [object-id (thc/fmt-object-id file-id page-id frame-id "frame")]
+-                        (when (unhealed-text-thumbnail? state object-id)
++                        (when (some? (dm/get-in state [:thumbnails object-id :uri]))
+                           [frame-id object-id])))))]
+     (->> (rx/from (eduction xf frame-ids))
+-         (rx/map
++         (rx/mapcat
+           (fn [[frame-id object-id]]
+-            (mark-thumbnail-healed! object-id)
+-            (update-thumbnail file-id page-id frame-id "frame" "heal-stale-text-thumbnails"))))))
++            (rx/of (clear-local-thumbnail object-id)
++                   (refresh-local-thumbnail file-id page-id frame-id)))))))
+ 
+ (defn watch-state-changes
+   "Watch the state for changes inside frames. If a change is detected will force a rendering
+@@ -379,8 +388,8 @@
+                  (rx/tap #(l/trc :hint "buffer initialized")))]
+ 
+         (->> (rx/merge
+-              ;; Heal boards with text whose cached thumbnail may predate the
+-              ;; text-position fix (see heal-stale-text-thumbnails).
++              ;; Discard stale local bitmaps on page entry, then regenerate locally.
++              ;; Normal local/remote edit commits retain existing cache invalidation.
+               (heal-stale-text-thumbnails state file-id page-id)
+ 
+               ;; Perform instant thumbnail cleaning of affected frames

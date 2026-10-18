@@ -1,0 +1,27 @@
+--- a/frontend/src/app/main/ui/workspace/shapes/frame.cljs
++++ b/frontend/src/app/main/ui/workspace/shapes/frame.cljs
+@@ -141,13 +141,14 @@
+                                 (refs/workspace-thumbnail-by-id object-id)))
+             thumbnail-data  (mf/deref thumbnail-data*)
+             thumbnail-uri   (:uri thumbnail-data)
++            stale-thumbnail? (:stale? thumbnail-data)
+ 
+             modifiers-ref  (mf/with-memo [frame-id]
+                              (refs/workspace-modifiers-by-frame-id frame-id))
+             modifiers      (mf/deref modifiers-ref)
+ 
+             hidden?        (true? (:hidden shape))
+-            content-visible? (or (not ^boolean thumbnail?) (not ^boolean thumbnail-uri))
++            content-visible? (or stale-thumbnail? (not ^boolean thumbnail?) (not ^boolean thumbnail-uri))
+ 
+             tries-ref      (mf/use-ref 0)
+             imposter-ref   (mf/use-ref nil)
+@@ -211,7 +212,7 @@
+              :href thumbnail-uri
+              :on-load on-load
+              :on-error on-error
+-             :style {:display (when-not (and ^boolean thumbnail? ^boolean thumbnail-uri) "none")}}]
++             :style {:display (when-not (and ^boolean thumbnail? ^boolean thumbnail-uri (not stale-thumbnail?)) "none")}}]
+ 
+            ;; Render border around image when we are debugging
+            ;; thumbnails.
