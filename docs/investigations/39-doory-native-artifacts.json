@@ -1,0 +1,85 @@
+{
+  "svg": {
+    "archiveSha256": "751d0fd057a3318921e50091d263735ba41e69d9bad6ef625fbfd450aa8d64d4",
+    "entries": [
+      {
+        "name": "Studio-to-Doory-proposed-contract-fixture-01.svg",
+        "bytes": 2095,
+        "sha256": "39e7c2093b6076d6db585082ee502c5a7e059e6eedb8894f8a2f65232ff7b8c2",
+        "width": "1080",
+        "height": "1350",
+        "textElements": [
+          {
+            "text": "BROWSER VERIFIED NATIVEHEADING",
+            "fontFamily": "'Inter', sans-serif",
+            "fontSize": "48",
+            "fontWeight": "700",
+            "textRuns": [
+              "BROWSER VERIFIED NATIVE",
+              "HEADING"
+            ]
+          },
+          {
+            "text": "A controlled integration fixture. No clinical or financial claim.",
+            "fontFamily": "'Inter', sans-serif",
+            "fontSize": "32",
+            "fontWeight": "400",
+            "textRuns": [
+              "A controlled integration fixture. No clinical or financial claim."
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Studio-to-Doory-proposed-contract-fixture-02.svg",
+        "bytes": 2033,
+        "sha256": "82e3d8d5667a29005b6a627593efefc8c8856bf66599c2023975bc73abfcebfe",
+        "width": "1080",
+        "height": "1350",
+        "textElements": [
+          {
+            "text": "SECOND PAGE",
+            "fontFamily": "'Inter', sans-serif",
+            "fontSize": "48",
+            "fontWeight": "700",
+            "textRuns": [
+              "SECOND PAGE"
+            ]
+          },
+          {
+            "text": "A controlled integration fixture. No clinical or financial claim.",
+            "fontFamily": "'Inter', sans-serif",
+            "fontSize": "32",
+            "fontWeight": "400",
+            "textRuns": [
+              "A controlled integration fixture. No clinical or financial claim."
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "png": {
+    "archiveSha256": "a2ed7ee4042a5c73c7fa49334f387ba8f0e78a60147a0f38ce77845ccc6c6ffd",
+    "entries": [
+      {
+        "name": "Studio-to-Doory-proposed-contract-fixture-01.png",
+        "bytes": 78066,
+        "sha256": "0671fed11ff6273419f83105747efd152cb97df0278095da35ee65c696416336",
+        "dimensions": [
+          1080,
+          1350
+        ]
+      },
+      {
+        "name": "Studio-to-Doory-proposed-contract-fixture-02.png",
+        "bytes": 66759,
+        "sha256": "3041915bcf57d934f055573cabff56e26bb6fe9165e33ef7ad04549689024375",
+        "dimensions": [
+          1080,
+          1350
+        ]
+      }
+    ]
+  }
+}
