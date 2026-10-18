@@ -1448,7 +1448,7 @@
             </div>
           </div>
           {/if}
-          {#if campaign && promotedStoryId===selectedStory.id && !nativeRecord && !preparedWorkspace}
+          {#if campaign && promotedStoryId===selectedStory.id && !nativeRecord && !preparedWorkspace && !((penpotEnabled || penpotStoryDesignsEnabled) && penpotHost)}
             <section class="panel" aria-label="Continue to design"><h3>Your reviewed copy is saved</h3><p>Choose a layout next. Layout approval and publication remain separate.</p>
               {#if nativeEditorEnabled}<button class="primary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Edit design</button>
               {:else}<button class="primary" onclick={()=>focusWorkflow("workflow-preview")}>Preview saved artwork</button>{/if}
