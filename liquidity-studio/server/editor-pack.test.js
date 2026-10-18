@@ -718,3 +718,30 @@ test('combined retained/live native history count is checked before any scene is
  await assert.rejects(f.service.export(actor),{status:413});assert.equal(hydrated,0);
  assert.deepEqual(await Promise.all((await f.store.keys('')).map(async key=>[key,await f.store.get(key)])),before);
 });
+
+
+test("export preflights exact projected repository lineage without writes or file collection", async (t) => {
+  const source = await fixture(t);
+  await source.repo.mutate((state) => {
+    state.usage.push({storyId: "story", generationId: "missing-trace"});
+    return state;
+  });
+  const snapshot = async () => Promise.all((await source.store.keys("")).sort().map(async key => [key, await source.store.get(key)]));
+  const before = await snapshot();
+  let collections = 0;
+  const service = new EditorPackService({native: source.native, createFiles: () => { collections++; throw Error("Must validate before collecting files"); }});
+  await assert.rejects(service.export(actor), {status: 400, message: "Orphaned generation lineage"});
+  assert.equal(collections, 0);
+  assert.deepEqual(await snapshot(), before);
+  // Correct the controlled fixture explicitly; export must not manufacture this trace.
+  await source.repo.mutate((state) => {
+    state.telemetry.traces.push({traceId: "missing-trace", storyId: "story"});
+    return state;
+  });
+  const corrected = await snapshot();
+  const pack = await source.service.export(actor);
+  assert.deepEqual(await snapshot(), corrected);
+  const target = await fixture(t, "liquidity_desk", true, "preflight-target");
+  await target.service.install(actor, pack, {...input, target: {organizationId: "organization", brandId: "preflight-target"}});
+  assert.equal((await target.repo.read()).usage[0].generationId, "missing-trace");
+});

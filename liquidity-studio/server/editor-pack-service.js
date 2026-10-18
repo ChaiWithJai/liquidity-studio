@@ -84,6 +84,25 @@ const pick = (value, fields) =>
       .filter((field) => value[field] !== undefined)
       .map((field) => [field, copy(value[field])]),
   );
+/** Run the install repository validator without a destination store or artifact writer.
+ * importData may normalize its input, so validate a clone of the exact portable projection. */
+export async function validatePortableRepository(repository, scope) {
+  let validatedState;
+  await ScopedRepository.prototype.importData.call(
+    {
+      scope,
+      key: "validation",
+      store: {
+        update: async (_key, callback) => {
+          validatedState = callback(null);
+        },
+      },
+    },
+    copy(repository),
+    { remapScope: true },
+  );
+  return validatedState;
+}
 /** Separate from database recovery: no principal/session/permit/lease restoration. */
 export class EditorPackService {
   constructor({
@@ -123,6 +142,7 @@ export class EditorPackService {
     );
     delete repository.data.preparedSourceCandidates;
     repository.sha256 = jsonDigest(repository.data);
+    await validatePortableRepository(repository, this.scope);
     const files = this.createFiles(),
       documents = [],
       assets = [],
@@ -461,19 +481,9 @@ export class EditorPackService {
           "Install the exact licensed pack fonts before restoration",
         );
     }
-    let validatedState;
-    await ScopedRepository.prototype.importData.call(
-      {
-        scope: this.scope,
-        key: "validation",
-        store: {
-          update: async (_key, callback) => {
-            validatedState = callback(null);
-          },
-        },
-      },
-      copy(validated.repository),
-      { remapScope: true },
+    const validatedState = await validatePortableRepository(
+      validated.repository,
+      this.scope,
     );
     for (const doc of pack.documents) {
       if (doc.metadata.origin.requiresSourceReview !== true)
