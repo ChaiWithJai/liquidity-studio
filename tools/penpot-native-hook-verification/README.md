@@ -7,8 +7,8 @@ installs PNPM, creates a native image, connects a native database, starts an
 application, or enables editing.
 
 Dispatch only after source review. `source_sha` must be the full reviewed Studio
-commit containing both `tools/penpot-brand-access` and
-`tools/penpot-live-fence`. The confirmation is
+commit containing `tools/penpot-brand-access`, `tools/penpot-live-fence` and
+`tools/penpot-native-access-bootstrap`. The confirmation is
 `verify-reviewed-penpot-native-hooks`. The recipe checkout is the workflow's own
 event commit; the independently pinned hook checkout is recorded in the artifact.
 No push or PR trigger exists. Do not dispatch a second run to conceal a failure.
@@ -18,7 +18,13 @@ reconciliation command/test and registers that command in the explicit RPC scan.
 C3 applies its exact pinned WebSocket patch and installs its original live module
 and focused test. Namespace loading checks the actual reconciliation command,
 access/HTTP-authority/live modules and patched HTTP/util WebSocket namespaces
-before Kaocha runs. All four expected focused test namespaces must load and each
+before Kaocha runs. The bootstrap's exact pinned `main.clj` SHA is verified, its
+`main.patch` is applied and its original configuration module/test are installed.
+The recipe requires `app.studio.configuration` and `app.main`, but never calls
+`start`, `resume`, Integrant initialization or `-main`. Pinned `app.main` defines
+those entry points as functions; requiring it constructs its configuration maps
+without invoking its listener/application startup. No native access config is
+supplied to the compile container. All five expected focused test namespaces must load and each
 must contain at least one test var; a zero-test discovery cannot be called a pass.
 
 The pinned backend defines `clojure -M:dev:test` and Kaocha in its actual
@@ -56,3 +62,25 @@ Primary pinned conventions:
 
 No local compile, Docker pull, test runner or manual hosted dispatch was performed
 while preparing this recipe.
+
+## First hosted attempt: preserved failure
+
+Run [39146035625](https://github.com/ChaiWithJai/liquidity-studio/actions/runs/39146035625)
+used recipe `f2443845` and hook source `4fd78e5a`. It failed before application or
+namespace compilation: `verify.sh` could not write `/evidence/source-ownership.json`.
+The retained official image metadata reports `Config.User="0"`; Clojure's actual
+toolchain receipt identifies `/root/.clojure`. Effective GID was not recorded in
+that attempt and is not invented here. The container had all capabilities dropped
+and could not write the runner-owned 0755 bind. Missing hook directories were a
+secondary collector error because no source had been installed. All dependency
+hashes remained unchanged. This is not native compilation or test evidence.
+
+The correction preserves the official container user/HOME and resource/capability
+bounds. Only disposable `upstream` and `evidence` trees gain group read/write/search
+access, and the container receives the hosted runner's primary group as an
+additional group. No world-write permission, chown, system-directory modification
+or wildcard Git trust is added. The next toolchain/ownership receipts record actual
+UID/GID/groups. The always collector records an empty installed-source inventory
+when installation did not occur, preserving the original failure. A new manual
+run still requires review/merge and explicit dispatch; this change does not rerun
+the failed job.
