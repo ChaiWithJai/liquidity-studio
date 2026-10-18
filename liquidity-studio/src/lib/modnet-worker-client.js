@@ -72,7 +72,9 @@ export function createModnetWorkerClient({
               else if (data.type === "error")
                 finish(
                   new Error(
-                    "Background removal failed; the original image is unchanged.",
+                    data.code === "OUTPUT_TOO_LARGE"
+                      ? "Cutout PNG exceeds 512 KiB. Original resolution and image remain unchanged; use an explicitly smaller source image and try again."
+                      : "Background removal failed; the original image is unchanged.",
                   ),
                   null,
                   true,

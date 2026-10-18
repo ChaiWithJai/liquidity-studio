@@ -291,6 +291,8 @@ export function createHttpServer(
         const types = {
           ".html": "text/html",
           ".js": "application/javascript",
+          ".mjs": "application/javascript",
+          ".wasm": "application/wasm",
           ".css": "text/css",
           ".svg": "image/svg+xml",
           ".json": "application/json",
@@ -616,6 +618,30 @@ export function createHttpServer(
         if (!nativeEditorEnabled || trustedTestMode)
           throw fail(404, "Not found");
         const service = platform.nativeEditor(scope, repo);
+        if (route.startsWith("/api/studio/native-editor/cutout/")) {
+          const cutout = platform.nativeCutout(scope, repo);
+          if (
+            route === "/api/studio/native-editor/cutout/model" &&
+            req.method === "GET"
+          )
+            return json(200, await cutout.manifest(user));
+          const chunk = route.match(
+            /^\/api\/studio\/native-editor\/cutout\/model\/(\d{1,2})$/,
+          );
+          if (chunk && req.method === "GET")
+            return json(200, await cutout.chunk(user, Number(chunk[1])));
+          if (
+            route === "/api/studio/native-editor/cutout/prepare" &&
+            req.method === "POST"
+          )
+            return json(200, await cutout.prepare(user, body));
+          if (
+            route === "/api/studio/native-editor/cutout/complete" &&
+            req.method === "POST"
+          )
+            return json(201, await cutout.complete(user, body));
+          throw fail(404, "Not found");
+        }
         if (route === "/api/studio/native-editor/fonts" && req.method === "GET")
           return json(200, {
             count: nativeFontCatalog().length,

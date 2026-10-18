@@ -413,7 +413,7 @@ export class NativeEditorService {
       })),
     };
   }
-  async uploadAsset(actor, input) {
+  async uploadAsset(actor, input, commitGuard = null) {
     exact(input, [
       "name",
       "contentType",
@@ -488,6 +488,15 @@ export class NativeEditorService {
     if (current) {
       if (current.fingerprint !== intent.fingerprint)
         throw fail(409, "Upload key was used for different content");
+      if (commitGuard) {
+        const checked = await this.commitGuardedAsset(
+          key,
+          current,
+          commitGuard,
+        );
+        await this.authorize(actor);
+        return this.assetDto(checked);
+      }
       return this.assetDto(current);
     }
     const asset = {
@@ -516,11 +525,13 @@ export class NativeEditorService {
     let retained = false;
     try {
       await this.authorize(actor);
-      const saved = await this.store.update(key, (prior) => {
-        if (prior && prior.fingerprint !== intent.fingerprint)
-          throw fail(409, "Upload key was used for different content");
-        return prior || asset;
-      });
+      const saved = commitGuard
+        ? await this.commitGuardedAsset(key, asset, commitGuard)
+        : await this.store.update(key, (prior) => {
+            if (prior && prior.fingerprint !== intent.fingerprint)
+              throw fail(409, "Upload key was used for different content");
+            return prior || asset;
+          });
       retained =
         !asset.artifactRef ||
         asset.artifactRef.object === saved.artifactRef?.object;
@@ -529,6 +540,19 @@ export class NativeEditorService {
       if (!retained && asset.artifactRef)
         await this.store.deleteArtifact?.(this.scope, asset.artifactRef);
     }
+  }
+  // Internal-only atomic guard, never populated from request JSON.
+  async commitGuardedAsset(key, asset, guard) {
+    const result = await this.store.transact(
+      [key, ...guard.keys],
+      ([prior, ...states]) => {
+        if (prior && prior.fingerprint !== asset.fingerprint)
+          throw fail(409, "Upload key was used for different content");
+        const committed = guard.validate(states, prior || asset);
+        return [committed, ...states];
+      },
+    );
+    return result[0];
   }
   assetDto(asset) {
     const { artifactRef, base64, fingerprint, ...dto } = asset;

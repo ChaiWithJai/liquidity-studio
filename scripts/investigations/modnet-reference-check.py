@@ -3,6 +3,7 @@ Requires numpy, Pillow, OpenCV, onnxruntime. Supply the owned pinned checkpoint
 and synthetic portrait explicitly. Outputs metadata, never image/model bytes.
 """
 import argparse, hashlib, json, pathlib, subprocess, tempfile
+from datetime import datetime, timezone
 import cv2
 import numpy as np
 import onnxruntime as ort
@@ -52,9 +53,9 @@ const out=applyModnetMatte(new Uint8Array(fs.readFileSync(process.argv[1])),Numb
   if not np.array_equal(output[:,:,:3],rgba[:,:,:3]): raise AssertionError('Original RGB changed')
   delta=np.abs(actual-reference)
   alpha_delta=np.abs((actual_matte*255).astype('uint8').astype('int16')-(ref_matte*255).astype('uint8').astype('int16'))
-  result=dict(fixture=name,width=w,height=h,modelDimensions=dims,inputMaxAbsolute=float(delta.max()),inputMeanAbsolute=float(delta.mean()),modelAlphaMaxDifference=int(alpha_delta.max()),modelAlphaMeanDifference=float(alpha_delta.mean()),finalAlphaMaxDifference=int(post_delta.max()),finalAlphaMeanDifference=float(post_delta.mean()),originalRgbPreserved=True)
+  result=dict(fixture=name,rgbaSha256=hashlib.sha256(rgba.tobytes()).hexdigest(),width=w,height=h,modelDimensions=dims,inputMaxAbsolute=float(delta.max()),inputMeanAbsolute=float(delta.mean()),modelAlphaMaxDifference=int(alpha_delta.max()),modelAlphaMeanDifference=float(alpha_delta.mean()),finalAlphaMaxDifference=int(post_delta.max()),finalAlphaMeanDifference=float(post_delta.mean()),originalRgbPreserved=True)
   if result['inputMaxAbsolute']>1e-6 or result['modelAlphaMaxDifference']>1 or result['finalAlphaMaxDifference']>1: raise AssertionError(result)
   results.append(result)
-report=dict(processor='studio-modnet-area-v1',modelSha256=expected,reference='ZHKKKe/MODNet@28165a451e4610c9d77cfdf925a94610bb2810fb/onnx/inference_onnx.py',scope='CPU reference agreement, not browser timing or ground-truth segmentation quality',versions=dict(opencv=cv2.__version__,onnxruntime=ort.__version__),fixtures=results)
+report=dict(generatedAt=datetime.now(timezone.utc).isoformat(),inputSha256=hashlib.sha256(pathlib.Path(a.image).read_bytes()).hexdigest(),processor='studio-modnet-area-v1',modelSha256=expected,reference='ZHKKKe/MODNet@28165a451e4610c9d77cfdf925a94610bb2810fb/onnx/inference_onnx.py',scope='CPU reference agreement, not browser timing or ground-truth segmentation quality',versions=dict(opencv=cv2.__version__,onnxruntime=ort.__version__),fixtures=results)
 pathlib.Path(a.output).write_text(json.dumps(report,indent=2)+'\n')
 print(json.dumps(report,indent=2))

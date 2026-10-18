@@ -15,6 +15,7 @@ test("original-only build blocks upstream source, dependencies and emitted frame
     "/node_modules/react/index.js",
     "/node_modules/react-dom/client.js",
     "/node_modules/fabric/dist/index.js",
+    "/node_modules/onnxruntime-web/dist/ort.wasm.js",
   ])
     assert.throws(
       () =>
@@ -26,6 +27,8 @@ test("original-only build blocks upstream source, dependencies and emitted frame
   for (const fileName of [
     "native-editor-frame.html",
     "native-editor-license.txt",
+    "assets/ort-wasm-simd-threaded.wasm",
+    "assets/modnet-worker-123.js",
   ])
     assert.throws(
       () => assertOriginalOnlyNativeBundle({ asset: { fileName } }),

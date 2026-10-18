@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { open } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import {
   MODNET_MODEL_SHA256,
@@ -6,6 +6,30 @@ import {
 } from "../src/lib/modnet-processor.js";
 const EXPECTED_SIZE = 25_888_640;
 const CHUNK_SIZE = 256 * 1024;
+async function readModel(path) {
+  const handle = await open(path, "r");
+  try {
+    const stat = await handle.stat();
+    if (!stat.isFile() || stat.size !== EXPECTED_SIZE) throw fail();
+    const bytes = Buffer.alloc(EXPECTED_SIZE);
+    let offset = 0;
+    while (offset < bytes.length) {
+      const { bytesRead } = await handle.read(
+        bytes,
+        offset,
+        bytes.length - offset,
+        offset,
+      );
+      if (!bytesRead) throw fail();
+      offset += bytesRead;
+    }
+    const extra = Buffer.alloc(1);
+    if ((await handle.read(extra, 0, 1, EXPECTED_SIZE)).bytesRead) throw fail();
+    return bytes;
+  } finally {
+    await handle.close();
+  }
+}
 const fail = () =>
   Object.assign(new Error("Native background removal is unavailable."), {
     status: 503,
@@ -16,7 +40,7 @@ const fail = () =>
 export function createNativeCutoutModel({
   enabled = false,
   path,
-  read = readFile,
+  read = readModel,
 } = {}) {
   let bytes = null,
     loading = null;
