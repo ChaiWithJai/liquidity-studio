@@ -937,3 +937,24 @@ test("token accounting preserves the exact existing500000 content-node acceptanc
   assert.equal(count(contentOf(pack)), 500001);
   assert.throws(() => validateEditorPack(pack), { status: 413, message: "Editor pack complexity limit" });
 });
+
+test("restore capacity uses exact validated Unicode pack bytes without reserializing the pack", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor);
+  pack.documents[0].metadata.title = "Unicode 宇宙 😀 \ud800 caption";
+  const { sha256, ...content } = pack;
+  pack.sha256 = jsonDigest(content);
+  const expectedBytes = Buffer.byteLength(JSON.stringify(pack), "utf8");
+  assert.equal(validateEditorPack(pack).serializedBytes, expectedBytes);
+  const target = await fixture(t, "liquidity_desk", true);
+  let requested;
+  target.service.capacityCheck = async bytes => {
+    requested = bytes;
+    throw Object.assign(new Error("controlled capacity rejection"), { status: 507 });
+  };
+  const before = Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)]));
+  await assert.rejects(target.service.install(actor, pack, input), { status: 507 });
+  assert.equal(requested, expectedBytes * 3);
+  assert.deepEqual(Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)])), before);
+});

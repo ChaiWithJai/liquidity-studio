@@ -435,7 +435,7 @@ export function validateEditorPack(input) {
   // Replacing the value preserves the original top-level key order/checksum.
   const pack = structuredClone({ ...input, files: [] });
   pack.files = input.files.map((file) => ({ ...file }));
-  return { pack, files, repository, json, bytes };
+  return { pack, files, repository, json, bytes, serializedBytes: accounting.bytes };
 }
 export function sealEditorPack(content) {
   const pack = { ...content, sha256: jsonDigest(content) };

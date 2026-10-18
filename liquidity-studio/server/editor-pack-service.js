@@ -535,7 +535,7 @@ export class EditorPackService {
         throw fail(422, "Invalid portable image dimensions or encoding");
       await image.resize(1, 1).raw().toBuffer();
     }
-    await this.capacityCheck(Buffer.byteLength(JSON.stringify(pack)) * 3);
+    await this.capacityCheck(validated.serializedBytes * 3);
     const intentFingerprint = jsonDigest({
       packSha256: pack.sha256,
       options: input,
