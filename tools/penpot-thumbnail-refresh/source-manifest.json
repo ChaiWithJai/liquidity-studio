@@ -4,15 +4,20 @@
   "files": {
     "frontend/src/app/main/data/workspace/thumbnails.cljs": {
       "beforeSha256": "f878a5ea4ba26af748fbf5ea0a4c2b6d19948fbe8de93d26d59ab7fb448cf628",
-      "afterSha256": "6d28f3cb8629f41ddc2f6c4c067ab763ec45856575072f13676b84c6800bebd4"
+      "afterSha256": "056ddab4dbb00d8a334769634e29a395cae0aadc018f31dd0e65ca7033c112f9"
+    },
+    "frontend/src/app/main/ui/workspace/shapes/frame.cljs": {
+      "beforeSha256": "ee6a3849409219f2f3235d7a92415945dd9ff6b369a74ddf524389e8beb5761b",
+      "afterSha256": "ba8dcdf53c3996937d9105764bdad8d8f7097c3b6b2fa7fcc2f2f72536204d58"
     },
     "frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs": {
       "beforeSha256": "6fcef378ed0adb5c48ffe1bfc366c0c2b2bbd1650408d0d51168e8e1faf9b657",
-      "afterSha256": "517b1ba7f22654073b74e05e78d0a6b467de8c8f73db815d9c3913790b2c2885"
+      "afterSha256": "ffda8d8c089dd64525a2563adf3afdf8416c6c56397e40640914f0f291c1d36c"
     }
   },
   "patches": {
-    "thumbnails.patch": "34443e1b1ebc88b44091904ea56365f07af2cd847344e76a6554ec2d4d91464a",
-    "thumbnails-test.patch": "8f407013307af0ce5f23513846d7fe81ed403f88b3c246885daa36777252c93e"
+    "frame.patch": "af5d89130f4864f6780a2c183fee8f64e4192e9dafc8e8cba7ba86ad2313ffca",
+    "thumbnails-test.patch": "78ab0c9c7deee6241c6c8e508d4f04730236241bfd62626bcb80d175d1227028",
+    "thumbnails.patch": "77c150bbca00a2545d274fb7f0c268fcddc865b3ee5039548b08d3a652476074"
   }
 }

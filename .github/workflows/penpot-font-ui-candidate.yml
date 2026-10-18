@@ -55,7 +55,7 @@ jobs:
           git -C upstream apply --check ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
           git -C upstream apply ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
           python3 studio/tools/penpot-thumbnail-refresh/apply.py upstream > evidence/thumbnail-apply.json
-          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs frontend/src/app/main/data/workspace/thumbnails.cljs frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs > evidence/applied.patch
+          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs frontend/src/app/main/data/workspace/thumbnails.cljs frontend/src/app/main/ui/workspace/shapes/frame.cljs frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs > evidence/applied.patch
       - name: Resolve pinned official toolchain without building an image
         shell: bash
         run: |
@@ -144,8 +144,9 @@ jobs:
           git -C upstream archive HEAD | gzip > evidence/upstream-source.tar.gz
           cp upstream/frontend/src/app/main/data/fonts.cljs evidence/fonts.modified.cljs
           cp upstream/frontend/src/app/main/data/workspace/thumbnails.cljs evidence/thumbnails.modified.cljs
+          cp upstream/frontend/src/app/main/ui/workspace/shapes/frame.cljs evidence/frame.modified.cljs
           cp upstream/frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs evidence/workspace_thumbnails_test.modified.cljs
-          cp studio/tools/penpot-thumbnail-refresh/thumbnails.patch studio/tools/penpot-thumbnail-refresh/thumbnails-test.patch evidence/
+          cp studio/tools/penpot-thumbnail-refresh/thumbnails.patch studio/tools/penpot-thumbnail-refresh/thumbnails-test.patch studio/tools/penpot-thumbnail-refresh/frame.patch evidence/
           cp studio/tools/penpot-thumbnail-refresh/source-manifest.json evidence/thumbnail-source-manifest.json
           cp studio/tools/penpot-thumbnail-refresh/README.md evidence/thumbnail-README.md
           cp upstream/LICENSE evidence/UPSTREAM-LICENSE
