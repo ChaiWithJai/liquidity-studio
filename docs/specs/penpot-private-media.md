@@ -2,6 +2,8 @@
 
 This extends the approved #52/#54 registered editor/private-asset modules. It creates no cloud resources, editor backend fork, service image or new storage system. The existing owned Penpot frontend remains the only published native surface. The opt-in candidate callback is reserved on **39038**; ports39035–39037 belong to other fixtures. No ingress change is authorized merely by building this source: the frozen configuration and complete inventory must be reviewed before the owned frontend is changed.
 
+Ingress enforcement and image transfer have separate disabled-default gates. `STUDIO_PENPOT_PRIVATE_INGRESS=true` enables the reviewed callback; `STUDIO_PENPOT_RASTER_ENABLED` stays false while authorization/font/export checks run. Only after those observations pass may the operator explicitly enable raster actions. A marker response alone never enables transfer.
+
 ## Authority and copy semantics
 
 Studio authorizes the current managed Google actor, organization/brand membership, source/generation/brand/native revisions, registered native owner/project and private image rights/generation/hash before transferring bytes. The native action adds one image fill to current state; it never writes a stale document snapshot or claims editorial approval.

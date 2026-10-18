@@ -32,6 +32,8 @@ export async function createPenpotStudioRuntime({
   );
   const services = new Map();
   const privateIngress = env.STUDIO_PENPOT_PRIVATE_INGRESS === "true";
+  const rasterEnabled =
+    privateIngress && env.STUDIO_PENPOT_RASTER_ENABLED === "true";
   const nativeOrigin =
     configuration.transportMode === "docker-host"
       ? "http://host.docker.internal:39008"
@@ -92,7 +94,7 @@ export async function createPenpotStudioRuntime({
     return services.get(key);
   };
   const transport = new PenpotTokenRefreshTransport({
-    privateRasterSupported: privateIngress,
+    privateRasterSupported: rasterEnabled,
     prepareRaster: (input, context, snapshot) =>
       serviceFor(input.binding).prepareRaster(
         input,
@@ -317,7 +319,7 @@ export async function createPenpotStudioRuntime({
       );
       const bindings = [];
       let imageDeliveryAvailable = false;
-      if (privateIngress) {
+      if (rasterEnabled) {
         try {
           await assertPrivateDelivery();
           imageDeliveryAvailable = true;
