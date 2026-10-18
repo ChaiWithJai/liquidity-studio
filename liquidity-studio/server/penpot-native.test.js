@@ -6,7 +6,8 @@ import {
   compileMultimodalBundle,
   brandRevision,
 } from "./multimodal-contract.js";
-import { compilePenpotNative } from "./penpot-native.js";
+import { compilePenpotNative, PENPOT_OM_FONT } from "./penpot-native.js";
+import { penpotNativeFontBindings } from "./penpot-token-refresh.js";
 const fileId = "11111111-1111-4111-8111-111111111111";
 const fonts = [
   ["Mona Sans", 400],
@@ -173,4 +174,25 @@ test("coherent imported bundle tampering cannot replace source-approved copy or 
     () => compilePenpotNative(wrongGeneration, { fileId, fonts }),
     /GENERATION_MISMATCH/,
   );
+});
+
+
+test("explicit Om badge uses only the pinned licensed team-local Noto glyph run and preserves every Latin style", () => {
+  const input=fixture("vedic_dharma"),before=structuredClone(input),noto={...PENPOT_OM_FONT,fontId:"custom-00000000-0000-4000-8000-000000000009"};
+  const original=compilePenpotNative(input,{fileId,fonts}),bound=compilePenpotNative(input,{fileId,fonts:[...fonts,noto],explicitOm:true});
+  const originals=original.changes.filter(c=>c.obj?.name==="brand_pill_badge"),badges=bound.changes.filter(c=>c.obj?.name==="brand_pill_badge");
+  assert.equal(badges.length,9);assert.equal(bound.fontBindings.at(-1).sha256,PENPOT_OM_FONT.sha256);
+  assert.ok(penpotNativeFontBindings(bound).some(f=>f.fontId===noto.fontId&&f.family===noto.family&&f.weight==="400"));
+  for(let i=0;i<badges.length;i++){
+    const oldLeaf=originals[i].obj.content.children[0].children[0].children[0],paragraph=badges[i].obj.content.children[0].children[0],runs=paragraph.children;
+    assert.equal(runs.map(r=>r.text).join(""),oldLeaf.text);assert.ok(runs.some(r=>r.text==="ॐ"));
+    for(const run of runs){const expected={...oldLeaf,text:run.text,...(run.text==="ॐ"?{"font-id":noto.fontId,"font-family":noto.family}:{})};assert.deepEqual(run,expected);}
+    assert.equal(paragraph["font-id"],originals[i].obj.content.children[0].children[0]["font-id"]);
+  }
+  const other=changes=>changes.filter(c=>c.obj?.name!=="brand_pill_badge");assert.deepEqual(other(bound.changes),other(original.changes));assert.deepEqual(input,before);
+  const duplicate=compilePenpotNative(input,{fileId,fonts:[...fonts,{...noto,fontId:"custom-00000000-0000-4000-8000-000000000008",sha256:"b".repeat(64)},noto],explicitOm:true});
+  assert.equal(duplicate.fontBindings.at(-1).fontId,noto.fontId);
+  assert.throws(()=>compilePenpotNative(input,{fileId,fonts,explicitOm:true}),/OM_FONT_NOT_VERIFIED/);
+  assert.throws(()=>compilePenpotNative(input,{fileId,fonts:[...fonts,{...noto,sha256:"b".repeat(64)}],explicitOm:true}),/OM_FONT_NOT_VERIFIED/);
+  assert.throws(()=>compilePenpotNative(input,{fileId,fonts:[...fonts,{...noto,license:"unknown"}],explicitOm:true}),/OM_FONT_NOT_VERIFIED/);
 });

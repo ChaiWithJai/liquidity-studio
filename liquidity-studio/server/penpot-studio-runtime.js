@@ -1,3 +1,4 @@
+import {PenpotStoryDesigns,createPenpotStoryRpc} from './penpot-story-design.js';
 import { EditorBoundary } from "./editor-boundary.js";
 import { ScopedRepository } from "./repository.js";
 import { fail } from "./auth.js";
@@ -519,7 +520,26 @@ export async function createPenpotStudioRuntime({
     authorize: authorizeMediaRecord,
     resolve: resolveMediaRecord,
   });
+  const storyRpc=createPenpotStoryRpc({sessions:configuration.sessions,transportMode:configuration.transportMode});
+  const storyServices=new Map();
+  const storyWorkspace=async(actor,scope)=>{
+    const service=serviceFor(scope);await service.ledger.permitted(actor);identity.requireFounder(actor);
+    for(const target of configuration.targets.filter(t=>t.organizationId===scope.organizationId&&t.brandId===scope.brandId)){
+      let selected;try{selected=await currentPenpotBinding(service.boundaryFactory(transport),target,async binding=>{const current=await identity.authorizeJobActor(actor.id,new Date().toISOString());await identity.authorize(current,scope.organizationId,scope.brandId);return current;});}catch(error){if([403,409].includes(error.status))continue;throw error;}
+      const entry=configuration.manifests.get(target.id),fonts=entry?.manifest.nativeFonts;if(!Array.isArray(fonts)||!fonts.length)throw fail(422,'Verified team-local font bindings are required for a new design');
+      const workspace={targetId:target.id,bindingId:selected.binding.id,bindingEpoch:selected.binding.epoch,ownerPrincipal:target.ownerPrincipal,projectId:target.nativeProjectId,teamId:entry.teamId,fonts:structuredClone(fonts)};
+      const profile=await storyRpc(workspace,'get-profile',{}),project=await storyRpc(workspace,'get-project',{id:workspace.projectId});
+      if(profile.id!==workspace.ownerPrincipal||project.id!==workspace.projectId||project.teamId!==workspace.teamId)throw fail(403,'Current native owner or workspace changed');
+      const variants=await storyRpc(workspace,'get-font-variants',{'team-id':workspace.teamId});
+      if(!Array.isArray(variants)||fonts.some(font=>!variants.some(row=>'custom-'+row.fontId===font.fontId&&row.fontFamily===font.family&&Number(row.fontWeight)===font.weight)))throw fail(422,'Current native team fonts do not match the verified bindings');
+      return workspace;
+    }
+    throw fail(403,'Register a current native workspace for this brand before creating a design');
+  };
+  const storyService=scope=>{const key=`${scope.organizationId}:${scope.brandId}`;if(!storyServices.has(key))storyServices.set(key,new PenpotStoryDesigns({store,identity,scope,repo:new ScopedRepository(store,scope),workspaceFor:storyWorkspace,rpc:storyRpc}));return storyServices.get(key);};
   return {
+    designs:(actor,scope,input)=>storyService(scope).designs(actor,input),
+    createDesign:(actor,scope,input)=>storyService(scope).createDesign(actor,input),
     transport,
     transportMode: configuration.transportMode,
     forScope: serviceFor,

@@ -27,8 +27,33 @@ Cookies use the fixed profile name `studio_dev_<profile>`. The developer wrapper
 
 The child process receives a small operating-system environment allowlist. Google/ADC, provider API keys, remote storage/dispatcher settings, and operator configurations are not inherited. Generation uses the existing gateway's **offline-synthetic** fallback with `AI_ALLOW_SYNTHETIC=true`; its existing approved-source requirements and provenance remain in force. No human review or publication approval is invented. Remote model/provider `fetch` calls are denied in this developer process. Public source preparation is enabled through the existing HTTPS host, DNS-pinning, byte, status, and deadline guards. It does not use a paid model provider. This is an application boundary, not an operating-system network firewall.
 
-Source jobs, source preparation, and typed helper controls are enabled. The existing durable local worker runs sequentially in the API/Vite process, with no separate service or new queue architecture. Preexisting queued work is paused on restart by the existing worker contract until explicitly resumed. Shutdown aborts and waits for that worker before closing SQLite; a10-second drain failure stops the child with an error and preserves its profile for recovery. Penpot, native editing, portable recovery, and cutout remain disabled. These profiles emulate the local role/session/data workflow, not full deployed feature parity or licensed native media distribution. No model, held upstream frame, or new service is downloaded or started. Vite HMR uses the same guarded loopback HTTP server and its cache remains profile-specific.
+Source jobs, source preparation, and typed helper controls are enabled. The existing durable local worker runs sequentially in the API/Vite process, with no separate service or new queue architecture. Preexisting queued work is paused on restart by the existing worker contract until explicitly resumed. Shutdown aborts and waits for that worker before closing SQLite; a10-second drain failure stops the child with an error and preserves its profile for recovery. Embedded native editing, portable recovery, and cutout remain disabled. Penpot Create/Open is disabled by default and can be enabled with the explicit local option below. These profiles emulate the local role/session/data workflow, not full deployed feature parity or licensed native media distribution. No model, held upstream frame, or new service is downloaded or started. Vite HMR uses the same guarded loopback HTTP server and its cache remains profile-specific.
 
 Stop with Ctrl+C. The launcher drains its local worker, then closes its Vite server and SQLite connection and removes only its own PID lock. A crash can leave `launcher.lock`: verify the recorded PID is no longer the owned launcher before manually removing **that lock only**. Never delete or replace the database to clear a lock. If startup left a marker but no database, preserve the directory for inspection; the launcher reports a marker mismatch rather than silently initializing over it. Bind failures and missing dependencies are reported without installing or changing a maintained service.
 
 The loopback wrapper rejects foreign Host/Origin values and forwarded headers before the backend or Vite handler. Persona selection requires a same-origin bounded form with exactly one of the two fixed persona names. This developer-only picker is not a production authentication mode or a remotely deployable login bypass. Do not expose it through a tunnel or reverse proxy.
+
+
+### Optional local Penpot Create/Open
+
+To connect the developer profile to an existing local Penpot workspace, explicitly
+pass a private operator configuration file:
+
+```sh
+npm run dev -- --profile development --port 3002 --penpot-config /absolute/private/operator.json
+```
+
+The file uses the existing pinned Penpot operator configuration schema, must be
+private, and must select the fixed loopback service at `localhost:39008`. Its
+per-brand workspace, native owner session and verified team-local fonts are server
+configuration. They are never chosen by the browser. A current local founder can
+create and reopen a design from saved, reviewed campaign copy. Marketers cannot
+create designs through this developer adapter. Ordinary native project edit ACLs
+still apply to creation.
+
+This enables only Create/Open. It does not enable the full Penpot token, media,
+callback or export integration, change production Google authentication, or prove
+Studio-to-native human identity pairing. The developer profile and native owner
+are separate identities. With no `--penpot-config`, the existing launcher behavior
+is unchanged. Restart with the same profile and private configuration to recover
+pending creation or reopen its existing saved native design.

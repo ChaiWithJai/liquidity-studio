@@ -439,10 +439,9 @@
 <section class="emulator" aria-label="Instagram preview simulator">
   <div class="preview-heading">
     <div>
-      <span class="eyebrow">PREVIEW LAB</span>
-      <h3>See it in context.</h3>
+      <h3>Studio preview</h3>
     </div>
-    <span class="simulation">Local simulation</span>
+    <span class="simulation">Saved copy · local simulation</span>
   </div>
   <div class="segmented" aria-label="Preview mode">
     <button class:active={mode === "design"} onclick={() => setMode("design")}

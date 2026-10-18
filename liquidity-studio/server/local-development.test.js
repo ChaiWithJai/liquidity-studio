@@ -96,7 +96,13 @@ test('actual developer HTTP sessions preserve memberships, reject foreign scope 
     assert.equal((await select(app,'administrator')).status,400);
     assert.equal((await httpRequest(app.origin,'/__dev/session',{method:'POST',headers:{origin:app.origin,'content-type':'application/x-www-form-urlencoded'},body:'persona=founder&role=founder'})).status,400);
     assert.equal((await httpRequest(app.origin,'/api/auth/config',{headers:{Host:'attacker.invalid'}})).status,403);
-    const founderReply=await select(app,'founder');assert.equal(founderReply.status,303);
+    const workflow='/?org=org_default&brand=brand_default&tab=studio&story=story_huda_buyback&format=carousel&page=2';
+    const pickerRedirect=await httpRequest(app.origin,workflow);
+    assert.equal(new URL(pickerRedirect.headers.location,app.origin).searchParams.get('returnTo'),workflow);
+    const picker=await httpRequest(app.origin,pickerRedirect.headers.location);
+    assert.match(picker.text,/name="returnTo"/);assert.ok(picker.text.includes('org=org_default&amp;brand=brand_default'));
+    for(const returnTo of ['https://example.org/','//example.org/','/\\example.org/'])assert.equal((await httpRequest(app.origin,'/__dev/session',{method:'POST',headers:{origin:app.origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({persona:'founder',returnTo}).toString()})).status,400);
+    const founderReply=await httpRequest(app.origin,'/__dev/session',{method:'POST',headers:{origin:app.origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({persona:'founder',returnTo:workflow}).toString()});assert.equal(founderReply.status,303);assert.equal(founderReply.headers.location,workflow);
     const founderCookie=sessionCookie(founderReply);assert.match(founderCookie,/^studio_dev_development=/);
     const founder=(await httpRequest(app.origin,'/api/auth/session',{headers:{cookie:founderCookie}}));
     assert.equal(founder.status,200);assert.equal(founder.json.user.role,'founder');
