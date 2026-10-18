@@ -1,0 +1,31 @@
+{
+  "sourceCommit": "6bf667fb899fcbd5e3196d789c0a3c9ee82546f8",
+  "candidateSha256": "f6d9518cac31d85d35ba5819bf8eb9cd97f98c5cef82eaaff3550a84347d9f03",
+  "highestSampledMemoryBytes": 282255360,
+  "sampleCount": 154,
+  "truePeakAvailable": false,
+  "appExited": 0,
+  "oomKilled": false,
+  "installObservedByRootNeo": "completed",
+  "limits": {
+    "appMemory": 536870912,
+    "proxyMemory": 67108864,
+    "totalConfigured": 603979776
+  },
+  "scope": "one controlled candidate; not every admissible shape; tmpfs not durable restart",
+  "backup": {
+    "integrity": "ok",
+    "bytes": 36233216,
+    "sha256": "2fab3b06f939bf54954c9fe271832078c4bac7ec6880b996c76cbf9ed98d630c",
+    "records": 86,
+    "journalStatuses": [
+      "completed"
+    ],
+    "archiveBytes": 40386560,
+    "archiveSha256": "2a69ad689b4d282bddffca292d1b4fe21cabc8ed42aed1e48df87f699ceba054"
+  },
+  "postAcceptanceShellTarOverheadIncludedInSamples": true,
+  "controlledPasswordNotGoogle": true,
+  "ordinaryNeoInstallNotOfflineValidation": true,
+  "noAutomaticRetry": true
+}
