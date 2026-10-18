@@ -26,23 +26,32 @@ export function verifyPenpotStoryFile(file,compiled,projectId){
 function compileStory(bundle,options){try{return compilePenpotNative(bundle,{...options,explicitOm:true});}catch(error){if(error.message==='OM_FONT_NOT_VERIFIED')throw fail(422,'This workspace needs the verified Noto Sans Devanagari font for the Om badge');if(error.message==='FONT_NOT_VERIFIED')throw fail(422,'The native workspace fonts do not match the saved Brand Kit');if(error.message==='OM_GLYPH_OUTSIDE_BADGE')throw fail(422,'Explicit Om font binding currently supports the brand badge only');throw error;}}
 /** Workspace authority and RPC are constructor-only. No owner/session/project URL from HTTP. */
 export class PenpotStoryDesigns{
- constructor({store,identity,scope,repo,workspaceFor,rpc,now=()=>Date.now()}){Object.assign(this,{store,identity,scope,repo,workspaceFor,rpc,now});this.key=`penpot-story-designs:${scope.organizationId}:${scope.brandId}`;}
- async context(actor,storyId){
-  this.identity.requireFounder(actor);const currentActor=(await this.store.get('identity'))?.users?.find(x=>x.id===actor.id);if(currentActor?.role!=='founder')throw fail(403,'Current founder permission required');await this.identity.authorize(actor,this.scope.organizationId,this.scope.brandId);
-  const workspace=await this.workspaceFor(actor,this.scope),state=await this.repo.read();assertRestoreAvailable(state);
-  const liveIdentity=await this.store.get('identity');if(liveIdentity?.users?.find(x=>x.id===actor.id)?.role!=='founder'||!liveIdentity.memberships?.some(x=>x.userId===actor.id&&x.organizationId===this.scope.organizationId&&x.brandIds.includes(this.scope.brandId)))throw fail(403,'Current founder or brand membership changed');
+ constructor({store,identity,scope,repo,workspaceFor,rpc,brandAccess=null,now=()=>Date.now()}){Object.assign(this,{store,identity,scope,repo,workspaceFor,rpc,brandAccess,now});this.key=`penpot-story-designs:${scope.organizationId}:${scope.brandId}`;}
+ async context(actor,storyId,sessionContext){
+  await this.identity.authorize(actor,this.scope.organizationId,this.scope.brandId);
+  let workspace,grantSnapshot;
+  if(this.brandAccess){
+   ({workspace,grantSnapshot}=await this.brandAccess.require(actor,this.scope,sessionContext));
+  }else{
+   this.identity.requireFounder(actor);
+   const currentActor=(await this.store.get('identity'))?.users?.find(x=>x.id===actor.id);
+   if(currentActor?.role!=='founder')throw fail(403,'Current founder permission required');
+   workspace=await this.workspaceFor(actor,this.scope);
+  }
+  const state=await this.repo.read();assertRestoreAvailable(state);
+  const liveIdentity=await this.store.get('identity');if((!this.brandAccess&&liveIdentity?.users?.find(x=>x.id===actor.id)?.role!=='founder')||!liveIdentity.memberships?.some(x=>x.userId===actor.id&&x.organizationId===this.scope.organizationId&&x.brandIds.includes(this.scope.brandId)))throw fail(403,'Current design permission or brand membership changed');
   const story=state.backlog.find(x=>x.id===storyId);if(!story)throw fail(404,'Saved story not found');
   if(!story.campaignDraft||!story.generationId)throw fail(422,'Review and hand off the saved campaign before creating its Penpot design');
   const bundle=compileMultimodalBundle({scope:this.scope,brandProfile:state.brandProfile,story,request:{schemaVersion:1,storyId:story.id,expectedRevision:story.revision,generationId:story.generationId,expectedBrandRevision:brandRevision(state.brandProfile),requiredCapabilities:[]}});
   const authority={targetId:workspace.targetId,bindingId:workspace.bindingId,bindingEpoch:workspace.bindingEpoch,ownerPrincipal:workspace.ownerPrincipal,projectId:workspace.projectId,teamId:workspace.teamId,fonts:workspace.fonts};
   if(![workspace.ownerPrincipal,workspace.projectId,workspace.teamId].every(uuid)||!Array.isArray(workspace.fonts))throw fail(503,'Verified native workspace and fonts are unavailable');
   const identity={storyId:story.id,generationId:story.generationId,contentRevision:story.contentRevision||1,contentSha256:storyContentDigest(story),brandRevision:bundle.brandRevision,authoritySha256:hash(authority)};
-  return {story,bundle,workspace,identity,designKey:hash(identity)};
+  return {story,bundle,workspace,grantSnapshot,identity,designKey:hash(identity)};
  }
  dto(record,format,actor){const page=record.pages?.find(p=>p.format===format);return {id:record.id,status:record.status,storyId:record.identity.storyId,generationId:record.identity.generationId,fileId:record.fileId,nativeRevision:record.nativeRevision??null,nativeUrl:record.status==='ready'?`http://localhost:39008/#/workspace?team-id=${record.teamId}&file-id=${record.fileId}${page?'&page-id='+page.id:''}`:null,...(record.actorId===actor.id&&record.status==='pending'?{retry:{...record.input}}:{}),limitations:['Native Reel pages are static boards, not rendered video.','Source review and publication approval are separate.']};}
- async designs(actor,input){query(input);try{const context=await this.context(actor,input.storyId);compileStory(context.bundle,{fileId:'00000000-0000-4000-8000-000000000001',fonts:context.workspace.fonts});const state=await this.store.get(this.key);let record=state?.designs.find(x=>x.designKey===context.designKey);if(record?.status==='ready'){const file=await this.rpc(context.workspace,'get-file',{id:record.fileId});if(file.id!==record.fileId||file.projectId!==context.workspace.projectId||!Number.isSafeInteger(file.revn)||file.revn<0)throw fail(403,'Current native design access is unavailable');record={...record,nativeRevision:file.revn};}return {available:true,reason:null,design:record?this.dto(record,input.format,actor):null};}catch(error){if([409,422,503].includes(error.status))return {available:false,reason:error.message,design:null};throw error;}}
- async createDesign(actor,input){
-  command(input);const requestHash=hash({actorId:actor.id,input});let context=await this.context(actor,input.storyId),record;
+ async designs(actor,input,sessionContext){query(input);try{const context=await this.context(actor,input.storyId,sessionContext);compileStory(context.bundle,{fileId:'00000000-0000-4000-8000-000000000001',fonts:context.workspace.fonts});const state=await this.store.get(this.key);let record=state?.designs.find(x=>x.designKey===context.designKey);if(record?.status==='ready'){const file=await this.rpc(context.workspace,'get-file',{id:record.fileId});if(file.id!==record.fileId||file.projectId!==context.workspace.projectId||!Number.isSafeInteger(file.revn)||file.revn<0)throw fail(403,'Current native design access is unavailable');record={...record,nativeRevision:file.revn};}return {available:true,reason:null,design:record?this.dto(record,input.format,actor):null};}catch(error){if([409,422,503].includes(error.status))return {available:false,reason:error.message,design:null};throw error;}}
+ async createDesign(actor,input,sessionContext){
+  command(input);const requestHash=hash({actorId:actor.id,input});let context=await this.context(actor,input.storyId,sessionContext),record;
   await this.store.update(this.key,old=>{const state=old||{designs:[],intents:[]};const prior=state.intents.find(x=>x.key===input.idempotencyKey);if(prior){if(prior.actorId!==actor.id||prior.requestHash!==requestHash)throw fail(409,'Operation key belongs to another design request');record=state.designs.find(x=>x.id===prior.designId);if(!record||record.designKey!==context.designKey)throw fail(409,'Source or workspace changed; original native design is preserved');return state;}
    if(input.expectedRevision!==context.story.revision||input.generationId!==context.story.generationId)throw fail(409,'Saved story changed; refresh before creating a design');
    if(state.intents.length>=128)throw fail(429,'Native design operation capacity reached');
@@ -52,7 +61,7 @@ export class PenpotStoryDesigns{
    state.intents.push({key:input.idempotencyKey,actorId:actor.id,requestHash,designId:record.id});return state;
   });
   // Every remote side effect and read is preceded by fresh current scope/source/native authority.
-  const revalidate=async()=>{const current=await this.context(actor,input.storyId);if(current.designKey!==record.designKey)throw fail(409,'Source or native authority changed; existing design is preserved');context=current;};
+  const revalidate=async()=>{const current=await this.context(actor,input.storyId,sessionContext);if(current.designKey!==record.designKey)throw fail(409,'Source or native authority changed; existing design is preserved');context=current;};
   const call=async(name,body)=>{await revalidate();return this.rpc(context.workspace,name,body);};
   const compiled=compileStory(context.bundle,{fileId:record.fileId,fonts:context.workspace.fonts});
   if(record.status==='ready'){const current=await call('get-file',{id:record.fileId});if(current.id!==record.fileId||current.projectId!==context.workspace.projectId||!Number.isSafeInteger(current.revn)||current.revn<0)throw fail(403,'Current native design access is unavailable');return this.dto({...record,nativeRevision:current.revn},input.format,actor);}
@@ -65,11 +74,14 @@ export class PenpotStoryDesigns{
    if(!verifyPenpotStoryFile(file,compiled,context.workspace.projectId))throw fail(502,'Native save readback did not match the compiled design');
   }
   await revalidate();
-  await this.store.transact([this.key,this.repo.key,'identity',`editor-security:${this.scope.organizationId}:${this.scope.brandId}`],([state,scoped,identity,security])=>{
+  const guardKeys=this.brandAccess?this.brandAccess.guardKeys(context.grantSnapshot):[];
+  await this.store.transact([this.key,this.repo.key,'identity',`editor-security:${this.scope.organizationId}:${this.scope.brandId}`,...guardKeys],values=>{
+   const [state,scoped,identity,security,...guardValues]=values;
+   if(this.brandAccess)this.brandAccess.assertCurrent({identity,brandAccess:guardValues[0],pair:guardValues[1],profileOwner:guardValues[2],session:guardValues[3]},context.grantSnapshot);
    assertRestoreAvailable(scoped);const currentStory=scoped?.backlog?.find(x=>x.id===input.storyId),currentActor=identity?.users?.find(x=>x.id===actor.id),binding=security?.bindings?.find(x=>x.id===context.workspace.bindingId);
-   if(currentActor?.role!=='founder'||!identity.memberships?.some(x=>x.userId===actor.id&&x.organizationId===this.scope.organizationId&&x.brandIds.includes(this.scope.brandId))||!binding||binding.revokedAt||binding.epoch!==context.workspace.bindingEpoch||binding.ownerPrincipal!==context.workspace.ownerPrincipal||binding.nativeProjectId!==context.workspace.projectId)throw fail(403,'Current native registration or membership changed');
+   if((!this.brandAccess&&currentActor?.role!=='founder')||!identity.memberships?.some(x=>x.userId===actor.id&&x.organizationId===this.scope.organizationId&&x.brandIds.includes(this.scope.brandId))||!binding||binding.revokedAt||binding.epoch!==context.workspace.bindingEpoch||binding.ownerPrincipal!==context.workspace.ownerPrincipal||binding.nativeProjectId!==context.workspace.projectId)throw fail(403,'Current native registration or membership changed');
    if(!currentStory||currentStory.generationId!==record.identity.generationId||(currentStory.contentRevision||1)!==record.identity.contentRevision||storyContentDigest(currentStory)!==record.identity.contentSha256||brandRevision(scoped.brandProfile)!==record.identity.brandRevision)throw fail(409,'Source changed before native registration; original file is preserved');
-   const current=state.designs.find(x=>x.id===record.id);if(!current||current.designKey!==context.designKey)throw fail(409,'Native operation changed');current.status='ready';current.nativeRevision=file.revn;current.pages=compiled.pages.map(({id,format})=>({id,format}));current.completedAt=this.now();record=structuredClone(current);return [state,scoped,identity,security];
+   const current=state.designs.find(x=>x.id===record.id);if(!current||current.designKey!==context.designKey)throw fail(409,'Native operation changed');current.status='ready';current.nativeRevision=file.revn;current.pages=compiled.pages.map(({id,format})=>({id,format}));current.completedAt=this.now();record=structuredClone(current);return [state,scoped,identity,security,...guardValues];
   });
   return this.dto(record,input.format,actor);
  }

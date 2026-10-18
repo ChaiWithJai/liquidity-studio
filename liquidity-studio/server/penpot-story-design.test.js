@@ -18,3 +18,56 @@ test('pending readback rejects reordered pages, changed fonts, missing token pai
 test('lost update reply verifies the original initialized file without applying changes twice',async t=>{const f=await fixture(t);const rpc=f.service.rpc;let lost=true;f.service.rpc=async(...args)=>{const out=await rpc(...args);if(args[1]==='update-file'&&lost){lost=false;throw Object.assign(Error('lost save reply'),{status:503});}return out;};await assert.rejects(f.service.createDesign(f.actor,f.input));assert.equal((await f.service.createDesign(f.actor,f.input)).status,'ready');assert.equal(f.calls.filter(x=>x.operation==='update-file').length,1);});
 test('current founder role is reread before any native RPC, not trusted from request DTO',async t=>{const f=await fixture(t);await f.store.update('identity',state=>{state.users.find(x=>x.id===f.actor.id).role='marketer';return state;});await assert.rejects(f.service.createDesign(f.actor,f.input),e=>e.status===403);assert.equal(f.calls.length,0);});
 test('founder demotion during asynchronous native workspace lookup prevents create RPC',async t=>{const f=await fixture(t);f.service.workspaceFor=async()=>{await f.store.update('identity',state=>{state.users.find(x=>x.id===f.actor.id).role='marketer';return state;});return structuredClone(f.workspace);};await assert.rejects(f.service.createDesign(f.actor,f.input),e=>e.status===403);assert.equal(f.calls.length,0);});
+
+// Constructor-only admission fixture. This verifies the shared design service
+// contract, not actual native membership or C3 enforcement.
+async function pairedFixture(t){
+ const f=await fixture(t);
+ await f.identity.provision({username:'paired-marketer',password:'controlled-paired-marketer-password',role:'marketer'});
+ const marketer=(await f.store.get('identity')).users.find(x=>x.username==='paired-marketer');
+ await f.identity.setMembership(f.actor,{userId:marketer.id,organizationId:f.scope.organizationId,brandIds:[f.scope.brandId]});
+ const keys=['controlled-brand-grant','controlled-pair','controlled-profile-owner','controlled-session'];
+ for(const key of keys)await f.store.update(key,()=>({state:'current',epoch:1}));
+ f.service.brandAccess={
+  async require(actor,scope,sessionContext){
+   assert.equal(sessionContext,'verified-fixture-session');
+   await f.identity.authorize(actor,scope.organizationId,scope.brandId);
+   const grant=await f.store.get(keys[0]);
+   if(grant.state!=='current')throw Object.assign(Error('Revoked paired grant'),{status:403});
+   return {workspace:structuredClone(f.workspace),grantSnapshot:{actorId:actor.id,epoch:grant.epoch}};
+  },
+  guardKeys:()=>keys,
+  assertCurrent({identity,brandAccess,pair,profileOwner,session},snapshot){
+   if(!identity.memberships.some(x=>x.userId===snapshot.actorId&&x.organizationId===f.scope.organizationId&&x.brandIds.includes(f.scope.brandId))||
+      [brandAccess,pair,profileOwner,session].some(x=>x?.state!=='current'||x.epoch!==snapshot.epoch))
+    throw Object.assign(Error('Current paired grant changed'),{status:403});
+  },
+ };
+ return {...f,marketer,keys};
+}
+test('paired founder and marketer resolve the same native file and retain human edits',async t=>{
+ const f=await pairedFixture(t),session='verified-fixture-session';
+ const first=await f.service.createDesign(f.actor,f.input,session);
+ const file=f.files.get(first.fileId),text=Object.values(file.data.pagesIndex[file.data.pages[0]].objects).find(x=>x.type==='text');
+ text.content.children[0].children[0].children[0].text='Shared human edit';file.revn++;
+ const opened=await f.service.designs(f.marketer,{storyId:f.input.storyId,format:'infographic'},session);
+ assert.equal(opened.design.fileId,first.fileId);assert.equal(opened.design.nativeRevision,file.revn);
+ const resumed=await f.service.createDesign(f.marketer,{...f.input,idempotencyKey:randomUUID()},session);
+ assert.equal(resumed.fileId,first.fileId);assert.equal(f.calls.filter(x=>x.operation==='create-file').length,1);
+ assert.equal(f.calls.filter(x=>x.operation==='update-file').length,1);
+ assert.equal(text.content.children[0].children[0].children[0].text,'Shared human edit');
+});
+test('final native registration rechecks paired grant inside the eight-key transaction',async t=>{
+ const f=await pairedFixture(t);let afterRevalidate=false;
+ const transact=f.store.transact.bind(f.store);
+ f.store.transact=async(keys,fn)=>{
+  if(keys.includes(f.service.key)&&keys.includes(f.keys[0])&&!afterRevalidate){
+   afterRevalidate=true;assert.equal(keys.length,8);
+   await f.store.update(f.keys[0],value=>({...value,state:'revoked',epoch:value.epoch+1}));
+  }
+  return transact(keys,fn);
+ };
+ await assert.rejects(f.service.createDesign(f.marketer,f.input,'verified-fixture-session'),e=>e.status===403);
+ assert.equal(afterRevalidate,true);assert.equal((await f.store.get(f.service.key)).designs[0].status,'pending');
+ assert.equal(f.files.size,1,'already accepted native work is preserved');
+});
