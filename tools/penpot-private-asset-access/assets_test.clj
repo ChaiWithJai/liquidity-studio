@@ -98,3 +98,36 @@
     (is (false? (assets/native-readable? cfg actor {:file-id file-id :team-id governed})))
     (is (false? (assets/native-readable? cfg actor {:team-id governed :live false})))
     (is (true? (assets/native-readable? cfg actor {:team-id governed :live true})))))
+
+(deftest private-native-export-pointer-is-server-owned-and-default-off-is-preserved
+  (is (= {:bucket "studio-file-export" :studio-export-file-id file-id}
+         (assets/export-metadata cfg file-id)))
+  (is (not (contains? (assets/export-metadata {} file-id) :studio-export-file-id)))
+  (let [exported (with-meta {:id object-id :backend :fs}
+                   {:bucket "studio-file-export" :studio-export-file-id file-id})
+        seen (atom nil)]
+    (with-redefs [db/exec! (fn [_ query]
+                            (reset! seen query)
+                            [{:file-id file-id :team-id governed}])]
+      (is (= [{:file-id file-id :team-id governed}] (assets/references cfg exported)))
+      (is (= [file-id] (vec (rest @seen))))
+      (is (re-find #"JOIN project" (first @seen))))
+    (with-redefs [assets/references (fn [_ _] [{:file-id file-id :team-id governed}])
+                  assets/native-readable? (fn [_ profile ref]
+                                             (and (= actor profile) (= file-id (:file-id ref))))]
+      (is (= 403 (::response/status (assets/deliver cfg {} exported served))))
+      (let [result (assets/deliver cfg request exported served)]
+        (is (= 204 (::response/status result)))
+        (is (= "private, no-store" (get-in result [::response/headers "cache-control"])))))))
+
+(deftest personal-recovery-exports-are-private-too-and-deleted-files-never-authorize
+  (let [exported (with-meta {:id object-id :backend :fs} {:bucket "studio-file-export"})]
+    (with-redefs [assets/references (fn [_ _] [{:file-id file-id :team-id personal}])
+                  assets/native-readable? (fn [_ _ _] true)]
+      (is (= 403 (::response/status (assets/deliver cfg {} exported served))))
+      (is (= "private, no-store"
+             (get-in (assets/deliver cfg request exported served) [::response/headers "cache-control"]))))
+    (with-redefs [assets/references (fn [_ _] [{:file-id file-id :team-id governed}])
+                  access/current-file-team (fn [_ _] nil)
+                  permissions/get-file-read-permissions (fn [& _] {:can-read true})]
+      (is (= 403 (::response/status (assets/deliver cfg request exported served)))))))

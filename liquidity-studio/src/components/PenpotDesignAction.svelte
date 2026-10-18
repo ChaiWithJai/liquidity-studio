@@ -6,6 +6,8 @@
   let styleAttempt=$state(null),styleReceipt=$state(null),styleCapability=$state(''),styleError=$state(''),styleNotice=$state(''),styleRejected=$state(false);
   let copyNotice=$state('');
   let svgUrl=$state(''),svgError=$state('');
+  let recoveryUrl=$state(''),recoveryError=$state(''),recoveryContext=$state('');
+  const currentRecoveryContext=$derived(JSON.stringify([storyId,format,storyRevision,generationId,result?.design?.fileId]));
   async function prepareSvg(){
     if(busy||loading||!openUrl)return;busy=true;svgUrl='';svgError='';
     const saved={storyId,format,expectedRevision:storyRevision,generationId,fileId:result.design.fileId,nativeUrl:openUrl};
@@ -20,6 +22,21 @@
       if(alive&&value.downloadUrl?.startsWith('http://localhost:39008/studio-save-svg?permit='))svgUrl=value.downloadUrl;
     }
     catch(failure){if(alive)svgError=failure.message;}finally{if(alive){busy=false;if(refreshPending){refreshPending=false;void load();}}}
+  }
+  async function prepareRecovery(){
+    if(busy||loading||!openUrl)return;busy=true;recoveryUrl='';recoveryError='';
+    const saved={storyId,format,expectedRevision:storyRevision,generationId,fileId:result.design.fileId,nativeUrl:openUrl};
+    try{
+      const fresh=await request(`/api/studio/penpot/designs?storyId=${encodeURIComponent(saved.storyId)}&format=${encodeURIComponent(saved.format)}`);
+      if(!alive)return;
+      if(storyId!==saved.storyId||format!==saved.format||storyRevision!==saved.expectedRevision||generationId!==saved.generationId||openUrl!==saved.nativeUrl)throw Error('The campaign changed. Reopen its saved design before downloading its recovery kit.');
+      const design=fresh.design;
+      if(design?.status!=='ready'||design.fileId!==saved.fileId||design.storyId!==saved.storyId||design.generationId!==saved.generationId||design.nativeUrl!==saved.nativeUrl||!Number.isSafeInteger(design.nativeRevision)||design.nativeRevision<0)throw Error(fresh.reason||'The saved design is unavailable. Reopen it before downloading its recovery kit.');
+      result=fresh;
+      const value=await request('/api/studio/penpot/designs/recovery',{method:'POST',body:JSON.stringify({storyId:saved.storyId,format:saved.format,expectedRevision:saved.expectedRevision,generationId:saved.generationId,expectedNativeRevision:design.nativeRevision})});
+      if(alive&&value.downloadUrl?.startsWith('http://localhost:39008/studio-recovery-kit?permit=')){recoveryUrl=value.downloadUrl;recoveryContext=currentRecoveryContext;}
+    }
+    catch(failure){if(alive)recoveryError=failure.message;}finally{if(alive){busy=false;if(refreshPending){refreshPending=false;void load();}}}
   }
   const pluginManifestUrl='http://localhost:39039/manifest.json';
   async function copyStyleValue(value,label){
@@ -89,6 +106,12 @@
     <p>Draft SVG of this format’s first board, with licensed fonts embedded. Save changes in Penpot first. Images outside the verified export set are not supported.</p>
     {#if svgUrl}<a href={svgUrl} target="_blank" rel="noopener noreferrer">Download draft SVG ↗</a><p>This one-use download expires in two minutes. Use your connected Penpot account.</p>{/if}
     {#if svgError}<p role="alert">{svgError}</p>{/if}
+  {/if}
+  {#if !loading && openUrl && result?.recoveryAvailable}
+    <button class="secondary" disabled={busy} onclick={prepareRecovery}>{busy?'Preparing download…':'Download Penpot recovery kit'}</button>
+    <p>Saved native file, embedded media, original licensed fonts and restore guide. Save changes in Penpot first. Keep the separate Studio recovery kit from Operations too.</p>
+    {#if recoveryUrl && recoveryContext===currentRecoveryContext}<a href={recoveryUrl} target="_blank" rel="noopener noreferrer">Download prepared Penpot kit ↗</a><p>One use within two minutes, through your connected Penpot account. Import and Studio reconnection are separate steps.</p>{/if}
+    {#if recoveryError}<p role="alert">{recoveryError}</p>{/if}
   {/if}
   {#if styleCapability}<section class="style-handoff" aria-label="Apply saved Brand Kit colors">
     <ol>

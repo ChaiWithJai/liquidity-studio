@@ -7,13 +7,24 @@
       "gitBlob": "b0adb45b13df7f336067a117ffc6578539d69ff9",
       "sha256": "ca3f1f723c447dcd9fbfb43eed5dc1ea2f394fa86916b56e719d019957ccaeda",
       "patchedSha256": "cd17216f284f357552c3b2827897c362756afd6c0ec25998209994479db275c1"
+    },
+    {
+      "path": "backend/src/app/rpc/commands/binfile.clj",
+      "sha256": "32bb0fc303d2a2bb9ce318eb74d66c8259d91af7828aefe59133010da306cf01",
+      "patchedSha256": "b51b4d57004db06e25f53d6e8133e10020762247f8ca05194a48f3d3e7fb909f"
+    },
+    {
+      "path": "backend/src/app/storage/gc_touched.clj",
+      "sha256": "7d1fa85a6631a58c933963a64658e35ec79137c73c7e56c96bdf41dd063a397d",
+      "patchedSha256": "a98ec52edf4500c6db8b44a97ed18516fe550bc1673c0a2c4812d956d5e50d4d"
     }
   ],
   "localBuildOrTests": false,
   "runtimeChanged": false,
   "originalSources": {
-    "assets.clj": "9758938583e4ced68c4fd61f0d9570a2c38639b798fb4eab8e4f0db868f431b5",
-    "assets_test.clj": "47599a43c0d9a994caf3b673263363a98db802fd91238e0388f6df4a25f8de2f"
+    "assets.clj": "d9e37ef5b1462ab3eb6de6b7d68c6afb28c29ae9cf084a9a35b31eed1ef1cc39",
+    "assets_test.clj": "f10b5c63dbdab48768f607c203468eab9401c23f2815c3167ee611e9e5abaacf"
   },
-  "patchSha256": "b8dcb3aeb7c6d4dd7491ff604de1ffc2b5225dd136e1d13465d13997b1c3d712"
+  "patchSha256": "b8dcb3aeb7c6d4dd7491ff604de1ffc2b5225dd136e1d13465d13997b1c3d712",
+  "exportPatchSha256": "d4d5a7d13c696604bc75a242a142bcd53d620b27c2a387f4a4c0f3cf584e6475"
 }

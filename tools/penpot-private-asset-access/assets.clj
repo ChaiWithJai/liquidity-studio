@@ -12,13 +12,21 @@
 
 (def ^:private protected-buckets
   #{"file-media-object" "team-font-variant" "file-object-thumbnail"
-    "file-thumbnail" "file-data" "file-data-fragment"})
+    "file-thumbnail" "file-data" "file-data-fragment" "studio-file-export"})
 
 (def ^:private private-headers
   {"cache-control" "private, no-store" "pragma" "no-cache"
    "expires" "0" "x-accel-expires" "0" "vary" "Cookie"})
 
 (defn enabled? [cfg] (contains? cfg ::access/governed-teams))
+(defn export-metadata
+  "Only export-binfile supplies this server-authored file pointer. Native default
+   export storage remains unchanged when the Studio hook is disabled."
+  [cfg file-id]
+  (if (enabled? cfg)
+    {:bucket "studio-file-export" :studio-export-file-id file-id}
+    {:bucket storage/tempfile-bucket}))
+
 (defn- pool [cfg] (or (::db/pool cfg) (::db/pool (::storage/storage cfg))))
 
 (defn references
@@ -31,6 +39,12 @@
         file-join " JOIN file f ON f.id=r.file_id JOIN project p ON p.id=f.project_id "
         rows
         (case bucket
+          "studio-file-export"
+          (if (uuid? (:studio-export-file-id metadata))
+            (db/exec! (pool cfg)
+              ["SELECT f.id AS file_id, p.team_id FROM file f JOIN project p ON p.id=f.project_id WHERE f.id=? LIMIT 65"
+               (:studio-export-file-id metadata)])
+            [])
           "file-media-object"
           (db/exec! (pool cfg)
             [(str "SELECT DISTINCT r.file_id, p.team_id FROM file_media_object r" file-join
@@ -89,7 +103,7 @@
     (let [refs (references cfg object)
           governed? (some #(access/governed-team? cfg (:team-id %)) refs)]
       (when (empty? refs) (access/denied!))
-      (if-not governed?
+      (if-not (or governed? (= "studio-file-export" (:bucket (meta object))))
         {:private false}
         (let [context (actual-session cfg request)
               profile (:native-profile-id context)]

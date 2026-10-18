@@ -87,3 +87,29 @@ the published frontend, including cache/internal redirect behavior. No current
 Studio GCS proof, old private-ingress proof, RPC-only result or header assertion
 alone establishes this native HTTP boundary. Keep editing disabled if that native
 integration is not accepted.
+
+## Registered-file recovery exports
+
+`export.patch` additionally patches the exact pinned
+`backend/src/app/rpc/commands/binfile.clj` and `backend/src/app/storage/gc_touched.clj`.
+When this hook is enabled, native export objects use `studio-file-export` with a
+server-authored `:studio-export-file-id` UUID. Its persisted source file/project
+classifies the resource; the existing current native ACL and Studio grant/session
+checks authorize bytes. Personal file exports also require a current native
+reader. Anonymous, deleted-source and unreferenced export delivery deny privately.
+Default-off native exports retain the original bucket and response.
+
+An explicit optional `:studio-recovery true` command parameter returns an SSE end
+map containing `:uri` as a string, `:studio-export-version "v1"` and `:file-id`.
+Ordinary native exports retain their URI result shape. Recovery export refuses if
+the hook configuration is absent. The Studio service accepts only that exact end
+shape/source and never returns the raw output URL to the browser. The new bucket
+uses the original tempfile GC dispatch and two-hour deletion delay; it does not
+retain output indefinitely or add a new authority store. Existing previously
+public temporary exports cannot be recalled by this source change.
+
+The hosted recipe explicitly requires the patched binfile and GC namespaces.
+Additional tests cover stored export-pointer resolution, anonymous denial,
+private current-reader delivery and deleted-source denial. A fresh hosted native
+verification/candidate is required before activation; source preparation is not
+runtime acceptance.
