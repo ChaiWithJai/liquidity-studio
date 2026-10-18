@@ -1,0 +1,30 @@
+{
+  "importMethod": "Official export-binfile archive downloaded then parsed by official multipart import-binfile",
+  "originalFileId": "e749cfb6-8499-8002-8008-ce64b58b8398",
+  "restoredFileId": "e749cfb6-8499-8002-8008-ce65e00c3166",
+  "archiveBytes": 92540,
+  "archiveSha256": "4ad056a08943d7c8dd35d824334b692094479f2cb3e65d14d61653309b146d50",
+  "archiveEntries": 98,
+  "embeddedFontBinaryEntries": [],
+  "pageOrderEqual": true,
+  "restoredPageIds": [
+    "cb07cc43-5cb2-5601-aa55-b6f03985f1bf",
+    "fd1b39fb-e730-58e2-a7c9-38ecc1132638",
+    "4b4e1a07-9a9d-55ac-aee5-bd68e7498e45",
+    "31282227-9998-58e6-a564-833566a4981d",
+    "aca800d3-7f5c-5904-a94b-a27989d5c768",
+    "e6e6052a-6a52-5016-a2ee-1be6aed80048",
+    "f87a4d8d-c2f6-543a-a5da-67cbbb771def",
+    "44bd757a-3913-51b5-a618-0222d72cb20a",
+    "8f7b591d-884f-5ddb-a4bb-4bc799d5e252"
+  ],
+  "nativeShapeDifferencesAfterExpectedFileIdRemapAndPageIdNormalization": [],
+  "tokensEqual": true,
+  "shapeCounts": {
+    "frame": 18,
+    "text": 50,
+    "rect": 9
+  },
+  "completeFreshInstallFontPortability": false,
+  "boundary": "Native saved-model roundtrip only; representative browser visual/export acceptance pending; same QA team fonts remain external"
+}

@@ -1,0 +1,31 @@
+{
+  "archiveSha256": "60cf389ec3b2fd2ceee6b380cff2ba00dfcce1e321d9f2efc9d8fe70475bf072",
+  "archiveBytes": 185789,
+  "archiveEntries": 101,
+  "embeddedFontBinaryEntries": [],
+  "importMethod": "Actual downloaded .penpot ZIP uploaded through official local multipart import-binfile; no JSON reconstruction",
+  "originalFileId": "e749cfb6-8499-8002-8008-ce64b590bf0c",
+  "restoredFileId": "e749cfb6-8499-8002-8008-ce65ba136a05",
+  "restoredPageIds": [
+    "d95eb660-bf0b-5235-ac50-8b224c0617c4",
+    "daac5fe2-b16d-51b2-a764-9ff3f84d1ba7",
+    "e3660696-9006-5273-a3f0-d602cb2a2b71",
+    "76539573-fbaa-5cbc-a2eb-f044a9ee85d4",
+    "4ce3231e-143d-5a7d-a5d3-a0ead9841c0a",
+    "bdbe03ff-098f-52ee-a630-914846c3be22",
+    "74e5165f-bca1-514b-a1fd-0cfe6476d875",
+    "53dfc9de-94f3-5b0a-a810-689975f858c6",
+    "7c58c5bc-07b4-596b-afb4-f1aa621ddd68"
+  ],
+  "pageOrderEqual": true,
+  "shapeCounts": {
+    "frame": 18,
+    "text": 50,
+    "rect": 9
+  },
+  "tokensEqual": true,
+  "fontVariantsEqualSameTeam": true,
+  "nativeShapeDifferencesAfterExpectedFileIdRemapAndPageIdNormalization": [],
+  "completeFreshInstallFontPortability": false,
+  "boundary": "Native saved-model equality within same QA team; browser restored rendering/export still requires operator proof; font bytes not embedded in this downloaded archive"
+}
