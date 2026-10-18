@@ -1,6 +1,6 @@
 # Inter normal native Font UI checkpoint
 
-On 2026-10-18, a reviewed Penpot 2.18.3 frontend derivative compiled successfully and accepted the existing InterVariable.ttf through the normal native Font UI in a disposable local fixture. The installed font survived a full browser reload. The original stored TTF matches the879708-byte source exactly. **Issue 166 and issue 54 remain open:** the restored cultural layout has not yet been rebound and rendered with this new font identity.
+On 2026-10-18, a reviewed Penpot 2.18.3 frontend derivative compiled successfully and accepted the existing InterVariable.ttf through the normal native Font UI in a disposable local fixture. The installed font survived a full browser reload. The original stored TTF matches the879708-byte source exactly. At this initial upload checkpoint, the cultural layout had not yet been rebound. The later [fresh-owner cultural recovery proof](cultural-recovery/README.md) now records the intended Inter rendering and exact PNG result, with the separate Om system-fallback limitation. Issues 54 and 57 retain their broader recovery requirements.
 
 This is a later runtime checkpoint. Earlier source-only recipes and failed build records describe their actual earlier stages; this result does not rewrite them. The temporary candidate frontend has been removed and the original frontend restored. No maintained Studio, cloud deployment, Google identity, native source document or original font was changed.
 
@@ -44,6 +44,6 @@ Two metadata guard failures caused immediate baseline rollbacks before the final
 
 A consistent 525977-byte native backup was validated before activation. After UI persistence proof, the owned frontend alone was restored to baseline. All 900 original hashes and three runtime files matched, other containers and all four document fingerprints were unchanged, and root independently confirmed the original dashboard asset through Neo. QA1 was restored through normal login, and the page's cache setting was restored. The new QA2 variant remains installed. No callback, ingress or maintained-runtime change was made.
 
-Next acceptance is a separately guarded cultural-copy font binding and actual glyph/export proof. Successful compilation, upload and storage alone do not establish that result or fresh-installation recovery.
+The separately guarded cultural-copy font binding and glyph/export result is recorded in the [later recovery checkpoint](cultural-recovery/README.md). The upload checkpoint alone did not establish that result, and neither checkpoint establishes fresh-installation recovery.
 
 After baseline restoration, the generated 251827069-byte graph directory was removed only after all 900 file hashes and 44 directory entries were checked and no running container mounted it. The verified ZIP and small source/license/manifest/evidence files remain recoverable. This was targeted fixture cleanup, with no Docker prune or unrelated deletion.

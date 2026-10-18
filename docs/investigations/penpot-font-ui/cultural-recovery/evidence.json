@@ -1,0 +1,80 @@
+{
+  "recordedDate": "2026-10-18",
+  "upstreamVersion": "2.18.3",
+  "upstreamCommit": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "fixture": "Disposable same-server fresh native owner; existing cultural archive imported into own team",
+  "fontRemap": {
+    "requestCount": 1,
+    "httpStatus": 200,
+    "beforeRevision": 9,
+    "afterRevision": 10,
+    "fontIdScalarChanges": 100,
+    "expectedOwnedComponentTimestampChanges": 9,
+    "otherDataChanges": 0,
+    "strictFontIdOnlyPass": false,
+    "qualifiedAuditPass": true,
+    "auditSha256": "3dfbf20f4bf47284b003f7b780e90408898ef2e818b810c8731f5d0ad5da0b59"
+  },
+  "nativeReflow": {
+    "pageCount": 9,
+    "textShapeCount": 50,
+    "afterRevision": 14,
+    "interVariablePositionRuns": 41,
+    "monaSansPositionRuns": 13,
+    "passiveFirstFrameRefreshInitiallyFailed": true,
+    "ordinaryEnterEscapeOnFiveInterShapes": true,
+    "characterInput": false,
+    "newNativeChildKeys": 5,
+    "semanticContentUnchanged": true,
+    "objectGeometryTokensMediaPageOrderUnchanged": true,
+    "auditSha256": "bcae835c4b6518c27b18724bf2bca73b794228d0ae50b46c51bf4ac188b06ea2"
+  },
+  "font": {
+    "originalTtfBytes": 879708,
+    "originalTtfSha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf",
+    "registeredFamily": "Inter Variable",
+    "weight": 400,
+    "style": "normal",
+    "textFamilyLabelRetained": "Inter",
+    "familyRenamed": false
+  },
+  "glyphObservation": {
+    "text": "CWJ // ॐ",
+    "method": "Neo CDP CSS.getPlatformFontsForNode",
+    "interVariableCustomGlyphCount": 7,
+    "systemFallbackGlyphCount": 1,
+    "systemFallbackFamily": "Kohinoor Devanagari",
+    "systemFallbackPostScriptName": "KohinoorDevanagari-Regular",
+    "omBundledByReviewedFonts": false,
+    "pngOmVisibleNoTofu": true,
+    "portableOmCoverageProven": false
+  },
+  "png": {
+    "file": "first-frame.png",
+    "bytes": 138103,
+    "width": 1080,
+    "height": 1350,
+    "sha256": "87257a42a362e184dcc9e703101ddfb1825dbd54ef315a8bc80963d7739d4c49",
+    "exportsPerformed": 1,
+    "normalNativeExportUi": true,
+    "originalExporterNoDerivativeMount": true,
+    "byteEqualEarlierOriginal": true,
+    "headlineBodyFooterPortraitVisible": true,
+    "rootIndependentlyInspected": true
+  },
+  "preservation": {
+    "originalFinanceRevision": 17,
+    "originalCulturalRevision": 9,
+    "financeCopyRevision": 18,
+    "threeStoredFingerprintsUnchanged": true,
+    "qa1RestoredViaNormalLogin": true,
+    "freshProfileReadConfirmed": true,
+    "callbackOrIngressStarted": false,
+    "maintainedStudioOrCloudChanged": false
+  },
+  "limits": [
+    "Same-server fresh-owner recovery, not a fresh installation or Google identity pairing proof.",
+    "Om relies on an observed system fallback; no explicit portable glyph font package is established.",
+    "This export does not prove private asset delivery or complete issues 52, 54 or 57."
+  ]
+}
