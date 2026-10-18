@@ -8,7 +8,17 @@
   let svgUrl=$state(''),svgError=$state('');
   async function prepareSvg(){
     if(busy||loading||!openUrl)return;busy=true;svgUrl='';svgError='';
-    try{const value=await request('/api/studio/penpot/designs/svg',{method:'POST',body:JSON.stringify({storyId,format,expectedRevision:storyRevision,generationId,expectedNativeRevision:result.design.nativeRevision})});if(alive&&value.downloadUrl?.startsWith('http://localhost:39008/studio-save-svg?permit='))svgUrl=value.downloadUrl;}
+    const saved={storyId,format,expectedRevision:storyRevision,generationId,fileId:result.design.fileId,nativeUrl:openUrl};
+    try{
+      const fresh=await request(`/api/studio/penpot/designs?storyId=${encodeURIComponent(saved.storyId)}&format=${encodeURIComponent(saved.format)}`);
+      if(!alive)return;
+      if(storyId!==saved.storyId||format!==saved.format||storyRevision!==saved.expectedRevision||generationId!==saved.generationId||openUrl!==saved.nativeUrl)throw Error('The campaign changed. Reopen its saved design before saving SVG.');
+      const design=fresh.design;
+      if(design?.status!=='ready'||design.fileId!==saved.fileId||design.storyId!==saved.storyId||design.generationId!==saved.generationId||design.nativeUrl!==saved.nativeUrl||!Number.isSafeInteger(design.nativeRevision)||design.nativeRevision<0)throw Error(fresh.reason||'The saved design is unavailable. Reopen it before saving SVG.');
+      result=fresh;
+      const value=await request('/api/studio/penpot/designs/svg',{method:'POST',body:JSON.stringify({storyId:saved.storyId,format:saved.format,expectedRevision:saved.expectedRevision,generationId:saved.generationId,expectedNativeRevision:design.nativeRevision})});
+      if(alive&&value.downloadUrl?.startsWith('http://localhost:39008/studio-save-svg?permit='))svgUrl=value.downloadUrl;
+    }
     catch(failure){if(alive)svgError=failure.message;}finally{if(alive){busy=false;if(refreshPending){refreshPending=false;void load();}}}
   }
   const pluginManifestUrl='http://localhost:39039/manifest.json';
