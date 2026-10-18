@@ -1,5 +1,7 @@
 import { jobDispatcherConfiguration, dispatchJobs } from "./job-dispatcher.js";
 import { idempotencyKey as workspaceIdempotencyKey } from "./workspace-query.js";
+import { HelperControlService } from "./helper-control.js";
+import { exact as workspaceExact } from "./workspace-schema.js";
 import { revision as workspaceRevision } from "./workspace-schema.js";
 import http from "node:http";
 import fs from "node:fs";
@@ -172,6 +174,7 @@ export function createHttpServer(
   {
     platform = appContainer ? null : createPlatform(),
     trustedTestMode = false,
+    helperControlEnabled = process.env.STUDIO_HELPER_CONTROL_ENABLED === "true",
     distDir = DIST_DIR,
     editorBoundaryEnabled = process.env.STUDIO_EDITOR_BOUNDARY_ENABLED ===
       "true",
@@ -605,6 +608,29 @@ export function createHttpServer(
         if (trustedTestMode) throw fail(404, "Not found");
         const service = platform.workspace(scope, repo);
         const base = "/api/studio/workspace";
+        if (route === base + "/control" || route.startsWith(base + "/control/")) {
+          if (!helperControlEnabled) throw fail(404, "Not found");
+          const control = new HelperControlService({ workspace: service });
+          if (route === base + "/control" && req.method === "GET")
+            return json(200, await control.list(user));
+          if (route === base + "/control/grants" && req.method === "POST")
+            return json(201, await control.createGrant(user, body));
+          if (route === base + "/control/proposals" && req.method === "POST")
+            return json(201, await control.propose(user, body));
+          const grant = route.match(/^\/api\/studio\/workspace\/control\/grants\/([^/]+)\/(pause|stop|takeover|resume)$/);
+          if (grant && req.method === "POST") {
+            workspaceExact(body, ["expectedEpoch"]);
+            return json(200, await control.transition(user, grant[1], { ...body, action: grant[2] }));
+          }
+          const proposal = route.match(/^\/api\/studio\/workspace\/control\/proposals\/([^/]+)\/(approve|apply)$/);
+          if (proposal && req.method === "POST") {
+            if (proposal[2] === "approve")
+              return json(200, await control.approve(user, proposal[1], body));
+            workspaceExact(body, ["grantId", "epoch", "idempotencyKey"]);
+            return json(200, await control.apply(user, { ...body, proposalId: proposal[1] }));
+          }
+          throw fail(404, "Not found");
+        }
         if (route === base + "/members" && req.method === "GET")
           return json(200, { members: await service.members(user) });
         if (route === base + "/query" && req.method === "POST")
