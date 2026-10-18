@@ -143,7 +143,80 @@ test("actual scoped HTTP ejection, explicit empty destination, owner remap and n
     ).status,
     403,
   );
-  const installed = await request(endpoint, { body: { pack, options } });
+  // Hold a legacy import after it captured an available scoped container,
+  // then reserve/install that destination. The old import must not overwrite it.
+  const sourceBundle = JSON.parse(
+    Buffer.from(
+      pack.files.find((file) => file.sha256 === pack.repository).base64,
+      "base64",
+    ),
+  );
+  const originalForScope = platform.forScope.bind(platform),
+    originalTransact = store.transact.bind(store);
+  let enterImport,
+    releaseImport,
+    enterInstall,
+    releaseInstall,
+    importHeld = false,
+    installHeld = false;
+  const importEntered = new Promise((resolve) => (enterImport = resolve)),
+    importGate = new Promise((resolve) => (releaseImport = resolve)),
+    installEntered = new Promise((resolve) => (enterInstall = resolve)),
+    installGate = new Promise((resolve) => (releaseInstall = resolve));
+  platform.forScope = async (selected) => {
+    const value = await originalForScope(selected);
+    if (selected.brandId === target.brandId) {
+      const repo = value.ports.repo,
+        importData = repo.importData.bind(repo);
+      repo.importData = async (...args) => {
+        if (!importHeld) {
+          importHeld = true;
+          enterImport();
+          await importGate;
+        }
+        return importData(...args);
+      };
+    }
+    return value;
+  };
+  store.transact = async (keys, callback) => {
+    const value = originalTransact(keys, callback);
+    if (
+      !installHeld &&
+      keys.length === 4 &&
+      keys.some((key) =>
+        key.startsWith(`native-editor:org_default:${target.brandId}:`),
+      )
+    ) {
+      installHeld = true;
+      enterInstall();
+      await installGate;
+    }
+    return value;
+  };
+  const legacyImport = request(
+    `/api/admin/import?organizationId=org_default&brandId=${target.brandId}`,
+    { body: { bundle: sourceBundle, remapScope: true } },
+  );
+  await importEntered;
+  const installation = request(endpoint, { body: { pack, options } });
+  let installed;
+  try {
+    await installEntered;
+    releaseImport();
+    const denied = await legacyImport;
+    assert.equal(denied.status, 423);
+    const reserved = await store.get(`scope:org_default:${target.brandId}`);
+    assert.equal(reserved.editorRestore.status, "installing");
+    assert.equal(reserved.backlog.length, 0);
+  } finally {
+    releaseImport();
+    releaseInstall();
+    installed = await installation;
+    platform.forScope = originalForScope;
+    store.transact = originalTransact;
+  }
+
   assert.equal(installed.status, 200, await installed.clone().text());
   const nativeUrl = `/api/studio/native-editor/documents/${record.id}?organizationId=org_default&brandId=${target.brandId}`;
   const current = await request(nativeUrl);

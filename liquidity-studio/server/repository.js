@@ -701,7 +701,10 @@ export class ScopedRepository {
         delete asset.base64;
       }
     }
-    await this.store.update(this.key, () => data);
+    await this.store.update(this.key, current => {
+      assertRestoreAvailable(current);
+      return data;
+    });
     return { imported: true };
   }
 }
