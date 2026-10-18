@@ -1,5 +1,6 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
+  import { SvelteMap } from "svelte/reactivity";
   import Emulator from "./Emulator.svelte";
   import { createGoogleAuth } from "./lib/google-auth.js";
   import "./studio.css";
@@ -56,6 +57,13 @@
   let scheduledDay = $state("Monday");
   let search = $state("");
   let statusFilter = $state("All");
+  let searchInput = $state(null);
+  // Session-only view context, never story data or an authorization source.
+  const backlogViews = new SvelteMap();
+  let activeBacklogScopeKey = "";
+  let scopeLoadError = $state("");
+  let searchQuery = $derived(search.trim());
+  let filtersActive = $derived(Boolean(searchQuery || statusFilter !== "All"));
   let editJson = $state("");
   let editFields = $state({});
   let pendingEdits = $state(false);
@@ -86,10 +94,10 @@
   let filteredStories = $derived(
     backlog.filter(
       (story) =>
-        (!search ||
+        (!searchQuery ||
           (story.title + " " + story.category)
             .toLowerCase()
-            .includes(search.toLowerCase())) &&
+            .includes(searchQuery.toLowerCase())) &&
         (statusFilter === "All" || story.status === statusFilter),
     ),
   );
@@ -162,6 +170,11 @@
   function clearWorkspace() {
     lastScopeToken++;
     scopeLoading = false;
+    scopeLoadError = "";
+    backlogViews.clear();
+    activeBacklogScopeKey = "";
+    search = "";
+    statusFilter = "All";
     user = null;
     organizations = [];
     permissions = {};
@@ -299,7 +312,53 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (failure) { error = failure.message; }
   }
+  function backlogScopeKey() {
+    return JSON.stringify([user?.id, organizationId, brandId]);
+  }
+  function rememberBacklogView() {
+    if (!user || scopeLoading || scopeLoadError) return;
+    const key = backlogScopeKey();
+    const previous = backlogViews.get(key);
+    backlogViews.set(key, {
+      search,
+      statusFilter,
+      selectedStoryId: selectedStory?.id,
+      scrollY: tab === "backlog" ? window.scrollY : previous?.scrollY || 0,
+    });
+  }
+  async function navigateTab(next) {
+    if (tab === "backlog") rememberBacklogView();
+    tab = next;
+    if (next === "backlog") {
+      const token = lastScopeToken;
+      await tick();
+      if (token === lastScopeToken && !scopeLoading) {
+        window.scrollTo(0, backlogViews.get(backlogScopeKey())?.scrollY || 0);
+      }
+    }
+  }
+  async function clearFilters() {
+    search = "";
+    statusFilter = "All";
+    rememberBacklogView();
+    await tick();
+    searchInput?.focus();
+  }
   async function loadScope() {
+    const key = backlogScopeKey();
+    const cached = backlogViews.get(key);
+    const view = key === activeBacklogScopeKey
+      ? {
+          search,
+          statusFilter,
+          selectedStoryId: selectedStory?.id || cached?.selectedStoryId,
+          scrollY: cached?.scrollY || 0,
+        }
+      : cached;
+    activeBacklogScopeKey = key;
+    search = view?.search || "";
+    statusFilter = view?.statusFilter || "All";
+    scopeLoadError = "";
     const token = ++lastScopeToken;
     scopeLoading = true;
     backlog = [];
@@ -329,10 +388,13 @@
       calendar = data.calendar || [];
       if (data.organizations) organizations = data.organizations;
       if (data.permissions) permissions = data.permissions;
-      if (backlog.length) selectStory(backlog[0]);
+      if (backlog.length) {
+        selectStory(backlog.find(story => story.id === view?.selectedStoryId) || backlog[0]);
+      }
     } catch (failure) {
       if (token === lastScopeToken) {
         error = failure.message;
+        scopeLoadError = failure.message;
         backlog = [];
         calendar = [];
         brandProfile = null;
@@ -341,12 +403,22 @@
       if (token === lastScopeToken) {
         busy = false;
         scopeLoading = false;
+        await tick();
+        if (token === lastScopeToken && tab === "backlog" && !scopeLoadError) {
+          window.scrollTo(0, view?.scrollY || 0);
+        }
       }
     }
   }
   async function switchOrganization(event) {
-    if (pendingEdits && !(await saveEdit())) return;
-    organizationId = event.currentTarget.value;
+    const selector = event.currentTarget;
+    const requestedOrganizationId = selector.value;
+    if (pendingEdits && !(await saveEdit())) {
+      selector.value = organizationId;
+      return;
+    }
+    rememberBacklogView();
+    organizationId = requestedOrganizationId;
     brandId =
       organizations.find((org) => org.id === organizationId)?.brands?.[0]?.id ||
       "";
@@ -354,8 +426,14 @@
     await loadScope();
   }
   async function switchBrand(event) {
-    if (pendingEdits && !(await saveEdit())) return;
-    brandId = event.currentTarget.value;
+    const selector = event.currentTarget;
+    const requestedBrandId = selector.value;
+    if (pendingEdits && !(await saveEdit())) {
+      selector.value = brandId;
+      return;
+    }
+    rememberBacklogView();
+    brandId = requestedBrandId;
     tab = "backlog";
     await loadScope();
   }
@@ -397,7 +475,9 @@
   }
   async function openStory(story) {
     if (pendingEdits && !(await saveEdit())) return;
+    rememberBacklogView();
     selectStory(story);
+    rememberBacklogView();
     tab = "studio";
   }
   async function selectFormat(next) {
@@ -617,6 +697,7 @@
     }
   }
   async function loadAdmin() {
+    if (tab === "backlog") rememberBacklogView();
     tab = "admin";
     error = "";
     try {
@@ -761,7 +842,7 @@
         class="wordmark"
         onclick={(e) => {
           e.preventDefault();
-          tab = "backlog";
+          navigateTab("backlog");
         }}>◈<span>LIQUIDITY<br />STUDIO</span></a
       >
       <div class="scope-selectors">
@@ -788,7 +869,7 @@
       <nav aria-label="Main navigation">
         {#each [{ id: "backlog", label: "Story backlog", icon: "▤" }, { id: "calendar", label: "Content calendar", icon: "▦" }, { id: "studio", label: "Campaign Studio", icon: "◧" }, { id: "brand", label: "Brand Kit", icon: "◉" }] as item (item.id)}<button
             class:active={tab === item.id}
-            onclick={() => (tab = item.id)}
+            onclick={() => navigateTab(item.id)}
             ><span aria-hidden="true">{item.icon}</span>{item.label}</button
           >{/each}{#if canAdmin}<button
             class:active={tab === "admin"}
@@ -841,25 +922,41 @@
         </div>{/if}
       {#if scopeLoading}
         <div class="panel" role="status">Loading {currentBrand?.name || "brand"} workspace…</div>
+      {:else if scopeLoadError}
+        <div class="panel">
+          <h2>Workspace could not load.</h2>
+          <p>Retry loading this brand before opening or adding stories.</p>
+          <button class="secondary" onclick={loadScope}>Retry workspace</button>
+        </div>
       {:else if tab === "backlog"}
         <div class="section-line">
           <div>
-            <h2>Story backlog <span class="count">{backlog.length}</span></h2>
+            <h2>Story backlog <span class="count">{filteredStories.length} of {backlog.length}</span></h2>
+            <p id="backlog-results" class="muted" role="status" aria-live="polite" aria-atomic="true">Showing {filteredStories.length} of {backlog.length} stories.{searchQuery ? ` Search: ${searchQuery}.` : ""}{statusFilter !== "All" ? ` Status: ${statusFilter}.` : ""}</p>
             <p class="muted">Opening a saved story keeps your edits.</p>
           </div>
           <div class="filters">
             <input
+              bind:this={searchInput}
               aria-label="Search stories"
+              aria-describedby="backlog-results"
               placeholder="Search stories…"
               bind:value={search}
             /><select aria-label="Filter by status" bind:value={statusFilter}
               ><option>All</option
-              >{#each [...new Set(backlog.map((story) => story.status))] as status (status)}<option
+              >{#each [...new Set([...backlog.map((story) => story.status), statusFilter].filter(status => status !== "All"))] as status (status)}<option
                   >{status}</option
                 >{/each}</select
             >
           </div>
         </div>
+        {#if filtersActive}
+          <div class="active-filters" role="group" aria-label="Active filters">
+            {#if searchQuery}<span class="status-tag">Search: {searchQuery}</span>{/if}
+            {#if statusFilter !== "All"}<span class="status-tag">Status: {statusFilter}</span>{/if}
+            <button class="secondary" onclick={clearFilters}>Clear filters</button>
+          </div>
+        {/if}
         <div class="story-list">
           {#each filteredStories as story (story.id)}<article class="story-row">
               <div class="story-day">
@@ -880,8 +977,13 @@
                 >{story.campaignDraft ? "Open draft" : "Open story"} ↗</button
               >
             </article>{:else}<div class="empty">
-              <h3>No stories here yet.</h3>
-              <p>Add supplied facts below. The studio will not invent them.</p>
+              {#if backlog.length}
+                <h3>No stories match these filters.</h3>
+                <p>Your stories are still in this brand. Clear filters to show them.</p>
+              {:else}
+                <h3>No stories here yet.</h3>
+                <p>Add supplied facts below. The studio will not invent them.</p>
+              {/if}
             </div>{/each}
         </div>
         <details class="panel add-story">

@@ -1,0 +1,110 @@
+[
+  {
+    "step": "S01",
+    "action": "Open scoped backlog",
+    "recordedAt": "2026-10-18T01:21:07.720Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "screenshot": "S01.png",
+    "sha256": "e6192263e14e3c46524328b68dea35de9a090b44f593e7f790c53c2416e94b7c",
+    "sourceAppSha256": "875510da21dca4166f019124bb8df6fded6b9c1187a9581ed559b3c7954baabf",
+    "sourceBase": "324f3fc",
+    "actor": "isolated test founder",
+    "organization": "org_default",
+    "brand": "brand_default",
+    "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+    "humanMetrics": null
+  },
+  {
+    "step": "S02",
+    "action": "Search Huda; one of five visible",
+    "recordedAt": "2026-10-18T01:21:07.781Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "screenshot": "S02.png",
+    "sha256": "1380b34576624b57727723b0dd834f731aeb58a70388d80f0353cdd66519c4cb",
+    "sourceAppSha256": "875510da21dca4166f019124bb8df6fded6b9c1187a9581ed559b3c7954baabf",
+    "sourceBase": "324f3fc",
+    "actor": "isolated test founder",
+    "organization": "org_default",
+    "brand": "brand_default",
+    "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+    "humanMetrics": null
+  },
+  {
+    "step": "S04",
+    "action": "Return from selected story; same-brand filter retained",
+    "recordedAt": "2026-10-18T01:21:07.897Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "screenshot": "S04.png",
+    "sha256": "560a138748dabefc6f9397051232f6abad01a964208365e2faac02f670558235",
+    "sourceAppSha256": "875510da21dca4166f019124bb8df6fded6b9c1187a9581ed559b3c7954baabf",
+    "sourceBase": "324f3fc",
+    "actor": "isolated test founder",
+    "organization": "org_default",
+    "brand": "brand_default",
+    "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+    "humanMetrics": null
+  },
+  {
+    "step": "S05",
+    "action": "Unmatched query shows no-match recovery, not empty brand",
+    "recordedAt": "2026-10-18T01:21:07.947Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "screenshot": "S05.png",
+    "sha256": "0a0275a209ff1bdbe9ee7b1b0fe89ffa7b7d54c0af72cb799b68755f3f0ca698",
+    "sourceAppSha256": "875510da21dca4166f019124bb8df6fded6b9c1187a9581ed559b3c7954baabf",
+    "sourceBase": "324f3fc",
+    "actor": "isolated test founder",
+    "organization": "org_default",
+    "brand": "brand_default",
+    "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+    "humanMetrics": null
+  },
+  {
+    "step": "S09",
+    "action": "Switch to CWJ; prior brand filter does not cross scope",
+    "recordedAt": "2026-10-18T01:21:07.999Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "screenshot": "S09.png",
+    "sha256": "d80fc50d450a3556b2bc413d6571c06c57cfdec9156b9d2fee29aad9976ac0de",
+    "sourceAppSha256": "875510da21dca4166f019124bb8df6fded6b9c1187a9581ed559b3c7954baabf",
+    "sourceBase": "324f3fc",
+    "actor": "isolated test founder",
+    "organization": "org_default",
+    "brand": "brand_vedic",
+    "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+    "humanMetrics": null
+  },
+  {
+    "step": "S10",
+    "action": "Clear the deliberately set CWJ filter; five stories visible",
+    "recordedAt": "2026-10-18T01:21:08.134Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "screenshot": "S10.png",
+    "sha256": "361347dcdbd8490c4179c796b147a20c66be45ded15dcf0a5cba5cfc899f0624",
+    "sourceAppSha256": "875510da21dca4166f019124bb8df6fded6b9c1187a9581ed559b3c7954baabf",
+    "sourceBase": "324f3fc",
+    "actor": "isolated test founder",
+    "organization": "org_default",
+    "brand": "brand_vedic",
+    "evidence": "Unmodified viewport; fresh SQLite fixture; explicit test-only password mode; no generation or paid calls",
+    "humanMetrics": null
+  }
+]
