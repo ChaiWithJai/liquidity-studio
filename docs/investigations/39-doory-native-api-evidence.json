@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "checks": [
+    "two_ephemeral_session_logins",
+    "native_two_page_create_read_exact_json",
+    "outsider_owner_read_write_rejected",
+    "editable_text_persisted_and_stale_revision_409",
+    "anonymous_valid_share_intentionally_discloses_document",
+    "view_share_write_rejected",
+    "password_share_requires_password",
+    "anonymous_room_rejected_4401",
+    "outsider_room_invalid_share_rejected_4403",
+    "active_shared_room_revoked_in_0.01s",
+    "active_shared_room_revocation_observed",
+    "revoked_share_http_rejected",
+    "explicit_native_json_copy_to_second_owner_preserves_document_and_isolation",
+    "unsafe_login_without_csrf_rejected_403"
+  ],
+  "sourceDesignId": "68f3f407-256c-46c5-b8ae-19b292a36e17",
+  "mappedDesignId": "5e89f10a-1bd0-441e-88cc-765199263c5a",
+  "nativeDocumentSha256": "2648d5419e6b4fd986f892738cb974be54f9a3549394dbe37692107c4b4ac3cc",
+  "bounds": "This API run alone establishes local HTTP/WebSocket checks; owners are not Studio brands. Subsequent browser/native export evidence is recorded separately. No self-contained archive, font-binary, Penpot or cloud integration proof."
+}

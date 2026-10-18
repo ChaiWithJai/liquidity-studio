@@ -1,0 +1,59 @@
+name: doory-native39
+services:
+  db:
+    image: postgres:16-alpine
+    mem_limit: 384m
+    environment:
+      POSTGRES_DB: doory
+      POSTGRES_USER: doory
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U doory -d doory]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7.2-alpine
+    mem_limit: 128m
+    command: [redis-server, --save, '', --appendonly, 'no']
+  api:
+    image: doory-native39:27b6f68
+    build:
+      context: ${DOORY_SOURCE_DIR:?Set the isolated pinned Doory source directory}/backend
+      args: {INSTALL_CHROMIUM: 'false'}
+    mem_limit: 768m
+    depends_on:
+      db: {condition: service_healthy}
+    environment: &appenv
+      DJANGO_SETTINGS_MODULE: doory.settings.prod
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DATABASE_URL: postgres://doory:${POSTGRES_PASSWORD}@db:5432/doory
+      SITE_URL: http://127.0.0.1:39006
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost,api,realtime
+      CSRF_TRUSTED_ORIGINS: http://127.0.0.1:39007,http://127.0.0.1:39006
+      SECURE_SSL_REDIRECT: 'false'
+      SECURE_COOKIES: 'false'
+      NUM_PROXIES: '0'
+      WEB_CONCURRENCY: '1'
+      REALTIME_WORKERS: '1'
+      REDIS_URL: redis://redis:6379/0
+      DOORY_SYNC_FONTS: 'false'
+      DOORY_SYNC_ELEMENTS: 'false'
+      DOORY_SYNC_MODELS: 'false'
+      DOORY_SYNC_AUDIO: 'false'
+      DOORY_SEED_TEMPLATES: 'false'
+      EMAIL_URL: memorymail://
+      GOOGLE_CLIENT_ID: ''
+    ports: [127.0.0.1:39007:8000]
+    volumes: [media:/app/media]
+  realtime:
+    image: doory-native39:27b6f68
+    mem_limit: 512m
+    environment: *appenv
+    command: [uvicorn, doory.asgi:application, --host, 0.0.0.0, --port, '8001', --workers, '1', --lifespan, 'off']
+    ports: [127.0.0.1:39009:8001]
+    volumes: [media:/app/media]
+volumes:
+  pgdata:
+  media:
