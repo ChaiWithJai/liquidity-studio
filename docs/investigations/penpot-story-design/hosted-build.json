@@ -1,14 +1,14 @@
 {
-  "source": "cd4fc3c483ae7d0b5175ec3fbf69fca50c33a40b",
-  "run": 39138884020,
-  "artifact": 12140549075,
-  "archiveSha256": "2314d89bcb7db377611c4220800b185c3393987ac9df03acdf7c5452e7bea5ca",
+  "source": "0d6fc789d36d072e0afa50377594e1e37348da85",
+  "run": 39139284841,
+  "artifact": 12141096760,
+  "archiveSha256": "5039c69867df4f883a4c4413b4732f78c4f1e78b60a15cccc1fbc46ab00c7954",
   "method": "Exact hosted canonical frontend; no local build or generated-byte edits",
   "files": [
     {
-      "path": "assets/index-CatmLmWm.css",
-      "bytes": 47103,
-      "sha256": "85ff09b59080e66185606903e98c949a6ad573e85758de96b629327c53002608"
+      "path": "assets/index-DWx2ZTQ8.css",
+      "bytes": 47137,
+      "sha256": "d870e40ace6f52df9ec02b5cea293744989b90bec1b3a636c7b47a31610a3cf5"
     },
     {
       "path": "fonts/DejaVuSans-Bold.ttf",
@@ -16,9 +16,9 @@
       "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
     },
     {
-      "path": "assets/index-D_8518eW.js",
-      "bytes": 448499,
-      "sha256": "a463547d78d96e7a6e3e8bfae66ee14b7c8cf3e4b21fc6b39ebee1bba61d6097"
+      "path": "assets/index-75S-YerE.js",
+      "bytes": 448491,
+      "sha256": "d41feb528366d725f2b1302c28c2dcc8617486afe75e41143a32ebf88580c174"
     },
     {
       "path": "fonts/DejaVuSans.ttf",
@@ -78,7 +78,7 @@
     {
       "path": "index.html",
       "bytes": 455,
-      "sha256": "284b8d4a5cc9dbf32e0671bf7e21a7e0a88de75f09d0e27bf1f59fba587c5feb"
+      "sha256": "73e37ffc50df0bfae12545c5c39fce7dce15f960547177c98506b569c1ee0252"
     }
   ]
 }
