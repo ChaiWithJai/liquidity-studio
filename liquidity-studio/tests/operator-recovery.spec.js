@@ -480,6 +480,7 @@ test('Operations recovery kit downloads readable instructions/fonts and its exac
  await panel.getByRole('button',{name:'Restore into this new brand'}).click();
  await expect(panel.getByText('Recovery stopped before writing restore data.',{exact:false})).toBeVisible();
  await expect(panel.getByText('The request outcome is uncertain.',{exact:true})).toHaveCount(0);
+ await expect(panel.getByRole('button',{name:'Retry retained recovery request'})).toHaveCount(0);
  await panel.getByRole('button',{name:'Retry same recovery request'}).click();
  await expect(panel.getByLabel('Recovery status')).toHaveText('Recovery status: completed');
  expect(installs).toHaveLength(2);expect(installs[1]).toEqual(installs[0]);
