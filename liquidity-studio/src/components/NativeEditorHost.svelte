@@ -22,10 +22,11 @@
   let editorDirty = $state(false);
   let editorReady = $state(false);
   let exportStages = $state.raw([]);
+  let historical = $derived(record.origin?.requiresSourceReview === true || record.sourceState === 'historical');
   let exportReceiptEpoch = $state(0);
 
   $effect(() => {
-    if (!frame) return;
+    if (!frame || historical) return;
     const openingScope = scopeKey;
     const openingId = documentId;
     const epoch = reloadEpoch;
@@ -110,6 +111,9 @@
     <p role="status">The original campaign, source review or brand palette has changed. These native edits remain a proposal; return to the campaign to review before saving.</p>
   {/if}
   {#if recoveryMessage}<p role="alert">{recoveryMessage}</p>{/if}
+  {#if historical}
+    <p role="status">This restored layout is historical evidence. Its original source must be reviewed and adopted before creating a new editable layout. Live editing, cutout, approval and export actions are unavailable here.</p>
+  {:else}
   <details>
     <summary>Image rights and consent</summary>
     <label>Rights declaration <input bind:value={rightsDeclaration} maxlength="500" placeholder="Describe your permission to use uploaded images" /></label>
@@ -129,6 +133,7 @@
     <EditorExportPanel record={localRecord?.id === record.id ? localRecord : record} stages={exportStages} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} onExported={()=>exportReceiptEpoch++} />
   {/key}
   <iframe title="Native Doory design canvas" bind:this={frame} sandbox="allow-scripts allow-same-origin allow-downloads" referrerpolicy="no-referrer"></iframe>
+  {/if}
 </section>
 
 <style>
