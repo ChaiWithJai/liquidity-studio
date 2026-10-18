@@ -28,7 +28,7 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
    const profile=await rpc(native,'get-profile',{}),project=await rpc(native,'get-project',{id:native.projectId});
    if(profile.id!==native.ownerPrincipal||project.id!==native.projectId||project.teamId!==native.teamId||project.permissions?.canEdit===false)throw fail(403,'Current native owner or editable project is unavailable');
    const variants=await rpc(native,'get-font-variants',{'team-id':native.teamId});
-   if(!Array.isArray(variants)||fonts.some(font=>!variants.some(v=>'custom-'+v.fontId===font.fontId&&v.fontFamily===font.family&&v.fontWeight===font.weight)))throw fail(422,'Current native team fonts differ from the configured fonts');
+   if(!Array.isArray(variants)||fonts.some(font=>!variants.some(v=>'custom-'+v.fontId===font.fontId&&v.fontFamily===font.family&&Number(v.fontWeight)===font.weight)))throw fail(422,'Current native team fonts differ from the configured fonts');
    // Serialize first registration. Existing revoked/stale registrations are never
    // silently replaced; explicit operator configuration cannot revive a revoke.
    if(!registration){registration=(async()=>{const state=await boundary.read(),matching=state.bindings.filter(b=>b.targetId===target.id);if(matching.length){const active=matching.filter(b=>!b.revokedAt);if(active.length!==1)throw fail(403,'Native workspace registration requires operator review');return boundary.binding(state,active[0].id);}return boundary.register(actor,{targetId:target.id});})();try{await registration;}catch(error){registration=null;throw error;}}
