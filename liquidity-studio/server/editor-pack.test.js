@@ -793,3 +793,90 @@ test("pack legacy downloads are sequential and valid historical records need no 
   await target.service.install(actor, pack, {...input,target:{organizationId:"organization",brandId:"bounded-target"}});
   assert.equal((await target.repo.read()).assets.length, 2);
 });
+
+test("portable JSON digest preserves exact UTF-8, surrogate and property-order semantics", async () => {
+  const { createHash } = await import("node:crypto");
+  for (const value of [
+    { headline: "ॐ · café · 😀", nested: ["\uD800", "\uDC00", "e\u0301"] },
+    { second: 2, first: 1 },
+    [null, true, -0, "\n\"\\"],
+  ]) {
+    const expected = createHash("sha256")
+      .update(Buffer.from(JSON.stringify(value), "utf8"))
+      .digest("hex");
+    assert.equal(jsonDigest(value), expected);
+  }
+  assert.notEqual(jsonDigest({ a: 1, b: 2 }), jsonDigest({ b: 2, a: 1 }));
+});
+
+test("validated pack detaches metadata, arrays and each primitive file record bidirectionally", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const inputPack = await source.service.export(actor);
+  const before = structuredClone(inputPack);
+  const validated = validateEditorPack(inputPack);
+  assert.deepEqual(validated.pack, before);
+  assert.equal(JSON.stringify(validated.pack), JSON.stringify(before));
+  assert.notEqual(validated.pack.files, inputPack.files);
+  for (let i = 0; i < inputPack.files.length; i++) {
+    assert.notEqual(validated.pack.files[i], inputPack.files[i]);
+    assert.deepEqual(Object.keys(validated.pack.files[i]).sort(), ["base64", "kind", "sha256", "size"]);
+  }
+  inputPack.documents[0].metadata.title = "caller mutation";
+  inputPack.documents[0].history.length = 0;
+  inputPack.scope.brandId = "caller-brand";
+  inputPack.files[0].base64 = "caller bytes";
+  inputPack.files.push({});
+  assert.deepEqual(validated.pack, before);
+  validated.pack.documents[0].metadata.title = "snapshot mutation";
+  validated.pack.files[1].kind = "snapshot kind";
+  assert.notEqual(inputPack.documents[0].metadata.title, "snapshot mutation");
+  assert.equal(inputPack.files[1].kind, before.files[1].kind);
+});
+
+test("install uses its validated snapshot when caller mutates pack during principal authorization", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const inputPack = await source.service.export(actor);
+  const expected = structuredClone(inputPack);
+  const target = await fixture(t, "liquidity_desk", true, "async-target");
+  let entered, release;
+  const held = new Promise(resolve => { release = resolve; });
+  const reached = new Promise(resolve => { entered = resolve; });
+  const originalAuthorize = target.identity.authorize;
+  target.identity.authorize = async (...args) => {
+    entered();
+    await held;
+    return originalAuthorize(...args);
+  };
+  const installing = target.service.install(actor, inputPack, {
+    ...input,
+    target: { organizationId: "organization", brandId: "async-target" },
+    idempotencyKey: "portable_async_snapshot_0001",
+  });
+  await reached;
+  inputPack.documents[0].metadata.title = "UNVALIDATED CALLER TITLE";
+  inputPack.documents[0].history.length = 0;
+  inputPack.documents[0].current = "0".repeat(64);
+  inputPack.files[0].base64 = "invalid after validation";
+  inputPack.sha256 = "f".repeat(64);
+  release();
+  const result = await installing;
+  assert.equal(result.packSha256, expected.sha256);
+  const restored = await target.native.read(actor, expected.documents[0].metadata.id);
+  assert.equal(restored.title, expected.documents[0].metadata.title);
+  assert.deepEqual(restored.document, validateEditorPack(expected).json(expected.documents[0].current));
+});
+
+test("detached pack preserves accepted top-level and primitive-file key order", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const original = await source.service.export(actor);
+  const { sha256, files, ...metadata } = original;
+  const reorderedFiles = files.map(({ base64, kind, size, sha256 }) => ({ base64, kind, size, sha256 }));
+  const content = { files: reorderedFiles, ...metadata };
+  const reordered = { ...content, sha256: jsonDigest(content) };
+  const snapshot = validateEditorPack(reordered).pack;
+  assert.equal(JSON.stringify(snapshot), JSON.stringify(reordered));
+  assert.equal(validateEditorPack(snapshot).pack.sha256, reordered.sha256);
+});

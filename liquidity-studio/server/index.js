@@ -160,7 +160,11 @@ async function readBody(req, limit = 262144, timeoutMs = 0) {
       if (settled) return;
       let value;
       try {
-        value = JSON.parse(Buffer.concat(chunks).toString() || "{}");
+        // Incoming request listeners retain this array until request teardown.
+        // Drop its Buffer references before creating the decoded/parsed forms.
+        const encoded = Buffer.concat(chunks);
+        chunks.length = 0;
+        value = JSON.parse(encoded.toString("utf8") || "{}");
       } catch {
         rejectOnce(fail(400, "Malformed JSON"));
         return;
