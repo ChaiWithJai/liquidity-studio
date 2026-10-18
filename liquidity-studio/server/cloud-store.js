@@ -83,6 +83,41 @@ export class FirestoreStore {
     }, { maxAttempts: 5 });
   }
 
+  // One-off operator admission, not a product/store key limit. Query snapshots
+  // and named values share the same read-write transaction; never prefetch keys().
+  async transactWithKeyInventory(keys, callback) {
+    keys = transactionKeys(keys, callback);
+    const refs = keys.map(key => this.ref(key));
+    return this.firestore.runTransaction(async transaction => {
+      const indexed = await transaction.get(this.collection.orderBy('key').select('key').limit(513));
+      const parents = await transaction.get(this.collection.orderBy('__name__').select('key').limit(513));
+      if (indexed.size > 512 || parents.size > 512) throw failure('OPERATOR_INVENTORY_CAPACITY', 'Operator inventory exceeds 512 logical records; preserve state for owner review');
+      const inspect = snapshot => snapshot.docs.map(doc => {
+        const key = doc.data().key;
+        if (typeof key !== 'string' || !key || Buffer.byteLength(key) > 512 || doc.id !== hash(key)) throw failure('STORE_CORRUPT', 'Operator inventory contains invalid parent metadata');
+        return [doc.id, key];
+      }).sort((a,b) => a[0].localeCompare(b[0]));
+      const listed = inspect(indexed), all = inspect(parents);
+      if (JSON.stringify(listed) !== JSON.stringify(all) || new Set(all.map(([,key])=>key)).size !== all.length) throw failure('STORE_CORRUPT', 'Operator key inventory is incomplete');
+      const inventory = all.map(([,key])=>key).sort();
+      const current = await Promise.all(keys.map((key,index)=>this.read(transaction,refs[index],key)));
+      // Bound the selected current values too; do not expand unrelated payloads.
+      const currentBytes = current.reduce((total,record)=>total+Buffer.byteLength(JSON.stringify(record.value)),0);
+      if (currentBytes > MAX_VALUE_BYTES) throw failure('STORE_CAPACITY', 'Operator current records exceed four MiB capacity');
+      const encoded = transactionValues(callback(current.map(record=>record.value), inventory), keys.length);
+      const buffers = encoded.map(value=>Buffer.from(value));
+      buffers.forEach((buffer,index)=>{
+        const prior=current[index], ref=refs[index], digest=hash(buffer);
+        if(prior.sha256===digest)return;
+        const chunks=Math.ceil(buffer.byteLength/CHUNK_BYTES);
+        for(let i=0;i<chunks;i++)transaction.set(ref.collection('chunks').doc(String(i)),{bytes:buffer.subarray(i*CHUNK_BYTES,(i+1)*CHUNK_BYTES)});
+        for(let i=chunks;i<prior.chunkCount;i++)transaction.delete(ref.collection('chunks').doc(String(i)));
+        transaction.set(ref,{schemaVersion:1,key:keys[index],revision:prior.revision+1,chunkCount:chunks,bytes:buffer.byteLength,sha256:digest});
+      });
+      return encoded.map(value=>JSON.parse(value));
+    }, {maxAttempts:5});
+  }
+
   async deleteIf(key, guardKeys, predicate) {
     const keys = transactionKeys([key, ...guardKeys], predicate);
     const refs = keys.map(item => this.ref(item));

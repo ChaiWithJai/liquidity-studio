@@ -17,6 +17,12 @@ function currentPlan(store,scope,key,actorId,state,sourceCommit){return pristine
  */
 export async function applyPristineSeedFollowthrough({store,workspace,jobs,actor,scope,plan,sourceCommit,titleIdempotencyKey,jobIdempotencyKey}){
  if(!(store instanceof DurableStore)||workspace.store!==store||workspace.repo?.store!==store||jobs.repo?.store!==store||jobs.repo.key!==workspace.repo.key)throw fail(400,'Same-connection SQLite operator composition required');
+ return applyGuardedSeedFollowthrough({store,workspace,jobs,actor,scope,plan,sourceCommit,titleIdempotencyKey,jobIdempotencyKey});
+}
+
+// Internal semantic composition. Callers must supply a transaction-local snapshot
+// view; never expose this function as an HTTP operation or arbitrary store adapter.
+export async function applyGuardedSeedFollowthrough({store,workspace,jobs,actor,scope,plan,sourceCommit,titleIdempotencyKey,jobIdempotencyKey}){
  same(workspace.repo.scope,scope);same(jobs.repo.scope,scope);
  same(scope,plan.scope);
  if(sourceCommit!==plan.sourceCommit)throw fail(409,'Reviewed source commit changed');
@@ -51,7 +57,7 @@ export async function applyPristineSeedFollowthrough({store,workspace,jobs,actor
  });
  // A receipt is authoritative only for the original post-title intent. Read it
  // without substituting current revisions, then recheck it in job creation's tx.
- const accepted=store.get(workspace.repo.key).workspace.receipts.find(item=>item.idempotencyKey===titleIdempotencyKey)?.seedFollowthrough;
+ const accepted=(await store.get(workspace.repo.key)).workspace.receipts.find(item=>item.idempotencyKey===titleIdempotencyKey)?.seedFollowthrough;
  if(!accepted)throw fail(409,'Title receipt is unavailable; no job was queued');
  const input={purpose:'source-preparation',idempotencyKey:jobIdempotencyKey,reviewed:true,brandRevision:accepted.brandRevision,items:accepted.items.map(({storyId,storyRevision})=>({storyId,storyRevision}))};
  const job=await jobs.create(actor,input,'operator-plan',{binding,guard(state,prior){

@@ -37,4 +37,4 @@ while (true) {
   await new Promise(resolve => setTimeout(resolve, 200));
 }
 JS
-node --test server/cloud-store.emulator.test.js
+node --test server/cloud-store.emulator.test.js server/seed-followthrough-firestore.emulator.test.js
