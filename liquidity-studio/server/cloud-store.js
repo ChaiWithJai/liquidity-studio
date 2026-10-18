@@ -83,6 +83,21 @@ export class FirestoreStore {
     }, { maxAttempts: 5 });
   }
 
+  async deleteIf(key, guardKeys, predicate) {
+    const keys = transactionKeys([key, ...guardKeys], predicate);
+    const refs = keys.map(item => this.ref(item));
+    return this.firestore.runTransaction(async transaction => {
+      const records = await Promise.all(keys.map((item, index) => this.read(transaction, refs[index], item)));
+      const allowed = predicate(records.map(record => record.value));
+      if (allowed instanceof Promise) allowed.catch(() => {});
+      if (typeof allowed !== 'boolean') throw new Error('Conditional deletion requires a synchronous boolean predicate');
+      if (allowed) {
+        for (let i=0;i<records[0].chunkCount;i++) transaction.delete(refs[0].collection('chunks').doc(String(i)));
+        transaction.delete(refs[0]);
+      }
+      return allowed;
+    }, {maxAttempts:5});
+  }
   async delete(key) {
     const ref = this.ref(key);
     await this.firestore.runTransaction(async transaction => {

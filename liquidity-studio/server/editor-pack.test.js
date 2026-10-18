@@ -1,0 +1,613 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { DurableStore } from "./storage.js";
+import { ScopedRepository } from "./repository.js";
+import { NativeEditorService } from "./native-editor.js";
+import { EditorPackService } from "./editor-pack-service.js";
+import { nativeFontRegistry } from "./native-editor-fonts.js";
+import { campaignFromApprovedClaims } from "./source-integrity.js";
+import { brandRevision } from "./multimodal-contract.js";
+import { validateEditorPack, jsonDigest } from "./editor-pack.js";
+const actor = { id: "owner", role: "founder" };
+async function fixture(
+  t,
+  preset = "liquidity_desk",
+  empty = false,
+  brandId = "brand",
+) {
+  const store = new DurableStore(":memory:");
+  t.after(() => store.close());
+  const scope = { organizationId: "organization", brandId, preset };
+  await store.update("identity", () => ({ users: [actor], memberships: [] }));
+  const identity = {
+    authorize: async (user) => {
+      if (user.id !== actor.id)
+        throw Object.assign(new Error("Forbidden"), { status: 403 });
+    },
+  };
+  const repo = new ScopedRepository(store, scope);
+  await repo.ready;
+  await repo.mutate((state) => {
+    state.backlog = [];
+    return state;
+  });
+  if (!empty) {
+    const story = {
+      id: "story",
+      title: "Portable controlled source",
+      revision: 2,
+      generationId: "gen",
+      sourceClaims: [
+        {
+          id: "claim",
+          text: "An approved source excerpt for the portable fixture.",
+          sourceUrl: "https://example.org/portable",
+          kind: "general",
+          status: "approved",
+        },
+      ],
+    };
+    story.campaignDraft = {
+      ...campaignFromApprovedClaims(story),
+      provenance: { generationId: "gen", mode: "synthetic" },
+    };
+    await repo.mutate((state) => {
+      state.backlog = [story];
+      return state;
+    });
+  }
+  const native = new NativeEditorService({
+    repo,
+    identity,
+    scope,
+    availableFonts: nativeFontRegistry(),
+  });
+  const service = new EditorPackService({ native });
+  return { store, repo, native, service, scope, identity };
+}
+const input = {
+  target: { organizationId: "organization", brandId: "brand" },
+  principalRemap: { owner: "owner" },
+  sourceReviewAcknowledged: true,
+  idempotencyKey: "portable_restore_fixture_0001",
+};
+async function allFormats(f) {
+  const state = await f.repo.read(),
+    story = state.backlog[0];
+  const records = [];
+  for (const format of ["infographic", "carousel", "story", "reel"]) {
+    const created = await f.native.create(actor, {
+      storyId: story.id,
+      format,
+      expectedRevision: story.revision,
+      generationId: "gen",
+      expectedBrandRevision: brandRevision(state.brandProfile),
+      idempotencyKey: `create_portable_${format}`,
+    });
+    const document = structuredClone(created.document);
+    document.pages[0].objects.find((o) => o.id === "headline_layer").text =
+      `Retained human ${format}`;
+    records.push(
+      await f.native.save(actor, created.id, {
+        expectedRevision: 1,
+        title: created.title,
+        document,
+        idempotencyKey: `save_portable_${format}`,
+      }),
+    );
+  }
+  return records;
+}
+test("deletion-independent both-brand four-format packs restore exact scenes/history and remain natively editable", async (t) => {
+  for (const preset of ["liquidity_desk", "vedic_dharma"]) {
+    const source = await fixture(t, preset),
+      records = await allFormats(source),
+      pack = await source.service.export(actor);
+    assert.equal(pack.documents.length, 4);
+    assert.equal(pack.fonts.length, 5);
+    validateEditorPack(pack);
+    for (const key of source.store.keys("")) source.store.delete(key);
+    const target = await fixture(t, preset, true, "fresh-brand");
+    const targetInput = {
+      ...input,
+      target: { organizationId: "organization", brandId: "fresh-brand" },
+    };
+    const result = await target.service.install(actor, pack, targetInput);
+    assert.equal(result.documents, 4);
+    assert.deepEqual(
+      await target.service.install(actor, pack, targetInput),
+      result,
+    );
+    for (const original of records) {
+      const restored = await target.native.read(actor, original.id);
+      assert.deepEqual(restored.document, original.document);
+      assert.equal(restored.sourceState, "current");
+      assert.equal(restored.receipts, undefined);
+      assert.equal(restored.restoredHistory.length, 2);
+      const document = structuredClone(restored.document);
+      document.pages[0].objects.find((o) => o.id === "headline_layer").text =
+        "Fresh installation edit";
+      const saved = await target.native.save(actor, restored.id, {
+        expectedRevision: 2,
+        title: restored.title,
+        document,
+        idempotencyKey: `fresh_installation_edit_${restored.format}`,
+      });
+      assert.equal(saved.revision, 3);
+      assert.deepEqual(
+        (await target.native.read(actor, saved.id)).document,
+        document,
+      );
+    }
+  }
+});
+test("tampered bytes/version/credentials/foreign references and missing explicit destination fail before writes", async (t) => {
+  const f = await fixture(t);
+  await allFormats(f);
+  const pack = await f.service.export(actor),
+    target = await fixture(t, "liquidity_desk", true),
+    before = target.store.keys("");
+  for (const change of [
+    (p) => (p.schemaVersion = 2),
+    (p) => (p.files[0].base64 = "AAAA"),
+    (p) => (p.documents[0].metadata.brandId = "foreign"),
+    (p) => (p.documents[0].metadata.origin.credentials = "secret"),
+  ]) {
+    const bad = structuredClone(pack);
+    change(bad);
+    const { sha256, ...content } = bad;
+    bad.sha256 = jsonDigest(content);
+    await assert.rejects(target.service.install(actor, bad, input));
+    assert.deepEqual(target.store.keys(""), before);
+  }
+  await assert.rejects(
+    target.service.install(actor, pack, {
+      ...input,
+      target: { organizationId: "foreign", brandId: "brand" },
+    }),
+    { status: 403 },
+  );
+  await assert.rejects(
+    target.service.install(actor, pack, { ...input, principalRemap: {} }),
+    { status: 403 },
+  );
+});
+test("staging failure hides partial state and rolls back only installation-owned data", async (t) => {
+  const f = await fixture(t);
+  await allFormats(f);
+  const pack = await f.service.export(actor),
+    target = await fixture(t, "liquidity_desk", true),
+    before = await target.repo.read();
+  const transact = target.store.transact.bind(target.store);
+  let writes = 0,
+    blocked = false;
+  target.store.transact = (keys, fn) => {
+    if (keys.some((key) => key.startsWith(target.native.prefix))) {
+      blocked =
+        target.store.get(target.repo.key).editorRestore.status === "installing";
+      if (++writes === 2) throw new Error("Injected disk write failure");
+    }
+    return transact(keys, fn);
+  };
+  await assert.rejects(
+    target.service.install(actor, pack, input),
+    /Injected disk/,
+  );
+  assert.equal(blocked, true);
+  assert.deepEqual(await target.repo.read(), before);
+  assert.deepEqual(target.store.keys(target.native.prefix), []);
+});
+test("capacity failure and populated destination refuse mutation", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor),
+    target = await fixture(t, "liquidity_desk", true);
+  target.service.capacityCheck = async () => {
+    throw new Error("Insufficient disk headroom");
+  };
+  await assert.rejects(
+    target.service.install(actor, pack, input),
+    /disk headroom/,
+  );
+  assert.equal(target.store.get(target.service.journalKey), null);
+  await assert.rejects(source.service.install(actor, pack, input), {
+    status: 409,
+  });
+});
+test("revoked owner cannot activate or continue an interrupted installation; current founder can roll it back", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor),
+    target = await fixture(t, "liquidity_desk", true);
+  const update = target.store.update.bind(target.store),
+    transact = target.store.transact.bind(target.store);
+  let staged = false;
+  target.store.transact = (keys, fn) => {
+    const value = transact(keys, fn);
+    if (keys.some((key) => key.startsWith(target.native.prefix)) && !staged) {
+      staged = true;
+      update("identity", (state) => ({ ...state, users: [] }));
+    }
+    return value;
+  };
+  await assert.rejects(
+    target.service.install(actor, pack, input),
+    (error) => error.status === 403 && error.restoreRecoveryRequired === true,
+  );
+  await assert.rejects(target.repo.read(), { status: 423 });
+  const resumed = new EditorPackService({ native: target.native });
+  await assert.rejects(
+    resumed.rollback(actor, { idempotencyKey: input.idempotencyKey }),
+    { status: 403 },
+  );
+  update("identity", (state) => ({ ...state, users: [actor] }));
+  await resumed.rollback(actor, { idempotencyKey: input.idempotencyKey });
+  assert.deepEqual(target.store.keys(target.native.prefix), []);
+  assert.equal((await target.repo.read()).backlog.length, 0);
+});
+test("rollback refuses deletion of a record no longer owned by its journal", async (t) => {
+  const target = await fixture(t, "liquidity_desk", true),
+    id = "installation-owned",
+    foreign = `${target.native.prefix}payload:collision`;
+  const before = await target.repo.read();
+  target.store.update(target.repo.key, () => ({
+    ...before,
+    editorRestore: { id, status: "installing" },
+  }));
+  target.store.update(target.service.journalKey, () => ({
+    id,
+    key: input.idempotencyKey,
+    status: "installing",
+    before,
+    plannedKeys: [foreign],
+  }));
+  target.store.update(foreign, () => ({ document: "different writer" }));
+  await assert.rejects(
+    target.service.rollback(actor, { idempotencyKey: input.idempotencyKey }),
+    { status: 409 },
+  );
+  assert.equal(target.store.get(foreign).document, "different writer");
+  await assert.rejects(target.repo.read(), { status: 423 });
+});
+test("actual process interruption preserves a durable reservation and fresh-process rollback restores the empty database", async (t) => {
+  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { spawnSync } = await import("node:child_process");
+  const directory = mkdtempSync(join(tmpdir(), "editor-pack-crash-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor),
+    empty = await fixture(t, "liquidity_desk", true);
+  const filename = join(directory, "target.sqlite"),
+    packfile = join(directory, "pack.json"),
+    target = new DurableStore(filename);
+  target.update("identity", () => ({ users: [actor], memberships: [] }));
+  target.update(empty.repo.key, () => empty.store.get(empty.repo.key));
+  target.backup(join(directory, "pre-restore.sqlite"));
+  target.close();
+  writeFileSync(packfile, JSON.stringify(pack), { mode: 0o600 });
+  const script = `import{readFileSync}from'node:fs';import{DurableStore}from'./server/storage.js';import{ScopedRepository}from'./server/repository.js';import{NativeEditorService}from'./server/native-editor.js';import{EditorPackService}from'./server/editor-pack-service.js';const store=new DurableStore(process.argv[1]);const repo=new ScopedRepository(store,${JSON.stringify(empty.scope)});await repo.ready;const native=new NativeEditorService({store,repo,scope:${JSON.stringify(empty.scope)},identity:{authorize:async()=>{}}});const transact=store.transact.bind(store);store.transact=(keys,fn)=>{const value=transact(keys,fn);if(keys.some(key=>key.startsWith(native.prefix)))process.exit(86);return value;};await new EditorPackService({native}).install(${JSON.stringify(actor)},JSON.parse(readFileSync(process.argv[2])),${JSON.stringify(input)});`;
+  const child = spawnSync(
+    process.execPath,
+    ["--input-type=module", "-e", script, filename, packfile],
+    { encoding: "utf8" },
+  );
+  assert.equal(child.status, 86, child.stderr);
+  const recovered = new DurableStore(filename);
+  t.after(() => recovered.close());
+  const repo = new ScopedRepository(recovered, empty.scope);
+  await repo.ready;
+  await assert.rejects(repo.read(), { status: 423 });
+  const native = new NativeEditorService({
+      repo,
+      scope: empty.scope,
+      identity: empty.identity,
+    }),
+    service = new EditorPackService({ native });
+  await assert.rejects(native.read(actor, pack.documents[0].metadata.id), {
+    status: 423,
+  });
+  await service.rollback(actor, { idempotencyKey: input.idempotencyKey });
+  assert.deepEqual(await repo.read(), await empty.repo.read());
+  assert.deepEqual(recovered.keys(native.prefix), []);
+});
+test("two concurrent installers cannot activate separate intents into one fresh scope", async (t) => {
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor),
+    target = await fixture(t, "liquidity_desk", true);
+  const competing = new EditorPackService({ native: target.native });
+  const results = await Promise.allSettled([
+    target.service.install(actor, pack, input),
+    competing.install(actor, pack, {
+      ...input,
+      idempotencyKey: "second_competing_restore_key",
+    }),
+  ]);
+  assert.equal(results.filter((item) => item.status === "fulfilled").length, 1);
+  assert.equal(results.filter((item) => item.status === "rejected").length, 1);
+  assert.equal((await target.repo.read()).backlog.length, 1);
+  assert.equal(target.store.keys(`${target.native.prefix}document:`).length, 4);
+});
+test("ejection rejects a concurrent new native document, image, or review update instead of silently omitting work", async (t) => {
+  for (const change of ["document", "asset", "review"]) {
+    const source = await fixture(t);
+    const records = await allFormats(source),
+      original = source.native.hydrate.bind(source.native);
+    let changed = false;
+    if (change === "review")
+      source.store.update(
+        `editor-review:organization:brand:${records[0].id}`,
+        () => ({
+          schemaVersion: 1,
+          nativeId: records[0].id,
+          revision: 1,
+          history: [],
+        }),
+      );
+    source.native.hydrate = async (...args) => {
+      if (!changed) {
+        changed = true;
+        if (change === "document") {
+          const state = await source.repo.read();
+          await source.native.create(actor, {
+            storyId: "story",
+            format: "story",
+            expectedRevision: 2,
+            generationId: "gen",
+            expectedBrandRevision: brandRevision(state.brandProfile),
+            idempotencyKey: "concurrent_added_native_document",
+          });
+        }
+        if (change === "asset")
+          source.store.update(
+            `${source.native.prefix}asset:${"a".repeat(32)}`,
+            () => ({ id: "a".repeat(32), createdBy: actor.id }),
+          );
+        if (change === "review")
+          source.store.update(
+            `editor-review:organization:brand:${records[0].id}`,
+            (current) => ({ ...current, revision: 2 }),
+          );
+      }
+      return original(...args);
+    };
+    await assert.rejects(
+      source.service.export(actor),
+      (error) => error.status === 409 && /changed/.test(error.message),
+    );
+  }
+});
+async function processFixture(t) {
+  const { mkdtempSync, writeFileSync, rmSync } = await import("node:fs"),
+    { tmpdir } = await import("node:os"),
+    { join } = await import("node:path"),
+    { spawnSync } = await import("node:child_process");
+  const directory = mkdtempSync(join(tmpdir(), "editor-pack-races-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const source = await fixture(t);
+  await allFormats(source);
+  const pack = await source.service.export(actor),
+    empty = await fixture(t, "liquidity_desk", true),
+    before = await empty.repo.read();
+  const filename = join(directory, "target.sqlite"),
+    packfile = join(directory, "pack.json"),
+    store = new DurableStore(filename);
+  t.after(() => store.close());
+  store.update("identity", () => ({ users: [actor], memberships: [] }));
+  store.update(empty.repo.key, () => before);
+  writeFileSync(packfile, JSON.stringify(pack), { mode: 0o600 });
+  const repo = new ScopedRepository(store, empty.scope);
+  await repo.ready;
+  const native = new NativeEditorService({
+      repo,
+      scope: empty.scope,
+      identity: empty.identity,
+    }),
+    service = new EditorPackService({ native });
+  const nextInput = {
+    ...input,
+    idempotencyKey: "new_process_installation_key",
+  };
+  const child = (mode) => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "tests/fixtures/editor-pack-child.mjs",
+        filename,
+        packfile,
+        JSON.stringify(empty.scope),
+        JSON.stringify(actor),
+        JSON.stringify(nextInput),
+        mode,
+        input.idempotencyKey,
+      ],
+      { encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+  };
+  return { store, repo, native, service, before, pack, child, nextInput };
+}
+test("two processes: releasing rollback never deletes a new installer journal", async (t) => {
+  const f = await processFixture(t),
+    id = "old-empty-reservation";
+  f.store.update(f.repo.key, () => ({
+    ...f.before,
+    editorRestore: { id, status: "installing" },
+  }));
+  f.store.update(f.service.journalKey, () => ({
+    id,
+    status: "installing",
+    key: input.idempotencyKey,
+    before: f.before,
+    plannedKeys: [],
+  }));
+  const transact = f.store.transact.bind(f.store);
+  let interleaved = false;
+  f.store.transact = (keys, callback) => {
+    const result = transact(keys, callback);
+    if (
+      !interleaved &&
+      keys.includes(f.service.journalKey) &&
+      f.store.get(f.service.journalKey) === null
+    ) {
+      interleaved = true;
+      f.child("install");
+    }
+    return result;
+  };
+  await f.service.rollback(actor, { idempotencyKey: input.idempotencyKey });
+  assert.equal(interleaved, true);
+  assert.equal(
+    f.store.get(f.service.journalKey)?.key,
+    f.nextInput.idempotencyKey,
+  );
+  assert.equal(f.store.get(f.service.journalKey)?.status, "completed");
+  assert.equal(
+    (await f.service.install(actor, f.pack, f.nextInput)).restored,
+    true,
+  );
+});
+test("two processes: a stale recovery cannot delete a replacement installer document", async (t) => {
+  const f = await processFixture(t);
+  await f.service.install(actor, f.pack, input);
+  const original = f.store.get(f.service.journalKey);
+  f.store.update(f.repo.key, () => ({
+    ...f.before,
+    editorRestore: { id: original.id, status: "installing" },
+  }));
+  f.store.update(f.service.journalKey, () => ({
+    ...original,
+    status: "installing",
+  }));
+  const target = f.native.key(f.pack.documents[0].metadata.id),
+    deleteIf = f.store.deleteIf.bind(f.store),
+    remove = f.store.delete.bind(f.store);
+  let interleaved = false;
+  const replace = () => {
+    if (interleaved) return;
+    interleaved = true;
+    f.store.update(f.service.journalKey, (current) => ({
+      ...current,
+      rollbackLeaseExpiresAt: 0,
+    }));
+    f.child("rollback-install");
+  };
+  f.store.deleteIf = (key, keys, guard) => {
+    if (key === target) replace();
+    return deleteIf(key, keys, guard);
+  };
+  // Retains the pre-fix interleaving: old code deleted after a separate owner read.
+  f.store.delete = (key) => {
+    if (key === target) replace();
+    return remove(key);
+  };
+  await assert.rejects(
+    f.service.rollback(actor, { idempotencyKey: input.idempotencyKey }),
+    { status: 409 },
+  );
+  assert.equal(interleaved, true);
+  assert.ok(f.store.get(target));
+  assert.notEqual(f.store.get(target).restoreInstallationId, original.id);
+  assert.equal(
+    (await f.native.read(actor, f.pack.documents[0].metadata.id)).sourceState,
+    "current",
+  );
+});
+test("a crashed rollback lease blocks another recovery until expiry, then permits a new token", async (t) => {
+  const target = await fixture(t, "liquidity_desk", true),
+    before = await target.repo.read(),
+    id = "interrupted-rollback",
+    at = Date.now();
+  target.store.update(target.repo.key, () => ({
+    ...before,
+    editorRestore: { id, status: "installing" },
+  }));
+  target.store.update(target.service.journalKey, () => ({
+    id,
+    status: "rolling-back",
+    key: input.idempotencyKey,
+    before,
+    plannedKeys: [],
+    rollbackToken: "crashed-process-token",
+    rollbackLeaseExpiresAt: at + 60000,
+  }));
+  const now = new EditorPackService({
+    native: target.native,
+    now: () => new Date(at).toISOString(),
+  });
+  await assert.rejects(
+    now.rollback(actor, { idempotencyKey: input.idempotencyKey }),
+    { status: 409 },
+  );
+  await assert.rejects(target.repo.read(), { status: 423 });
+  const later = new EditorPackService({
+    native: target.native,
+    now: () => new Date(at + 60001).toISOString(),
+  });
+  assert.equal(
+    (await later.rollback(actor, { idempotencyKey: input.idempotencyKey }))
+      .rolledBack,
+    true,
+  );
+  assert.deepEqual(await target.repo.read(), before);
+});
+test("re-ejection retains original authors, original source binding and historical approvals without reviving review authority", async (t) => {
+  const source = await fixture(t);
+  const records = await allFormats(source),
+    original = records[0];
+  source.store.update(
+    `editor-review:organization:brand:${original.id}`,
+    () => ({
+      schemaVersion: 1,
+      nativeId: original.id,
+      organizationId: "organization",
+      brandId: "brand",
+      revision: 4,
+      stage: "Approved",
+      approval: { approvedBy: actor.id, approvedAt: new Date().toISOString() },
+      history: [{ action: "approve", actorId: actor.id }],
+      journal: [{ key: "original_actor_replay_key" }],
+    }),
+  );
+  const first = await source.service.export(actor),
+    target = await fixture(t, "liquidity_desk", true, "second-brand"),
+    firstOptions = {
+      ...input,
+      target: { organizationId: "organization", brandId: "second-brand" },
+    };
+  await target.service.install(actor, first, firstOptions);
+  const second = await target.service.export(actor);
+  assert.equal(
+    second.documents.find(item=>item.metadata.id===original.id).metadata.portableHistory.sourceCreatedBy,
+    actor.id,
+  );
+  assert.deepEqual(
+    second.documents.find(item=>item.metadata.id===original.id).metadata.portableHistory.sourceOrigin,
+    original.origin,
+  );
+  assert.equal(
+    second.documents.find(item=>item.metadata.id===original.id).metadata.portableHistory.restorations.length,
+    1,
+  );
+  const final = await fixture(t, "liquidity_desk", true, "third-brand");
+  await final.service.install(actor, second, {
+    ...input,
+    target: { organizationId: "organization", brandId: "third-brand" },
+  });
+  const restored = await final.native.read(actor, original.id);
+  assert.deepEqual(restored.portableHistory.sourceOrigin, original.origin);
+  assert.equal(restored.portableHistory.restorations.length, 2);
+  assert.equal(
+    restored.portableHistory.reviewHistory.authority,
+    "historical-only",
+  );
+  assert.equal(restored.portableHistory.reviewHistory.record.stage, "Approved");
+  assert.equal(
+    restored.portableHistory.reviewHistory.record.journal,
+    undefined,
+  );
+  assert.deepEqual(final.store.keys("editor-review:"), []);
+});

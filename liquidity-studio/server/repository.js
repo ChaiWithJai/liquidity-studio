@@ -1,3 +1,4 @@
+import { assertRestoreAvailable } from './restore-gate.js';
 import { portableWorkspace } from "./workspace-schema.js";
 import { randomUUID, createHash } from "node:crypto";
 import {
@@ -59,11 +60,16 @@ export class ScopedRepository {
   }
   async read() {
     await this.ready;
-    return this.store.get(this.key);
+    const state = await this.store.get(this.key);
+    assertRestoreAvailable(state);
+    return state;
   }
   async mutate(callback) {
     await this.ready;
-    return this.store.update(this.key, callback);
+    return this.store.update(this.key, state => {
+      assertRestoreAvailable(state);
+      return callback(state);
+    });
   }
   async getBrandProfile() {
     return (await this.read()).brandProfile;
@@ -695,7 +701,10 @@ export class ScopedRepository {
         delete asset.base64;
       }
     }
-    await this.store.update(this.key, () => data);
+    await this.store.update(this.key, current => {
+      assertRestoreAvailable(current);
+      return data;
+    });
     return { imported: true };
   }
 }
