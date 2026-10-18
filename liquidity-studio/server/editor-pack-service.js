@@ -111,12 +111,14 @@ export class EditorPackService {
   constructor({
     native,
     now = () => new Date().toISOString(),
-    capacityCheck = checkRestoreCapacity,
+    capacityCheck = null,
     createFiles = createPackFileCollection,
   }) {
     Object.assign(this, { native, now, capacityCheck, createFiles });
     this.repo = native.repo;
     this.store = native.store;
+    this.capacityCheck = capacityCheck || ((bytes) =>
+      checkRestoreCapacity(bytes, this.store.filesystemDirectory || undefined));
     this.scope = native.scope;
     this.identity = native.identity;
     this.journalKey = `editor-restore:${this.scope.organizationId}:${this.scope.brandId}`;

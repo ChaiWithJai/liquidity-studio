@@ -7,6 +7,12 @@ export class DurableStore {
   constructor(
     filename = process.env.STUDIO_DATABASE_PATH || "./data/studio.sqlite",
   ) {
+    // Capacity admission must follow the actual constructor-selected database,
+    // including private homes mounted on a different filesystem from cwd.
+    Object.defineProperty(this, "filesystemDirectory", {
+      value: filename === ":memory:" ? null : path.dirname(path.resolve(filename)),
+      enumerable: false,
+    });
     if (filename !== ":memory:")
       fs.mkdirSync(path.dirname(path.resolve(filename)), {
         recursive: true,
