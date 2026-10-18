@@ -47,7 +47,7 @@ test('fixed official RPC accepts only the two added read commands, never invitat
 test('C4 guard composes exactly four extra keys, retains admin identity, and aborts revoked final write',async t=>{
  const f=await setup(t),session=await f.connect();await f.service.registerWorkspace(f.founder.user,{});await f.service.inspect(f.marketer.user,session);await assert.rejects(f.service.require(f.marketer.user,scope,session),{status:503});
  // Explicit trusted hosted fixture state, NOT native policy/runtime evidence.
- f.store.update(f.service.key,record=>{record.state='current';record.sharingPolicy='disabled';record.liveFence='current';record.grants[0].state='current';return record;});
+ f.store.update(f.service.key,record=>{record.state='current';record.sharingPolicy='disabled';record.liveFence='current';record.grants[0].state='current';record.grants[0].reconciliation={state:'acknowledged',present:true,pairingEpoch:record.grants[0].pairingEpoch};return record;});
  const admission=await f.service.require(f.marketer.user,scope,session);assert.equal(admission.workspace.ownerPrincipal,operator);assert.equal(admission.grantSnapshot.nativeProfileId,human);const keys=f.service.guardKeys(admission.grantSnapshot);assert.equal(keys.length,4);assert.equal(keys[3],`session:${session}`);
  f.store.update('sentinel',()=>({humanText:'retained'}));f.store.update('identity',identity=>{identity.memberships.find(x=>x.userId===f.marketer.user.id).brandIds=[];return identity;});
  assert.throws(()=>f.store.transact(['sentinel','repo','identity','security',...keys],values=>{f.service.assertCurrent({identity:values[2],brandAccess:values[4],pair:values[5],profileOwner:values[6],session:values[7]},admission.grantSnapshot);values[0].humanText='overwritten';return values;}),{status:403});assert.equal(f.store.get('sentinel').humanText,'retained');
@@ -60,4 +60,34 @@ test('native UUID reconciliation persists exact intent before side effect and re
  f.store.update('identity',identity=>{identity.memberships.find(x=>x.userId===f.marketer.user.id).brandIds=[];return identity;});
  const input={actorId:f.marketer.user.id,idempotencyKey:id('7')};await assert.rejects(service.reconcile(f.founder.user,input),/Lost native reply/);await assert.rejects(service.reconcile(f.founder.user,{...input,idempotencyKey:id('8')}),{status:409});
  const result=await service.reconcile(f.founder.user,input);assert.equal(result.present,false);assert.equal(result.editingEnabled,false);assert.deepEqual(calls[0],calls[1]);assert.equal(calls[0]['member-id'],human);assert.equal(f.store.get(f.service.key).grants[0].state,'revoked');await service.reconcile(f.founder.user,input);assert.equal(calls.length,2);
+});
+
+test('verified membership inspection retains native receipt and current session lease',async t=>{
+ const f=await setup(t),session=await f.connect();
+ await f.service.registerWorkspace(f.founder.user,{});await f.service.inspect(f.marketer.user,session);
+ // Controlled policy/receipt fixture only; not a native activation claim.
+ f.store.update(f.service.key,record=>{
+  record.state='current';record.sharingPolicy='disabled';record.liveFence='current';
+  Object.assign(record.grants[0],{nativeEpoch:7,reconciliation:{id:id('7'),state:'acknowledged',present:true,pairingEpoch:record.grants[0].pairingEpoch}});
+  return record;
+ });
+ assert.equal((await f.service.inspect(f.marketer.user,session)).grantState,'current');
+ const grant=f.store.get(f.service.key).grants[0];
+ assert.equal(grant.nativeEpoch,7);assert.equal(grant.reconciliation.id,id('7'));assert.equal(grant.sessionDigest,session);
+ assert.equal((await f.service.admission(nativeRequest(human,'read'))).allowed,true);
+ await f.identity.logout(f.marketer.token);
+ await assert.rejects(f.service.admission(nativeRequest(human,'read')),{status:401});
+});
+
+test('server-side design RPC carries a separate private acting profile without changing its owner cookie',async()=>{
+ const requests=[],grantKey='g'.repeat(43),cookie='auth-token=controlled-operator-cookie';
+ const rpc=createPenpotStoryRpc({sessions:new Map([[operator,{cookie}]]),grantKey,
+  fetchImpl:async(url,options)=>{requests.push({url,options});return new Response('{}',{status:200});}});
+ await rpc({ownerPrincipal:operator,actingNativeProfileId:human},'get-file',{id:id('8')});
+ assert.equal(requests[0].options.headers.Cookie,cookie);
+ assert.equal(requests[0].options.headers['X-Studio-Acting-Profile'],human);
+ assert.equal(requests[0].options.headers['X-Studio-Native-Grant-Key'],grantKey);
+ assert.deepEqual(JSON.parse(requests[0].options.body),{id:id('8')});
+ await rpc({ownerPrincipal:operator},'get-profile',{});
+ assert.equal(requests[1].options.headers['X-Studio-Acting-Profile'],undefined);
 });

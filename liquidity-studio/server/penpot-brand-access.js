@@ -27,7 +27,7 @@ export class PenpotBrandAccess {
   const owner=members.filter(x=>x.id===workspace.ownerPrincipal);if(owner.length!==1||owner[0].isActive!==true||owner[0].isOwner!==true)throw fail(403,'Explicit administrative native owner required');
   return {workspace,mapping:{nativeInstanceId:this.pairing.nativeInstanceId,teamId:workspace.teamId,projectId:workspace.projectId,operatorProfileId:workspace.ownerPrincipal},members};
  }
- dto(record,grant){return {state:record?'pending':'not-configured',nativeTeamId:record?.teamId||null,grantState:grant?.state||'not-paired',actingNativeProfileId:grant?.nativeProfileId||null,editingEnabled:false,reason:'Native sharing policy and live access fencing must be verified before editing.'};}
+ dto(record,grant){const ready=record?.state==='current'&&record.sharingPolicy==='disabled'&&record.liveFence==='current'&&grant?.state==='current';return {state:record?.state||'not-configured',nativeTeamId:record?.teamId||null,grantState:grant?.state||'not-paired',actingNativeProfileId:grant?.nativeProfileId||null,editingEnabled:ready,reason:ready?null:'Native sharing policy and live access fencing must be verified before editing.'};}
  async registerWorkspace(actor,input={}){
   if(!input||Object.keys(input).length)throw fail(400,'Native workspace registration has no browser-supplied IDs');this.identity.requireFounder(actor);this.current(await this.store.get('identity'),actor.id,true);
   const snapshot=await this.nativeWorkspace(actor);let result;
@@ -49,8 +49,14 @@ export class PenpotBrandAccess {
    const [identity,record,pair,owner]=values;this.pairing.check(identity,actor.id,this.scope,sessionContext,values.at(-1));this.current(identity,actor.id);if(!record||!sameWorkspace(record,snapshot.mapping))throw fail(409,'Register this separate brand workspace before admitting editors');
    if(!pair?.connection||pair.connection.nativeProfileId!==profileId||owner?.actorId!==actor.id||owner.revokedAt!==null||owner.epoch!==pair.epoch)throw fail(403,'Current native pairing changed');
    const nextState=memberEditor(member)?'pending-native-policy':'pending-native-membership';
-   const existing=record.grants.find(x=>x.actorId===actor.id),changed=existing?.nativeProfileId!==profileId||existing?.pairingEpoch!==pair.epoch||existing?.state!==nextState;
-   const grant={actorId:actor.id,nativeProfileId:profileId,pairingEpoch:pair.epoch,epoch:(existing?.epoch||0)+(changed?1:0),state:nextState,observedAt:this.now()};
+   const existing=record.grants.find(x=>x.actorId===actor.id),sameProfile=existing?.nativeProfileId===profileId;
+   const policyReady=record.state==='current'&&record.sharingPolicy==='disabled'&&record.liveFence==='current';
+   const acknowledged=sameProfile&&existing?.reconciliation?.state==='acknowledged'&&existing.reconciliation.present===true&&existing.reconciliation.pairingEpoch===pair.epoch;
+   const state=memberEditor(member)&&policyReady&&acknowledged?'current':nextState;
+   const authVersion=identity.users.find(x=>x.id===actor.id)?.authVersion||0;
+   const changed=!sameProfile||existing?.pairingEpoch!==pair.epoch||existing?.state!==state||existing?.sessionDigest!==sessionContext||existing?.authVersion!==authVersion;
+   const grant={...(sameProfile?existing:{}),actorId:actor.id,nativeProfileId:profileId,pairingEpoch:pair.epoch,epoch:(existing?.epoch||0)+(changed?1:0),state,
+    sessionDigest:sessionContext,authVersion,pairedAt:pair.connection.verifiedAt,observedAt:this.now()};
    if(member&&(member.isOwner===true||member.isAdmin===true))throw fail(403,'Ordinary Studio editors cannot use native owner or admin fallback');
    record.grants=record.grants.filter(x=>x.actorId!==actor.id);record.grants.push(grant);result=this.dto(record,grant);return [identity,record,pair,owner,...values.slice(4)];
   });return result;
@@ -108,7 +114,7 @@ export class PenpotBrandAccess {
   this.pairing.check(identity,snapshot.actorId,this.scope,snapshot.sessionDigest,session);this.current(identity,snapshot.actorId);
   const grant=record?.grants?.find(x=>x.actorId===snapshot.actorId);
   if(!record||record.epoch!==snapshot.workspaceEpoch||record.teamId!==snapshot.nativeTeamId||record.projectId!==snapshot.projectId||record.operatorProfileId!==snapshot.operatorProfileId||record.operatorProfileId===snapshot.nativeProfileId||!pair?.connection||pair.connection.nativeProfileId!==snapshot.nativeProfileId||pair.epoch!==snapshot.pairingEpoch||profileOwner?.actorId!==snapshot.actorId||profileOwner.revokedAt!==null||profileOwner.epoch!==pair.epoch||!grant||grant.nativeProfileId!==snapshot.nativeProfileId||grant.epoch!==snapshot.grantEpoch||grant.pairingEpoch!==pair.epoch)throw fail(403,'Current paired native brand grant changed');
-  if(record.state!=='current'||record.sharingPolicy!=='disabled'||record.liveFence!=='current'||grant.state!=='current')throw fail(503,'Native policy and live fencing are not ready for editing');
+  if(record.state!=='current'||record.sharingPolicy!=='disabled'||record.liveFence!=='current'||grant.state!=='current'||grant.reconciliation?.state!=='acknowledged'||grant.reconciliation.present!==true)throw fail(503,'Native policy and live fencing are not ready for editing');
  }
  async require(actor,scope,sessionContext){
   if(!scopeEqual(scope,this.scope))throw fail(403,'Native grant belongs to another brand');
@@ -116,21 +122,36 @@ export class PenpotBrandAccess {
   const nativeProfileId=paired.connection.nativeProfileId,snapshot=await this.nativeWorkspace(actor),record=await this.store.get(this.key),grant=record?.grants?.find(x=>x.actorId===actor.id);
   if(!record||!sameWorkspace(record,snapshot.mapping)||!grant)throw fail(503,'Native brand admission is pending');
   const grantSnapshot={actorId:actor.id,nativeInstanceId:this.pairing.nativeInstanceId,nativeProfileId,nativeTeamId:record.teamId,projectId:record.projectId,operatorProfileId:record.operatorProfileId,workspaceEpoch:record.epoch,grantEpoch:grant.epoch,pairingEpoch:grant.pairingEpoch,sessionDigest:sessionContext,scope:this.scope};
-  await this.store.transact(['identity',...this.guardKeys(grantSnapshot)],values=>{const [identity,brandAccess,pair,profileOwner,session]=values;this.assertCurrent({identity,brandAccess,pair,profileOwner,session},grantSnapshot);return values;});
+  await this.store.transact(['identity',...this.guardKeys(grantSnapshot)],values=>{
+   const [identity,brandAccess,pair,profileOwner,session]=values;
+   this.assertCurrent({identity,brandAccess,pair,profileOwner,session},grantSnapshot);
+   const currentGrant=brandAccess.grants.find(x=>x.actorId===actor.id),authVersion=identity.users.find(x=>x.id===actor.id)?.authVersion||0;
+   if(currentGrant.sessionDigest!==sessionContext||currentGrant.authVersion!==authVersion){currentGrant.sessionDigest=sessionContext;currentGrant.authVersion=authVersion;currentGrant.pairedAt=pair.connection.verifiedAt;currentGrant.epoch++;grantSnapshot.grantEpoch=currentGrant.epoch;}
+   return values;
+  });
   // Native owner/configuration stays identical across acting humans and never
   // changes the existing compiler/design authority identity.
-  return {workspace:snapshot.workspace,grantSnapshot};
+  return {workspace:{...snapshot.workspace,actingNativeProfileId:nativeProfileId},grantSnapshot};
  }
  /** Constructor-only native hook entry: profile comes from authenticated native middleware.
-  * Even a prepared member is denied until C3 supplies verified live enforcement. */
- async admission({nativeProfileId,nativeTeamId,operation,nativeSession}={}){
-  if(nativeTeamId===undefined||!UUID.test(nativeTeamId)||!nativeSession||nativeSession.profileId!==nativeProfileId||typeof nativeSession.id!=='string'||!UUID.test(nativeSession.id))throw fail(403,'Actual native team and authenticated session required');
-  if(!UUID.test(nativeProfileId||'')||!['read','write','tokens','comment','subscribe','pointer','asset','export'].includes(operation))throw fail(403,'Unsupported governed native operation');
-  const owner=await this.store.get(this.pairing.profileKey(nativeProfileId));if(!owner||owner.revokedAt!==null)throw fail(403,'Current native pairing required');let result;
-  await this.store.transact(['identity',this.key,this.pairing.pairKey(owner.actorId),this.pairing.profileKey(nativeProfileId)],([identity,record,pair,currentOwner])=>{
-   this.current(identity,owner.actorId);const grant=record?.grants?.find(x=>x.actorId===owner.actorId);
-   if(!record||record.teamId!==nativeTeamId||record.operatorProfileId===nativeProfileId||!pair?.connection||pair.connection.nativeProfileId!==nativeProfileId||pair.epoch!==grant?.pairingEpoch||grant.nativeProfileId!==nativeProfileId||currentOwner?.actorId!==owner.actorId||currentOwner.revokedAt!==null||currentOwner.epoch!==pair.epoch)throw fail(403,'Current native brand grant required');
-   result={allowed:false,editingEnabled:false,reason:'live-fence-required',grantEpoch:grant.epoch,workspaceEpoch:record.epoch};return [identity,record,pair,currentOwner];
+  * A prepared member is denied until current C3 policy and membership are acknowledged. */
+ async admission({nativeProfileId,nativeTeamId,operation,nativeSession,nativeOperatorProfileId}={}){
+  const sessionProfile=nativeOperatorProfileId||nativeProfileId;
+  if(!UUID.test(nativeTeamId||'')||!nativeSession||nativeSession.profileId!==sessionProfile||!UUID.test(nativeSession.id||''))throw fail(403,'Actual native team and authenticated UUID session required');
+  if(!UUID.test(nativeProfileId||'')||(nativeOperatorProfileId!==undefined&&(!UUID.test(nativeOperatorProfileId)||nativeOperatorProfileId===nativeProfileId))||!['read','write','tokens','comment','subscribe','pointer','asset','export'].includes(operation))throw fail(403,'Unsupported governed native operation');
+  const owner=await this.store.get(this.pairing.profileKey(nativeProfileId));if(!owner||owner.revokedAt!==null)throw fail(403,'Current native pairing required');
+  const observed=await this.store.get(this.key),lease=observed?.grants?.find(x=>x.actorId===owner.actorId);
+  if(!lease||!/^[a-f0-9]{64}$/.test(lease.sessionDigest||''))throw fail(403,'Current Studio grant session required');
+  if(this.identity.mode==='google')await this.identity.authorizeJobActor(owner.actorId,new Date(lease.pairedAt).toISOString());
+  let result;
+  await this.store.transact(['identity',this.key,this.pairing.pairKey(owner.actorId),this.pairing.profileKey(nativeProfileId),...(this.identity.mode==='password'?[`session:${lease.sessionDigest}`]:[])],values=>{
+   const [identity,record,pair,currentOwner]=values,grant=record?.grants?.find(x=>x.actorId===owner.actorId);
+   this.current(identity,owner.actorId);
+   if(!grant||grant.sessionDigest!==lease.sessionDigest||grant.authVersion!==lease.authVersion)throw fail(403,'Current Studio grant session changed');
+   this.pairing.check(identity,owner.actorId,this.scope,grant.sessionDigest,values[4],grant.authVersion);
+   if(!record||record.teamId!==nativeTeamId||record.operatorProfileId===nativeProfileId||(nativeOperatorProfileId!==undefined&&record.operatorProfileId!==nativeOperatorProfileId)||!pair?.connection||pair.connection.nativeProfileId!==nativeProfileId||pair.epoch!==grant.pairingEpoch||grant.nativeProfileId!==nativeProfileId||currentOwner?.actorId!==owner.actorId||currentOwner.revokedAt!==null||currentOwner.epoch!==pair.epoch)throw fail(403,'Current native brand grant required');
+   const allowed=record.state==='current'&&record.sharingPolicy==='disabled'&&record.liveFence==='current'&&grant.state==='current'&&grant.reconciliation?.state==='acknowledged'&&grant.reconciliation.present===true;
+   result={allowed,editingEnabled:allowed,reason:allowed?null:'live-fence-required',grantEpoch:grant.epoch,workspaceEpoch:record.epoch};return values;
   });return result;
  }
 }

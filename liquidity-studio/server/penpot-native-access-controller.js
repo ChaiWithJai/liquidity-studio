@@ -29,11 +29,20 @@ export function createNativeAccessController({store, nativeInstanceId, grantKey,
   }
 
   return {
+    async forScope(scope) {
+      const service=await accessFor(scope);
+      if(service?.pairing?.nativeInstanceId!==nativeInstanceId ||
+         service.scope?.organizationId!==scope?.organizationId || service.scope?.brandId!==scope?.brandId)
+        throw fail(503,'Current native brand service unavailable');
+      return service;
+    },
     async admission(key, input) {
       const service = await serviceFor(key, input);
-      if (!exact(input, ['nativeProfileId', 'nativeTeamId', 'operation', 'nativeSession']) ||
+      const operator=input?.nativeOperatorProfileId;
+      const keys=['nativeProfileId', 'nativeTeamId', 'operation', 'nativeSession',...(operator===undefined?[]:['nativeOperatorProfileId'])];
+      if (!exact(input, keys) || (operator!==undefined&&(!uuid(operator)||operator===input.nativeProfileId)) ||
           !uuid(input.nativeProfileId) || !exact(input.nativeSession, ['id', 'profileId']) ||
-          !uuid(input.nativeSession.id) || input.nativeSession.profileId !== input.nativeProfileId ||
+          !uuid(input.nativeSession.id) || input.nativeSession.profileId !== (operator||input.nativeProfileId) ||
           !['read', 'write', 'tokens', 'comment', 'subscribe', 'pointer', 'asset', 'export'].includes(input.operation))
         throw fail(400, 'Verified native profile, UUID session and operation required');
       return service.admission(input);

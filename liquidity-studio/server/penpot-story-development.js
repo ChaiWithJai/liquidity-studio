@@ -4,12 +4,12 @@ import {ScopedRepository} from './repository.js';
 import {loadPenpotLocalConfiguration} from './penpot-local-configuration.js';
 import {PenpotStoryDesigns,createPenpotStoryRpc} from './penpot-story-design.js';
 import {fail} from './auth.js';
-export async function createDevelopmentPenpotStoryDesigns({store,identity,configurationPath,brandAccessFor=null,env=process.env,fetchImpl=fetch}) {
+export async function createDevelopmentPenpotStoryDesigns({store,identity,configurationPath,brandAccessFor=null,grantKey=null,env=process.env,fetchImpl=fetch}) {
  if(env.NODE_ENV!=='development'||env.K_SERVICE||env.K_REVISION||identity.mode!=='password')throw Error('Penpot developer integration requires the local password launcher');
  // Same strict private-file schema; this does not change process feature flags.
  const configuration=await loadPenpotLocalConfiguration(configurationPath,{STUDIO_PENPOT_ENABLED:'true'});
  if(configuration.transportMode!=='loopback')throw Error('Developer Penpot requires fixed loopback transport');
- const rpc=createPenpotStoryRpc({sessions:configuration.sessions,transportMode:'loopback',fetchImpl});
+ const rpc=createPenpotStoryRpc({sessions:configuration.sessions,transportMode:'loopback',grantKey,fetchImpl});
  const services=new Map();
  return async scope=>{
   const key=JSON.stringify([scope.organizationId,scope.brandId]);
@@ -45,7 +45,7 @@ export async function createDevelopmentPenpotStoryDesigns({store,identity,config
   };
   // Only the constructor chooses paired access. The actor never selects an
   // operator identity, project, session, or alternate workspace in HTTP input.
-  const brandAccess=brandAccessFor?await brandAccessFor({scope,workspaceFor:administrativeWorkspaceFor,rpc,repo,boundary}):null;
+  const brandAccess=brandAccessFor?await brandAccessFor({scope,workspaceFor:administrativeWorkspaceFor,rpc,repo,boundary,nativeSessions:configuration.sessions}):null;
   const service=new PenpotStoryDesigns({store,identity,scope,repo,workspaceFor,rpc,brandAccess});services.set(key,service);return service;
  };
 }

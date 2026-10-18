@@ -855,6 +855,17 @@ export function createHttpServer(
         if (!nativePairing || trustedTestMode) throw fail(404, "Native connection is not configured");
         const credential = token(req, identity.mode);
         const context = createHash("sha256").update(credential).digest("hex");
+        if (["/api/studio/penpot/access/workspace", "/api/studio/penpot/access/inspect", "/api/studio/penpot/access/reconcile"].includes(route)) {
+          if (!nativeAccess || req.method !== "POST") throw fail(404, "Native brand access is not configured");
+          const service=await nativeAccess.forScope(scope);
+          if(route.endsWith("/reconcile")) {
+            workspaceExact(body,["actorId","idempotencyKey"]);
+            return json(200,await service.reconcile(user,body));
+          }
+          workspaceExact(body,[]);
+          return json(200,route.endsWith("/workspace")
+            ? await service.registerWorkspace(user,{}) : await service.inspect(user,context));
+        }
         if (route === "/api/studio/penpot/access" && req.method === "GET")
           return json(200, await nativePairing.status(user, scope, context));
         if (req.method === "POST") {
@@ -1380,7 +1391,7 @@ export function createHttpServer(
               !trustedTestMode &&
               process.env.STUDIO_NATIVE_PORTABLE_ENABLED === "true",
             penpot: penpotEnabled && !trustedTestMode && !process.env.K_SERVICE,
-            penpotStoryDesigns: Boolean(developmentPenpotStoryDesigns) && user.role === "founder",
+            penpotStoryDesigns: Boolean(developmentPenpotStoryDesigns) && (user.role === "founder" || developmentPenpotStoryDesigns.pairedAccess === true),
             penpotPairing: Boolean(nativePairing) && !trustedTestMode,
             sourcePreparation:
               process.env.STUDIO_SOURCE_PREPARATION_ENABLED === "true" &&
