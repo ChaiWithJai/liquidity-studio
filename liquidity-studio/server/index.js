@@ -160,6 +160,8 @@ export function createHttpServer(
     platform = appContainer ? null : createPlatform(),
     trustedTestMode = false,
     distDir = DIST_DIR,
+    editorBoundaryEnabled = process.env.STUDIO_EDITOR_BOUNDARY_ENABLED ===
+      "true",
     editorContractEnabled = process.env.STUDIO_EDITOR_CONTRACT_ENABLED ===
       "true",
   } = {},
@@ -454,6 +456,49 @@ export function createHttpServer(
           ...(trustedTestMode ? {} : await session()),
           activeScope: scope,
         });
+      if (route.startsWith("/api/studio/editor-bindings")) {
+        if (!editorBoundaryEnabled || trustedTestMode)
+          throw fail(404, "Not found");
+        const boundary = platform.editorBoundary(scope, repo);
+        const match = route.match(
+          /^\/api\/studio\/editor-bindings(?:\/([^/]+)(?:\/(revoke|operations|asset-grants|asset-delivery|room-grants|room-join|callbacks|public-share))?)?$/,
+        );
+        if (!match) throw fail(404, "Not found");
+        const [, bindingId, operation] = match;
+        if (!bindingId && req.method === "GET")
+          return json(200, { bindings: await boundary.list(user) });
+        if (!bindingId && req.method === "POST")
+          return json(201, await boundary.register(user, body));
+        if (operation === "revoke" && req.method === "POST")
+          return json(200, await boundary.revoke(user, bindingId));
+        if (operation === "operations" && req.method === "POST")
+          return json(200, await boundary.execute(user, bindingId, body));
+        if (operation === "asset-grants" && req.method === "POST")
+          return json(201, await boundary.grantAsset(user, bindingId, body));
+        if (operation === "room-grants" && req.method === "POST")
+          return json(201, await boundary.grantRoom(user, bindingId, body));
+        if (operation === "room-join" && req.method === "POST")
+          return json(200, await boundary.joinRoom(user, bindingId, body));
+        if (operation === "asset-delivery" && req.method === "GET") {
+          const { asset, bytes } = await boundary.consumeAsset(
+            user,
+            bindingId,
+            req.headers["x-editor-asset-grant"],
+          );
+          res.writeHead(200, {
+            "Content-Type": asset.contentType,
+            "Content-Disposition": `attachment; filename="${asset.filename.replace(/[^a-zA-Z0-9_.-]/g, "_")}"`,
+            "Cache-Control": "private, no-store",
+          });
+          return res.end(bytes);
+        }
+        if (["callbacks", "public-share"].includes(operation))
+          throw fail(
+            403,
+            "External callback and public-share capabilities are disabled",
+          );
+        throw fail(404, "Not found");
+      }
       if (route === "/api/studio/multimodal-spec" && req.method === "GET") {
         if (!editorContractEnabled) throw fail(404, "Not found");
         const allowed = [

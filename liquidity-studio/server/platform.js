@@ -1,3 +1,4 @@
+import { EditorBoundary, validateEditorTargets } from "./editor-boundary.js";
 import { DurableStore } from "./storage.js";
 import { IdentityService } from "./auth.js";
 import { GoogleIdentityService } from "./google-auth.js";
@@ -9,8 +10,22 @@ export function createPlatform({
   store,
   authMode = process.env.STUDIO_AUTH_MODE || "google",
   googleAuth,
+  editorTargets = JSON.parse(process.env.STUDIO_EDITOR_TARGETS_JSON || "[]"),
+  editorTransport,
+  editorNow,
 } = {}) {
+  const targets = validateEditorTargets(editorTargets);
   const platform = { store: null, identity: null };
+  platform.editorBoundary = (scope, repo) =>
+    new EditorBoundary({
+      store: platform.store,
+      scope,
+      identity: platform.identity,
+      repo,
+      targets,
+      transport: editorTransport,
+      now: editorNow,
+    });
   const initialize = async (activeStore) => {
     platform.store = activeStore;
     if (authMode === "google")
