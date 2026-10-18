@@ -16,12 +16,13 @@ reader_proof = json.loads((root / 'data-readers-merge.json').read_text())
 if reader_proof.get('originalMappingsPreserved') is not True or reader_proof.get('readerSymbolsEvaluated') is not False:
     raise SystemExit('Merged reader-map preservation was not verified')
 image = json.loads((root / 'candidate-image.json').read_text())[0]
-if image['Os'] != 'linux' or image['Architecture'] != 'arm64':
+expected = os.environ.get('EXPECTED_PLATFORM', 'linux/arm64')
+if expected not in ('linux/arm64', 'linux/amd64') or image['Os'] + '/' + image['Architecture'] != expected:
     raise SystemExit('Wrong candidate platform')
 (root / 'candidate-manifest.json').write_text(json.dumps({
     'schemaVersion': 1, 'sourceSha': os.environ['SOURCE_SHA'],
     'upstreamSha': 'ff7a66f51938b2293260ea27a64e2c4e0833b5e3',
-    'imageId': image['Id'], 'platform': 'linux/arm64',
+    'imageId': image['Id'], 'platform': expected,
     'mergedDataReadersMappingsPreserved': True,
     'java26NamespaceLoadCompleted': True, 'nativeRuntimeActivated': False,
     'privateAccessConfigIncluded': False, 'publicImagePushed': False,
