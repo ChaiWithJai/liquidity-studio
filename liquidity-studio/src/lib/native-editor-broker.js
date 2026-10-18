@@ -26,6 +26,7 @@ export function createNativeEditorBroker({
   let revision = record.revision;
   const responses = new Map();
   const savedIntents = new Map();
+  const cutoutIntents = new Set();
   const inflight = new Map();
   const current = () => active && getScopeKey() === scopeKey;
   function reply(requestId, result) {
@@ -42,7 +43,36 @@ export function createNativeEditorBroker({
       options = {};
     if (operation === "fonts" && payload === null)
       path = "/api/studio/native-editor/fonts";
-    else if (operation === "asset.list" && payload === null)
+    else if (operation === "cutout.model" && payload === null)
+      path = "/api/studio/native-editor/cutout/model";
+    else if (
+      operation === "cutout.chunk" &&
+      Object.keys(payload || {}).length === 1 &&
+      Number.isInteger(payload.index) &&
+      payload.index >= 0 &&
+      payload.index < 99
+    )
+      path = `/api/studio/native-editor/cutout/model/${payload.index}`;
+    else if (operation === "cutout.prepare" && payload && bounded(payload)) {
+      if (
+        payload.documentId !== record.id ||
+        payload.expectedRevision !== revision
+      )
+        throw Object.assign(
+          new Error("Native revision changed; reload explicitly."),
+          { status: 409 },
+        );
+      path = "/api/studio/native-editor/cutout/prepare";
+      options = { method: "POST", body: JSON.stringify(payload) };
+    } else if (operation === "cutout.complete" && payload && bounded(payload)) {
+      if (!cutoutIntents.has(payload.intentId))
+        throw Object.assign(
+          new Error("Cutout intent is not owned by this editor frame."),
+          { status: 400 },
+        );
+      path = "/api/studio/native-editor/cutout/complete";
+      options = { method: "POST", body: JSON.stringify(payload) };
+    } else if (operation === "asset.list" && payload === null)
       path = "/api/studio/native-editor/assets";
     else if (
       operation === "asset.read" &&
@@ -71,6 +101,16 @@ export function createNativeEditorBroker({
       });
     const result = await request(path, options);
     if (!current()) throw changed();
+    if (operation === "cutout.prepare") {
+      if (
+        !/^[a-f0-9]{32}$/.test(result.id || "") ||
+        result.nativeRevision !== revision
+      )
+        throw new Error("Invalid cutout intent response");
+      cutoutIntents.add(result.id);
+      if (cutoutIntents.size > 100)
+        cutoutIntents.delete(cutoutIntents.values().next().value);
+    }
     if (operation === "document.save") {
       if (
         result.id !== record.id ||
@@ -197,6 +237,7 @@ export function createNativeEditorBroker({
                 500,
               ),
               consent: policy.consent,
+              cutoutConfirmed: policy.cutoutConfirmed === true,
             },
           },
           origin,
@@ -251,7 +292,29 @@ export function createNativeFrameRequest({
         payload = null;
       if (path === "/api/studio/native-editor/fonts" && !options.method)
         operation = "fonts";
-      else if (path === "/api/studio/native-editor/assets" && !options.method)
+      else if (
+        path === "/api/studio/native-editor/cutout/model" &&
+        !options.method
+      )
+        operation = "cutout.model";
+      else if (
+        /^\/api\/studio\/native-editor\/cutout\/model\/\d{1,2}$/.test(path) &&
+        !options.method
+      ) {
+        operation = "cutout.chunk";
+        payload = { index: Number(path.split("/").at(-1)) };
+      } else if (
+        [
+          "/api/studio/native-editor/cutout/prepare",
+          "/api/studio/native-editor/cutout/complete",
+        ].includes(path) &&
+        options.method === "POST"
+      ) {
+        operation = path.endsWith("/prepare")
+          ? "cutout.prepare"
+          : "cutout.complete";
+        payload = JSON.parse(options.body);
+      } else if (path === "/api/studio/native-editor/assets" && !options.method)
         operation = "asset.list";
       else if (
         /^\/api\/studio\/native-editor\/assets\/[a-f0-9]{32}$/.test(path) &&

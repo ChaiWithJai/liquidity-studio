@@ -1,0 +1,21 @@
+{
+  "coldAppliedMs": 7919,
+  "cancelUiMs": 257,
+  "warmAppliedMs": 4675,
+  "crossFrameCachedToProcessingAndCancelMs": 4559,
+  "optionalCacheBlockedByTest": true,
+  "modelChunks": 198,
+  "modelBytes": 25888640,
+  "outputBytes": 198985,
+  "outputSha256": "be20c97b37e61742d8fb60239df7f13fc3e14385b5b7fdbbb268c9fb228ac31d",
+  "outputDimensions": [
+    384,
+    384
+  ],
+  "workerCancellation": "actual processing-phase cancellation followed by identical-output recovery",
+  "mainThreadHeap": {
+    "usedJSHeapSize": 86400000,
+    "totalJSHeapSize": 148000000,
+    "scope": "main realm only; excludes dedicated-worker/WASM peak"
+  }
+}

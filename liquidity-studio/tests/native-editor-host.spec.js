@@ -2,7 +2,13 @@ import { test, expect } from "@playwright/test";
 import { createServer } from "node:http";
 import { build } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
-import { readFileSync, existsSync, mkdtempSync, rmSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdtempSync,
+  rmSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
@@ -32,7 +38,11 @@ test.beforeAll(async () => {
     password,
     role: "founder",
   });
-  await platform.identity.provision({ username: "native-marketer-fixture", password, role: "marketer" });
+  await platform.identity.provision({
+    username: "native-marketer-fixture",
+    password,
+    role: "marketer",
+  });
   const api = createHttpServer(null, { platform, nativeEditorEnabled: true });
   const root = fileURLToPath(new URL("..", import.meta.url));
   buildDirectory = mkdtempSync(
@@ -82,6 +92,8 @@ test.beforeAll(async () => {
           {
             ".html": "text/html",
             ".js": "application/javascript",
+            ".mjs": "application/javascript",
+            ".wasm": "application/wasm",
             ".css": "text/css",
             ".ttf": "font/ttf",
             ".otf": "font/otf",
@@ -629,97 +641,582 @@ test("iframe reload disposes its previous parent broker before mounting a replac
   await page.keyboard.press("Escape");
 });
 
-test('saved layout review rejects dirty/stale versions and approves the acknowledged native revision', async ({ page }, testInfo) => {
-  await page.request.post(`${base}/api/auth/login`, { data: { username: 'native-host-fixture', password } });
+test("saved layout review rejects dirty/stale versions and approves the acknowledged native revision", async ({
+  page,
+}, testInfo) => {
+  await page.request.post(`${base}/api/auth/login`, {
+    data: { username: "native-host-fixture", password },
+  });
   await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
-  const panel = page.getByRole('region', { name: 'Saved layout review', exact: true });
-  await panel.getByRole('button', { name: 'Begin review', exact: true }).click();
-  await panel.getByRole('button', { name: 'Start post-production', exact: true }).click();
-  await panel.getByRole('button', { name: 'Submit final layout', exact: true }).click();
-  await expect(panel.getByRole('button', { name: 'Approve saved layout', exact: true })).toBeEnabled();
+  const panel = page.getByRole("region", {
+    name: "Saved layout review",
+    exact: true,
+  });
+  await panel
+    .getByRole("button", { name: "Begin review", exact: true })
+    .click();
+  await panel
+    .getByRole("button", { name: "Start post-production", exact: true })
+    .click();
+  await panel
+    .getByRole("button", { name: "Submit final layout", exact: true })
+    .click();
+  await expect(
+    panel.getByRole("button", { name: "Approve saved layout", exact: true }),
+  ).toBeEnabled();
   const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
-  await expect(frame.getByRole('button', { name: 'Layers', exact: true })).toBeVisible({ timeout: 30000 });
+  await expect(
+    frame.getByRole("button", { name: "Layers", exact: true }),
+  ).toBeVisible({ timeout: 30000 });
   const fixture = fixtures[0];
   const endpoint = `${base}/api/studio/native-editor/documents/${fixture.id}?organizationId=org_default&brandId=${fixture.brandId}`;
   const before = await (await page.request.get(endpoint)).json();
   let release;
-  const held = new Promise(resolve => { release = resolve; });
-  await page.route('**/api/studio/native-editor/documents/*?*', async route => {
-    if (route.request().method() === 'POST') await held;
-    await route.continue();
+  const held = new Promise((resolve) => {
+    release = resolve;
   });
-  const art = await frame.locator('[data-artboard]').first().boundingBox();
-  await page.mouse.dblclick(art.x + art.width * .5, art.y + art.height * 365 / 1350);
-  await expect(frame.locator('textarea[data-fabric="textarea"]')).toBeAttached();
-  await page.keyboard.press('ControlOrMeta+A');
-  await page.keyboard.type('FINAL SAVED REVIEW VERSION');
-  await page.keyboard.press('Escape');
+  await page.route(
+    "**/api/studio/native-editor/documents/*?*",
+    async (route) => {
+      if (route.request().method() === "POST") await held;
+      await route.continue();
+    },
+  );
+  const art = await frame.locator("[data-artboard]").first().boundingBox();
+  await page.mouse.dblclick(
+    art.x + art.width * 0.5,
+    art.y + (art.height * 365) / 1350,
+  );
+  await expect(
+    frame.locator('textarea[data-fabric="textarea"]'),
+  ).toBeAttached();
+  await page.keyboard.press("ControlOrMeta+A");
+  await page.keyboard.type("FINAL SAVED REVIEW VERSION");
+  await page.keyboard.press("Escape");
   try {
-    await expect(panel.getByRole('button', { name: 'Approve saved layout', exact: true })).toBeDisabled();
-    await expect(panel.getByText('Save your native edits before changing review state.', { exact: true })).toBeVisible();
-  } finally { release(); }
-  await expect.poll(async () => (await (await page.request.get(endpoint)).json()).revision).toBe(before.revision + 1);
-  await expect(panel.getByRole('alert')).toContainText('saved content or source changed');
-  await panel.getByRole('button', { name: 'Restart review for saved version', exact: true }).click();
-  await panel.getByRole('button', { name: 'Start post-production', exact: true }).click();
-  await panel.getByRole('button', { name: 'Submit final layout', exact: true }).click();
-  await panel.getByRole('button', { name: 'Approve saved layout', exact: true }).click();
-  await expect(panel.getByRole('status')).toContainText('Approved');
-  const review = await (await page.request.get(`${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`)).json();
+    await expect(
+      panel.getByRole("button", { name: "Approve saved layout", exact: true }),
+    ).toBeDisabled();
+    await expect(
+      panel.getByText("Save your native edits before changing review state.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+  } finally {
+    release();
+  }
+  await expect
+    .poll(
+      async () => (await (await page.request.get(endpoint)).json()).revision,
+    )
+    .toBe(before.revision + 1);
+  await expect(panel.getByRole("alert")).toContainText(
+    "saved content or source changed",
+  );
+  await panel
+    .getByRole("button", {
+      name: "Restart review for saved version",
+      exact: true,
+    })
+    .click();
+  await panel
+    .getByRole("button", { name: "Start post-production", exact: true })
+    .click();
+  await panel
+    .getByRole("button", { name: "Submit final layout", exact: true })
+    .click();
+  await panel
+    .getByRole("button", { name: "Approve saved layout", exact: true })
+    .click();
+  await expect(panel.getByRole("status")).toContainText("Approved");
+  const review = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`,
+    )
+  ).json();
   expect(review.stale).toBe(false);
   expect(review.approval.nativeRevision).toBe(before.revision + 1);
-  expect(review.history.map(value => value.action)).toEqual(['create', 'start', 'submit', 'restart', 'start', 'submit', 'approve']);
-  await page.screenshot({ path: testInfo.outputPath('saved-layout-approved.png'), fullPage: true });
+  expect(review.history.map((value) => value.action)).toEqual([
+    "create",
+    "start",
+    "submit",
+    "restart",
+    "start",
+    "submit",
+    "approve",
+  ]);
+  await page.screenshot({
+    path: testInfo.outputPath("saved-layout-approved.png"),
+    fullPage: true,
+  });
 });
 
-test('marketer submits a saved layout and a separate founder session approves it', async ({ page, browser }) => {
-  const fixture=fixtures[1];
-  await page.request.post(`${base}/api/auth/login`,{data:{username:'native-marketer-fixture',password}});
+test("marketer submits a saved layout and a separate founder session approves it", async ({
+  page,
+  browser,
+}) => {
+  const fixture = fixtures[1];
+  await page.request.post(`${base}/api/auth/login`, {
+    data: { username: "native-marketer-fixture", password },
+  });
   await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
-  await page.getByRole('combobox',{name:'Native fixture',exact:true}).selectOption(fixture.id);
-  const panel=page.getByRole('region',{name:'Saved layout review',exact:true});
-  await panel.getByRole('button',{name:'Begin review',exact:true}).click();
-  await panel.getByRole('button',{name:'Start post-production',exact:true}).click();
-  await panel.getByRole('button',{name:'Submit final layout',exact:true}).click();
-  await expect(panel.getByText('A founder or designated brand approver must approve this saved layout.',{exact:true})).toBeVisible();
-  await expect(panel.getByRole('button',{name:'Approve saved layout',exact:true})).toHaveCount(0);
-  const endpoint=`${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`;
-  const review=await(await page.request.get(endpoint)).json();
-  const denial=await page.request.post(endpoint,{data:{action:'approve',expectedRevision:review.revision,expectedNativeRevision:review.binding.nativeRevision,idempotencyKey:'marketer_forged_approve_123'}});
+  await page
+    .getByRole("combobox", { name: "Native fixture", exact: true })
+    .selectOption(fixture.id);
+  const panel = page.getByRole("region", {
+    name: "Saved layout review",
+    exact: true,
+  });
+  await panel
+    .getByRole("button", { name: "Begin review", exact: true })
+    .click();
+  await panel
+    .getByRole("button", { name: "Start post-production", exact: true })
+    .click();
+  await panel
+    .getByRole("button", { name: "Submit final layout", exact: true })
+    .click();
+  await expect(
+    panel.getByText(
+      "A founder or designated brand approver must approve this saved layout.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(
+    panel.getByRole("button", { name: "Approve saved layout", exact: true }),
+  ).toHaveCount(0);
+  const endpoint = `${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`;
+  const review = await (await page.request.get(endpoint)).json();
+  const denial = await page.request.post(endpoint, {
+    data: {
+      action: "approve",
+      expectedRevision: review.revision,
+      expectedNativeRevision: review.binding.nativeRevision,
+      idempotencyKey: "marketer_forged_approve_123",
+    },
+  });
   expect(denial.status()).toBe(403);
-  const context=await browser.newContext();
+  const context = await browser.newContext();
   try {
-    const founderPage=await context.newPage();
-    await founderPage.request.post(`${base}/api/auth/login`,{data:{username:'native-host-fixture',password}});
+    const founderPage = await context.newPage();
+    await founderPage.request.post(`${base}/api/auth/login`, {
+      data: { username: "native-host-fixture", password },
+    });
     await founderPage.goto(`${base}/tests/fixtures/native-editor-host.html`);
-    await founderPage.getByRole('combobox',{name:'Native fixture',exact:true}).selectOption(fixture.id);
-    await founderPage.getByRole('region',{name:'Saved layout review',exact:true}).getByRole('button',{name:'Approve saved layout',exact:true}).click();
-    await panel.getByRole('button',{name:'Reload review',exact:true}).click();
-    await expect(panel.getByRole('status')).toContainText('Approved');
-    const saved=await(await page.request.get(endpoint)).json();
+    await founderPage
+      .getByRole("combobox", { name: "Native fixture", exact: true })
+      .selectOption(fixture.id);
+    await founderPage
+      .getByRole("region", { name: "Saved layout review", exact: true })
+      .getByRole("button", { name: "Approve saved layout", exact: true })
+      .click();
+    await panel
+      .getByRole("button", { name: "Reload review", exact: true })
+      .click();
+    await expect(panel.getByRole("status")).toContainText("Approved");
+    const saved = await (await page.request.get(endpoint)).json();
     expect(saved.history.at(-1).actorId).not.toBe(saved.history[0].actorId);
     expect(saved.canApprove).toBe(false);
-  } finally { await context.close(); }
+  } finally {
+    await context.close();
+  }
 });
 
-test('a lost review response retries the same intent without a second transition',async({page})=>{
-  const fixture=fixtures[2];
-  await page.request.post(`${base}/api/auth/login`,{data:{username:'native-host-fixture',password}});
-  await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
-  await page.getByRole('combobox',{name:'Native fixture',exact:true}).selectOption(fixture.id);
-  const panel=page.getByRole('region',{name:'Saved layout review',exact:true});
-  const keys=[];
-  await page.route('**/api/studio/native-editor/documents/*/review?*',async route=>{
-    if(route.request().method()!=='POST')return route.continue();
-    keys.push(route.request().postDataJSON().idempotencyKey);
-    if(keys.length===1){await route.fetch();return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Controlled lost response'})});}
-    return route.continue();
+test("a lost review response retries the same intent without a second transition", async ({
+  page,
+}) => {
+  const fixture = fixtures[2];
+  await page.request.post(`${base}/api/auth/login`, {
+    data: { username: "native-host-fixture", password },
   });
-  await panel.getByRole('button',{name:'Begin review',exact:true}).click();
-  await expect(panel.getByRole('alert')).toContainText('Retry the same action');
-  await panel.getByRole('button',{name:'Begin review',exact:true}).click();
-  await expect(panel.getByRole('status')).toContainText('Draft ready');
-  expect(keys).toHaveLength(2);expect(keys[1]).toBe(keys[0]);
-  const saved=await(await page.request.get(`${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`)).json();
-  expect(saved.revision).toBe(1);expect(saved.history).toHaveLength(1);
+  await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
+  await page
+    .getByRole("combobox", { name: "Native fixture", exact: true })
+    .selectOption(fixture.id);
+  const panel = page.getByRole("region", {
+    name: "Saved layout review",
+    exact: true,
+  });
+  const keys = [];
+  await page.route(
+    "**/api/studio/native-editor/documents/*/review?*",
+    async (route) => {
+      if (route.request().method() !== "POST") return route.continue();
+      keys.push(route.request().postDataJSON().idempotencyKey);
+      if (keys.length === 1) {
+        await route.fetch();
+        return route.fulfill({
+          status: 503,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Controlled lost response" }),
+        });
+      }
+      return route.continue();
+    },
+  );
+  await panel
+    .getByRole("button", { name: "Begin review", exact: true })
+    .click();
+  await expect(panel.getByRole("alert")).toContainText("Retry the same action");
+  await panel
+    .getByRole("button", { name: "Begin review", exact: true })
+    .click();
+  await expect(panel.getByRole("status")).toContainText("Draft ready");
+  expect(keys).toHaveLength(2);
+  expect(keys[1]).toBe(keys[0]);
+  const saved = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/documents/${fixture.id}/review?organizationId=org_default&brandId=${fixture.brandId}`,
+    )
+  ).json();
+  expect(saved.revision).toBe(1);
+  expect(saved.history).toHaveLength(1);
+});
+
+test("reference-correct MODNet replaces a private portrait through native undo/save/reload", async ({
+  page,
+}, testInfo) => {
+  test.skip(
+    process.env.STUDIO_NATIVE_CUTOUT_ENABLED !== "true" ||
+      !process.env.STUDIO_NATIVE_MODNET_PATH,
+    "Requires explicitly configured owned digest-pinned checkpoint; no model download.",
+  );
+  const sharp = (await import("sharp")).default;
+  const cacheBlocked = process.env.STUDIO_NATIVE_QA_CACHE_BLOCKED === "true";
+  if (cacheBlocked)
+    await page.addInitScript(() => {
+      caches.open = async () => {
+        throw new DOMException("Controlled unavailable cache", "SecurityError");
+      };
+    });
+  let modelChunks = 0;
+  page.on("response", (response) => {
+    if (/\/cutout\/model\/\d+\?/.test(response.url())) modelChunks++;
+  });
+  const measurements = {};
+
+  const input = await sharp(
+    new URL(
+      "../../docs/investigations/cutout-portrait/fixtures/synthetic-portrait-input.png",
+      import.meta.url,
+    ).pathname,
+  )
+    .resize(384, 384)
+    .jpeg({ quality: 90 })
+    .toBuffer();
+  await page.request.post(`${base}/api/auth/login`, {
+    data: { username: "native-host-fixture", password },
+  });
+  await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
+  const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
+  await expect(
+    frame.getByRole("button", { name: "Images", exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  await page.getByText("Image rights and consent", { exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Rights declaration" })
+    .fill(
+      "Owned generated synthetic portrait with no actual personal identity; cutout fixture.",
+    );
+  await page
+    .getByRole("combobox", { name: "Consent", exact: true })
+    .selectOption("not_personal_data");
+  await page
+    .getByRole("checkbox", { name: /I confirm the selected image/ })
+    .check();
+  await frame.getByRole("button", { name: "Images", exact: true }).click();
+  const chooser = page.waitForEvent("filechooser");
+  await frame.getByTestId("upload-zone").click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "synthetic-portrait.jpg",
+    mimeType: "image/jpeg",
+    buffer: input,
+  });
+  const thumb = frame
+    .getByTestId("uploaded-thumb")
+    .filter({ hasText: "synthetic-portrait.jpg" });
+  await expect(thumb).toBeVisible();
+  await thumb.click();
+  const endpoint = `${base}/api/studio/native-editor/documents/${fixtures[0].id}?organizationId=org_default&brandId=brand_default`;
+  const read = async () => await (await page.request.get(endpoint)).json();
+  await expect
+    .poll(
+      async () =>
+        (await read()).document.pages[0].objects.filter(
+          (o) => o.type === "image" && o.name === "synthetic-portrait.jpg",
+        ).length,
+    )
+    .toBeGreaterThan(0);
+  const original = (await read()).document.pages[0].objects.find(
+    (o) => o.type === "image" && o.name === "synthetic-portrait.jpg",
+  );
+  const coldStarted = Date.now();
+  await frame.getByTestId("ed-remove-bg").click();
+  await expect(frame.getByTestId("native-cutout-status")).toBeVisible({
+    timeout: 10000,
+  });
+  console.log(
+    "CUTOUT_STATUS",
+    await frame.getByTestId("native-cutout-status").innerText(),
+  );
+
+  await expect
+    .poll(
+      async () =>
+        (await read()).document.pages[0].objects.find(
+          (o) => o.id === original.id,
+        )?.assetId,
+      { timeout: 60000 },
+    )
+    .not.toBe(original.assetId);
+  measurements.coldAppliedMs = Date.now() - coldStarted;
+  const cutout = (await read()).document.pages[0].objects.find(
+    (o) => o.id === original.id,
+  );
+  const asset = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/assets/${cutout.assetId}?organizationId=org_default&brandId=brand_default`,
+    )
+  ).json();
+  expect(asset.lineage.inputAssetId).toBe(original.assetId);
+  expect(asset.width).toBe(384);
+  expect(asset.height).toBe(384);
+  expect(asset.size).toBeLessThanOrEqual(512 * 1024);
+  const output = Buffer.from(asset.base64, "base64");
+  writeFileSync(testInfo.outputPath("actual-modnet-native-alpha.png"), output);
+  writeFileSync(testInfo.outputPath("actual-modnet-native-input.jpg"), input);
+
+  const { data, info } = await sharp(output)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  expect(info.channels).toBe(4);
+  expect([...data.filter((_, i) => i % 4 === 3)].some((a) => a < 128)).toBe(
+    true,
+  );
+  await sharp(output)
+    .flatten({ background: "#18202b" })
+    .jpeg()
+    .toFile(testInfo.outputPath("actual-modnet-native-on-dark.jpg"));
+  await frame.locator("body").press("ControlOrMeta+z");
+  await expect
+    .poll(
+      async () =>
+        (await read()).document.pages[0].objects.find(
+          (o) => o.id === original.id,
+        )?.assetId,
+    )
+    .toBe(original.assetId);
+  const chunksAfterCold = modelChunks;
+  await frame.getByTestId("ed-remove-bg").click();
+  await expect(
+    frame.getByRole("progressbar", { name: /Remove Background/i }),
+  ).toHaveAttribute("aria-valuenow", "30", { timeout: 15000 });
+  const canceledStarted = Date.now();
+  await frame
+    .getByRole("dialog")
+    .getByRole("button", { name: "Cancel", exact: true })
+    .click();
+  await expect(frame.getByRole("dialog")).toHaveCount(0);
+  measurements.cancelUiMs = Date.now() - canceledStarted;
+  expect(
+    (await read()).document.pages[0].objects.find((o) => o.id === original.id)
+      .assetId,
+  ).toBe(original.assetId);
+  const warmStarted = Date.now();
+  await frame.getByTestId("ed-remove-bg").click();
+  await expect
+    .poll(
+      async () =>
+        (await read()).document.pages[0].objects.find(
+          (o) => o.id === original.id,
+        )?.assetId,
+      { timeout: 15000 },
+    )
+    .not.toBe(original.assetId);
+  measurements.warmAppliedMs = Date.now() - warmStarted;
+  const warmImage = (await read()).document.pages[0].objects.find(
+    (o) => o.id === original.id,
+  );
+  const warmAsset = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/assets/${warmImage.assetId}?organizationId=org_default&brandId=brand_default`,
+    )
+  ).json();
+  expect(warmAsset.sha256).toBe(asset.sha256);
+  expect(modelChunks).toBe(chunksAfterCold);
+  expect(chunksAfterCold).toBe(99);
+  await frame.locator("body").press("ControlOrMeta+z");
+  await expect
+    .poll(
+      async () =>
+        (await read()).document.pages[0].objects.find(
+          (o) => o.id === original.id,
+        )?.assetId,
+    )
+    .toBe(original.assetId);
+  await frame.locator("body").press("ControlOrMeta+Shift+z");
+  await expect
+    .poll(
+      async () =>
+        (await read()).document.pages[0].objects.find(
+          (o) => o.id === original.id,
+        )?.assetId,
+    )
+    .toBe(warmImage.assetId);
+  await page
+    .getByRole("button", { name: "Reload saved native document" })
+    .click();
+  await expect(
+    frame.getByRole("button", { name: "Download", exact: true }),
+  ).toBeVisible();
+  expect(
+    (await read()).document.pages[0].objects.find((o) => o.id === original.id)
+      ?.assetId,
+  ).toBe(warmImage.assetId);
+  const retained = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/assets/${original.assetId}?organizationId=org_default&brandId=brand_default`,
+    )
+  ).json();
+  expect(Buffer.from(retained.base64, "base64")).toEqual(input);
+  // A new iframe creates a fresh loader/worker: this path must verify and use
+  // the persisted origin-local model cache, not the prior loader's memory.
+  await page.getByText("Image rights and consent", { exact: true }).click();
+  await page
+    .getByRole("checkbox", { name: /I confirm the selected image/ })
+    .check();
+  await frame.getByRole("button", { name: "Layers", exact: true }).click();
+  await frame.getByRole("treeitem").filter({ hasText: original.name }).click();
+  const cachedStarted = Date.now();
+  await frame.getByTestId("ed-remove-bg").click();
+  await expect(
+    frame.getByRole("progressbar", { name: /Remove Background/i }),
+  ).toHaveAttribute("aria-valuenow", "30", { timeout: 15000 });
+  await frame
+    .getByRole("dialog")
+    .getByRole("button", { name: "Cancel", exact: true })
+    .click();
+  await expect(frame.getByRole("dialog")).toHaveCount(0);
+  measurements.crossFrameCachedToProcessingAndCancelMs =
+    Date.now() - cachedStarted;
+  expect(modelChunks).toBe(
+    cacheBlocked ? chunksAfterCold * 2 : chunksAfterCold,
+  );
+  expect(
+    (await read()).document.pages[0].objects.find((o) => o.id === original.id)
+      ?.assetId,
+  ).toBe(warmImage.assetId);
+  measurements.optionalCacheBlockedByTest = cacheBlocked;
+  measurements.modelChunks = modelChunks;
+  measurements.modelBytes = 25888640;
+  measurements.outputBytes = asset.size;
+  measurements.outputSha256 = asset.sha256;
+  measurements.outputDimensions = [asset.width, asset.height];
+  measurements.workerCancellation =
+    "actual processing-phase cancellation followed by identical-output recovery";
+  measurements.mainThreadHeap = await page.evaluate(() =>
+    performance.memory
+      ? {
+          usedJSHeapSize: performance.memory.usedJSHeapSize,
+          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          scope: "main realm only; excludes dedicated-worker/WASM peak",
+        }
+      : null,
+  );
+  writeFileSync(
+    testInfo.outputPath("actual-modnet-native-metrics.json"),
+    JSON.stringify(measurements, null, 2),
+  );
+});
+
+test("oversized native cutout is rejected without silently resizing or replacing its source", async ({
+  page,
+}) => {
+  test.skip(
+    process.env.STUDIO_NATIVE_CUTOUT_ENABLED !== "true" ||
+      !process.env.STUDIO_NATIVE_MODNET_PATH,
+    "Requires explicitly configured owned checkpoint.",
+  );
+  const sharp = (await import("sharp")).default;
+  const input = await sharp(
+    new URL(
+      "../../docs/investigations/cutout-portrait/fixtures/synthetic-portrait-input.png",
+      import.meta.url,
+    ).pathname,
+  )
+    .jpeg({ quality: 95 })
+    .toBuffer();
+  await page.request.post(`${base}/api/auth/login`, {
+    data: { username: "native-host-fixture", password },
+  });
+  await page.goto(`${base}/tests/fixtures/native-editor-host.html`);
+  await page
+    .getByRole("combobox", { name: "Native fixture" })
+    .selectOption(fixtures[4].id);
+  const frame = page.frameLocator('iframe[title="Native Doory design canvas"]');
+  await expect(
+    frame.getByRole("button", { name: "Images", exact: true }),
+  ).toBeVisible({ timeout: 30000 });
+  await page.getByText("Image rights and consent", { exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Rights declaration" })
+    .fill(
+      "Owned synthetic portrait, no actual personal identity; output-size test.",
+    );
+  await page
+    .getByRole("combobox", { name: "Consent", exact: true })
+    .selectOption("not_personal_data");
+  await page
+    .getByRole("checkbox", { name: /I confirm the selected image/ })
+    .check();
+  await frame.getByRole("button", { name: "Images", exact: true }).click();
+  const chooser = page.waitForEvent("filechooser");
+  await frame.getByTestId("upload-zone").click();
+  await (
+    await chooser
+  ).setFiles({
+    name: "synthetic-full-resolution.jpg",
+    mimeType: "image/jpeg",
+    buffer: input,
+  });
+  await expect(frame.getByTestId("uploaded-thumb")).toHaveCount(1);
+  await frame.getByTestId("uploaded-thumb").click();
+  const endpoint = `${base}/api/studio/native-editor/documents/${fixtures[4].id}?organizationId=org_default&brandId=${fixtures[4].brandId}`;
+  const read = async () => await (await page.request.get(endpoint)).json();
+  await expect
+    .poll(
+      async () =>
+        (await read()).document.pages[0].objects.filter(
+          (o) => o.type === "image",
+        ).length,
+    )
+    .toBe(1);
+  const original = (await read()).document.pages[0].objects.find(
+    (o) => o.type === "image",
+  );
+  await frame.getByTestId("ed-remove-bg").click();
+  await expect(frame.getByTestId("native-cutout-status")).toContainText(
+    "exceeds 512 KiB",
+    { timeout: 30000 },
+  );
+  const current = (await read()).document.pages[0].objects.find(
+    (o) => o.id === original.id,
+  );
+  expect(current.assetId).toBe(original.assetId);
+  const retained = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/assets/${original.assetId}?organizationId=org_default&brandId=${fixtures[4].brandId}`,
+    )
+  ).json();
+  expect(retained.width).toBe(768);
+  expect(retained.height).toBe(768);
+  expect(Buffer.from(retained.base64, "base64")).toEqual(input);
+  const assets = await (
+    await page.request.get(
+      `${base}/api/studio/native-editor/assets?organizationId=org_default&brandId=${fixtures[4].brandId}`,
+    )
+  ).json();
+  expect(assets.count).toBe(1);
 });

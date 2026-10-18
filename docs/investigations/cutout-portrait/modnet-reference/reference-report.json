@@ -1,0 +1,109 @@
+{
+  "generatedAt": "2026-10-18T03:36:36.970092+00:00",
+  "inputSha256": "b614ff30258ad627172f0c4c23df65718c808cec1a6917b49471c86d6a95d6da",
+  "processor": "studio-modnet-area-v1",
+  "modelSha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9",
+  "reference": "ZHKKKe/MODNet@28165a451e4610c9d77cfdf925a94610bb2810fb/onnx/inference_onnx.py",
+  "scope": "CPU reference agreement, not browser timing or ground-truth segmentation quality",
+  "versions": {
+    "opencv": "4.12.0",
+    "onnxruntime": "1.23.2"
+  },
+  "fixtures": [
+    {
+      "fixture": "portrait",
+      "rgbaSha256": "7ea27abfc6e3a12b4b5c4abab7ed4d98cfc66f73fda3e930e1f66e62e2129846",
+      "width": 512,
+      "height": 768,
+      "modelDimensions": [
+        1,
+        3,
+        768,
+        512
+      ],
+      "inputMaxAbsolute": 0.0,
+      "inputMeanAbsolute": 0.0,
+      "modelAlphaMaxDifference": 0,
+      "modelAlphaMeanDifference": 0.0,
+      "finalAlphaMaxDifference": 0,
+      "finalAlphaMeanDifference": 0.0,
+      "originalRgbPreserved": true
+    },
+    {
+      "fixture": "landscape",
+      "rgbaSha256": "0c8a7aa840adaa7c6228eec0e7bff26f354eebe1d7691f30777ba4540b692f2b",
+      "width": 768,
+      "height": 512,
+      "modelDimensions": [
+        1,
+        3,
+        512,
+        768
+      ],
+      "inputMaxAbsolute": 0.0,
+      "inputMeanAbsolute": 0.0,
+      "modelAlphaMaxDifference": 0,
+      "modelAlphaMeanDifference": 0.0,
+      "finalAlphaMaxDifference": 0,
+      "finalAlphaMeanDifference": 0.0,
+      "originalRgbPreserved": true
+    },
+    {
+      "fixture": "square",
+      "rgbaSha256": "a1cb18650edf1acced5170f39375d76d5e800c169731b6a07d5015e534399683",
+      "width": 768,
+      "height": 768,
+      "modelDimensions": [
+        1,
+        3,
+        512,
+        512
+      ],
+      "inputMaxAbsolute": 1.1920928955078125e-07,
+      "inputMeanAbsolute": 2.5361851285765624e-08,
+      "modelAlphaMaxDifference": 1,
+      "modelAlphaMeanDifference": 0.00048828125,
+      "finalAlphaMaxDifference": 1,
+      "finalAlphaMeanDifference": 0.016038682725694444,
+      "originalRgbPreserved": true
+    },
+    {
+      "fixture": "small",
+      "rgbaSha256": "560ddee7559c9667c6bd3ebd00b1b99830b03d4905155c29d979e639e19da5de",
+      "width": 320,
+      "height": 480,
+      "modelDimensions": [
+        1,
+        3,
+        768,
+        512
+      ],
+      "inputMaxAbsolute": 1.1920928955078125e-07,
+      "inputMeanAbsolute": 4.2883776529833995e-09,
+      "modelAlphaMaxDifference": 1,
+      "modelAlphaMeanDifference": 0.0007832845052083334,
+      "finalAlphaMaxDifference": 1,
+      "finalAlphaMeanDifference": 0.00416015625,
+      "originalRgbPreserved": true
+    },
+    {
+      "fixture": "noninteger",
+      "rgbaSha256": "f48b90de066651817e8bda79754c2bd5e3d030918decbfe8d5c280014ae7d6e0",
+      "width": 1024,
+      "height": 640,
+      "modelDimensions": [
+        1,
+        3,
+        512,
+        800
+      ],
+      "inputMaxAbsolute": 5.960464477539063e-08,
+      "inputMeanAbsolute": 8.45138004024193e-09,
+      "modelAlphaMaxDifference": 1,
+      "modelAlphaMeanDifference": 0.00129150390625,
+      "finalAlphaMaxDifference": 1,
+      "finalAlphaMeanDifference": 0.00921783447265625,
+      "originalRgbPreserved": true
+    }
+  ]
+}

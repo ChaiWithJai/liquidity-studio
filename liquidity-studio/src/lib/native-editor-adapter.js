@@ -28,6 +28,8 @@ export function createNativeEditorAdapter({
   const urls = new Map();
   const createdUrls = new Set();
   const loadedAssets = new Map();
+  const cutoutOutputs = new WeakMap();
+  let pendingCutoutUpload = null;
   function current() {
     if (!active || getScopeKey() !== scopeKey)
       throw Object.assign(
@@ -108,8 +110,85 @@ export function createNativeEditorAdapter({
       current();
       return true;
     },
+    getCutoutRetry(assetId) {
+      current();
+      if (!pendingCutoutUpload) return null;
+      if (pendingCutoutUpload.intent.inputAssetId !== assetId)
+        throw new Error(
+          "A cutout upload has an uncertain result. Retry the same selected image first.",
+        );
+      return pendingCutoutUpload.file;
+    },
+    async prepareCutout(image, assetId) {
+      current();
+      const policy = getAssetPolicy();
+      if (!policy?.cutoutConfirmed)
+        throw new Error(
+          "Confirm the image rights and consent for background removal.",
+        );
+      if (!/^[a-f0-9]{32}$/.test(assetId || ""))
+        throw new Error("Select a saved private Studio image.");
+      const source =
+        loadedAssets.get(assetId) || (await call(`assets/${assetId}`));
+      const digest = [
+        ...new Uint8Array(
+          await crypto.subtle.digest("SHA-256", await image.arrayBuffer()),
+        ),
+      ]
+        .map((v) => v.toString(16).padStart(2, "0"))
+        .join("");
+      current();
+      if (digest !== source.sha256)
+        throw new Error(
+          "Selected image changed; reopen it before background removal.",
+        );
+      return call("cutout/prepare", {
+        documentId: record.id,
+        expectedRevision: revision,
+        inputAssetId: assetId,
+        idempotencyKey: key(),
+      });
+    },
+    retainCutoutOutput(image, intent) {
+      current();
+      cutoutOutputs.set(image, { intent, idempotencyKey: key() });
+    },
     async uploadAsset(file, options = {}) {
       current();
+      const cutout = cutoutOutputs.get(file);
+      if (cutout) {
+        if (file.type !== "image/png" || file.size > 512 * 1024)
+          throw new Error(
+            "Cutout exceeds 512 KiB; the original image is unchanged.",
+          );
+        if (pendingCutoutUpload && pendingCutoutUpload.file !== file)
+          throw new Error("Retry the same uncertain cutout upload first.");
+        pendingCutoutUpload ||= { ...cutout, file };
+        let uploaded;
+        try {
+          uploaded = await call("cutout/complete", {
+            intentId: cutout.intent.id,
+            base64: encode(new Uint8Array(await file.arrayBuffer())),
+            idempotencyKey: cutout.idempotencyKey,
+          });
+          pendingCutoutUpload = null;
+        } catch (error) {
+          if (error.status >= 400 && error.status < 500)
+            pendingCutoutUpload = null;
+          throw error;
+        }
+        loadedAssets.set(uploaded.id, uploaded);
+        const src = `studio-asset:${uploaded.id}`;
+        return {
+          id: uploaded.id,
+          url: src,
+          thumbUrl: src,
+          width: uploaded.width,
+          height: uploaded.height,
+          name: uploaded.name,
+          kind: "image",
+        };
+      }
       const policy = getAssetPolicy();
       if (
         !policy?.rightsDeclaration?.trim() ||

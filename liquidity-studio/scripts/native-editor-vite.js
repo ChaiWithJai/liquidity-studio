@@ -11,13 +11,14 @@ export function assertOriginalOnlyNativeBundle(bundle) {
     if (
       ["native-editor-frame.html", "native-editor-license.txt"].includes(
         output.fileName,
-      )
+      ) ||
+      /(?:modnet|ort-wasm).*\.(?:onnx|wasm|mjs|js)$/.test(output.fileName)
     )
       throw new Error("Upstream native asset in original-only build");
     for (const id of Object.keys(output.modules || {})) {
       if (
         id.includes("/.native-editor-source/") ||
-        /\/node_modules\/(react|react-dom|fabric)\//.test(id)
+        /\/node_modules\/(react|react-dom|fabric|onnxruntime-web)\//.test(id)
       )
         throw new Error("Upstream native module in original-only build");
     }

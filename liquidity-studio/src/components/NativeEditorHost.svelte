@@ -14,6 +14,7 @@
   let loading = $state(true);
   let rightsDeclaration = $state('');
   let consent = $state('');
+  let cutoutConfirmed = $state(false);
   let localRecord = $state.raw(null);
   let reloadEpoch = $state(0);
   let recoveryMessage = $state('');
@@ -92,7 +93,7 @@
       broker = null;
     };
   });
-  $effect(() => { broker?.setAssetPolicy({ rightsDeclaration, consent }); });
+  $effect(() => { broker?.setAssetPolicy({ rightsDeclaration, consent, cutoutConfirmed }); });
 </script>
 
 <section class="native-editor-shell" aria-label="Native design editor">
@@ -112,10 +113,11 @@
       <select bind:value={consent}>
         <option value="">Choose before uploading</option>
         <option value="confirmed">Permission and required personal consent confirmed</option>
-        <option value="not_personal_data">Owned procedural image with no personal data</option>
+        <option value="not_personal_data">Owned image with no personal data</option>
       </select>
     </label>
-    <p>Uploads support PNG, JPEG and WebP up to 512 KiB and four megapixels. Background removal is unavailable.</p>
+    <label><input type="checkbox" bind:checked={cutoutConfirmed} /> I confirm the selected image’s recorded rights and consent permit background removal.</label>
+    <p>Uploads support PNG, JPEG and WebP up to 512 KiB and four megapixels. When configured locally, background removal preserves pixel dimensions and rejects PNG output above 512 KiB. It never silently resizes or overwrites the original; native Undo restores the original reference.</p>
   </details>
   {#if loading}<p role="status">Opening native editor…</p>{/if}
   <EditorReviewPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} />

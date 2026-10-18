@@ -185,3 +185,31 @@ test("adapter retains identical save key after ambiguous HTTP5xx and rejects a d
   assert.deepEqual(bodies[0], bodies[1]);
   adapter.dispose();
 });
+
+test("ambiguous cutout upload retains the exact output and key without another inference", async () => {
+  const bodies = [];
+  const adapter = createNativeEditorAdapter({
+    scopeKey: "A",
+    getScopeKey: () => "A",
+    record: { id: crypto.randomUUID(), revision: 1 },
+    request: async (path, options) => {
+      bodies.push(JSON.parse(options.body));
+      if (bodies.length === 1)
+        throw Object.assign(Error("Unavailable"), { status: 503 });
+      return { id: "f".repeat(32), width: 32, height: 32, name: "Cutout" };
+    },
+  });
+  const output = new Blob(["fixture"], { type: "image/png" }),
+    intent = { id: "e".repeat(32), inputAssetId: "a".repeat(32) };
+  adapter.retainCutoutOutput(output, intent);
+  await assert.rejects(adapter.uploadAsset(output), { status: 503 });
+  assert.equal(adapter.getCutoutRetry(intent.inputAssetId), output);
+  assert.throws(
+    () => adapter.getCutoutRetry("b".repeat(32)),
+    /uncertain result/,
+  );
+  await adapter.uploadAsset(output);
+  assert.deepEqual(bodies[0], bodies[1]);
+  assert.equal(adapter.getCutoutRetry(intent.inputAssetId), null);
+  adapter.dispose();
+});

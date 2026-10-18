@@ -1,3 +1,5 @@
+import { NativeCutoutService } from "./native-cutout.js";
+import { createNativeCutoutModel } from "./native-cutout-model.js";
 import { NativeEditorService } from "./native-editor.js";
 import { EditorApprovalService } from "./editor-approval.js";
 import { nativeFontRegistry } from "./native-editor-fonts.js";
@@ -18,6 +20,10 @@ export function createPlatform({
   editorTargets = JSON.parse(process.env.STUDIO_EDITOR_TARGETS_JSON || "[]"),
   editorTransport,
   editorNow,
+  nativeCutoutModel = createNativeCutoutModel({
+    enabled: process.env.STUDIO_NATIVE_CUTOUT_ENABLED === "true",
+    path: process.env.STUDIO_NATIVE_MODNET_PATH,
+  }),
 } = {}) {
   const targets = validateEditorTargets(editorTargets);
   const platform = { store: null, identity: null };
@@ -52,9 +58,18 @@ export function createPlatform({
       scope,
       availableFonts: nativeFontRegistry(),
     });
-  platform.editorApproval = (scope, repo) => new EditorApprovalService({
-    repo, scope, identity: platform.identity, native: platform.nativeEditor(scope, repo),
-  });
+  platform.editorApproval = (scope, repo) =>
+    new EditorApprovalService({
+      repo,
+      scope,
+      identity: platform.identity,
+      native: platform.nativeEditor(scope, repo),
+    });
+  platform.nativeCutout = (scope, repo) =>
+    new NativeCutoutService({
+      native: platform.nativeEditor(scope, repo),
+      model: nativeCutoutModel,
+    });
   const initialize = async (activeStore) => {
     platform.store = activeStore;
     if (authMode === "google")

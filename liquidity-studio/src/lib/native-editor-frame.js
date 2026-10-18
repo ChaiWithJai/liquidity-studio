@@ -39,6 +39,11 @@ window.addEventListener("message", async (event) => {
       policy = next.data.policy;
   });
   try {
+    let cutoutEnabled = false;
+    try {
+      await broker.request("/api/studio/native-editor/cutout/model");
+      cutoutEnabled = true;
+    } catch {}
     const module = await import("virtual:studio-native-editor");
     editor = module.mountNativeEditor(document.getElementById("native-root"), {
       document: message.record.document,
@@ -49,6 +54,14 @@ window.addEventListener("message", async (event) => {
         revision: message.record.revision,
       },
       adapter,
+      cutoutRequest: cutoutEnabled ? broker.request : null,
+      onCutoutStatus: (message) =>
+        broker.state({
+          status: editor?.isDirty() ? "dirty" : "idle",
+          dirty: editor?.isDirty() ?? false,
+          message,
+          cutoutStatus: message,
+        }),
       onSaveStateChange: (state) =>
         broker.state({
           ...state,
