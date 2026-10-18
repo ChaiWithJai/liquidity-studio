@@ -2,8 +2,11 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 const ROOT = new URL("../tools/penpot-token-plugin/", import.meta.url);
 /** Explicit disposable local operator host; never mounted in Studio/Cloud Run. */
-export function createPenpotPluginLocalHost(transport) {
-  const origin = "http://localhost:39019";
+export function createPenpotPluginLocalHost(transport, { port = 39019 } = {}) {
+  // Trusted constructor-only QA isolation. Never a request field or arbitrary URL.
+  if (![39019, 39039].includes(port))
+    throw new Error("Unsupported fixed local Penpot plugin port");
+  const origin = `http://localhost:${port}`;
   const server = createServer(async (req, res) => {
     const json = (code, value) => {
       res.writeHead(code, {
@@ -14,7 +17,9 @@ export function createPenpotPluginLocalHost(transport) {
     };
     try {
       if (
-        !["localhost:39019", "127.0.0.1:39019"].includes(req.headers.host) ||
+        ![`localhost:${port}`, `127.0.0.1:${port}`].includes(
+          req.headers.host,
+        ) ||
         (req.headers.origin &&
           req.headers.origin !== origin &&
           !(
@@ -41,7 +46,10 @@ export function createPenpotPluginLocalHost(transport) {
               "async function",
             ) +
             "\n" +
-            (await readFile(new URL("plugin-tail.js", ROOT), "utf8"));
+            (await readFile(new URL("plugin-tail.js", ROOT), "utf8")).replace(
+              '"http://localhost:39019/"',
+              JSON.stringify(`${origin}/`),
+            );
           type = "text/javascript";
         } else if (
           req.url === "/" ||
