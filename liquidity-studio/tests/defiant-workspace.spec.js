@@ -27,7 +27,9 @@ test('brandless organization uses real enable/import/graph and restores the sele
  await expect(workspace.getByRole('region',{name:'Reference import preview'})).toContainText('User-reported intake');
  await workspace.getByRole('button',{name:'Add these references',exact:true}).click();
  await workspace.getByRole('button',{name:'Explore Our imported producer, person',exact:true}).click();
- await expect(workspace.getByLabel('Selection details',{exact:true})).toContainText('unverified rights');
+ await workspace.getByLabel('Selection details',{exact:true}).getByText('Evidence and constraints',{exact:true}).click();
+ await expect(workspace.getByLabel('Selection details',{exact:true})).toContainText('Rights: unverified');
+ await expect(workspace.getByLabel('Selection details',{exact:true})).toContainText('Not confirmed');
  await expect(page).toHaveURL(/select=owned%3Aproducer/);
  const edge=workspace.getByRole('button',{name:'Inspect relationship Brief relationship',exact:true});await edge.focus();await page.keyboard.press('Enter');await expect(page).toHaveURL(/select=owned%3Arelationship/);await workspace.getByRole('button',{name:'Explore Our imported producer, person',exact:true}).click();await page.reload();
  await expect(page.getByLabel('Selection details',{exact:true})).toContainText('Our imported producer');
