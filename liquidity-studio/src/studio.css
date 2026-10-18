@@ -1605,3 +1605,6 @@ th {
 }
 
 .active-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+.generation-review-context { position: sticky; top: 0; z-index: 5; max-height: 35vh; overflow: auto; }
+
+fieldset[id^="source-claim-"] { scroll-margin-top: 36vh; }

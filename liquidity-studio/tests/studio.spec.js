@@ -572,3 +572,66 @@ test("reversed scope responses cannot replace the latest brand or clear its load
   await expect(page.locator(".story-row").filter({ hasText: oldTitle })).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "Loading" })).toHaveCount(0);
 });
+
+test("source review prerequisites block UI and API, focus stable claims and recover saved review", async ({ page }) => {
+  await page.setViewportSize({width:1280,height:720});
+  await signIn(page);
+  const source = { id: "stable-review-claim", text: "A reviewed excerpt for prerequisite testing.", sourceUrl: "https://example.org/review", kind: "general", status: "unreviewed" };
+  const response = await page.request.post(base + "/api/studio/backlog" + scope, {data:{title:"Prerequisite fixture",category:"Review",scheduledDay:"Monday",sourceClaims:[source]}});
+  expect(response.status()).toBe(201);
+  const story = (await response.json()).story;
+  await page.reload();
+  await page.locator(".story-row").filter({hasText:"Prerequisite fixture"}).getByRole("button",{name:"Open story"}).click();
+  await expect(page.getByRole("button",{name:"Generate draft",exact:true})).toBeDisabled();
+  await expect(page.getByRole("button",{name:"Generate four-format draft",exact:true})).toBeDisabled();
+  await page.screenshot({path:"test-results/source-review-S03-after.png"});
+  const bypass = await page.request.post(base + "/api/studio/generate-campaign" + scope,{data:{storyId:story.id}});
+  expect(bypass.ok()).toBe(false);
+  await page.getByRole("button",{name:/Approve at least one sourced claim/}).first().click();
+  await expect(page.locator("#source-claim-stable-review-claim textarea")).toBeFocused();
+  await page.getByLabel("Review status",{exact:true}).selectOption("approved");
+  await expect(page.getByText("Save source review changes before generating.",{exact:true}).first()).toBeVisible();
+  await page.getByRole("button",{name:"Save source review",exact:true}).focus();
+  await page.screenshot({path:"test-results/source-review-S08-after.png"});
+  await page.getByRole("button",{name:"Save source review",exact:true}).click();
+  await expect(page.getByRole("button",{name:"Generate draft",exact:true})).toBeEnabled();
+  await page.getByLabel("Claim text",{exact:true}).fill("Unsaved review changes");
+  await expect(page.getByRole("button",{name:"Generate draft",exact:true})).toBeDisabled();
+  await page.getByRole("button",{name:"Reload saved review (discard review edits)",exact:true}).click();
+  await expect(page.getByLabel("Claim text",{exact:true})).toHaveValue(source.text);
+  await expect(page.getByRole("button",{name:"Generate draft",exact:true})).toBeEnabled();
+  const saved = (await (await page.request.get(base+"/api/studio/bootstrap"+scope)).json()).backlog.find(item=>item.id===story.id);
+  const clinical = await page.request.post(base+"/api/studio/source-claims"+scope,{data:{storyId:story.id,expectedRevision:saved.revision,sourceClaims:[{...source,status:"approved",kind:"clinical"}]}});
+  expect(clinical.ok()).toBe(true);
+  const denied = await page.request.post(base+"/api/studio/generate-campaign"+scope,{data:{storyId:story.id}});
+  expect(denied.ok()).toBe(false);
+  // Existing local revision is now stale: save fails instead of replacing the clinical review.
+  await page.getByLabel("Claim text",{exact:true}).fill("A competing edit");
+  await page.getByRole("button",{name:"Save source review",exact:true}).click();
+  await expect(page.getByText(/Story changed; reload before reviewing/)).toBeVisible();
+  await page.getByRole("button",{name:"Reload saved review (discard review edits)",exact:true}).click();
+  await expect(page.getByRole("button",{name:"Generate draft",exact:true})).toBeDisabled();
+  await expect(page.getByRole("button",{name:/save an authorized clinical source review/}).first()).toBeVisible();
+});
+
+test("late source review save cannot restore a story from the previous brand", async ({page}) => {
+  await signIn(page);
+  const created = await page.request.post(base+"/api/studio/backlog"+scope,{data:{title:"Delayed review fixture",category:"Review",scheduledDay:"Monday",sourceClaims:[{id:"late-review",text:"A source excerpt.",sourceUrl:"https://example.org/review",kind:"general",status:"unreviewed"}]}});
+  expect(created.status()).toBe(201);
+  await page.reload();
+  await page.locator(".story-row").filter({hasText:"Delayed review fixture"}).getByRole("button",{name:"Open story"}).click();
+  await page.getByLabel("Review status",{exact:true}).selectOption("approved");
+  let release, captured;
+  const held = new Promise(resolve=>{release=resolve});
+  const seen = new Promise(resolve=>{captured=resolve});
+  await page.route("**/api/studio/source-claims?*",async route=>{const response=await route.fetch();captured();await held;await route.fulfill({response});});
+  await page.getByRole("button",{name:"Save source review",exact:true}).click();
+  await seen;
+  await page.getByLabel("Brand",{exact:true}).selectOption("brand_vedic");
+  await expect(page.locator(".story-row").first()).toBeVisible();
+  release();
+  await page.unrouteAll({behavior:"wait"});
+  await page.locator(".story-row").first().getByRole("button",{name:/Open (story|draft)/}).click();
+  await expect(page.getByRole("heading",{name:"Delayed review fixture",exact:true})).toHaveCount(0);
+  await expect(page.locator("#source-claim-late-review")).toHaveCount(0);
+});

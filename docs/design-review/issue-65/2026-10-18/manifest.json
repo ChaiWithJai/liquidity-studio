@@ -1,0 +1,29 @@
+{
+  "kind": "after-change-original-fixture",
+  "baselineEvidenceCommit": "273cdde3fba60e1c6c46de84721b07db88b3241f",
+  "canonicalAnnotations": [
+    "review-6",
+    "review-7"
+  ],
+  "method": "Actual Chromium authenticated UI against disposable HTTP/SQLite server; no production app mutations. S03 shows blocked initial generation; S08 shows save focus and unsaved-review blocker. New original fixture, not a pixel comparison of the historical story.",
+  "images": [
+    {
+      "step": "S03",
+      "file": "S03-after.png",
+      "sha256": "f975a5b997dde64fef4c0395231b825f520e46a455aa0325a3dcd61be6646dea",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      }
+    },
+    {
+      "step": "S08",
+      "file": "S08-after.png",
+      "sha256": "683aadf9c386b67f3b0ea21735fe6292f5d909633ade451c50fcf9f4cb022539",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      }
+    }
+  ]
+}
