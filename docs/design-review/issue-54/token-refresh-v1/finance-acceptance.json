@@ -1,0 +1,48 @@
+{
+  "brand": "liquidity_desk",
+  "nativeRevisionBefore": 3,
+  "nativeRevisionAfter": 4,
+  "sameShapeIds": true,
+  "samePageOrder": true,
+  "textShapes": 50,
+  "allTextContentStringsPreserved": true,
+  "allGeometryPreserved": true,
+  "humanTextPreserved": true,
+  "palette": [
+    "#201B30",
+    "#52796F",
+    "#E9C46A",
+    "#F6EEE3"
+  ],
+  "receiptStatus": "native-state-verified",
+  "receiptPixelsVerified": false,
+  "publicationApproved": false,
+  "pngs": [
+    {
+      "stage": "before",
+      "bytes": 65368,
+      "sha256": "27f6f368bab82e7ea8f9b89782b6dcac884cfd8c13a54b007d756e24bfce058d",
+      "width": 1080,
+      "height": 1350,
+      "newPalettePresent": [
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "stage": "after",
+      "bytes": 65145,
+      "sha256": "375f9dbd7841f2c38a7b10a9a405a0d94c56a8d33d44fd5faa7cccebff2909ca",
+      "width": 1080,
+      "height": 1350,
+      "newPalettePresent": [
+        true,
+        true,
+        true,
+        true
+      ]
+    }
+  ]
+}

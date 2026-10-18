@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Studio governed token refresh</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <h1>Refresh registered Studio colors</h1>
+    <p>
+      This local action changes registered color tokens. It does not replace
+      native text or geometry.
+    </p>
+    <label
+      >One-use Studio action capability
+      <input id="capability" type="password" autocomplete="off"
+    /></label>
+    <button id="apply" type="button">Validate and apply</button>
+    <p id="status" role="status">
+      Waiting for a currently authorized Studio action.
+    </p>
+    <script src="/ui.js"></script>
+  </body>
+</html>
