@@ -51,3 +51,16 @@ test('real HTTP writes acknowledge records and reopen the same saved report with
  const report=await api(path+'/reports',{expectedRevision:saved.data.revision,idempotencyKey:randomUUID(),report:{title:'Real saved report',thesis:'',planIds:['yt_sig_lagos_01']}});assert.equal(report.status,200);const reopened=(await api(path)).data.reports[0];assert.equal(reopened.id,report.data.report.id);assert.equal(reopened.findings[0].notes[0].text,'HTTP saved evidence note');
  const refreshed=await api(path+'/reports/'+reopened.id+'/refresh',{expectedRevision:report.data.revision,idempotencyKey:randomUUID(),expectedReportRevision:1,planIds:reopened.planIds});assert.equal(refreshed.status,200);assert.equal(refreshed.data.report.revision,2);
 });
+
+test('report preserves observation and rights sources plus explicitly selected notes outside its findings',async t=>{
+ const f=await fixture(t),evidence=[{id:'owned-observation-source',sourceUrl:'https://example.org/observation',title:'Reported observation'},{id:'owned-rights-source',sourceUrl:'https://example.org/rights',title:'Rights reference'}];
+ await f.service.import(f.actor,f.command({kind:'owned',data:{nodes:[{id:'owned-resource',kind:'resource',name:'Owned studio',evidenceIds:[]}],edges:[],evidence,observations:[{id:'owned-observation',nodeId:'owned-resource',evidenceId:evidence[0].id,metric:'capacity',unit:'people',value:4}],resources:[{id:'owned-resource-details',nodeId:'owned-resource',rights:{evidenceIds:[evidence[1].id]}}]}}));
+ const annotation=(await f.service.annotate(f.actor,f.command({annotation:{...note('Keep this explicitly selected outside note'),evidenceIds:[evidence[0].id]}}))).annotation;
+ const report=(await f.service.saveReport(f.actor,f.command({report:{title:'Owned resource review',thesis:'',planIds:['owned-resource'],annotationIds:[annotation.id]}}))).report;
+ assert.deepEqual(report.findings[0].evidence.map(e=>e.id).sort(),evidence.map(e=>e.id).sort());assert.equal(report.findings[0].observations[0].evidenceId,evidence[0].id);assert.equal(report.findings[0].resources[0].rights.evidenceIds[0],evidence[1].id);
+ assert.deepEqual(report.annotations,[annotation]);assert.equal(report.annotationEvidence[0].id,evidence[0].id);assert.deepEqual(report.findings[0].notes,[]);
+ await f.service.annotate(f.actor,f.command({annotation:{...note('Later outside note'),id:annotation.id}}));
+ const edited=(await f.service.saveReport(f.actor,f.command({report:{id:report.id,expectedReportRevision:1,title:'Title edit only',thesis:''}}))).report;
+ assert.deepEqual(edited.annotations,[annotation]);assert.deepEqual(edited.annotationEvidence,report.annotationEvidence);assert.deepEqual(edited.history[0].annotations,[annotation]);
+ const refreshed=(await f.service.refreshReport(f.actor,report.id,f.command({expectedReportRevision:2,planIds:report.planIds,annotationIds:[annotation.id]}))).report;assert.equal(refreshed.annotations[0].text,'Later outside note');assert.deepEqual(refreshed.history[1].annotations,[annotation]);
+});
