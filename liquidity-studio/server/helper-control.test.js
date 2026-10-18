@@ -305,3 +305,50 @@ test("advisory presence expires and cannot claim another actor client or confer 
     (error) => error.status === 403,
   );
 });
+test("delegated execution rechecks managed grant owner and helper revocation before touching content", async (t) => {
+  const f = await fixture(t),
+    p = await f.control.propose(f.helper, {
+      grantId: f.grant.id,
+      epoch: 1,
+      changes: f.changes,
+    });
+  await f.control.approve(f.owner, p.id, { expectedRevision: 1 });
+  const seen = [];
+  f.platform.identity.authorizeJobActor = async (id, approvedAt) => {
+    seen.push({ id, approvedAt });
+    if (id === f.owner.id)
+      throw Object.assign(
+        Error("Managed owner disabled or authorization revoked"),
+        { status: 403 },
+      );
+    return f.helper;
+  };
+  await assert.rejects(
+    f.control.apply(f.helper, {
+      grantId: f.grant.id,
+      proposalId: p.id,
+      epoch: 1,
+      idempotencyKey: randomUUID(),
+    }),
+    (error) => error.status === 403,
+  );
+  assert.deepEqual(seen, [{ id: f.owner.id, approvedAt: f.grant.createdAt }]);
+  assert.equal((await f.repo.read()).backlog[0].revision, f.story.revision);
+  f.platform.identity.authorizeJobActor = async (id, approvedAt) => {
+    seen.push({ id, approvedAt });
+    if (id === f.helper.id)
+      throw Object.assign(Error("Managed helper revoked"), { status: 403 });
+    return f.owner;
+  };
+  await assert.rejects(
+    f.control.apply(f.helper, {
+      grantId: f.grant.id,
+      proposalId: p.id,
+      epoch: 1,
+      idempotencyKey: randomUUID(),
+    }),
+    (error) => error.status === 403,
+  );
+  assert.equal(seen.at(-1).id, f.helper.id);
+  assert.equal((await f.repo.read()).workspace, undefined);
+});

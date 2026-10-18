@@ -30,9 +30,26 @@ export class HelperControlService {
   async pair(actor, grant) {
     const current = await this.principal(actor);
     const state = await this.workspace.store.get("identity");
-    const owner = state.users.find((user) => user.id === grant.ownerId);
-    const helper = state.users.find((user) => user.id === grant.helperId);
+    let owner = state.users.find((user) => user.id === grant.ownerId);
+    let helper = state.users.find((user) => user.id === grant.helperId);
     if (!owner || !helper) throw fail(403, "Grant principal is unavailable");
+    // Delegated execution must also honor managed Google disable/revoke policy
+    // for the absent grant owner. Never authorize from a stored role alone.
+    if (this.workspace.identity.authorizeJobActor) {
+      owner = await this.workspace.identity.authorizeJobActor(
+        grant.ownerId,
+        grant.createdAt,
+      );
+      helper = await this.workspace.identity.authorizeJobActor(
+        grant.helperId,
+        grant.createdAt,
+      );
+    } else if (this.workspace.identity.mode === "google") {
+      throw fail(
+        503,
+        "Managed delegated-principal verification is unavailable",
+      );
+    }
     await this.workspace.authorize(owner);
     await this.workspace.authorize(helper);
     return current;
