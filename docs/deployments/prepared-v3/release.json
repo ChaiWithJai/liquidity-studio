@@ -110,5 +110,16 @@
     "assetSha256": "4a4e27392806d24c097947d5a7b1ecc35e5dab019fc408f30375a48d93b316ab",
     "freshAuthenticatedGoogleClaim": false
   },
-  "noNewProviderCall": true
+  "noNewProviderCall": true,
+  "rootNeoCanonicalAfterPromotion": {
+    "ready": 200,
+    "anonymousBootstrap": 401,
+    "googleMode": true,
+    "assetName": "index-DiUzGbQ7.js",
+    "assetBytes": 438219,
+    "assetSha256": "4a4e27392806d24c097947d5a7b1ecc35e5dab019fc408f30375a48d93b316ab",
+    "freshAuthenticatedGoogleClaim": false,
+    "revision": "liquidity-studio-00031-van",
+    "percent": 100
+  }
 }
