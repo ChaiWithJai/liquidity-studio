@@ -13,12 +13,40 @@ Font UUIDs are preserved, including one family shared by multiple weights. The
 bounded pack permits eight variants, a 10 MiB archive and 20 MiB aggregate decoded
 content. Original font files remain limited to 3 MiB each.
 
+## Independent local destination
+
+Private configuration may optionally set `nativeOrigin` and `operatorPort`. For
+example, restore to an independent native instance on
+`http://127.0.0.1:39046` while the operator page listens on
+`http://127.0.0.1:39049`:
+
+```json
+{
+  "nativeOrigin": "http://127.0.0.1:39046",
+  "operatorPort": 39049
+}
+```
+
+Add those two fields to the existing private destination configuration below;
+keep its real destination profile/team/project and `cookieFile`. This does not
+create an installation or sign in for you. The private cookie belongs to that
+fixed destination and never enters the page or exported sidecar. Existing
+http://localhost:39008 and http://127.0.0.1:39045 defaults are unchanged. Native origins must be exact
+HTTP origins on `localhost` or `127.0.0.1` with an explicit unprivileged port,
+without credentials, paths, query or fragment. The operator port is an integer
+1024–65535; its page Host/Origin checks use that exact 127.0.0.1 port. Public/cloud
+origins, arbitrary proxies and browser-selected destinations are unsupported.
+Use a free operator port; this example leaves the existing 39045 Studio instance
+untouched. Font UUID/conflict/source-byte/journal rules and ordinary archive
+import remain unchanged. Independent fresh-instance rendering is not inferred
+from configuring the endpoints; it still needs an actual restore.
+
 ## Fixed operator setup
 
 Prepare a private configuration and journal directory with mode 0700, and the
 configuration/session files with mode 0600. The session file contains the native
 Cookie header for the explicitly configured operator account, never Google
-credentials. The tool refuses Cloud Run, listens only on `127.0.0.1:39045`, checks
+credentials. The tool refuses Cloud Run, listens only on `127.0.0.1` (port 39045 by default), checks
 Host/Origin/peer/forwarded headers, and accepts a restore POST only from its own
 page. It is not mounted by the Studio server or developer launcher. Confirm the
 port is free and coordinate the native account before starting it.

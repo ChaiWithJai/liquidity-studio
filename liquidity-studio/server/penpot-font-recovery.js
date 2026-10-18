@@ -185,10 +185,19 @@ export class PenpotFontRecovery {
   }
 }
 
+/** Private operator config only: explicit local endpoints, never browser input. */
+export function fontRecoveryEndpoints({nativeOrigin='http://localhost:39008',operatorPort=39045}={}) {
+  if(typeof nativeOrigin!=='string')throw fail(422,'Explicit loopback native origin required');
+  let url;try{url=new URL(nativeOrigin);}catch{throw fail(422,'Explicit loopback native origin required');}
+  if(url.origin!==nativeOrigin||url.protocol!=='http:'||!['localhost','127.0.0.1'].includes(url.hostname)||url.username||url.password||url.pathname!=='/'||url.search||url.hash||!url.port||Number(url.port)<1024||Number(url.port)>65535)throw fail(422,'Explicit loopback native origin required');
+  if(!Number.isSafeInteger(operatorPort)||operatorPort<1024||operatorPort>65535)throw fail(422,'Explicit unprivileged operator port required');
+  return {nativeOrigin,operatorPort,operatorOrigin:`http://127.0.0.1:${operatorPort}`};
+}
+
 /** Fixed pinned native transport. Cookies never enter the operator page or pack. */
-export function createPenpotFontRecoveryTransport({ cookie, fetchImpl = fetch }) {
+export function createPenpotFontRecoveryTransport({ cookie, nativeOrigin, fetchImpl = fetch }) {
   if (typeof cookie !== 'string' || !cookie.length || /[\r\n]/.test(cookie)) throw fail(422, 'Invalid private native session');
-  const origin = 'http://localhost:39008';
+  const {nativeOrigin:origin}=fontRecoveryEndpoints({nativeOrigin});
   async function request(path, options, limit) {
     const response = await fetchImpl(origin + path, { ...options, redirect: 'error',
       signal: AbortSignal.timeout(30000), headers: { ...options.headers, Cookie: cookie, Origin: origin } });
