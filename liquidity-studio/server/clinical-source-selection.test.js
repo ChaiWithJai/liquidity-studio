@@ -29,7 +29,7 @@ test('actual primary passages produce bounded clinical research copy, exact maps
   assert.ok(f.candidate.excerpts.every(x=>x.clinicalReview===null&&x.status==='unreviewed'));
   for(const map of f.candidate.sourceFieldMappings){const value=map.fieldPath.split('.').reduce((v,k)=>v[k],f.candidate.artwork);assert.equal(value,f.evidence[0].text.slice(map.startOffset,map.startOffset+map.textLength));}
   for(const profile of Object.values(BRAND_PRESETS))assert.doesNotThrow(()=>validateCandidateLayout(f.candidate.artwork,profile));
-  assert.doesNotMatch(f.candidate.artwork.infographic.caption,/thumbs|inhale|exhale|must chant/);
+  assert.doesNotMatch(JSON.stringify(f.candidate.artwork),/thumbs|inhale|exhale|must chant|respiratory rate/i);
  }
 });
 test('clinical IDs and retained source URLs cannot be downgraded, omitted or converted to legacy projections',()=>{
@@ -44,12 +44,12 @@ test('clinical IDs and retained source URLs cannot be downgraded, omitted or con
 });
 test('strict clinical passage selection rejects missing and duplicated real boundaries',()=>{
  for(const topic of topics){const f=fixture(topic),p=f.pointer.passage;
-  // Controlled HTML layout uses actual retained paragraphs; Ashwagandha results/conclusion
-  // are deliberately synthetic here because this short fixture is not its full abstract.
-  const paragraphs=p.paragraphPrefixes.map(prefix=>f.evidence[0].text.split('\n').find(x=>x.startsWith(prefix))||prefix+' Controlled boundary fixture only.');
-  const html=`<h2>${p.section}</h2>${paragraphs.map(x=>`<p>${x}</p>`).join('')}<h2>${p.nextSection||'References'}</h2><p>Unselected cited paper.</p>`;
-  const text=extractSourceText(html,'text/html','',p);assert.doesNotMatch(text,/Unselected cited/);
-  for(const bad of [html.replace(paragraphs[0],'Changed boundary'),html+`<h2>${p.section}</h2>`,html.replace(`<h2>${p.nextSection||'References'}</h2>`,`<p>${paragraphs[0]}</p><h2>${p.nextSection||'References'}</h2>`)])assert.throws(()=>extractSourceText(bad,'text/html','',p),e=>e.status===422);
+  // Controlled HTML wrapper; EVERY selected paragraph is actual retained primary text.
+  const paragraphs=p.paragraphPrefixes.map(prefix=>{const text=f.evidence[0].text.split('\n').find(x=>x.startsWith(prefix));assert.ok(text,'Actual selected paragraph must be retained');return text;});
+  const escape=text=>text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  const html=`<h2>${p.section}</h2>${paragraphs.map(x=>`<p>${escape(x)}</p>`).join('')}<h2>${p.nextSection||'References'}</h2><p>Unselected cited paper.</p>`;
+  const text=extractSourceText(html,'text/html','',p);assert.equal(text,paragraphs.join('\n'));assert.doesNotMatch(text,/Unselected cited/);
+  for(const bad of [html.replace(escape(paragraphs[0]),'Changed boundary'),html+`<h2>${p.section}</h2>`,html.replace(`<h2>${p.nextSection||'References'}</h2>`,`<p>${escape(paragraphs[0])}</p><h2>${p.nextSection||'References'}</h2>`)])assert.throws(()=>extractSourceText(bad,'text/html','',p),e=>e.status===422);
  }
 });
 test('promotion and reviewed-copy fork preserve mandatory separate clinical confirmation',async t=>{
