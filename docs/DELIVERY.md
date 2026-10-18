@@ -6,7 +6,21 @@ Own Liquidity Studio as an operable service. Keep this issue open as the queue e
 
 Main implements canonical Svelte/Vite UI, Google-managed identity with server-owned authorization, SQLite persistence, the async Firestore/GCS adapter, source-controlled generation, real artifacts, feedback lineage, discovery/job contracts and recovery tooling. The dated status below separates local/CI evidence from live cloud acceptance.
 
-### Operational snapshot: 2026-10-18 00:11 UTC
+### Release checkpoint: 2026-10-18 00:16 UTC
+
+Operator-reported evidence, corresponding to 2026-10-17 in America/New_York. This later checkpoint supersedes the routing and pending-check status in the preserved 00:11 snapshot below; it does not change the runtime source or image.
+
+| Surface | Recorded result | Remaining acceptance |
+| --- | --- | --- |
+| Runtime and routing | Source remains `6937c5338887d65d017d8c93dac2a9f2f79906c4`, image `sha256:1940959dac8ce3859a62d9af4e1069b154b745c33af44bbb7ddbc7e0558b604a`. Canonical Cloud Run traffic is now 100% on `00003-mos`. | Later runtime changes require their own exact-image evidence. |
+| Final cloud image | Managed founder Google sign-in and refresh, real-provider generation, GCS artifact SHA verification and recovery passed. | The invited marketer's first managed Google sign-in remains pending; no managed Auth record exists for that account yet. |
+| Access boundary | A genuine outside Google service identity received application 401 and direct Firestore 403; the test identity and grants were cleaned up. | This was a service identity, not an ordinary human Google account browser test. |
+| Rollback and return | CLI rollback to `00001-wud` and roll-forward to `00003-mos` were verified, including the persisted draft through the Google UI. | Retain revision-specific recovery evidence for future releases. |
+| Local operation | Main Docker on port 3001 uses the same final image. Review containers on 3109, 39004 and 39005 were stopped with persistent volumes retained. Original port 3000 remains untouched. | Retained volumes are not a substitute for tested backups. |
+
+Issues #19 and #30 remain open for the invited marketer's first managed sign-in acceptance. Issue #39 is an open Penpot/Doory investigation; no integration or infrastructure expansion is established by that brief. The USD100 project alert budget and delayed USD20 Cloud Run / USD70 Vertex service caps remain configured, without a guaranteed hard USD100 aggregate ceiling. Personal addresses, billing identifiers and private evidence remain outside this public record.
+
+### Earlier operational snapshot: 2026-10-18 00:11 UTC
 
 Operator-reported evidence, corresponding to 2026-10-17 in America/New_York:
 

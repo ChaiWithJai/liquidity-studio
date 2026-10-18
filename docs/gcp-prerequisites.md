@@ -1,6 +1,17 @@
 # Minimal two-person GCP prerequisite provisioner
 
-## Operator snapshot: 2026-10-18 00:11 UTC
+## Release checkpoint: 2026-10-18 00:16 UTC
+
+Operator-reported evidence (2026-10-17 in America/New_York), following the preserved 00:11 snapshot below:
+
+- Canonical Cloud Run traffic is now 100% on revision `00003-mos`, using image `sha256:1940959dac8ce3859a62d9af4e1069b154b745c33af44bbb7ddbc7e0558b604a` from source `6937c5338887d65d017d8c93dac2a9f2f79906c4`. Documentation changes do not alter that runtime source or image.
+- The final cloud image passed managed founder Google sign-in and refresh, real-provider generation, GCS artifact SHA verification and recovery. CLI rollback to `00001-wud` and roll-forward to `00003-mos` were verified, including the persisted draft through the Google UI.
+- A genuine outside Google service identity received application 401 and direct Firestore 403. Its test identity and grants were cleaned up. This establishes the tested service-identity boundary, not an ordinary human Google account browser result.
+- Main local Docker on port 3001 uses the same final image. Review containers on 3109, 39004 and 39005 were stopped; their persistent volumes were retained. Original port 3000 remains untouched.
+- The invited marketer has no managed Auth record yet and still needs the first managed Google sign-in. Issues #19 and #30 remain open for that acceptance. Issue #39 remains a Penpot/Doory investigation, not an implemented integration or authorization for new infrastructure.
+- The USD100 all-service project alert budget and delayed USD20 Cloud Run / USD70 Vertex service caps remain configured. They do not guarantee a hard USD100 aggregate ceiling. Public records omit personal addresses, billing identifiers and private evidence.
+
+## Earlier operator snapshot: 2026-10-18 00:11 UTC
 
 This snapshot records operator-reported runtime evidence (2026-10-17 in America/New_York). It is not a statement that the two-person pilot is complete.
 
