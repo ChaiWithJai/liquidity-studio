@@ -71,3 +71,14 @@ test('final native registration rechecks paired grant inside the eight-key trans
  assert.equal(afterRevalidate,true);assert.equal((await f.store.get(f.service.key)).designs[0].status,'pending');
  assert.equal(f.files.size,1,'already accepted native work is preserved');
 });
+
+test('Brand Kit changes retain the existing native design and human edits across legacy design keys',async t=>{
+ const f=await fixture(t),first=await f.service.createDesign(f.actor,f.input),file=f.files.get(first.fileId),text=Object.values(file.data.pagesIndex[file.data.pages[0]].objects).find(x=>x.type==='text');text.content.children[0].children[0].children[0].text='Human headline survives Brand Kit changes';file.revn++;
+ // Existing persisted records used a brand-specific key before this change.
+ await f.store.update(f.service.key,state=>{state.designs[0].designKey='retained-legacy-brand-key';return state;});
+ const profile=await f.repo.getBrandProfile();await f.repo.updateBrandProfile({colors:profile.colors.map((color,i)=>i===2?{...color,hex:'#123456'}:color)});
+ const reopened=(await f.service.designs(f.actor,{storyId:f.input.storyId,format:'infographic'})).design;assert.equal(reopened.fileId,first.fileId);assert.equal(reopened.styles.needsRefresh,true);assert.notEqual(reopened.styles.savedBrandRevision,reopened.styles.currentBrandRevision);
+ assert.equal((await f.service.createDesign(f.actor,{...f.input,idempotencyKey:randomUUID()})).fileId,first.fileId);assert.equal(f.files.size,1);assert.equal(f.calls.filter(call=>call.operation==='create-file').length,1);assert.equal(f.calls.filter(call=>call.operation==='update-file').length,1);assert.equal(text.content.children[0].children[0].children[0].text,'Human headline survives Brand Kit changes');
+ // A new unsupported font must not hide an already saved, still-readable design.
+ await f.repo.updateBrandProfile({fonts:{heading:'Unavailable new font',body:'Inter'}});assert.equal((await f.service.designs(f.actor,{storyId:f.input.storyId,format:'infographic'})).design.fileId,first.fileId);
+});
