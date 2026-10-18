@@ -222,3 +222,13 @@ test("broker supplies captured library context and rejects a mismatched asset re
   assert.equal(f.sent.at(-1).data.error.code, "REQUEST_CONTEXT_CHANGED");
   f.broker.dispose();
 });
+
+test('existing broker carries typed audio library requests without mixing image assets',async()=>{
+ const f=fixture(async()=>({count:0,results:[]}));await f.message({operation:'asset.list',payload:{kind:'audio'}});assert.equal(f.calls[0][0],'/api/studio/native-editor/assets?kind=audio');await f.message({operation:'asset.list',payload:{kind:'audio',path:'/arbitrary'}});assert.equal(f.calls.length,1);f.broker.dispose();
+});
+test('audio adapter uploads exact PCM, returns a native-playable scoped path and resolves verified bytes',async()=>{
+ const {pcmWav}=await import('../tests/fixtures/native-audio.js'),{createHash}=await import('node:crypto'),bytes=pcmWav(),asset={id:'c'.repeat(32),kind:'audio',contentType:'audio/wav',name:'Original tone',width:0,height:0,durationMs:30000,sha256:createHash('sha256').update(bytes).digest('hex'),base64:bytes.toString('base64')},calls=[];
+ const adapter=createNativeEditorAdapter({scopeKey:'A',getScopeKey:()=> 'A',record:{id:crypto.randomUUID(),revision:1},getAssetPolicy:()=>({rightsDeclaration:'Original generated signal',consent:'not_personal_data'}),request:async(path,options)=>{calls.push({path,body:options?.body?JSON.parse(options.body):null});return asset;}});
+ const ref=await adapter.uploadAsset(new File([bytes],'original.wav',{type:'audio/wav'}));assert.equal(ref.kind,'audio');assert.equal(ref.url,'/__studio_native_audio/'+asset.id);assert.equal(calls[0].body.base64,bytes.toString('base64'));assert.equal(calls[0].body.contentType,'audio/wav');assert.match(await adapter.resolveSrc(ref.url),/^blob:/);
+ await adapter.services.assets.list({kind:'audio'});assert.equal(calls.at(-1).path,'/api/studio/native-editor/assets?kind=audio');await assert.rejects(adapter.uploadAsset(new File([bytes],'unsupported.mp3',{type:'audio/mpeg'})),/PCM WAV/);adapter.dispose();
+});

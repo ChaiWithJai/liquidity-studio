@@ -96,8 +96,8 @@ export function createNativeEditorBroker({
         );
       path = "/api/studio/native-editor/cutout/complete";
       options = { method: "POST", body: JSON.stringify(payload) };
-    } else if (operation === "asset.list" && payload === null)
-      path = "/api/studio/native-editor/assets";
+    } else if (operation === "asset.list" && (payload === null||payload?.kind==="audio"&&Object.keys(payload).length===1))
+      path = "/api/studio/native-editor/assets"+(payload?.kind==="audio"?"?kind=audio":"");
     else if (
       operation === "asset.read" &&
       typeof payload?.id === "string" &&
@@ -359,8 +359,8 @@ export function createNativeFrameRequest({
           ? "cutout.prepare"
           : "cutout.complete";
         payload = JSON.parse(options.body);
-      } else if (path === "/api/studio/native-editor/assets" && !options.method)
-        operation = "asset.list";
+      } else if (["/api/studio/native-editor/assets","/api/studio/native-editor/assets?kind=audio"].includes(path) && !options.method){
+        operation = "asset.list";payload=path.endsWith("?kind=audio")?{kind:"audio"}:null;}
       else if (
         /^\/api\/studio\/native-editor\/assets\/[a-f0-9]{32}$/.test(path) &&
         !options.method

@@ -1,3 +1,4 @@
+import {inspectPcmWav,validateAudioTracks,audioSource} from './native-audio.js';
 import { planHistoricalRebind, rebindHistorical } from './native-historical-rebind.js';
 import { assertRestoreAvailable } from "./restore-gate.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -71,11 +72,12 @@ export function validateHostedDocument(
     ![1350, 1920].includes(document.height) ||
     document.unit !== "px" ||
     !Array.isArray(document.pages) ||
-    ![1, 3, 4].includes(document.pages.length) ||
-    (document.audioTracks?.length || 0) !== 0
+    ![1, 3, 4].includes(document.pages.length)
   )
     throw fail(422, "Unsupported native document structure");
-  const assetIds = new Set(assets.map((asset) => asset.id));
+  const assetIds = new Set(assets.filter(asset=>asset.kind!=="audio").map((asset) => asset.id));
+  const audioIds = new Set(assets.filter(asset=>asset.kind==="audio").map(asset=>asset.id));
+  validateAudioTracks(document.audioTracks,{assets,pageIds:document.pages.map(p=>p.id)});
   const ids = new Set();
   let nodes = 0;
   function walk(value, depth = 0) {
@@ -113,7 +115,8 @@ export function validateHostedDocument(
         const match =
           typeof child === "string" &&
           /^studio-asset:([a-zA-Z0-9_-]{1,100})$/.exec(child);
-        if (!match || !assetIds.has(match[1]))
+        const audioMatch=typeof child==="string"&&/^\/__studio_native_audio\/([a-f0-9]{32})$/.exec(child);
+        if ((!match || !assetIds.has(match[1])) && (!audioMatch||!audioIds.has(audioMatch[1])))
           throw fail(422, "Native asset is not owned by this scope");
       }
       // Fabric pattern sources resolve relative URLs too; no arbitrary source/url field
@@ -433,12 +436,13 @@ export class NativeEditorService {
       if (!retained) await this.discardPayload(documentRef);
     }
   }
-  async listAssets(actor) {
+  async listAssets(actor,kind="image") {
+    if(!["image","audio"].includes(kind))throw fail(400,"Choose image or audio assets");
     await this.authorize(actor);
     const keys = await this.store.keys(`${this.prefix}asset:`);
     if (keys.length > 1000)
       throw fail(413, "Native image library exceeds the bounded host limit");
-    const assets = await Promise.all(keys.map((key) => this.store.get(key)));
+    const assets = (await Promise.all(keys.map((key) => this.store.get(key)))).filter(asset=>(asset.kind||"image")===kind);
     await this.authorize(actor);
     return {
       count: assets.length,
@@ -446,9 +450,10 @@ export class NativeEditorService {
       previous: null,
       results: assets.map((asset) => ({
         id: asset.id,
-        kind: "image",
+        kind: asset.kind||"image",
+        duration_ms:asset.durationMs,
         name: asset.name,
-        url: `studio-asset:${asset.id}`,
+        url: asset.kind==="audio"?audioSource(asset.id):`studio-asset:${asset.id}`,
         thumb_url: `studio-asset:${asset.id}`,
         width: asset.width,
         height: asset.height,
@@ -474,13 +479,13 @@ export class NativeEditorService {
     text(input.rightsDeclaration, "asset rights declaration", 500);
     if (
       !["confirmed", "not_personal_data"].includes(input.consent) ||
-      !["image/png", "image/jpeg", "image/webp"].includes(input.contentType) ||
+      !["image/png", "image/jpeg", "image/webp","audio/wav"].includes(input.contentType) ||
       typeof input.base64 !== "string" ||
       !/^[A-Za-z0-9+/]+={0,2}$/.test(input.base64)
     )
       throw fail(
         422,
-        "Raster image, rights and consent declaration are required",
+        "PNG, JPEG, WebP or PCM WAV, with rights and consent declaration, is required",
       );
     const bytes = Buffer.from(input.base64, "base64");
     if (
@@ -490,40 +495,43 @@ export class NativeEditorService {
     )
       throw fail(
         413,
-        "Native image must be at most 512 KiB of canonical base64-decoded bytes",
+        "Native uploads must be at most 512 KiB of canonical base64-decoded bytes",
       );
-    const sharp = (await import("sharp")).default;
     let metadata;
-    if (activeImageDecodes >= 2)
-      throw fail(429, "Image decoding is busy; retry this upload shortly");
-    activeImageDecodes++;
-    try {
-      metadata = await sharp(bytes, {
-        limitInputPixels: 4000000,
-        animated: false,
-      }).metadata();
-      // Decode validation produces a tiny sample, never a full uncompressed raster buffer.
-      await sharp(bytes, { limitInputPixels: 4000000, animated: false })
-        .resize(1, 1)
-        .raw()
-        .toBuffer();
-    } catch {
-      throw fail(
-        422,
-        "Image could not be safely decoded; use an image up to four megapixels",
-      );
-    } finally {
-      activeImageDecodes--;
+    if(input.contentType==='audio/wav')metadata={...inspectPcmWav(bytes),width:0,height:0};
+    else {
+      const sharp = (await import("sharp")).default;
+      if (activeImageDecodes >= 2)
+        throw fail(429, "Image decoding is busy; retry this upload shortly");
+      activeImageDecodes++;
+      try {
+        metadata = await sharp(bytes, {
+          limitInputPixels: 4000000,
+          animated: false,
+        }).metadata();
+        // Decode validation produces a tiny sample, never a full uncompressed raster buffer.
+        await sharp(bytes, { limitInputPixels: 4000000, animated: false })
+          .resize(1, 1)
+          .raw()
+          .toBuffer();
+      } catch {
+        throw fail(
+          422,
+          "Image could not be safely decoded; use an image up to four megapixels",
+        );
+      } finally {
+        activeImageDecodes--;
+      }
+      if (
+        { png: "image/png", jpeg: "image/jpeg", webp: "image/webp" }[
+          metadata.format
+        ] !== input.contentType ||
+        !metadata.width ||
+        !metadata.height ||
+        metadata.pages > 1
+      )
+        throw fail(422, "Image MIME or animation mismatch");
     }
-    if (
-      { png: "image/png", jpeg: "image/jpeg", webp: "image/webp" }[
-        metadata.format
-      ] !== input.contentType ||
-      !metadata.width ||
-      !metadata.height ||
-      metadata.pages > 1
-    )
-      throw fail(422, "Image MIME or animation mismatch");
     const intent = this.request(actor, "upload", input);
     const id = hash({
       scope: this.scope,
@@ -550,6 +558,7 @@ export class NativeEditorService {
       id,
       name: input.name,
       contentType: input.contentType,
+      ...(input.contentType==="audio/wav"?{kind:"audio",durationMs:metadata.durationMs,channels:metadata.channels,sampleRate:metadata.sampleRate}:{}),
       width: metadata.width,
       height: metadata.height,
       size: bytes.length,

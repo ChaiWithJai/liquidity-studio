@@ -1,3 +1,4 @@
+import {inspectPcmWav,audioSource} from '../../server/native-audio.js';
 const emptyPage = () => ({ count: 0, next: null, previous: null, results: [] });
 const unavailable = () => {
   throw new Error(
@@ -50,9 +51,10 @@ export function createNativeEditorAdapter({
   }
   async function resolveSrc(src) {
     current();
-    const match = /^studio-asset:([a-f0-9]{32})$/.exec(src);
+    const audioMatch=/^\/__studio_native_audio\/([a-f0-9]{32})$/.exec(src);
+    const match = /^studio-asset:([a-f0-9]{32})$/.exec(src)||audioMatch;
     if (!match)
-      throw new Error("Only private Studio image references can be loaded.");
+      throw new Error("Only saved Studio image or audio references can be loaded.");
     if (urls.has(src)) return urls.get(src);
     const asset = await call(`assets/${match[1]}`);
     const bytes = Uint8Array.from(atob(asset.base64), (character) =>
@@ -66,9 +68,10 @@ export function createNativeEditorAdapter({
     current();
     if (
       digest !== asset.sha256 ||
-      !["image/png", "image/jpeg", "image/webp"].includes(asset.contentType)
+      !(audioMatch?asset.contentType==="audio/wav":["image/png", "image/jpeg", "image/webp"].includes(asset.contentType))
     )
-      throw new Error("Private image integrity check failed.");
+      throw new Error("Private media integrity check failed.");
+    if(audioMatch)inspectPcmWav(bytes);
     const url = URL.createObjectURL(
       new Blob([bytes], { type: asset.contentType }),
     );
@@ -195,33 +198,36 @@ export function createNativeEditorAdapter({
         !["confirmed", "not_personal_data"].includes(policy.consent)
       )
         throw new Error(
-          "Confirm the image rights and consent declaration before uploading.",
+          "Confirm the upload rights and consent declaration before uploading.",
         );
+      const audio=/^(audio\/|video\/webm)/.test(file.type)||/\.(wav|mp3|ogg|oga|opus|m4a|weba|webm|aac)$/i.test(file.name||""),mime=audio?"audio/wav":file.type;
+      if(audio&&!(["audio/wav","audio/x-wav","audio/wave","audio/vnd.wave"].includes(file.type)||!file.type&&/\.wav$/i.test(file.name||"")))throw new Error("Use an uncompressed 16-bit PCM WAV file, at most 512 KiB and 30 seconds. MP3/OGG/recording uploads are not supported in Studio yet.");
       if (
-        !["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
+        !["image/png", "image/jpeg", "image/webp","audio/wav"].includes(mime) ||
         file.size > 512 * 1024
       )
-        throw new Error("Use a PNG, JPEG or WebP image of at most 512 KiB.");
+        throw new Error("Use a PNG, JPEG, WebP or PCM WAV file of at most 512 KiB.");
       const bytes = new Uint8Array(await file.arrayBuffer());
       current();
+      if(audio)inspectPcmWav(bytes);
       const uploaded = await call("assets", {
         name: options.name || file.name || "Native image",
-        contentType: file.type,
+        contentType: mime,
         base64: encode(bytes),
         rightsDeclaration: policy.rightsDeclaration,
         consent: policy.consent,
         idempotencyKey: key(),
       });
       loadedAssets.set(uploaded.id, uploaded);
-      const src = `studio-asset:${uploaded.id}`;
+      const src = audio?audioSource(uploaded.id):`studio-asset:${uploaded.id}`;
       return {
         id: uploaded.id,
         url: src,
-        thumbUrl: src,
+        thumbUrl: audio?"":src,
         width: uploaded.width,
         height: uploaded.height,
         name: uploaded.name,
-        kind: "image",
+        kind: audio?"audio":"image",
       };
     },
     resolveSrc,
@@ -234,7 +240,7 @@ export function createNativeEditorAdapter({
         list: async () => emptyPage(),
         get: unavailable,
       },
-      assets: { list: async () => call("assets"), remove: unavailable },
+      assets: { list: async (options={}) => call(options.kind==="audio"?"assets?kind=audio":"assets"), remove: unavailable },
       brand: null,
       stock: null,
       versions: null,

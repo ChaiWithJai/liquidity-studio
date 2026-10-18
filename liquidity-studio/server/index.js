@@ -1168,7 +1168,7 @@ export function createHttpServer(
           route === "/api/studio/native-editor/assets" &&
           req.method === "GET"
         )
-          return json(200, await service.listAssets(user));
+          return json(200, await service.listAssets(user,url.searchParams.get("kind")||"image"));
         if (
           route === "/api/studio/native-editor/assets" &&
           req.method === "POST"

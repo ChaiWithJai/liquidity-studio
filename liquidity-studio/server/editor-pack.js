@@ -1,3 +1,4 @@
+import {inspectPcmWav} from './native-audio.js';
 import { createHash } from "node:crypto";
 import { accountPortableJson } from "./portable-json-accounting.js";
 import { fail } from "./auth.js";
@@ -247,6 +248,7 @@ export function validateEditorPack(input) {
       "id",
       "name",
       "contentType",
+      "kind","durationMs","channels","sampleRate",
       "size",
       "width",
       "height",
@@ -263,7 +265,7 @@ export function validateEditorPack(input) {
       asset.metadata.id !== asset.id ||
       asset.metadata.sha256 !== asset.file ||
       asset.metadata.size !== bytes(asset.file).length ||
-      !["image/png", "image/jpeg", "image/webp"].includes(
+      !["image/png", "image/jpeg", "image/webp","audio/wav"].includes(
         asset.metadata.contentType,
       ) ||
       !["confirmed", "not_personal_data"].includes(asset.metadata.consent) ||
@@ -271,6 +273,10 @@ export function validateEditorPack(input) {
       !asset.metadata.rightsDeclaration.trim()
     )
       throw fail(422, "Invalid portable image rights or bytes");
+    if(asset.metadata.contentType==='audio/wav'){
+      const actual=inspectPcmWav(bytes(asset.file));
+      if(asset.metadata.kind!=='audio'||asset.metadata.width!==0||asset.metadata.height!==0||['durationMs','channels','sampleRate'].some(k=>actual[k]!==asset.metadata[k]))throw fail(422,'Portable WAV metadata differs from its original bytes');
+    }else if(asset.metadata.kind!==undefined&&asset.metadata.kind!=='image')throw fail(422,'Audio requires PCM WAV bytes');
   }
   for (const asset of input.assets)
     if (asset.metadata.lineage) {

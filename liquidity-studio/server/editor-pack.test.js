@@ -958,3 +958,13 @@ test("restore capacity uses exact validated Unicode pack bytes without reseriali
   assert.equal(requested, expectedBytes * 3);
   assert.deepEqual(Object.fromEntries(target.store.keys("").map(key => [key, target.store.get(key)])), before);
 });
+
+test('portable recovery preserves exact WAV bytes, rights and native timeline in a fresh empty brand',async t=>{
+ const {pcmWav}=await import('../tests/fixtures/native-audio.js'),{audioSource}=await import('./native-audio.js'),source=await fixture(t),records=await allFormats(source),reel=records.find(r=>r.format==='reel'),bytes=pcmWav();
+ const sound=await source.native.uploadAsset(actor,{name:'Owned signal',contentType:'audio/wav',base64:bytes.toString('base64'),rightsDeclaration:'Original generated signal; no external music or recording.',consent:'not_personal_data',idempotencyKey:'portable_audio_source'}),document=structuredClone(reel.document);
+ document.audioTracks=[{id:'portable-track',kind:'upload',name:sound.name,assetId:sound.id,src:audioSource(sound.id),scope:{type:'design'},durationMs:30000,startMs:0,trimStartMs:0,trimEndMs:30000,volume:.5,fadeInMs:500,fadeOutMs:500,loop:false,muted:false}];
+ await source.native.save(actor,reel.id,{document,title:reel.title,expectedRevision:reel.revision,idempotencyKey:'portable_audio_save'});
+ const pack=await source.service.export(actor);validateEditorPack(pack);const packed=pack.assets.find(a=>a.id===sound.id);assert.equal(packed.metadata.kind,'audio');assert.equal(packed.metadata.durationMs,30000);
+ const target=await fixture(t,'liquidity_desk',true,'audio-destination');await target.service.install(actor,pack,{...input,target:{organizationId:'organization',brandId:'audio-destination'}});
+ assert.deepEqual((await target.native.read(actor,reel.id)).document,document);assert.equal((await target.native.asset(actor,sound.id)).base64,bytes.toString('base64'));assert.equal((await target.native.asset(actor,sound.id)).rightsDeclaration,sound.rightsDeclaration);
+});

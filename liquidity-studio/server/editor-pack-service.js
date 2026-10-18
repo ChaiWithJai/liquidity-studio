@@ -1,3 +1,4 @@
+import {inspectPcmWav} from './native-audio.js';
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -50,6 +51,7 @@ const portableAssetFields = [
   "id",
   "name",
   "contentType",
+  "kind","durationMs","channels","sampleRate",
   "size",
   "width",
   "height",
@@ -522,6 +524,7 @@ export class EditorPackService {
     // Re-project validates archived evidence, scope and excerpt hashes before reserving the target.
     projectPreparedHistory(restoredPrepared, this.scope);
     for (const asset of pack.assets) {
+      if(asset.metadata.kind==="audio"){inspectPcmWav(validated.bytes(asset.file));continue;}
       const image = sharp(validated.bytes(asset.file), {
         limitInputPixels: 4_000_000,
       });
