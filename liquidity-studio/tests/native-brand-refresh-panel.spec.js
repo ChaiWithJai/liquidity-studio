@@ -120,3 +120,106 @@ test("ordinary pending refresh and unconfirmed retry have distinct truthful labe
     page.getByRole("button", { name: "Refreshing styles…", exact: true }),
   ).toBeDisabled();
 });
+
+test("known font rejection gives its reason without claiming an uncertain retry or adopting a canvas", async ({
+  page,
+}) => {
+  await page.goto(base);
+  await page.getByRole("button", { name: "Check saved Brand Kit" }).click();
+  await page.evaluate(() =>
+    window.fixture.resolve({
+      id: "original-document",
+      revision: 1,
+      currentBrandRevision: "b".repeat(64),
+    }),
+  );
+  await page
+    .getByRole("button", { name: "Refresh saved brand styles", exact: true })
+    .click();
+  await page.evaluate(() =>
+    window.fixture.reject(
+      422,
+      "Heading font is not in the verified font registry.",
+    ),
+  );
+  await expect(page.getByRole("alert")).toContainText(
+    "Heading font is not in the verified font registry.",
+  );
+  await expect(page.getByRole("alert")).toContainText(
+    "Your canvas is unchanged.",
+  );
+  await expect(page.getByRole("alert")).not.toContainText(
+    "Retry the same request",
+  );
+  await expect(
+    page.getByRole("button", {
+      name: "Retry saved brand refresh",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  expect(await page.evaluate(() => window.fixture.applied)).toEqual([]);
+});
+
+test("failed recheck removes the previous successful match notice", async ({
+  page,
+}) => {
+  await page.goto(base);
+  await page.getByRole("button", { name: "Check saved Brand Kit" }).click();
+  await page.evaluate(() =>
+    window.fixture.resolve({
+      id: "original-document",
+      revision: 1,
+      currentBrandRevision: "a".repeat(64),
+    }),
+  );
+  await expect(
+    page.getByText("Saved styles match the current Brand Kit.", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Check saved Brand Kit" }).click();
+  await page.evaluate(() => window.fixture.reject());
+  await expect(page.getByRole("alert")).toContainText("could not be checked");
+  await expect(
+    page.getByText("Saved styles match the current Brand Kit.", {
+      exact: true,
+    }),
+  ).toHaveCount(0);
+});
+
+test("a saved refresh followed by denied readback does not falsely claim the write was rejected", async ({
+  page,
+}) => {
+  await page.goto(base);
+  await page.getByRole("button", { name: "Check saved Brand Kit" }).click();
+  await page.evaluate(() =>
+    window.fixture.resolve({
+      id: "original-document",
+      revision: 1,
+      currentBrandRevision: "b".repeat(64),
+    }),
+  );
+  await page
+    .getByRole("button", { name: "Refresh saved brand styles", exact: true })
+    .click();
+  await page.evaluate(() => window.fixture.resolve({ revision: 2 }));
+  await expect
+    .poll(() => page.evaluate(() => window.fixture.requests.length))
+    .toBe(3);
+  await page.evaluate(() =>
+    window.fixture.reject(403, "Current access is required."),
+  );
+  await expect(page.getByRole("alert")).toContainText(
+    "Brand styles were saved, but the current layout could not be checked.",
+  );
+  await expect(page.getByRole("alert")).not.toContainText(
+    "refresh was rejected",
+  );
+  await expect(
+    page.getByRole("button", {
+      name: "Retry saved brand refresh",
+      exact: true,
+    }),
+  ).toHaveCount(0);
+  expect(await page.evaluate(() => window.fixture.applied)).toEqual([]);
+});

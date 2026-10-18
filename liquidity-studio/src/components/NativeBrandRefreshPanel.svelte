@@ -32,6 +32,7 @@
     busy = true;
     error = "";
     notice = "";
+    checked = null;
     try {
       const value = await request(`/api/studio/native-editor/documents/${id}`);
       if (current(id, revision, scope)) {
@@ -71,11 +72,13 @@
     busy = true;
     error = "";
     notice = "";
+    let savedReceipt = false;
     try {
       const result = await request(
         `/api/studio/native-editor/documents/${id}/brand-tokens`,
         { method: "POST", body: JSON.stringify(pending) },
       );
+      savedReceipt = true;
       if (!current(id, revision, scope)) return;
       const latest = await request(`/api/studio/native-editor/documents/${id}`);
       if (!current(id, revision, scope)) return;
@@ -94,13 +97,17 @@
         "Brand styles saved as a new layout version. Review it again before exporting.";
     } catch (failure) {
       if (current(id, revision, scope)) {
-        if (failure.status >= 400 && failure.status < 500) pending = null;
-        error =
-          failure.status === 409
-            ? "The source, Brand Kit or saved layout changed. Preserve your edits and reload the current version."
-            : failure.status === 403
-              ? "Current access to this brand is required."
-              : "Refresh was not confirmed. Retry the same request to recover its receipt.";
+        const rejected = failure.status >= 400 && failure.status < 500;
+        if (rejected) pending = null;
+        error = !rejected
+          ? "Refresh was not confirmed. Retry the same request to recover its receipt."
+          : savedReceipt
+            ? "Brand styles were saved, but the current layout could not be checked. Your canvas is preserved. Restore current access and reload the saved version explicitly."
+            : failure.status === 409
+              ? "The source, Brand Kit or saved layout changed. Preserve your edits and reload the current version."
+              : failure.status === 401 || failure.status === 403
+                ? "Current access to this brand is required. Your canvas is unchanged."
+                : `Brand style refresh was rejected: ${failure.message || "Check the saved fonts and brand settings before trying again."} Your canvas is unchanged.`;
       }
     } finally {
       if (current(id, revision, scope)) busy = false;

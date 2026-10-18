@@ -10,14 +10,21 @@
       import { mount } from "svelte";
       import Panel from "../../src/components/NativeBrandRefreshPanel.svelte";
       const requests = [];
+      const applied = [];
       let held;
       window.fixture = {
         requests,
+        applied,
         resolve(value) {
           held.resolve(value);
         },
-        reject() {
-          held.reject(new Error("Original controlled lost response"));
+        reject(status, message) {
+          held.reject(
+            Object.assign(
+              new Error(message || "Original controlled lost response"),
+              { status },
+            ),
+          );
         },
       };
       mount(Panel, {
@@ -31,6 +38,9 @@
           scopeKey: "original-scope",
           getScopeKey: () => "original-scope",
           ready: true,
+          onRefreshed(value) {
+            applied.push(value);
+          },
           request(path, options) {
             requests.push({ path, options });
             return new Promise(
