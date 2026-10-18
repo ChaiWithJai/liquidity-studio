@@ -588,3 +588,32 @@ test("held valid status refresh with new candidate ID at revision one preserves 
     "LOCAL COPY MUST SURVIVE NEW CANDIDATE",
   );
 });
+
+// Controlled status projections isolate notice lifecycle; authentication and the
+// preparation POST still use the real HTTP/SQLite service. They confer no approval.
+for (const terminalStatus of ['failed', 'cancelled']) {
+  test(`queued notice clears when preparation becomes ${terminalStatus}`, async ({page}) => {
+    await signIn(page);
+    const panel = await open(page);
+    let projectedStatus = 'queued';
+    await page.route(`**/api/studio/preparations/stories/${urls.brand_default}`, async route => {
+      const response = await route.fetch();
+      const body = await response.json();
+      await route.fulfill({response, json: {...body, status: projectedStatus}});
+    });
+    const accepted = page.waitForResponse(response =>
+      response.url().endsWith('/api/studio/jobs') && response.request().method() === 'POST');
+    await panel.getByRole('button', {name: 'Prepare a new source candidate', exact: true}).click();
+    expect((await accepted).ok()).toBeTruthy();
+    const queued = panel.getByText('Source preparation queued. You can leave and rejoin this durable job.', {exact: true});
+    await expect(queued).toBeVisible();
+    // Pending status must retain the notice; only the later terminal projection clears it.
+    await panel.getByRole('button', {name: 'Refresh preparation status', exact: true}).click();
+    await expect(queued).toBeVisible();
+    projectedStatus = terminalStatus;
+    await panel.getByRole('button', {name: 'Refresh preparation status', exact: true}).click();
+    await expect(panel.getByRole('status').filter({hasText: new RegExp(`^${terminalStatus}$`)})).toBeVisible();
+    await expect(queued).toHaveCount(0);
+    await expect(panel.getByRole('button', {name: 'Review saved draft and evidence', exact: true})).toBeVisible();
+  });
+}

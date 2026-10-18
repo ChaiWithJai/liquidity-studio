@@ -25,7 +25,7 @@
       if(!current()||ticket!==sequence)return;
       if(dirty&&!discard&&(next.prepared?.candidate.id!==info?.prepared?.candidate.id||next.prepared?.revision!==info?.prepared?.revision)){notice='A newer candidate is saved. Your local edits keep their original revision; save will report a conflict.';return;}
       const changed=next.prepared?.candidate.id!==info?.prepared?.candidate.id||next.prepared?.revision!==info?.prepared?.revision;
-      info=next;if(next.status==='ready'&&notice===QUEUED_NOTICE)notice='';if(discard||changed||!working)replacePrepared(next.prepared);
+      info=next;if(['ready','failed','cancelled'].includes(next.status)&&notice===QUEUED_NOTICE)notice='';if(discard||changed||!working)replacePrepared(next.prepared);
     }catch(failure){if(current()&&ticket===sequence)error=failure.message;}
   }
   function edit(path,value) {
