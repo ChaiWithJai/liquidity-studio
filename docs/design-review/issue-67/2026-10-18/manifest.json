@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "issue": 67,
+  "sourceCommit": "d6f62f4be0b3a372e39e09fadc738a426f62391f",
+  "sourceFingerprints": {
+    "liquidity-studio/src/components/WorkspaceCalendar.svelte": "719d451fa598e6a3c7fad296a3580da432c18267c8ea54c2c73517fd8a4fb121",
+    "liquidity-studio/src/lib/calendar-model.js": "b1bf667956cd5c6d39d4fba9a12d5ade57e1214cc31458d29feaa4e1b2c3ebf2",
+    "liquidity-studio/src/lib/workspace-client.js": "cb28286c41a3755ae299190b980da6edc29aeb9234cb74bf97162912c889b956",
+    "liquidity-studio/tests/calendar-workspace.spec.js": "c0a9986bec06f7063f8040df238321f0e0c27e6467930e291b3278f47da3c9fb",
+    "liquidity-studio/tests/fixtures/CalendarHarness.svelte": "a0fa77f89a7a0689b22ba76adc62397c384756ff2ca728b51d7182981d9d9024",
+    "liquidity-studio/server/workspace.js": "42919e85268f8d4c3d8a3ee8baf5201e8b2ad39c1b4e98bfd4f940a55cfd2a60"
+  },
+  "runtime": {
+    "node": "v22.23.1",
+    "browser": "Playwright Chromium",
+    "frontend": "Vite source fixture",
+    "repository": "fresh SQLite per test",
+    "listener": "ephemeral loopback"
+  },
+  "actor": {
+    "type": "isolated automated founder fixture",
+    "authMode": "explicit test-only password",
+    "productionIdentity": false
+  },
+  "scope": {
+    "organizationId": "org_default",
+    "brandId": "brand_default",
+    "fixture": true
+  },
+  "claims": {
+    "approval": "unreviewed",
+    "paidProviderCalls": 0
+  },
+  "results": {
+    "browserJourneysPassed": 7,
+    "nodePassed": 135,
+    "nodeSkipped": 1,
+    "svelteMcpIssues": 0,
+    "humanUsabilityAssessment": "not performed"
+  },
+  "canonicalComparison": {
+    "S06": {
+      "originalPixels": [
+        1280,
+        720
+      ],
+      "originalSha256": "e147524507a0a4c4c0b2b345bdc3210ca7886ae72b296da20113f593f88b3685",
+      "task": "integrated calendar overview",
+      "afterCapture": "pending combined App owner"
+    },
+    "S07": {
+      "originalPixels": [
+        1280,
+        720
+      ],
+      "originalSha256": "33a5f5663808b050383d6c1f4db6b791fe18aa914f8d7cf1809d61c9ecea0105",
+      "task": "integrated calendar card to source review",
+      "afterCapture": "pending combined App owner"
+    },
+    "supplementaryOnly": true
+  },
+  "images": [
+    {
+      "id": "C01",
+      "file": "C01.png",
+      "state": "legacy-undated",
+      "sha256": "13d6f51d51a4f0356865b8c249735a0121c6a8e363b19aee43be1cbf8240a30e",
+      "bytes": 161395,
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "imagePixels": {
+        "width": 1440,
+        "height": 1178
+      },
+      "fullPage": true,
+      "capturedAt": "2026-10-18T01:54:45.196051+00:00"
+    },
+    {
+      "id": "C02",
+      "file": "C02.png",
+      "state": "dated-campaign",
+      "sha256": "f714ea626d5e742451350b904c5fc02a06832d332167b5338ab79d6e8c3853d7",
+      "bytes": 163949,
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "imagePixels": {
+        "width": 1440,
+        "height": 1189
+      },
+      "fullPage": true,
+      "capturedAt": "2026-10-18T01:54:46.056475+00:00"
+    },
+    {
+      "id": "C03",
+      "file": "C03.png",
+      "state": "format-placement",
+      "sha256": "39a2ddd42f4f42e6b551716429bda8015fade7daa9329633ae2ecf6b2ef7e283",
+      "bytes": 344662,
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "imagePixels": {
+        "width": 1440,
+        "height": 2734
+      },
+      "fullPage": true,
+      "capturedAt": "2026-10-18T01:54:46.656595+00:00"
+    },
+    {
+      "id": "C04",
+      "file": "C04.png",
+      "state": "revision-conflict",
+      "sha256": "d20d926da2a19bd9465438eb665200885b2d6798385fc5dba0c1b95e611b1770",
+      "bytes": 205853,
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "imagePixels": {
+        "width": 1440,
+        "height": 1439
+      },
+      "fullPage": true,
+      "capturedAt": "2026-10-18T01:54:49.685854+00:00"
+    },
+    {
+      "id": "C05",
+      "file": "C05.png",
+      "state": "touch-agenda",
+      "sha256": "a36adf1e138177f869e4c027124b4c8c114c4595b801095538ad891dde8fdbd9",
+      "bytes": 182977,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "imagePixels": {
+        "width": 390,
+        "height": 2288
+      },
+      "fullPage": true,
+      "capturedAt": "2026-10-18T01:54:51.958368+00:00"
+    },
+    {
+      "id": "C06",
+      "file": "C06.png",
+      "state": "unknown-outcome",
+      "sha256": "c37e62f1a5ba9cd1c136443c1d70a5c5b859a47d5ddd76a837f5e0adce13630d",
+      "bytes": 202206,
+      "viewport": {
+        "width": 1440,
+        "height": 1100
+      },
+      "imagePixels": {
+        "width": 1440,
+        "height": 1340
+      },
+      "fullPage": true,
+      "capturedAt": "2026-10-18T01:54:52.904334+00:00"
+    }
+  ]
+}
