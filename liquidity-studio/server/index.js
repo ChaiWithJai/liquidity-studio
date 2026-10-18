@@ -359,7 +359,7 @@ export function createHttpServer(
         } catch (error) {
           // nginx auth_request accepts only 2xx/401/403. Unknown failures stay
           // unavailable; expected missing/foreign media is an explicit denial.
-          if ([400, 401, 403, 404].includes(error.status))
+          if ([400, 401, 403, 404, 409].includes(error.status))
             throw fail(403, "Native asset access denied");
           throw error;
         }
