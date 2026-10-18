@@ -1,0 +1,20 @@
+{
+  "repository": "prism-ml/Ternary-Bonsai-2-2B-mlx-2bit",
+  "revision": "1c6cbae21f8c38830ce337972b46fdae7b18eaaa",
+  "files": {
+    "LICENSE": {
+      "bytes": 10174,
+      "sha256": "69849221bfb90053de2134ef5e6d540287b4b98062326492f1f96f5da685524b"
+    },
+    "NOTICE.txt": {
+      "bytes": 409,
+      "sha256": "316012fa6094c03c7b0600bec258bffb675a9261d86f37bc86e15763a1fabc99"
+    },
+    "model.safetensors": {
+      "bytes": 1200284784,
+      "sha256": "da5095b9f34d7f0d5094090afeeadf124eef821c75136dc28957ce586ae7ac0c",
+      "verification": "SHA256 computed against actual downloaded local file before inference"
+    }
+  },
+  "redistribution": "Metadata only; no weights or model code included"
+}

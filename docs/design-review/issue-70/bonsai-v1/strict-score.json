@@ -1,0 +1,64 @@
+{
+  "initialScoringNote": "Raw generation records retain original provisional taskValid flag, which measured protocol only and did not validate the decision enum. This independent strict score supersedes that provisional flag; completeTaskValid includes screenshot identity. No raw model output changed.",
+  "rows": [
+    {
+      "case": "fresh",
+      "jsonValid": true,
+      "schemaValid": true,
+      "protocolValid": true,
+      "visualIdentityCorrect": false,
+      "completeTaskValid": false
+    },
+    {
+      "case": "stale",
+      "jsonValid": true,
+      "schemaValid": false,
+      "protocolValid": false,
+      "visualIdentityCorrect": false,
+      "completeTaskValid": false
+    },
+    {
+      "case": "paused",
+      "jsonValid": true,
+      "schemaValid": true,
+      "protocolValid": true,
+      "visualIdentityCorrect": true,
+      "completeTaskValid": true
+    },
+    {
+      "case": "unsupported",
+      "jsonValid": true,
+      "schemaValid": true,
+      "protocolValid": true,
+      "visualIdentityCorrect": false,
+      "completeTaskValid": false
+    },
+    {
+      "case": "fresh-warm",
+      "jsonValid": true,
+      "schemaValid": true,
+      "protocolValid": true,
+      "visualIdentityCorrect": false,
+      "completeTaskValid": false
+    }
+  ],
+  "counts": {
+    "jsonValid": 5,
+    "schemaValid": 4,
+    "protocolValid": 4,
+    "visualIdentityCorrect": 1,
+    "completeTaskValid": 1
+  },
+  "samples": 5,
+  "correction": [
+    {
+      "case": "stale",
+      "jsonValid": true,
+      "schemaValid": true,
+      "protocolValid": false,
+      "visualIdentityCorrect": true,
+      "completeTaskValid": false
+    }
+  ],
+  "scoringPolicy": "Visible title alone or full Current story row accepted; straight/curly apostrophe normalized. Protocol authority never inferred from visual text."
+}
