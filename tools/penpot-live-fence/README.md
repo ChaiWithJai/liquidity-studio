@@ -65,3 +65,5 @@ After compilation and independent source review, use one owned native runtime to
 measure durable revoke to subscription fence, new-operation denial, natural
 expiry, unaffected work and reconnect. Preserve the source/runtime backup and
 leave editing off if the bound or the native contract fails.
+
+Live subscription ownership requires C2 `access/current-file-team`, which excludes both deleted file and deleted project rows. RPC `access/file-team` intentionally retains deleted-record classification for native ACL semantics. The focused SQL contract test is a bounded database double, not an actual database integration result.

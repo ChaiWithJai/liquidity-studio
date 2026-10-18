@@ -53,7 +53,7 @@
       :app.http.websocket/file-subscription {:topic file :channel channel ::live/resource resource}
       :app.http.websocket/team-subscription {:topic personal :channel personal-channel
                                             ::live/resource (live/team-resource personal)})
-    (with-redefs [access/file-team (fn [_ _] team)
+    (with-redefs [access/current-file-team (fn [_ _] team)
                   mbus/purge! (fn [_ channels] (swap! purged into channels))]
       (is (live/allow-output? cfg wsp {::live/resource resource :type :file-change}))
       (reset! allowed false) ; models durable membership revocation or natural grant expiry
@@ -70,7 +70,7 @@
     (is (live/allowed? (assoc cfg ::access/authorize (fn [_] (throw (Exception. "offline"))))
                       wsp (live/team-resource personal) :read))
     (is (empty? @calls))
-    (with-redefs [access/file-team (fn [_ _] personal)]
+    (with-redefs [access/current-file-team (fn [_ _] personal)]
       (is (false? (live/allowed? cfg wsp {:kind :file :topic file :native-team-id team} :read))))))
 
 (deftest personal-file-moved-into-governed-team-or-deleted-loses-old-classification
@@ -80,16 +80,16 @@
         purged (atom [])]
     (swap! (::ws/state wsp) assoc :app.http.websocket/file-subscription
       {:topic file :channel channel ::live/resource resource})
-    (with-redefs [access/file-team (fn [_ _] personal)]
+    (with-redefs [access/current-file-team (fn [_ _] personal)]
       (is (live/allowed? cfg wsp resource :read))
       (is (empty? @calls) "Unchanged personal files do not call Studio"))
-    (with-redefs [access/file-team (fn [_ _] team)
+    (with-redefs [access/current-file-team (fn [_ _] team)
                   mbus/purge! (fn [_ channels] (swap! purged into channels))]
       (is (false? (live/allowed? cfg wsp resource :write)))
       (is (false? (live/allow-output? cfg wsp {::live/resource resource :type :file-change})))
       (is (nil? (:app.http.websocket/file-subscription @(::ws/state wsp))))
       (is (= [channel] @purged)))
-    (with-redefs [access/file-team (fn [_ _] nil)]
+    (with-redefs [access/current-file-team (fn [_ _] nil)]
       (is (false? (live/allowed? cfg wsp resource :read))))
     (is (empty? @calls) "A changed/deleted file is fenced before Studio admission")))
 
@@ -99,7 +99,7 @@
         delegated (atom [])
         delegate (fn [_ _ message] (swap! delegated conj message))]
     (swap! (::ws/state wsp) assoc :app.http.websocket/file-subscription {:topic file ::live/resource resource})
-    (with-redefs [access/file-team (fn [_ _] team)]
+    (with-redefs [access/current-file-team (fn [_ _] team)]
       (live/handle-message cfg delegate wsp {:type :pointer-update :file-id file ::live/resource {:topic personal}})
       (is (nil? (::live/resource (first @delegated))))
       (is (thrown? Exception (live/handle-message cfg delegate wsp {:type :pointer-update :file-id personal})))
@@ -152,3 +152,24 @@
       (is (false? (live/allowed? cfg wsp (live/team-resource team) :read)))
       (is (realized? started))
       (finally (deliver release true)))))
+
+(deftest live-lookup-retains-current-only-sql-while-rpc-classifies-deleted-records
+  (let [{:keys [cfg wsp calls]} (fixture)
+        queries (atom [])
+        resource {:kind :file :topic file :native-team-id personal}]
+    ;; Exercise both real access helpers, not a redefinition of their result.
+    ;; This bounded query contract double represents a deleted row still present
+    ;; for native RPC classification, but absent from current-only ownership.
+    (with-redefs [db/exec-one!
+                  (fn [_ [sql id]]
+                    (swap! queries conj [sql id])
+                    (when-not (and (re-find #"f\.deleted_at IS NULL" sql)
+                                   (re-find #"p\.deleted_at IS NULL" sql))
+                      {:team-id personal}))]
+      (is (= personal (access/file-team (::db/pool cfg) file)))
+      (is (nil? (access/current-file-team (::db/pool cfg) file)))
+      (is (false? (live/allowed? cfg wsp resource :read)))
+      (is (false? (live/allowed? cfg wsp resource :write)))
+      (is (thrown? Exception (live/file-resource cfg file)))
+      (is (empty? @calls))
+      (is (= 5 (count @queries))))))

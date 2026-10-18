@@ -66,7 +66,7 @@
 
 (defn file-resource [cfg file-id]
   (when-not (uuid? file-id) (denied!))
-  (let [team-id (access/file-team (::db/pool cfg) file-id)]
+  (let [team-id (access/current-file-team (::db/pool cfg) file-id)]
     (when-not (uuid? team-id) (denied!))
     {:kind :file :topic file-id :native-team-id team-id}))
 
@@ -83,7 +83,7 @@
             (let [same-team? (case (:kind resource)
                                :team true
                                :file (= (:native-team-id resource)
-                                        (access/file-team (::db/pool cfg) (:topic resource)))
+                                        (access/current-file-team (::db/pool cfg) (:topic resource)))
                                false)
                   context (::context wsp)]
               (and same-team?
