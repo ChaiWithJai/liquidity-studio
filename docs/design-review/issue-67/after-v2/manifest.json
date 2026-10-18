@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "c5844c1d00fb40fae65200319e87bfd96528b031",
+  "functionalSourceCommit": "32eec4652c3d35e2b4d2f1a955182742fdc1ccb6",
+  "auth": "isolated test-only password fixture; production remains Google-only",
+  "organization": "org_default",
+  "brand": "brand_default",
+  "fixtureSetup": "Fresh local SQLite repository; two API-created source records, pure synthetic excerpt drafts and two real typed dated-placement API mutations. No provider calls.",
+  "fixtures": [
+    {
+      "storyId": "569c9cea-8648-4231-8c67-0c1aa4736d8a",
+      "title": "Fixture campaign A",
+      "generationId": "1b62fb76-320c-46b0-9347-0a73fdd2e437",
+      "revision": 3,
+      "assignment": {
+        "id": "63df2a5a-8d26-49ae-aab7-9e3bbf77cde6",
+        "storyId": "569c9cea-8648-4231-8c67-0c1aa4736d8a",
+        "unit": "campaign",
+        "format": null,
+        "revision": 1,
+        "organizationId": "org_default",
+        "brandId": "brand_default",
+        "date": "2026-10-19",
+        "timeZone": "America/New_York",
+        "deletedAt": null
+      },
+      "synthetic": true,
+      "providerInvoked": false
+    },
+    {
+      "storyId": "6aa5a3d0-a4be-4fe0-ae94-258b5fc6e4c4",
+      "title": "Fixture campaign B",
+      "generationId": "94451b76-cdaa-45da-b82a-615f31120182",
+      "revision": 3,
+      "assignment": {
+        "id": "bdc5fcf5-6406-4c68-acd1-d141037b8c21",
+        "storyId": "6aa5a3d0-a4be-4fe0-ae94-258b5fc6e4c4",
+        "unit": "campaign",
+        "format": null,
+        "revision": 1,
+        "organizationId": "org_default",
+        "brandId": "brand_default",
+        "date": "2026-10-19",
+        "timeZone": "America/New_York",
+        "deletedAt": null
+      },
+      "synthetic": true,
+      "providerInvoked": false
+    }
+  ],
+  "captures": [
+    {
+      "step": "S22",
+      "action": "Return to the actual dated calendar: two controlled synthetic campaigns stack on Monday October 19; all seven dates remain visible.",
+      "recordedAt": "2026-10-18T02:12:18.180Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S22.png",
+      "sha256": "07498ca1b7837ddff870539b9f5ad15d67c977d398354780e9d28d090da1ded6",
+      "naturalScroll": true,
+      "pixelEdits": false
+    },
+    {
+      "step": "S23",
+      "action": "Open the existing Monday campaign, choose Reel, and keyboard-focus its compatibility assignment button without submitting; this retains the historical path for comparison with direct Move.",
+      "recordedAt": "2026-10-18T02:12:18.392Z",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "screenshot": "S23.png",
+      "sha256": "db1d675d484afd85cd2fc032ee7313f6f235159640d16b90c9ed7c93a14c0682",
+      "naturalScroll": true,
+      "pixelEdits": false
+    }
+  ],
+  "visibleCards": [
+    {
+      "top": 72.28125,
+      "bottom": 338.21875,
+      "inViewport": true
+    },
+    {
+      "top": 347.3125,
+      "bottom": 613.25,
+      "inViewport": true
+    }
+  ],
+  "scheduleSubmissions": 0,
+  "postCaptureAssignments": [
+    {
+      "id": "63df2a5a-8d26-49ae-aab7-9e3bbf77cde6",
+      "storyId": "569c9cea-8648-4231-8c67-0c1aa4736d8a",
+      "unit": "campaign",
+      "format": null,
+      "revision": 1,
+      "organizationId": "org_default",
+      "brandId": "brand_default",
+      "date": "2026-10-19",
+      "timeZone": "America/New_York",
+      "deletedAt": null
+    },
+    {
+      "id": "bdc5fcf5-6406-4c68-acd1-d141037b8c21",
+      "storyId": "6aa5a3d0-a4be-4fe0-ae94-258b5fc6e4c4",
+      "unit": "campaign",
+      "format": null,
+      "revision": 1,
+      "organizationId": "org_default",
+      "brandId": "brand_default",
+      "date": "2026-10-19",
+      "timeZone": "America/New_York",
+      "deletedAt": null
+    }
+  ],
+  "compiledIndexSha256": "efb15329b9481d3d588c05287f7dc4dec388b2b831df93fd59216f297d684705",
+  "canonicalAnnotations": {
+    "S22": [
+      "review-9"
+    ],
+    "S23": [
+      "review-17"
+    ]
+  },
+  "baselineCommit": "273cdde3fba60e1c6c46de84721b07db88b3241f",
+  "baselineUnmodified": true,
+  "captureRuntime": "Fresh local Node HTTP server and SQLite fixture serving the committed production bundle; not the Docker/Cloud Run deployment.",
+  "deploymentReference": {
+    "configImageId": "sha256:7c2a8dea864d3fafcaa8b5c00b1a90e6ece515c6940ef7e305933c0a924e2299",
+    "registryManifestDigest": "sha256:add0fe20bf0c30b6b117bd9233333750a4e251791323bc3d8888f8ce01e05f6b",
+    "authority": "operator-reported matching functional source32eec46 and bundle; not independently executed by this capture"
+  },
+  "sourceSha256": {
+    "liquidity-studio/src/App.svelte": "28f971038bcc1e84143a79f579c8e83277ad290745512218c10ffae05df64b23",
+    "liquidity-studio/src/components/WorkspaceCalendar.svelte": "719d451fa598e6a3c7fad296a3580da432c18267c8ea54c2c73517fd8a4fb121",
+    "liquidity-studio/src/lib/workspace-client.js": "6f481ae3e2b49d584386a2017613d902732f0f29030492c855fa43ebb9614dd5",
+    "liquidity-studio/dist/assets/index-DdnAfJlf.js": "97676e26ea2461151769cdd30219c566f4d7c1e0b192e382813de8ba7de13a5f",
+    "liquidity-studio/dist/assets/index-DoRfITYh.css": "b03d627b798ff25cc90ee715a5f1ba0c5edb03b72db55ead82a6d7076c7d36aa"
+  },
+  "reproducerSha256": "2eed0053bb489244909c941cfd3a008aadd53fe8cbb955b6890e8ea9641b83e0",
+  "limits": [
+    "Two short-title controlled synthetic campaign fixtures, not live editorial data or factual approval.",
+    "Two dated placements were created only as fixture setup through actual typed APIs. S23 sent no schedule mutation.",
+    "Natural scroll only; no screenshot cropping, CSS hiding or pixel editing.",
+    "No measured human action/time improvement, native editor integration, media rendering or provider acceptance claim."
+  ]
+}

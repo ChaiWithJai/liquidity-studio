@@ -1,0 +1,18 @@
+# Canonical calendar S22 → S23, version 2
+
+This completes the missing after-change frames for the original #67 sequence and stable annotations **review-9** and **review-17**. The [original evidence](../../issue-39/2026-10-17/sequences.md#s22) remains unchanged. Integrated S06/S07 and their source/hash provenance are already recorded in [the shared workspace evidence](../../issue-66/after-v1/README.md).
+
+The capture used merged source `c5844c1`, whose functional UI source is `32eec46`, and its committed production bundle `index-DdnAfJlf.js`. A fresh local Node HTTP server served that bundle with an isolated SQLite repository and a random disposable password-mode QA account. The production application remains Google-only. The manifest separately records the operator-reported matching live image reference; these screenshots were **not** taken from that container or Cloud Run service.
+
+Fixture setup created two clearly named records, `Fixture campaign A` and `Fixture campaign B`, with controlled general source text. Their drafts were built with the pure synthetic excerpt helper, not a model/provider call. Two actual revision-aware API placements put them on October 19, 2026 in `America/New_York`. Their IDs, revisions, placements and generation IDs are in [manifest.json](manifest.json). No clinical claim or real-world factual approval is implied.
+
+- **S22:** Both campaigns visibly stack in Monday's dated column. All seven dates, including Sunday, remain visible. The page was naturally scrolled to the date grid so both complete cards fit within the unmodified 1280×720 viewport; the manifest records their measured bounds. Short fixture titles do not certify every long-title layout.
+- **S23:** The first existing campaign opens in the actual App. The operator chooses its Reel form, focuses Assigned day, then presses Tab to keyboard-focus **Assign to calendar**. The button is visibly focused. No click/Enter submission occurs: the harness observes zero calls to the compatibility scheduling endpoint and verifies the same two dated placements afterward. This old control is still an undated weekday compatibility action, not the dated placement shown in S22.
+
+The historical Reel-form detour is preserved here for comparison. The new direct **Move** controls are the preferred dated scheduling path; their pointer, keyboard, touch, ordering, conflict and undo acceptance is separate [component evidence](../2026-10-18/README.md) and the merged #84 test suite. This capture does not invent a measured reduction in actions, backtracks or time, and opening a Reel script does not render a video.
+
+## Reproduction and verification
+
+The [reproducer](capture-reproducer.spec.js) ran successfully on Node 22 and real Chromium against the actual authenticated local APIs. It creates and removes only its own temporary database/server. It contains no credentials; the password is random and never written to its report. To repeat, use an isolated checkout at the recorded commit with locked development dependencies, create the owned `/tmp/liquidity-calendar-canonical-output` directory, copy the reproducer into `liquidity-studio/tests/canonical-calendar-evidence.spec.js`, then run that one test with the existing Chromium project and a unique Playwright output directory. Do not point it at a running user application.
+
+Both PNGs decode as 1280×720, and SHA-256 hashes were independently checked against the capture report. Source, compiled JavaScript/CSS and reproducer hashes are recorded. No application/server/deployment configuration changed in this evidence-only follow-up. The broader #39 editor integration and instructional acceptance remain separate work.
