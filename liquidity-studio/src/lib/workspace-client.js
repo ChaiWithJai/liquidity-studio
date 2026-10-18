@@ -144,12 +144,15 @@ export function createWorkspaceClient({
     );
     guard();
     const entities = new Map(state.entities);
+    let queryStale = false;
     for (const result of details.filter(Boolean)) {
       if (
         result.story?.id !== result.row?.id ||
         result.story.revision !== result.row.revision
       )
         throw Error("Mismatched workspace detail revision");
+      const previous = entities.get(result.story.id);
+      if (!previous || result.row.revision > previous.revision) queryStale = true;
       applyRow(result.row, entities);
       const current = entities.get(result.story.id);
       if (current.revision === result.story.revision)
@@ -159,6 +162,9 @@ export function createWorkspaceClient({
         });
     }
     publish({ entities });
+    // A detail refresh can change active filter membership/order/counts. Refresh only the query,
+    // never the calendar, to avoid a force-detail/calendar recursion.
+    if (queryStale && state.query.loaded) await query(state.query.definition);
     return ids.map((id) => getStory(id));
   }
   function getStory(id) {
@@ -304,10 +310,11 @@ export function createWorkspaceClient({
           "The change was recorded, but a projection could not refresh. Retry loading before continuing.",
       });
   }
-  async function perform(path, payload) {
+  async function perform(path, payload, {retry = false} = {}) {
     guard();
     if (state.mutationPending)
       throw Error("Wait for the current workspace change to finish.");
+    if (state.uncertain && !retry) throw Error("Resolve the retained uncertain request with Retry same request before another change.");
     const intent = { path, payload: copy(payload) };
     publish({ mutationPending: true, error: "", uncertain: null });
     let recorded = false;
@@ -360,7 +367,7 @@ export function createWorkspaceClient({
     guard();
     if (!state.uncertain) throw Error("No uncertain request to retry.");
     const { path, payload } = state.uncertain;
-    return perform(path, payload);
+    return perform(path, payload, {retry:true});
   }
   async function writeView(action, { id, expectedRevision, ...fields }) {
     const path =

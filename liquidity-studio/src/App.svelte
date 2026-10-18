@@ -62,6 +62,7 @@
   // Projection of one canonical entity map; editor fields are intentional transient buffers.
   let backlog = $derived(workspaceState ? [...workspaceState.entities.values()].filter(entry => entry.story?.revision === entry.revision).map(entry => entry.story) : []);
   let selectedStory = $state(null);
+  let editorConflictRevision = $state(null);
   let campaign = $state(null);
   let format = $state("infographic");
   let scheduledDay = $state("Monday");
@@ -185,8 +186,13 @@
       workspaceState = state;
       const current = selectedStory && client.getStory(selectedStory.id);
       if (current && current.revision > selectedStory.revision) {
-        selectedStory = current;
-        if (!pendingEdits) campaign = current.campaignDraft || null;
+        if (pendingEdits || reviewSignature(reviewClaims) !== savedReviewSignature) {
+          // Canonical projections may advance; an unsaved editor keeps its original optimistic base.
+          editorConflictRevision = current.revision;
+        } else {
+          // A clean editor adopts the whole saved snapshot, including its editable buffers.
+          selectStory(current);
+        }
       }
     });
   }
@@ -197,6 +203,18 @@
       if (workspaceClient !== client) return;
       const story = client.getStory(id);
       if (story) await openStory(story);
+    } catch (failure) {
+      if (workspaceClient === client && failure.code !== "REQUEST_CONTEXT_CHANGED") error = failure.message;
+    }
+  }
+  async function discardLocalEditsAndReload() {
+    const client = workspaceClient, storyId = selectedStory?.id;
+    if (!client || !storyId) return;
+    try {
+      await client.ensureStories([storyId], {force:true});
+      if (workspaceClient !== client || selectedStory?.id !== storyId) return;
+      const story = client.getStory(storyId);
+      if (story) { selectStory(story); error = ""; notice = "Loaded the current saved story. Local edits were discarded."; }
     } catch (failure) {
       if (workspaceClient === client && failure.code !== "REQUEST_CONTEXT_CHANGED") error = failure.message;
     }
@@ -478,6 +496,7 @@
     await loadScope();
   }
   function selectStory(story) {
+    editorConflictRevision = null;
     selectedStory = story ? JSON.parse(JSON.stringify(story)) : null;
     campaign = selectedStory?.campaignDraft || null;
     scheduledDay = story?.scheduledDay || "Monday";
@@ -1077,6 +1096,11 @@
             onReceipt={() => {}} />
         {/if}
       {:else if tab === "studio"}
+        {#if selectedStory && editorConflictRevision}
+          <div class="workspace-conflict" role="alert">A newer saved revision {editorConflictRevision} is available. Your local edits still use revision {selectedStory.revision}; they cannot overwrite the newer work.
+            <button class="secondary" onclick={discardLocalEditsAndReload}>Discard local edits and load saved story</button>
+          </div>
+        {/if}
         {#if selectedStory}<div class="studio-toolbar">
             <div>
               <span class="eyebrow">ACTIVE STORY</span>

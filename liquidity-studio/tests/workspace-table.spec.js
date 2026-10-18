@@ -106,16 +106,27 @@ test("table view, detail edit, shared receipt and undo preserve canonical story 
   await expect(
     page.getByRole("dialog", { name: "Story details" }),
   ).toBeVisible();
+  await page.getByLabel("Detail queue title").fill("Canonical workspace title");
   await page.getByLabel("Detail category").fill("Table detail revision");
   await page.getByRole("button", { name: "Save detail metadata" }).click();
   await expect(
-    page.getByRole("dialog").getByText(/Saved revision/),
-  ).toContainText("Saved revision");
+    page.getByRole("dialog").getByText(/current saved revision/),
+  ).toContainText("current saved revision");
   await expect(page.locator(`[data-story-id="${storyId}"]`)).toContainText(
     "Table detail revision",
   );
   await page.keyboard.press("Escape");
   await expect(page.locator(`[data-detail-story="${storyId}"]`)).toBeFocused();
+  const revision=await page.locator(`[data-story-id="${storyId}"]`).getAttribute("data-story-revision");
+  await page.getByRole("button",{name:"Content calendar",exact:true}).click();
+  await page.getByRole("button",{name:/^Move Canonical workspace title,/}).click();
+  await expect(page.getByRole("dialog",{name:"Move planning unit"})).toContainText(`expected story revision ${revision}`);
+  await page.getByRole("button",{name:"Cancel move",exact:true}).click();
+  await page.getByRole("button",{name:/^Open Canonical workspace title,/}).click();
+  await expect(page.getByRole("heading",{name:"Canonical workspace title",exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"Story backlog",exact:true}).click();
+  await expect(page.locator(`[data-story-id="${storyId}"]`)).toHaveAttribute("data-story-revision",revision);
+
   await page
     .getByRole("button", { name: "Undo operation", exact: true })
     .click();
@@ -267,4 +278,27 @@ test("uncertain browser write exposes same-request retry and commits once",async
  await row.locator('input[type=checkbox]').check();await page.getByLabel('Bulk metadata value').fill('Uncertain request committed once');await page.getByRole('button',{name:'Apply to selected',exact:true}).click();
  await expect(page.getByRole('button',{name:'Retry same request',exact:true})).toBeVisible();await page.getByRole('button',{name:'Retry same request',exact:true}).click();await expect(page.getByRole('button',{name:'Retry same request',exact:true})).toHaveCount(0);
  await expect(page.locator(`[data-story-id="${id}"]`)).toHaveAttribute('data-story-revision',String(before+1));expect(keys).toHaveLength(2);expect(keys[0]).toBe(keys[1]);
+});
+
+test("external rename reconciles filtered rows after a forced detail refresh",async({page})=>{
+ await page.goto(base);await page.getByLabel('Username',{exact:true}).fill('table-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →'}).click();await page.getByLabel('Search stories').fill('Huda');await expect(page.locator('.story-row')).toHaveCount(1);
+ const row=page.locator('.story-row'),id=await row.getAttribute('data-story-id'),revision=Number(await row.getAttribute('data-story-revision'));
+ const response=await page.request.post(`${base}/api/studio/workspace/mutations?organizationId=org_default&brandId=brand_default`,{data:{idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:revision,patch:{title:'Externally renamed queue item'}}]}});expect(response.ok()).toBeTruthy();
+ await row.locator('[data-detail-story]').click();await expect(page.getByLabel('Detail queue title')).toHaveValue('Externally renamed queue item');await page.getByRole('button',{name:'Close story details'}).click();
+ await expect(page.locator('.story-row')).toHaveCount(0);await expect(page.locator('#backlog-results')).toContainText(/Showing 0 of [1-9]\d* stories/);
+});
+
+test("dirty detail and inline metadata retain their opening revisions after another writer changes the story",async({page})=>{
+ await page.goto(base);await page.getByLabel('Username',{exact:true}).fill('table-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →'}).click();
+ await page.getByLabel('Rows per page').selectOption('50');
+ const row=page.locator('.story-row').first();await expect(row).toBeVisible();const id=await row.getAttribute('data-story-id'),revision=Number(await row.getAttribute('data-story-revision'));
+ await row.locator('[data-detail-story]').click();await page.getByLabel('Detail category').fill('Unsaved local detail');
+ const response=await page.request.post(`${base}/api/studio/workspace/mutations?organizationId=org_default&brandId=brand_default`,{data:{idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:revision,patch:{title:'Externally saved detail title',category:'Newer external category'}}]}});expect(response.ok()).toBeTruthy();
+ await page.getByLabel('Sort direction').selectOption('desc');await expect(page.getByRole('dialog').getByRole('alert')).toContainText('original revision');await expect(page.getByLabel('Detail category')).toHaveValue('Unsaved local detail');
+ await page.getByRole('button',{name:'Save detail metadata'}).click();await expect(page.getByRole('status',{name:'Operation results'})).toContainText('conflict');
+ const current=await (await page.request.get(`${base}/api/studio/workspace/stories/${id}?organizationId=org_default&brandId=brand_default`)).json();expect(current.story.category).toBe('Newer external category');expect(current.story.title).toBe('Externally saved detail title');await expect(page.getByLabel('Detail category')).toHaveValue('Unsaved local detail');
+ await page.getByRole('button',{name:'Discard detail edits and reload'}).click();await expect(page.getByLabel('Detail category')).toHaveValue('Newer external category');await page.keyboard.press('Escape');
+ const target=page.locator(`[data-story-id="${id}"]`);await target.getByRole('button',{name:/Edit Category/}).click();await target.getByRole('textbox').fill('Unsaved inline category');
+ const latest=Number(await target.getAttribute('data-story-revision'));await page.request.post(`${base}/api/studio/workspace/mutations?organizationId=org_default&brandId=brand_default`,{data:{idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:latest,patch:{category:'Newest inline conflict category'}}]}});
+ await page.getByLabel('Sort direction').selectOption('asc');await target.getByRole('button',{name:'Save cell',exact:true}).click();await expect(page.getByRole('status',{name:'Operation results'})).toContainText('conflict');await expect(target).toContainText('Newest inline conflict category');
 });

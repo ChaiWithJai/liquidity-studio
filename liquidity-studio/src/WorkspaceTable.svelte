@@ -34,6 +34,8 @@
   let bulkField = $state("category"),
     bulkValue = $state("");
   let detailsLoading = $state(false);
+  let drawerBaseRevision = $state(null);
+  let drawerLoadedId = $state(null);
   let host = $state();
   let scroller = $state(),
     opener,
@@ -273,6 +275,7 @@
   async function openDetails(row, event) {
     const sequence = ++detailsSequence;
     detailsLoading = true;
+    drawerLoadedId = null;
     opener = event.currentTarget;
     client.setUi({ drawerStoryId: row.id, focusStoryId: row.id });
     localError = "";
@@ -289,6 +292,8 @@
         throw Error("Story changed while loading. Refresh its details.");
       drawerTitle = story.title;
       drawerCategory = story.category;
+      drawerBaseRevision = story.revision;
+      drawerLoadedId = story.id;
       detailsLoading = false;
       await tick();
       document.querySelector("[data-workspace-drawer]")?.focus();
@@ -322,14 +327,14 @@
       fail(error);
     }
   }
-  async function saveInline(row, key, value) {
+  async function saveInline(row, key, value, expectedRevision = row.revision) {
     localError = "";
     try {
       await client.mutate([
         {
           kind: "story.patch",
           storyId: row.id,
-          expectedRevision: row.revision,
+          expectedRevision,
           patch: { [key]: value },
         },
       ]);
@@ -346,23 +351,16 @@
         client.snapshot.entities.get(row.id)?.row?.status || row.status;
   }
   async function saveDetails() {
-    const row = client.snapshot.entities.get(
-      client.snapshot.ui.drawerStoryId,
-    )?.row;
-    if (!row) return;
+    const row = client.snapshot.entities.get(client.snapshot.ui.drawerStoryId)?.row;
+    if (!row || drawerBaseRevision === null) return;
     localError = "";
+    const sequence = detailsSequence;
+    const submitted = {title:drawerTitle,category:drawerCategory};
     try {
-      await client.mutate([
-        {
-          kind: "story.patch",
-          storyId: row.id,
-          expectedRevision: row.revision,
-          patch: { title: drawerTitle, category: drawerCategory },
-        },
-      ]);
-    } catch (error) {
-      fail(error);
-    }
+      const result = await client.mutate([{kind:"story.patch",storyId:row.id,expectedRevision:drawerBaseRevision,patch:submitted}]);
+      const applied = result.outcomes?.find(outcome=>outcome.storyId===row.id&&outcome.status==="applied");
+      if (applied && sequence===detailsSequence && client.snapshot.ui.drawerStoryId===row.id) drawerBaseRevision = applied.row.revision;
+    } catch (error) { fail(error); }
   }
   async function bulkChange() {
     localError = "";
@@ -465,10 +463,10 @@
         {#each columns as column (column)}<td>
           {#if column==="title"}<button class="title-button" data-detail-story={row.id} onclick={event=>openDetails(row,event)}>{row.title}</button>
           {:else if ["category","assigneeId","status"].includes(column)}
-            {#if inline?.id===row.id&&inline?.field===column}<form onsubmit={event=>{event.preventDefault();saveInline(row,column,column==="assigneeId"?(inlineValue||null):inlineValue);}}>
+            {#if inline?.id===row.id&&inline?.field===column}<form onsubmit={event=>{event.preventDefault();saveInline(row,column,column==="assigneeId"?(inlineValue||null):inlineValue,inline.revision);}}>
               {#if column==="assigneeId"}<select aria-label={`Edit ${labels[column]} for ${row.title}`} bind:value={inlineValue}><option value="">Unassigned</option>{#each $client.members as member (member.id)}<option value={member.id}>{member.displayName}</option>{/each}</select>{:else if column==="status"}<select aria-label={`Edit ${labels[column]} for ${row.title}`} bind:value={inlineValue}>{#each [...new Set([row.status,...statuses])] as status (status)}<option>{status}</option>{/each}</select>{:else}<input aria-label={`Edit ${labels[column]} for ${row.title}`} bind:value={inlineValue} maxlength="300"/>{/if}
               <button class="secondary" disabled={$client.mutationPending}>Save cell</button><button type="button" onclick={()=>inline=null}>Cancel</button>
-            </form>{:else}<button class="cell-button" aria-label={`Edit ${labels[column]} for ${row.title}`} disabled={$client.mutationPending} onclick={()=>{inline={id:row.id,field:column};inlineValue=row[column]||"";}}>{cellValue(row,column)}</button>{/if}
+            </form>{:else}<button class="cell-button" aria-label={`Edit ${labels[column]} for ${row.title}`} disabled={$client.mutationPending} onclick={()=>{inline={id:row.id,field:column,revision:row.revision};inlineValue=row[column]||"";}}>{cellValue(row,column)}</button>{/if}
           {:else}{cellValue(row,column)}{/if}
         </td>{/each}
         <td><button class="secondary" disabled={$client.mutationPending} data-open-story={row.id} onclick={()=>openEditor(row.id)}>{row.formats.length?"Open draft":"Open story"} ↗</button></td>
@@ -481,9 +479,9 @@
   {#if $client.operations.length}<details><summary>Recent operations</summary><ul>{#each $client.operations as operation (operation.operationId)}<li>{operation.undone?"Undone":"Recorded"} · {new Date(operation.createdAt).toLocaleString()} · {operation.outcomes.length} item outcomes {#if operation.canUndo}<button class="secondary" disabled={$client.mutationPending} onclick={()=>undo(operation.operationId)}>Undo recorded operation</button>{/if}</li>{/each}</ul></details>{/if}
   {#if $client.ui.drawerStoryId}<div class="context-drawer" role="dialog" aria-modal="false" aria-label="Story details" tabindex="-1" data-workspace-drawer>
     <header><h3>Story details</h3><button aria-label="Close story details" onclick={closeDetails}>×</button></header>
-    {#if !detailsLoading&&drawer?.story&&drawer.story.revision===drawer.revision}<p>Saved revision {drawer.revision} · source review is separate from artwork approval</p>
+    {#if !detailsLoading&&drawerLoadedId===$client.ui.drawerStoryId}<p>Editing metadata from revision {drawerBaseRevision} · current saved revision {drawer.revision}. Source review is separate from artwork approval.</p>{#if drawerBaseRevision!==drawer.revision}<p role="alert">The saved story changed. This form keeps its original revision; save will report a conflict instead of overwriting newer metadata.</p><button class="secondary" onclick={()=>openDetails({id:drawer.id},{currentTarget:opener})}>Discard detail edits and reload</button>{/if}
       <form onsubmit={event=>{event.preventDefault();saveDetails();}}><label>Queue title <input aria-label="Detail queue title" bind:value={drawerTitle} maxlength="300"/></label><label>Category <input aria-label="Detail category" bind:value={drawerCategory} maxlength="300"/></label><button class="primary" disabled={$client.mutationPending}>Save detail metadata</button></form>
-      <p>{drawer.story.status} · {drawer.story.sourceClaims?.length||0} supplied source claims</p><p>Queue metadata edits do not rewrite generated artwork or approve claims.</p>
+      <p>Current queue status: {drawer?.row?.status || "Refresh required"}. Review supplied source claims in the campaign editor.</p><p>Queue metadata edits do not rewrite generated artwork or approve claims.</p>
       <button class="secondary" onclick={()=>openEditor(drawer.id)}>Open campaign editor</button><details><summary>Story identity</summary><p>{drawer.id}</p></details>
     {:else}<p role="status">Loading current story details…</p><button class="secondary" onclick={()=>openDetails({id:$client.ui.drawerStoryId},{currentTarget:opener})}>Retry story details</button>{/if}
     <p class="small">Closing this panel returns to the same work surface, filters and focused row. Escape closes it.</p>

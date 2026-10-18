@@ -37,12 +37,12 @@ async function signIn(page, name = "founder") {
     page.getByRole("heading", { name: "Good stories, next up." }),
   ).toBeVisible();
 }
-async function seed(page) {
+async function seed(page, title = "Browser source fixture") {
   const response = await page.request.post(
     base + "/api/studio/backlog" + scope,
     {
       data: {
-        title: "Browser source fixture",
+        title,
         category: "Source notes",
         scheduledDay: "Monday",
         sourceClaims: [
@@ -61,7 +61,7 @@ async function seed(page) {
   await page.reload();
   await page
     .locator(".story-row")
-    .filter({ hasText: "Browser source fixture" })
+    .filter({ hasText: title })
     .getByRole("button", { name: "Open story" })
     .click();
   await page
@@ -701,4 +701,48 @@ test("calendar assignment preserves newer local text while applying revision-che
   await page.getByRole("button",{name:"Campaign Studio",exact:true}).click();
   await expect(page.getByLabel("Headline",{exact:true})).toHaveValue("Typing while schedule saves");
   await expect(page.getByLabel("Assigned day")).toHaveValue("Thursday");
+});
+
+test('dirty artwork retains its original optimistic base across a newer canonical detail refresh', async ({page}) => {
+ await signIn(page); await seed(page,"Concurrent editor fixture");
+ const initial=await (await page.request.get(base+'/api/studio/bootstrap'+scope)).json();
+ const story=initial.backlog.find(s=>s.title==='Concurrent editor fixture');
+ await page.getByLabel('Headline',{exact:true}).fill('MY UNSAVED HEADLINE');
+ const external={...story.campaignDraft.infographic,caption:'A newer caption saved from a second session.'};
+ const response=await page.request.post(base+'/api/studio/save-edit'+scope,{data:{storyId:story.id,format:'infographic',content:external,expectedRevision:story.revision}});
+ expect(response.status()).toBe(200);
+ await page.getByRole('button',{name:'Story backlog',exact:true}).click();
+ await page.locator('[data-detail-story="'+story.id+'"]').click();
+ await expect(page.getByRole('dialog',{name:'Story details'})).toBeVisible();
+ await expect(page.getByLabel('Detail queue title')).toHaveValue(story.title);
+ await page.getByRole('button',{name:'Close story details'}).click();
+ await page.getByRole('button',{name:'Campaign Studio',exact:true}).click();
+ await expect(page.getByLabel('Headline',{exact:true})).toHaveValue('MY UNSAVED HEADLINE');
+ const save=page.waitForResponse(r=>r.url().includes('/api/studio/save-edit')&&r.request().method()==='POST');
+ await page.getByRole('button',{name:'Save changes',exact:true}).click();
+ const status=(await save).status();
+ const after=await (await page.request.get(base+'/api/studio/bootstrap'+scope)).json();
+ expect(status).toBe(409);
+ expect(after.backlog.find(s=>s.id===story.id).campaignDraft.infographic.caption).toBe(external.caption);
+ await expect(page.getByLabel('Headline',{exact:true})).toHaveValue('MY UNSAVED HEADLINE');
+ await page.getByRole('button',{name:'Discard local edits and load saved story',exact:true}).click();
+ await expect(page.getByLabel('Caption',{exact:true})).toHaveValue(external.caption);
+ await expect(page.getByLabel('Headline',{exact:true})).not.toHaveValue('MY UNSAVED HEADLINE');
+});
+
+test("clean artwork refresh replaces editable buffers together with their optimistic revision",async({page})=>{
+ await signIn(page);await seed(page,'Clean editor refresh fixture');const initial=await (await page.request.get(base+'/api/studio/bootstrap'+scope)).json();const story=initial.backlog.find(item=>item.title==='Clean editor refresh fixture');
+ const content={...story.campaignDraft.infographic,caption:'Current external caption for a clean editor.'};expect((await page.request.post(base+'/api/studio/save-edit'+scope,{data:{storyId:story.id,format:'infographic',content,expectedRevision:story.revision}})).status()).toBe(200);
+ await page.getByRole('button',{name:'Story backlog',exact:true}).click();await page.locator(`[data-detail-story="${story.id}"]`).click();await expect(page.getByLabel('Detail queue title')).toHaveValue(story.title);await page.getByRole('button',{name:'Close story details'}).click();await page.getByRole('button',{name:'Campaign Studio',exact:true}).click();
+ await expect(page.getByLabel('Caption',{exact:true})).toHaveValue(content.caption);await page.getByLabel('Headline',{exact:true}).fill('New edit after a clean refresh');await page.getByRole('button',{name:'Save changes',exact:true}).click();await expect(page.getByRole('status').filter({hasText:'Changes saved.'})).toBeVisible();
+ const saved=await (await page.request.get(base+'/api/studio/bootstrap'+scope)).json();expect(saved.backlog.find(item=>item.id===story.id).campaignDraft.infographic.caption).toBe(content.caption);
+});
+
+test("dirty source review retains its opening revision while canonical projections refresh",async({page})=>{
+ await signIn(page);const claim={id:'dirty-source-base',text:'Opening unreviewed claim.',sourceUrl:'https://example.org/dirty-source-base',kind:'general',status:'unreviewed'};
+ const created=await page.request.post(base+'/api/studio/backlog'+scope,{data:{title:'Dirty source base fixture',category:'Review',scheduledDay:'Monday',sourceClaims:[claim]}});expect(created.status()).toBe(201);const story=(await created.json()).story;await page.reload();await page.locator(`[data-story-id="${story.id}"]`).getByRole('button',{name:'Open story'}).click();await page.getByLabel('Claim text',{exact:true}).fill('Local unreviewed source edit.');
+ const external={...claim,text:'Newer externally saved unreviewed claim.'};expect((await page.request.post(base+'/api/studio/source-claims'+scope,{data:{storyId:story.id,sourceClaims:[external],expectedRevision:story.revision}})).status()).toBe(200);
+ await page.getByRole('button',{name:'Story backlog',exact:true}).click();await page.locator(`[data-detail-story="${story.id}"]`).click();await expect(page.getByLabel('Detail queue title')).toHaveValue(story.title);await page.getByRole('button',{name:'Close story details'}).click();await page.getByRole('button',{name:'Campaign Studio',exact:true}).click();await expect(page.getByLabel('Claim text',{exact:true})).toHaveValue('Local unreviewed source edit.');
+ const pending=page.waitForResponse(response=>response.url().includes('/source-claims')&&response.request().method()==='POST');await page.getByRole('button',{name:'Save source review',exact:true}).click();expect((await pending).status()).toBe(409);
+ const saved=await (await page.request.get(base+'/api/studio/workspace/stories/'+story.id+scope)).json();expect(saved.story.sourceClaims[0].text).toBe(external.text);await expect(page.getByLabel('Claim text',{exact:true})).toHaveValue('Local unreviewed source edit.');
 });

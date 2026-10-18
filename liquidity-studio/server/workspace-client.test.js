@@ -262,10 +262,21 @@ test("lost mutation response retries the identical retained key without applying
     /Controlled lost response/,
   );
   assert.ok(client.snapshot.uncertain);
+  const retained=client.snapshot.uncertain;
+  await assert.rejects(client.mutate([{kind:"story.patch",storyId:id,expectedRevision:before.revision,patch:{category:"Do not replace retained request"}}]),/retained uncertain request/);
+  assert.deepEqual(client.snapshot.uncertain,retained);
+  await assert.rejects(client.undo("other-operation"),/retained uncertain request/);
   await client.retryOperation();
   assert.equal(keys.length, 2);
   assert.equal(keys[0], keys[1]);
   assert.equal(client.getStory(id).revision, before.revision + 1);
   assert.equal(client.getStory(id).category, "One committed write");
   assert.equal(client.snapshot.uncertain, null);
+});
+
+test("forced detail revision refresh also reconciles active search membership and counts",async(t)=>{
+ const {client,request}=await fixture(t);await client.query({filters:{search:'Huda'},sort:[{field:'title',direction:'asc'}],columns:['title','revision'],limit:25});
+ assert.equal(client.snapshot.query.filteredTotal,1);const id=client.snapshot.pageIds[0];await client.ensureStories([id]);const before=client.getStory(id);
+ await request('/api/studio/workspace/mutations',{method:'POST',body:JSON.stringify({idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:before.revision,patch:{title:'Renamed by another operator'}}]})});
+ await client.ensureStories([id],{force:true});assert.equal(client.getStory(id).title,'Renamed by another operator');assert.equal(client.snapshot.query.filteredTotal,0);assert.deepEqual(client.snapshot.pageIds,[]);
 });
