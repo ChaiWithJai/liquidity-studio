@@ -5,7 +5,7 @@
             [app.http.client :as client]
             [java-http-clj.core :as http])
   (:import [java.net.http HttpClient HttpClient$Redirect]
-           [java.util.concurrent CompletableFuture TimeUnit]
+           [java.util.concurrent CompletableFuture TimeUnit ForkJoinPool]
            [java.io InputStream]
            [java.util.function Function BiConsumer]))
 
@@ -61,7 +61,7 @@
                         (when @closed
                           (try (.close ^InputStream input) (catch Exception _ nil)))))))
               ^CompletableFuture pending
-              (.thenApply request-future
+              (.thenApplyAsync request-future
                 (reify Function
                   (apply [_ response]
                     (reset! stream (:body response))
@@ -71,7 +71,8 @@
                         (let [bytes (.readNBytes input 4097)]
                           (if (> (alength bytes) 4096)
                             {:allowed false :authorized false}
-                            (json/decode (String. bytes "UTF-8") :key-fn json/read-kebab-key))))))))]
+                            (json/decode (String. bytes "UTF-8") :key-fn json/read-kebab-key)))))))
+                (.orElse (.executor ^HttpClient client) (ForkJoinPool/commonPool)))]
           (try
             ;; Includes headers AND bounded body consumption; no retry/redirect.
             (let [result (.get pending 1000 TimeUnit/MILLISECONDS)]

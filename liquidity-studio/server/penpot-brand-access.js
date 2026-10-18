@@ -1,5 +1,6 @@
 // C2: current paired-human admission preparation. C3 live fencing is mandatory
-// before any governed editing can be enabled. No native ACL is changed here.
+// before any governed editing can be enabled. Reconciliation changes only
+// the exact paired native membership through the private acknowledged hook.
 import {fail} from './auth.js';
 import {createHash} from 'node:crypto';
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');

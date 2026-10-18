@@ -3,7 +3,7 @@
   "files": {
     "access.clj": "ed90f958e578baf1ca0ab9967a5f8fab3974e2b0e07ba500efdd8e931160daa9",
     "access_test.clj": "db2d35759d552f6a213722292ed7150acfa2b4c7ed73455a8c36106e932cf062",
-    "http_authority.clj": "f84758ecaf0bd51524adbd2529391ce5efae242c5624ef046f3e0ba0aea1055e",
+    "http_authority.clj": "be28094e61c1e7347a43831e4f26cb438482403315da0cf899aaec3e63fad3f6",
     "http_authority_test.clj": "cac228ec76b63c733d14ce17a61eac64dc40add57890f6333644682e854f93bc",
     "reconciliation_test.clj": "2ed264643fb001b046e52dcea32c05a14f00bad77fa46679134f90026e834c94",
     "studio_access.clj": "7ef0b73daef7e0701d3d6551cfd1632f1a912e2971e9faad5029063c27d227e5"
