@@ -1,4 +1,5 @@
 import { jobDispatcherConfiguration, dispatchJobs } from "./job-dispatcher.js";
+import { nativeFontCatalog } from "./native-editor-fonts.js";
 import { idempotencyKey as workspaceIdempotencyKey } from "./workspace-query.js";
 import { HelperControlService } from "./helper-control.js";
 import { exact as workspaceExact } from "./workspace-schema.js";
@@ -178,6 +179,7 @@ export function createHttpServer(
     distDir = DIST_DIR,
     editorBoundaryEnabled = process.env.STUDIO_EDITOR_BOUNDARY_ENABLED ===
       "true",
+    nativeEditorEnabled = process.env.STUDIO_NATIVE_EDITOR_ENABLED === "true",
     editorContractEnabled = process.env.STUDIO_EDITOR_CONTRACT_ENABLED ===
       "true",
   } = {},
@@ -468,7 +470,12 @@ export function createHttpServer(
         req.method === "POST"
           ? await readBody(
               req,
-              route === "/api/admin/import" ? 32 * 1024 * 1024 : 262144,
+              route === "/api/admin/import"
+                ? 32 * 1024 * 1024
+                : nativeEditorEnabled &&
+                    route.startsWith("/api/studio/native-editor/")
+                  ? 768 * 1024
+                  : 262144,
             )
           : {};
       if (route === "/api/admin/organizations" && req.method === "POST") {
@@ -604,6 +611,41 @@ export function createHttpServer(
         throw fail(404, "Job operation not found");
       }
 
+      if (route.startsWith("/api/studio/native-editor/")) {
+        if (!nativeEditorEnabled || trustedTestMode)
+          throw fail(404, "Not found");
+        const service = platform.nativeEditor(scope, repo);
+        if (route === "/api/studio/native-editor/fonts" && req.method === "GET")
+          return json(200, {
+            count: nativeFontCatalog().length,
+            next: null,
+            previous: null,
+            results: nativeFontCatalog(),
+          });
+        if (
+          route === "/api/studio/native-editor/documents" &&
+          req.method === "POST"
+        )
+          return json(201, await service.create(user, body));
+        if (
+          route === "/api/studio/native-editor/assets" &&
+          req.method === "POST"
+        )
+          return json(201, await service.uploadAsset(user, body));
+        const nativeAssetMatch = route.match(
+          /^\/api\/studio\/native-editor\/assets\/([a-f0-9]{32})$/,
+        );
+        if (nativeAssetMatch && req.method === "GET")
+          return json(200, await service.asset(user, nativeAssetMatch[1]));
+        const nativeMatch = route.match(
+          /^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})$/,
+        );
+        if (nativeMatch && req.method === "GET")
+          return json(200, await service.read(user, nativeMatch[1]));
+        if (nativeMatch && req.method === "POST")
+          return json(200, await service.save(user, nativeMatch[1], body));
+        throw fail(404, "Not found");
+      }
       if (route.startsWith("/api/studio/workspace/")) {
         if (trustedTestMode) throw fail(404, "Not found");
         const service = platform.workspace(scope, repo);

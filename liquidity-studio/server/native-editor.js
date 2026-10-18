@@ -337,6 +337,146 @@ export class NativeEditorService {
       if (!retained) await this.discardPayload(documentRef);
     }
   }
+  async uploadAsset(actor, input) {
+    exact(input, [
+      "name",
+      "contentType",
+      "base64",
+      "rightsDeclaration",
+      "consent",
+      "idempotencyKey",
+    ]);
+    await this.authorize(actor);
+    text(input.name, "asset name", 120);
+    text(input.rightsDeclaration, "asset rights declaration", 500);
+    if (
+      !["confirmed", "not_personal_data"].includes(input.consent) ||
+      !["image/png", "image/jpeg", "image/webp"].includes(input.contentType) ||
+      typeof input.base64 !== "string" ||
+      !/^[A-Za-z0-9+/]+={0,2}$/.test(input.base64)
+    )
+      throw fail(
+        422,
+        "Raster image, rights and consent declaration are required",
+      );
+    const bytes = Buffer.from(input.base64, "base64");
+    if (
+      !bytes.length ||
+      bytes.length > 512 * 1024 ||
+      bytes.toString("base64") !== input.base64
+    )
+      throw fail(
+        413,
+        "Native image must be at most 512 KiB of canonical base64-decoded bytes",
+      );
+    const sharp = (await import("sharp")).default;
+    let metadata;
+    try {
+      metadata = await sharp(bytes, {
+        limitInputPixels: 16000000,
+        animated: false,
+      }).metadata();
+      await sharp(bytes, { limitInputPixels: 16000000, animated: false })
+        .raw()
+        .toBuffer();
+    } catch {
+      throw fail(422, "Image could not be safely decoded");
+    }
+    if (
+      { png: "image/png", jpeg: "image/jpeg", webp: "image/webp" }[
+        metadata.format
+      ] !== input.contentType ||
+      !metadata.width ||
+      !metadata.height ||
+      metadata.pages > 1
+    )
+      throw fail(422, "Image MIME or animation mismatch");
+    const intent = this.request(actor, "upload", input);
+    const id = hash({
+      scope: this.scope,
+      actor: actor.id,
+      key: input.idempotencyKey,
+    }).slice(0, 32);
+    const key = `${this.prefix}asset:${id}`;
+    const current = await this.store.get(key);
+    if (current) {
+      if (current.fingerprint !== intent.fingerprint)
+        throw fail(409, "Upload key was used for different content");
+      return this.assetDto(current);
+    }
+    const asset = {
+      id,
+      name: input.name,
+      contentType: input.contentType,
+      width: metadata.width,
+      height: metadata.height,
+      size: bytes.length,
+      sha256: createHash("sha256").update(bytes).digest("hex"),
+      rightsDeclaration: input.rightsDeclaration,
+      consent: input.consent,
+      createdBy: actor.id,
+      createdAt: this.now(),
+      fingerprint: intent.fingerprint,
+    };
+    const storageId = randomUUID();
+    if (this.store.uploadArtifact)
+      asset.artifactRef = await this.store.uploadArtifact(
+        this.scope,
+        storageId,
+        bytes,
+        input.contentType,
+      );
+    else asset.base64 = input.base64;
+    let retained = false;
+    try {
+      await this.authorize(actor);
+      const saved = await this.store.update(key, (prior) => {
+        if (prior && prior.fingerprint !== intent.fingerprint)
+          throw fail(409, "Upload key was used for different content");
+        return prior || asset;
+      });
+      retained =
+        !asset.artifactRef ||
+        asset.artifactRef.object === saved.artifactRef?.object;
+      return this.assetDto(saved);
+    } finally {
+      if (!retained && asset.artifactRef)
+        await this.store.deleteArtifact?.(this.scope, asset.artifactRef);
+    }
+  }
+  assetDto(asset) {
+    const { artifactRef, base64, fingerprint, ...dto } = asset;
+    return clone(dto);
+  }
+  async asset(actor, id, withBytes = true) {
+    await this.authorize(actor);
+    if (typeof id !== "string" || !/^[a-f0-9]{32}$/.test(id))
+      throw fail(404, "Native asset not found");
+    const asset = await this.store.get(`${this.prefix}asset:${id}`);
+    if (!asset) throw fail(404, "Native asset not found");
+    const dto = this.assetDto(asset);
+    if (!withBytes) return dto;
+    const bytes = asset.artifactRef
+      ? await this.store.downloadArtifact(this.scope, asset.artifactRef)
+      : Buffer.from(asset.base64, "base64");
+    if (createHash("sha256").update(bytes).digest("hex") !== asset.sha256)
+      throw fail(500, "Native asset integrity mismatch");
+    return { ...dto, base64: bytes.toString("base64") };
+  }
+  async documentAssets(actor, document) {
+    const ids = new Set();
+    let count = 0;
+    function visit(value, depth = 0) {
+      if (++count > 50000 || depth > 32) throw fail(422, "Native document is too complex");
+      if (!value || typeof value !== "object") return;
+      if (typeof value.assetId === "string") ids.add(value.assetId);
+      for (const child of Object.values(value))
+        if (child && typeof child === "object") visit(child, depth + 1);
+    }
+    visit(document);
+    if (ids.size > 250) throw fail(422, "Too many native image references");
+    return Promise.all([...ids].map((id) => this.asset(actor, id, false)));
+  }
   async save(actor, id, input) {
     exact(input, ["expectedRevision", "title", "document", "idempotencyKey"]);
     revision(input.expectedRevision);
@@ -356,7 +496,7 @@ export class NativeEditorService {
         "Native document changed; preserve local work and reload explicitly",
       );
     const document = validateHostedDocument(input.document, {
-      assets: state.assets,
+      assets: await this.documentAssets(actor, input.document),
       pageIds: original.origin.pageIds,
     });
     const documentRef = await this.persistDocument(document);

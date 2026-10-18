@@ -231,3 +231,182 @@ test("source and palette drift do not silently replace or rebase native proposal
     assert.equal((await f.service.read(f.actor, native.id)).revision, 1);
   }
 });
+
+test("real authenticated HTTP saves native proposals; anonymous and wrong-brand reads fail", async (t) => {
+  const { DurableStore } = await import("./storage.js");
+  const { createPlatform } = await import("./platform.js");
+  const { createHttpServer } = await import("./index.js");
+  const store = new DurableStore(":memory:");
+  const platform = createPlatform({ store, authMode: "password" });
+  await platform.ready;
+  await platform.identity.provision({
+    username: "native-qa",
+    password: "ephemeral-native-test-password-239!",
+    role: "founder",
+  });
+  const container = await platform.forScope({
+    organizationId: "org_default",
+    brandId: "brand_default",
+    preset: "liquidity_desk",
+  });
+  const controlled = fixture().state();
+  await container.ports.repo.mutate((state) => ({
+    ...state,
+    backlog: controlled.backlog,
+    brandProfile: controlled.brandProfile,
+  }));
+  const server = createHttpServer(null, {
+    platform,
+    nativeEditorEnabled: true,
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  t.after(async () => {
+    await new Promise((resolve) => server.close(resolve));
+    store.close();
+  });
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const login = await fetch(`${base}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: "native-qa",
+      password: "ephemeral-native-test-password-239!",
+    }),
+  });
+  const cookie = login.headers.get("set-cookie").split(";")[0];
+  async function api(
+    path,
+    body,
+    brand = "brand_default",
+    authenticated = true,
+  ) {
+    const response = await fetch(
+      `${base}/api/studio/native-editor/${path}?organizationId=org_default&brandId=${brand}`,
+      {
+        method: body ? "POST" : "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authenticated ? { Cookie: cookie } : {}),
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      },
+    );
+    return { status: response.status, data: await response.json() };
+  }
+  const created = await api("documents", {
+    storyId: "story",
+    format: "carousel",
+    expectedRevision: 2,
+    generationId: "gen",
+    expectedBrandRevision: brandRevision(controlled.brandProfile),
+    idempotencyKey: "http_native_create",
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.data));
+  const id = created.data.id;
+  assert.equal(created.data.document.pages.length, 4);
+  assert.equal("documentRef" in created.data, false);
+  assert.equal(
+    (await api(`documents/${id}`, undefined, "brand_vedic")).status,
+    404,
+  );
+  assert.equal(
+    (await api(`documents/${id}`, undefined, "brand_default", false)).status,
+    401,
+  );
+  const document = created.data.document;
+  document.pages[2].objects.find(
+    (object) => object.id === "headline_layer",
+  ).text = "HTTP native proposal";
+  const input = {
+    document,
+    title: "Real HTTP proposal",
+    expectedRevision: 1,
+    idempotencyKey: "http_native_save_1",
+  };
+  const saved = await api(`documents/${id}`, input);
+  assert.equal(saved.status, 200);
+  assert.equal(saved.data.revision, 2);
+  assert.equal((await api(`documents/${id}`, input)).data.revision, 2);
+  assert.equal(
+    (
+      await api(`documents/${id}`, {
+        ...input,
+        idempotencyKey: "http_stale_save_2",
+      })
+    ).status,
+    409,
+  );
+  assert.equal(
+    (await api(`documents/${id}`)).data.document.pages[2].objects.find(
+      (object) => object.id === "headline_layer",
+    ).text,
+    "HTTP native proposal",
+  );
+  assert.deepEqual(
+    (await container.ports.repo.read()).backlog,
+    controlled.backlog,
+  );
+  const sharp = (await import("sharp")).default;
+  const png = await sharp({
+    create: { width: 32, height: 40, channels: 4, background: "#123456" },
+  })
+    .png()
+    .toBuffer();
+  const upload = {
+    name: "Procedural fixture.png",
+    contentType: "image/png",
+    base64: png.toString("base64"),
+    rightsDeclaration: "Procedural test image created for this fixture.",
+    consent: "not_personal_data",
+    idempotencyKey: "http_native_upload",
+  };
+  const uploaded = await api("assets", upload);
+  assert.equal(uploaded.status, 201, JSON.stringify(uploaded.data));
+  assert.equal((await api("assets", upload)).data.id, uploaded.data.id);
+  assert.equal(
+    (await api("assets", { ...upload, name: "Different input" })).status,
+    409,
+  );
+  const image = await api(`assets/${uploaded.data.id}`);
+  assert.equal(image.data.base64, png.toString("base64"));
+  assert.equal(image.data.width, 32);
+  assert.equal(
+    (await api(`assets/${uploaded.data.id}`, undefined, "brand_vedic")).status,
+    404,
+  );
+  assert.equal(
+    (await api(`assets/${uploaded.data.id}`, undefined, "brand_default", false))
+      .status,
+    401,
+  );
+  document.pages[0].objects.push({
+    id: "owned_image",
+    type: "image",
+    assetId: uploaded.data.id,
+    src: `studio-asset:${uploaded.data.id}`,
+    width: 32,
+    height: 40,
+    left: 10,
+    top: 10,
+  });
+  const imageSave = await api(`documents/${id}`, {
+    document,
+    title: "Private image native proposal",
+    expectedRevision: 2,
+    idempotencyKey: "http_native_image_save",
+  });
+  assert.equal(imageSave.status, 200, JSON.stringify(imageSave.data));
+  assert.equal(imageSave.data.revision, 3);
+  assert.equal(
+    (await api(`documents/${id}`)).data.document.pages[0].objects.at(-1)
+      .assetId,
+    uploaded.data.id,
+  );
+  const badImage = await api("assets", {
+    ...upload,
+    base64: Buffer.from("not an image").toString("base64"),
+    idempotencyKey: "http_bad_image_upload",
+  });
+  assert.equal(badImage.status, 422);
+  assert.equal((await api("fonts")).data.results.length, 4);
+});

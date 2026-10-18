@@ -1,3 +1,5 @@
+import { NativeEditorService } from "./native-editor.js";
+import { nativeFontRegistry } from "./native-editor-fonts.js";
 import { EditorBoundary, validateEditorTargets } from "./editor-boundary.js";
 import { DurableJobService } from "./operator-jobs.js";
 import { WorkspaceService } from "./workspace.js";
@@ -41,6 +43,13 @@ export function createPlatform({
       identity: platform.identity,
       scope,
       repo,
+    });
+  platform.nativeEditor = (scope, repo) =>
+    new NativeEditorService({
+      repo,
+      identity: platform.identity,
+      scope,
+      availableFonts: nativeFontRegistry(),
     });
   const initialize = async (activeStore) => {
     platform.store = activeStore;
