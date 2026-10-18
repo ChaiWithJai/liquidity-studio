@@ -189,6 +189,7 @@ export class DurableJobService {
       });
       state.operatorJobs.push({
         id,
+        schemaVersion: 1,
         actorId: user.id,
         idempotencyKey: input.idempotencyKey,
         requestHash,
@@ -231,6 +232,8 @@ export class DurableJobService {
     const state = await this.repo.mutate((state) => {
       const job = state.operatorJobs?.find((job) => job.id === id);
       if (!job) throw fail(404, "Job not found");
+      if (job.schemaVersion !== 1)
+        throw fail(409, "Unsupported job schema version");
       if (job.actorId !== user.id && user.role !== "founder")
         throw fail(403, "Only the job owner or founder can control this plan");
       const prior = job.controls.find(
@@ -244,6 +247,8 @@ export class DurableJobService {
       if (job.controls.length >= 50)
         throw fail(409, "Job control limit reached");
       if (action === "cancel") {
+        if (job.items.every((item) => item.state === "completed"))
+          throw fail(409, "Completed work cannot be cancelled");
         job.cancelled = true;
         for (const item of job.items)
           if (
@@ -251,6 +256,10 @@ export class DurableJobService {
             item.state === "paused" ||
             item.state === "running"
           ) {
+            if (item.state === "running") {
+              item.attempts.at(-1).state = "cancelled";
+              item.attempts.at(-1).providerBillingMayBeUnknown = true;
+            }
             item.state = "cancelled";
             item.fence++;
             delete item.lease;
@@ -304,6 +313,7 @@ export class DurableJobService {
     await this.repo.mutate((state) => {
       claimed = null;
       for (const job of state.operatorJobs || []) {
+        if (job.schemaVersion !== 1) continue;
         if (
           (jobId && job.id !== jobId) ||
           (deliveryEpoch && job.deliveryEpoch !== deliveryEpoch)
@@ -480,6 +490,16 @@ export class DurableJobService {
         const liveJob = state.operatorJobs?.find((row) => row.id === job.id),
           live = liveJob?.items.find((row) => row.id === item.id);
         if (!live) return state;
+        const attempt = live.attempts.find(
+          (attempt) => attempt.id === item.attempts.at(-1).id,
+        );
+        if (attempt && prepared)
+          attempt.providerOutcome = {
+            traceId: prepared.trace.traceId,
+            mode: prepared.campaign.provenance?.mode || "unknown",
+            usage: prepared.trace.usage || null,
+            committed: false,
+          };
         if (live.state === "running" && live.fence === item.fence) {
           live.state =
             error.code === "PROVIDER_TIMEOUT"
