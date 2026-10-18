@@ -7,7 +7,9 @@ cd liquidity-studio
 npm run dev:studio
 ```
 
-Open the printed `http://127.0.0.1:3002/__dev` address and choose a persona. A fresh profile grants Founder both default brands and Marketer Chai With Jai only. Later founder changes to users, brands, organizations, and grants remain authoritative and survive restart. The picker creates an ordinary existing password session; application and backend membership checks still apply. Passwords and session values are never displayed. This entrypoint requires the project's existing Node 22 and installed development dependencies. It does not install dependencies or build a distribution. The API and Vite share one child with a 384 MiB V8 old-space limit. This is not an RSS or browser memory cap; no renderer or inference runs concurrently.
+Open the printed `http://127.0.0.1:3002/__dev` address and choose a persona. A fresh profile grants Founder both default brands and Marketer Chai With Jai only. Later founder changes to users, brands, organizations, and grants remain authoritative and survive restart. The picker creates an ordinary existing password session; application and backend membership checks still apply. Passwords and session values are never displayed. This entrypoint requires the project's existing Node 22 and installed development dependencies. It does not install dependencies or build a distribution. The API and Vite share one child with a 384 MiB V8 old-space limit. This is not an RSS or browser memory cap. The launcher starts no media renderer or inference process.
+
+`npm run dev` uses this same full-stack launcher. The previous UI-only Vite command is available as `npm run dev:ui` when a separate API is intentionally provided.
 
 Select another isolated profile from the CLI:
 
