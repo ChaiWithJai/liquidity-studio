@@ -248,7 +248,9 @@ export function validatePreparedCandidate(candidate, evidence) {
     throw fail(422, "Invalid candidate evidence shape");
   const excerpts = excerptsFor(evidence);
   if (!excerpts.length) throw fail(422, "Candidate source excerpts required");
-  const projection = version === 2 ? candidateArtworkV2(excerpts) : {artwork:candidateArtwork(excerpts)};
+  let projection;
+  try { projection = version === 2 ? candidateArtworkV2(excerpts) : {artwork:candidateArtwork(excerpts)}; }
+  catch { throw fail(422, "Candidate source prefixes cannot fit the declared projection"); }
   if ((version === 1 && candidate.sourceFieldMappings !== undefined) ||
       (version === 2 && !isDeepStrictEqual(candidate.sourceFieldMappings, projection.sourceFieldMappings)))
     throw fail(422, "Candidate source field mappings must preserve exact source prefixes");
