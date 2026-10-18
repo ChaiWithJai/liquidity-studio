@@ -55,3 +55,6 @@ node scripts/investigations/cutout-portrait/run.mjs \
 ```
 
 Use `--kind=modnet` with the exact fp32 asset for the comparison. The harness exercises the **existing generic host processor**, not the reference-correct MODNet processor. Native EditorApp upload/replace/undo/canvas save integration remains separate acceptance; the cutout hook remains disabled.
+
+
+The exact input PNG is about 1.1 MB and the worker's cutout PNG about 730 KB. Both exceed the separate gated Studio native host's 512 KiB raster-asset upload cap. This engine fixture therefore does not prove that those bytes can be uploaded or replaced through the native API. Integration needs an explicit reviewed output-size policy, such as an operator-chosen bounded resize, while preserving the original asset and reporting failure before replacement. No silent resolution change or cap increase is implemented here.
