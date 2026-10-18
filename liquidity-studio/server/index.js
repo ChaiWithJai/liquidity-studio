@@ -208,6 +208,7 @@ export function createHttpServer(
     penpotEnabled = process.env.STUDIO_PENPOT_ENABLED === "true",
     developmentPenpotStoryDesigns = null,
     nativePairing = null,
+    nativeAccess = null,
     editorContractEnabled = process.env.STUDIO_EDITOR_CONTRACT_ENABLED ===
       "true",
   } = {},
@@ -279,6 +280,14 @@ export function createHttpServer(
         throw fail(400, "Invalid path");
       const url = new URL(req.url, "http://localhost");
       const route = url.pathname;
+      if (["/api/native/penpot/access/admission", "/api/native/penpot/access/reconciliation"].includes(route)) {
+        if (!nativeAccess || trustedTestMode || req.method !== "POST" || url.search) throw fail(404, "Not found");
+        const input = await readBody(req, 4096, 1000);
+        const key = req.headers["x-studio-native-grant-key"];
+        return json(200, route.endsWith("/admission")
+          ? await nativeAccess.admission(key, input)
+          : await nativeAccess.reconciliation(key, input));
+      }
       if (["/api/native/penpot/pairing/proof", "/api/native/penpot/pairing/challenge"].includes(route)) {
         if (!nativePairing || trustedTestMode || req.method !== "POST") throw fail(404, "Not found");
         const proof = await readBody(req, 4096, 4000);
