@@ -30,3 +30,9 @@ The root operator used the real browser at the isolated preview: created a local
 | Post-reload two-page SVG ZIP | Archive SHA256 `8f0fde1c1c0bd8b605c82a7f57e1d207c4f7815afbaa1d51c24ffd3ca3d02c48`; exactly two SVG entries, each 1080×1350. Page 1 retains `SOURCE NOTES` and the identical single-SVG hash above. Page 2 retains `PAGE TWO`, SHA256 `cee768b7a4e3dcb647d733c393ee5078d8325c475e88b72380b3696d7c6698f7`. |
 
 These are actual PNG/SVG downloads from Doory's guest frontend. SVG text remains SVG text in these artifacts, but no claim is made that Studio, Penpot or a separate Doory browser can import them into equivalent editable native objects. No export latency was measured. See the [license and model ledger](39-licenses-models-and-references.md) before selecting dependencies or redistributing models.
+
+## Actual MP4 decoding
+
+The operator selected Share → Video/GIF, default MP4, design dimensions 1080×1350, 30fps, all two pages at the default five seconds each, then downloaded the completed video. Independent `ffprobe` identified **H.264 video, 1080×1350, 30fps, 300 frames, 10.000 seconds, 66,078 bytes and no audio stream**. SHA256: `a3dce7aa9a0a56ab569192c3253ff57023cac31190e88cd5f35c1317abe7b78d`.
+
+`ffmpeg` decoded actual frames 0 and 180 (six seconds). Visual inspection of those decoded PNGs shows `SOURCE NOTES` first and `PAGE TWO` later; their different SHA256 values are `f8946a48c9701eaa2481deb1c640f6ad2809850eaf680aa14c39691c2c483d82` and `72fd1c5827b1bc0d8ed4e04045c3c69ad243f20db6d59851130462a87a38e627`. This establishes a real two-page static-text MP4 export, beyond a filename or ready-state UI. It does **not** establish the requested three-beat 30-second 9:16 reel, motion animation, sound, WebM/GIF encoding, background removal, Penpot interoperability or Studio integration. Encoding latency was not measured. Issue 39 remains open.
