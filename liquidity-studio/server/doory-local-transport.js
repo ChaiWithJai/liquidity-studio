@@ -48,10 +48,13 @@ export function validateDooryDocument(doc) {
       throw fail(422, "Unsupported native page");
     const ids = new Set();
     for (const object of page.objects) {
+      if (object.isPlaceholder !== undefined && typeof object.isPlaceholder !== "boolean")
+        throw fail(422, "Invalid native placeholder marker");
       exact(object, [
         "id",
         "type",
         "name",
+        "isPlaceholder",
         "text",
         "originX",
         "originY",
