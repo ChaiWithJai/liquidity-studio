@@ -394,7 +394,7 @@ export class NativeEditorService {
         const { origin, ...receiptSnapshot } = record;
         snapshot = receiptSnapshot;
         return { ...record, receipts: [{ ...intent, snapshot }] };
-      }, native.manifest);
+      }, origin);
       retained =
         saved.documentRef.key === documentRef.key &&
         saved.documentRef.artifact?.object === documentRef.artifact?.object;

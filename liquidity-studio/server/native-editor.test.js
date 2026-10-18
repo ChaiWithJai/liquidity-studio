@@ -7,6 +7,8 @@ import {
 import { BRAND_PRESETS } from "./domain.js";
 import { campaignFromApprovedClaims } from "./source-integrity.js";
 import { brandRevision } from "./multimodal-contract.js";
+import {DurableStore} from './storage.js';
+import {ScopedRepository} from './repository.js';
 
 function fixture(preset = "liquidity_desk") {
   const actor = { id: "operator" };
@@ -472,4 +474,24 @@ test("planning metadata preserves content-bound proposals while legacy origins r
   assert.equal(saved.revision,2);assert.equal(saved.origin.storyRevision,2);assert.equal(saved.origin.sourceContentRevision,1);
   f.state().backlog[0].contentRevision=2;
   assert.equal((await f.service.read(f.actor,native.id)).sourceState,"changed");
+});
+
+test('atomic native creation uses the content epoch when a calendar edit races its commit',async()=>{
+ const f=fixture(),store=new DurableStore(':memory:'),scope={organizationId:'org',brandId:'brand',preset:'liquidity_desk'};
+ const repo=new ScopedRepository(store,scope);
+ try{
+  await repo.ready;await repo.mutate(state=>({...state,...structuredClone(f.state())}));
+  const service=new NativeEditorService({repo,scope,identity:f.service.identity,availableFonts:f.service.availableFonts});
+  const transact=store.transact.bind(store);let moved=false;
+  store.transact=async(keys,callback)=>{
+   if(!moved&&keys.some(key=>key.startsWith(service.prefix+'document:'))){
+    moved=true;await repo.updateStory('story',story=>{story.status='Scheduled';story.scheduledDay='Tuesday';});
+   }
+   return transact(keys,callback);
+  };
+  const result=await service.create(f.actor,{storyId:'story',format:'story',expectedRevision:2,generationId:'gen',expectedBrandRevision:brandRevision(f.state().brandProfile),idempotencyKey:'create_racing_calendar_metadata'});
+  assert.equal(moved,true);assert.equal(result.origin.sourceContentRevision,1);
+  assert.equal((await service.read(f.actor,result.id)).sourceState,'current');
+  assert.equal((await repo.read()).backlog[0].revision,3);
+ }finally{store.close();}
 });
