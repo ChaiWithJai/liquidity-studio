@@ -40,3 +40,5 @@ Versioned after-change frames use new controlled fixtures. They are not pixel co
 - Independent reviewers reproduced the pre-fix dirty editor, stale filtered count and drawer metadata overwrite failures, then verified their focused probes against the fixes. The final export integration test downloads and checks actual PNG bytes.
 
 The canonical integrated S06/S07 screenshots are included. S22/S23 original evidence remains linked by #67; supplementary C01–C06 and the direct-input regression journeys cover dated stacking, movement and undo. No claim of measured human action savings or a newly captured canonical S22/S23 is made in this slice.
+
+Follow-up: canonical S22/S23 were subsequently captured in [the version 2 calendar evidence](../issue-67/after-v2/README.md), with a separate controlled synthetic fixture and no production source changes.
