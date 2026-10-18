@@ -22,7 +22,7 @@
   import SourceReviewSummary from "./SourceReviewSummary.svelte";
   import { sourceReviewSummary, reviewSignature } from "./lib/source-review.js";
   import { createGoogleAuth } from "./lib/google-auth.js";
-  import { neutralBrandKit } from "./lib/neutral-brand-kit.js";
+  import { neutralBrandKit } from "../server/neutral-brand-kit.js";
   import "./studio.css";
 
   const supportedFonts = [
