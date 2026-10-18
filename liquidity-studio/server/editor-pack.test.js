@@ -644,7 +644,10 @@ test('completed signed-off PNG survives fresh-scope install as exact historical 
   await approval.transition(actor,native.id,{action:'restart',expectedRevision:4,expectedNativeRevision:3,idempotencyKey:'restart_after_completed_png'});
   assert.equal((await approval.read(actor,native.id)).exports,undefined);
   assert.equal((await f.store.get(`editor-export:organization:brand:events:${native.id}`)).events.length,1);
-  const pack=await f.service.export(actor);
+  let inlinePayloadReads=0;const read=f.store.get.bind(f.store);
+  f.store.get=key=>{if(key.startsWith('editor-export:organization:brand:bytes:'))inlinePayloadReads++;return read(key);};
+  const pack=await f.service.export(actor);f.store.get=read;
+  assert.equal(inlinePayloadReads,1,'immutable payload must be loaded only when its checked receipt is consumed');
   assert.equal(pack.schemaVersion,2);assert.equal(pack.documents.find(doc=>doc.metadata.id===native.id).finalExports.length,1);assert.deepEqual(pack.documents.find(doc=>doc.metadata.id===native.id).finalExports[0].receipt,receipt);
   assert.equal(JSON.stringify(pack).includes(envelope.signature),false);
   const target=await fixture(t,'liquidity_desk',true,'restored-final');
@@ -688,4 +691,30 @@ test('version 1 editor packs remain restorable without silently accepting versio
  const {sha256,...content}=legacy;legacy.sha256=jsonDigest(content);
  const target=await fixture(t,'liquidity_desk',true);await target.service.install(actor,legacy,input);
  assert.equal((await target.native.list(actor,{storyId:'story',format:'carousel'})).documents.length,1);
+});
+
+test('ejection stops before later scene hydration when file or encoded-byte budget is reached, without writes',async t=>{
+ const {createPackFileCollection,PACK_LIMITS}=await import('./editor-pack.js');
+ for(const mode of ['bytes','files']){
+  const f=await fixture(t),state=await f.repo.read();
+  const created=await f.native.create(actor,{storyId:'story',format:'infographic',expectedRevision:state.backlog[0].revision,generationId:'gen',expectedBrandRevision:brandRevision(state.brandProfile),idempotencyKey:`bounded_export_create_${mode}`});
+  const document=structuredClone(created.document);document.pages[0].objects.find(object=>object.id==='headline_layer').text='Second retained human scene';
+  await f.native.save(actor,created.id,{expectedRevision:1,title:created.title,document,idempotencyKey:`bounded_export_save_${mode}`});
+  const before=await Promise.all((await f.store.keys('')).map(async key=>[key,await f.store.get(key)]));
+  let hydrated=0;const hydrate=f.native.hydrate.bind(f.native);f.native.hydrate=async(...args)=>{hydrated++;return hydrate(...args);};
+  const service=new EditorPackService({native:f.native,createFiles:()=>createPackFileCollection({...PACK_LIMITS,...(mode==='bytes'?{bytes:220}:{files:1})})});
+  await assert.rejects(service.export(actor),{status:413});
+  assert.equal(hydrated,mode==='bytes'?1:2,'must stop before hydrating later snapshots/current/initial scenes');
+  assert.deepEqual(await Promise.all((await f.store.keys('')).map(async key=>[key,await f.store.get(key)])),before);
+ }
+});
+
+test('combined retained/live native history count is checked before any scene is hydrated',async t=>{
+ const f=await fixture(t),state=await f.repo.read();
+ const record=await f.native.create(actor,{storyId:'story',format:'infographic',expectedRevision:state.backlog[0].revision,generationId:'gen',expectedBrandRevision:brandRevision(state.brandProfile),idempotencyKey:'oversized_history_export_create'});
+ await f.store.update(f.native.key(record.id),value=>({...value,restoredHistory:Array.from({length:100},()=>({documentRef:value.documentRef,revision:1,title:value.title,updatedBy:actor.id,updatedAt:value.updatedAt}))}));
+ const before=await Promise.all((await f.store.keys('')).map(async key=>[key,await f.store.get(key)]));
+ let hydrated=0;const hydrate=f.native.hydrate.bind(f.native);f.native.hydrate=async(...args)=>{hydrated++;return hydrate(...args);};
+ await assert.rejects(f.service.export(actor),{status:413});assert.equal(hydrated,0);
+ assert.deepEqual(await Promise.all((await f.store.keys('')).map(async key=>[key,await f.store.get(key)])),before);
 });
