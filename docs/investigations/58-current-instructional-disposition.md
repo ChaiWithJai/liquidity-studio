@@ -2,6 +2,10 @@
 
 2026-10-18, merged main `e49dab5` (historical native continuation #133 and asset contexts #134 included). This addendum supersedes implementation-status observations in the [6937c53 snapshot](39-instructional-disposition.md), without rewriting that historical audit or removing either blueprint. Agent-operated product acceptance is not evidence of founder/marketer learning.
 
+## Current practice instructions
+
+The [content-work walkthrough](58-native-operator-practice.md#current-content-work-walkthrough) is updated for merged PR197/198/201: preview-first Studio, More actions, Preview settings, and explicit Create/Open Penpot versus the separate Studio native layout. Its local founder evidence is engineering QA, not learner competence or Nicole’s pending native access. The dated 70-item implementation ledger below remains intact; this instruction update does not close issue58 or its human practice requirements.
+
 ## Evidence index
 
 | Key | Bounded merged source/evidence |
