@@ -5,6 +5,7 @@
   import WorkspaceTable from "./WorkspaceTable.svelte";
   import WorkspaceCalendar from "./components/WorkspaceCalendar.svelte";
   import JobsPane from "./components/JobsPane.svelte";
+  import HelperControlPane from "./components/HelperControlPane.svelte";
   import { createWorkspaceClient } from "./lib/workspace-client.js";
   import { scopedRequest } from "./lib/scoped-request.js";
   import SourceReviewSummary from "./SourceReviewSummary.svelte";
@@ -59,6 +60,32 @@
   let brandProfile = $state(null);
   let workspaceClient = $state(null);
   let workspaceState = $state(null);
+  let helperControlEnabled = $state(false);
+  // One stable transport/callback pair for this authenticated canonical client.
+  let helperHost = $derived.by(() => {
+    const client = workspaceClient;
+    if (!client) return null;
+    return {
+      client,
+      request: (path, options) => {
+        if (workspaceClient !== client) return Promise.reject(Object.assign(new Error("Workspace changed"), {code:"REQUEST_CONTEXT_CHANGED"}));
+        return request(path, options);
+      },
+      onContentChanged: async ({storyIds = []}) => {
+        if (workspaceClient !== client) return;
+        await client.ensureStories(storyIds, {force:true});
+        // Its canonical subscription reconciles clean buffers or marks a dirty conflict.
+        // Never select/open a story or move focus from a background helper receipt.
+      },
+    };
+  });
+  $effect(() => {
+    const host = helperHost;
+    if (!host || !helperControlEnabled) return;
+    void host.client.loadMembers().catch(failure => {
+      if (workspaceClient === host.client && failure.code !== "REQUEST_CONTEXT_CHANGED") error = `Could not load current brand members: ${failure.message}`;
+    });
+  });
   let workspaceUnsubscribe;
   // Projection of one canonical entity map; editor fields are intentional transient buffers.
   let backlog = $derived(workspaceState ? [...workspaceState.entities.values()].filter(entry => entry.story?.revision === entry.revision).map(entry => entry.story) : []);
@@ -268,6 +295,7 @@
     requestSessionEpoch++;
     lastScopeToken++;
     scopeLoading = false;
+    helperControlEnabled = false;
     scopeLoadError = "";
     backlogViews.clear();
     activeBacklogScopeKey = "";
@@ -463,6 +491,7 @@
     scopeLoadError = "";
     const token = ++lastScopeToken;
     scopeLoading = true;
+    helperControlEnabled = false;
     disposeWorkspaceClient();
     brandProfile = null;
     reviewClaims = [];
@@ -479,6 +508,7 @@
     try {
       const data = await request("/api/studio/bootstrap");
       if (token !== lastScopeToken) return;
+      helperControlEnabled = data.operatorCapabilities?.helperControl === true;
       brandProfile = data.brandProfile;
       if (brandProfile) {
         brandProfile.fonts ||= { heading: "DejaVu Sans", body: "DejaVu Sans" };
@@ -1197,6 +1227,13 @@
                 >{item.name}<small>{item.ratio}</small></button
               >{/each}
           </div>
+          {#if helperControlEnabled && helperHost}
+            {#key helperHost.client}<details class="panel shared-helper-control" aria-label="Shared helper control">
+              <summary>Shared control · bounded proposals</summary>
+              <HelperControlPane request={helperHost.request} scopeKey={`${user.id}:${helperHost.client.scopeKey}`} actorId={user.id}
+                story={selectedStory} members={workspaceState?.members || []} onContentChanged={helperHost.onContentChanged} />
+            </details>{/key}
+          {/if}
           {#if campaign}<div class="studio-grid">
               <section class="editor-panel workflow-target" id="workflow-editor" aria-label="Campaign wording" tabindex="-1">
                 <div class="panel-heading">
