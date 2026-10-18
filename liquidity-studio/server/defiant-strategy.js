@@ -1,3 +1,4 @@
+import {createDraftDestination,handoffReport} from './defiant-draft-handoff.js';
 import {createHash} from 'node:crypto';
 import {fail} from './auth.js';
 import {exact as planningExact,annotationRecord,viewRecord,reportRecord,clusterRecord} from './defiant-strategy-notes.js';
@@ -46,6 +47,8 @@ export class DefiantStrategyService {
  combine(state,incoming){
   const before=dataOf(state),result={};for(const name of Object.keys(before)){const seen=new Map(before[name].map(row=>[row.id,row]));for(const row of incoming[name]){const old=seen.get(row.id);if(old&&hash(old)!==hash(row))throw fail(409,`Existing ${name} record changed; preserve its saved interpretation`);if(!old)seen.set(row.id,row);}result[name]=[...seen.values()];}return result;
  }
+ async createDestination(actor,input){return createDraftDestination(this,actor,input);}
+ async handoff(actor,reportId,input){return handoffReport(this,actor,reportId,input);}
  async saveCluster(actor,input){
   planningExact(input,['expectedRevision','idempotencyKey','cluster']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'cluster',input});let result;
   await this.store.transact(['identity',this.key],([identity,state])=>{
