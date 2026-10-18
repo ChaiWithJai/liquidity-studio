@@ -1,6 +1,6 @@
 # Native editor identity and tenant access: Phase 2 plan
 
-Status: proposed for human review, updated 2026-10-18. Planning only; no implementation, identity migration, native authentication, service start or build is authorized by this plan. Module: `identity-tenant-access`. Tracker: [issue 52](https://github.com/ChaiWithJai/liquidity-studio/issues/52).
+Status: human-approved for implementation, 2026-10-18. The human approved the revised plan and explicitly authorized its issue-backed task breakdown and implementation without further planning approvals. Implementation and actual acceptance are tracked in [issue 52](https://github.com/ChaiWithJai/liquidity-studio/issues/52); approval does not establish completed native access. Module: `identity-tenant-access`.
 
 The human-approved [specification](../../../specs/identity-tenant-access-native-editor.md) is unchanged. The [boundary audit](../../../../liquidity-studio/docs/investigations/52-native-command-boundary-audit.md) distinguishes native APIs from missing hooks. Current Studio baseline is PR201 merge `0f1c21d`, including the customer Create/Open flow from PR197 and the task/preview improvements from PR198/201. Native Penpot remains 2.18.3 at `ff7a66f51938b2293260ea27a64e2c4e0833b5e3`. Preserve the separate Issue56 tasks and Doory distribution hold.
 
@@ -14,7 +14,7 @@ Delivery order: scoped CWJ connection and preservation → complete governed CWJ
 
 ### Proposed implementation units
 
-These are ordered planning units, not authorized tasks. After human plan approval, record their acceptance and verification in issue52. Keep each unit to roughly three to five implementation files; split a native patch by its actual hook if it exceeds that scope. Each unit uses the hosted checks and actual Neo behavior below, rather than a separate test strategy.
+These ordered units are authorized by the human review and recorded as tasks in issue52. Keep each unit to roughly three to five implementation files; split a native patch by its actual hook if it exceeds that scope. Each unit uses the hosted checks and actual Neo behavior below, rather than a separate test strategy.
 
 | Unit | Visible outcome / acceptance | Likely files and dependency |
 | --- | --- | --- |
@@ -76,4 +76,4 @@ Hosted verification uses the existing exact-head workflows (`node --test server/
 
 Actual Neo acceptance follows the visible connect/Create/Open/edit/save/reopen path and original foreign/revoke/expiry/share criteria using disposable grants. Never disable managed accounts for QA. Retain source/native patch hashes, preservation references and honest limits. On rollback, deny/pending activation first, then restore reviewed mappings/configuration without reviving revoked epochs or deleting originals/dirty work. Previously downloaded bytes cannot be recalled.
 
-Phase2 ends with human review of this revised plan. Addy's PLAN → TASKS → IMPLEMENT separation remains in force. No gated native-authority implementation is authorized yet. After approval, track the reviewed slices in issue52 without overwriting Issue56 tasks.
+The human completed Phase2 review and authorized proceeding through the issue-backed tasks without another planning approval. Track C1–C5 in issue52 without overwriting Issue56 tasks. Preserve the approved defaults, independent source review, existing hosted checks and actual Neo acceptance; no connection or implementation-only checkpoint grants editing authority or closes the issue.

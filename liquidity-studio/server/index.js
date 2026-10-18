@@ -15,7 +15,7 @@ import { revision as workspaceRevision } from "./workspace-schema.js";
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { verifySchedulerIdentity, schedulerScope } from "./scheduler-auth.js";
 import { createPlatform } from "./platform.js";
@@ -207,6 +207,7 @@ export function createHttpServer(
     nativeEditorEnabled = process.env.STUDIO_NATIVE_EDITOR_ENABLED === "true",
     penpotEnabled = process.env.STUDIO_PENPOT_ENABLED === "true",
     developmentPenpotStoryDesigns = null,
+    nativePairing = null,
     editorContractEnabled = process.env.STUDIO_EDITOR_CONTRACT_ENABLED ===
       "true",
   } = {},
@@ -278,6 +279,14 @@ export function createHttpServer(
         throw fail(400, "Invalid path");
       const url = new URL(req.url, "http://localhost");
       const route = url.pathname;
+      if (["/api/native/penpot/pairing/proof", "/api/native/penpot/pairing/challenge"].includes(route)) {
+        if (!nativePairing || trustedTestMode || req.method !== "POST") throw fail(404, "Not found");
+        const proof = await readBody(req, 4096, 4000);
+        const key = req.headers["x-studio-native-pairing-key"];
+        return json(200, route.endsWith("/proof")
+          ? await nativePairing.receiveProof(key, proof)
+          : await nativePairing.describeChallenge(key, proof));
+      }
       if (req.method === "GET" && ["/healthz", "/api/live"].includes(route))
         return json(200, { status: "alive" });
       if (req.method === "GET" && ["/readyz", "/api/ready"].includes(route)) {
@@ -833,6 +842,24 @@ export function createHttpServer(
               req.headers["x-organization-id"],
             url.searchParams.get("brandId") || req.headers["x-brand-id"],
           );
+      if (route.startsWith("/api/studio/penpot/access")) {
+        if (!nativePairing || trustedTestMode) throw fail(404, "Native connection is not configured");
+        const credential = token(req, identity.mode);
+        const context = createHash("sha256").update(credential).digest("hex");
+        if (route === "/api/studio/penpot/access" && req.method === "GET")
+          return json(200, await nativePairing.status(user, scope, context));
+        if (req.method === "POST") {
+          if (route === "/api/studio/penpot/access/challenges") {
+            workspaceExact(body, []);
+            return json(201, await nativePairing.issue(user, scope, context));
+          }
+          if (route === "/api/studio/penpot/access/complete")
+            return json(200, await nativePairing.complete(user, scope, context, body));
+          if (route === "/api/studio/penpot/access/disconnect")
+            return json(200, await nativePairing.disconnect(user, scope, context, body));
+        }
+        throw fail(404, "Not found");
+      }
       activeContainer = trustedTestMode
         ? appContainer
         : await platform.forScope(scope);
@@ -1345,6 +1372,7 @@ export function createHttpServer(
               process.env.STUDIO_NATIVE_PORTABLE_ENABLED === "true",
             penpot: penpotEnabled && !trustedTestMode && !process.env.K_SERVICE,
             penpotStoryDesigns: Boolean(developmentPenpotStoryDesigns) && user.role === "founder",
+            penpotPairing: Boolean(nativePairing) && !trustedTestMode,
             sourcePreparation:
               process.env.STUDIO_SOURCE_PREPARATION_ENABLED === "true" &&
               process.env.STUDIO_OPERATOR_JOBS_ENABLED === "true" &&
