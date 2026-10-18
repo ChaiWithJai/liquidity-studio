@@ -1,0 +1,18 @@
+{
+  "upstream": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "introducedUpstreamCommit": "011feeaf7175837167481b187f0ece924e8d5a07",
+  "files": {
+    "frontend/src/app/main/data/workspace/thumbnails.cljs": {
+      "beforeSha256": "f878a5ea4ba26af748fbf5ea0a4c2b6d19948fbe8de93d26d59ab7fb448cf628",
+      "afterSha256": "2f32e636249111f34954392ce0fb96107ac27c0e9f594f149e1118713a659448"
+    },
+    "frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs": {
+      "beforeSha256": "6fcef378ed0adb5c48ffe1bfc366c0c2b2bbd1650408d0d51168e8e1faf9b657",
+      "afterSha256": "64a136ae7402ae63131250c734cd553e50b82d9987d242d08d21e922e97f5182"
+    }
+  },
+  "patches": {
+    "thumbnails-test.patch": "80272226a16da41f81a6d0a5a31bdd0d890d2dc00a03875781d2f95d2d22e1e0",
+    "thumbnails.patch": "4ca8f996516780dd9c1af84cf4924cd400fb598d554bdd4adb03e258c4a120b2"
+  }
+}

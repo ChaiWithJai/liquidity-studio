@@ -1,0 +1,36 @@
+--- a/frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs
++++ b/frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs
+@@ -309,3 +309,33 @@
+                   (fn [err] (t/is (nil? err)) (done'))
+                   nil))))
+         done))))
++
++(t/deftest page-entry-clears-cached-text-bitmap-before-refresh-without-changing-content
++  (t/async
++    done
++    (let [file-id (uuid/next) page-id (uuid/next) frame-id (uuid/next)
++          text-id (uuid/next) other-id (uuid/next)
++          object-id (thc/fmt-object-id file-id page-id frame-id "frame")
++          other-object-id (thc/fmt-object-id file-id page-id other-id "frame")
++          content {:type "root" :children [{:text "Retained shared wording"}]}
++          state {:files {file-id {:data {:pages-index {page-id {:objects
++                    {frame-id {:id frame-id :type :frame :frame-id uuid/zero :shapes [text-id]}
++                     text-id {:id text-id :type :text :frame-id frame-id :parent-id frame-id :content content}
++                     other-id {:id other-id :type :frame :frame-id uuid/zero :shapes []}}}}}}}
++                 :thumbnails {object-id {:uri "https://native.example/assets/stale"}
++                              other-object-id {:uri "https://native.example/assets/unchanged"}}}]
++      (->> (#'thumbnails/heal-stale-text-thumbnails state file-id page-id)
++           (rx/reduce conj [])
++           (rx/subs!
++            (fn [events]
++              (t/is (= [:app.main.data.workspace.thumbnails/clear-thumbnail
++                        :app.main.data.workspace.thumbnails/update-thumbnail]
++                       (mapv ptk/type events)))
++              (t/is (= [object-id object-id] (mapv deref events)))
++              (let [cleared (ptk/update (first events) state)]
++                (t/is (nil? (get-in cleared [:thumbnails object-id])))
++                (t/is (= (get-in state [:thumbnails other-object-id])
++                         (get-in cleared [:thumbnails other-object-id])))
++                (t/is (= (:files state) (:files cleared)))))
++            (fn [error] (t/is (nil? error)) (done))
++            (fn [_] (done)))))))
