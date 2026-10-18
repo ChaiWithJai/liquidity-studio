@@ -64,3 +64,15 @@ test('report preserves observation and rights sources plus explicitly selected n
  assert.deepEqual(edited.annotations,[annotation]);assert.deepEqual(edited.annotationEvidence,report.annotationEvidence);assert.deepEqual(edited.history[0].annotations,[annotation]);
  const refreshed=(await f.service.refreshReport(f.actor,report.id,f.command({expectedReportRevision:2,planIds:report.planIds,annotationIds:[annotation.id]}))).report;assert.equal(refreshed.annotations[0].text,'Later outside note');assert.deepEqual(refreshed.history[1].annotations,[annotation]);
 });
+
+test('ACK aggregate revision chains across record kinds while record revisions stay nested',async t=>{
+ const f=await fixture(t),initial=(await f.service.read(f.actor)).revision;
+ const annotation=await f.service.annotate(f.actor,{expectedRevision:initial,idempotencyKey:randomUUID(),annotation:note('Use this acknowledged revision')});
+ assert.equal(annotation.revision,initial+1);assert.equal(annotation.annotation.revision,1);
+ const view=await f.service.saveView(f.actor,{expectedRevision:annotation.revision,idempotencyKey:randomUUID(),view:{name:'Acknowledged view',planIds:['yt_sig_lagos_01']}});
+ assert.equal(view.revision,annotation.revision+1);assert.equal(view.view.revision,1);
+ const report=await f.service.saveReport(f.actor,{expectedRevision:view.revision,idempotencyKey:randomUUID(),report:{title:'Chained report',thesis:'',planIds:['yt_sig_lagos_01'],viewId:view.view.id}});
+ assert.equal(report.revision,view.revision+1);assert.equal(report.report.revision,1);
+ const refreshed=await f.service.refreshReport(f.actor,report.report.id,{expectedRevision:report.revision,idempotencyKey:randomUUID(),expectedReportRevision:report.report.revision,planIds:report.report.planIds});
+ assert.equal(refreshed.revision,report.revision+1);assert.equal(refreshed.report.revision,2);assert.equal((await f.service.read(f.actor)).revision,refreshed.revision);
+});
