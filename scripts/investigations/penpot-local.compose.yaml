@@ -10,7 +10,7 @@ services:
     image: penpotapp/frontend@sha256:bb8abe27d53de84c95597f2c02c0e702b2779971fb0703e543f9ecf183e999f6
     platform: linux/arm64
     ports: ["127.0.0.1:39008:8080"]
-    mem_limit: 128m
+    mem_limit: 384m
     cpus: 0.25
     environment:
       <<: *common
