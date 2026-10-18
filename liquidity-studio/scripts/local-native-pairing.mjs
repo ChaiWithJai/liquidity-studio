@@ -9,12 +9,13 @@ export function loadNativePairingConfiguration(filename) {
     throw Error('Native pairing configuration must be a private regular file');
   const value = JSON.parse(fs.readFileSync(filename, 'utf8'));
   const keys = ['schemaVersion', 'nativeInstanceId', 'nativeOrigin', 'studioOrigin', 'pairingKey', 'gatewayKey'];
-  if (Object.keys(value).sort().join(',') !== keys.sort().join(',') || value.schemaVersion !== 1 ||
+  if ((keys.some(key => !Object.hasOwn(value,key)) || Object.keys(value).some(key => ![...keys,'grantKey'].includes(key))) || value.schemaVersion !== 1 ||
       !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value.nativeInstanceId || '') ||
       value.nativeOrigin !== 'http://localhost:39008' ||
       !/^[A-Za-z0-9_-]{43}$/.test(value.pairingKey || '') ||
       !/^[a-f0-9]{64}$/.test(value.gatewayKey || '') ||
-      value.pairingKey === value.gatewayKey)
+      value.pairingKey === value.gatewayKey ||
+      (Object.hasOwn(value,'grantKey') && (!/^[A-Za-z0-9_-]{43}$/.test(value.grantKey || '') || value.grantKey === value.pairingKey)))
     throw Error('Exact native pairing configuration required');
   const studio = new URL(value.studioOrigin);
   if (studio.protocol !== 'http:' || studio.hostname !== '127.0.0.1' ||
