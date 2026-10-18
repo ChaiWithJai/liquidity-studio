@@ -69,7 +69,7 @@ try {
   }
   if(url.pathname.startsWith('/__dev'))throw Object.assign(Error('Not found'),{status:404});
   if(nativeAssets?.has(url.pathname)){const actor=await platform.identity.authenticate(req.headers.cookie.slice('studio_session='.length));if(!actor)throw Object.assign(Error('Sign in to use the local image editor'),{status:401});if(nativeAssets.serve(req,res,url.pathname))return;}
-  if(url.pathname==='/native-editor-frame.html'||url.pathname==='/native-editor-license.txt')throw Object.assign(Error('Matching private native assets are not configured'),{status:404});
+  if(url.pathname==='/native-editor-frame.html'||url.pathname==='/native-editor-license.txt'||url.pathname==='/studio-native-assets.json')throw Object.assign(Error('Matching private native assets are not configured'),{status:404});
   if(url.pathname==='/api'||url.pathname.startsWith('/api/')||['/readyz','/healthz'].includes(url.pathname))return api.emit('request',req,res);
   vite.middlewares(req,res,()=>{res.statusCode=404;res.end('Not found');});
  }catch(error){if(!res.headersSent){res.statusCode=error.status||500;res.end(error.status?error.message:'Local developer request failed');}else res.destroy();}});
