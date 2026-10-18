@@ -13,7 +13,7 @@ export function projectPreparedHistory(entries, scope) {
   scanPortable(entries);
   const ids = new Set();
   return entries.map(entry => {
-    exact(entry, ['candidate','evidence','revision','workingArtwork','editorialStatus','edits','prePromotionSourceClaims','promotionReceipts','forkRequest','replacement','derivation','restoredHistorical']);
+    exact(entry, ['candidate','evidence','revision','workingArtwork','editorialStatus','edits','prePromotionSourceClaims','promotionReceipts','forkRequest','replacement','derivation','prePromotionCampaign','restoredHistorical']);
     const candidate = entry.candidate;
     exact(candidate, ['schemaVersion','id','organizationId','brandId','preset','storyId','contentRevision','inputFingerprint','brandRevision','jobId','itemId','attemptId','createdAt','excerpts','sourceSelection','artwork','provenance']);
     if (candidate.schemaVersion !== 1 || !candidate.id || ids.has(candidate.id) || !candidate.storyId ||
@@ -72,9 +72,13 @@ export function projectPreparedHistory(entries, scope) {
 }
 
 /** Retained entries are discoverable only for an explicit new current-generation fork. */
-export function restorePreparedHistory(history, {scope,packSha256}) {
+export function restorePreparedHistory(history, {scope,sourceScope,packSha256}) {
   if (!hash(packSha256)) throw fail(422, 'Restored preparation pack hash required');
+  if (!Array.isArray(history) || history.length > 30 || Buffer.byteLength(JSON.stringify(history)) > 192*1024) throw fail(413,'Prepared history limit');
   return history.map(item => {
+    exact(item,['schemaVersion','authority','sourceScope','originalCandidateId','storyId','candidate','evidence','revision','workingArtwork','editorialStatus']);
+    if (sourceScope && (item.candidate?.organizationId !== sourceScope.organizationId || item.candidate?.brandId !== sourceScope.brandId)) throw fail(422,'Foreign archived candidate scope');
+    if (item.storyId !== item.candidate?.storyId) throw fail(422,'Foreign archived story association');
     if (item.authority !== 'historical-only' || item.schemaVersion !== 1)
       throw fail(422, 'Prepared history must be non-authoritative');
     return {candidate:{...copy(item.candidate),...copy(scope),storyId:item.storyId,jobId:null,itemId:null,attemptId:null},

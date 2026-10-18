@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { fail } from "./auth.js";
 import { validateHostedDocument } from "./native-editor.js";
+import { projectPreparedHistory, restorePreparedHistory } from "./editor-pack-prepared.js";
 import { nativeFontCatalog } from "./native-editor-fonts.js";
-export const PACK_VERSION = 1;
+export const PACK_VERSION = 2;
 export const PACK_LIMITS = Object.freeze({
   bytes: 48 * 1024 * 1024,
   files: 1024,
@@ -123,8 +124,9 @@ export function validateEditorPack(input) {
     "fonts",
     "files",
     "sha256",
+    "preparedHistory",
   ]);
-  if (input.schemaVersion !== 1 || input.kind !== "studio-native-editor-pack")
+  if (![1,2].includes(input.schemaVersion) || input.kind !== "studio-native-editor-pack")
     throw fail(422, "Unsupported editor pack version");
   const { sha256, ...content } = input;
   if (sha256 !== jsonDigest(content))
@@ -158,6 +160,7 @@ export function validateEditorPack(input) {
         "license",
         "repository",
         "history",
+        "final-png",
       ].includes(file.kind)
     )
       throw fail(422, "Invalid editor pack file");
@@ -287,7 +290,7 @@ export function validateEditorPack(input) {
     }
   const ids = new Set();
   for (const doc of input.documents) {
-    exact(doc, ["metadata", "current", "initial", "history", "reviewHistory"]);
+    exact(doc, ["metadata", "current", "initial", "history", "reviewHistory", "finalExports"]);
     const m = doc.metadata;
     validatePortability(m?.portableHistory);
     exact(m, [
@@ -363,6 +366,20 @@ export function validateEditorPack(input) {
       validate(snapshot.document);
     }
     if (doc.reviewHistory !== null) json(doc.reviewHistory);
+    if (doc.finalExports !== undefined) {
+      if (input.schemaVersion < 2 || !Array.isArray(doc.finalExports) || doc.finalExports.length > 256)
+        throw fail(422, "Invalid historical final exports");
+      const events = new Set();
+      for (const item of doc.finalExports) {
+        exact(item, ["authority","receipt","nativeRevision","width","height","file"]);
+        exact(item.receipt, ["eventId","artifactId","nativeId","reviewRevision","sha256","size","mime","pageIndex","exportedAt","signedOffBy","completedBy"]);
+        if (item.authority !== "historical-only" || item.receipt.nativeId !== m.id || events.has(item.receipt.eventId) ||
+            item.file !== item.receipt.sha256 || bytes(item.file).length !== item.receipt.size ||
+            item.receipt.mime !== "image/png" || item.width !== 1080 || item.height !== (["story","reel"].includes(m.format)?1920:1350))
+          throw fail(422, "Invalid historical final export binding");
+        events.add(item.receipt.eventId);
+      }
+    }
   }
   for (const asset of input.assets)
     if (
@@ -387,6 +404,13 @@ export function validateEditorPack(input) {
       throw fail(422, "Unsupported font license or name");
     bytes(font.file);
     bytes(font.licenseFile);
+  }
+  if (input.preparedHistory !== undefined && input.preparedHistory !== null) {
+    if (input.schemaVersion < 2) throw fail(422, "Prepared history requires editor pack version 2");
+    const history = json(input.preparedHistory);
+    const restored = restorePreparedHistory(history,{scope:input.scope,sourceScope:input.scope,packSha256:input.sha256});
+    if (restored.some(entry=>!stories.has(entry.candidate.storyId))) throw fail(422,"Foreign prepared story association");
+    projectPreparedHistory(restored,input.scope);
   }
   if (used.size !== files.size)
     throw fail(422, "Unreferenced editor pack bytes");

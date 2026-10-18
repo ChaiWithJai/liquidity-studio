@@ -101,6 +101,22 @@ test("actual scoped HTTP ejection, explicit empty destination, owner remap and n
     idempotencyKey: "portable_http_creation",
   });
   const query = "organizationId=org_default&brandId=brand_default";
+  const nativeEndpoint = `/api/studio/native-editor/documents/${record.id}`;
+  let reviewRevision = 0;
+  for (const action of ["create","start","submit","approve"]) {
+    const response = await request(`${nativeEndpoint}/review?${query}`,{body:{action,expectedRevision:reviewRevision++,expectedNativeRevision:1,idempotencyKey:`http_pack_review_${action}_unique`}});
+    assert.equal(response.status,200,await response.clone().text());
+  }
+  const sharp=(await import("sharp")).default;
+  const finalPng=await sharp({create:{width:1080,height:1920,channels:3,background:"#f2a93b"}}).png().toBuffer();
+  const stageResponse=await request(`${nativeEndpoint}/exports?${query}`,{body:{expectedReviewRevision:4,expectedNativeRevision:1,pageIndex:0,base64:finalPng.toString("base64"),idempotencyKey:"http_pack_final_png_unique"}});
+  assert.equal(stageResponse.status,201,await stageResponse.clone().text());
+  const stage=await stageResponse.json();
+  const signoffResponse=await request(`${nativeEndpoint}/exports/${stage.artifactId}/signoff?${query}`,{body:{sha256:stage.sha256,reviewed:true}});
+  assert.equal(signoffResponse.status,200);const envelope=await signoffResponse.json();
+  const completeResponse=await request(`${nativeEndpoint}/exports/${stage.artifactId}/complete?${query}`,{body:envelope});
+  assert.equal(completeResponse.status,200,await completeResponse.clone().text());
+
   assert.equal(
     (await request(`/api/admin/editor-pack/export?${query}`, { cookie: "" }))
       .status,
@@ -223,7 +239,36 @@ test("actual scoped HTTP ejection, explicit empty destination, owner remap and n
   assert.equal(current.status, 200);
   const restored = await current.json();
   assert.deepEqual(restored.document, record.document);
-  assert.equal(restored.portableHistory.reviewHistory, null);
+  assert.equal(restored.portableHistory.reviewHistory.authority,"historical-only");
+  assert.equal(restored.restoredExports,undefined);
+  const historicalUrl=`${nativeEndpoint}/portable-exports/${stage.artifactId}?organizationId=org_default&brandId=${target.brandId}`;
+  const historical=await request(historicalUrl);
+  assert.equal(historical.status,200,await historical.clone().text());
+  assert.deepEqual(Buffer.from((await historical.json()).base64,"base64"),finalPng);
+  assert.equal((await request(historicalUrl,{cookie:""})).status,401);
+  assert.equal((await request(historicalUrl,{cookie:marketerCookie})).status,403);
+  assert.equal((await request(`${nativeEndpoint}/portable-exports/${stage.artifactId}?${query}`)).status,404);
+  assert.equal((await request(`${nativeEndpoint}/review?organizationId=org_default&brandId=${target.brandId}`)).status,200);
+  const currentReview=await (await request(`${nativeEndpoint}/review?organizationId=org_default&brandId=${target.brandId}`)).json();
+  assert.equal(currentReview,null);
+  const identityBefore = await store.get("identity"), originalGet = store.get.bind(store);
+  let enteredBytes,releaseBytes,heldBytes=false;
+  const bytesEntered=new Promise(resolve=>enteredBytes=resolve),bytesGate=new Promise(resolve=>releaseBytes=resolve);
+  store.get=key=>{
+    if(!heldBytes && key.startsWith(`native-editor:org_default:${target.brandId}:historical-export:`)) {
+      heldBytes=true;enteredBytes();return bytesGate.then(()=>originalGet(key));
+    }
+    return originalGet(key);
+  };
+  const pendingHistorical=request(historicalUrl);
+  try {
+    await bytesEntered;
+    await store.update("identity",current=>({...current,memberships:current.memberships.filter(member=>member.userId!==owner.id)}));
+    releaseBytes();assert.equal((await pendingHistorical).status,403);
+  } finally {
+    releaseBytes();store.get=originalGet;await store.update("identity",()=>identityBefore);
+  }
+
   const edited = structuredClone(restored.document);
   edited.pages[0].objects.find(
     (object) => object.id === "headline_layer",

@@ -240,7 +240,7 @@ export class NativeEditorService {
         throw fail(500, "Native payload integrity mismatch");
       document = payload.document;
     }
-    const { receipts, documentRef, initialDocumentRef, ...result } = {
+    const { receipts, documentRef, initialDocumentRef, restoredExports, ...result } = {
       ...record,
       ...snapshot,
     };
@@ -283,11 +283,11 @@ export class NativeEditorService {
     const value = await this.store.get(this.key(id));
     if (!value) throw fail(404, "Native document not found");
     const state = await this.repo.read();
-    let sourceState = "current";
+    let sourceState = value.origin.requiresSourceReview === true ? "historical" : "current";
     try {
       this.assertCurrent(state, value.origin);
     } catch (error) {
-      if ([409, 422].includes(error.status)) sourceState = "changed";
+      if ([409, 422].includes(error.status)) sourceState = value.origin.requiresSourceReview === true ? "historical" : "changed";
       else throw error;
     }
     return { ...(await this.publicRecord(actor, value)), sourceState };
@@ -309,6 +309,7 @@ export class NativeEditorService {
   }
   assertCurrent(state, origin) {
     assertRestoreAvailable(state);
+    if (origin.requiresSourceReview === true) throw fail(409,"Restored layout is historical; establish a new reviewed source binding before editing");
     const story = state.backlog.find((item) => item.id === origin.storyId);
     if (
       !story ||

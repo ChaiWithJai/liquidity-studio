@@ -821,6 +821,14 @@ export function createHttpServer(
               .editorApproval(scope, repo)
               .transition(user, reviewMatch[1], body),
           );
+        const portableExportMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/portable-exports(?:\/([a-f0-9]{64}))?$/);
+        if (portableExportMatch && req.method === "GET") {
+          if (process.env.STUDIO_NATIVE_PORTABLE_ENABLED !== "true") throw fail(404,"Not found");
+          const history = new EditorPackService({native:service});
+          return json(200,portableExportMatch[2]
+            ? await history.historicalExportBytes(user,portableExportMatch[1],portableExportMatch[2])
+            : await history.historicalExports(user,portableExportMatch[1]));
+        }
         const exportStageMatch = route.match(/^\/api\/studio\/native-editor\/documents\/([a-f0-9-]{36})\/exports$/);
         if (exportStageMatch && req.method === "GET")
           return json(200, await platform.editorExport(scope, repo).list(user, exportStageMatch[1]));

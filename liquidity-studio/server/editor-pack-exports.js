@@ -10,7 +10,7 @@ export async function validateFinalPng(bytes, receipt, {nativeId,format}) {
     bytes.length!==receipt.size || digest(bytes)!==receipt.sha256 ||
     !Number.isSafeInteger(receipt.reviewRevision) || receipt.reviewRevision<1 ||
     !Number.isInteger(receipt.pageIndex) || receipt.pageIndex<0 || receipt.pageIndex>=({infographic:1,carousel:4,story:1,reel:3}[format]||0) ||
-    !Number.isFinite(Date.parse(receipt.exportedAt)) || !receipt.signedOffBy || !receipt.completedBy || !receipt.eventId)
+    !Number.isFinite(typeof receipt.exportedAt === "number" ? receipt.exportedAt : Date.parse(receipt.exportedAt)) || !receipt.signedOffBy || !receipt.completedBy || !receipt.eventId)
     throw fail(422,'Invalid historical final PNG receipt or bytes');
   const image=sharp(bytes,{limitInputPixels:4_000_000}),info=await image.metadata();
   const height=['story','reel'].includes(format)?1920:1350;
