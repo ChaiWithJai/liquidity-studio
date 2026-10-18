@@ -225,6 +225,16 @@
   }
   async function saveView(action) {
     localError = "";
+    // Saving is an explicit intent boundary. Use the visible controls even when the
+    // search/status query debounce has not dispatched yet.
+    const definition = {
+      ...client.snapshot.query.definition,
+      filters: {
+        ...client.snapshot.query.definition.filters,
+        search: search.trim(),
+        statuses: statusFilter === "All" ? [] : [statusFilter],
+      },
+    };
     try {
       const current = client.snapshot.views.find((view) => view.id === viewId);
       const view = await client.writeView(
@@ -233,7 +243,7 @@
           ? {
               name: viewName,
               sharing,
-              definition: client.snapshot.query.definition,
+              definition,
             }
           : {
               id: current.id,
@@ -242,7 +252,7 @@
                 ? {
                     name: viewName,
                     sharing,
-                    definition: client.snapshot.query.definition,
+                    definition,
                   }
                 : {}),
             },

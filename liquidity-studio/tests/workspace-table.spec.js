@@ -302,3 +302,17 @@ test("dirty detail and inline metadata retain their opening revisions after anot
  const latest=Number(await target.getAttribute('data-story-revision'));await page.request.post(`${base}/api/studio/workspace/mutations?organizationId=org_default&brandId=brand_default`,{data:{idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:latest,patch:{category:'Newest inline conflict category'}}]}});
  await page.getByLabel('Sort direction').selectOption('asc');await target.getByRole('button',{name:'Save cell',exact:true}).click();await expect(page.getByRole('status',{name:'Operation results'})).toContainText('conflict');await expect(target).toContainText('Newest inline conflict category');
 });
+
+test("immediate view create and update save visible search/status before debounce dispatch",async({page})=>{
+ await page.goto(base);await page.getByLabel('Username',{exact:true}).fill('table-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →'}).click();await expect(page.locator('.story-row').first()).toBeVisible();
+ await page.getByText('Saved views',{exact:true}).click();await page.getByLabel('Workspace view name').fill('Immediate control intent');
+ async function changeAndSave(search,status,action){
+  const pending=page.waitForResponse(response=>response.url().includes('/workspace/views')&&response.request().method()==='POST');
+  // One event turn flushes bound UI values but cannot run the query timeout.
+  // Only DOM controls are operated; the authenticated HTTP view request remains real.
+  await page.evaluate(async({search,status,action})=>{const input=document.querySelector('[aria-label="Search stories"]');input.value=search;input.dispatchEvent(new Event('input',{bubbles:true}));const select=document.querySelector('[aria-label="Filter by status"]');select.value=status;select.dispatchEvent(new Event('change',{bubbles:true}));await Promise.resolve();const button=[...document.querySelectorAll('button')].find(node=>node.textContent.trim()===action);button.click();},{search,status,action});
+  const response=await pending;expect(response.ok()).toBeTruthy();const payload=response.request().postDataJSON();expect(payload.definition.filters.search).toBe(search);expect(payload.definition.filters.statuses).toEqual(status==='All'?[]:[status]);return response.json();
+ }
+ const view=await changeAndSave('Large queue','In Backlog','Create saved view');expect(view.definition.filters.search).toBe('Large queue');await expect(page.getByLabel('Saved workspace view')).toHaveValue(view.id);
+ const updated=await changeAndSave('External','All','Update selected view');expect(updated.id).toBe(view.id);expect(updated.revision).toBeGreaterThan(view.revision);expect(updated.definition.filters.search).toBe('External');
+});
