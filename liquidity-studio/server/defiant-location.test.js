@@ -24,3 +24,10 @@ test('publishing location remains separate and explicit destination is never gue
  const empty=readWorkflowLocation('http://127.0.0.1:3002/?org=defiant_org&tab=strategy&view=campaign&select=%3Cscript%3E');
  assert.equal(empty.strategy.view,'map');assert.equal(empty.strategy.selected,'');assert.equal(empty.strategy.destinationBrandId,'');
 });
+
+test('owned entity identifiers with colons roundtrip without broadening organization or destination IDs',()=>{
+ const input={organizationId:'defiant_org',tab:'strategy',strategy:{view:'map',focus:'owned:producer',selected:'owned:relationship',savedViewId:'view:one',reportId:'report:one',destinationBrandId:'brand:invalid'}};
+ const route=readWorkflowLocation(workflowHref('http://127.0.0.1:3002/',input));
+ assert.equal(route.strategy.focus,'owned:producer');assert.equal(route.strategy.selected,'owned:relationship');assert.equal(route.strategy.savedViewId,'view:one');assert.equal(route.strategy.reportId,'report:one');assert.equal(route.strategy.destinationBrandId,'');
+ assert.equal(strategyOrganizationFor({...route,organizationId:'org:invalid'},[{id:'org:invalid',strategy:{enabled:true}}]),null);
+});
