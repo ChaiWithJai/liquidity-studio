@@ -20,6 +20,36 @@ import { createPenpotNativeExports } from "./penpot-native-export.js";
 import { brandRevision } from "./multimodal-contract.js";
 import { isDeepStrictEqual } from "node:util";
 
+/** Select only a current operator target. Old registrations may coexist after a
+ * target update; their stale hash must not hide a later valid registration. */
+export async function currentPenpotBinding(boundary, target, authorize) {
+  const state = await boundary.read();
+  for (const row of state.bindings.filter(
+    (row) =>
+      row.targetId === target.id &&
+      row.organizationId === target.organizationId &&
+      row.brandId === target.brandId &&
+      row.ownerPrincipal === target.ownerPrincipal &&
+      row.nativeProjectId === target.nativeProjectId &&
+      !row.revokedAt,
+  )) {
+    let binding;
+    try {
+      binding = boundary.binding(state, row.id);
+    } catch (error) {
+      if ([403, 409].includes(error.status)) continue;
+      throw error;
+    }
+    try {
+      return { binding, actor: await authorize(binding) };
+    } catch (error) {
+      if (error.status === 403) continue;
+      throw error;
+    }
+  }
+  throw fail(403, "Current native registration unavailable");
+}
+
 /** Optional fixed-loopback runtime. The public deployment never configures this factory. */
 export async function createPenpotStudioRuntime({
   store,
@@ -253,17 +283,22 @@ export async function createPenpotStudioRuntime({
     if (!target) throw fail(403, "Native export target is not registered");
     const service = serviceFor(target),
       boundary = service.boundaryFactory(transport);
-    const rows = await boundary.read();
-    const found = rows.bindings.find(
-      (row) => row.targetId === target.id && !row.revokedAt,
+    const { binding, actor } = await currentPenpotBinding(
+      boundary,
+      target,
+      async (binding) => {
+        const current = await identity.authorizeJobActor(
+          binding.registeredBy,
+          binding.registeredAt,
+        );
+        await identity.authorize(
+          current,
+          target.organizationId,
+          target.brandId,
+        );
+        return current;
+      },
     );
-    if (!found) throw fail(403, "Native export binding unavailable");
-    const binding = boundary.binding(rows, found.id);
-    const actor = await identity.authorizeJobActor(
-      binding.registeredBy,
-      binding.registeredAt,
-    );
-    await identity.authorize(actor, target.organizationId, target.brandId);
     const resource = binding.resources.find(
       (resource) =>
         resource.kind === "tokens" && resource.nativeId === request.fileId,
@@ -350,29 +385,34 @@ export async function createPenpotStudioRuntime({
     const service = serviceFor(record);
     const boundary = service.boundaryFactory(transport);
     if (["font", "legacy-native-copy"].includes(record.kind)) {
-      const binding = (await boundary.read()).bindings.find(
-        (row) => row.targetId === record.targetId && !row.revokedAt,
+      const target = configuration.targets.find(
+        (target) =>
+          target.id === record.targetId &&
+          target.organizationId === record.organizationId &&
+          target.brandId === record.brandId,
       );
-      if (!binding) throw fail(403, "Native asset registration unavailable");
-      boundary.binding(await boundary.read(), binding.id);
-      if (
-        binding.ownerPrincipal !== record.ownerPrincipal ||
-        binding.nativeProjectId !== record.projectId ||
-        !binding.resources.some(
-          (resource) =>
-            resource.nativeId === record.fileId &&
-            (record.kind === "font"
-              ? resource.kind === "tokens"
-              : resource.id === record.resourceId &&
-                resource.kind === "document"),
+      if (!target) throw fail(403, "Native asset target unavailable");
+      await currentPenpotBinding(boundary, target, async (binding) => {
+        if (
+          binding.ownerPrincipal !== record.ownerPrincipal ||
+          binding.nativeProjectId !== record.projectId ||
+          !binding.resources.some(
+            (resource) =>
+              resource.nativeId === record.fileId &&
+              (record.kind === "font"
+                ? resource.kind === "tokens"
+                : resource.id === record.resourceId &&
+                  resource.kind === "document"),
+          )
         )
-      )
-        throw fail(403, "Native asset resource registration changed");
-      const actor = await identity.authorizeJobActor(
-        binding.registeredBy,
-        binding.registeredAt,
-      );
-      await identity.authorize(actor, record.organizationId, record.brandId);
+          throw fail(403, "Native asset resource registration changed");
+        const actor = await identity.authorizeJobActor(
+          binding.registeredBy,
+          binding.registeredAt,
+        );
+        await identity.authorize(actor, record.organizationId, record.brandId);
+        return actor;
+      });
       return;
     }
     const actor = { id: record.actorId };
