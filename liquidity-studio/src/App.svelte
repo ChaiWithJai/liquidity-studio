@@ -159,7 +159,7 @@
     },onDirtyChange:dirty=>{if(current())preparedDirty=dirty;},onReturnToHandoff:()=>{if(current()&&!preparedDirty)preparedEditingStoryId="";},onStoryChanged:async()=>{if(current())await client.ensureStories([storyId],{force:true});},onPromoted:async result=>{
       if(!current())return;preparedDirty=false;preparedEditingStoryId="";client.ingestStories([result.story]);
       if(reviewDirty||pendingEdits){notice="Reviewed candidate saved. Your existing local edits are preserved; reload the current saved story explicitly before handoff.";return;}
-      selectStory(result.story);notice="Reviewed prepared copy saved. Continue to layout and artifact handoff; publication is not approved.";
+      selectStory(result.story);notice=result.promotionStillCurrent===false?"An earlier promotion receipt was recovered, but that generation changed afterward. The current handoff is shown; review its current state before continuing.":"Reviewed prepared copy saved. Continue to layout and artifact handoff; publication is not approved.";
     }};
   });
   async function editReviewedCopy(){

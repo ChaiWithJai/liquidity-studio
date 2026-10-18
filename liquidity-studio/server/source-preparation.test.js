@@ -279,6 +279,8 @@ test("whole saved draft promotion preserves edited copy, requires separate clini
     (await service.promote(f.user, id, clinical)).receipt.generationId,
     promoted.receipt.generationId,
   );
+  await f.repo.mutate(state=>{const row=state.backlog.find(row=>row.id===f.story.id);row.generationId=randomUUID();row.campaignDraft.provenance.generationId=row.generationId;row.revision++;return state;});
+  assert.equal((await service.promote(f.user,id,clinical)).promotionStillCurrent,false);
   const changed = structuredClone(promoted.story.campaignDraft);
   changed.infographic.headline = "Unreviewed replacement";
   assert.throws(() => validateCampaign(changed, promoted.story));

@@ -161,7 +161,7 @@ export class PreparedPromotionService {
           throw fail(409, "This campaign does not use prepared-copy review");
         const active = state.preparedSourceCandidates?.find(
           (entry) =>
-            entry.replacement?.generationId === story.generationId &&
+            !entry.restoredHistorical && entry.replacement?.generationId === story.generationId &&
             !entry.promotionReceipts?.length &&
             entry.candidate.inputFingerprint ===
               preparationFingerprint(story, this.scope) &&
