@@ -1,0 +1,402 @@
+{
+  "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+  "baselineCommit": "add4b3f201f46e6cc542f6a36bdfab666a64a163",
+  "browser": "Repository-pinned Playwright Chromium",
+  "viewports": [
+    {
+      "width": 883,
+      "height": 695,
+      "deviceScaleFactor": 1
+    },
+    {
+      "width": 1280,
+      "height": 720,
+      "deviceScaleFactor": 1
+    }
+  ],
+  "context": "Ephemeral authenticated HTTP/SQLite password-test fixtures; not maintained Google session or deployment",
+  "results": {
+    "browserPassed": 68,
+    "browserSkipped": 11,
+    "skipReasons": [
+      "Two separate Google Auth Emulator journeys",
+      "Nine opt-in licensed native-editor journeys"
+    ],
+    "workspaceNodePassed": 17,
+    "svelteIssues": 0
+  },
+  "files": [
+    {
+      "file": "before/1280-backlog.png",
+      "bytes": 154559,
+      "sha256": "eb6db9e7f6ac0d9affa02efab73319d1e0fcf09bf48a3b0c44997126ef9c4964",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "add4b3f201f46e6cc542f6a36bdfab666a64a163",
+      "capturedAtUtc": "2026-10-18T03:42:05.748293+00:00",
+      "capture": "baseline harness"
+    },
+    {
+      "file": "before/1280-saved-views.png",
+      "bytes": 131067,
+      "sha256": "038808f3bceb0ccb58febe59e127ebd9c5e9a063f5719eeee3edfe9dfcdc539f",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "add4b3f201f46e6cc542f6a36bdfab666a64a163",
+      "capturedAtUtc": "2026-10-18T03:42:05.897357+00:00",
+      "capture": "baseline harness"
+    },
+    {
+      "file": "before/883-backlog.png",
+      "bytes": 130874,
+      "sha256": "61ec26b9970df427bb19c532f2d0b426501e7b2d6ea3a9c123e98ae080644fb0",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "add4b3f201f46e6cc542f6a36bdfab666a64a163",
+      "capturedAtUtc": "2026-10-18T03:42:05.214803+00:00",
+      "capture": "baseline harness"
+    },
+    {
+      "file": "before/883-saved-views.png",
+      "bytes": 104315,
+      "sha256": "46a6271ca85beca424777fe6cc07b7a8caa205690a39af251fd93b544ff86269",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "add4b3f201f46e6cc542f6a36bdfab666a64a163",
+      "capturedAtUtc": "2026-10-18T03:42:05.345516+00:00",
+      "capture": "baseline harness"
+    },
+    {
+      "file": "after/1280-board-selected.png",
+      "bytes": 83500,
+      "sha256": "120adf44d6b82fff5e5837a4a0095f4fc7b860cd537ec7d4ceec40f522d18dff",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:36.158084+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-board.png",
+      "bytes": 83500,
+      "sha256": "120adf44d6b82fff5e5837a4a0095f4fc7b860cd537ec7d4ceec40f522d18dff",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:36.074804+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-brand-kit.png",
+      "bytes": 72803,
+      "sha256": "066182258ed87ef925f93a2f05c5e64e062ebfc6cfcc240374438497f18ea9a0",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:36.588685+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-campaign-studio.png",
+      "bytes": 116030,
+      "sha256": "c375eefb574f420d568dc2808b645816c6ec65e1095a5444ccae8ed87fcf6f60",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:36.509429+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-display-options.png",
+      "bytes": 108644,
+      "sha256": "857eb8f8553c2fde57f9a768a6650f7de6f1b131d43c47a3c500f5ea7883fee3",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:35.676280+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-empty-brand.png",
+      "bytes": 74846,
+      "sha256": "f5c6c97e2458cda1a5c78c9c41022ba93a98111cdd9de55f4f1fc29cd6d5a58f",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:39.196691+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-jobs.png",
+      "bytes": 48435,
+      "sha256": "e6036242d2d5a94c3be7589078242bb083c659dbc78ac9694e02e1bb933655fd",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:36.651825+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-more-filters.png",
+      "bytes": 90794,
+      "sha256": "d993f0e20640e40e46227aaf0d7c5b1c195cfac65d1c41d506d2b8100c466949",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:35.743536+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-no-match.png",
+      "bytes": 88690,
+      "sha256": "6554b56bca1c8679dba18a0df22c0537b698dcc80ff22138f2a65704a53531cf",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:38.816436+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-operations.png",
+      "bytes": 106570,
+      "sha256": "51c2d2cfbaf52d2078bb999835aed742a14517c15e547cd4e3f7810027252fae",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:36.747939+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-optional-columns.png",
+      "bytes": 80915,
+      "sha256": "a7aae081c3ace0b501e0c84673353fe28501639ec231f808fc52b3c2c6185d43",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:35.974268+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-rows-failed.png",
+      "bytes": 109656,
+      "sha256": "3718ba488ec07ca89b7433a9968ba7a5ce19a0cfd5f0c069a571bd8fcdaa4cad",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:39.570588+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-rows-pending.png",
+      "bytes": 72685,
+      "sha256": "c1637aa67e843067918cae0adeba661d7dff95cc80658bedfac730e4ca16788c",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:38.647898+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-all-settings.png",
+      "bytes": 93089,
+      "sha256": "e25734b6470ff8d8d52752bfd71cbacb0ed2e024b799f8c5207c686f37ab965e",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:35.810609+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-board-selected.png",
+      "bytes": 70831,
+      "sha256": "ea07dbff6181c8e7471b4c2a78dc7ac0a77d36909aea8f4c41de02e3f9b18768",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:34.259537+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-board.png",
+      "bytes": 70831,
+      "sha256": "ea07dbff6181c8e7471b4c2a78dc7ac0a77d36909aea8f4c41de02e3f9b18768",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:34.157181+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-brand-kit.png",
+      "bytes": 67871,
+      "sha256": "fae2765c1f7fb4621b181d8a660c2e7592c7041b8459bd5bbfabc9efe8575b6a",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:34.689576+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-campaign-studio.png",
+      "bytes": 105985,
+      "sha256": "a43e9e08dbb973fff5bc3ae488631f06f3aed9a232a5126216311d7176d03bd8",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:34.607915+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-display-options.png",
+      "bytes": 86092,
+      "sha256": "f27b032806f2dea8226fe395c49d2d514de891d9b6ef77377a7a241d34256232",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:33.759203+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-empty-brand.png",
+      "bytes": 72458,
+      "sha256": "4b985345ffc6d3d8e68112199731da72ea11248fc9941fba8e6a71de6b719d84",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:37.814761+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-jobs.png",
+      "bytes": 46736,
+      "sha256": "cf0ba5fc8d4d99badfd71da631d7aa49e6afb3c45835ad7ad8dba05fecfce96a",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:34.753561+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-more-filters.png",
+      "bytes": 79348,
+      "sha256": "73d8294f923aef37f16f19a374bcf895225270eed3809c0a5a38b3f460a8abc0",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:33.825837+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-no-match.png",
+      "bytes": 85158,
+      "sha256": "55c80134f15d71358863fc3cf49e6ce4e4c0464f82b1be08b741cc4335811de5",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:37.398365+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-operations.png",
+      "bytes": 90151,
+      "sha256": "e237d2831a2d9d5bd611de46202d2e9d0922c292b8f63661672663b27ed4be5c",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:34.845438+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-optional-columns.png",
+      "bytes": 68475,
+      "sha256": "4c50a731bf8d0849e1cb25014342be443d07ed31ea9d08406484c263e59007b5",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:34.056452+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-rows-failed.png",
+      "bytes": 95002,
+      "sha256": "55de963ddde009c2ff40e960ae1f3c26c62ec4e889f627c8bbc32d0b086c468e",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:38.184901+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-rows-pending.png",
+      "bytes": 70703,
+      "sha256": "050441c3b0753b7bbd6c4e4ee91a8094712061b2b43264ca566f77e6b62202e1",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:37.217090+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/883-all-settings.png",
+      "bytes": 79984,
+      "sha256": "c72eef8be1cfc88939272af6350eb4e42a9d5074984bb15a45dac193514f9d2e",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:43:33.893388+00:00",
+      "capture": "workspace-table browser suite"
+    },
+    {
+      "file": "after/1280-backlog.png",
+      "bytes": 121942,
+      "sha256": "063224903226e49bd759829a3a21d4932b0315d7a410716d2a3c65dc83947e95",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:42:26.068373+00:00",
+      "capture": "same five-story baseline harness on final source"
+    },
+    {
+      "file": "after/1280-saved-views.png",
+      "bytes": 110168,
+      "sha256": "fd04dca68986ca53fdb8abd9186b97f91903eb1073825372b1e401bd2881340c",
+      "width": 1280,
+      "height": 720,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:42:26.231626+00:00",
+      "capture": "same five-story baseline harness on final source"
+    },
+    {
+      "file": "after/883-backlog.png",
+      "bytes": 104948,
+      "sha256": "0c4002d3aa6b14d290bc17a784cc1b937c1524da106dc4f5bc84c53e17b3185d",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:42:25.003240+00:00",
+      "capture": "same five-story baseline harness on final source"
+    },
+    {
+      "file": "after/883-saved-views.png",
+      "bytes": 98202,
+      "sha256": "6e1592abe9b179038f938c6019181e6630f0f92444ccbcf80e213afd3612f9b7",
+      "width": 883,
+      "height": 695,
+      "sourceCommit": "8190ae0f1bc05b44759dccf6bb229cb03ea28e4a",
+      "capturedAtUtc": "2026-10-18T03:42:25.159231+00:00",
+      "capture": "same five-story baseline harness on final source"
+    }
+  ],
+  "assets": [
+    {
+      "file": "index-BZhZNQ5l.js",
+      "sha256": "9d158f9ca2b3be0189279b16a04b1a6f683d2dd788d200de276edbea89b6160b",
+      "bytes": 355717
+    },
+    {
+      "file": "index-DYuwwOv8.css",
+      "sha256": "dd8acd5be77143d550180a43113d9810328d29393faa5a904a38afbf2e70f250",
+      "bytes": 40200
+    }
+  ]
+}
