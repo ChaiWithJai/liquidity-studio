@@ -26,6 +26,31 @@ const terminal = new Set([
   "unknown",
 ]);
 const stamp = () => new Date().toISOString();
+// A racing worker can consume the eligible work after our read-only admission.
+// Throwing inside the existing transaction leaves the scope entirely unwritten.
+const NO_CLAIM_CHANGE = Object.freeze({ noDurableJobClaimChange: true });
+function claimPredicates({ jobId, itemId, nextAttempt, deliveryEpoch, now = Date.now } = {}) {
+  return {
+    relevant: (job) =>
+      job.schemaVersion === 1 &&
+      (!jobId || job.id === jobId) &&
+      (!deliveryEpoch || job.deliveryEpoch === deliveryEpoch),
+    eligible: (item) =>
+      item.state === "queued" &&
+      (!itemId || item.id === itemId) &&
+      (!nextAttempt || item.attempt + 1 === nextAttempt),
+    expired: (item) =>
+      item.state === "running" && item.lease.expiresAt <= now(),
+  };
+}
+// Advisory only: a current transaction must still recheck every claim fence.
+export function hasClaimWork(state, options) {
+  const { relevant, eligible, expired } = claimPredicates(options);
+  return (state.operatorJobs || []).some(
+    (job) => relevant(job) &&
+      (job.items.some(expired) || (!job.cancelled && job.items.some(eligible))),
+  );
+}
 function uuid(value) {
   if (
     typeof value !== "string" ||
@@ -599,75 +624,79 @@ export class DurableJobService {
   }
   async claim(workerId, jobId, itemId, nextAttempt, deliveryEpoch) {
     let claimed = null;
+    const options = { jobId, itemId, nextAttempt, deliveryEpoch, now: () => this.now() };
+    const { relevant, eligible, expired } = claimPredicates(options);
+    const snapshot = await this.repo.read();
+    if (!hasClaimWork(snapshot, options)) return null;
     const attemptId = randomUUID();
-    await this.repo.mutate((state) => {
-      claimed = null;
-      for (const job of state.operatorJobs || []) {
-        if (job.schemaVersion !== 1) continue;
-        if (
-          (jobId && job.id !== jobId) ||
-          (deliveryEpoch && job.deliveryEpoch !== deliveryEpoch)
-        )
-          continue;
-        for (const item of job.items) {
-          if (item.state === "running" && item.lease.expiresAt <= this.now()) {
-            item.state = "unknown";
-            item.error = {
-              code: "WORKER_INTERRUPTED",
-              message:
-                job.purpose === PREPARATION_PURPOSE
-                  ? "Preparation worker interrupted; no candidate receipt committed. No model provider was called."
-                  : "Provider completion/billing may be unknown. Explicit retry may incur another request.",
-            };
-            item.attempts.at(-1).state = "unknown";
-            delete item.lease;
-            item.fence++;
+    try {
+      await this.repo.mutate((state) => {
+        claimed = null;
+        let changed = false;
+        for (const job of state.operatorJobs || []) {
+          if (!relevant(job)) continue;
+          let leaseExpired = false;
+          for (const item of job.items) {
+            if (expired(item)) {
+              changed = leaseExpired = true;
+              item.state = "unknown";
+              item.error = {
+                code: "WORKER_INTERRUPTED",
+                message:
+                  job.purpose === PREPARATION_PURPOSE
+                    ? "Preparation worker interrupted; no candidate receipt committed. No model provider was called."
+                    : "Provider completion/billing may be unknown. Explicit retry may incur another request.",
+              };
+              item.attempts.at(-1).state = "unknown";
+              delete item.lease;
+              item.fence++;
+            }
           }
-        }
-        if (job.cancelled) {
-          settle(job);
-          continue;
-        }
-        const item = job.items.find(
-          (item) =>
-            item.state === "queued" &&
-            (!itemId || item.id === itemId) &&
-            (!nextAttempt || item.attempt + 1 === nextAttempt),
-        );
-        if (!item || claimed) {
-          settle(job);
-          continue;
-        }
-        item.state = "running";
-        item.fence++;
-        item.attempt++;
-        item.lease = { workerId, expiresAt: this.now() + LEASE_MS };
-        item.attempts.push({
-          id: attemptId,
-          state: "running",
-          startedAt: stamp(),
-        });
-        job.state = "running";
-        if (job.purpose === PREPARATION_PURPOSE) {
-          const story = state.backlog.find(
-            (story) => story.id === item.storyId,
-          );
-          if (story?.preparationJobId === job.id) {
-            story.preparationStatus = "running";
-            story.preparationUpdatedAt = stamp();
-            story.revision++;
+          if (job.cancelled) {
+            if (leaseExpired) settle(job);
+            continue;
           }
+          const item = job.items.find(eligible);
+          if (!item || claimed) {
+            if (leaseExpired) settle(job);
+            continue;
+          }
+          changed = true;
+          item.state = "running";
+          item.fence++;
+          item.attempt++;
+          item.lease = { workerId, expiresAt: this.now() + LEASE_MS };
+          item.attempts.push({
+            id: attemptId,
+            state: "running",
+            startedAt: stamp(),
+          });
+          job.state = "running";
+          if (job.purpose === PREPARATION_PURPOSE) {
+            const story = state.backlog.find(
+              (story) => story.id === item.storyId,
+            );
+            if (story?.preparationJobId === job.id) {
+              story.preparationStatus = "running";
+              story.preparationUpdatedAt = stamp();
+              story.revision++;
+            }
+          }
+          job.outbox = {
+            ...job.outbox,
+            state: "worker_received",
+            workerReceivedAt: stamp(),
+          };
+          job.updatedAt = stamp();
+          claimed = { job: structuredClone(job), item: structuredClone(item) };
         }
-        job.outbox = {
-          ...job.outbox,
-          state: "worker_received",
-          workerReceivedAt: stamp(),
-        };
-        job.updatedAt = stamp();
-        claimed = { job: structuredClone(job), item: structuredClone(item) };
-      }
-      return state;
-    });
+        if (!changed) throw NO_CLAIM_CHANGE;
+        return state;
+      });
+    } catch (error) {
+      if (error !== NO_CLAIM_CHANGE) throw error;
+      return null;
+    }
     return claimed;
   }
   async runNext(

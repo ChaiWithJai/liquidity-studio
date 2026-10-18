@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
+import { randomUUID, createHash } from "node:crypto";
+import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
@@ -9,6 +9,7 @@ import { DurableStore } from "./storage.js";
 import { createPlatform } from "./platform.js";
 import { brandRevision } from "./multimodal-contract.js";
 import { DurableJobService } from "./operator-jobs.js";
+import { workerTick } from "./job-worker.js";
 import {
   jobDispatcherConfiguration,
   CloudTasksJobDispatcher,
@@ -525,4 +526,126 @@ test("failed item retains sanitized actual reported provider attempt usage witho
       .campaignDraft,
     null,
   );
+});
+
+// These use actual SQLite/WAL bytes, not just a job DTO or mocked repository.
+function jobStorageReceipt(store, file) {
+  const digest = (name) => createHash("sha256").update(readFileSync(name)).digest("hex");
+  return {
+    totalChanges: store.db.prepare("SELECT total_changes() AS n").get().n,
+    database: digest(file),
+    wal: digest(`${file}-wal`),
+  };
+}
+async function diskJobFixture(t) {
+  const directory = mkdtempSync(join(tmpdir(), "studio-idle-jobs-"));
+  const file = join(directory, "jobs.sqlite");
+  const result = await fixture(t, { file });
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  return { ...result, file };
+}
+test("idle terminal/paused/unexpired scans preserve timestamps and physical SQLite/WAL bytes", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.UTC(2026, 9, 18) });
+  const f = await diskJobFixture(t), story = await f.add();
+  const seed = await f.jobs.create(f.user, await f.plan([story]));
+  await f.repo.mutate((state) => {
+    state.operatorJobs = ["completed", "partial", "cancelled", "paused", "running"].map((status) => {
+      const job = structuredClone(state.operatorJobs.find((row) => row.id === seed.id));
+      job.id = randomUUID();
+      job.state = status;
+      job.cancelled = status === "cancelled";
+      const item = job.items[0];
+      item.state = status === "partial" ? "failed" : status;
+      if (status === "running") {
+        item.attempt = 1;
+        item.fence = 1;
+        item.lease = { workerId: "existing", expiresAt: Date.now() + 120000 };
+        item.attempts = [{ id: randomUUID(), state: "running", startedAt: job.updatedAt }];
+      }
+      return job;
+    });
+    return state;
+  });
+  f.jobs.now = () => Date.now();
+  const before = await f.repo.read(), physical = jobStorageReceipt(f.store, f.file);
+  for (let tick = 0; tick < 5; tick++) {
+    t.mock.timers.tick(1000);
+    assert.equal(await workerTick(f.platform, "idle-worker-loop"), 0);
+    assert.equal(await f.jobs.claim("idle"), null);
+  }
+  assert.deepEqual(await f.repo.read(), before);
+  assert.deepEqual(jobStorageReceipt(f.store, f.file), physical);
+  await f.repo.mutate((state) => {
+    state.editorRestore = { status: "installing" };
+    return state;
+  });
+  await assert.rejects(workerTick(f.platform, "restore-guard"), { status: 423 });
+});
+test("claiming one job leaves skipped siblings untouched; targeted stale attempts are physical no-ops", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.UTC(2026, 9, 18) });
+  const f = await diskJobFixture(t), a = await f.add("A"), b = await f.add("B");
+  const first = await f.jobs.create(f.user, await f.plan([a]));
+  const second = await f.jobs.create(f.user, await f.plan([b]));
+  const before = await f.repo.read();
+  t.mock.timers.tick(1000);
+  const claimed = await f.jobs.claim("worker");
+  assert.equal(claimed.job.id, first.id);
+  assert.notEqual(claimed.job.updatedAt, first.updatedAt);
+  assert.deepEqual((await f.repo.read()).operatorJobs.find((job) => job.id === second.id), before.operatorJobs.find((job) => job.id === second.id));
+  const physical = jobStorageReceipt(f.store, f.file);
+  t.mock.timers.tick(1000);
+  assert.equal(await f.jobs.claim("targeted", second.id, second.items[0].id, 2, second.deliveryEpoch), null);
+  assert.equal(await f.jobs.claim("stale-epoch", second.id, second.items[0].id, 1, second.deliveryEpoch + 1), null);
+  assert.deepEqual(jobStorageReceipt(f.store, f.file), physical);
+});
+test("raced no-op rolls back without a write and genuine transaction failures propagate", async (t) => {
+  const f = await diskJobFixture(t), story = await f.add();
+  const job = await f.jobs.create(f.user, await f.plan([story]));
+  const staleQueued = await f.repo.read();
+  await f.jobs.control(f.user, job.id, "cancel", { idempotencyKey: randomUUID() });
+  const current = await f.repo.read(), physical = jobStorageReceipt(f.store, f.file);
+  const read = f.repo.read.bind(f.repo);
+  let once = true;
+  f.repo.read = async () => {
+    const fresh = await read();
+    if (!once) return fresh;
+    once = false;
+    return structuredClone(staleQueued);
+  };
+  assert.equal(await f.jobs.claim("lost-race", job.id), null);
+  assert.deepEqual(await read(), current);
+  assert.deepEqual(jobStorageReceipt(f.store, f.file), physical);
+  f.repo.read = async () => structuredClone(staleQueued);
+  const failure = new Error("real storage guard failure");
+  f.repo.mutate = async () => { throw failure; };
+  await assert.rejects(f.jobs.claim("broken-storage", job.id), (error) => error === failure);
+});
+test("lease expiry settles once while real cancel/resume/retry timestamps still advance", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: Date.UTC(2026, 9, 18) });
+  const f = await diskJobFixture(t), story = await f.add();
+  f.jobs.now = () => Date.now();
+  const job = await f.jobs.create(f.user, await f.plan([story]));
+  const claimed = await f.jobs.claim("gone", job.id);
+  t.mock.timers.tick(120001);
+  assert.equal(await f.jobs.claim("rejoin", job.id), null);
+  let current = await f.jobs.detail(f.user, job.id);
+  assert.equal(current.items[0].state, "unknown");
+  assert.equal(current.items[0].error.code, "WORKER_INTERRUPTED");
+  const internal = (await f.repo.read()).operatorJobs.find((row) => row.id === job.id);
+  assert.equal(internal.items[0].fence, claimed.item.fence + 1);
+  assert.equal(internal.items[0].lease, undefined);
+  assert.notEqual(current.updatedAt, claimed.job.updatedAt);
+  const expired = structuredClone(current), physical = jobStorageReceipt(f.store, f.file);
+  t.mock.timers.tick(1000);
+  assert.equal(await f.jobs.claim("idle-after-expiry", job.id), null);
+  assert.deepEqual(await f.jobs.detail(f.user, job.id), expired);
+  assert.deepEqual(jobStorageReceipt(f.store, f.file), physical);
+  for (const action of ["retry", "cancel", "resume"]) {
+    t.mock.timers.tick(1000);
+    const previous = current.updatedAt;
+    current = await f.jobs.control(f.user, job.id, action, {
+      idempotencyKey: randomUUID(), ...(action === "retry" ? { itemIds: [job.items[0].id] } : {}),
+    });
+    assert.notEqual(current.updatedAt, previous, action);
+  }
 });
