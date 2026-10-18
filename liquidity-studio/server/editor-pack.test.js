@@ -745,3 +745,51 @@ test("export preflights exact projected repository lineage without writes or fil
   await target.service.install(actor, pack, {...input, target: {organizationId: "organization", brandId: "preflight-target"}});
   assert.equal((await target.repo.read()).usage[0].generationId, "missing-trace");
 });
+
+test("legacy cloud metadata rejects oversized or invalid declarations before any download", async (t) => {
+  const { createHash } = await import("node:crypto");
+  for (const mode of ["oversized", "fractional", "mismatched-size"]) {
+    const f = await fixture(t);
+    const sha256 = createHash("sha256").update("abc").digest("hex");
+    await f.repo.mutate(state => {
+      state.assets = [{id:"legacy", storyId:"story", filename:"notes.txt", contentType:"text/plain", sha256,
+        ...(mode === "mismatched-size" ? {size:4} : {}),
+        artifactRef:{size:mode === "oversized" ? 20*1024*1024 : mode === "fractional" ? 3.5 : 3, sha256}}];
+      return state;
+    });
+    let downloads = 0;
+    f.store.downloadArtifact = async () => { downloads++; throw Error("Must not download"); };
+    const snapshot = async () => Promise.all((await f.store.keys("")).sort().map(async key => [key, await f.store.get(key)]));
+    const before = await snapshot();
+    await assert.rejects(f.service.export(actor), {status:mode === "oversized" ? 413 : 400});
+    assert.equal(downloads, 0);
+    assert.deepEqual(await snapshot(), before);
+  }
+});
+
+test("pack legacy downloads are sequential and valid historical records need no optional size field", async (t) => {
+  const { createHash } = await import("node:crypto");
+  const f = await fixture(t), bytes = Buffer.from("abc"), sha256 = createHash("sha256").update(bytes).digest("hex");
+  await f.repo.mutate(state => {
+    state.assets = ["first", "second"].map(id => ({id, storyId:"story", filename:id+".txt", contentType:"text/plain", sha256, artifactRef:{size:3,sha256}}));
+    return state;
+  });
+  let active = 0, maximum = 0, calls = 0, release;
+  const held = new Promise(resolve => { release = resolve; });
+  let entered;
+  const firstEntered = new Promise(resolve => { entered = resolve; });
+  f.store.downloadArtifact = async () => {
+    calls++; active++; maximum = Math.max(maximum, active);
+    if (calls === 1) { entered(); await held; }
+    active--; return bytes;
+  };
+  const exporting = f.service.export(actor);
+  await firstEntered;
+  assert.equal(calls, 1);
+  release();
+  const pack = await exporting;
+  assert.equal(calls, 2); assert.equal(maximum, 1);
+  const target = await fixture(t, "liquidity_desk", true, "bounded-target");
+  await target.service.install(actor, pack, {...input,target:{organizationId:"organization",brandId:"bounded-target"}});
+  assert.equal((await target.repo.read()).assets.length, 2);
+});

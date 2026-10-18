@@ -135,7 +135,16 @@ export class EditorPackService {
     await this.principal(actor);
     await this.native.authorize(actor);
     const sourceFingerprint = jsonDigest(await this.repo.read());
-    const repository = await this.repo.exportData();
+    const repository = await this.repo.exportData({
+      portableBudget: {
+        bytes: PACK_LIMITS.bytes,
+        fileBytes: PACK_LIMITS.fileBytes,
+        fileEnvelopeBytes: Buffer.byteLength(JSON.stringify({
+          sha256: "0".repeat(64), size: PACK_LIMITS.fileBytes,
+          kind: "repository", base64: "",
+        })) + 2,
+      },
+    });
     const preparedHistory = projectPreparedHistory(
       repository.data.preparedSourceCandidates || [],
       this.scope,

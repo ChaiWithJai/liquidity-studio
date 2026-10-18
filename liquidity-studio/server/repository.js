@@ -474,7 +474,7 @@ export class ScopedRepository {
     });
     return value;
   }
-  async exportData() {
+  async exportData({ portableBudget } = {}) {
     const data = await this.read();
     // Execution authority, delivery leases and helper grants are never portable.
     delete data.operatorJobs;
@@ -521,26 +521,74 @@ export class ScopedRepository {
       row.organizationId = this.scope.organizationId;
       row.brandId = this.scope.brandId;
     }
-    data.assets = await Promise.all(
-      data.assets.map(async (asset) => {
-        const complete = await this.getAsset(asset.id);
-        delete complete.artifactRef;
-        complete.organizationId = this.scope.organizationId;
-        complete.brandId = this.scope.brandId;
-        return complete;
-      }),
-    );
-    return {
+    const exportedAt = new Date().toISOString();
+    const envelope = (value) => ({
       schemaVersion: 1,
-      scope: {
-        organizationId: this.scope.organizationId,
-        brandId: this.scope.brandId,
-      },
-      exportedAt: new Date().toISOString(),
+      scope: { organizationId: this.scope.organizationId, brandId: this.scope.brandId },
+      exportedAt,
+      sha256: "0".repeat(64),
+      data: value,
+    });
+    const checkBudget = (repositoryBytes) => {
+      if (repositoryBytes > portableBudget.fileBytes ||
+          4 * Math.ceil(repositoryBytes / 3) + portableBudget.fileEnvelopeBytes > portableBudget.bytes)
+        throw fail(413, "Legacy repository exceeds editor pack byte budget");
+    };
+    const completeAsset = async (asset, captured = false) => {
+      const complete = captured
+        ? { ...asset, ...(asset.artifactRef ? { base64: (await this.store.downloadArtifact(this.scope, asset.artifactRef)).toString("base64") } : {}) }
+        : await this.getAsset(asset.id);
+      delete complete.artifactRef;
+      complete.organizationId = this.scope.organizationId;
+      complete.brandId = this.scope.brandId;
+      return complete;
+    };
+    if (portableBudget) {
+      if (![portableBudget.bytes, portableBudget.fileBytes, portableBudget.fileEnvelopeBytes].every(value => Number.isSafeInteger(value) && value > 0))
+        throw fail(413, "Invalid portable repository budget");
+      let cloudBase64Bytes = 0;
+      const projected = data.assets.map(asset => {
+        const { artifactRef, ...metadata } = asset;
+        metadata.organizationId = this.scope.organizationId;
+        metadata.brandId = this.scope.brandId;
+        if (artifactRef) {
+          // The production artifact reference requires a positive safe declared size.
+          if (!Number.isSafeInteger(artifactRef.size) || artifactRef.size < 1 ||
+              (asset.size !== undefined && asset.size !== artifactRef.size) ||
+              artifactRef.sha256 !== asset.sha256)
+            throw fail(400, "Invalid portable artifact size or checksum metadata");
+          cloudBase64Bytes += 4 * Math.ceil(artifactRef.size / 3);
+          metadata.base64 = "";
+        } else if (typeof metadata.base64 !== "string") {
+          throw fail(400, "Invalid portable artifact payload");
+        }
+        return metadata;
+      });
+      // Count metadata and the exact base64 expansion before any cloud payload is read.
+      // JSON base64 characters require no escaping; this remains conservative if
+      // prepared history is extracted separately by the pack service afterward.
+      checkBudget(Buffer.byteLength(JSON.stringify(envelope({ ...data, assets: projected }))) + cloudBase64Bytes);
+      const expanded = [];
+      for (const asset of data.assets) {
+        const complete = await completeAsset(asset, true);
+        if (asset.artifactRef && (typeof complete.base64 !== "string" ||
+            complete.base64.length !== 4 * Math.ceil(asset.artifactRef.size / 3) ||
+            Buffer.byteLength(complete.base64, "base64") !== asset.artifactRef.size))
+          throw fail(400, "Portable artifact payload size changed");
+        expanded.push(complete);
+        checkBudget(Buffer.byteLength(JSON.stringify(envelope({ ...data, assets: expanded }))));
+      }
+      data.assets = expanded;
+      checkBudget(Buffer.byteLength(JSON.stringify(envelope(data))));
+    } else {
+      data.assets = await Promise.all(data.assets.map(completeAsset));
+    }
+    return {
+      ...envelope(data),
       sha256: createHash("sha256").update(JSON.stringify(data)).digest("hex"),
-      data,
     };
   }
+
   async importData(bundle, { remapScope = false } = {}) {
     if (
       !bundle?.data ||
