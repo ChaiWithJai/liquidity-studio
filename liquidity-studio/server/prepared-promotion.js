@@ -62,6 +62,8 @@ export class PreparedPromotionService {
     );
     if (
       !story ||
+      (story.preparedCandidateId &&
+        story.preparedCandidateId !== entry.candidate.id) ||
       preparationFingerprint(story, this.scope) !==
         entry.candidate.inputFingerprint ||
       brandRevision(state.brandProfile) !== entry.candidate.brandRevision
@@ -161,7 +163,8 @@ export class PreparedPromotionService {
           throw fail(409, "This campaign does not use prepared-copy review");
         const active = state.preparedSourceCandidates?.find(
           (entry) =>
-            !entry.restoredHistorical && entry.replacement?.generationId === story.generationId &&
+            !entry.restoredHistorical &&
+            entry.replacement?.generationId === story.generationId &&
             !entry.promotionReceipts?.length &&
             entry.candidate.inputFingerprint ===
               preparationFingerprint(story, this.scope) &&

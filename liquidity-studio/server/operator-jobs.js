@@ -193,7 +193,7 @@ export class DurableJobService {
       (story) => story.id === entry.candidate.storyId,
     );
     const stale =
-      Boolean(entry.restoredHistorical) || !story ||
+      Boolean(entry.restoredHistorical) || !story || (story.preparedCandidateId && story.preparedCandidateId!==id) ||
       preparationFingerprint(story, this.scope) !==
         entry.candidate.inputFingerprint ||
       brandRevision(state.brandProfile) !== entry.candidate.brandRevision;
@@ -238,6 +238,7 @@ export class DurableJobService {
       );
       if (
         !story ||
+        (story.preparedCandidateId && story.preparedCandidateId!==id) ||
         preparationFingerprint(story, this.scope) !==
           entry.candidate.inputFingerprint ||
         brandRevision(state.brandProfile) !== entry.candidate.brandRevision

@@ -476,3 +476,115 @@ test("an external candidate edit invalidates an already-open review without over
     "EXTERNAL SAVED CANDIDATE",
   );
 });
+test("an ordinary pending save is pending, not an uncertain outcome", async ({
+  page,
+}) => {
+  await signIn(page);
+  const panel = await open(page);
+  let release, started;
+  const held = new Promise((resolve) => (started = resolve)),
+    resume = new Promise((resolve) => (release = resolve));
+  await page.route(
+    /\/api\/studio\/preparations\/[^/]+\/edit(?:\?|$)/,
+    async (route) => {
+      started();
+      await resume;
+      await route.fulfill({ response: await route.fetch() });
+    },
+  );
+  await panel
+    .getByLabel("Headline", { exact: true })
+    .fill("NORMAL PENDING SAVE");
+  await panel
+    .getByRole("button", { name: "Save preview edits", exact: true })
+    .click();
+  await held;
+  await expect(
+    panel.getByRole("button", { name: "Save preview edits", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    panel.getByText("The request outcome is uncertain.", { exact: false }),
+  ).toHaveCount(0);
+  await expect(
+    panel.getByRole("button", { name: "Retry same request", exact: true }),
+  ).toHaveCount(0);
+  release();
+  await expect(
+    panel.getByText("Preview edits saved.", { exact: false }),
+  ).toBeVisible();
+});
+test("held valid status refresh with new candidate ID at revision one preserves local edits and original base", async ({
+  page,
+}) => {
+  await signIn(page);
+  const panel = await open(page);
+  let release, started;
+  const held = new Promise((resolve) => (started = resolve)),
+    resume = new Promise((resolve) => (release = resolve));
+  await page.route(
+    /\/api\/studio\/preparations\/stories\/story_huda_buyback(?:\?|$)/,
+    async (route) => {
+      started();
+      await resume;
+      await route.fulfill({ response: await route.fetch() });
+    },
+  );
+  await panel
+    .getByRole("button", { name: "Refresh preparation status", exact: true })
+    .click();
+  await held;
+  await panel
+    .getByLabel("Headline", { exact: true })
+    .fill("LOCAL COPY MUST SURVIVE NEW CANDIDATE");
+  const founder = (await platform.store.get("identity")).users.find(
+      (user) => user.username === "founder",
+    ),
+    scope = await platform.identity.authorize(
+      founder,
+      "org_default",
+      "brand_default",
+    ),
+    container = await platform.forScope(scope),
+    repo = container.ports.repo,
+    state = await repo.read(),
+    story = state.backlog.find((story) => story.id === "story_huda_buyback"),
+    oldId = story.preparedCandidateId,
+    jobs = platform.operatorJobs(scope, container),
+    job = await jobs.create(founder, {
+      purpose: "source-preparation",
+      idempotencyKey: randomUUID(),
+      reviewed: true,
+      brandRevision: brandRevision(state.brandProfile),
+      items: [{ storyId: story.id, storyRevision: story.revision }],
+    });
+  await jobs.runNext("held-refresh-worker", job.id, job.items[0].id, 1);
+  const nextState = await repo.read(),
+    newId = nextState.backlog.find(
+      (row) => row.id === story.id,
+    ).preparedCandidateId;
+  expect(newId).not.toBe(oldId);
+  expect((await jobs.candidate(founder, newId)).revision).toBe(1);
+  release();
+  await expect(
+    panel.getByText("A newer candidate is saved.", { exact: false }),
+  ).toBeVisible();
+  await expect(panel.getByLabel("Headline", { exact: true })).toHaveValue(
+    "LOCAL COPY MUST SURVIVE NEW CANDIDATE",
+  );
+  await panel.getByText("Candidate details", { exact: true }).click();
+  await expect(
+    panel.getByText(`Candidate ${oldId}`, { exact: false }),
+  ).toBeVisible();
+  const failedSave = page.waitForResponse(
+    (response) =>
+      response.url().includes("/edit") &&
+      response.request().method() === "POST",
+  );
+  await panel
+    .getByRole("button", { name: "Save preview edits", exact: true })
+    .click();
+  expect((await failedSave).status()).toBe(409);
+  await expect(panel.getByLabel("Headline", { exact: true })).toHaveValue(
+    "LOCAL COPY MUST SURVIVE NEW CANDIDATE",
+  );
+});

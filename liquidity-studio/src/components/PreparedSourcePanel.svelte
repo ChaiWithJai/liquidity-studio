@@ -22,7 +22,7 @@
     try {
       const next=await request(`/api/studio/preparations/stories/${encodeURIComponent(capturedStory)}`);
       if(!current()||ticket!==sequence)return;
-      if(dirty&&!discard&&next.prepared?.revision!==info?.prepared?.revision){notice='A newer candidate is saved. Your local edits keep their original revision; save will report a conflict.';return;}
+      if(dirty&&!discard&&(next.prepared?.candidate.id!==info?.prepared?.candidate.id||next.prepared?.revision!==info?.prepared?.revision)){notice='A newer candidate is saved. Your local edits keep their original revision; save will report a conflict.';return;}
       const changed=next.prepared?.candidate.id!==info?.prepared?.candidate.id||next.prepared?.revision!==info?.prepared?.revision;
       info=next;if(discard||changed||!working)replacePrepared(next.prepared);
     }catch(failure){if(current()&&ticket===sequence)error=failure.message;}
@@ -69,7 +69,7 @@
   <header><div><h3>Source preview</h3></div><span role="status">{dirty?'Unsaved preview edits':info?.status==='ready'?`Ready for review · ${info.prepared?.evidence?.length||0} source${info.prepared?.evidence?.length===1?'':'s'}`:info?.status?.replaceAll('_',' ')||'Loading source preparation…'}</span></header>
   {#if error}<p role="alert">{error}</p>{/if}
   {#if notice}<p role="status">{notice}</p>{/if}
-  {#if retained}<p>The request outcome is uncertain. Keep this intent until its receipt is recovered.</p><button class="secondary" disabled={pending} onclick={()=>submit(retained)}>Retry same request</button>{/if}
+  {#if retained&&!pending}<p>The request outcome is uncertain. Keep this intent until its receipt is recovered.</p><button class="secondary" disabled={pending} onclick={()=>submit(retained)}>Retry same request</button>{/if}
   {#if info?.prepared?.stale}<p role="alert">Source content or brand settings changed. This historical preview cannot be approved or edited against the newer inputs.</p>{/if}
   {#if working}
     <div class="prepared-toolbar"><label>Preview format<select bind:value={format} onchange={()=>page=0}><option value="infographic">Feed infographic</option><option value="carousel">Carousel</option><option value="story">Story</option><option value="reel">Reel boards</option></select></label>{#if pages>1}<label>Page<select bind:value={page}>{#each Array.from({length:pages},(_,i)=>i) as index(index)}<option value={index}>{index+1} of {pages}</option>{/each}</select></label>{/if}<button class="primary" disabled={!dirty||pending||!!retained||info.prepared.stale||!!preview.error} onclick={save}>Save preview edits</button><button class="secondary" disabled={pending||!!retained} onclick={()=>load(true)}>Reload saved preview / discard edits</button></div>
