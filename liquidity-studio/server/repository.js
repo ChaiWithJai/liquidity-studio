@@ -1,3 +1,4 @@
+import { portableWorkspace } from "./workspace-schema.js";
 import { randomUUID, createHash } from "node:crypto";
 import {
   DEFAULT_BRAND_PROFILE,
@@ -436,6 +437,15 @@ export class ScopedRepository {
   }
   async exportData() {
     const data = await this.read();
+    if (data.workspace) {
+      delete data.workspace.receipts;
+      data.workspace = portableWorkspace(
+        data.workspace,
+        new Set(data.backlog.map((story) => story.id)),
+        this.scope,
+      );
+      delete data.workspace.receipts;
+    }
     data.telemetry.backpropDataset =
       data.telemetry.backpropDataset.map(classifyFeedback);
     const rows = [
@@ -614,16 +624,25 @@ export class ScopedRepository {
       "gatewayConfig",
       "discovery",
       "operationalEvents",
+      "workspace",
     ];
     const data = Object.fromEntries(
       allowed
         .filter((key) => bundle.data[key] !== undefined)
         .map((key) => [key, bundle.data[key]]),
     );
+    if (data.workspace)
+      data.workspace = portableWorkspace(
+        data.workspace,
+        new Set(data.backlog.map((story) => story.id)),
+        bundle.scope,
+        { remapTo: remapScope ? this.scope : undefined },
+      );
     for (const job of data.jobs) {
       if (job.status === "RUNNING") job.status = "INTERRUPTED";
     }
     if (remapScope) {
+      for (const story of data.backlog) delete story.assigneeId;
       for (const record of records) {
         if (record.organizationId)
           record.organizationId = this.scope.organizationId;

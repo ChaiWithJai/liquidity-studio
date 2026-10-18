@@ -543,22 +543,31 @@
   }
   async function updateSchedule() {
     if (!selectedStory) return;
+    const token = lastScopeToken;
+    const storyId = selectedStory.id;
+    const expectedRevision = selectedStory.revision;
+    const requestedDay = scheduledDay;
+    const idempotencyKey = crypto.randomUUID();
     try {
       const data = await post("/api/studio/schedule", {
-        storyId: selectedStory.id,
+        storyId,
         status: "Scheduled",
-        scheduledDay,
+        scheduledDay: requestedDay,
+        expectedRevision,
+        idempotencyKey,
       });
-      selectedStory = data.story || {
-        ...selectedStory,
-        scheduledDay,
-        status: "Scheduled",
-      };
-      backlog = data.backlog || backlog;
+      if (token !== lastScopeToken || selectedStory?.id !== storyId) return;
+      if (selectedStory.revision !== expectedRevision) {
+        notice = "The schedule was saved. Reload this story to see concurrent changes.";
+        return;
+      }
+      // Scheduling changes metadata only. Keep any text typed while it ran.
+      selectedStory = { ...data.story, campaignDraft: campaign || data.story.campaignDraft };
+      backlog = (data.backlog || backlog).map(story => story.id === storyId ? selectedStory : story);
       calendar = data.calendar || calendar;
-      notice = `Assigned to ${scheduledDay}. This does not publish to Instagram.`;
+      notice = `Assigned to ${requestedDay} as an undated weekday. This does not publish to Instagram.`;
     } catch (failure) {
-      error = failure.message;
+      if (token === lastScopeToken && selectedStory?.id === storyId) error = failure.message;
     }
   }
   async function exportAsset() {
