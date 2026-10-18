@@ -1,0 +1,9 @@
+# Issue 56 execution plan
+
+Approved semantics: docs/specs/editor-approval-workflow.md, user review 2026-10-17 America/New_York.
+
+1. Prove the storage arbitration boundary before building review UI. Scope/story state and native document headers are currently separate key/value records. Independent reads plus a later one-key write cannot prove atomic stale rejection. Introduce a bounded multi-record transaction port for SQLite and Firestore, with synchronous pure callbacks and all reads before writes; preserve existing one-record API behavior. Test competing source/native writes, rollback, callback validation, capacity and retry purity. Do not claim global identity revocation atomicity.
+2. Build review/approval transitions and immutable lineage on that boundary. A trusted resolver identifies exact registered native document and scope keys; browser cannot choose transaction keys or native URLs. Validate current principal and source gates, then compare transactional source/native/brand versions, bind approval hashes, journal idempotency and expose stale state.
+3. Connect authenticated HTTP and a dedicated Svelte panel to actual source/native review revisions. Founder/current marketer role policy stays explicit. Preserve dirty editor state, focus, canonical client lifecycle and default-off native distribution gate.
+4. Implement adapter-owned export with private artifact verification, authenticated bounded envelope and replay journal. Stage artifact bytes before transaction, commit only after matching all approval preconditions, retain retry/uncertain state and audit. No unproven upstream event listener or automatic publication.
+5. Replay two-role built-App and actual private artifact paths. Independent review, all hosted gates, combined local image and deployment verification precede closure. Original-only public build remains mandatory until the separate native license hold is resolved.
