@@ -496,7 +496,7 @@
             </form>{:else}<button class="cell-button" aria-label={`Edit ${labels[column]} for ${row.title}`} disabled={$client.mutationPending} onclick={()=>{inline={id:row.id,field:column,revision:row.revision};inlineValue=row[column]||"";}}>{cellValue(row,column)}</button>{/if}
           {:else}{cellValue(row,column)}{/if}
         </td>{/each}
-        <td><button class="secondary" disabled={$client.mutationPending} data-open-story={row.id} onclick={()=>openEditor(row.id)}>{row.formats.length?"Open draft":"Open story"} ↗</button></td>
+        <td><button class="secondary" aria-label={`${row.formats.length?"Open draft":"Open story"} ↗`} disabled={$client.mutationPending} data-open-story={row.id} onclick={()=>openEditor(row.id)}><span aria-hidden="true">Open ↗</span></button></td>
       </tr>{/each}
     {/each}</tbody></table>
     {#if $client.query.loaded&&!$client.query.loading&&!rows.length&&!$client.query.error}<div class="table-empty">{#if $client.query.total}<h3>No stories match these filters.</h3><p>Your stories are still in this brand. Clear filters to show them.</p>{:else}<h3>No stories here yet.</h3><p>Add a story and its sources below.</p>{/if}</div>{/if}
