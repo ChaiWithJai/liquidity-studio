@@ -1,55 +1,45 @@
-;; Original optional policy hook for pinned Penpot ff7a66f (2.18.3).
-;; Source only: not built, wired, or enabled. No protocol relay or credentials.
+;; Original optional policy helpers for pinned Penpot ff7a66f (2.18.3).
+;; Constructor configuration is private; browser data never classifies governance.
 (ns app.studio.access
   (:require [app.db :as db]
             [app.common.exceptions :as ex]
-            [app.common.uuid :as uuid]
-            [app.rpc :as-alias rpc]
-            [app.util.services :as sv]))
+            [app.common.uuid :as uuid]))
 
-(defn- denied! []
+(defn denied! []
   (ex/raise :type :authorization :code :studio-native-access-denied
             :hint "Current Studio brand access is required"))
 
-(defn- file-team [pool id]
+(defn file-team [pool id]
   (when-not (uuid? id) (denied!))
   (:team-id (db/exec-one! pool
               ["SELECT p.team_id FROM file f JOIN project p ON p.id=f.project_id WHERE f.id=? AND f.deleted_at IS NULL AND p.deleted_at IS NULL" id])))
 
-(defn- project-team [pool id]
+(defn project-team [pool id]
   (when-not (uuid? id) (denied!))
   (:team-id (db/exec-one! pool
               ["SELECT team_id FROM project WHERE id=? AND deleted_at IS NULL" id])))
 
-(defn wrap
-  "Install before spec-conform/validation/auth wrappers are applied in app.rpc/wrap.
-   authorize is a constructor-only current-authority function, not browser metadata.
-   Without it, existing operator/personal runtime behavior is unchanged.
-   Configured governed runtime fails closed; C2 callback always denies admission."
-  [{:keys [::authorize ::db/pool]} f mdata]
-  (if-not authorize
-    f
-    (fn [cfg params]
-      (let [profile-id (::rpc/profile-id params)
-            command (::sv/name mdata)]
-        (when-not (uuid? profile-id) (denied!))
-        (if (= command "get-profile")
-          (f cfg params)
-          (let [[team-id operation]
-                (case command
-                  "get-file" [(file-team pool (:id params)) :read]
-                  "update-file" [(file-team pool (:id params)) :write]
-                  "get-project" [(project-team pool (:id params)) :read]
-                  "get-team" [(:id params) :read]
-                  "get-team-members" [(:team-id params) :read]
-                  ;; Sharing is not an ordinary editor permission in Studio.
-                  "create-share-link" (denied!)
-                  ;; Indirect commands are added only with exact native ownership
-                  ;; resolution and focused checks. No caller-declared team bypass.
-                  (denied!))]
-            (when-not (uuid? team-id) (denied!))
-            (when-not (true? (:allowed (authorize {:native-profile-id profile-id
-                                                 :native-team-id team-id
-                                                 :operation operation})))
-              (denied!))
-            (f cfg params)))))))
+(defn governed-team? [cfg team-id]
+  (contains? (::governed-teams cfg #{}) team-id))
+
+(defn authorize-resource
+  "Classification is LOCAL, not a decision returned by the authority callback.
+   native-session is supplied by native middleware/C3, never a WS query UUID.
+   Unknown/failed authority denies a governed team; personal teams retain native ACL."
+  [cfg {:keys [native-profile-id native-team-id] :as resource}]
+  (when-not (uuid? native-team-id) (denied!))
+  (if-not (governed-team? cfg native-team-id)
+    {:governed false :allowed true}
+    {:governed true
+     :allowed (boolean
+                (and (uuid? native-profile-id)
+                     (::authorize cfg)
+                     (try (true? (:allowed ((::authorize cfg) resource)))
+                          (catch Exception _ false))))}))
+
+(defn assert-team! [cfg resource]
+  (when-not (:allowed (authorize-resource cfg resource)) (denied!)))
+
+(defn assert-file! [cfg resource file-id]
+  (let [team-id (file-team (::db/pool cfg) file-id)]
+    (assert-team! cfg (assoc resource :native-team-id team-id))))
