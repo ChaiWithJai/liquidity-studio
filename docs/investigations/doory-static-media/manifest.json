@@ -1,0 +1,785 @@
+{
+  "downloads": 24,
+  "pageCounts": {
+    "SVG": 18,
+    "JPG": 18,
+    "PDF": 18
+  },
+  "artifacts": [
+    {
+      "preset": "vedic_dharma",
+      "format": "reel",
+      "type": "SVG",
+      "bytes": 3372924,
+      "sha256": "1d8eacb63917539e102ede17e0c2f815749a14710c49728adb4620c2c2c9eb27",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 2185424,
+          "sha256": "9fb958c002ae06cccea04a5c6152c36355c31cc07a17cc23e7e61038c0d1f665",
+          "dimensions": [
+            1080,
+            1920
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 2,
+          "bytes": 2185432,
+          "sha256": "a64c380003e43c89766dc2ba58cc83baa8ae25292b7a375ce9c9bfae1ae3ce70",
+          "dimensions": [
+            1080,
+            1920
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 3,
+          "bytes": 2185512,
+          "sha256": "416ec36c27d80780efc27f0c657054d250a428bf5fa36e06ca2f69ba834e14be",
+          "dimensions": [
+            1080,
+            1920
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        }
+      ]
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "reel",
+      "type": "JPG",
+      "bytes": 191921,
+      "sha256": "4eaa50c75dde1f2efb62e4f85a43ac5928049e86577acf3b8df8c9817286c10a",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 55132,
+          "sha256": "589f9f48e58a817a6c54b54d9d9cc6e437fee6da4779c77f542a1c34f8e4b2c8",
+          "decodedPixels": [
+            1080,
+            1920
+          ]
+        },
+        {
+          "page": 2,
+          "bytes": 65320,
+          "sha256": "ff6c36d8af63ff8506658189467ba4d48169a5c5e379b867822a52a819600979",
+          "decodedPixels": [
+            1080,
+            1920
+          ]
+        },
+        {
+          "page": 3,
+          "bytes": 70895,
+          "sha256": "396cb92c357431fa09958a6d1b1e83696583596efdeadcb9f5dcdb1b229be97d",
+          "decodedPixels": [
+            1080,
+            1920
+          ]
+        }
+      ]
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "reel",
+      "type": "PDF",
+      "bytes": 1030372,
+      "sha256": "f3a6c3c70610bb8d548a426d910ce3d79ae04c24e8eef82a11e6db95750e3a99",
+      "pages": [
+        {
+          "page": 1,
+          "decodedPixels": [
+            1080,
+            1920
+          ],
+          "rasterSha256": "c5b3f94c240965261b1f3a82b82949d9a4ab785690eb39f2dfb304916dfb052a"
+        },
+        {
+          "page": 2,
+          "decodedPixels": [
+            1080,
+            1920
+          ],
+          "rasterSha256": "c213088ee3f491669b1c8897b286c60b6d929175cc2a73c90c6864b5ed5420d7"
+        },
+        {
+          "page": 3,
+          "decodedPixels": [
+            1080,
+            1920
+          ],
+          "rasterSha256": "912e888ff8182ddd115edec09af75087a93f0f9103bd712405fd5b30874cfa14"
+        }
+      ],
+      "rasterDecodeRequestedDimensions": [
+        1080,
+        1920
+      ],
+      "extractableTextCharacters": 0,
+      "representation": "raster-page PDF; no editable-vector/text claim"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "infographic",
+      "type": "SVG",
+      "bytes": 250054,
+      "sha256": "4d89483e269cc0ef02e8b9a7a28f3cae4a2c5d3216af59bae6367af35c465a03",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 250054,
+          "sha256": "4d89483e269cc0ef02e8b9a7a28f3cae4a2c5d3216af59bae6367af35c465a03",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        }
+      ]
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "infographic",
+      "type": "JPG",
+      "bytes": 79508,
+      "sha256": "9d1783b1aa2772d275c359237d702591a0392a2d2c9789e4fd2e73cd3f6d4414",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 79508,
+          "sha256": "9d1783b1aa2772d275c359237d702591a0392a2d2c9789e4fd2e73cd3f6d4414",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        }
+      ]
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "infographic",
+      "type": "PDF",
+      "bytes": 422134,
+      "sha256": "fcdc94427b6bac3a643c00232d6637d4cfffd7fccb0d47300b47cda835ad07f7",
+      "pages": [
+        {
+          "page": 1,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "93ae6894cf008a4af3f4fb5114d69a7604d4df303fc112731453f14b47acbdcb"
+        }
+      ],
+      "rasterDecodeRequestedDimensions": [
+        1080,
+        1350
+      ],
+      "extractableTextCharacters": 0,
+      "representation": "raster-page PDF; no editable-vector/text claim"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "carousel",
+      "type": "SVG",
+      "bytes": 549154,
+      "sha256": "b206e12e2e2500433db81dabdc13d6f432cab1e3490026a4f6b6de11e1c22c94",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 249806,
+          "sha256": "38afe2cd82ad7ddd1448457da993986e36689ad91fd89825dbc96d2fe2a15e4e",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 2,
+          "bytes": 249792,
+          "sha256": "4c61427e8de028bf33e9e0055d28b1aad66103488b4cc49976e6602a061383df",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 3,
+          "bytes": 249792,
+          "sha256": "1dbc32777e99a235b2fcd76cd758c3473cf8e6b110c844531e3ac0db4dc09d65",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 4,
+          "bytes": 249771,
+          "sha256": "522f76edf0613e73b822c4194842ac5fb072bf3263f185cf09e8951ee0e15be0",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        }
+      ]
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "carousel",
+      "type": "JPG",
+      "bytes": 186513,
+      "sha256": "b48336679757145c57f3c5b78924b1462753beb84c2c33cfa2c53ce4eea596be",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 50476,
+          "sha256": "c332c7c251492efe9673a294dc6a213826f6188578d8ed12f69810e9ce54d463",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        },
+        {
+          "page": 2,
+          "bytes": 46410,
+          "sha256": "538c8821e84eac4fd08364548261644883c68063ed6554ba831e328befab65c5",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        },
+        {
+          "page": 3,
+          "bytes": 46410,
+          "sha256": "538c8821e84eac4fd08364548261644883c68063ed6554ba831e328befab65c5",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        },
+        {
+          "page": 4,
+          "bytes": 42411,
+          "sha256": "3c665fb4a5ff91a794008dcdc51568152bb6f56f91e776d54fb5d8aa5f3d4e3b",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        }
+      ]
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "carousel",
+      "type": "PDF",
+      "bytes": 736977,
+      "sha256": "92b65112a33f2833475422edaf6d47880a8bdc9b8e69c73689fb24189110b083",
+      "pages": [
+        {
+          "page": 1,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "c533bc8191df9c91d337d9a83b863c44df29d5257d54101af82cca7ad8b391e5"
+        },
+        {
+          "page": 2,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "1a98ad5c4524f6526c9c104c0af1fdb6eace958f54f045a05e01d92c5d6f68c2"
+        },
+        {
+          "page": 3,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "1a98ad5c4524f6526c9c104c0af1fdb6eace958f54f045a05e01d92c5d6f68c2"
+        },
+        {
+          "page": 4,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "53efec8b3f763492fef4e9018ce787b9d10f472ea48b0304aa9c776276646bb1"
+        }
+      ],
+      "rasterDecodeRequestedDimensions": [
+        1080,
+        1350
+      ],
+      "extractableTextCharacters": 0,
+      "representation": "raster-page PDF; no editable-vector/text claim"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "story",
+      "type": "SVG",
+      "bytes": 249771,
+      "sha256": "791d2ccadb354756d678adb0ae7be309cb2662ac786fbaaf1565bda2c57379b7",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 249771,
+          "sha256": "791d2ccadb354756d678adb0ae7be309cb2662ac786fbaaf1565bda2c57379b7",
+          "dimensions": [
+            1080,
+            1920
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        }
+      ]
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "story",
+      "type": "JPG",
+      "bytes": 54521,
+      "sha256": "511de9128b61969a1a8d5a05824912b799e876d57eeb2899079279377860371a",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 54521,
+          "sha256": "511de9128b61969a1a8d5a05824912b799e876d57eeb2899079279377860371a",
+          "decodedPixels": [
+            1080,
+            1920
+          ]
+        }
+      ]
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "story",
+      "type": "PDF",
+      "bytes": 304980,
+      "sha256": "e121b3b54a133e172770fbb0c80fa9b2c403c270dc823b447f8bd2c29d708760",
+      "pages": [
+        {
+          "page": 1,
+          "decodedPixels": [
+            1080,
+            1920
+          ],
+          "rasterSha256": "c48e8cef6137485a9b00c5ef9d7a9d2530b8d09b59d80715554933f1078ea288"
+        }
+      ],
+      "rasterDecodeRequestedDimensions": [
+        1080,
+        1920
+      ],
+      "extractableTextCharacters": 0,
+      "representation": "raster-page PDF; no editable-vector/text claim"
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "reel",
+      "type": "SVG",
+      "bytes": 411861,
+      "sha256": "fdabe40fe84279886741f2fcfe21f07c518a1366ac7fab9fcf9060e37cdb05ae",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 249823,
+          "sha256": "13ae77ab4ef6048bf9795bebc15c36e9c1ec6072879c430093720f73eba56e8a",
+          "dimensions": [
+            1080,
+            1920
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 2,
+          "bytes": 249831,
+          "sha256": "88d7d9746a9bd9ccbb613ad492bc24eb25390e8c392b732b0eb8ceaf9cc18fc9",
+          "dimensions": [
+            1080,
+            1920
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 3,
+          "bytes": 249911,
+          "sha256": "e5eb937019f4a33a45729e1b34d8a3ef0b21165bf2fa1c4c9dbbe8d738c38307",
+          "dimensions": [
+            1080,
+            1920
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        }
+      ]
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "reel",
+      "type": "JPG",
+      "bytes": 186914,
+      "sha256": "a1376c7bbb3bdb75deb7f55f719bd0478eb07ac81ed8578b9b27721d10e30c05",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 55681,
+          "sha256": "3cc219de5e1f297c87d64f6a1d4ee18c7715a052ba525f750e558dd3d9ddc406",
+          "decodedPixels": [
+            1080,
+            1920
+          ]
+        },
+        {
+          "page": 2,
+          "bytes": 62275,
+          "sha256": "be1e7e823e59e6b789a094b77449ee319db050eb56c3958b3af51905d3821d67",
+          "decodedPixels": [
+            1080,
+            1920
+          ]
+        },
+        {
+          "page": 3,
+          "bytes": 68372,
+          "sha256": "cfa47bfcd40e5b23b9b2ab7fb1c8d8e676052bd03b6e614d7218d50d9f38db8f",
+          "decodedPixels": [
+            1080,
+            1920
+          ]
+        }
+      ]
+    },
+    {
+      "preset": "liquidity_desk",
+      "format": "reel",
+      "type": "PDF",
+      "bytes": 1037716,
+      "sha256": "1d325ec1a54df84c400f14038b6f59ffa8d9aa4fefc4de531b4eb620fd3c5227",
+      "pages": [
+        {
+          "page": 1,
+          "decodedPixels": [
+            1080,
+            1920
+          ],
+          "rasterSha256": "845545035687d3bd74db9ef723e7c84bc5611780c937e41395a81e6cf27501a7"
+        },
+        {
+          "page": 2,
+          "decodedPixels": [
+            1080,
+            1920
+          ],
+          "rasterSha256": "cefab319de2818b4cdf2102a15306a6d76b123b9c2d360c25069b63aca173a9c"
+        },
+        {
+          "page": 3,
+          "decodedPixels": [
+            1080,
+            1920
+          ],
+          "rasterSha256": "3619f0e5de4e7999ffaf0debd19cb51f2c05d78cd6013cc3edd7f091a5bf77a0"
+        }
+      ],
+      "rasterDecodeRequestedDimensions": [
+        1080,
+        1920
+      ],
+      "extractableTextCharacters": 0,
+      "representation": "raster-page PDF; no editable-vector/text claim"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "infographic",
+      "type": "SVG",
+      "bytes": 2185655,
+      "sha256": "07f782322e092eb180d22fa86d5c17bf1cf9ab6294d8a3497e1d2f352ed2f36b",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 2185655,
+          "sha256": "07f782322e092eb180d22fa86d5c17bf1cf9ab6294d8a3497e1d2f352ed2f36b",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        }
+      ]
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "infographic",
+      "type": "JPG",
+      "bytes": 78278,
+      "sha256": "6ab2a9134825121a53db9f22fd34fc8b412a908e8db61f29d076f088f690f721",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 78278,
+          "sha256": "6ab2a9134825121a53db9f22fd34fc8b412a908e8db61f29d076f088f690f721",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        }
+      ]
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "infographic",
+      "type": "PDF",
+      "bytes": 409516,
+      "sha256": "42024e73166cb57513b789ff78f83114c6dbde1983a1eba355cbc5eafb6a2500",
+      "pages": [
+        {
+          "page": 1,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "82ebb7e607545a69c2ba00995518d0774f8d411acf5f372aa9b6ef81b0db7ac1"
+        }
+      ],
+      "rasterDecodeRequestedDimensions": [
+        1080,
+        1350
+      ],
+      "extractableTextCharacters": 0,
+      "representation": "raster-page PDF; no editable-vector/text claim"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "carousel",
+      "type": "SVG",
+      "bytes": 4497230,
+      "sha256": "a2c103a7d94a762c999d6787f129353f0bea3d77116b3683789b4787b71512b0",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 2185407,
+          "sha256": "b541f234c2c805833345ac5ab569420478997e460dcbd36cb7598185596ae9f1",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 2,
+          "bytes": 2185393,
+          "sha256": "26167d8b04493da724b1b50885b00487d8af185b8db97aacea628bb34b6bdc54",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 3,
+          "bytes": 2185393,
+          "sha256": "7a31c7a4ad0c4526bf3df5be32f408906f248be3f68e8b3d63a497e79c9c5e09",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        },
+        {
+          "page": 4,
+          "bytes": 2185372,
+          "sha256": "1743de80e8e979cb2ed107091e8b497f78490a0c03f392f66f07fd0fba520b13",
+          "dimensions": [
+            1080,
+            1350
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        }
+      ]
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "carousel",
+      "type": "JPG",
+      "bytes": 181748,
+      "sha256": "b6c70ab7ebbe72bd1201e7b926ebe0e66ce6b43189a6066f3a2aa6898bb84156",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 49973,
+          "sha256": "e05d5daea01e241a095221dfb469c43f3b8cb7c2b26084001b280a8cba12f458",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        },
+        {
+          "page": 2,
+          "bytes": 44961,
+          "sha256": "6ed0267afd1d36eada7389b6975879baee3ff82aa68dfe7d9b74850025a92b9b",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        },
+        {
+          "page": 3,
+          "bytes": 44961,
+          "sha256": "6ed0267afd1d36eada7389b6975879baee3ff82aa68dfe7d9b74850025a92b9b",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        },
+        {
+          "page": 4,
+          "bytes": 41063,
+          "sha256": "d010cb86ccfcc5ee089d99bb3fa85dbe6bbc3a77a5169f164bdc6874a9bde97b",
+          "decodedPixels": [
+            1080,
+            1350
+          ]
+        }
+      ]
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "carousel",
+      "type": "PDF",
+      "bytes": 714520,
+      "sha256": "f9106e9df167960688cff21241834d974854c108f5cada466ecf5eead2b21b39",
+      "pages": [
+        {
+          "page": 1,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "066b85365dcbd227a5582b3cb74743d918adddfa64b9499ecb7d9663cc3b7a1e"
+        },
+        {
+          "page": 2,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "853ef6c2b56fb84de7cc339668247aa1bef9fd6de3c77c72fb26bb628c23d36b"
+        },
+        {
+          "page": 3,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "853ef6c2b56fb84de7cc339668247aa1bef9fd6de3c77c72fb26bb628c23d36b"
+        },
+        {
+          "page": 4,
+          "decodedPixels": [
+            1080,
+            1350
+          ],
+          "rasterSha256": "2cfb841b26a0b63f732659517e9fd57331f47a5354a65ea8c3831c5ebeeac457"
+        }
+      ],
+      "rasterDecodeRequestedDimensions": [
+        1080,
+        1350
+      ],
+      "extractableTextCharacters": 0,
+      "representation": "raster-page PDF; no editable-vector/text claim"
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "story",
+      "type": "SVG",
+      "bytes": 2185372,
+      "sha256": "f9d1a85b449f5aaaf7c48e97534462bee3faa44e2e307f9c4253f36db4d5f87f",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 2185372,
+          "sha256": "f9d1a85b449f5aaaf7c48e97534462bee3faa44e2e307f9c4253f36db4d5f87f",
+          "dimensions": [
+            1080,
+            1920
+          ],
+          "textNodes": 6,
+          "embeddedFonts": true
+        }
+      ]
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "story",
+      "type": "JPG",
+      "bytes": 54039,
+      "sha256": "e54807c0d388d992f5cfb3fedaf253c419bf0499c02b74df18244556f7f47754",
+      "pages": [
+        {
+          "page": 1,
+          "bytes": 54039,
+          "sha256": "e54807c0d388d992f5cfb3fedaf253c419bf0499c02b74df18244556f7f47754",
+          "decodedPixels": [
+            1080,
+            1920
+          ]
+        }
+      ]
+    },
+    {
+      "preset": "vedic_dharma",
+      "format": "story",
+      "type": "PDF",
+      "bytes": 297380,
+      "sha256": "5c19db362f2654c8eb2d2112550f7eec1adba5df33353e5bd4844136fc67dc6f",
+      "pages": [
+        {
+          "page": 1,
+          "decodedPixels": [
+            1080,
+            1920
+          ],
+          "rasterSha256": "2ce089141a67dd45b5e26ce06b77c75843495560e86d49398cab1da72b162c5b"
+        }
+      ],
+      "rasterDecodeRequestedDimensions": [
+        1080,
+        1920
+      ],
+      "extractableTextCharacters": 0,
+      "representation": "raster-page PDF; no editable-vector/text claim"
+    }
+  ],
+  "limits": [
+    "Actual native browser downloads; controlled fixtures with explicit placeholder cutouts and token accents.",
+    "SVG parsed as XML with embedded font data; not independently visually certified in every target renderer.",
+    "All JPEGs and all PDF pages independently raster-decoded; representative visual inspection is separate.",
+    "PDF export rasterizes pages; this does not preserve editable native layers.",
+    "No cutout, audio, animation, GIF, full performance or portable fresh-install font acceptance from these files."
+  ]
+}
