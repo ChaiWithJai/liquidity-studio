@@ -1,3 +1,4 @@
+import { buildPreparedCandidate } from './prepared-source-candidate.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {projectPreparedHistory,restorePreparedHistory} from './editor-pack-prepared.js';
@@ -36,4 +37,20 @@ test('re-ejected prepared history retains the original scope rather than attribu
  const restored=restorePreparedHistory(first,{scope:target,packSha256:'c'.repeat(64)});
  const repeated=projectPreparedHistory(restored,target);
  assert.deepEqual(repeated[0].sourceScope,scope);assert.equal(repeated[0].originalCandidateId,'candidate');
+});
+
+
+test('version2 prefix mappings survive historical portable roundtrip without transferring source authority',()=>{
+ const entries=fixture();
+ entries[0].candidate=buildPreparedCandidate({id:'new',scope,story:{id:'story',revision:1},brandProfile:{},evidence:entries[0].evidence,createdAt:'2026-10-18T00:00:00Z'});
+ entries[0].workingArtwork=structuredClone(entries[0].candidate.artwork);
+ const history=projectPreparedHistory(entries,scope),target={organizationId:'new-org',brandId:'new-brand'};
+ const restored=restorePreparedHistory(history,{scope:target,packSha256:'c'.repeat(64)});
+ assert.equal(restored[0].candidate.artworkProjectionVersion,2);
+ assert.deepEqual(restored[0].candidate.sourceFieldMappings,entries[0].candidate.sourceFieldMappings);
+ assert.deepEqual(restored[0].workingArtwork,entries[0].workingArtwork);
+ assert.equal(restored[0].candidate.excerpts[0].clinicalReview,null);assert.equal(restored[0].editorialStatus,'unreviewed');
+ assert.deepEqual(projectPreparedHistory(restored,target)[0].candidate.sourceFieldMappings,entries[0].candidate.sourceFieldMappings);
+ const bad=structuredClone(entries);bad[0].candidate.sourceFieldMappings[0].textLength++;
+ assert.throws(()=>projectPreparedHistory(bad,scope));
 });

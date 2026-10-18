@@ -92,6 +92,9 @@ export function extractSourceText(body, contentType, query = "", passage) {
   const afterHeading = passage?.mode === "after-heading-prefix";
   if (passage?.mode !== undefined && !afterHeading)
     throw fail(422, "Unknown source passage mode");
+  if (passage?.lineBreakParagraphs !== undefined &&
+      (!afterHeading || typeof passage.lineBreakParagraphs !== "boolean"))
+    throw fail(422, "Invalid source line-break paragraph option");
   if (afterHeading && (
     type === "text/plain" || Buffer.byteLength(body, "utf8") > MAX_BYTES ||
     typeof passage.section !== "string" || !passage.section.trim() ||
@@ -138,6 +141,7 @@ export function extractSourceText(body, contentType, query = "", passage) {
         /<(script|style|noscript|svg|nav|header|footer|form)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
         " ",
       )
+      .replace(/<br\b[^>]*>/gi, match => afterHeading && passage.lineBreakParagraphs === true ? "\n" : match)
       .replace(/<\/(p|div|section|article|li|h[1-6]|tr)\s*>/gi, "\n")
       .replace(/<[^>]*>/g, " ");
     text = entities(text);

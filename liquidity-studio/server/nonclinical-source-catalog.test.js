@@ -11,7 +11,7 @@ const culture = { organizationId:'org',brandId:'culture',preset:'vedic_dharma' }
 const topics = [
  ['story_beyonce_amc', 'Beyoncé’s Direct-to-AMC Concert Film Distribution Play', finance],
  ['story_margot_luckychap', 'Margot Robbie & LuckyChap: Film Production and IP Development', finance],
- ['story_nykaa_ipo', 'Falguni Nayar’s Nykaa: Online and Physical Beauty Retail', finance],
+ ['story_nykaa_ipo', 'Nykaa’s 2022 Plan for a GCC Omnichannel Alliance', finance],
  ['research_1', 'Ramanujan: Trinity’s Record of Mathematical Work', culture],
 ];
 
@@ -49,7 +49,7 @@ test('existing passage selector excludes Nykaa totals and Ramanujan inscription 
   assert.equal(validatePreparedCandidate(candidate,evidence),true);
   assert.equal(candidate.provenance.humanApproval,'none');assert.equal(candidate.provenance.modelCalls,0);
   assert.ok(candidate.excerpts.every(x=>text.slice(x.startOffset).startsWith(x.text)));
-  for(const broken of [html.replace(`<h3>${passage.nextSection}</h3>`,'<h3>Changed boundary</h3>'),html+`<h2>${passage.section}</h2>`,html.replace(`<p>${selected[0]}</p>`,'')]){
+  for(const broken of [...(passage.mode ? [] : [html.replace(`<h3>${passage.nextSection}</h3>`,'<h3>Changed boundary</h3>')]),html+`<h2>${passage.section}</h2>`,html.replace(`<p>${selected[0]}</p>`,'')]){
    assert.throws(()=>extractSourceText(broken,'text/html',title,passage),/missing or ambiguous/);
   }
  }
@@ -77,4 +77,21 @@ test('explicit after-heading selection keeps literal release paragraphs, Unicode
  assert.throws(()=>extractSourceText(html,'text/plain','',p),/Invalid bounded/);
  assert.throws(()=>extractSourceText(html+'x'.repeat(512*1024),'text/html','',p),/Invalid bounded/);
  assert.throws(()=>extractSourceText(html,'text/html','',{...p,paragraphPrefixes:[p.paragraphPrefixes[0],p.paragraphPrefixes[0]]}),/Invalid bounded/);
+});
+
+
+test('explicit BR paragraphs select only the named primary alliance paragraphs and fail closed',()=>{
+ const entry=catalogForStory({id:'story_nykaa_ipo',title:'Nykaa'},finance)[0],p=entry.passage;
+ const selected=p.paragraphPrefixes.map((prefix,i)=>`${prefix} literal primary paragraph ${i} with Unicode GCC café.`);
+ const html=`<a>${p.section}</a><h1>${p.section}</h1><p>${selected.join('<br />')}<br>As per a Red Seer report, excluded partner forecast.<br>About Apparel Group: excluded boilerplate.</p>`;
+ assert.equal(extractSourceText(html,'text/html','',p),selected.join('\n'));
+ for(const bad of [html+`<h2>${p.section}</h2>`,html.replace(selected[1],''),html+`<p>${selected[0]}</p>`])assert.throws(()=>extractSourceText(bad,'text/html','',p),/missing or ambiguous/);
+ for(const option of ['true',1,null])assert.throws(()=>extractSourceText(html,'text/html','',{...p,lineBreakParagraphs:option}),/line-break/);
+ assert.throws(()=>extractSourceText(html,'text/html','',{...p,mode:undefined}),/line-break/);
+ assert.throws(()=>extractSourceText(html,'text/html','',{...p,mode:'other'}),/Unknown/);
+ assert.throws(()=>extractSourceText(html,'text/plain','',p),/Invalid bounded/);
+ assert.throws(()=>extractSourceText(html+'x'.repeat(512*1024),'text/html','',p),/Invalid bounded/);
+ assert.throws(()=>extractSourceText(html,'text/html','',{...p,lineBreakParagraphs:false}),/missing or ambiguous/);
+ // Existing HTML behavior does not gain BR separators implicitly.
+ assert.equal(extractSourceText('<h1>Old</h1><p>First old paragraph has enough source words.<br>Second old paragraph has enough source words.</p>','text/html'),extractSourceText('<h1>Old</h1><p>First old paragraph has enough source words. Second old paragraph has enough source words.</p>','text/html'));
 });

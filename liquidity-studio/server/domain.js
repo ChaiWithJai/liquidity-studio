@@ -91,7 +91,7 @@ export const INITIAL_CONTENT_BACKLOG = [
   },
   {
     id: 'story_nykaa_ipo',
-    title: 'Falguni Nayar’s Nykaa: Online and Physical Beauty Retail',
+    title: 'Nykaa’s 2022 Plan for a GCC Omnichannel Alliance',
     category: 'Global IPOs & Retail',
     trendBadge: '🌍 Global Market Spotlight',
     status: 'In Backlog',

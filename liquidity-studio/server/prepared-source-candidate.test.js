@@ -6,6 +6,8 @@ import {
   validatePreparedCandidate,
   preparationFingerprint,
   preparationUrls,
+  candidateArtwork,
+  validateCandidateLayout,
 } from "./prepared-source-candidate.js";
 const text =
   "A retrieved primary source excerpt with enough material for an operator to inspect.";
@@ -172,10 +174,38 @@ test("numbered primary-text verse keeps its meaningful sentence rather than only
     brandProfile: {},
     evidence: snapshots,
   });
-  assert.equal(
-    candidate.artwork.infographic.headline,
-    "The eight means of Yoga",
-  );
+  assert.match(candidate.artwork.infographic.headline, /^29\. The eight means of Yoga/);
   assert.match(candidate.excerpts[0].text, /29\. The eight means of Yoga/);
   assert.ok(text.includes(candidate.artwork.infographic.headline));
+});
+
+
+test('version2 fits canonical four-format pages for both brands using exact source prefixes and mapped offsets',()=>{
+ const long='Beyoncé’s primary institutional source records historical plans and limitations without asserting completed outcomes or medical advice. '.repeat(8);
+ const snapshots=[{...evidence[0],text:long,textSha256:createHash('sha256').update(long).digest('hex')}];
+ for(const preset of ['liquidity_desk','vedic_dharma']){
+  const candidate=buildPreparedCandidate({id:'new',scope:{organizationId:'org',brandId:preset,preset},story,brandProfile:{},evidence:snapshots});
+  assert.equal(candidate.artworkProjectionVersion,2);
+  assert.equal(validatePreparedCandidate(candidate,snapshots),true);
+  assert.doesNotThrow(()=>validateCandidateLayout(candidate.artwork,{brandName:preset,logoText:preset==='vedic_dharma'?'CWJ // ॐ':'Liquidity Desk'}));
+  for(const map of candidate.sourceFieldMappings){
+   const value=map.fieldPath.split('.').reduce((v,key)=>v[key],candidate.artwork);
+   assert.equal(value,snapshots[0].text.slice(map.startOffset,map.startOffset+map.textLength));
+   assert.ok(candidate.excerpts.some(e=>e.evidenceId===map.evidenceId&&e.startOffset===map.startOffset&&e.text.startsWith(value)));
+  }
+  assert.equal(candidate.excerpts[0].clinicalReview,null);assert.equal(candidate.provenance.modelCalls,0);
+  for(const alter of [c=>c.sourceFieldMappings[0].startOffset++,c=>c.sourceFieldMappings[0].textLength++,c=>c.artworkProjectionVersion=3,c=>c.artwork.infographic.headline+=' fabricated']){
+   const copy=structuredClone(candidate);alter(copy);assert.throws(()=>validatePreparedCandidate(copy,snapshots));
+  }
+ }
+});
+
+test('historical version1 retains original artwork and fingerprint semantics without automatic migration',()=>{
+ const candidate=buildPreparedCandidate({id:'old',scope:{organizationId:'org',brandId:'brand'},story,brandProfile:{},evidence});
+ delete candidate.artworkProjectionVersion;delete candidate.sourceFieldMappings;
+ candidate.artwork=candidateArtwork(candidate.excerpts);
+ const before=JSON.stringify(candidate),fingerprint=preparationFingerprint(story);
+ assert.equal(validatePreparedCandidate(candidate,evidence),true);
+ assert.equal(JSON.stringify(candidate),before);assert.equal(preparationFingerprint(story),fingerprint);
+ candidate.artworkProjectionVersion=1;assert.equal(validatePreparedCandidate(candidate,evidence),true);
 });

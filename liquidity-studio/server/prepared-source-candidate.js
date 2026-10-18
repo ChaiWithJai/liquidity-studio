@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { fail } from "./auth.js";
 import { brandRevision } from "./multimodal-contract.js";
-import { renderSvg } from "./artwork.js";
+import { renderSvg, sourcePrefixForLines } from "./artwork.js";
 import { storyContentDigest } from "./story-content-revision.js";
 import { catalogForStory, SOURCE_CATALOG_REVISION } from "./source-catalog.js";
 export const PREPARATION_PURPOSE = "source-preparation";
@@ -121,6 +121,51 @@ export function candidateArtwork(excerpts) {
     },
   };
 }
+/** Version2 changes only new source-derived artwork, never historical human work. */
+export function candidateArtworkV2(excerpts) {
+  const [heading, first = heading, second = first, third = first] = excerpts;
+  const sourceFieldMappings = [];
+  const value = (fieldPath, excerpt, width, size, maxLines) => {
+    const text = maxLines ? sourcePrefixForLines(excerpt.text, {width,size,maxLines}) : excerpt.text;
+    sourceFieldMappings.push({fieldPath,evidenceId:excerpt.evidenceId,startOffset:excerpt.startOffset,textLength:text.length});
+    return text;
+  };
+  const h = path => value(path,heading,900,52,2);
+  const rows = [first,second,third];
+  const artwork = {
+    infographic: {
+      headline:h("infographic.headline"),
+      statRows:rows.map((x,i)=>value(`infographic.statRows.${i}`,x,840,34,3)),
+      bottomTakeaway:value("infographic.bottomTakeaway",third,900,29,2),
+      caption:value("infographic.caption",first),
+    },
+    carousel: {
+      coverHook:h("carousel.coverHook"),
+      slides:[...rows,third].map((x,i)=>({
+        slideNumber:i+1,title:h(`carousel.slides.${i}.title`),
+        bodyMetric:value(`carousel.slides.${i}.bodyMetric`,x,840,34,4),
+        visualNote:i===3?"Editorial review step; no factual assertion":"Source excerpt text card",
+      })),
+    },
+    story:{
+      hookBanner:value("story.hookBanner",heading,900,52,3),
+      keyStatHighlight:value("story.keyStatHighlight",first,840,34,5),
+      interactiveStickerPrompt:value("story.interactiveStickerPrompt",second,900,29,2),
+    },
+    reel:{
+      spokenHook0to3s:value("reel.spokenHook0to3s",heading,740,52,3),
+      beats:rows.map((x,i)=>({
+        timecode:["0:00-0:05","0:05-0:15","0:15-0:30"][i],
+        voiceover:value(`reel.beats.${i}.voiceover`,x,680,34,5),
+        onScreenText:value(`reel.beats.${i}.onScreenText`,x,740,52,3),
+        bRollDirection:"Unreviewed source excerpt text card",
+      })),
+      closingCta:value("reel.closingCta",third,740,29,2),
+    },
+  };
+  return {artwork,sourceFieldMappings};
+}
+
 export function buildPreparedCandidate({
   id,
   scope,
@@ -155,8 +200,11 @@ export function buildPreparedCandidate({
   const excerpts = excerptsFor(evidence);
   if (!excerpts.length)
     throw fail(422, "No usable source excerpts were retrieved");
+  const projection = candidateArtworkV2(excerpts);
   return {
     schemaVersion: 1,
+    artworkProjectionVersion: 2,
+    sourceFieldMappings: projection.sourceFieldMappings,
     id,
     ...scope,
     storyId: story.id,
@@ -171,7 +219,7 @@ export function buildPreparedCandidate({
     sourceSelection: catalogForStory(story, scope).filter((entry) =>
       evidence.some((snapshot) => snapshot.sourceUrl === entry.sourceUrl),
     ),
-    artwork: candidateArtwork(excerpts),
+    artwork: projection.artwork,
     provenance: {
       purpose: PREPARATION_PURPOSE,
       mode: "extractive-unreviewed",
@@ -193,10 +241,16 @@ export function validatePreparedCandidate(candidate, evidence) {
     candidate.provenance.modelCalls !== 0
   )
     throw fail(422, "Candidate cannot claim human approval or model execution");
+  const version = candidate.artworkProjectionVersion ?? 1;
+  if (version !== 1 && version !== 2) throw fail(422, "Unknown candidate artwork projection version");
   const excerpts = excerptsFor(evidence);
+  const projection = version === 2 ? candidateArtworkV2(excerpts) : {artwork:candidateArtwork(excerpts)};
+  if ((version === 1 && candidate.sourceFieldMappings !== undefined) ||
+      (version === 2 && !isDeepStrictEqual(candidate.sourceFieldMappings, projection.sourceFieldMappings)))
+    throw fail(422, "Candidate source field mappings must preserve exact source prefixes");
   if (
     !isDeepStrictEqual(candidate.excerpts, excerpts) ||
-    !isDeepStrictEqual(candidate.artwork, candidateArtwork(excerpts)) ||
+    !isDeepStrictEqual(candidate.artwork, projection.artwork) ||
     !isDeepStrictEqual(
       candidate.provenance.evidenceIds,
       evidence.map((snapshot) => snapshot.id),

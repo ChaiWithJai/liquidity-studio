@@ -1,3 +1,4 @@
+import { candidateArtwork } from './prepared-source-candidate.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID, createHash } from "node:crypto";
@@ -607,7 +608,13 @@ test("preparation failure reports fixed phase and real layout422 without exposin
   ...[{status:502,code:'PREPARATION_FAILED'},{status:409,code:'REVISION_CONFLICT'},{status:429,code:'QUOTA_EXCEEDED'}].map(x=>({...x,name:`retrieve-${x.status}`,phase:'prepare',retrieve:async()=>{throw Object.assign(Error('PRIVATE_BODY_TOKEN_DO_NOT_RETURN'),{status:x.status});}})),
  ];
  for(const c of cases){
-  const f=await fixture(t,c.retrieve),job=await f.jobs.create(f.user,f.input);
+  const f=await fixture(t,c.retrieve);
+  if(c.name==='layout'){
+   // Preserve a canonical historical-v1 overflow probe; new v2 copy fits by projection.
+   const prepare=f.jobs.preparation.prepare.bind(f.jobs.preparation);
+   f.jobs.preparation.prepare=async(...args)=>{const prepared=await prepare(...args);delete prepared.candidate.artworkProjectionVersion;delete prepared.candidate.sourceFieldMappings;prepared.candidate.artwork=candidateArtwork(prepared.candidate.excerpts);return prepared;};
+  }
+  const job=await f.jobs.create(f.user,f.input);
   const result=await f.jobs.runNext('phase-worker',job.id,job.items[0].id,1),item=result.items[0];
   assert.equal(item.error.phase,c.phase,c.name);assert.equal(item.error.code,c.code,c.name);
   assert.doesNotMatch(JSON.stringify(item.error),/PRIVATE_BODY_TOKEN|source\.example/);

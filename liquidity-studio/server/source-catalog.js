@@ -3,7 +3,7 @@
 // so unrelated saved candidates do not become stale merely because another topic gains a source.
 export const SOURCE_CATALOG_REVISION = "pilot-primary-v1";
 export const DEFAULT_SOURCE_HOSTS =
-  "angelcity.com,www.gutenberg.org,www.prnewswire.com,investor.amctheatres.com,newsroom.hasbro.com,www.nykaa.com,explore.trin.cam.ac.uk";
+  "angelcity.com,www.gutenberg.org,www.prnewswire.com,investor.amctheatres.com,newsroom.hasbro.com,www.apparelgroup.com,explore.trin.cam.ac.uk";
 const entries = Object.freeze([
   Object.freeze({
     id: "angel-city-ownership-2024",
@@ -37,10 +37,11 @@ const entries = Object.freeze([
     sourceUrl: "https://investor.amctheatres.com/news-events/press-releases/detail/10/renaissance-a-film-by-beyonc-will-take-over-movie-theaters-worldwide-this-december",
     publisher: "Parkwood Entertainment and AMC issuer announcement, October 2, 2023",
     passage: {
-      version: "renaissance-distribution-release-v1",
+      version: "renaissance-distribution-release-v2",
       mode: "after-heading-prefix",
       section: "RENAISSANCE: A FILM BY BEYONCÉ Will Take Over Movie Theaters, Worldwide This December",
       paragraphPrefixes: [
+        "RENAISSANCE: A FILM BY BEYONCÉ , chronicles",
         "LOS ANGELES--(BUSINESS WIRE)-- Today,",
         "The theatrical concert experience will descend",
         "The experience will air Thursdays,",
@@ -60,20 +61,21 @@ const entries = Object.freeze([
     coverage: "LuckyChap production and Monopoly development announcement. Does not establish Margot Robbie compensation, producer profit shares or risk-free equity returns. Box office is not producer profit.",
   }),
   Object.freeze({
-    id: "nykaa-online-physical-company-profile",
+    id: "nykaa-apparel-alliance-2022-v1",
     preset: "liquidity_desk",
     storyId: "story_nykaa_ipo",
     topicTerms: ["nykaa"],
-    sourceUrl: "https://www.nykaa.com/who_are_we/lp",
-    publisher: "Nykaa issuer company profile",
+    sourceUrl: "https://www.apparelgroup.com/en/news/nykaa-enters-into-a-strategic-alliance-with-middle-east-based-apparel-group-to-recreate-omnichannel-beauty-retail-platform-in-the-gcc/",
+    publisher: "Apparel Group counterparty announcement, October 6, 2022",
     passage: {
-      version: "nykaa-company-origin-platforms-v1",
-      section: "The Nykaa Story",
-      nextSection: "Our Vision",
-      paragraphPrefixes: ["Nykaa is built on", "Over the years, Nykaa"],
+      version: "nykaa-planned-gcc-alliance-v1",
+      mode: "after-heading-prefix",
+      lineBreakParagraphs: true,
+      section: "Nykaa Enters into a Strategic Alliance with Middle East-based Apparel Group to Recreate Omnichannel Beauty Retail Platform in the GCC",
+      paragraphPrefixes: ["Mumbai, October 6, 2022:", "Bringing its proven multi-brand beauty retail expertise", "The technology-led company"],
     },
     kind: "financial",
-    coverage: "Issuer account of company origin and online/physical business. Excludes undated store/customer totals and all legacy IPO valuation, market-share and causal CAC claims. Not the FY2022 PDF report.",
+    coverage: "Historical counterparty announcement of a planned GCC omnichannel alliance. Does not establish completion, IPO valuation, market share or causal CAC claims. Excludes third-party market forecasts and About sections.",
   }),
   Object.freeze({
     id: "ramanujan-trinity-institutional-record",
@@ -83,10 +85,10 @@ const entries = Object.freeze([
     sourceUrl: "https://explore.trin.cam.ac.uk/assets/ramanujan/",
     publisher: "Trinity College Cambridge institutional memorial record",
     passage: {
-      version: "ramanujan-institutional-biography-opening-v1",
+      version: "ramanujan-institutional-biography-opening-v2",
       section: "Srinivasa Ramanujan, FRS ஸ்ரீநிவாச ராமானுஜன்",
       nextSection: "Memorial inscription",
-      paragraphPrefixes: ["Srinivasa Ramanujan was an autodidact"],
+      paragraphPrefixes: ["Srinivasa Ramanujan was an autodidact", "Born into a poor Brahmin family in India,", "Ramanujan received a scholarship", "During his short lifetime, Ramanujan"],
     },
     kind: "cultural",
     coverage: "Institutional biographical account only, not a theorem proof or evidence for devotional causation. Excludes the later memorial translation and its first-Indian-FRS claim. Original manuscript archive retrieval remains separate research.",
