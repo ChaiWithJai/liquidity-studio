@@ -6,4 +6,6 @@ The JSON records exact before/after source edits for three files. Each input is 
 
 Audio opens on Uploads. The picker/hint describe Studio's actual 6 MiB, 30-second, 16-bit stereo PCM WAV at 44.1/48 kHz boundary. Library and Record stay keyboard-accessible explanatory tabs, with no library or microphone component loaded. Existing upload, native track controls, save, playback and export remain in their original components. Server and adapter byte validation remain authoritative.
 
-No local build, tests or runtime changes were performed. Obtain a new matching hosted private native artifact before ordinary Neo acceptance. This changes capability presentation, not model conversion or codec timing.
+Hosted private artifact run `39163499581` built source `6f3a6c047b145b0c3e7668e86130b9066d045126`; its source/output hashes were independently inspected. Actual BrowserOS Neo acceptance opened Audio on the existing saved Reel and found Uploads selected, the exact WAV hint and WAV-only file input. Ordinary Library and Record clicks showed the unavailable explanations while retaining the existing 30-second design track. The parent Upload rights panel expanded in normal flow above the iframe, with no overlap; Done closed it and returned focus to its summary. The editor was then unmounted by returning to saved preview. Receipt: `/tmp/liquidity-media-neo-20261018/audio-ui-acceptance.json`.
+
+No local tests or builds ran. This changes capability presentation, not model conversion or codec timing.
