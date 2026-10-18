@@ -1,0 +1,67 @@
+--- a/frontend/src/app/main/data/fonts.cljs
++++ b/frontend/src/app/main/data/fonts.cljs
+@@ -124,13 +124,23 @@
+   wrap it in a `Blob` and hand it directly to `upload-blob-chunked`
+   without any intermediate client-side chunking."
+   [blobs team-id]
+-  (letfn [(prepare [{:keys [font type name data] :as params}]
++  (letfn [(english-name [font field]
++            ;; Resolve per name, rather than selecting one platform for all names.
++            (some (fn [platform]
++                    (let [value (some-> (.-names ^js font)
++                                        (aget platform)
++                                        (aget field)
++                                        (aget "en"))]
++                      (when (and (string? value) (not (str/blank? value)))
++                        value)))
++                  ["unicode" "macintosh" "windows"]))
++          (prepare [{:keys [font type name data] :as params}]
+             (if font
+               ;; Font was parsed with opentype.js (ttf, otf, woff)
+-              (let [family          (or (.getEnglishName ^js font "preferredFamily")
+-                                        (.getEnglishName ^js font "fontFamily"))
+-                    variant         (or (.getEnglishName ^js font "preferredSubfamily")
+-                                        (.getEnglishName ^js font "fontSubfamily"))
++              (let [family          (or (english-name font "preferredFamily")
++                                        (english-name font "fontFamily"))
++                    variant         (or (english-name font "preferredSubfamily")
++                                        (english-name font "fontSubfamily"))
+ 
+                     ;; Vertical metrics determine the baseline in a text and the space between lines of
+                     ;; text. For historical reasons, there are three pairs of ascender/descender
+@@ -160,14 +170,22 @@
+                                                           (not= hhea-ascender os2-ascent)
+                                                           (not= hhea-descender os2-descent))))
+                     data            (js/Uint8Array. data)]
+-                {:content {:data data
+-                           :name name
+-                           :type type}
+-                 :font-family (or family "")
++                (if (and (string? family) (not (str/blank? family))
++                         (string? variant) (not (str/blank? variant)))
++                  {:content {:data data
++                             :name name
++                             :type type}
++                 :font-family family
+                  :font-weight (cm/parse-font-weight variant)
+                  :font-style  (cm/parse-font-style variant)
+                  :variant-name variant
+-                 :height-warning? height-warning?})
++                 :height-warning? height-warning?}
++                  (do
++                    (st/emit!
++                     (ntf/error
++                      (str "Cannot preview font '" name
++                           "': missing English family or style metadata. No font was uploaded.")))
++                    nil)))
+               ;; Font could not be parsed (woff2), extract metadata from filename
+               (let [base-name       (str/replace name #"\.[^.]+$" "")
+                     ;; Strip known weight/style tokens and separators to derive family name
+@@ -259,6 +277,7 @@
+            (rx/map parse-font)
+            (rx/filter some?)
+            (rx/map prepare)
++           (rx/filter some?)
+            (rx/reduce join {})))))
+ 
+ (defn- calculate-family-to-id-mapping

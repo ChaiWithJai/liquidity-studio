@@ -1,0 +1,48 @@
+# Pinned Penpot font UI repair: review-only recipe
+
+Issue166, downstream54. No build, workflow dispatch, runtime mount, upload retry, font conversion or account/file change is claimed by this source packet. The reviewed manual-only workflow is now installed at `.github/workflows/penpot-font-ui-candidate.yml`; `hosted-build.workflow.PROPOSED.yml` remains its byte-identical review copy. It has no push/PR trigger. The exact confirmation phrase is required on workflow_dispatch; no dispatch/build has occurred. Root reviews final source/all-five standard checks before authorizing one hosted candidate build. Activation is not deployment or font acceptance.
+
+## Observed defect and source diagnosis
+
+In original disposable QA, exact InterVariable.ttf879708B SHA4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf was read successfully by native FileReader; normal Penpot2.18.3 font selection then emitted `TypeError: re-seq must match against a string`, with no preview/create. Instrument Serif and Mona Sans regular/bold succeeded through the same normal UI. No substitution or parser override was used.
+
+Pinned upstream ff7a66f51938b2293260ea27a64e2c4e0833b5e3 locks opentype.js2.0.0. Its getter chooses a whole first-present platform dictionary before selecting a requested name. The approved Inter bytes have Macintosh names but no family/subfamily IDs1/2/16/17; Windows English has family `Inter Variable` and subfamily `Regular`. Penpot passes missing variant metadata to unguarded regex helpers. This is a source-supported explanation consistent with the observed error, not a captured runtime stack assertion.
+
+`fonts.patch` fixes the narrow Fonts prepare path: each requested English name falls back unicode→macintosh→windows, preferring preferred family/subfamily names first. Only nonempty strings are accepted. Missing metadata uses the existing native `ntf/error` notification and excludes that pending item before regex parsing. WOFF2 filename behavior remains unchanged. It does not change opentype globally, font bytes, auth, ACLs or upload protocol. The actual fallback family is `Inter Variable`; no silent rename to canonical `Inter` is authorized by this patch.
+
+## Exact source and dependencies
+
+- Upstream source: https://github.com/penpot/penpot/tree/ff7a66f51938b2293260ea27a64e2c4e0833b5e3
+- Fonts source SHA923eb82925a265419a2a46c36b12fdcabc0922b4d209018b96e92407dfe79bd4.
+- Proposed patch SHA85879dc707f99e7e0cf9a014164f1bd3874fe1e015348158fca3feb0252dec16.
+- [Pinned name helper](https://github.com/opentypejs/opentype.js/blob/2.0.0/src/font.mjs#L508-L513), [pinned Penpot metadata path](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/frontend/src/app/main/data/fonts.cljs), [regex helpers](https://github.com/penpot/penpot/blob/ff7a66f51938b2293260ea27a64e2c4e0833b5e3/common/src/app/common/media.cljc#L93-L112).
+- Official frontend image: penpotapp/frontend@sha256:bb8abe27d53de84c95597f2c02c0e702b2779971fb0703e543f9ecf183e999f6. Actual libs.js6189208B SHA6b5191a675da094c5a563748230b5a241adfa9c968e95911c3e234bc6d2fcb1e contains the exact source-consistent whole-platform getter once. No compiled source is checked in.
+- Proposed hosted toolchain: official penpotapp/devenv linux/amd64 manifest912d522803d94fa3e5c9f304088887a45fa6d90517751094f22a14a8754d2b37, config4e1a57dba9110dd98b2c7434f359e3cf7ff06f5d196a6283e96e5702b9ef5d44. Registry manifest inspection only:44layers1882129715compressed bytes; image NOT pulled locally. Registry SLSA provenance identifies the toolchain image build source as **4f015b9500ca512a549715a8d0897d98d4c6ecd3**, separately from target app source ff7. Its actual build Dockerfile SHA412b61f94d2c3d8e417479401e548845ff7b3b3fad9936c2b1d742a1ff3e3ef7 pins Node24.22.0/global pnpm12.14.0/Java27/ClojureCLI1.12.5.1664. A future network-none image probe must confirm those versions; provenance is not a binary execution measurement. The target app still builds using **exact pnpm12.5.1**, not the image global12.14.0: official `pnpm self-update 12.5.1` outside any project installs into isolated PNPM_HOME. The original upstream packageManager and lockfiles stay unchanged. `verify-pnpm.py` checks pinned registry package/native SRI and compares the actual installed executable against the native package bytes. It has not run yet. `runtime-provenance.json` records source/descriptor/metadata receipts.
+
+## Hosted build plan and limits
+
+Proposed job: ubuntu24.04,120minute deadline, before download require24GB available disk/12GB RAM; disposable build container8GiB RAM/swap-equal,4CPU, Java heap4GiB/Nodeoldspace1536MiB. No paid cloud/GPU or app credentials. These are explicit proposed limits, not measured resource requirements or a promise it will fit. Review GitHub runner capacity/minute eligibility before dispatch. A failed admission/build is evidence; do not raise limits silently.
+
+Run upstream **official complete** frontend `./scripts/build 2.18.3`, not a substitute helper compilation. Pinned script also builds render-WASM, MCP/plugin and UI prerequisites. This potentially expensive dependency work runs only on the reviewed hosted runner, never the constrained Mac. Explicit `--frozen-lockfile` on every install/i call through the original-owned wrapper plus post-build lock/dependency diff prevent silent upgrades; no cache reused. Maven/git dependencies remain those declared by pinned source; artifact records complete source/locks/toolchain. If upstream fetch/build needs credentials or mutable dependencies, fail and review rather than injecting secrets.
+
+The comparison frontend index bb8 includes linux/amd64 child2c7f4e840102e06bccf36b6a93fc3a030cc0bbba7e0125dec33197187dba8041 and linux/arm64 child4b755d7b8dc666184cea086b25dffe3273e09df782e72b8e4eb3388624f9b28b. Workflow pins the AMD64 child directly. No architecture is inferred from a local ARM image. Actual descriptor receipt is recorded.
+
+The pnpm manager uses fixed https://registry.npmjs.org. Package12.5.1 SRIsha512-4/MFvHhKK8ifWtO2E4iJRw+ujSr182thIW7JHCw9ZAiXdfneOKrDMQROpA8kXLDVZmOS399lgk4ZB+9qLGLeXw== decodes to the exact original packageManager +sha512 hex suffix. Native linux-x6412.5.1 SRIsha512-3PkUBYo5z4dgtlnTNIFj7QGpcDUAuqXz9WGVigPDCeccEnhGiRkWmA5102TmYJHtwJP3LfmE+ZF9PGeWhn8p9Q== is separately pinned. The wrapper checks actual pnpm version in current build working directory on every invocation and adds the documented install flag; it rejects mutable dependency/lock commands. This does not rely solely on CI environment defaults. Primary [self-update behavior](https://pnpm.io/cli/self-update) and [install flag](https://pnpm.io/cli/install#--frozen-lockfile).
+
+Keep exact official application/protocol version **2.18.3**. Mark the derivative only in original-owned manifests, patch/source hashes and artifact name, never in the frontend/backend version value.
+
+Full real CLJS release compiles the proposed `some->`/`aget` helper and existing `ntf/error` use. No successful compilation has occurred yet. No helper-only check is labeled a real compiler/UI test. Complete output graph is retained and compared against exact official frontend asset hashes. Many differences may result from build timestamps/toolchains; the manifest is a byte inventory, not a semantic equivalence claim. Mount no guessed lone main/shared chunk.
+
+## License/source availability
+
+Upstream modified file is MPL-2.0; its notice/copyright remains in the patch context/source. The recipe and inventory script are original-owned. Candidate artifact must include the unmodified pinned source archive, exact patch and modified file, upstream license, source URL and changed-asset manifest. No upstream compiled artifacts go into this repository. Preserve included third-party notices in any complete candidate distribution; opentype is MIT and remains unmodified. This describes attribution mechanics, not legal clearance for every dependency or public editor deployment.
+
+## Regression and actual acceptance plan, not executed
+
+Hosted real-source checks before candidate release: correct English metadata retains priority; incomplete Macintosh names fall through Windows; absent/nonstring/blank names yield native error/no pending upload; regular/bold/italic are unchanged; WOFF2 path remains unchanged. Full CLJS release must pass. Prefer exercising actual `process-upload` observable using synthetic name metadata in the upstream test harness, not testing a separately copied getter. This regression harness still needs review/implementation before dispatch.
+
+Neo only, original disposable QA2 team: select exact Inter once, observe unmodified FileReader SHA/header + actual family/style preview. Do not upload until correct metadata and any explicit canonical family rename are reviewed. Correct Instrument/Mona fonts can be selected/dismissed without creating duplicates. If separately authorized, normal Upload once, independently verify new native variant/team and persisted original exact bytes/generated-format identities. No API bypass. Verify source/copy document hashes unchanged during font upload. Rebind and final pixels are separate downstream actions.
+
+## Rollback
+
+No automatic deploy or runtime mutation exists here. Before a separately reviewed candidate mount, capture current effective Compose/image/assets, consistent native backup and source/copy fingerprints. Only owned39008 frontend, complete reviewed graph, read-only bind with create_host_path:false. Restore official baseline frontend graph before stopping any ancillary callback. Never touch maintained Studio3001/cloud, original files/fonts or52 identity pairing. Retain failed outputs. Missing fonts/UI/compiler failure remains open until actual proof.
