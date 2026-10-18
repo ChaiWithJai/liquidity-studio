@@ -1,4 +1,5 @@
 <script>
+  import DraftBrief from './components/defiant/DraftBrief.svelte';
   import DefiantWorkspace from './components/defiant/DefiantWorkspace.svelte';
   import {strategyOrganizationFor} from './lib/defiant-location.js';
   import PenpotConnection from "./components/PenpotConnection.svelte";
@@ -373,6 +374,7 @@
     const target = document.getElementById(id);
     if (!target) return;
     if (target.tagName === "DETAILS") target.open = true;
+    for (let ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement) if(ancestor.tagName==="DETAILS") ancestor.open=true;
     const offset = measureWorkflowOffset();
     window.scrollTo({ top: Math.max(0, window.scrollY + target.getBoundingClientRect().top - offset), behavior: "instant" });
     target.focus({ preventScroll: true });
@@ -1019,6 +1021,12 @@
       busy = false;
     }
   }
+  function useBriefSource({text,sourceUrl}) {
+    if(!selectedStory?.draftBrief||busy)return;
+    if(!reviewClaims.some(claim=>claim.text===text&&claim.sourceUrl===sourceUrl))reviewClaims=[...reviewClaims,{id:crypto.randomUUID(),text,sourceUrl,kind:"",status:"unreviewed"}];
+    notice=text.length>2000?"Excerpt copied to source review. Shorten it to 2,000 characters, check its context, choose a classification and save your review.":"Excerpt copied to source review. Check its context, choose a classification and save your review.";
+    void focusWorkflow("workflow-sources");
+  }
   function addSourceClaim() {
     reviewClaims = [
       ...reviewClaims,
@@ -1469,6 +1477,7 @@
           </div>
         {/if}
         {#if selectedStory}
+          {#if selectedStory.draftBrief?.kind==='defiant-report'}<DraftBrief brief={selectedStory.draftBrief} reportHref={workflowHref(window.location.href,{organizationId:selectedStory.draftBrief.organizationId,tab:'strategy',strategy:{view:'report',reportId:selectedStory.draftBrief.reportId}})} onUseSource={useBriefSource} onReviewSources={()=>focusWorkflow("workflow-sources")} disabled={busy} />{/if}
           {#if nativeEditorEnabled && preparedHost}{#key preparedHost.client}{#key `${selectedStory.id}:${format}`}
             <NativeLayoutHistory request={preparedHost.request} storyId={selectedStory.id} {format} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} onOpen={openNativeEditor} />
           {/key}{/key}{/if}
