@@ -1,0 +1,102 @@
+{
+  "processor": "studio-modnet-area-v1",
+  "modelSha256": "07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9",
+  "reference": "ZHKKKe/MODNet@28165a451e4610c9d77cfdf925a94610bb2810fb/onnx/inference_onnx.py",
+  "scope": "CPU reference agreement, not browser timing or ground-truth segmentation quality",
+  "versions": {
+    "opencv": "4.12.0",
+    "onnxruntime": "1.23.2"
+  },
+  "fixtures": [
+    {
+      "fixture": "portrait",
+      "width": 512,
+      "height": 768,
+      "modelDimensions": [
+        1,
+        3,
+        768,
+        512
+      ],
+      "inputMaxAbsolute": 0.0,
+      "inputMeanAbsolute": 0.0,
+      "modelAlphaMaxDifference": 0,
+      "modelAlphaMeanDifference": 0.0,
+      "finalAlphaMaxDifference": 0,
+      "finalAlphaMeanDifference": 0.0,
+      "originalRgbPreserved": true
+    },
+    {
+      "fixture": "landscape",
+      "width": 768,
+      "height": 512,
+      "modelDimensions": [
+        1,
+        3,
+        512,
+        768
+      ],
+      "inputMaxAbsolute": 0.0,
+      "inputMeanAbsolute": 0.0,
+      "modelAlphaMaxDifference": 0,
+      "modelAlphaMeanDifference": 0.0,
+      "finalAlphaMaxDifference": 0,
+      "finalAlphaMeanDifference": 0.0,
+      "originalRgbPreserved": true
+    },
+    {
+      "fixture": "square",
+      "width": 768,
+      "height": 768,
+      "modelDimensions": [
+        1,
+        3,
+        512,
+        512
+      ],
+      "inputMaxAbsolute": 1.1920928955078125e-07,
+      "inputMeanAbsolute": 2.5361851285765624e-08,
+      "modelAlphaMaxDifference": 1,
+      "modelAlphaMeanDifference": 0.00048828125,
+      "finalAlphaMaxDifference": 1,
+      "finalAlphaMeanDifference": 0.016038682725694444,
+      "originalRgbPreserved": true
+    },
+    {
+      "fixture": "small",
+      "width": 320,
+      "height": 480,
+      "modelDimensions": [
+        1,
+        3,
+        768,
+        512
+      ],
+      "inputMaxAbsolute": 1.1920928955078125e-07,
+      "inputMeanAbsolute": 4.2883776529833995e-09,
+      "modelAlphaMaxDifference": 1,
+      "modelAlphaMeanDifference": 0.0007832845052083334,
+      "finalAlphaMaxDifference": 1,
+      "finalAlphaMeanDifference": 0.00416015625,
+      "originalRgbPreserved": true
+    },
+    {
+      "fixture": "noninteger",
+      "width": 1024,
+      "height": 640,
+      "modelDimensions": [
+        1,
+        3,
+        512,
+        800
+      ],
+      "inputMaxAbsolute": 5.960464477539063e-08,
+      "inputMeanAbsolute": 8.45138004024193e-09,
+      "modelAlphaMaxDifference": 1,
+      "modelAlphaMeanDifference": 0.00129150390625,
+      "finalAlphaMaxDifference": 1,
+      "finalAlphaMeanDifference": 0.00921783447265625,
+      "originalRgbPreserved": true
+    }
+  ]
+}
