@@ -83,27 +83,49 @@ export class FirestoreStore {
     }, { maxAttempts: 5 });
   }
 
+  async operatorInventory(transaction) {
+    const indexed = await transaction.get(this.collection.orderBy('key').select('key').limit(513));
+    const parents = await transaction.get(this.collection.orderBy('__name__').select('key').limit(513));
+    if (indexed.size > 512 || parents.size > 512) throw failure('OPERATOR_INVENTORY_CAPACITY', 'Operator inventory exceeds 512 logical records; preserve state for owner review');
+    const inspect = snapshot => snapshot.docs.map(doc => {
+      const key = doc.data().key;
+      if (typeof key !== 'string' || !key || Buffer.byteLength(key) > 512 || doc.id !== hash(key)) throw failure('STORE_CORRUPT', 'Operator inventory contains invalid parent metadata');
+      return [doc.id, key];
+    }).sort((a,b) => a[0].localeCompare(b[0]));
+    const listed = inspect(indexed), all = inspect(parents);
+    if (JSON.stringify(listed) !== JSON.stringify(all) || new Set(all.map(([,key])=>key)).size !== all.length) throw failure('STORE_CORRUPT', 'Operator key inventory is incomplete');
+    const inventory = all.map(([,key])=>key).sort();
+    return inventory;
+  }
+
+  async operatorRecords(transaction, keys, refs) {
+    const current = await Promise.all(keys.map((key,index)=>this.read(transaction,refs[index],key)));
+    // Bound the selected current values too; do not expand unrelated payloads.
+    const currentBytes = current.reduce((total,record)=>total+Buffer.byteLength(JSON.stringify(record.value)),0);
+    if (currentBytes > MAX_VALUE_BYTES) throw failure('STORE_CAPACITY', 'Operator current records exceed four MiB capacity');
+    return current;
+  }
+
+  async inspectWithKeyInventory(keys, callback) {
+    keys = transactionKeys(keys, callback);
+    const refs = keys.map(key => this.ref(key));
+    return this.firestore.runTransaction(async transaction => {
+      const inventory = await this.operatorInventory(transaction);
+      const records = await this.operatorRecords(transaction, keys, refs);
+      const result = callback(records.map(record => record.value), inventory);
+      if (result?.then instanceof Function) { result.catch?.(()=>{}); throw failure('INVALID_TRANSACTION', 'Operator inspection callback must be synchronous'); }
+      return result;
+    }, {readOnly:true});
+  }
+
   // One-off operator admission, not a product/store key limit. Query snapshots
   // and named values share the same read-write transaction; never prefetch keys().
   async transactWithKeyInventory(keys, callback) {
     keys = transactionKeys(keys, callback);
     const refs = keys.map(key => this.ref(key));
     return this.firestore.runTransaction(async transaction => {
-      const indexed = await transaction.get(this.collection.orderBy('key').select('key').limit(513));
-      const parents = await transaction.get(this.collection.orderBy('__name__').select('key').limit(513));
-      if (indexed.size > 512 || parents.size > 512) throw failure('OPERATOR_INVENTORY_CAPACITY', 'Operator inventory exceeds 512 logical records; preserve state for owner review');
-      const inspect = snapshot => snapshot.docs.map(doc => {
-        const key = doc.data().key;
-        if (typeof key !== 'string' || !key || Buffer.byteLength(key) > 512 || doc.id !== hash(key)) throw failure('STORE_CORRUPT', 'Operator inventory contains invalid parent metadata');
-        return [doc.id, key];
-      }).sort((a,b) => a[0].localeCompare(b[0]));
-      const listed = inspect(indexed), all = inspect(parents);
-      if (JSON.stringify(listed) !== JSON.stringify(all) || new Set(all.map(([,key])=>key)).size !== all.length) throw failure('STORE_CORRUPT', 'Operator key inventory is incomplete');
-      const inventory = all.map(([,key])=>key).sort();
-      const current = await Promise.all(keys.map((key,index)=>this.read(transaction,refs[index],key)));
-      // Bound the selected current values too; do not expand unrelated payloads.
-      const currentBytes = current.reduce((total,record)=>total+Buffer.byteLength(JSON.stringify(record.value)),0);
-      if (currentBytes > MAX_VALUE_BYTES) throw failure('STORE_CAPACITY', 'Operator current records exceed four MiB capacity');
+      const inventory = await this.operatorInventory(transaction);
+      const current = await this.operatorRecords(transaction, keys, refs);
       const encoded = transactionValues(callback(current.map(record=>record.value), inventory), keys.length);
       const buffers = encoded.map(value=>Buffer.from(value));
       buffers.forEach((buffer,index)=>{
