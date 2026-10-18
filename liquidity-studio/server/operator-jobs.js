@@ -863,7 +863,8 @@ export class DurableJobService {
   }
   async runPreparation({ job, item }, workerId) {
     let prepared,
-      committed = false;
+      committed = false,
+      phase = "authorization";
     try {
       await this.actor(job.actorId, job.createdAt);
       const assertCurrent = async () => {
@@ -886,6 +887,7 @@ export class DurableJobService {
         )
           throw fail(409, "Preparation permission or input changed");
       };
+      phase = "prepare";
       prepared = await this.preparation.prepare(item.storyId, {
         assertCurrent,
         inputFingerprint: item.inputFingerprint,
@@ -894,13 +896,18 @@ export class DurableJobService {
         itemId: item.id,
         attemptId: item.attempts.at(-1).id,
       });
+      phase = "authorization";
       await this.actor(job.actorId, job.createdAt);
+      phase = "reservation";
       await this.repo.assertGenerationReservation(prepared.reservation);
+      phase = "candidate-validation";
       validatePreparedCandidate(prepared.candidate, prepared.evidence);
+      phase = "layout";
       validateCandidateLayout(
         prepared.candidate.artwork,
         (await this.repo.read()).brandProfile,
       );
+      phase = "commit";
       await this.repo.mutate((state) => {
         const liveJob = state.operatorJobs?.find((row) => row.id === job.id),
           live = liveJob?.items.find((row) => row.id === item.id);
@@ -971,6 +978,7 @@ export class DurableJobService {
         return state;
       });
       committed = true;
+      phase = "finalize";
       await this.repo.finalizeGeneration(prepared.reservation, {
         status: "completed",
         mode: PREPARATION_PURPOSE,
@@ -996,9 +1004,13 @@ export class DurableJobService {
                   ? "QUOTA_EXCEEDED"
                   : error.status === 409
                     ? "REVISION_CONFLICT"
-                    : "PREPARATION_FAILED",
-            message:
-              "Source preparation did not commit. Inspect source access and current revisions before retrying; no model provider was called.",
+                    : phase === "layout" && error.status === 422
+                      ? "PREPARATION_LAYOUT_FAILED"
+                      : "PREPARATION_FAILED",
+            phase,
+            message: phase === "layout" && error.status === 422
+              ? "Retrieved copy does not fit the artwork. No new preview was saved; review the source selection before preparing again."
+              : "Source preparation did not commit. Inspect source access and current revisions before retrying; no model provider was called.",
           };
           live.attempts.at(-1).state = live.state;
           delete live.lease;
