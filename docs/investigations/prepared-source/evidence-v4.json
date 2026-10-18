@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "issue": 103,
+  "annotationId": "1",
+  "captureVersion": 4,
+  "sourceCommit": "4f2b83b5da47ec74b8d43d6e9da333522c7ea7a6",
+  "viewport": {
+    "width": 883,
+    "height": 695
+  },
+  "fixture": "isolated HTTP/SQLite default pilot Huda story; actual issuer HTTPS retrieval before editor entry",
+  "auth": "disposable local password fixture; not live Google session acceptance",
+  "modelCalls": 0,
+  "runtime": "production Svelte dist; original-only default build; no upstream editor bundle",
+  "meaning": "unreviewed source preview, not approved fact/native layout/export/publication",
+  "sources": [
+    "https://www.prnewswire.com/news-releases/huda-beauty-reclaims-full-ownership-as-an-independent-beauty-brand-302471853.html",
+    "https://www.gutenberg.org/cache/epub/2526/pg2526-images.html"
+  ],
+  "checks": {
+    "actualPrimaryBrowserJourneys": 4,
+    "nodePass": 278,
+    "nodeEmulatorSkips": 2,
+    "scriptsPass": 39,
+    "reviewEditReloadReconfirm": "passed within Huda App journey; newgeneration and retained priorcopy"
+  },
+  "bounds": [
+    "Seven other seed topics remain source research required",
+    "Catalog association does not approve legacy claims",
+    "Live rollout and Google session acceptance are separate",
+    "Portable candidate import remains explicitly unsupported until follow-up integration"
+  ],
+  "screenshots": [
+    {
+      "path": "annotation-1-after-v4.png",
+      "sha256": "64fb66238115b0c24f89f6a3e94a44abe13f425659dfe88f8499d448c02fa19b"
+    },
+    {
+      "path": "annotation-1-desktop-after-v4.png",
+      "sha256": "65cba5717203099cb47921c063e634a505df0a3f19fab4fc8c8155cc8493a460"
+    },
+    {
+      "path": "cwj-primary-preview-after-v4.png",
+      "sha256": "c8dd6d859e538eeceaf5dbf565e89f019ae63842b67e63835c46abb5c08d0357"
+    }
+  ],
+  "supersedes": "evidence-v3.json: full reviewed-copy editing loop added; numbered verse headline extraction corrected; original captures retained"
+}
