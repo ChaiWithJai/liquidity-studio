@@ -5,6 +5,31 @@
   let projection = $state({ grants: [], proposals: [], presence: [], operations: [] });
   let helperId = $state(''), category = $state(''), error = $state(''), message = $state('');
   let pending = $state(0), uncertain = $state(null);
+  let grantTarget = $state('current'), grantSearch = $state(''), grantStoryId = $state('');
+  let grantRows = $state([]), grantMatches = $state(0), grantResultKey = $state(null);
+  let grantSearching = $state(false), grantLookupError = $state('');
+  let grantSearchReads = 0, grantSearchController;
+  const grantStory = () => grantTarget === 'current' ? story : grantResultKey === grantSearch.trim() ? grantRows.find(row => row.id === grantStoryId) : null;
+  const grantStoryLabel = id => id === story?.id ? story.title : grantRows.find(row => row.id === id)?.title || projection.proposals.flatMap(proposal => proposal.preview).find(item => item.storyId === id)?.before.title || id;
+  function cancelGrantSearch() {
+    grantSearchController?.abort(); grantSearchController = undefined; grantSearchReads++;
+    grantRows = []; grantStoryId = ''; grantMatches = 0; grantResultKey = null; grantSearching = false; grantLookupError = '';
+  }
+  async function searchGrantStories() {
+    cancelGrantSearch();
+    const owner = lifecycle, read = grantSearchReads, send = request, query = grantSearch.trim();
+    if (!query || grantTarget !== 'other') return;
+    const controller = new AbortController(); grantSearchController = controller; grantSearching = true;
+    try {
+      const result = await send('/api/studio/workspace/query', { method: 'POST', body: JSON.stringify({ filters: { search: query }, limit: 25 }), signal: controller.signal });
+      if (owner !== lifecycle || read !== grantSearchReads || controller.signal.aborted || grantTarget !== 'other' || query !== grantSearch.trim()) return;
+      grantRows = result.rows; grantMatches = result.filteredTotal; grantResultKey = query;
+    } catch (failure) {
+      if (owner === lifecycle && read === grantSearchReads && !controller.signal.aborted) grantLookupError = `Stories could not be loaded: ${failure.message}`;
+    } finally {
+      if (owner === lifecycle && read === grantSearchReads) { grantSearching = false; grantSearchController = undefined; }
+    }
+  }
   let permission = $state('metadata'), proposalKind = $state('story.patch');
   let calendarUnit = $state('campaign'), calendarFormat = $state('infographic');
   let calendarDate = $state(''), calendarZone = $state('America/New_York');
@@ -40,12 +65,12 @@
     actorId;
     untrack(() => {
       lifecycle++; reads++; observedReceiptState = ''; projection = { grants: [], proposals: [], presence: [], operations: [] };
-      error = ''; message = ''; helperId = ''; category = ''; permission = 'metadata'; proposalKind = 'story.patch'; calendarUnit = 'campaign'; calendarFormat = 'infographic'; calendarDate = ''; calendarZone = 'America/New_York'; observation = null; observing = false; calendarReads++; uncertain = null; pending = 0; clientId = crypto.randomUUID();
+      error = ''; message = ''; helperId = ''; category = ''; grantTarget = 'current'; grantSearch = ''; cancelGrantSearch(); permission = 'metadata'; proposalKind = 'story.patch'; calendarUnit = 'campaign'; calendarFormat = 'infographic'; calendarDate = ''; calendarZone = 'America/New_York'; observation = null; observing = false; calendarReads++; uncertain = null; pending = 0; clientId = crypto.randomUUID();
       void refresh(lifecycle, send);
     });
     const owner = lifecycle;
     const timer = setInterval(() => { if (key === scopeKey) void refresh(owner, send); }, 5000);
-    return () => { clearInterval(timer); lifecycle++; reads++; };
+    return () => { clearInterval(timer); grantSearchController?.abort(); grantSearchReads++; lifecycle++; reads++; };
   });
   $effect(() => {
     const send = request, selected = story ? { storyId: story.id, observedRevision: story.revision } : { storyId: null, observedRevision: null };
@@ -69,9 +94,10 @@
     finally { if (owner === lifecycle) pending--; }
   }
   function createGrant() {
-    if (!story || !helperId) return;
+    const target = grantStory();
+    if (!target || !helperId || grantSearching) return;
     const kinds = permission === 'metadata' ? ['story.patch'] : permission === 'calendar' ? ['assignment.place', 'assignment.remove'] : ['story.patch', 'assignment.place', 'assignment.remove'];
-    return action('/grants', { helperId, storyIds: [story.id], kinds, expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() }, 'Granted the selected proposals for 10 minutes. Each still needs your approval.');
+    return action('/grants', { helperId, storyIds: [target.id], kinds, expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString() }, `Granted the selected proposals for “${target.title}” for 10 minutes. Each still needs your approval. Your active editor is unchanged.`);
   }
   async function observeCalendar() {
     const owner = lifecycle, read = ++calendarReads, send = request, key = settings(), selected = story ? { id: story.id, revision: story.revision } : null;
@@ -151,8 +177,23 @@
   {#if story}
     <p>Current story: {story.title} · revision {story.revision}</p>
     <label>Proposal operator<select aria-label="Proposal operator" bind:value={helperId}><option value="">Choose a current brand member</option>{#each members as member (member.id)}<option value={member.id}>{member.displayName}</option>{/each}</select></label>
+    <label>Grant target<select aria-label="Grant target" bind:value={grantTarget} onchange={cancelGrantSearch}><option value="current">Current editor story</option><option value="other">Another story in this brand</option></select></label>
+    {#if grantTarget === 'other'}
+      <p>Choose a story without opening it or saving your current editor. The proposal operator opens that story in their own workspace.</p>
+      <label>Find story for delegation<input bind:value={grantSearch} oninput={cancelGrantSearch} maxlength="100" /></label>
+      <button class="secondary" disabled={grantSearching || pending > 0 || !grantSearch.trim()} onclick={searchGrantStories}>Search stories for delegation</button>
+      {#if grantSearching}<p role="status">Loading stories in this brand…</p>{/if}
+      {#if grantLookupError}<p role="alert">{grantLookupError}</p>{/if}
+      {#if grantResultKey === grantSearch.trim()}
+        {#if grantRows.length}
+          <label>Story to delegate<select aria-label="Story to delegate" bind:value={grantStoryId}><option value="">Choose a returned story</option>{#each grantRows as row (row.id)}<option value={row.id}>{row.title} · revision {row.revision}</option>{/each}</select></label>
+          <p>Showing {grantRows.length} of {grantMatches} matching stories.{grantMatches > grantRows.length ? ' Narrow the search to find another story.' : ''}</p>
+        {:else}<p>No matching stories in this brand. Change the search and try again.</p>{/if}
+      {/if}
+    {/if}
+    {#if grantStory()}<p>Grant applies only to: {grantStory().title}. Your current editor remains {story.title}.</p>{/if}
     <label>Allowed proposal types<select aria-label="Allowed proposal types" bind:value={permission}><option value="metadata">Category changes only</option><option value="calendar">Calendar plans only</option><option value="both">Category changes and calendar plans</option></select></label>
-    <button disabled={pending > 0 || !helperId} onclick={createGrant}>{permission === 'metadata' ? 'Grant metadata proposals for 10 minutes' : permission === 'calendar' ? 'Grant calendar proposals for 10 minutes' : 'Grant metadata and calendar proposals for 10 minutes'}</button>
+    <button disabled={pending > 0 || !helperId || grantSearching || !grantStory()} onclick={createGrant}>{permission === 'metadata' ? 'Grant metadata proposals for 10 minutes' : permission === 'calendar' ? 'Grant calendar proposals for 10 minutes' : 'Grant metadata and calendar proposals for 10 minutes'}</button>
     <label>Proposal action<select aria-label="Proposal action" bind:value={proposalKind}><option value="story.patch">Change category</option><option value="assignment.place">Place or move a calendar plan</option><option value="assignment.remove">Remove a calendar plan</option></select></label>
     {#if proposalKind === 'story.patch'}
       <label>Proposed category<input bind:value={category} maxlength="100" /></label>
@@ -175,6 +216,7 @@
     <article aria-label={`Grant ${grant.id}`}>
       <h3>{display(grant.ownerId)} → {display(grant.helperId)}</h3>
       <p>{active(grant) ? 'Active' : grant.status === 'active' ? 'Expired' : grant.status} · epoch {grant.epoch} · {grant.storyIds.length} stories · expires {grant.expiresAt}</p>
+      <p>Granted stories: {grant.storyIds.map(grantStoryLabel).join('; ')}.</p>
       <p>Allowed actions: {grant.kinds.map(actionLabel).join(', ')}. Attempted items: {grant.attemptedItems} of 25.</p>
       {#if grant.ownerId === actorId && !['stopped', 'completed'].includes(grant.status)}
         {#if active(grant)}<button class="secondary" onclick={() => action(`/grants/${grant.id}/pause`, { expectedEpoch: grant.epoch }, 'Paused. Older helper epochs cannot apply new work.')}>Pause</button>{/if}
