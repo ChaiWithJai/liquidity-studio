@@ -20,6 +20,7 @@ export function createNativeEditorBroker({
   onState = () => {},
   onConflictResolve = () => {},
   onReady = () => {},
+  onExportStaged = () => {},
 }) {
   const nonce = crypto.randomUUID();
   let active = true;
@@ -41,7 +42,14 @@ export function createNativeEditorBroker({
     const { operation, payload } = message;
     let path,
       options = {};
-    if (operation === "fonts" && payload === null)
+    if(operation === 'review.read' && payload === null)
+      path = `/api/studio/native-editor/documents/${record.id}/review`;
+    else if(operation === 'export.stage' && payload && JSON.stringify(payload).length <= 6*1024*1024) {
+      if(payload.expectedNativeRevision !== revision)throw Object.assign(new Error('Native revision changed; reload explicitly.'),{status:409});
+      path = `/api/studio/native-editor/documents/${record.id}/exports`;
+      options = {method:'POST',body:JSON.stringify(payload)};
+    }
+    else if (operation === "fonts" && payload === null)
       path = "/api/studio/native-editor/fonts";
     else if (operation === "cutout.model" && payload === null)
       path = "/api/studio/native-editor/cutout/model";
@@ -101,6 +109,7 @@ export function createNativeEditorBroker({
       });
     const result = await request(path, options);
     if (!current()) throw changed();
+    if(operation === 'export.stage')onExportStaged(result);
     if (operation === "cutout.prepare") {
       if (
         !/^[a-f0-9]{32}$/.test(result.id || "") ||
@@ -168,7 +177,9 @@ export function createNativeEditorBroker({
         operation: message.operation,
         payload: message.payload,
       });
-      if (fingerprint.length > 768 * 1024) throw new Error("Message too large");
+      if (fingerprint.length > (message.operation === 'export.stage' ? 6*1024*1024 : 768*1024)) throw new Error("Message too large");
+      // Large PNG requests retain a fixed-size digest, not many copies of base64.
+      if(message.operation === 'export.stage')fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(fingerprint))),byte=>byte.toString(16).padStart(2,'0')).join('');
     } catch {
       reply(message.requestId, {
         error: {
@@ -290,7 +301,12 @@ export function createNativeFrameRequest({
       if (!active) return Promise.reject(changed());
       let operation,
         payload = null;
-      if (path === "/api/studio/native-editor/fonts" && !options.method)
+      if(/^\/api\/studio\/native-editor\/documents\/[a-f0-9-]{36}\/review$/.test(path) && !options.method)
+        operation = 'review.read';
+      else if(/^\/api\/studio\/native-editor\/documents\/[a-f0-9-]{36}\/exports$/.test(path) && options.method === 'POST') {
+        operation = 'export.stage';payload=JSON.parse(options.body);
+      }
+      else if (path === "/api/studio/native-editor/fonts" && !options.method)
         operation = "fonts";
       else if (
         path === "/api/studio/native-editor/cutout/model" &&

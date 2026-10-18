@@ -2,6 +2,7 @@ import { NativeCutoutService } from "./native-cutout.js";
 import { createNativeCutoutModel } from "./native-cutout-model.js";
 import { NativeEditorService } from "./native-editor.js";
 import { EditorApprovalService } from "./editor-approval.js";
+import { EditorExportService } from "./editor-export.js";
 import { nativeFontRegistry } from "./native-editor-fonts.js";
 import { EditorBoundary, validateEditorTargets } from "./editor-boundary.js";
 import { DurableJobService } from "./operator-jobs.js";
@@ -85,6 +86,10 @@ export function createPlatform({
       native: platform.nativeEditor(scope, repo),
       model: nativeCutoutModel,
     });
+  platform.editorExport = (scope, repo) => new EditorExportService({
+    approval: platform.editorApproval(scope, repo),
+    enabled: process.env.STUDIO_EDITOR_COMPLETION_ENABLED !== "false",
+  });
   const initialize = async (activeStore) => {
     platform.store = activeStore;
     if (authMode === "google")

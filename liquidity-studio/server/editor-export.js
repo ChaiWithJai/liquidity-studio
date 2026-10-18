@@ -73,12 +73,33 @@ export class EditorExportService {
   });return result;
  }
  dto(stage){const {reference,fingerprint,signoff,...publicFields}=stage;return {...copy(publicFields),signedOff:!!signoff};}
+ async list(actor,id){
+  const principal=await this.approval.principal(actor),keys=[...this.approval.keys(id),this.prefix+'staging:'+id];let captured;
+  await this.store.transact(keys,values=>{
+   const [identity,source,native,review,index]=values;
+   if(digest(identity)!==principal.identityHash)throw fail(409,'Membership changed; reload exports');
+   this.approval.scoped(native);this.approval.native.assertCurrent(source,native.origin);
+   captured={binding:review?.stage==='Approved'&&!this.approval.stale(source,native,review)?this.binding(id,review):null,entries:copy(index?.entries||[])};return values;
+  });
+  if(!captured.binding)return [];
+  const stages=await Promise.all(captured.entries.map(entry=>this.store.get(this.prefix+entry.artifactId)));
+  const currentPrincipal=await this.approval.principal(actor);
+  await this.store.transact(keys,values=>{const {review}=this.checked(values,currentPrincipal,id);if(this.binding(id,review)!==captured.binding)throw fail(409,'Review changed while listing exports');return values;});
+  return stages.filter(stage=>stage?.nativeId===id&&stage.bindingId===captured.binding).map(stage=>this.dto(stage));
+ }
  async bytes(actor,id,artifactId){
   if(typeof artifactId!=='string'||!/^[a-f0-9]{64}$/.test(artifactId))throw fail(404,'Staged export not found');
   const principal=await this.approval.principal(actor);let stage;
-  await this.store.transact(this.keys(id,artifactId),values=>{this.checked(values,principal,id);stage=copy(values[4]);if(!stage||stage.nativeId!==id)throw fail(404,'Staged export not found');return values;});
+  await this.store.transact(this.keys(id,artifactId),values=>{const {review}=this.checked(values,principal,id);stage=copy(values[4]);if(!stage||stage.nativeId!==id)throw fail(404,'Staged export not found');if(stage.bindingId!==this.binding(id,review))throw fail(409,'Staged PNG belongs to a previous layout review');return values;});
   const bytes=stage.reference.artifact?await this.store.downloadArtifact(this.scope,stage.reference.artifact):Buffer.from((await this.store.get(stage.reference.key))?.base64||'','base64');
   if(bytes.length!==stage.size||digest(bytes)!==stage.sha256)throw fail(422,'Private export bytes failed integrity verification');
+  const currentPrincipal=await this.approval.principal(actor);
+  await this.store.transact(this.keys(id,artifactId),values=>{
+   const {review}=this.checked(values,currentPrincipal,id);
+   if(stage.bindingId!==this.binding(id,review))throw fail(409,'Review changed during export retrieval');
+   if(digest(values[4])!==digest(stage))throw fail(409,'Export staging changed during retrieval');
+   return values;
+  });
   return {stage,bytes};
  }
  async signoff(actor,id,artifactId,input){
@@ -91,7 +112,7 @@ export class EditorExportService {
    if(current.signoff){result=copy(current.signoff.envelope);return values;}
    const at=this.now();let ring=values[5];
    if(!ring||at-ring.rotatedAt>=86400000)ring={rotatedAt:at,keys:[newCompletionKey(),...(ring?.keys||[]).slice(0,1)]};
-   const envelope=signCompletion(ring.keys[0],{bindingId:current.bindingId,...this.scope,nativeId:id,artifactId,storyId:native.storyId,generationId:native.origin.generationId,expectedReviewRevision:review.revision,expectedNativeRevision:native.revision,sha256:current.sha256,size:current.size,mime:current.mime,requestDigest:current.fingerprint},{now:at});
+   const envelope=signCompletion(ring.keys[0],{bindingId:current.bindingId,organizationId:this.scope.organizationId,brandId:this.scope.brandId,nativeId:id,artifactId,storyId:native.storyId,generationId:native.origin.generationId,expectedReviewRevision:review.revision,expectedNativeRevision:native.revision,sha256:current.sha256,size:current.size,mime:current.mime,requestDigest:current.fingerprint},{now:at});
    current.signoff={actorId:principal.actor.id,at,envelope};values[5]=ring;result=copy(envelope);return values;
   });return result;
  }

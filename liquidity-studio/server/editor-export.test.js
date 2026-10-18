@@ -12,7 +12,7 @@ async function fixture(){
  store.update('native',()=>({id:'doc',organizationId:'org',brandId:'brand',storyId:'story',revision:1,origin:{storyId:'story',storyRevision:1,sourceContentRevision:1,generationId:'gen',brandRevision:'brand'},documentRef:{sha256:'a'.repeat(64)}}));
  const identity={authorize:async actor=>{if(!store.get('identity').memberships.some(m=>m.userId===actor.id))throw Object.assign(new Error('Revoked'),{status:403});}};
  const native={key:()=> 'native',hydrate:async()=>({document:{height:1350,pages:[{}]}}),assertCurrent:(source,origin)=>{if(source.backlog[0].contentRevision!==origin.sourceContentRevision)throw Object.assign(new Error('Changed'),{status:409});}};
- const approval=new EditorApprovalService({repo:{store,key:'source',ready:Promise.resolve()},scope:{organizationId:'org',brandId:'brand'},identity,native});
+ const approval=new EditorApprovalService({repo:{store,key:'source',ready:Promise.resolve()},scope:{organizationId:'org',brandId:'brand',preset:'liquidity_desk'},identity,native});
  let revision=0;for(const action of ['create','start','submit','approve'])await approval.transition(founder,'doc',{action,expectedRevision:revision++,expectedNativeRevision:1,idempotencyKey:`review_${action}_unique_key`});
  const service=new EditorExportService({approval,now:()=>at});
  const bytes=await sharp({create:{width:1080,height:1350,channels:4,background:'#eebbaa'}}).png().toBuffer();
@@ -53,5 +53,16 @@ test('hash corruption and changed idempotency input fail; revoked principal cann
   const key=f.store.keys('editor-export:org:brand:bytes:')[0];f.store.update(key,p=>({...p,base64:Buffer.from('corrupt').toString('base64')}));
   await assert.rejects(f.service.complete(founder,'doc',envelope),{status:422});
   f.store.update('identity',i=>({...i,memberships:[]}));await assert.rejects(f.service.complete(founder,'doc',envelope),{status:403});
+ }finally{f.store.close();}
+});
+
+test('independent: membership revoked during private-byte retrieval must deny returned bytes',async()=>{
+ const f=await fixture();try{
+  const stage=await f.service.stage(founder,'doc',f.input),get=f.store.get.bind(f.store);
+  let release,entered;const enteredPromise=new Promise(resolve=>entered=resolve),blocked=new Promise(resolve=>release=resolve);
+  f.store.get=key=>key.startsWith('editor-export:org:brand:bytes:')?(async()=>{const value=get(key);entered();await blocked;return value;})():get(key);
+  const read=f.service.bytes(founder,'doc',stage.artifactId);await enteredPromise;
+  f.store.update('identity',state=>({...state,memberships:[]}));release();
+  await assert.rejects(read,{status:403});
  }finally{f.store.close();}
 });

@@ -1,6 +1,6 @@
 <script>
   import { untrack } from 'svelte';
-  let { record, request, scopeKey, getScopeKey, dirty = false, ready = true } = $props();
+  let { record, request, scopeKey, getScopeKey, dirty = false, ready = true, refreshKey = 0 } = $props();
   let review = $state.raw(null);
   let loading = $state(true);
   let loadFailed = $state(false);
@@ -17,6 +17,7 @@
     const nativeRevision = record.revision;
     const currentScope = scopeKey;
     const epoch = reload;
+    const receiptEpoch = refreshKey;
     const send = untrack(() => request);
     let disposed = false;
     const current = () => !disposed && getScopeKey() === currentScope && record.id === id && record.revision === nativeRevision;
@@ -69,6 +70,8 @@
     <p role="status">{review ? `${stages[review.stage] || 'Review unavailable'} · review ${review.revision} · native version ${review.binding.nativeRevision}` : 'Review has not started.'}</p>
     {#if review?.stale}<p role="alert">The saved content or source changed. The previous approval is historical; restart review for the current saved version.</p>{/if}
     {#if review?.approval}<p>Approved by {review.approval.approvedByLabel || 'workspace approver'} at {review.approval.approvedAt}.</p>{/if}
+    {#each review?.planning || [] as plan (plan.id)}<p>Planned: {plan.date} · {plan.timeZone}</p>{/each}
+    {#if review?.exported}<p role="status">Exported · {review.exports.length} verified PNG {review.exports.length===1?'receipt':'receipts'}</p>{/if}
     <div class="actions">
       {#if !review}<button disabled={!ready || busy || dirty || loadFailed} onclick={() => transition('create')}>{labels.create}</button>
       {:else if review.stale}<button disabled={!ready || busy || dirty} onclick={() => transition('restart')}>{labels.restart}</button>

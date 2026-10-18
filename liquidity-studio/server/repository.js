@@ -705,7 +705,7 @@ export class ScopedRepository {
     }
     await this.store.update(this.key, current => {
       assertRestoreAvailable(current);
-      return data;
+      return applyContentRevisions(data,captureContentRevisions(current || {backlog:[]}));
     });
     return { imported: true };
   }

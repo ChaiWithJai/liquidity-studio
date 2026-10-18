@@ -54,6 +54,7 @@ window.addEventListener("message", async (event) => {
         revision: message.record.revision,
       },
       adapter,
+      exportRequest: broker.request,
       cutoutRequest: cutoutEnabled ? broker.request : null,
       onCutoutStatus: (message) =>
         broker.state({

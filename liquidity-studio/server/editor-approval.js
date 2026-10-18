@@ -58,7 +58,8 @@ export class EditorApprovalService {
       if(hash(identity)!==principal.identityHash) throw fail(409,'Membership changed; reload review');
       this.scoped(native);
       const dto=this.dto(review,this.stale(source,native,review));
-      result=dto ? {...dto,canApprove:this.canApprove(identity,principal.actor),approval:dto.approval ? {...dto.approval,approvedByLabel:identity.users.find(user=>user.id===dto.approval.approvedBy)?.username || 'Former workspace member'} : null} : null;
+      const plans=(source.workspace?.assignments||[]).filter(plan=>!plan.deletedAt&&plan.storyId===native.storyId&&(plan.unit==='campaign'||plan.format===native.format)).map(({id,date,timeZone,unit,format})=>({id,date,timeZone,unit,format}));
+      result=dto ? {...dto,planning:plans,exported:!dto.stale&&(dto.exports?.length||0)>0,canApprove:this.canApprove(identity,principal.actor),approval:dto.approval ? {...dto.approval,approvedByLabel:identity.users.find(user=>user.id===dto.approval.approvedBy)?.username || 'Former workspace member'} : null} : null;
       return values;
     });
     return result;
