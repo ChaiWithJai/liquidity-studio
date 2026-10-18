@@ -14,6 +14,8 @@ Author-run local Chromium used production-compiled temporary bundles, a real eph
 - A second HTTP writer advanced the native revision while the canvas had local edits. Native save returned 409 and preserved the other writer. The actual upstream “Reload latest” action reopened saved state.
 - The actual Studio App opened/resumed the proposal, blocked navigation while a save response was delayed, returned to its original exporter after saving, and reopened the same native work. The original generated headline remained unchanged. This regression also catches acknowledgment-driven canvas remounts.
 
+An additional real iframe-reload regression checks that the parent message listener count remains one and that text saved before reload returns in the actual editable canvas. Replacement disposes the old broker/watchdog and initializes from the latest acknowledged native snapshot.
+
 The exact run metadata is recorded in `local-evidence.json`. Evidence is author-run and awaits independent review. No claim of live Google/native acceptance or deployed native availability follows from these fixtures.
 
 ## Reproduce locally
