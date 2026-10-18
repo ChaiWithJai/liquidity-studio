@@ -71,6 +71,7 @@ export class WorkspaceService {
         outcomes: receipt.result.outcomes,
         undone: !!receipt.undone,
         canUndo:
+          receipt.undo.length > 0 &&
           !receipt.undone &&
           receipt.afterWorkspaceHash === calendarHash &&
           receipt.undo.every(
@@ -206,6 +207,12 @@ export class WorkspaceService {
         result = structuredClone(prior.result);
         return state;
       }
+      if (
+        data.receipts.some(
+          (receipt) => receipt.undoKey === input.idempotencyKey,
+        )
+      )
+        throw fail(409, "Idempotency key already used for undo");
       const outcomes = [],
         undo = [],
         beforeWorkspace = structuredClone({
@@ -509,7 +516,15 @@ export class WorkspaceService {
         result = receipt.undoResult;
         return state;
       }
-      if (data.receipts.some((r) => r.idempotencyKey === input.idempotencyKey))
+      if (!receipt.undo.length)
+        throw fail(409, "Operation has no applied changes to undo");
+      if (
+        data.receipts.some(
+          (r) =>
+            r.idempotencyKey === input.idempotencyKey ||
+            r.undoKey === input.idempotencyKey,
+        )
+      )
         throw fail(409, "Idempotency key already used");
       if (
         hash({ assignments: data.assignments, buckets: data.buckets }) !==

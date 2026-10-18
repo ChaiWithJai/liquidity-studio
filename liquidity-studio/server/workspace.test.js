@@ -511,3 +511,54 @@ test("simultaneous placements cannot overwrite a shared date bucket order", asyn
   assert.equal(cal.data.assignments.length, 1);
   assert.equal(Object.values(cal.data.buckets)[0].revision, 1);
 });
+
+test("undo keys cannot be reused for another operation or mutation", async (t) => {
+  const f = await fixture(t),
+    [one, two] = (await query(f)).data.rows;
+  const change = (story) => [
+    {
+      kind: "story.patch",
+      storyId: story.id,
+      expectedRevision: story.revision,
+      patch: { title: story.title + " edited" },
+    },
+  ];
+  const first = await mutate(f, change(one)),
+    second = await mutate(f, change(two)),
+    key = randomUUID();
+  assert.equal(
+    (
+      await f.api(
+        `/api/studio/workspace/operations/${second.data.operationId}/undo`,
+        { idempotencyKey: key },
+      )
+    ).status,
+    200,
+  );
+  assert.equal(
+    (
+      await f.api(
+        `/api/studio/workspace/operations/${first.data.operationId}/undo`,
+        { idempotencyKey: key },
+      )
+    ).status,
+    409,
+  );
+  assert.equal(
+    (
+      await mutate(
+        f,
+        [
+          {
+            kind: "story.patch",
+            storyId: one.id,
+            expectedRevision: first.data.outcomes[0].row.revision,
+            patch: { title: "must not apply" },
+          },
+        ],
+        key,
+      )
+    ).status,
+    409,
+  );
+});
