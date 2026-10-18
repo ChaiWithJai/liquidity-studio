@@ -5,6 +5,7 @@
   import WorkspaceTable from "./WorkspaceTable.svelte";
   import WorkspaceCalendar from "./components/WorkspaceCalendar.svelte";
   import JobsPane from "./components/JobsPane.svelte";
+  import NativeEditorHost from "./components/NativeEditorHost.svelte";
   import HelperControlPane from "./components/HelperControlPane.svelte";
   import { createWorkspaceClient } from "./lib/workspace-client.js";
   import { scopedRequest } from "./lib/scoped-request.js";
@@ -61,6 +62,52 @@
   let workspaceClient = $state(null);
   let workspaceState = $state(null);
   let helperControlEnabled = $state(false);
+  let nativeEditorEnabled = $state(false);
+  let nativeRecord = $state(null);
+  let nativeHost = $state.raw(null);
+  let nativeDirty = $state(false);
+  let nativeSaveState = $state("idle");
+  function leaveNativeEditor(discard = false) {
+    if (nativeRecord && nativeDirty && !discard) {
+      error = "Save native changes or explicitly discard them before leaving the native editor.";
+      return false;
+    }
+    nativeRecord = null; nativeHost = null; nativeDirty = false; nativeSaveState = "idle";
+    return true;
+  }
+  $effect(() => {
+    if (!nativeDirty) return;
+    const protect = (event) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", protect);
+    return () => window.removeEventListener("beforeunload", protect);
+  });
+  async function openNativeEditor() {
+    if (!nativeEditorEnabled || !campaign || !selectedStory || busy || !workspaceClient) return;
+    if (reviewDirty) { error = "Save or reload source review edits before opening the native editor."; return; }
+    if (pendingEdits && !(await saveEdit())) return;
+    const client = workspaceClient, storyId = selectedStory.id, openingFormat = format;
+    const capturedRequest = (path, options) => {
+      if (workspaceClient !== client) return Promise.reject(Object.assign(new Error("Workspace changed"), {code:"REQUEST_CONTEXT_CHANGED"}));
+      return request(path, options);
+    };
+    busy = true; error = "";
+    try {
+      const bootstrap = await capturedRequest("/api/studio/bootstrap");
+      if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;
+      if (!bootstrap.operatorCapabilities?.nativeEditor) throw new Error("Native editor is unavailable; the original exporter remains available.");
+      client.ingestStories(bootstrap.backlog || []);
+      const story = client.getStory(storyId);
+      const history = await capturedRequest(`/api/studio/native-editor/documents?storyId=${encodeURIComponent(storyId)}&format=${openingFormat}`);
+      const existing = history.documents.find(item => item.storyRevision === story.revision && item.generationId === story.generationId && item.brandRevision === bootstrap.nativeEditorContext.brandRevision);
+      if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;
+      const created = existing ? await capturedRequest(`/api/studio/native-editor/documents/${existing.id}`) : await capturedRequest("/api/studio/native-editor/documents", { method:"POST", body:JSON.stringify({storyId,format:openingFormat,expectedRevision:story.revision,generationId:story.generationId,expectedBrandRevision:bootstrap.nativeEditorContext.brandRevision,idempotencyKey:crypto.randomUUID()}) });
+      if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;
+      nativeHost = { client, scopeKey:client.scopeKey, request:capturedRequest, getScopeKey:()=>workspaceClient === client ? client.scopeKey : "context-changed" };
+      nativeRecord = created; nativeDirty = false; nativeSaveState = "idle";
+    } catch (failure) { if (workspaceClient === client) error = failure.message; }
+    finally { if (workspaceClient === client) busy = false; }
+  }
+
   // One stable transport/callback pair for this authenticated canonical client.
   let helperHost = $derived.by(() => {
     const client = workspaceClient;
@@ -292,6 +339,7 @@
     if (workspaceClient && stories) workspaceClient.ingestStories(stories, {replace});
   }
   function clearWorkspace() {
+    leaveNativeEditor(true); nativeEditorEnabled = false;
     requestSessionEpoch++;
     lastScopeToken++;
     scopeLoading = false;
@@ -454,6 +502,7 @@
     });
   }
   async function navigateTab(next) {
+    if (!leaveNativeEditor()) return;
     if (tab === "backlog") rememberBacklogView();
     tab = next;
     if (next === "backlog") {
@@ -473,6 +522,7 @@
     searchInput?.focus();
   }
   async function loadScope() {
+    leaveNativeEditor(true); nativeEditorEnabled = false;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
     const view = key === activeBacklogScopeKey
@@ -509,6 +559,7 @@
       const data = await request("/api/studio/bootstrap");
       if (token !== lastScopeToken) return;
       helperControlEnabled = data.operatorCapabilities?.helperControl === true;
+      nativeEditorEnabled = data.operatorCapabilities?.nativeEditor === true;
       brandProfile = data.brandProfile;
       if (brandProfile) {
         brandProfile.fonts ||= { heading: "DejaVu Sans", body: "DejaVu Sans" };
@@ -541,6 +592,7 @@
     }
   }
   async function switchOrganization(event) {
+    if (!leaveNativeEditor()) { event.currentTarget.value = organizationId; return; }
     const selector = event.currentTarget;
     const requestedOrganizationId = selector.value;
     if (pendingEdits && !(await saveEdit())) {
@@ -556,6 +608,7 @@
     await loadScope();
   }
   async function switchBrand(event) {
+    if (!leaveNativeEditor()) { event.currentTarget.value = brandId; return; }
     const selector = event.currentTarget;
     const requestedBrandId = selector.value;
     if (pendingEdits && !(await saveEdit())) {
@@ -606,6 +659,7 @@
     pendingEdits = true;
   }
   async function openStory(story) {
+    if (!leaveNativeEditor()) return;
     if (pendingEdits && !(await saveEdit())) return;
     rememberBacklogView();
     selectStory(story);
@@ -613,12 +667,14 @@
     tab = "studio";
   }
   async function selectFormat(next) {
+    if (!leaveNativeEditor()) return;
     if (pendingEdits && !(await saveEdit())) return;
     format = next;
     exportUrl = "";
     syncEditor();
   }
   async function generate() {
+    if (!leaveNativeEditor()) return;
     if (!selectedStory || busy || !generationReview.ready) return;
     if (pendingEdits && !(await saveEdit())) return;
     busy = true;
@@ -851,6 +907,7 @@
     }
   }
   async function loadAdmin() {
+    if (!leaveNativeEditor()) return;
     if (tab === "backlog") rememberBacklogView();
     tab = "admin";
     error = "";
@@ -1195,6 +1252,7 @@
               >
             </div>
             <div class="toolbar-actions">
+              {#if nativeEditorEnabled && campaign && !nativeRecord}<button class="secondary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Open native design editor</button>{/if}
               <button class="secondary" disabled={busy || !generationReview.ready} onclick={generate}
                 >{busy
                   ? "Working…"
@@ -1205,7 +1263,7 @@
                 class="primary"
                 disabled={busy || !campaign}
                 onclick={exportAsset}
-                >Export {format === "carousel"
+                >Export {nativeRecord ? "original " : ""}{format === "carousel"
                   ? "ZIP"
                   : format === "reel"
                     ? "script"
@@ -1213,13 +1271,24 @@
               >
             </div>
           </div>
+          {#if nativeRecord && nativeHost}
+            <section class="panel" aria-label="Native proposal workspace">
+              <h3>Native {formats.find(item => item.id === nativeRecord.format)?.name} proposal</h3>
+              <p role="status">Native revision {nativeRecord.revision} · {nativeDirty ? "Unsaved native work" : "Native proposal saved"} · {nativeSaveState}. The original generated campaign and approval state are unchanged.</p>
+              <button class="secondary" disabled={nativeDirty} onclick={() => leaveNativeEditor()}>Return to original campaign and exporter</button>
+              {#if nativeDirty}<button class="secondary" onclick={() => leaveNativeEditor(true)}>Discard local native changes and return</button>{/if}
+              {#key nativeHost}<NativeEditorHost record={nativeRecord} request={nativeHost.request} scopeKey={nativeHost.scopeKey} getScopeKey={nativeHost.getScopeKey}
+                onSaved={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.id) nativeRecord = saved; }}
+                onDirtyChange={(dirty) => nativeDirty = dirty} onSaveStateChange={(value) => { nativeSaveState = value.status; if (value.status === "saved" && error === "Save native changes or explicitly discard them before leaving the native editor.") error = ""; }} />{/key}
+            </section>
+          {/if}
           <div class="generation-review-context"><SourceReviewSummary summary={generationReview} onclaim={focusSourceClaim} /></div>
           {#if exportUrl}<p class="download">
               <a href={exportUrl} download={exportName} onclick={downloadArtifact}>↓ {exportName}</a><small
                 >Actual exported artifact · scope authorization required</small
               >
             </p>{/if}
-          <p class="small muted workflow-boundaries">Saving updates the private draft. Calendar placement plans work; export downloads a file for handoff. Neither publishes nor opens Doory or Penpot. Unsaved changes stay in this tab when you visit the calendar or backlog; return via Campaign Studio. Reloading discards unsaved changes.</p>
+          <p class="small muted workflow-boundaries">Saving updates the private draft. Calendar placement plans work; export downloads a file for handoff. Neither publishes. The optional native editor opens a separate proposal. Save or discard native changes before leaving it. Original artwork edits stay in this tab when you visit the calendar or backlog; return via Campaign Studio. Reloading discards unsaved changes.</p>
           <div class="format-tabs" aria-label="Campaign format">
             {#each formats as item (item.id)}<button
                 class:active={format === item.id}

@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-18T02:52:41.318959+00:00",
+  "functionalCommit": "0a38184f8a7c4b1074f8e6dfeadd68c5559412bf",
+  "upstreamCommit": "27b6f68221fdbf1ef1bedc182e303210ca9e39f5",
+  "scope": "Author-run local production-compiled EditorApp with disposable QA password identity; not Google or deployment acceptance",
+  "sourceHashes": {
+    "liquidity-studio/server/native-editor.js": "d91193643836d12c43a78d5ca469124f6f0b175183df3d243b3e43419fd974a7",
+    "liquidity-studio/src/App.svelte": "a513e6dcd4b64cb3e0c1ef8e4ee3c030519562835e67fe4b3b58efe70b1108e6",
+    "liquidity-studio/src/components/NativeEditorHost.svelte": "65fc7908a6a4168371b2f83632bed86f23a41d54a30f17cc574df1f858fb61c3",
+    "liquidity-studio/src/lib/native-editor-broker.js": "86a4a75a0061d3f0d1fc824bfa6ec2be757a3d75307c2791f555f1e17766057b",
+    "liquidity-studio/src/lib/native-editor-adapter.js": "5a52157a4b1b81ff5337a238f2a3ca12055a90be308a499ff22cf2f8f7d8750f",
+    "liquidity-studio/tests/native-editor-host.spec.js": "125ddd6ebf06a2b678c24023656c63cfd7b606d0b46eccc5aa6c1aa34fc5936a"
+  },
+  "checks": {
+    "node22": {
+      "passed": 184,
+      "skipped": 1,
+      "skip": "separate Firestore emulator"
+    },
+    "chromium": {
+      "passed": 6,
+      "durationSeconds": 45.7
+    },
+    "svelteMcp": {
+      "issues": 0
+    },
+    "publicDefaultBundle": {
+      "transformedModules": 154,
+      "auditedChunkModules": 91,
+      "upstreamSource": false,
+      "reactOrFabric": false,
+      "editorFrameOrLicenseAsset": false,
+      "assets": [
+        "index-B1KkZSH7.css",
+        "index-D4c4hasO.js"
+      ],
+      "enforcedBy": "scripts/native-editor-vite.js generateBundle default-mode guard",
+      "buildOnlyFollowupCommit": "9e20cf2",
+      "legalNotices": {
+        "uniqueBefore": 8,
+        "uniqueAfter": 8,
+        "missing": 0,
+        "placement": "eof with sorted canonical footer",
+        "reason": "Ubuntu/macOS differed only in placement of a duplicated notice"
+      },
+      "canonicalPriorUbuntuEqualsActualPriorMac": true
+    }
+  },
+  "nativePng": {
+    "sha256": "2b33b49af162ce0078b84620666382a0d79067621ba03242f1ea7ed4db745d33",
+    "bytes": 142231,
+    "width": 1080,
+    "height": 1350,
+    "hasAlpha": true,
+    "bounds": "Actual upstream quick PNG; centered owned procedural image obscures copy. Operational evidence only, not portrait/cutout or layout quality."
+  },
+  "distribution": {
+    "copiedSourcePublished": false,
+    "upstreamBundlePublished": false,
+    "unresolved": "Pinned AAL GPG-signed text condition",
+    "nativeEnabledByDefault": false
+  },
+  "runtimeChanges": false,
+  "paidCalls": 0,
+  "baseCommit": "a439acb5cffa7260744ef1058b8e74dd51c7147a"
+}
