@@ -1,7 +1,7 @@
 <script>
   import { untrack } from 'svelte';
   let { request, scopeKey, actorId, story = null, members = [] } = $props();
-  let projection = $state({ grants: [], proposals: [], presence: [] });
+  let projection = $state({ grants: [], proposals: [], presence: [], operations: [] });
   let helperId = $state(''), category = $state(''), error = $state(''), message = $state('');
   let pending = $state(0), uncertain = $state(null);
   let clientId = $state(crypto.randomUUID());
@@ -12,7 +12,8 @@
   async function refresh(owner = lifecycle, send = request) {
     const read = ++reads;
     try {
-      const next = await send(root);
+      const [next, receipts] = await Promise.all([send(root), send('/api/studio/workspace/operations')]);
+      next.operations = receipts.operations;
       if (owner === lifecycle && read === reads) projection = next;
     } catch (failure) { if (owner === lifecycle && read === reads) error = failure.message; }
   }
@@ -20,7 +21,7 @@
     const key = scopeKey, send = request;
     actorId;
     untrack(() => {
-      lifecycle++; reads++; projection = { grants: [], proposals: [], presence: [] };
+      lifecycle++; reads++; projection = { grants: [], proposals: [], presence: [], operations: [] };
       error = ''; message = ''; helperId = ''; category = ''; uncertain = null; pending = 0; clientId = crypto.randomUUID();
       void refresh(lifecycle, send);
     });
@@ -51,6 +52,20 @@
   function propose(grant) {
     if (!story || !category.trim()) return;
     return action('/proposals', { grantId: grant.id, epoch: grant.epoch, changes: [{ kind: 'story.patch', storyId: story.id, expectedRevision: story.revision, patch: { category: category.trim() } }] }, 'Proposal submitted for the owner to review. Story content has not changed.');
+  }
+  async function undo(operationId) {
+    if (uncertain && uncertain.operationId !== operationId) return;
+    const owner = lifecycle, send = request; pending++; error = '';
+    const intent = uncertain || { operationId, idempotencyKey: crypto.randomUUID() };
+    uncertain = intent;
+    try {
+      const receipt = await send(`/api/studio/workspace/operations/${operationId}/undo`, { method: 'POST', body: JSON.stringify({ idempotencyKey: intent.idempotencyKey }) });
+      if (owner === lifecycle) { uncertain = null; message = `Undo recorded for ${receipt.operationId || operationId}. Newer work is protected by revision checks.`; await refresh(owner, send); }
+    } catch (failure) {
+      if (owner !== lifecycle) return;
+      if (failure.status >= 400 && failure.status < 500) uncertain = null;
+      error = uncertain ? 'Undo result is unknown. Retry the same undo request to recover its receipt.' : failure.message;
+    } finally { if (owner === lifecycle) pending--; }
   }
   async function apply(proposal, grant) {
     if (uncertain && uncertain.proposalId !== proposal.id) return;
@@ -83,7 +98,7 @@
     <button disabled={pending > 0 || !helperId} onclick={createGrant}>Grant metadata proposals for 10 minutes</button>
     <label>Proposed category<input bind:value={category} maxlength="100" /></label>
   {:else}<p>Open a story to create a bounded metadata grant or proposal.</p>{/if}
-  {#if uncertain}<p role="status">An application result is unknown. Its request key is retained for retry.</p>{/if}
+  {#if uncertain}<p role="status">An operation result is unknown. Its request key is retained for retry.</p>{#if uncertain.operationId}<button disabled={pending > 0} onclick={() => undo(uncertain.operationId)}>Retry same undo</button>{/if}{/if}
   {#each projection.grants as grant (grant.id)}
     <article aria-label={`Grant ${grant.id}`}>
       <h3>{display(grant.ownerId)} → {display(grant.helperId)}</h3>
@@ -108,10 +123,14 @@
           {#if grant.ownerId === actorId && proposal.status === 'proposed' && active(grant) && proposal.epoch === grant.epoch}
             <button disabled={pending > 0} onclick={() => action(`/proposals/${proposal.id}/approve`, { expectedRevision: proposal.revision }, 'Approved this exact proposal. Execution still checks the current revision and grant epoch.')}>Approve exact proposal</button>
           {/if}
-          {#if grant.helperId === actorId && (proposal.status === 'approved' || uncertain?.proposalId === proposal.id)}
+          {#if grant.helperId === actorId && ((proposal.status === 'approved' && active(grant) && proposal.epoch === grant.epoch) || uncertain?.proposalId === proposal.id)}
             <button disabled={pending > 0 || (!!uncertain && uncertain.proposalId !== proposal.id)} onclick={() => apply(proposal, grant)}>{uncertain?.proposalId === proposal.id ? 'Retry same application' : 'Apply approved proposal'}</button>
           {/if}
-          {#if proposal.operationId}<p>Receipt: {proposal.operationId}</p>{/if}
+          {#if proposal.operationId}<p>Receipt: {proposal.operationId}</p>
+            {@const operation = projection.operations.find(item => item.operationId === proposal.operationId)}
+            {#if operation?.undone}<p>Compensating undo recorded. Original receipt retained.</p>
+            {:else if operation?.canUndo}<button class="secondary" disabled={pending > 0 || !!uncertain} onclick={() => undo(proposal.operationId)}>Undo accepted changes</button>{/if}
+          {/if}
         </section>
       {/each}
     </article>

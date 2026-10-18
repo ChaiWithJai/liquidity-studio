@@ -203,6 +203,21 @@ test("two authenticated actors review and apply a proposal without focus theft; 
     await expect(
       owner.getByText(/browser-helper · human · recently connected/).first(),
     ).toBeVisible();
+    const undoKeys = [];
+    helper.on('request', request => { if (request.method() === 'POST' && /\/workspace\/operations\/[^/]+\/undo/.test(request.url())) undoKeys.push(request.postDataJSON().idempotencyKey); });
+    const undoPattern = '**/workspace/operations/*/undo?*';
+    await helper.route(undoPattern, async route => { await route.fetch(); await route.abort('failed'); });
+    await helper.getByRole('button', { name: 'Undo accepted changes', exact: true }).click();
+    await expect(helper.getByRole('button', { name: 'Retry same undo', exact: true })).toBeVisible();
+    await helper.unroute(undoPattern);
+    await helper.getByRole('button', { name: 'Retry same undo', exact: true }).click();
+    await expect(helper.getByRole('button', { name: 'Retry same undo', exact: true })).toHaveCount(0);
+    expect(undoKeys).toHaveLength(2); expect(undoKeys[0]).toBe(undoKeys[1]);
+    const afterUndo = await (await platform.forScope({ organizationId: 'org_default', brandId: 'brand_default' })).ports.repo.read();
+    const restored = afterUndo.backlog.find(row => row.id === story.id);
+    expect(restored.category).toBe(proposal.preview[0].before.category);
+    expect(restored.revision).toBe(proposal.changes[0].expectedRevision + 2);
+
   } finally {
     await ownerContext.close();
     await helperContext.close();
