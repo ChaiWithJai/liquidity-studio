@@ -128,7 +128,7 @@
       if(nativeEditorEnabled)await openNativeEditor(route.nativeId);
       else error="This saved layout is unavailable here. The saved story remains available.";
     }
-    if(tab==="admin")await loadAdmin();
+    if(tab==="admin")await loadAdmin(true);
     if(route.unavailable)error="That workspace is unavailable for your current account. Your permitted workspace is shown.";
   }
 
@@ -750,7 +750,9 @@
         busy = false;
         scopeLoading = false;
         if(workflowTarget&&workflowTarget.organizationId===organizationId&&workflowTarget.brandId===brandId){
-          try{if(!scopeLoadError)await restoreWorkflowLocation(workflowTarget);}finally{if(token===lastScopeToken)pendingWorkflowLocation=null;}
+          const alreadyRestoring=workflowRestoring;
+          workflowRestoring=true;
+          try{if(!scopeLoadError)await restoreWorkflowLocation(workflowTarget);}finally{workflowRestoring=alreadyRestoring;if(token===lastScopeToken)pendingWorkflowLocation=null;}
         }
         await tick();
         if (token === lastScopeToken && tab === "backlog" && !scopeLoadError) {
@@ -760,7 +762,7 @@
     }
   }
   async function switchOrganization(event) {
-    if(workflowRestoring)return;
+    if(workflowRestoring){event.currentTarget.value=organizationId;return;}
     if (!leaveNativeEditor()) { event.currentTarget.value = organizationId; return; }
     const selector = event.currentTarget;
     const requestedOrganizationId = selector.value;
@@ -777,7 +779,7 @@
     await loadScope();
   }
   async function switchBrand(event) {
-    if(workflowRestoring)return;
+    if(workflowRestoring){event.currentTarget.value=brandId;return;}
     if (!leaveNativeEditor()) { event.currentTarget.value = brandId; return; }
     const selector = event.currentTarget;
     const requestedBrandId = selector.value;
@@ -1079,7 +1081,8 @@
       error = failure.message;
     }
   }
-  async function loadAdmin() {
+  async function loadAdmin(restoringRoute = false) {
+    if(workflowRestoring&&restoringRoute!==true)return;
     if (!leaveNativeEditor()) return;
     if (tab === "backlog") rememberBacklogView();
     tab = "admin";
