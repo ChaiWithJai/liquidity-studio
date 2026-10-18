@@ -1,0 +1,128 @@
+{
+  "observedAt": "2026-10-18T01:11:30.868277+00:00",
+  "method": "Read-only public metadata and source text. No weight binary downloaded or executed; sizes are publisher metadata, not measured RAM.",
+  "models": [
+    {
+      "model": "prism-ml/Ternary-Bonsai-2-2B-gguf",
+      "revision": "683f7be2629342a50987627b40881e54761a2430",
+      "license": "apache-2.0",
+      "pipelineTag": "image-text-to-text",
+      "metadataUrl": "https://huggingface.co/api/models/prism-ml/Ternary-Bonsai-2-2B-gguf?blobs=true",
+      "selectedFiles": [
+        {
+          "name": "LICENSE",
+          "bytes": 10174
+        },
+        {
+          "name": "Ternary-Bonsai-2-2B-PQ2_0.gguf",
+          "bytes": 517312992
+        },
+        {
+          "name": "Ternary-Bonsai-2-2B-PTQ1_0.gguf",
+          "bytes": 429183456
+        },
+        {
+          "name": "Ternary-Bonsai-2-2B-Q2_0.gguf",
+          "bytes": 546689504
+        },
+        {
+          "name": "Ternary-Bonsai-2-2B-mmproj-BF16.gguf",
+          "bytes": 671372832
+        },
+        {
+          "name": "Ternary-Bonsai-2-2B-mmproj-Q8_0.gguf",
+          "bytes": 364664352
+        }
+      ]
+    },
+    {
+      "model": "HuggingFaceTB/SmolVLM2-500M-Video-Instruct",
+      "revision": "7b375e1b73b11138ff12fe22c8f2822d8fe03467",
+      "license": "apache-2.0",
+      "pipelineTag": "image-text-to-text",
+      "metadataUrl": "https://huggingface.co/api/models/HuggingFaceTB/SmolVLM2-500M-Video-Instruct?blobs=true",
+      "selectedFiles": [
+        {
+          "name": "model.safetensors",
+          "bytes": 2029990624
+        },
+        {
+          "name": "onnx/decoder_model_merged_q4f16.onnx",
+          "bytes": 205328508
+        },
+        {
+          "name": "onnx/embed_tokens_q4f16.onnx",
+          "bytes": 94618005
+        },
+        {
+          "name": "onnx/vision_encoder_q4f16.onnx",
+          "bytes": 57691749
+        }
+      ]
+    },
+    {
+      "model": "lerobot/smolvla_base",
+      "revision": "5e8d12a6e2975b0e5e5fce7c8caf47c371d257b6",
+      "license": "apache-2.0",
+      "pipelineTag": "robotics",
+      "metadataUrl": "https://huggingface.co/api/models/lerobot/smolvla_base?blobs=true",
+      "selectedFiles": [
+        {
+          "name": "model.safetensors",
+          "bytes": 906712520
+        }
+      ]
+    },
+    {
+      "model": "nvidia/Cosmos-Reason2-2B",
+      "revision": "9ce19a195e423419c349abfc86fd07178b230561",
+      "license": "other",
+      "pipelineTag": "image-text-to-text",
+      "metadataUrl": "https://huggingface.co/api/models/nvidia/Cosmos-Reason2-2B?blobs=true",
+      "selectedFiles": [
+        {
+          "name": "model.safetensors",
+          "bytes": 4877470304
+        }
+      ]
+    },
+    {
+      "model": "showlab/ShowUI-2B",
+      "revision": "cabec4fcc48d15ffd3efe0b33ea9bc7d41509d60",
+      "license": "mit",
+      "pipelineTag": null,
+      "metadataUrl": "https://huggingface.co/api/models/showlab/ShowUI-2B?blobs=true",
+      "selectedFiles": [
+        {
+          "name": "pytorch_model.bin",
+          "bytes": 4418202778
+        }
+      ]
+    }
+  ],
+  "browserRuntime": {
+    "space": "webml-community/ternary-bonsai-2-hermes-webgpu",
+    "revision": "621e20782f208660f4f58283c2ce58430020f243",
+    "licenseDeclaredInSpaceMetadata": null,
+    "rootLicenseFileListed": false,
+    "readSourceFiles": [
+      {
+        "name": "README.md",
+        "sha256": "ccee49b04c5859a5898e0603b0d314cee73be765b1c1db2136b46d7596c3d4aa"
+      },
+      {
+        "name": "THIRD_PARTY_NOTICES.md",
+        "sha256": "358505ebe13647c6f1e5215efb8bb3aaed27a7d5c7b2d41429f845f07484c349"
+      },
+      {
+        "name": "assets/index-625vxx6U.js",
+        "sha256": "b5e5d90033d0259330bb22392e7e979cb36044add9fd38c26c661f0922263e02"
+      },
+      {
+        "name": "assets/qwen35-vision-Kzp5MMIJ.js",
+        "sha256": "00c1a72a962a84fee17000a6b1d18b24d75033e56d59996fc504b7c57cfc6488"
+      }
+    ],
+    "boundary": "Source presence of vision/mmproj/tool handlers is not an executed browser acceptance or complete runtime license audit"
+  }
+}
