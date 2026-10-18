@@ -1,6 +1,6 @@
 # Doory guest build experiment
 
-Evidence recorded 2026-10-18 UTC for issue 39. This is an actual dependency/build and loopback HTTP experiment, not a native editor roundtrip, account integration or Penpot compatibility result.
+Evidence recorded 2026-10-18 UTC for issue 39. This records an actual dependency/build experiment and an operator-driven guest editor roundtrip. It does not establish account integration or Penpot compatibility.
 
 | Boundary | Observed evidence |
 |---|---|
@@ -17,4 +17,16 @@ Evidence recorded 2026-10-18 UTC for issue 39. This is an actual dependency/buil
 
 Reproduction in a disposable checkout: use the pinned source and an existing compatible Node 22 binary; install with lifecycle scripts disabled; run the unmodified build; then `VITE_API_PROXY=http://127.0.0.1:1 npm run preview -- --host 127.0.0.1 --port 39006 --strictPort`. Do not run the README's system package/daemon setup for this guest experiment. Stop only the owned preview process when the browser investigation is complete; do not touch the Studio 3001 volume or application.
 
-Remaining acceptance: create an original two-page fixture in the real guest UI, edit visible text, close/reopen from browser storage, export a real PNG and native document if supported, inspect dimensions/page order/fonts/hash, and retain required attribution. A working guest document does not prove signed-in Django ownership, multi-user collaboration, server backup, Studio token mapping, GCS interoperability, source-reviewed content or Penpot import. Background-removal model execution and actual MP4/WebM/GIF encoding remain separate authorized experiments with their own asset/license/network evidence. Issue39 stays open.
+Remaining acceptance: inspect portable native document export/import if supported, font substitution and complete attribution packaging. A working guest document does not prove signed-in Django ownership, multi-user collaboration, server backup, Studio token mapping, GCS interoperability, source-reviewed content or Penpot import. Background-removal model execution and actual MP4/WebM/GIF encoding remain separate authorized experiments with their own asset/license/network evidence. Issue39 stays open.
+
+## Actual guest UI and independently decoded artifacts
+
+The root operator used the real browser at the isolated preview: created a local document, named it `Studio contract experiment`, resized it to 1080×1350, inserted editable heading `SOURCE NOTES`, added a second page with `PAGE TWO`, and reloaded to reopen both pages. This is browser-local persistence, not server backup or cross-browser portability. A separate reviewer decoded the downloaded ZIPs and SVG XML without executing their contents. No artifact contents or private download paths are published here.
+
+| Download | Independent byte evidence |
+|---|---|
+| Single SVG | 1080×1350 XML containing `SOURCE NOTES`; SHA256 `9dc34f8ef74e3a143a32c74041b998a480f7dec4fb8679f52a2d70b446d14bb4`. |
+| Two-page PNG ZIP | Archive SHA256 `cadb89ec1c68da5b452f9bbb755f8505be619c80bc363c0cab7fcc82be69d3f6`; exactly two PNG entries, each 1080×1350. Page 1: 53,450 bytes, SHA256 `4c8bcc8785a949cb832095bdb6acf93404dd49d79bac454a29b3d16085b9a990`. Page 2: 47,515 bytes, SHA256 `5874d4136a244f7780b3fafe8698fe9513932e95a750e8c860c50f7462a5903b`. |
+| Post-reload two-page SVG ZIP | Archive SHA256 `8f0fde1c1c0bd8b605c82a7f57e1d207c4f7815afbaa1d51c24ffd3ca3d02c48`; exactly two SVG entries, each 1080×1350. Page 1 retains `SOURCE NOTES` and the identical single-SVG hash above. Page 2 retains `PAGE TWO`, SHA256 `cee768b7a4e3dcb647d733c393ee5078d8325c475e88b72380b3696d7c6698f7`. |
+
+These are actual PNG/SVG downloads from Doory's guest frontend. SVG text remains SVG text in these artifacts, but no claim is made that Studio, Penpot or a separate Doory browser can import them into equivalent editable native objects. No export latency was measured. See the [license and model ledger](39-licenses-models-and-references.md) before selecting dependencies or redistributing models.

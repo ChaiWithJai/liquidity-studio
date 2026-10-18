@@ -2,6 +2,8 @@
 
 Checked 2026-10-18 UTC. Text/source/registry inspection only: no model binary was downloaded, hashed, loaded or executed. This ledger records engineering evidence and unresolved license provenance; it does not certify every asset's distribution rights. Read alongside [upstream product evidence](../PENPOT-DOORY-UPSTREAM.md) and [Penpot contracts and costs](39-penpot-contracts-and-operations.md).
 
+The Fabric 7.2.0 license inspection below is version-specific. The actual pinned Doory guest install resolves Fabric **7.4.0** from its lockfile; that runtime version is recorded in the [guest experiment](39-doory-guest-build.md). Do not treat the 7.2.0 source inspection as an exact 7.4.0 dependency audit.
+
 ## The proposed “MIT primitives” shortcut
 
 | Artifact and exact evidence | Disposition | Consequence for a Studio implementation |
