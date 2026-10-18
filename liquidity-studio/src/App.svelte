@@ -687,7 +687,7 @@
     await loadScope();
   }
   function selectStory(story) {
-    if(story?.id!==selectedStory?.id){preparedEditingStoryId="";preparedForkIntent=null;}
+    if(story?.id!==selectedStory?.id){notice="";preparedEditingStoryId="";preparedForkIntent=null;}
     editorConflictRevision = null;
     selectedStory = story ? JSON.parse(JSON.stringify(story)) : null;
     campaign = selectedStory?.campaignDraft || null;

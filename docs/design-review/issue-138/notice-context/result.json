@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "browser": "BrowserOS Neo",
+  "viewport": {
+    "width": 1051,
+    "height": 868,
+    "dpr": 2
+  },
+  "baseCommit": "548a5e0",
+  "asset": "index-BWJKhL1L.js",
+  "authentication": "controlled local password fixture; not Google",
+  "sameStorySuccess": {
+    "asset": "http://127.0.0.1:39037/assets/index-BWJKhL1L.js",
+    "notice": "Reviewed prepared copy saved. Continue to layout and artifact handoff; publication is not approved.\n×"
+  },
+  "afterDifferentStory": {
+    "preview": [
+      "Source preview",
+      "Review sources before generation"
+    ],
+    "previousStoryNoticePresent": false,
+    "status": true
+  },
+  "afterNewRealPreparation": {
+    "candidateId": "4bad7d1e-0d19-4162-94d9-ee4cf7e86682",
+    "http": 200,
+    "humanApproval": "none",
+    "modelCalls": 0,
+    "oldSuccess": false,
+    "queuedNotice": false,
+    "status": "ready"
+  },
+  "limitations": [
+    "Queued transient was not separately captured; completion state and fresh candidate ID were read back",
+    "No local test runner or private native build",
+    "No maintained runtime or approval/source-authority changes"
+  ]
+}
