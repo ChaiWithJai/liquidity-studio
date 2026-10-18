@@ -6,6 +6,7 @@ import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { createPlatform } from "../server/platform.js";
 import { DurableStore } from "../server/storage.js";
 import { createHttpServer } from "../server/index.js";
+import { PreparedPromotionService } from "../server/prepared-promotion.js";
 import { brandRevision } from "../server/multimodal-contract.js";
 const keys = [
   "NODE_ENV",
@@ -277,4 +278,75 @@ test("lost historical-fork reply retries the same request without importing appr
   expect(
     state.preparedSourceCandidates[1].candidate.provenance.humanApproval,
   ).toBe("none");
+});
+
+test("deduplicated lost continuation reply recovers after a later story edit", async ({
+  page,
+}) => {
+  const panel = await enter(page),
+    { user, scope, repo } = await stateFor("brand_default");
+  const service = new PreparedPromotionService({
+    repo,
+    scope,
+    identity: platform.identity,
+  });
+  let historicalId, accepted;
+  await page.route(
+    /\/api\/studio\/preparations\/[^/]+\/fork-plan(?:\?|$)/,
+    async (route) => {
+      historicalId = new URL(route.request().url()).pathname.split("/").at(-2);
+      const plan = await service.historicalForkPlan(user, historicalId),
+        input = { idempotencyKey: randomUUID() };
+      for (const key of [
+        "expectedRevision",
+        "expectedContentRevision",
+        "expectedBrandRevision",
+        "expectedHistoricalRevision",
+        "sourceCopySha256",
+        "evidenceSha256",
+        "packSha256",
+        "inputFingerprint",
+      ])
+        input[key] = plan[key];
+      await service.forkHistorical(user, historicalId, input);
+      await route.fulfill({ response: await route.fetch() });
+    },
+  );
+  const envelopes = [];
+  await page.route(
+    /\/api\/studio\/preparations\/[^/]+\/fork(?:\?|$)/,
+    async (route) => {
+      envelopes.push(route.request().postDataJSON());
+      const response = await route.fetch();
+      if (envelopes.length === 1) {
+        expect(response.status()).toBe(201);
+        accepted = await response.json();
+        await repo.mutate((state) => {
+          state.backlog.find((story) => story.id === ids.brand_default).title =
+            "Later external content";
+          return state;
+        });
+        await route.abort("failed");
+      } else await route.fulfill({ response });
+    },
+  );
+  await panel
+    .getByRole("button", {
+      name: "Continue editing restored draft",
+      exact: true,
+    })
+    .click();
+  await expect(
+    panel.getByRole("button", { name: "Retry same request", exact: true }),
+  ).toBeVisible();
+  await panel
+    .getByRole("button", { name: "Retry same request", exact: true })
+    .click();
+  await expect(
+    panel.getByText(/The saved continuation was recovered/),
+  ).toBeVisible();
+  expect(envelopes).toHaveLength(2);
+  expect(envelopes[1]).toEqual(envelopes[0]);
+  expect((await repo.read()).preparedSourceCandidates).toHaveLength(2);
+  expect(accepted.candidateId).toBeTruthy();
 });

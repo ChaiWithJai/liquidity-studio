@@ -1,5 +1,8 @@
 import { assertRestoreAvailable } from "./restore-gate.js";
-import { historicalForkPlan, forkHistoricalCandidate } from "./prepared-historical.js";
+import {
+  historicalForkPlan,
+  forkHistoricalCandidate,
+} from "./prepared-historical.js";
 import { randomUUID } from "node:crypto";
 import { fail } from "./auth.js";
 import { exact, hash } from "./workspace-schema.js";
@@ -90,7 +93,8 @@ export class PreparedPromotionService {
       evidenceSha256: evidenceDigest(entry.evidence),
       copyFieldCount: copyFields(artwork).length,
       sourceUrls: entry.evidence.map((source) => source.sourceUrl),
-      requiresClinicalReview: entry.derivation?.requiresClinicalReview === true ||
+      requiresClinicalReview:
+        entry.derivation?.requiresClinicalReview === true ||
         (entry.candidate.sourceSelection || []).some(
           (source) => source.kind === "clinical",
         ) ||
@@ -100,8 +104,12 @@ export class PreparedPromotionService {
         "Exact saved copy and retrieved evidence reviewed by the current operator; not automated factual or clinical accuracy.",
     };
   }
-  async historicalForkPlan(actor,id){return historicalForkPlan(this,actor,id);}
-  async forkHistorical(actor,id,input){return forkHistoricalCandidate(this,actor,id,input);}
+  async historicalForkPlan(actor, id) {
+    return historicalForkPlan(this, actor, id);
+  }
+  async forkHistorical(actor, id, input) {
+    return forkHistoricalCandidate(this, actor, id, input);
+  }
   async fork(actor, storyId, input) {
     exact(input, [
       "idempotencyKey",
@@ -136,13 +144,20 @@ export class PreparedPromotionService {
         assertRestoreAvailable(state);
         if (hash(identity) !== principal.identityHash)
           throw fail(409, "Review authority changed");
-        const prior = state.preparedSourceCandidates?.find(
-          (entry) => entry.forkRequest?.id === input.idempotencyKey,
+        const prior = state.preparedSourceCandidates?.find((entry) =>
+          [entry.forkRequest, ...(entry.forkAliases || [])].some(
+            (receipt) => receipt?.id === input.idempotencyKey,
+          ),
         );
         if (prior) {
+          const receipt = [
+            prior.forkRequest,
+            ...(prior.forkAliases || []),
+          ].find((receipt) => receipt?.id === input.idempotencyKey);
           if (
-            prior.forkRequest.actorId !== principal.actor.id ||
-            prior.forkRequest.requestHash !== requestHash
+            receipt.actorId !== principal.actor.id ||
+            receipt.requestHash !== requestHash ||
+            prior.candidate.storyId !== storyId
           )
             throw fail(409, "Fork key already used");
           candidateId = prior.candidate.id;
@@ -174,6 +189,24 @@ export class PreparedPromotionService {
             entry.candidate.brandRevision === input.brandRevision,
         );
         if (active) {
+          if ((active.forkAliases?.length || 0) >= 31)
+            throw fail(
+              429,
+              "Continuation receipt capacity reached; retry an existing request",
+            );
+          active.forkAliases = [
+            ...(active.forkAliases || []),
+            {
+              id: input.idempotencyKey,
+              requestHash,
+              actorId: principal.actor.id,
+            },
+          ];
+          if (
+            Buffer.byteLength(JSON.stringify(state.preparedSourceCandidates)) >
+            192 * 1024
+          )
+            throw fail(413, "Prepared evidence history is full");
           candidateId = active.candidate.id;
           return [identity, state];
         }
@@ -332,7 +365,8 @@ export class PreparedPromotionService {
           evidenceDigest(entry.evidence) !== input.evidenceSha256
         )
           throw fail(409, "Saved draft or evidence changed after review");
-        const clinical = entry.derivation?.requiresClinicalReview === true ||
+        const clinical =
+          entry.derivation?.requiresClinicalReview === true ||
           (entry.candidate.sourceSelection || []).some(
             (source) => source.kind === "clinical",
           ) ||

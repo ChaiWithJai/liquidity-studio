@@ -192,13 +192,18 @@ export async function forkHistoricalCandidate(service, actor, id, input) {
       assertRestoreAvailable(state);
       if (hash(identity) !== principal.identityHash)
         throw fail(409, "Current review authority changed");
-      const prior = state.preparedSourceCandidates?.find(
-        (entry) => entry.forkRequest?.id === input.idempotencyKey,
+      const prior = state.preparedSourceCandidates?.find((entry) =>
+        [entry.forkRequest, ...(entry.forkAliases || [])].some(
+          (receipt) => receipt?.id === input.idempotencyKey,
+        ),
       );
       if (prior) {
+        const receipt = [prior.forkRequest, ...(prior.forkAliases || [])].find(
+          (receipt) => receipt?.id === input.idempotencyKey,
+        );
         if (
-          prior.forkRequest.actorId !== principal.actor.id ||
-          prior.forkRequest.requestHash !== requestHash ||
+          receipt.actorId !== principal.actor.id ||
+          receipt.requestHash !== requestHash ||
           prior.derivation?.historicalCandidateId !== id
         )
           throw fail(409, "Historical fork key already used");
@@ -227,6 +232,24 @@ export async function forkHistoricalCandidate(service, actor, id, input) {
           entry.candidate.brandRevision === plan.expectedBrandRevision,
       );
       if (active) {
+        if ((active.forkAliases?.length || 0) >= 31)
+          throw fail(
+            429,
+            "Continuation receipt capacity reached; retry an existing request",
+          );
+        active.forkAliases = [
+          ...(active.forkAliases || []),
+          {
+            id: input.idempotencyKey,
+            requestHash,
+            actorId: principal.actor.id,
+          },
+        ];
+        if (
+          Buffer.byteLength(JSON.stringify(state.preparedSourceCandidates)) >
+          192 * 1024
+        )
+          throw fail(413, "Prepared evidence history is full");
         resultId = active.candidate.id;
         storyId = story.id;
         return [identity, state];

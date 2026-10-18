@@ -13,7 +13,7 @@ export function projectPreparedHistory(entries, scope) {
   scanPortable(entries);
   const ids = new Set();
   return entries.map(entry => {
-    exact(entry, ['candidate','evidence','revision','workingArtwork','editorialStatus','edits','prePromotionSourceClaims','promotionReceipts','forkRequest','replacement','derivation','prePromotionCampaign','restoredHistorical']);
+    exact(entry, ['candidate','evidence','revision','workingArtwork','editorialStatus','edits','prePromotionSourceClaims','promotionReceipts','forkRequest','forkAliases','replacement','derivation','prePromotionCampaign','restoredHistorical']);
     const candidate = entry.candidate;
     exact(candidate, ['schemaVersion','id','organizationId','brandId','preset','storyId','contentRevision','inputFingerprint','brandRevision','jobId','itemId','attemptId','createdAt','excerpts','sourceSelection','artwork','provenance']);
     if (candidate.schemaVersion !== 1 || !candidate.id || ids.has(candidate.id) || !candidate.storyId ||

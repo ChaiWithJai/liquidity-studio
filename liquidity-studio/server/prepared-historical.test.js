@@ -257,3 +257,69 @@ test("current membership and original clinical policy remain mandatory", async (
     status: 403,
   });
 });
+
+test("independent review: deduplicated successful continuation preserves its own replay receipt after story change", async (t) => {
+  const f = await fixture(t);
+  const firstInput = body(await f.service.historicalForkPlan(f.actor, f.id));
+  const first = await f.service.forkHistorical(f.actor, f.id, firstInput);
+  const secondInput = body(await f.service.historicalForkPlan(f.actor, f.id));
+  const second = await f.service.forkHistorical(f.actor, f.id, secondInput);
+  assert.equal(second.candidateId, first.candidateId);
+  await f.repo.mutate((state) => ({
+    ...state,
+    backlog: state.backlog.map((story) =>
+      story.id === f.story.id
+        ? {
+            ...story,
+            title: "Later real story edit",
+            revision: story.revision + 1,
+            contentRevision: (story.contentRevision || 1) + 1,
+          }
+        : story,
+    ),
+  }));
+  assert.equal(
+    (await f.service.forkHistorical(f.actor, f.id, firstInput))
+      .forkStillCurrent,
+    false,
+  );
+  const replay = await f.service.forkHistorical(f.actor, f.id, secondInput);
+  assert.equal(replay.candidateId, second.candidateId);
+  assert.equal(replay.forkStillCurrent, false);
+});
+
+test("dedup receipt rejects changed payload and bounds aliases without discarding prior receipts", async (t) => {
+  const f = await fixture(t),
+    first = body(await f.service.historicalForkPlan(f.actor, f.id));
+  await f.service.forkHistorical(f.actor, f.id, first);
+  const aliases = [];
+  for (let i = 0; i < 31; i++) {
+    const input = body(await f.service.historicalForkPlan(f.actor, f.id));
+    aliases.push(input);
+    await f.service.forkHistorical(f.actor, f.id, input);
+  }
+  await assert.rejects(
+    f.service.forkHistorical(f.actor, f.id, {
+      ...aliases[0],
+      sourceCopySha256: "f".repeat(64),
+    }),
+    { status: 409 },
+  );
+  await assert.rejects(
+    f.service.forkHistorical(
+      f.actor,
+      f.id,
+      body(await f.service.historicalForkPlan(f.actor, f.id)),
+    ),
+    { status: 429 },
+  );
+  assert.equal(
+    (await f.service.forkHistorical(f.actor, f.id, aliases[0]))
+      .forkStillCurrent,
+    true,
+  );
+  assert.equal(
+    (await f.repo.read()).preparedSourceCandidates[1].forkAliases.length,
+    31,
+  );
+});
