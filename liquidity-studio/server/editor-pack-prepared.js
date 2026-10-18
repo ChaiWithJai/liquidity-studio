@@ -15,11 +15,30 @@ export function projectPreparedHistory(entries, scope) {
   return entries.map(entry => {
     exact(entry, ['candidate','evidence','revision','workingArtwork','editorialStatus','edits','prePromotionSourceClaims','promotionReceipts','forkRequest','replacement','derivation','restoredHistorical']);
     const candidate = entry.candidate;
-    exact(candidate, ['schemaVersion','id','organizationId','brandId','storyId','contentRevision','inputFingerprint','brandRevision','jobId','itemId','attemptId','createdAt','excerpts','sourceSelection','artwork','provenance']);
+    exact(candidate, ['schemaVersion','id','organizationId','brandId','preset','storyId','contentRevision','inputFingerprint','brandRevision','jobId','itemId','attemptId','createdAt','excerpts','sourceSelection','artwork','provenance']);
     if (candidate.schemaVersion !== 1 || !candidate.id || ids.has(candidate.id) || !candidate.storyId ||
       candidate.organizationId !== scope.organizationId || candidate.brandId !== scope.brandId)
       throw fail(422, 'Foreign or duplicate prepared candidate');
     ids.add(candidate.id);
+    if (!Number.isInteger(candidate.contentRevision) || candidate.contentRevision < 1 ||
+        !hash(candidate.inputFingerprint) || !hash(candidate.brandRevision) || !Number.isFinite(Date.parse(candidate.createdAt)) ||
+        !Number.isInteger(entry.revision || 1) || (entry.revision || 1) < 1)
+      throw fail(422, 'Invalid historical candidate revision');
+    exact(candidate.provenance, ['purpose','mode','humanApproval','requiresReview','provider','modelCalls','evidenceIds']);
+    if (candidate.provenance.purpose !== 'source-preparation' || candidate.provenance.mode !== 'extractive-unreviewed' ||
+        candidate.provenance.humanApproval !== 'none' || candidate.provenance.requiresReview !== true ||
+        candidate.provenance.provider !== 'none' || candidate.provenance.modelCalls !== 0)
+      throw fail(422, 'Unsupported prepared candidate provenance');
+    let originalScope = scope, originalCandidateId = candidate.id;
+    if (entry.restoredHistorical) {
+      exact(entry.restoredHistorical, ['packSha256','originalScope','originalCandidateId']);
+      exact(entry.restoredHistorical.originalScope, ['organizationId','brandId']);
+      if (!hash(entry.restoredHistorical.packSha256) || !entry.restoredHistorical.originalScope.organizationId ||
+          !entry.restoredHistorical.originalScope.brandId || !entry.restoredHistorical.originalCandidateId)
+        throw fail(422, 'Invalid restored prepared provenance');
+      originalScope = entry.restoredHistorical.originalScope;
+      originalCandidateId = entry.restoredHistorical.originalCandidateId;
+    }
     if (!Array.isArray(entry.evidence) || !entry.evidence.length || entry.evidence.length > 2)
       throw fail(422, 'Historical prepared evidence required');
     const evidenceIds = new Set();
@@ -46,7 +65,7 @@ export function projectPreparedHistory(entries, scope) {
       return {...copy(excerpt),status:'unreviewed',clinicalReview:null};
     });
     const {jobId,itemId,attemptId,...historicalCandidate} = copy(candidate);
-    return {schemaVersion:1,authority:'historical-only',sourceScope:copy(scope),originalCandidateId:candidate.id,
+    return {schemaVersion:1,authority:'historical-only',sourceScope:{organizationId:originalScope.organizationId,brandId:originalScope.brandId},originalCandidateId,
       storyId:candidate.storyId,candidate:{...historicalCandidate,excerpts},evidence,
       revision:entry.revision || 1,workingArtwork:copy(entry.workingArtwork || candidate.artwork),editorialStatus:'unreviewed'};
   });
