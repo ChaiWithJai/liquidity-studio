@@ -50,15 +50,35 @@ test('Firestore query transaction: concurrent absent-key insertion is serialized
   a.firestore.runTransaction=(callback,options)=>run(async tx=>{const get=tx.get.bind(tx);let queries=0;tx.get=async ref=>{const result=await get(ref);if(typeof ref.limit==='function'&&++queries===2&&!held){held=true;entered();await barrier;}return result;};return callback(tx);},options);
   const guarded=a.transactWithKeyInventory(['scope:org:brand'],([state],keys)=>{if(keys.includes(added))throw Object.assign(new Error('external work'),{status:409});return [{commits:state.commits+1}];});
   await queried;
-  // Launch without awaiting: a pessimistic query lock can legitimately block B.
-  const inserted=b.update(added,()=>({human:true}));release();
+  // B must enter an actual SDK transaction and issue its document read while
+  // A is still held. Merely starting the async update() promise is insufficient.
+  let readIssued, bCallback=false, bIssued=false, bCommitted=false;
+  const issued=new Promise(resolve=>readIssued=resolve), bRun=b.firestore.runTransaction.bind(b.firestore);
+  b.firestore.runTransaction=(callback,options)=>bRun(async tx=>{
+   bCallback=true;const get=tx.get.bind(tx);
+   tx.get=ref=>{const pending=get(ref);bIssued=true;readIssued();return pending;};
+   return callback(tx);
+  },options);
+  const inserted=b.update(added,()=>({human:true})).then(value=>{bCommitted=true;return value;});
+  let watchdog;
+  try{await Promise.race([issued,new Promise((_,reject)=>{watchdog=setTimeout(()=>reject(new Error('B never issued its SDK read while A was held')),5000);})]);}
+  finally{clearTimeout(watchdog);if(!bIssued)release();}
+  assert.equal(bCallback,true);assert.equal(bIssued,true);
+  // Give B a bounded opportunity to commit before A resumes. A pessimistic
+  // query lock may block it; that outcome must not deadlock this test.
+  let overlapTimer;
+  try{await Promise.race([inserted,new Promise(resolve=>{overlapTimer=setTimeout(resolve,500);})]);}
+  finally{clearTimeout(overlapTimer);release();}
+  const committedBeforeRelease=bCommitted;
   const [result]=await Promise.allSettled([guarded,inserted]);await inserted;
+  if(committedBeforeRelease){assert.equal(result.status,'rejected','a B commit before A resumes must force retry/guard rejection');assert.equal(result.reason.status,409);}
   const state=await a.get('scope:org:brand');
   if(result.status==='fulfilled'){
    assert.equal(state.commits,1);
    const [guardParent,newParent]=await Promise.all([a.ref('scope:org:brand').get(),b.ref(added).get()]);
    assert.ok(guardParent.updateTime.seconds<newParent.updateTime.seconds||(guardParent.updateTime.seconds===newParent.updateTime.seconds&&guardParent.updateTime.nanoseconds<=newParent.updateTime.nanoseconds),'guard must serialize before the concurrent insertion');
-  }else{assert.equal(result.reason.status,409);assert.equal(state.commits,0);}
+   t.diagnostic(JSON.stringify({case:added,bSdkReadBeforeRelease:true,bCommittedBeforeRelease:committedBeforeRelease,outcome:'guard-before-insert',guardCommit:guardParent.updateTime.toDate().toISOString(),guardNanos:guardParent.updateTime.nanoseconds,insertCommit:newParent.updateTime.toDate().toISOString(),insertNanos:newParent.updateTime.nanoseconds}));
+  }else{assert.equal(result.reason.status,409);assert.equal(state.commits,0);const newParent=await b.ref(added).get();t.diagnostic(JSON.stringify({case:added,bSdkReadBeforeRelease:true,bCommittedBeforeRelease:committedBeforeRelease,outcome:'insert-detected-guard-rejected',insertCommit:newParent.updateTime.toDate().toISOString(),insertNanos:newParent.updateTime.nanoseconds}));}
   await assert.rejects(a.transactWithKeyInventory(['scope:org:brand'],([state],keys)=>{assert.ok(keys.includes(added));throw Object.assign(new Error('preserved'),{status:409});}),error=>error.status===409);
  }
 });
