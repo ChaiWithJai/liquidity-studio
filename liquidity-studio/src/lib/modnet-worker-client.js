@@ -15,6 +15,7 @@ export function createModnetWorkerClient({
     pending = null;
     clearTimeout(job.timer);
     job.signal?.removeEventListener("abort", job.abort);
+    job.controller.abort();
     if (terminate) {
       worker?.terminate();
       worker = null;
@@ -34,6 +35,7 @@ export function createModnetWorkerClient({
           "Finish or cancel the current background removal first.",
         );
       const id = ++sequence;
+      const controller = new AbortController();
       return new Promise((resolve, reject) => {
         const abort = () => finish(abortError(), null, true);
         pending = {
@@ -41,6 +43,7 @@ export function createModnetWorkerClient({
           resolve,
           reject,
           signal,
+          controller,
           abort,
           timer: setTimeout(
             () =>
@@ -58,7 +61,7 @@ export function createModnetWorkerClient({
         (async () => {
           try {
             onProgress("downloading", 0);
-            const model = await loadModel(signal);
+            const model = await loadModel(controller.signal);
             if (!pending || pending.id !== id) return;
             onProgress("downloading", 100);
             worker ||= createWorker();

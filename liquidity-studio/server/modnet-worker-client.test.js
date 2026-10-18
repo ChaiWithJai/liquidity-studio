@@ -62,3 +62,57 @@ test("cancel while loading never starts a worker and concurrent requests are rej
   assert.equal(created, 0);
   client.dispose();
 });
+
+test("timeout and disposal abort the real chunk loader before another authenticated chunk", async () => {
+  const { createModnetModelLoader } = await import(
+    "../src/lib/modnet-model-cache.js"
+  );
+  const { MODNET_MODEL_SHA256 } = await import(
+    "../src/lib/modnet-processor.js"
+  );
+  for (const mode of ["timeout", "dispose"]) {
+    let release,
+      workers = 0;
+    const paths = [];
+    const loadModel = createModnetModelLoader({
+      cacheStorage: null,
+      request: async (path) => {
+        paths.push(path);
+        if (paths.length === 1)
+          return {
+            sha256: MODNET_MODEL_SHA256,
+            size: 25888640,
+            chunkSize: 262144,
+            chunks: 99,
+          };
+        return new Promise((resolve) => (release = resolve));
+      },
+    });
+    const client = createModnetWorkerClient({
+      createWorker: () => {
+        workers++;
+        throw Error("No worker expected");
+      },
+      loadModel,
+      timeoutMs: mode === "timeout" ? 5 : 1000,
+    });
+    const pending = client.remove(new Blob(["owned input"]));
+    const rejected = assert.rejects(
+      pending,
+      mode === "timeout" ? /timed out/ : { name: "AbortError" },
+    );
+    await tick();
+    if (mode === "dispose") client.dispose();
+    await rejected;
+    assert.equal(paths.length, 2);
+    release({
+      index: 0,
+      sha256: MODNET_MODEL_SHA256,
+      base64: Buffer.alloc(262144).toString("base64"),
+    });
+    await tick();
+    assert.equal(paths.length, 2);
+    assert.equal(workers, 0);
+    client.dispose();
+  }
+});
