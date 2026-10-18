@@ -135,16 +135,18 @@ test("actual response bytes and extracted evidence have separate hashes, unrevie
 });
 test("cancel during DNS ends before any HTTP request; extraction bounds and empty evidence fail", async () => {
   const controller = new AbortController();
-  let release,
+  let release, lookupStarted,
     called = false;
+  const started = new Promise(resolve => { lookupStarted = resolve; });
   const pending = retrieveSource(url, {
     hosts: "source.example",
     signal: controller.signal,
-    lookup: () => new Promise((resolve) => (release = resolve)),
+    lookup: () => new Promise((resolve) => { release = resolve; lookupStarted(); }),
     get: () => {
       called = true;
     },
   });
+  await started;
   controller.abort();
   await assert.rejects(pending, /cancelled/);
   release(await publicLookup());
