@@ -114,6 +114,11 @@ test("saved Reel motion and simulated waveform share a pausable scrubber; only p
   await signIn(page);
   await seed(page, "Saved Reel pacing fixture");
   await page.getByRole("button", { name: "Reel 30s script", exact: true }).click();
+  // Save the original feature plan's 0–3 / 3–15 / 15–30 timing through the UI.
+  // The generic synthetic fixture defaults to a five-second first beat.
+  for (const [index, timecode] of ['0:00-0:03', '0:03-0:15', '0:15-0:30'].entries())
+    await page.getByLabel(`Beat ${index + 1} Time range`, { exact: true }).fill(timecode);
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
   const title = page.locator('.kinetic-reel text[data-artwork-id$="-heading"]');
   const bars = page.locator('.pacing-bars');
   await expect(title).toBeVisible();
