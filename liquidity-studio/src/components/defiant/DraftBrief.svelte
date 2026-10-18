@@ -2,6 +2,7 @@
  import {SvelteMap} from 'svelte/reactivity';
  let {brief,reportHref,onUseSource=()=>{},onReviewSources=()=>{},disabled=false}=$props();
  const report=$derived(brief.report);
+ const sectionFields=[['routes','Routes'],['partners','Partners'],['nextActions','Next actions'],['openQuestions','Open questions']];
  const sources=$derived.by(()=>{const unique=new SvelteMap();for(const finding of report.findings||[])for(const evidence of finding.evidence||[])if(validSource(evidence.sourceUrl))unique.set(evidence.id,{...evidence,findingName:finding.name});for(const evidence of report.annotationEvidence||[])if(validSource(evidence.sourceUrl))unique.set(evidence.id,evidence);return [...unique.values()];});
  function validSource(value){try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password;}catch{return false;}}
 </script>
@@ -10,6 +11,7 @@
  <p class="objective">{brief.objective}</p>
  {#if brief.deliverables?.length}<ul class="deliverables" aria-label="Proposed deliverables">{#each brief.deliverables as deliverable(deliverable)}<li>{deliverable}</li>{/each}</ul>{/if}
  {#if report.thesis}<p>{report.thesis}</p>{/if}
+ {#if sectionFields.some(([key])=>report.sections?.[key])}<details><summary>Retained plan details</summary>{#each sectionFields as [key,label](key)}{#if report.sections?.[key]}<article><h4>{label}</h4><p class="section-copy">{report.sections[key]}</p></article>{/if}{/each}</details>{/if}
  <p class="next-step">Start with the evidence below. Copy an excerpt into source review, check its context and wording, then save your review to generate a preview. The report’s proposals are retained here; they are not approved campaign claims.</p>
  <button class="secondary" disabled={disabled} onclick={onReviewSources}>Review sources for this draft</button>
  <details><summary>Selected findings · {report.findings?.length||0}</summary>{#each report.findings||[] as finding(finding.id)}<article><h4>{finding.name}</h4>{#if finding.description}<p>{finding.description}</p>{/if}{#if finding.members?.length}<p>Working group: {finding.members.map(member=>member.name).join(', ')}</p>{/if}{#each finding.notes||[] as note(note.id)}<blockquote>{note.text}</blockquote>{/each}</article>{/each}{#each report.annotations||[] as note(note.id)}{#if !(report.findings||[]).some(finding=>finding.notes?.some(item=>item.id===note.id))}<blockquote>{note.text}</blockquote>{/if}{/each}</details>
@@ -17,5 +19,5 @@
  <small>Saved report revision {brief.reportRevision}. Later report edits do not change this brief.</small>
 </section>
 <style>
-.draft-brief{margin-bottom:16px}.draft-brief header{display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap}.draft-brief h3{margin:6px 0 10px}.draft-brief p{line-height:1.65}.objective{font-weight:650}.deliverables{display:flex;flex-wrap:wrap;gap:6px;padding:0;list-style:none}.deliverables li{padding:4px 8px;border:1px solid var(--line,#dedfd8);border-radius:5px;font-size:12px}.draft-brief article{padding:10px 0;border-bottom:1px solid var(--line,#dedfd8)}.draft-brief h4{margin:4px 0}.draft-brief article button{margin-left:12px}.draft-brief details{margin:16px 0}.draft-brief summary{cursor:pointer;font-weight:600}.draft-brief blockquote{margin:8px 0;padding-left:12px;border-left:2px solid #bccbb2}.draft-brief small{color:var(--muted,#69765f)}.next-step{max-width:85ch}
+.draft-brief{margin-bottom:16px}.draft-brief header{display:flex;justify-content:space-between;align-items:start;gap:16px;flex-wrap:wrap}.draft-brief h3{margin:6px 0 10px}.draft-brief p{line-height:1.65}.objective{font-weight:650}.deliverables{display:flex;flex-wrap:wrap;gap:6px;padding:0;list-style:none}.deliverables li{padding:4px 8px;border:1px solid var(--line,#dedfd8);border-radius:5px;font-size:12px}.draft-brief article{padding:10px 0;border-bottom:1px solid var(--line,#dedfd8)}.draft-brief h4{margin:4px 0}.draft-brief article button{margin-left:12px}.draft-brief details{margin:16px 0}.draft-brief summary{cursor:pointer;font-weight:600}.draft-brief blockquote{margin:8px 0;padding-left:12px;border-left:2px solid #bccbb2}.draft-brief small{color:var(--muted,#69765f)}.next-step{max-width:85ch}.section-copy{white-space:pre-wrap}
 </style>
