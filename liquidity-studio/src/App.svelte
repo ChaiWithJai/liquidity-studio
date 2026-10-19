@@ -5,7 +5,7 @@
   import PenpotConnection from "./components/PenpotConnection.svelte";
   import PenpotDesignAction from "./components/PenpotDesignAction.svelte";
   import PenpotWorkspace from "./components/PenpotWorkspace.svelte";
-  import {boundPenpotFrameUrl,embeddingAvailable} from "./lib/penpot-workspace.js";
+  import {boundPenpotFrameUrl,embeddingAvailable,penpotMayHaveUnsavedChanges} from "./lib/penpot-workspace.js";
   import { onMount, tick } from "svelte";
   import { readWorkflowLocation, workflowHref } from "./lib/workflow-location.js";
   import { SvelteMap } from "svelte/reactivity";
@@ -202,13 +202,13 @@
       error = "Save native changes or explicitly discard them before leaving the native editor.";
       return false;
     }
-    if(penpotRecord && penpotSaveState!=="saved" && !discard && !window.confirm("Finish saving in Penpot before leaving this design. Return to Studio copy and preview?"))return false;
+    if(penpotRecord && penpotMayHaveUnsavedChanges(penpotSaveState) && !discard && !window.confirm("Finish saving in Penpot before leaving this design. Return to Studio copy and preview?"))return false;
     penpotRecord=null;penpotSaveState="unknown";
     nativeRecord = null; nativeHost = null; nativeDirty = false; nativeSaveState = "idle";
     return true;
   }
   $effect(() => {
-    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty && !strategyDirty && !(penpotRecord&&penpotSaveState!=="saved")) return;
+    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty && !strategyDirty && !(penpotRecord&&penpotMayHaveUnsavedChanges(penpotSaveState))) return;
     const protect = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
