@@ -39,3 +39,12 @@ test('native proof uses actual presented cookie at fixed internal origin and HTT
  const sink=createNativePairingProofSink({callbackUrl:'https://studio.example.com/api/native/penpot/pairing/proof',pairingKey:'a'.repeat(43),fetchImpl:async(url,options)=>{call={url,options};return Response.json({recorded:true});}});
  await sink({challenge:'b'.repeat(43),nativeInstanceId:uuid,nativeProfileId:uuid});assert.equal(call.options.headers.Cookie,undefined);assert.equal(call.options.headers.Authorization,undefined);assert.equal(call.options.redirect,'error');
 });
+
+import {readFile} from 'node:fs/promises';
+test('managed adapter deployment entrypoint forwards its validated private timeout configuration',async()=>{
+ const dockerfile=await readFile(new URL('../../../deployments/managed-penpot/Dockerfile.adapter',import.meta.url),'utf8');
+ const entry=await readFile(new URL('../scripts/serve-managed-native-connect.mjs',import.meta.url),'utf8');
+ assert.match(dockerfile,/serve-managed-native-connect\.mjs/);
+ assert.match(entry,/loadManagedPenpotConfiguration/);
+ assert.match(entry,/createPenpotNativeAccessForwarder\(configuration\)/);
+});

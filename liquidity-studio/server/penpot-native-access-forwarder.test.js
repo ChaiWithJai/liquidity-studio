@@ -63,7 +63,7 @@ test('managed callback deadline permits a valid 1486ms reply and still cancels b
   let complete,started;const ready=new Promise(r=>started=r);let status,bytes,aborted=false;
   const res={headersSent:false,destroyed:false,writeHead(s){status=s;this.headersSent=true;},end(b){bytes=b;}};
   const handler=createPenpotNativeAccessForwarder({studioOrigin,grantKey:key,authorityTimeoutMs:2500,fetchImpl:async(_url,init)=>{init.signal.addEventListener('abort',()=>{aborted=true;});started();return new Promise(r=>complete=r);}});
-  const done=handler(req,res);req.readableEnded=true;req.emit('end');await ready;
+  const done=handler(req,res);req.emit('data',Buffer.from('{}'));req.readableEnded=true;req.emit('end');await ready;
   t.mock.timers.tick(1486);await Promise.resolve();assert.equal(status,undefined);
   if(stalled)t.mock.timers.tick(1015);else complete(Response.json({allowed:true}));
   await done;assert.equal(status,stalled?504:200);assert.equal(aborted,true);if(!stalled)assert.deepEqual(JSON.parse(bytes),{allowed:true});
