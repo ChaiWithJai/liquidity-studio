@@ -8,7 +8,7 @@ import {fail} from './auth.js';
 // operator session relay and cannot select a URL, account, file, or page.
 export function createStorySvgGateway({studioOrigin,grantKey,gatewayKey,fetchImpl=fetch}) {
  const origin=new URL(studioOrigin);
- if(origin.origin!==studioOrigin||origin.hostname!=='127.0.0.1'||origin.protocol!=='http:'||!origin.port||!/^[\w-]{43}$/.test(grantKey)||!/^[a-f0-9]{64}$/.test(gatewayKey))throw Error('Fixed local SVG gateway configuration required');
+ if(origin.origin!==studioOrigin||!['127.0.0.1','localhost'].includes(origin.hostname)||origin.protocol!=='http:'||!origin.port||!/^[\w-]{43}$/.test(grantKey)||!/^[a-f0-9]{64}$/.test(gatewayKey))throw Error('Fixed local SVG gateway configuration required');
  return async(req,res)=>{
   const url=new URL(req.url,'http://localhost:39008');
   const recovery=url.pathname==='/studio-recovery-kit';

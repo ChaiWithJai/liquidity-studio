@@ -62,3 +62,9 @@ test('licensed original mismatch and concurrent native save never return a misle
   if(mode==='font')assert.equal(f.calls.some(x=>x.url.endsWith('/api/export')),false);
  }
 });
+
+test('native SVG gateway follows the exact localhost Studio callback origin',()=>{
+ const grantKey='g'.repeat(43),gatewayKey='a'.repeat(64);
+ assert.equal(typeof createStorySvgGateway({studioOrigin:'http://localhost:39052',grantKey,gatewayKey}),'function');
+ for(const studioOrigin of ['http://app.localhost:39052','http://127.0.0.2:39052','http://localhost:39052/'])assert.throws(()=>createStorySvgGateway({studioOrigin,grantKey,gatewayKey}));
+});

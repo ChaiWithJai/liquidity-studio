@@ -74,3 +74,8 @@ test('managed callback deadline permits a valid 1486ms reply and still cancels b
  await request();await request(true);
  for(const authorityTimeoutMs of [0,799,2501,Infinity,'2500'])assert.throws(()=>createPenpotNativeAccessForwarder({studioOrigin,grantKey:key,authorityTimeoutMs}));
 });
+
+test('local authority callback accepts exact localhost browser origin while rejecting other hosts',()=>{
+ assert.equal(typeof createPenpotNativeAccessForwarder({studioOrigin:'http://localhost:39052',grantKey:key}),'function');
+ for(const studioOrigin of ['http://app.localhost:39052','http://127.0.0.2:39052','http://localhost:39052/'])assert.throws(()=>createPenpotNativeAccessForwarder({studioOrigin,grantKey:key}));
+});

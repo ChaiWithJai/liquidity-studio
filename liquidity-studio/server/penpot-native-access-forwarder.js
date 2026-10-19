@@ -25,7 +25,7 @@ function readBody(req, signal) {
 export function createPenpotNativeAccessForwarder({studioOrigin, grantKey, authorityTimeoutMs = 800, fetchImpl = fetch} = {}) {
   if(![800,2500].includes(authorityTimeoutMs))throw Error('Fixed native authority timeout required');
   const studio = new URL(studioOrigin);
-  if (!(studio.protocol === 'https:' || (studio.protocol === 'http:' && studio.hostname === '127.0.0.1')) || studio.origin !== studioOrigin || studio.username || studio.password || studio.pathname !== '/' || studio.search || studio.hash || (studio.protocol==='http:'&&(!Number.isInteger(Number(studio.port)) || Number(studio.port) < 1024 || Number(studio.port) > 65535)) || !/^[A-Za-z0-9_-]{43}$/.test(grantKey || '') || typeof fetchImpl !== 'function') throw Error('Fixed private local authority configuration required');
+  if (!(studio.protocol === 'https:' || (studio.protocol === 'http:' && ['127.0.0.1','localhost'].includes(studio.hostname))) || studio.origin !== studioOrigin || studio.username || studio.password || studio.pathname !== '/' || studio.search || studio.hash || (studio.protocol==='http:'&&(!Number.isInteger(Number(studio.port)) || Number(studio.port) < 1024 || Number(studio.port) > 65535)) || !/^[A-Za-z0-9_-]{43}$/.test(grantKey || '') || typeof fetchImpl !== 'function') throw Error('Fixed private local authority configuration required');
   const expected = Buffer.from(grantKey);
   return async (req, res) => {
     if (!req.url?.startsWith('/api/native/penpot/access/')) return false;
