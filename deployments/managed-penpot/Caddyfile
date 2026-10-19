@@ -1,8 +1,14 @@
 # Operator-supplied exact hosts. Native and Studio remain separate origins.
 {$NATIVE_HOST} {
-  reverse_proxy penpot-frontend:8080 {
-    header_down -X-Frame-Options
-    header_down Content-Security-Policy "frame-ancestors 'self' https://{$STUDIO_HOST}"
+  @editor path /
+  handle @editor {
+    reverse_proxy penpot-frontend:8080 {
+      header_down -X-Frame-Options
+      header_down Content-Security-Policy "frame-ancestors 'self' https://{$STUDIO_HOST}"
+    }
+  }
+  handle {
+    reverse_proxy penpot-frontend:8080
   }
   log {
     output discard
