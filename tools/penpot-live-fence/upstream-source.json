@@ -44,11 +44,11 @@
   "originalSources": [
     {
       "path": "live.clj",
-      "sha256": "377af0b87a124601399c2141272e116ab45111f64f51582965d77eacbdeb0ff1"
+      "sha256": "45d251cd673c51d4cf491c09bad5e620e36d48bc4fa8ed4d2816072c48083710"
     },
     {
       "path": "live_test.clj",
-      "sha256": "f0bb874dc7c1ebbad082c83bf07aad60e91fe808b57dbcdd144ed77c58513f35"
+      "sha256": "458885f8169a93fdb8e1a980651c55e0a7e3bdd9d5b1bddc0b97565e887eb77d"
     },
     {
       "path": "websocket.patch",

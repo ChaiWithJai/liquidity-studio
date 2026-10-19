@@ -163,6 +163,15 @@
           (do (fence! cfg wsp resource (:reason result)) false)))
       true)))
 
+(defn- admit-subscription! [cfg wsp resource]
+  (let [result (decision cfg wsp resource :read)]
+    (when-not (and (true? (:allowed result)) (not (::fenced @(::ws/state wsp))))
+      ;; A reconnect during the same outage must retry too. Explicit refusals
+      ;; stay denied/open instead of creating an endless revoked-account loop.
+      (when (#{:authority-unavailable :check-timeout} (:reason result))
+        (fence! cfg wsp resource (:reason result)))
+      (denied!))))
+
 (defn handle-message [cfg delegate wsp message]
   (let [message (dissoc message ::resource)]
     (if-not (enabled? cfg)
@@ -172,11 +181,11 @@
        (case (:type message)
         :subscribe-file
         (let [resource (file-resource cfg (:file-id message))]
-          (when-not (and (allowed? cfg wsp resource :read) (not (::fenced @(::ws/state wsp)))) (denied!))
+          (admit-subscription! cfg wsp resource)
           (delegate cfg wsp (assoc message ::resource resource)))
         :subscribe-team
         (let [resource (team-resource (:team-id message))]
-          (when-not (and (allowed? cfg wsp resource :read) (not (::fenced @(::ws/state wsp)))) (denied!))
+          (admit-subscription! cfg wsp resource)
           (delegate cfg wsp (assoc message ::resource resource)))
         :pointer-update
         (let [subscription (:app.http.websocket/file-subscription @(::ws/state wsp))
