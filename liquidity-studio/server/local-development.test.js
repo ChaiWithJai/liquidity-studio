@@ -16,6 +16,8 @@ const origin='http://127.0.0.1:3002';
 const request=(patch={})=>({socket:{remoteAddress:'127.0.0.1'},headers:{host:'127.0.0.1:3002'},...patch});
 
 test('local CLI parsing refuses ambiguous profiles, duplicate flags and privileged/public bindings',()=>{
+  assert.deepEqual(parseLocalArguments(['--host','localhost']),{profile:'development',port:3002,check:false,hostname:'localhost'});
+  for(const host of ['[::1]','example.com','localhost.localdomain','127.0.0.2'])assert.throws(()=>parseLocalArguments(['--host',host]));
   assert.deepEqual(parseLocalArguments([]),{profile:'development',port:3002,check:false});
   assert.deepEqual(parseLocalArguments(['--profile','production','--port','43127','--check']),{profile:'production',port:43127,check:true});
   for(const args of [
@@ -79,7 +81,7 @@ test('developer cookies never adopt production or another profile session, inclu
 
 function httpRequest(base,pathname,{method='GET',headers={},body=''}={}){
   return new Promise((resolve,reject)=>{
-    const url=new URL(pathname,base),req=http.request(url,{method,headers},res=>{
+    const url=new URL(pathname,base),req=http.request(url,{method,headers,family:4},res=>{
       const chunks=[];res.on('data',chunk=>chunks.push(chunk));res.on('error',reject);
       res.on('end',()=>{const text=Buffer.concat(chunks).toString('utf8');let json;try{json=JSON.parse(text);}catch{}resolve({status:res.statusCode,headers:res.headers,text,json});});
     });req.on('error',reject);req.end(body);
@@ -94,8 +96,11 @@ test('actual developer HTTP sessions preserve memberships, reject foreign scope 
   let app;
   try{
     delete process.env.K_SERVICE;delete process.env.K_REVISION;delete process.env.CLOUD_RUN_JOB;delete process.env.FUNCTION_TARGET;delete process.env.GAE_ENV;delete process.env.AWS_LAMBDA_FUNCTION_NAME;process.env.NODE_ENV='test';
-    app=await createDevelopmentServer({profile:'development',port:0,home});
+    app=await createDevelopmentServer({profile:'development',port:0,hostname:'localhost',home});
+    assert.match(app.origin,/^http:\/\/localhost:[0-9]+$/);
     assert.equal(app.server.address().address,'127.0.0.1');
+    assert.match((await httpRequest(app.origin,'/__dev')).headers['content-security-policy'],new RegExp('ws://localhost:'+app.server.address().port));
+    assert.equal((await httpRequest(app.origin,'/__dev',{headers:{Host:'127.0.0.1:'+app.server.address().port}})).status,403);
     assert.equal((await httpRequest(app.origin,'/api/auth/session')).status,401);
     assert.equal((await httpRequest(app.origin,'/')).headers.location,'/__dev');
     assert.equal((await httpRequest(app.origin,'/__dev')).status,200);

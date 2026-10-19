@@ -18,7 +18,7 @@ export function loadNativePairingConfiguration(filename) {
       (Object.hasOwn(value,'grantKey') && (!/^[A-Za-z0-9_-]{43}$/.test(value.grantKey || '') || value.grantKey === value.pairingKey)))
     throw Error('Exact native pairing configuration required');
   const studio = new URL(value.studioOrigin);
-  if (studio.protocol !== 'http:' || studio.hostname !== '127.0.0.1' ||
+  if (studio.protocol !== 'http:' || !['127.0.0.1','localhost'].includes(studio.hostname) ||
       studio.username || studio.password || studio.pathname !== '/' || studio.search || studio.hash ||
       !Number.isInteger(Number(studio.port)) || Number(studio.port) < 1024 || Number(studio.port) > 65535 ||
       studio.origin !== value.studioOrigin)
