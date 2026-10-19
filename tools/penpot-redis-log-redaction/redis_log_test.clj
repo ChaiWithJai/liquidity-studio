@@ -16,9 +16,12 @@
 
 (deftest valid-client-uri-keeps-authentication-and-target
   (let [^io.lettuce.core.RedisURI uri
-        (#'redis/parse-uri "redis://sample-user:sample-password@127.0.0.1:6379/0")]
+        (#'redis/parse-uri "redis://sample-user:sample-password@127.0.0.1:6379/0")
+        ^io.lettuce.core.RedisCredentials credentials
+        (.. uri getCredentialsProvider resolveCredentials
+            (block (java.time.Duration/ofSeconds 1)))]
     (is (= "127.0.0.1" (.getHost uri)))
     (is (= 6379 (.getPort uri)))
     (is (= 0 (.getDatabase uri)))
-    (is (= "sample-user" (.getUsername uri)))
-    (is (= "sample-password" (String. ^chars (.getPassword uri))))))
+    (is (= "sample-user" (.getUsername credentials)))
+    (is (= "sample-password" (String. ^chars (.getPassword credentials))))))
