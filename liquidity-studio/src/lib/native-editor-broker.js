@@ -17,6 +17,7 @@ export function createNativeEditorBroker({
   scopeKey,
   getScopeKey,
   record,
+  cutoutAvailable = false,
   onSaved = () => {},
   onState = () => {},
   onConflictResolve = () => {},
@@ -259,6 +260,7 @@ export function createNativeEditorBroker({
       frameWindow.postMessage(
         {
           type: "studio-native-init",
+          cutoutAvailable: cutoutAvailable === true,
           nonce,
           scopeKey,
           record: JSON.parse(JSON.stringify(record)),

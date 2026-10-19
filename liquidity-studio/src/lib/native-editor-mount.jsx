@@ -13,48 +13,29 @@ export function mountNativeEditor(element, props) {
   const root = createRoot(element);
   const ref = createRef();
   let engine = null;
-  let reportStatus = () => {};
   const remover = props.cutoutRequest
     ? createNativeCutoutRemover({
         request: props.cutoutRequest,
         adapter: props.adapter,
         getEngine: () => engine,
         onStatus: (message) => {
-          reportStatus(message);
           props.onCutoutStatus?.(message);
         },
       })
     : null;
   function CutoutContext() {
     const current = useEditor();
-    const [status, setStatus] = useState(props.cutoutUnavailableMessage || "");
     useEffect(() => {
       engine = current;
-      reportStatus = setStatus;
       if (remover) registerBackgroundRemover(remover);
       return () => {
         engine = null;
-        reportStatus = () => {};
         if (remover) registerBackgroundRemover(null);
       };
     }, [current]);
-    return status
-      ? createElement(
-          "span",
-          {
-            role: "status",
-            "aria-live": "polite",
-            "data-testid": "native-cutout-status",
-            style: {
-              maxWidth: "22rem",
-              fontSize: "12px",
-              overflowWrap: "anywhere",
-            },
-          },
-          status,
-        )
-      : null;
+    return null;
   }
+
   function ExportContext() {
     const current=useEditor();
     const pending=useRef(null);

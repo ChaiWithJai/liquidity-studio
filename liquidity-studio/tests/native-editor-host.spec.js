@@ -963,12 +963,13 @@ test("reference-correct MODNet replaces a private portrait through native undo/s
   );
   const coldStarted = Date.now();
   await frame.getByTestId("ed-remove-bg").click();
-  await expect(frame.getByTestId("native-cutout-status")).toBeVisible({
+  await setNativeTool(page, 'images');
+  await expect(page.getByTestId("native-cutout-status")).toBeVisible({
     timeout: 10000,
   });
   console.log(
     "CUTOUT_STATUS",
-    await frame.getByTestId("native-cutout-status").innerText(),
+    await page.getByTestId("native-cutout-status").innerText(),
   );
 
   await expect
@@ -1208,7 +1209,8 @@ test("oversized native cutout is rejected without silently resizing or replacing
     (o) => o.type === "image",
   );
   await frame.getByTestId("ed-remove-bg").click();
-  await expect(frame.getByTestId("native-cutout-status")).toContainText(
+  await setNativeTool(page, 'images');
+  await expect(page.getByTestId("native-cutout-status")).toContainText(
     "exceeds 512 KiB",
     { timeout: 30000 },
   );

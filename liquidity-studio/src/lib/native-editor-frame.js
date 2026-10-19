@@ -40,7 +40,7 @@ window.addEventListener("message", async (event) => {
       policy = next.data.policy;
   });
   try {
-    const cutout = await nativeCutoutAvailability(broker.request);
+    const cutout = await nativeCutoutAvailability(broker.request, { enabled: message.cutoutAvailable === true });
     const module = await import("virtual:studio-native-editor");
     editor = module.mountNativeEditor(document.getElementById("native-root"), {
       document: message.record.document,
@@ -78,6 +78,7 @@ window.addEventListener("message", async (event) => {
           location.origin,
         ),
     });
+    if (cutout.message) broker.state({status: "idle", dirty: false, cutoutStatus: cutout.message});
     broker.ready();
   } catch {
     document.getElementById("native-root").textContent =

@@ -68,6 +68,7 @@ export function createNativeCutoutModel({
     return loading;
   }
   return {
+    configured: enabled === true && typeof path === "string" && Boolean(path),
     async manifest() {
       await load();
       return {

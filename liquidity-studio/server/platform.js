@@ -31,7 +31,7 @@ export function createPlatform({
   penpotConfigurationPath = process.env.STUDIO_PENPOT_OPERATOR_CONFIG,
 } = {}) {
   const targets = validateEditorTargets(editorTargets);
-  const platform = { store: null, identity: null };
+  const platform = { store: null, identity: null, nativeCutoutConfigured: nativeCutoutModel.configured === true };
   let penpotRuntime;
   platform.getPenpotRuntime = async () => {
     await platform.ready;
