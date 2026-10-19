@@ -40,12 +40,13 @@
   (when-not (uuid? native-team-id) (denied!))
   (if-not (governed-team? cfg native-team-id)
     {:governed false :allowed true}
-    {:governed true
-     :allowed (boolean
-                (and (uuid? native-profile-id)
-                     (::authorize cfg)
-                     (try (true? (:allowed ((::authorize cfg) resource)))
-                          (catch Exception _ false))))}))
+    (let [decision (when (and (uuid? native-profile-id) (::authorize cfg))
+                     (try ((::authorize cfg) resource)
+                          (catch Exception _ {:allowed false :reason :authority-unavailable})))
+          allowed (true? (:allowed decision))]
+      (cond-> {:governed true :allowed allowed}
+        (not allowed) (assoc :reason (if (or (nil? decision) (= :authority-unavailable (:reason decision)))
+                                     :authority-unavailable :authority-denied))))))
 
 (defn assert-team! [cfg resource]
   (when-not (:allowed (authorize-resource cfg resource)) (denied!)))

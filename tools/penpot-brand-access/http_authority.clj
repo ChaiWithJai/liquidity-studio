@@ -53,7 +53,7 @@
                                "x-studio-native-grant-key" grant-key}
                      :body payload})]
       (if-not request
-        {:allowed false :authorized false}
+        {:allowed false :authorized false :reason :authority-unavailable}
         (let [closed (atom false)
               ^CompletableFuture request-future (http/send-async request {:client client :as :input-stream})
               ;; A response arriving after timeout must not leave an unread stream.
@@ -70,17 +70,18 @@
                     (reset! stream (:body response))
                     (with-open [^InputStream input (:body response)]
                       (if (or @closed (not= 200 (:status response)))
-                        {:allowed false :authorized false}
+                        {:allowed false :authorized false
+                         :reason (if (and (not @closed) (#{401 403} (:status response))) :authority-denied :authority-unavailable)}
                         (let [bytes (.readNBytes input 4097)]
                           (if (> (alength bytes) 4096)
-                            {:allowed false :authorized false}
+                            {:allowed false :authorized false :reason :authority-unavailable}
                             (json/decode (String. bytes "UTF-8") :key-fn json/read-kebab-key)))))))
                 (.orElse (.executor ^HttpClient client) (ForkJoinPool/commonPool)))]
           (try
             ;; Includes headers AND bounded body consumption; no retry/redirect.
             (let [result (.get pending 1000 TimeUnit/MILLISECONDS)]
-              (if (map? result) result {:allowed false :authorized false}))
-            (catch Exception _ {:allowed false :authorized false})
+              (if (map? result) result {:allowed false :authorized false :reason :authority-unavailable}))
+            (catch Exception _ {:allowed false :authorized false :reason :authority-unavailable})
             (finally
               (reset! closed true)
               (.cancel pending true)

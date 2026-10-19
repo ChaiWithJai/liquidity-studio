@@ -1,5 +1,5 @@
 (ns app.studio.live-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [clojure.test :refer [deftest is testing use-fixtures]]
             [app.http.session :as session]
             [app.http :as-alias http]
             [app.common.time :as ct]
@@ -9,7 +9,10 @@
             [app.db :as db]
             [app.msgbus :as mbus]
             [app.util.websocket :as ws]
-            [promesa.exec.csp :as sp]))
+            [promesa.exec.csp :as sp]
+            [yetti.websocket :as yws]))
+
+(use-fixtures :each (fn [run] (with-redefs [yws/close (fn [_ _ _] nil)] (run))))
 
 (def profile (java.util.UUID/fromString "11111111-1111-4111-8111-111111111111"))
 (def team (java.util.UUID/fromString "22222222-2222-4222-8222-222222222222"))
@@ -173,3 +176,53 @@
       (is (thrown? Exception (live/file-resource cfg file)))
       (is (empty? @calls))
       (is (= 5 (count @queries))))))
+
+(deftest transient-fence-closes-once-and-fresh-connection-must-authorize-before-output
+  (let [{:keys [cfg wsp allowed]} (fixture)
+        resource {:kind :file :topic file :native-team-id team}
+        channel (sp/chan) purged (atom []) closed (atom []) notices (atom [])
+        cfg (assoc cfg ::access/authorize (fn [_] (if @allowed {:allowed true} {:allowed false :reason :authority-unavailable})))
+        fresh (assoc wsp ::ws/state (atom {}))
+        delegate (fn [_ socket message]
+                   (when (= :subscribe-file (:type message))
+                     (swap! (::ws/state socket) assoc :app.http.websocket/file-subscription
+                            {:topic file ::live/resource (::live/resource message)})))]
+    (swap! (::ws/state wsp) assoc :editor-buffer "UNSAVED HUMAN WORDING"
+           :app.http.websocket/file-subscription {:topic file :channel channel ::live/resource resource})
+    (with-redefs [access/current-file-team (fn [_ _] team)
+                  mbus/purge! (fn [_ channels] (swap! purged into channels))
+                  yws/close (fn [_ code hint]
+                              (is (= [channel] @purged) "Purge precedes socket close")
+                              (swap! closed conj [code hint]))
+                  live/log-fence! #(swap! notices conj %)]
+      (reset! allowed false)
+      (live/check! cfg wsp)
+      (is (= [:authority-unavailable] @notices))
+      (is (= [[4003 "Studio live authorization changed"]] @closed))
+      (is (= "UNSAVED HUMAN WORDING" (:editor-buffer @(::ws/state wsp))))
+      (live/check! cfg wsp)
+      (live/fence! cfg wsp resource :authority-denied)
+      (is (false? (live/allow-output? cfg wsp {:type :presence})))
+      (is (false? (live/allow-output? cfg wsp {::live/resource resource :type :file-change})))
+      (is (= 1 (count @closed))) (is (= 1 (count @notices)))
+      ;; Native frontend's existing reconnect emits a new subscribe on a fresh state.
+      (is (thrown? Exception (live/handle-message cfg delegate fresh {:type :subscribe-file :file-id file})))
+      (is (nil? (:app.http.websocket/file-subscription @(::ws/state fresh))))
+      (is (= 1 (count @closed)) "A still-denied new subscription does not create a close loop")
+      (reset! allowed true)
+      (is (thrown? Exception (live/handle-message cfg delegate wsp {:type :subscribe-file :file-id file})))
+      (live/handle-message cfg delegate fresh {:type :subscribe-file :file-id file})
+      (is (live/allow-output? cfg fresh {::live/resource resource :type :file-change}))
+      (is (false? (live/allow-output? cfg wsp {::live/resource resource :type :file-change})))
+      (is (= 1 (count @closed))))))
+
+(deftest fence-reason-log-is-finite-and-never-repeats-for-late-output
+  (let [{:keys [cfg wsp]} (fixture) notices (atom []) closed (atom 0)
+        resource (live/team-resource team)]
+    (with-redefs [live/log-fence! #(swap! notices conj %)
+                  yws/close (fn [_ _ _] (swap! closed inc))]
+      (live/fence! cfg wsp resource {:unsafe "private callback/token details"})
+      (live/fence! cfg wsp resource :native-session-invalid)
+      (is (= [:authority-denied] @notices))
+      (is (= 1 @closed))
+      (is (false? (live/allow-output? cfg wsp {::live/resource resource :type :file-change}))))))
