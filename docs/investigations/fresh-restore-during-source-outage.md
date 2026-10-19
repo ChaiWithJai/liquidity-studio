@@ -19,10 +19,16 @@ The outage-ready event was at **03:52:13 UTC**. Automatic main-driver resumption
 
 A headline punctuation edit was attempted during this journey, but the inspected PNG and native text still read “Begin with ethics” without the attempted period. **Successful persistence of that new edit is not established by this outage checkpoint.** Import, explicit reconnection, reload and export are established separately from that edit attempt.
 
+## Separate continuation after source resumption
+
+Root subsequently made a deliberate native text edit **after** source services resumed: select the headline layer, enter its focused text editor, replace the text with “Begin with ethics.”, leave text editing and save. The Saved state appeared; full reload retained the exact headline including the period and the Saved state. This establishes durable editing in the fresh destination, separately from the outage export.
+
+Also after resumption, root reviewed the historical Reel and created a new editable Doory copy from revision 7. The review plan retained three pages and removed two placeholders. The original 30-second uploaded track remained visible for the whole design; ordinary **Play all → Stop** worked, and full reload retained the original track in Audio. No new Doory video export is claimed by this step.
+
 ## Evidence and remaining limits
 
 Private receipts comprise the clean-start admission, source outage event journal, completed three-item font recovery journal and BrowserOS reconnect/download receipts. The actual downloaded PNG was independently found and byte/header-checked after the initial browser-only download observation. No credentials, session tokens, raw customer packs or runtime snapshots are published here.
 
-No fresh Doory media export is claimed during this outage. Additional current-owner editing or media work after source resumption must be recorded separately. Earlier recovered MP4/WebM evidence and the 161-second continuation checkpoint do not substitute for that missing step.
+No fresh Doory media export is claimed during this outage or the separate after-resumption continuation above. Earlier recovered MP4/WebM evidence and the 161-second continuation checkpoint do not substitute for that missing step.
 
 This result does not establish deletion or relocation of installed local bundles/JARs/assets, internet independence, managed cloud recovery/sizing, consented human practice, or full Issue #57 completion. Source data and verified backups remain preserved. No local test suite, build, model inference, cloud change or human SSO setup was performed for this checkpoint.
