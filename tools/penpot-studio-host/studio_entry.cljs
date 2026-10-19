@@ -18,12 +18,12 @@
       (swap! storage/session assoc :login-redirect (str (.-origin js/location) path)))))
 
 (mf/defc entry*
-  [{:keys [content]}]
+  [{:keys [children]}]
   (let [personal? (mf/use-state false)
         origin (host/parent-origin)
         framed? (not (identical? js/window (.-parent js/window)))]
     (if (or (nil? origin) @personal?)
-      content
+      children
       [:main {:style {:max-width "38rem" :margin "12vh auto" :padding "24px"
                       :font-family "system-ui" :line-height "1.5"}}
        [:h1 "Your brand work starts in Studio"]

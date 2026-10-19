@@ -8,21 +8,22 @@
     [app.main.ui.context :as ctx]
     [app.main.ui.debug.icons-preview :refer [icons-preview*]]
     [app.main.ui.debug.playground :refer [playground*]]
-@@ -238,7 +239,7 @@
+@@ -238,7 +239,8 @@
               plugin-url          (some-> params :plugin)
               template            (some-> params :template)
               pending-action-id   (some-> params :pending-action-id uuid/parse*)]
 -         [:?
-+         [:> studio-entry/entry* {:content [:?
++         [:> studio-entry/entry* {}
++          [:?
            #_[:& app.main.ui.releases/release-notes-modal {:version "2.5"}]
            #_[:& app.main.ui.onboarding/onboarding-templates-modal]
            #_[:& app.main.ui.onboarding/onboarding-modal]
-@@ -262,7 +263,7 @@
+@@ -262,7 +264,7 @@
                                  :plugin-url plugin-url
                                  :project-id project-id
                                  :template template
 -                                :pending-action-id pending-action-id}]]])
-+                                :pending-action-id pending-action-id}]]]}])
++                                :pending-action-id pending-action-id}]]]])
  
         :workspace
         (let [params     (get params :query)
