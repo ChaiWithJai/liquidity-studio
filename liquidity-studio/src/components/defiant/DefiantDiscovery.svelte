@@ -1,0 +1,18 @@
+<script>
+ import {onMount,onDestroy} from 'svelte';
+ let {request,revision,onSaved=()=>{},onDirtyChange=()=>{}}=$props();
+ let info=$state(null),queries=$state([]),base=$state('[]'),busy=$state(false),error=$state(''),notice=$state(''),intent=$state(null);
+ let alive=true;const dirty=$derived(JSON.stringify(queries)!==base||Boolean(intent));$effect(()=>onDirtyChange(dirty));
+ async function load(){try{const result=await request('/inbox/discovery');if(!alive)return;info=result;if(!dirty){queries=result.queries.map(q=>({id:q.id,query:q.query}));base=JSON.stringify(queries);}}catch(e){if(alive)error=e.message;}}
+ async function send(kind,queryId,pageToken){if(busy)return;busy=true;error='';try{intent ||= {kind,payload:{expectedRevision:revision,idempotencyKey:crypto.randomUUID(),...(kind==='queries'?{queries:structuredClone(queries)}:{queryId,...(pageToken?{pageToken}:{})})}};const ack=await request('/inbox/discovery/'+intent.kind,{method:'POST',body:JSON.stringify(intent.payload)});if(!alive)return;intent=null;notice=kind==='queries'?'Search queries saved':ack.run?.status==='failed'?'Search did not finish. Your saved references are unchanged.':'Search complete. Source observations updated.';base=JSON.stringify(queries);await onSaved(ack);await load();}catch(e){if(alive){error=e.message;if(e.status>=400&&e.status<500)intent=null;}}finally{if(alive)busy=false;}}
+ onMount(()=>void load());onDestroy(()=>{alive=false;onDirtyChange(false);});
+</script>
+<details class="discovery"><summary>Find more creator videos</summary>
+ <p>Edit your searches, then run one query. Search adds metadata; it does not download video or grant permission to use it.</p>
+ {#if error}<p role="alert">{error}</p>{/if}{#if notice}<p role="status">{notice}</p>{/if}
+ {#if info}<fieldset disabled={busy||Boolean(intent)}><legend>Search queries</legend>{#each queries as q,index(q.id)}<div class="query"><label>Query {index+1}<input value={q.query} maxlength="300" oninput={e=>queries=queries.map(x=>x.id===q.id?{...x,query:e.currentTarget.value}:x)}/></label><button disabled={dirty||!info.configured} onclick={()=>send('run',q.id)}>Run search</button><button class="secondary" onclick={()=>queries=queries.filter(x=>x.id!==q.id)}>Remove query {index+1}</button></div>{/each}<button class="secondary" disabled={queries.length>=8} onclick={()=>queries=[...queries,{id:crypto.randomUUID(),query:''}]}>Add query</button><button disabled={!dirty||!queries.length||queries.some(q=>!q.query.trim())} onclick={()=>send('queries')}>Save queries</button></fieldset>
+ {#if !info.configured}<p>Live search is not configured. You can save queries and work with supplied references.</p>{/if}{#if info.lastRun}<p>Last checked: {new Date(info.lastRun.completedAt||info.lastRun.createdAt).toLocaleString()}. {info.lastRun.status||''}</p>{#if info.lastRun.nextPageToken}<button disabled={busy||dirty||!info.configured} onclick={()=>send('run',info.lastRun.queryId,info.lastRun.nextPageToken)}>Load next result page</button>{/if}{/if}
+ {:else}<p role="status">Loading search setup…</p>{/if}
+ {#if intent&&!busy}<button onclick={()=>send(intent.kind,intent.payload.queryId,intent.payload.pageToken)}>Retry same request</button>{/if}
+</details>
+<style>.discovery{margin:16px 0;padding:12px 0;border-block:1px solid #dedfd8}summary{cursor:pointer;font-weight:650}p{font-size:13px;line-height:1.6}fieldset{border:0;padding:0}.query{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin:10px 0}label{flex:1;min-width:220px;font-size:13px}input{display:block;width:100%;margin-top:5px}button{margin:4px 8px 4px 0}</style>
