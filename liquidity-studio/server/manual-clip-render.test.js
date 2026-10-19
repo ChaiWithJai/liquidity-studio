@@ -18,7 +18,7 @@ test('chunked supplied-media upload reconstructs exact bytes and retains source/
  const result=await uploadClipMedia(async(path,options)=>{
   if(path==='/inbox/clips/uploads'){begin=JSON.parse(options.body);return {uploadId:'owned-upload',chunkBytes:262144,chunkCount:3};}
   if(options.method==='PUT'){assert.equal(options.headers['Content-Type'],'application/octet-stream');chunks.push(options.body);return {received:true};}
-  assert.equal(path,'/inbox/clips/uploads/owned-upload/complete');return {asset:{id:'saved-source'}};
+  assert.equal(path,'/inbox/clips/uploads/owned-upload/complete');if(chunks.length<3)throw Object.assign(Error('Incomplete'),{status:409});return {asset:{id:'saved-source'}};
  },blob,{kind:'source',sourceId:'yt:owned-source',recordingId:'owned-recording',name:'owned.mp4',contentType:'video/mp4',rightsDeclaration:'Owned engineering fixture'},'fixed-intent');
  assert.deepEqual(result,{asset:{id:'saved-source'}});assert.equal(begin.sha256,await mediaHash(blob));assert.equal(begin.idempotencyKey,'fixed-intent');assert.equal(begin.sourceId,'yt:owned-source');assert.equal(begin.recordingId,'owned-recording');assert.equal(await mediaHash(new Blob(chunks)),begin.sha256);
 });
@@ -31,4 +31,10 @@ test('authenticated binary playback uses current scoped request and never bypass
  let epoch=1;const args={path:'/private-media',options:{responseType:'blob'},scoped:false,context:{sessionEpoch:1},getContext:()=>({sessionEpoch:epoch}),authorize:async()=>({Authorization:'Bearer fixture'}),onUnauthorized:()=>{throw Error('unexpected');}};
  const blob=await scopedRequest({...args,fetchImpl:async(path,options)=>{assert.equal(options.responseType,undefined);assert.equal(options.headers.Authorization,'Bearer fixture');return new Response(new Uint8Array([1,2,3]),{headers:{'Content-Type':'video/mp4'}});}});assert.deepEqual([...new Uint8Array(await blob.arrayBuffer())],[1,2,3]);
  await assert.rejects(scopedRequest({...args,fetchImpl:async()=>{epoch=2;return new Response('private bytes');}}),{code:'REQUEST_CONTEXT_CHANGED'});
+});
+
+test('lost upload completion reopens accepted bytes without resending completed chunks',async()=>{
+ let chunks=0;const accepted={asset:{id:'already-saved'}},blob=new Blob(['owned bytes']);
+ const result=await uploadClipMedia(async(path,options)=>{if(path==='/inbox/clips/uploads')return {uploadId:'same-request',chunkBytes:262144,chunkCount:1};if(options.method==='PUT'){chunks++;throw Error('Completed chunks must not be resent');}return accepted;},blob,{kind:'source'},'same-key');
+ assert.deepEqual(result,accepted);assert.equal(chunks,0);
 });

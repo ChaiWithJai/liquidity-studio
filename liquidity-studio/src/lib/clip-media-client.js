@@ -4,6 +4,8 @@ export async function uploadClipMedia(request,blob,metadata,key,onProgress=()=>{
  const input={...metadata,idempotencyKey:key,bytes:blob.size,sha256};
  const upload=await request('/inbox/clips/uploads',{method:'POST',body:JSON.stringify(input)});
  if(!Number.isInteger(upload.chunkBytes)||upload.chunkBytes<1||upload.chunkBytes>262144||upload.chunkCount!==Math.ceil(blob.size/upload.chunkBytes))throw Error('The upload response is incomplete. Keep this file and retry.');
+ // A lost completion reply must reopen the accepted artifact, not resend completed chunks.
+ try{return await request(`/inbox/clips/uploads/${encodeURIComponent(upload.uploadId)}/complete`,{method:'POST',body:'{}'});}catch(error){if(error.status!==409)throw error;}
  for(let index=0;index<upload.chunkCount;index++){
   await request(`/inbox/clips/uploads/${encodeURIComponent(upload.uploadId)}/chunks/${index}`,{method:'PUT',headers:{'Content-Type':'application/octet-stream'},body:blob.slice(index*upload.chunkBytes,(index+1)*upload.chunkBytes)});
   onProgress((index+1)/upload.chunkCount);
