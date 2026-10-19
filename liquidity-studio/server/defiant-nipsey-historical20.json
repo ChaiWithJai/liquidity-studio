@@ -1,0 +1,193 @@
+{
+  "packId": "nipsey-historical20-v1",
+  "provenance": {
+    "kind": "supplied-historical-sample",
+    "cohort": "historical-sample",
+    "providedOn": "2026-10-19",
+    "verification": "unverified",
+    "sourceSha256": "8f452429fa41d59d4bfa4b52efbfb08618c84dce9ca1f02249d4ab882a8734a8",
+    "mappingVersion": 1
+  },
+  "videos": [
+    {
+      "rank": 46,
+      "title": "Nipsey Hussle at The Breakfast Club Power 105.1 | Breakfast Club Classics",
+      "url": "https://www.youtube.com/watch?v=uSPMKMYt_nk",
+      "channel_handle": "@BreakfastClubPower1051FM",
+      "views": 11000000,
+      "matched_isrc": "US-AMI-13-00301",
+      "track": "Checc Me Out (Crenshaw)"
+    },
+    {
+      "rank": 47,
+      "title": "Lauren London Asks Nipsey Hussle 30 Questions | GQ Couples Quiz",
+      "url": "https://www.youtube.com/watch?v=ou8FAbw4YTs",
+      "channel_handle": "@GQ",
+      "views": 9400000,
+      "matched_isrc": "US-AMI-18-00103",
+      "track": "Double Up (Victory Lap)"
+    },
+    {
+      "rank": 48,
+      "title": "Nipsey Hussle Talks New Album, West Side Protocols, Cardi B, Diddy | The Breakfast Club",
+      "url": "https://www.youtube.com/watch?v=fGCMcu2iei0",
+      "channel_handle": "@BreakfastClubPower1051FM",
+      "views": 3500000,
+      "matched_isrc": "US-AMI-18-00101",
+      "track": "Hussle & Motivate (Victory Lap)"
+    },
+    {
+      "rank": 49,
+      "title": "Lauren London | Angie Martinez IRL Podcast",
+      "url": "https://www.youtube.com/watch?v=RzbHzc118lI",
+      "channel_handle": "@AngieMartinez",
+      "views": 3200000,
+      "matched_isrc": "US-AMI-18-00105",
+      "track": "Dedication (Victory Lap)"
+    },
+    {
+      "rank": 50,
+      "title": "NIPSEY HUSSLE FREESTYLES ON FLEX | #FREESTYLE089",
+      "url": "https://www.youtube.com/watch?v=W2Nf6tPfAAA",
+      "channel_handle": "@hot97",
+      "views": 3100000,
+      "matched_isrc": "US-AMI-18-00106",
+      "track": "Last Time That I Checc'd (Victory Lap)"
+    },
+    {
+      "rank": 51,
+      "title": "Rap Radar: Nipsey Hussle (TIDAL Exclusive Release)",
+      "url": "https://www.youtube.com/watch?v=5NndeiDIctM",
+      "channel_handle": "@Tidal",
+      "views": 2300000,
+      "matched_isrc": "US-AMI-18-00104",
+      "track": "Grinding All My Life (Victory Lap)"
+    },
+    {
+      "rank": 52,
+      "title": "Nipsey Hussle 'Racks In The Middle' Official Lyrics & Meaning | Genius Verified",
+      "url": "https://www.youtube.com/watch?v=pBV4tAAHiIM",
+      "channel_handle": "@Genius",
+      "views": 1900000,
+      "matched_isrc": "US-AMI-19-00201",
+      "track": "Racks In The Middle"
+    },
+    {
+      "rank": 55,
+      "title": "THE MARATHON – Live Visual Album Experience",
+      "url": "https://www.youtube.com/watch?v=ZOewCwzukOg",
+      "channel_handle": "@TheMarathonClothing",
+      "views": 1400000,
+      "matched_isrc": "US-AMI-11-00401",
+      "track": "Forever On Some Fly Shit"
+    },
+    {
+      "rank": 57,
+      "title": "Nipsey Hussle's Journey Of Opening A Store In The Middle Of His Neighborhood",
+      "url": "https://www.youtube.com/watch?v=2FnFUCgo7x8",
+      "channel_handle": "@TheMarathonClothing",
+      "views": 1200000,
+      "matched_isrc": "US-AMI-18-00101",
+      "track": "Hussle & Motivate"
+    },
+    {
+      "rank": 59,
+      "title": "Nipsey Hussle Freestyles, Speaks on 'Crenshaw' Profit, & Reveals Single | Sway In The Morning",
+      "url": "https://www.youtube.com/watch?v=W1vHVOYm4wQ",
+      "channel_handle": "@SWAYSUNIVERSE",
+      "views": 940000,
+      "matched_isrc": "US-AMI-13-00301",
+      "track": "Checc Me Out"
+    },
+    {
+      "rank": 60,
+      "title": "Jay-Z Bought 100 Copies of My $100 Album (Flashback) | VladTV",
+      "url": "https://www.youtube.com/watch?v=75nsYUHRmmQ",
+      "channel_handle": "@vladtv",
+      "views": 880000,
+      "matched_isrc": "US-AMI-13-00301",
+      "track": "Checc Me Out"
+    },
+    {
+      "rank": 61,
+      "title": "Nipsey Hussle on Victory Lap, Turning Down Deal With Rick Ross | Big Boy",
+      "url": "https://www.youtube.com/watch?v=2_HaZuFFxGw",
+      "channel_handle": "@Big.Boy.",
+      "views": 827000,
+      "matched_isrc": "US-AMI-18-00101",
+      "track": "Hussle & Motivate"
+    },
+    {
+      "rank": 62,
+      "title": "Nipsey Hussle Freestyle - 2010 XXL Freshman",
+      "url": "https://www.youtube.com/watch?v=A2qy29N4-dw",
+      "channel_handle": "@XXL",
+      "views": 710000,
+      "matched_isrc": "US-AMI-11-00401",
+      "track": "Forever On Some Fly Shit"
+    },
+    {
+      "rank": 67,
+      "title": "10 Minutes for the NEXT 10 Years of Your LIFE — Nipsey Hussle",
+      "url": "https://www.youtube.com/watch?v=eyuhrLw6Om0",
+      "channel_handle": "@ElevationVault",
+      "views": 450000,
+      "matched_isrc": "US-AMI-18-00104",
+      "track": "Grinding All My Life"
+    },
+    {
+      "rank": 70,
+      "title": "Nipsey Hussle (First interview ever???) from the Hard Knock TV Vaults",
+      "url": "https://www.youtube.com/watch?v=GwG4A_OrTmk",
+      "channel_handle": "@hardknocktv",
+      "views": 340000,
+      "matched_isrc": "US-AMI-11-00401",
+      "track": "Forever On Some Fly Shit"
+    },
+    {
+      "rank": 76,
+      "title": "The Studio Interview with Nipsey Hussle | Breaks Down 'Victory Lap'",
+      "url": "https://www.youtube.com/watch?v=lPHuZLM72U4",
+      "channel_handle": "@MassAppeal",
+      "views": 210000,
+      "matched_isrc": "US-AMI-18-00102",
+      "track": "Blue Laces 2"
+    },
+    {
+      "rank": 81,
+      "title": "Steve Stoute Shares Last Text Message From Nipsey Hussle",
+      "url": "https://www.youtube.com/watch?v=iTokfWg_BFA",
+      "channel_handle": "@RapRadarClips",
+      "views": 150000,
+      "matched_isrc": "US-AMI-26-00001",
+      "track": "Prolific"
+    },
+    {
+      "rank": 85,
+      "title": "Bootleg Kev Nipsey Hussle Freestyle (2010 Vault)",
+      "url": "https://www.youtube.com/watch?v=x7r8roQIv4M",
+      "channel_handle": "@BootlegKev",
+      "views": 93000,
+      "matched_isrc": "US-AMI-11-00401",
+      "track": "Forever On Some Fly Shit"
+    },
+    {
+      "rank": 95,
+      "title": "Jay Z Buys 100 Copies of 'The World's First $100 Album' | Fuse News",
+      "url": "https://www.youtube.com/watch?v=xUhpXaLLoKI",
+      "channel_handle": "@fuse",
+      "views": 58000,
+      "matched_isrc": "US-AMI-13-00301",
+      "track": "Checc Me Out"
+    },
+    {
+      "rank": 100,
+      "title": "Nipsey Hussle on The Making of Victory Lap | Streetz Is Watchin Vault",
+      "url": "https://www.youtube.com/watch?v=nvFmOucMNd8&t=480s",
+      "channel_handle": "@StreetzIsWatchin",
+      "views": 32000,
+      "matched_isrc": "US-AMI-18-00102",
+      "track": "Blue Laces 2"
+    }
+  ]
+}
