@@ -1,5 +1,5 @@
 """Hosted-only bounded wheel/checkpoint acquisition. Never imports model packages."""
-import argparse,hashlib,json,os,pathlib,re,subprocess,sys,tempfile,urllib.parse,urllib.request,zipfile,email
+import argparse,hashlib,json,os,pathlib,re,subprocess,sys,tempfile,urllib.parse,urllib.request,zipfile,email,platform
 ROOT=pathlib.Path(__file__).resolve().parent
 CHECKPOINT={'fileId':'1mcr7ALciuAsHCpLnrtG_eop5-EYhbCmz','name':'modnet_photographic_portrait_matting.ckpt','bytes':26255603,'modifiedTime':'2020-12-07T05:21:01.930Z','authorsFolder':'1umYmlCulvIFNaqPjwod1SayFmSRHziyR'}
 HOSTS={'pypi.org','files.pythonhosted.org','download.pytorch.org','download-r2.pytorch.org','drive.google.com','drive.usercontent.google.com'}
@@ -24,7 +24,7 @@ def checkpoint(destination,expected=None):
  digest=sha(data)
  if expected and digest!=expected:raise ValueError('Reviewed checkpoint digest changed')
  destination.write_bytes(data);destination.chmod(0o600)
- return {**CHECKPOINT,'requestedUrl':url,'actualUrl':actual,'sha256':digest,'digestAuthority':'operator-recorded authors-linked acquisition, not authors-published checksum','deserialized':False}
+ return {**CHECKPOINT,'available':True,'requestedUrl':url,'actualUrl':actual,'sha256':digest,'digestAuthority':'operator-recorded authors-linked acquisition, not authors-published checksum','deserialized':False}
 def write(p,v):p.write_text(json.dumps(v,indent=2)+'\n')
 def capture(out):
  core=json.loads((ROOT/'core-source-metadata.json').read_text());pins=[]
@@ -57,13 +57,13 @@ def capture(out):
    with zipfile.ZipFile(wheel) as z:
     members=[n for n in z.namelist() if n.endswith('.dist-info/METADATA')];assert len(members)==1
     assert z.getinfo(members[0]).file_size<=2*1024*1024
-    m=email.message_from_bytes(z.read(members[0]));assert m['Name'].lower().replace('_','-')==name
+    m=email.message_from_bytes(z.read(members[0]));assert re.sub(r'[-_.]+','-',m['Name']).lower()==name and m['Version']==version
     notices=[{'path':n,'sha256':sha(z.read(n)),'bytes':z.getinfo(n).file_size} for n in z.namelist() if '.dist-info/' in n and re.search(r'(?i)(license|notice|copying)',n) and not n.endswith('/') and z.getinfo(n).file_size<=2*1024*1024]
    packages.append({'name':name,'version':version,'url':url,'filename':filename,'bytes':len(data),'sha256':digest,'requiresDist':m.get_all('Requires-Dist',[]),'license':m.get('License-Expression') or m.get('License'),'notices':notices})
    requirements.append(f'{name}=={version} --hash=sha256:{digest}');wheel.unlink()
   assert len({x['name'] for x in packages})==len(packages)
   (out/'requirements.lock').write_text('\n'.join(sorted(requirements))+'\n')
-  write(out/'wheel-lock.json',{'schemaVersion':1,'pythonImage':core['python']['amd64ImageDigest'],'platform':'linux/amd64 CPython3.11','packages':packages,'aggregateWheelBytes':total,'pipVersion':subprocess.check_output([sys.executable,'-m','pip','--version'],text=True).strip(),'requirementsSha256':sha((out/'requirements.lock').read_bytes()),'reviewedForConversion':False})
+  write(out/'wheel-lock.json',{'schemaVersion':1,'pythonImage':core['python']['amd64ImageDigest'],'platform':'linux/amd64 CPython3.11','pythonVersion':sys.version,'packages':packages,'aggregateWheelBytes':total,'pipVersion':subprocess.check_output([sys.executable,'-m','pip','--version'],text=True).strip(),'requirementsSha256':sha((out/'requirements.lock').read_bytes()),'reviewedForConversion':False})
   path=tmp/'original.ckpt'
   try:
    receipt=checkpoint(path);write(out/'checkpoint-acquisition.json',receipt)
@@ -80,6 +80,7 @@ def restore(lockdir,wheels,destination,expected):
  return checkpoint(destination,expected)
 if __name__=='__main__':
  if os.environ.get('GITHUB_ACTIONS')!='true':raise SystemExit('Hosted Actions only; no local model/wheel acquisition')
+ if sys.implementation.name!='cpython' or sys.version_info[:3]!=(3,11,17) or platform.system()!='Linux' or platform.machine()!='x86_64':raise SystemExit('Exact pinned Linux AMD64 CPython3.11.17 required')
  os.umask(0o077);p=argparse.ArgumentParser();p.add_argument('mode',choices=['capture','restore']);p.add_argument('--out',required=True);p.add_argument('--lockdir');p.add_argument('--checkpoint-sha256');a=p.parse_args();out=pathlib.Path(a.out);out.mkdir(mode=0o700)
  if a.mode=='capture':capture(out)
  else:
