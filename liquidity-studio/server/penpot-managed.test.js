@@ -25,6 +25,8 @@ test('managed constructor never accepts password composition and exact config ha
 test('managed private config binds finite workspace and separate keys without enabling local tools',()=>{
  const id=n=>`${String(n).repeat(8)}-${String(n).repeat(4)}-4${String(n).repeat(3)}-8${String(n).repeat(3)}-${String(n).repeat(12)}`;
  const value={schemaVersion:1,nativeInstanceId:id(8),nativeOrigin:'https://design.example.com',rpcOrigin:'http://penpot-frontend:8080',studioOrigin:'https://studio.example.com',pairingKey:'a'.repeat(43),grantKey:'b'.repeat(43),workspace:{version:2,transportMode:'loopback',sessions:[{ownerPrincipal:id(1),cookie:'auth-token=controlled'}],workspaces:[{id:'brand-native',organizationId:'org_default',brandId:'brand_vedic',ownerPrincipal:id(1),projectId:id(2),teamId:id(3),fonts:[{family:'Inter',weight:400,fontId:'custom-'+id(4),fontVariantId:'normal-400',license:'OFL-1.1',sha256:'a'.repeat(64)}]}]}};
+ assert.equal(validateManagedPenpotConfiguration({...value,authorityTimeoutMs:2500}).authorityTimeoutMs,2500);
+ for(const authorityTimeoutMs of [0,799,2501,'2500'])assert.throws(()=>validateManagedPenpotConfiguration({...value,authorityTimeoutMs}));
  const actual=validateManagedPenpotConfiguration(value);assert.equal(actual.workspace.targets[0].nativeProjectId,id(2));assert.deepEqual(actual.workspace.targets[0].resources,[]);
  for(const mutate of [v=>v.workspace.workspaces[0].fileId=id(9),v=>v.workspace.sessions=[],v=>v.nativeOrigin='http://localhost:39008',v=>v.grantKey=v.pairingKey,v=>v.rpcOrigin='http://native/path']){const bad=structuredClone(value);mutate(bad);assert.throws(()=>validateManagedPenpotConfiguration(bad));}
 });
@@ -36,4 +38,13 @@ test('native proof uses actual presented cookie at fixed internal origin and HTT
  assert.equal(call.url,'http://penpot-frontend:8080/api/rpc/command/get-profile');assert.equal(call.options.headers.Origin,'https://design.example.com');assert.equal(call.options.headers.Cookie,'auth-token=presented-native-session');
  const sink=createNativePairingProofSink({callbackUrl:'https://studio.example.com/api/native/penpot/pairing/proof',pairingKey:'a'.repeat(43),fetchImpl:async(url,options)=>{call={url,options};return Response.json({recorded:true});}});
  await sink({challenge:'b'.repeat(43),nativeInstanceId:uuid,nativeProfileId:uuid});assert.equal(call.options.headers.Cookie,undefined);assert.equal(call.options.headers.Authorization,undefined);assert.equal(call.options.redirect,'error');
+});
+
+import {readFile} from 'node:fs/promises';
+test('managed adapter deployment entrypoint forwards its validated private timeout configuration',async()=>{
+ const dockerfile=await readFile(new URL('../../deployments/managed-penpot/Dockerfile.adapter',import.meta.url),'utf8');
+ const entry=await readFile(new URL('../scripts/serve-managed-native-connect.mjs',import.meta.url),'utf8');
+ assert.match(dockerfile,/serve-managed-native-connect\.mjs/);
+ assert.match(entry,/loadManagedPenpotConfiguration/);
+ assert.match(entry,/createPenpotNativeAccessForwarder\(configuration\)/);
 });

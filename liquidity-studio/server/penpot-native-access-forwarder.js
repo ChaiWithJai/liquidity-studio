@@ -22,7 +22,8 @@ function readBody(req, signal) {
 }
 
 /** Fixed local native→Studio authority transport, not an RPC/WS relay. */
-export function createPenpotNativeAccessForwarder({studioOrigin, grantKey, fetchImpl = fetch} = {}) {
+export function createPenpotNativeAccessForwarder({studioOrigin, grantKey, authorityTimeoutMs = 800, fetchImpl = fetch} = {}) {
+  if(![800,2500].includes(authorityTimeoutMs))throw Error('Fixed native authority timeout required');
   const studio = new URL(studioOrigin);
   if (!(studio.protocol === 'https:' || (studio.protocol === 'http:' && studio.hostname === '127.0.0.1')) || studio.origin !== studioOrigin || studio.username || studio.password || studio.pathname !== '/' || studio.search || studio.hash || (studio.protocol==='http:'&&(!Number.isInteger(Number(studio.port)) || Number(studio.port) < 1024 || Number(studio.port) > 65535)) || !/^[A-Za-z0-9_-]{43}$/.test(grantKey || '') || typeof fetchImpl !== 'function') throw Error('Fixed private local authority configuration required');
   const expected = Buffer.from(grantKey);
@@ -37,7 +38,7 @@ export function createPenpotNativeAccessForwarder({studioOrigin, grantKey, fetch
       if (req.method !== 'POST') throw failure(405, 'Native authority POST required');
       if (req.headers['content-type'] !== 'application/json') throw failure(415, 'Native authority JSON required');
       if (req.headers['content-length'] && (!/^\d+$/.test(req.headers['content-length']) || Number(req.headers['content-length']) > 4096)) throw failure(413, 'Native authority request is too large');
-      const deadline = new Promise((_, reject) => { timer = setTimeout(() => { reject(failure(504, 'Native authority request timed out')); controller.abort(); }, 800); });
+      const deadline = new Promise((_, reject) => { timer = setTimeout(() => { reject(failure(504, 'Native authority request timed out')); controller.abort(); }, authorityTimeoutMs); });
       const operation = (async () => {
         const body = await readBody(req, controller.signal); jsonObject(body);
         const response = await fetchImpl(studioOrigin + req.url, {method: 'POST', redirect: 'error', signal: controller.signal,

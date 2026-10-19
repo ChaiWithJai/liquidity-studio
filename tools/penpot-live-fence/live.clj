@@ -98,7 +98,7 @@
                               :operation operation})))
                  (catch Throwable _ {:allowed false :reason :authority-unavailable})))]
     (try
-      (deref work 1000 {:allowed false :reason :check-timeout})
+      (deref work (get cfg ::access/callback-timeout-ms 1000) {:allowed false :reason :check-timeout})
       (finally (when-not (realized? work) (future-cancel work))))))
 
 (defn allowed? [cfg wsp resource operation]

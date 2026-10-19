@@ -79,3 +79,16 @@
 (deftest private-compose-authority-origin-preserves-fixed-callback
   (with-settings (assoc settings :callbackOrigin "http://studio-native-connect:39044")
     #(is (= "http://studio-native-connect:39044" (:callback-origin (configuration/read-settings %))))))
+
+(deftest managed-private-timeout-wires-the-shared-authority-and-live-check
+  (doseq [timeout [1000 3000]]
+    (with-settings (assoc settings :callbackTimeoutMs timeout)
+      (fn [filename]
+        (let [system {:app.http.client/client {} :app.rpc/methods {} :app.http.websocket/routes {} :app.http.assets/routes {}}
+              result (configuration/install system filename)]
+          (is (= timeout (get-in result [:app.studio.configuration/authority :callback-timeout-ms])))
+          (doseq [target [:app.rpc/methods :app.http.websocket/routes :app.http.assets/routes]]
+            (is (= timeout (get-in result [target ::access/callback-timeout-ms]))))))))
+  (doseq [timeout [0 999 3001 "3000"]]
+    (with-settings (assoc settings :callbackTimeoutMs timeout)
+      (fn [filename] (is (thrown? Exception (configuration/read-settings filename)))))))

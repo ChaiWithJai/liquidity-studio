@@ -54,3 +54,20 @@ test('six-field pairing configurations remain valid and an optional distinct gra
  for(const grantKey of [config.pairingKey,'short',null]){write({...config,grantKey});assert.throws(()=>loadNativePairingConfiguration(filename),/Exact native pairing/);}
  assert.throws(()=>createPenpotNativeAccessForwarder({studioOrigin:'http://foreign.invalid',grantKey:key}));
 });
+
+import {EventEmitter} from 'node:events';
+test('managed callback deadline permits a valid 1486ms reply and still cancels beyond2500ms',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});
+ async function request(stalled=false){
+  const req=new EventEmitter();Object.assign(req,{url:admission,method:'POST',headers:{'content-type':'application/json','x-studio-native-grant-key':key},readableEnded:false,pause(){}});
+  let complete,started;const ready=new Promise(r=>started=r);let status,bytes,aborted=false;
+  const res={headersSent:false,destroyed:false,writeHead(s){status=s;this.headersSent=true;},end(b){bytes=b;}};
+  const handler=createPenpotNativeAccessForwarder({studioOrigin,grantKey:key,authorityTimeoutMs:2500,fetchImpl:async(_url,init)=>{init.signal.addEventListener('abort',()=>{aborted=true;});started();return new Promise(r=>complete=r);}});
+  const done=handler(req,res);req.emit('data',Buffer.from('{}'));req.readableEnded=true;req.emit('end');await ready;
+  t.mock.timers.tick(1486);await Promise.resolve();assert.equal(status,undefined);
+  if(stalled)t.mock.timers.tick(1015);else complete(Response.json({allowed:true}));
+  await done;assert.equal(status,stalled?504:200);assert.equal(aborted,true);if(!stalled)assert.deepEqual(JSON.parse(bytes),{allowed:true});
+ }
+ await request();await request(true);
+ for(const authorityTimeoutMs of [0,799,2501,Infinity,'2500'])assert.throws(()=>createPenpotNativeAccessForwarder({studioOrigin,grantKey:key,authorityTimeoutMs}));
+});

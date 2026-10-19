@@ -36,8 +36,10 @@
   "Uses the existing pinned java-http-clj client. Fixed local callback, key and
    total deadline are constructor-only. The original Node39044 forwards only
    these two paths to its fixed Studio origin; the native cookie is never sent."
-  [{:keys [::client/client grant-key callback-origin]}]
-  (when-not (and (instance? HttpClient client)
+  [{:keys [::client/client grant-key callback-origin callback-timeout-ms]
+     :or {callback-timeout-ms 1000}}]
+  (when-not (and (#{1000 3000} callback-timeout-ms)
+                 (instance? HttpClient client)
                  (= HttpClient$Redirect/NEVER (.followRedirects ^HttpClient client))
                  (contains? #{"http://host.docker.internal:39044" "http://studio-native-connect:39044"} callback-origin)
                  (string? grant-key) (re-matches #"[A-Za-z0-9_-]{43}" grant-key))
@@ -48,7 +50,7 @@
           stream (atom nil)
           request (when (and payload (<= (alength (.getBytes payload "UTF-8")) 4096))
                     {:uri (str callback-origin "/api/native/penpot/access/" path)
-                     :method :post :timeout 1000
+                     :method :post :timeout callback-timeout-ms
                      :headers {"content-type" "application/json"
                                "x-studio-native-grant-key" grant-key}
                      :body payload})]
@@ -79,7 +81,7 @@
                 (.orElse (.executor ^HttpClient client) (ForkJoinPool/commonPool)))]
           (try
             ;; Includes headers AND bounded body consumption; no retry/redirect.
-            (let [result (.get pending 1000 TimeUnit/MILLISECONDS)]
+            (let [result (.get pending callback-timeout-ms TimeUnit/MILLISECONDS)]
               (if (map? result) result {:allowed false :authorized false :reason :authority-unavailable}))
             (catch Exception _ {:allowed false :authorized false :reason :authority-unavailable})
             (finally

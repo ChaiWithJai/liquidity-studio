@@ -256,3 +256,21 @@
       (reset! result {:allowed false :reason :native-session-invalid})
       (is (thrown? Exception (live/handle-message cfg (fn [& _] (is false)) invalid-socket {:type :subscribe-team :team-id team})))
       (is (= 1 @closed)) (is (= [:check-timeout] @notices)))))
+
+(deftest managed-live-check-shares-the-configured-bounded-authority-envelope
+  (let [{:keys [cfg wsp]} (fixture)
+        entered (java.util.concurrent.CountDownLatch. 1)
+        release (java.util.concurrent.CountDownLatch. 1)
+        done (java.util.concurrent.CountDownLatch. 1)
+        configured (assoc cfg ::access/callback-timeout-ms 3000
+                          ::access/authorize (fn [_] (.countDown entered)
+                                               (if (.await release 2500 java.util.concurrent.TimeUnit/MILLISECONDS)
+                                                 {:allowed true} {:allowed false})))
+        result (future (try (live/decision configured wsp (live/team-resource team) :read)
+                            (finally (.countDown done))))]
+    (try
+      (is (.await entered 1 java.util.concurrent.TimeUnit/SECONDS))
+      (is (false? (.await done 1200 java.util.concurrent.TimeUnit/MILLISECONDS)))
+      (.countDown release)
+      (is (= true (:allowed (deref result 1500 {:allowed false}))))
+      (finally (.countDown release) (future-cancel result)))))
