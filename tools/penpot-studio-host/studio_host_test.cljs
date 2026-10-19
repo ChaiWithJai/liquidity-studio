@@ -31,3 +31,14 @@
            (entry/connection-return-path (apply str (repeat 43 "a")))))
   (t/is (nil? (entry/connection-return-path "https://other.example/")))
   (t/is (nil? (entry/connection-return-path "short"))))
+
+(t/deftest parent-origin-allows-only-explicit-canonical-loopback-development
+  (doseq [origin ["https://studio.example.com" "http://localhost:3002"
+                  "http://127.0.0.1:39043" "http://[::1]:3002"]]
+    (t/is (= origin (host/configured-parent-origin origin))))
+  (doseq [origin [nil "http://remote.example:3002" "http://app.localhost:3002"
+                  "http://127.0.0.2:3002" "http://localhost" "http://localhost:80"
+                  "http://localhost:0" "http://localhost:65536" "http://localhost:03002"
+                  "http://localhost:3002/" "http://user@localhost:3002"
+                  "http://localhost:3002?next=other"]]
+    (t/is (nil? (host/configured-parent-origin origin)))))

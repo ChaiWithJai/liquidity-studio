@@ -1,6 +1,11 @@
 // Only constructor-owned origins and a freshly resolved saved-design DTO may select a frame.
+function configuredOrigin(value){
+ try{const url=new URL(value);if(url.origin!==value)return false;if(url.protocol==='https:')return true;
+  return url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname)&&/^[1-9][0-9]{0,4}$/.test(url.port)&&Number(url.port)<=65535;
+ }catch{return false;}
+}
 export function embeddingAvailable(embedding,studioOrigin){
-  try{return Boolean(embedding&&new URL(embedding.studioOrigin).origin===embedding.studioOrigin&&new URL(embedding.nativeOrigin).origin===embedding.nativeOrigin&&embedding.studioOrigin.startsWith('https://')&&embedding.nativeOrigin.startsWith('https://')&&studioOrigin===embedding.studioOrigin&&embedding.nativeOrigin!==studioOrigin);}catch{return false;}
+ return Boolean(embedding&&configuredOrigin(embedding.studioOrigin)&&configuredOrigin(embedding.nativeOrigin)&&studioOrigin===embedding.studioOrigin&&embedding.nativeOrigin!==studioOrigin);
 }
 export function boundPenpotFrameUrl(design,{designId,storyId,generationId,embedding,studioOrigin}){
   if(!embeddingAvailable(embedding,studioOrigin)||!designId||design?.id!==designId||design.status!=='ready'||design.storyId!==storyId||design.generationId!==generationId)throw Error('This saved design is unavailable for the current story. Return to its preview and reopen the design.');

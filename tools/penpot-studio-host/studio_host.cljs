@@ -30,13 +30,22 @@
                     (int? (:revn file)) (<= 0 (:revn file))) "clean"
                :else "unknown")}))
 
+(defn configured-parent-origin
+  [value]
+  (try
+    (let [url (js/URL. value)
+          port (.-port url)
+          loopback? (and (= "http:" (.-protocol url))
+                         (#{"localhost" "127.0.0.1" "[::1]"} (.-hostname url))
+                         (re-matches #"[1-9][0-9]{0,4}" port)
+                         (<= (js/Number port) 65535))]
+      (when (and (= value (.-origin url))
+                 (or (= "https:" (.-protocol url)) loopback?)) value))
+    (catch :default _ nil)))
+
 (defn parent-origin
   []
-  (try
-    (let [value (unchecked-get js/window "penpotStudioOrigin")
-          url (js/URL. value)]
-      (when (and (= "https:" (.-protocol url)) (= value (.-origin url))) value))
-    (catch :default _ nil)))
+  (configured-parent-origin (unchecked-get js/window "penpotStudioOrigin")))
 
 (defn mount!
   [file-id]

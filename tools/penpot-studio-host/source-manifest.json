@@ -3,11 +3,11 @@
   "copies": {
     "studio_host.cljs": {
       "destination": "frontend/src/app/main/studio_host.cljs",
-      "sha256": "ad4db389d29d37b2dfe80870f5ccf2fac8fafdcc5f31c0719e40c19b967b6aaf"
+      "sha256": "81d93dd73170fe24d79c9d572297e93b26a159a97f878b410709c58de3dfa852"
     },
     "studio_host_test.cljs": {
       "destination": "frontend/test/frontend_tests/studio_host_test.cljs",
-      "sha256": "6e3799d8e74a673476d412ef1cef997a71c661c8450af717ebfe02a91599f336"
+      "sha256": "d8e505b450ca489112c60aebc6ae73fc54901bc2a081aec83bb001c61d20d000"
     },
     "studio_entry.cljs": {
       "destination": "frontend/src/app/main/ui/studio_entry.cljs",
@@ -21,7 +21,7 @@
     },
     "docker/images/files/nginx-entrypoint.sh": {
       "beforeSha256": "64de6664ec556d7e32f416aa7c7cf31b82a0594cd154ea316e2585984eac8b3d",
-      "afterSha256": "185336cbd711b5249cee91f4a36276be3db4414cc42419c2ddc281a6484b4b74"
+      "afterSha256": "6ad24e3d0bb2060f2b228f5df6b4466ac4be095eba2c7c1ee45022cac986ee6d"
     },
     "frontend/src/app/main/ui/auth.cljs": {
       "beforeSha256": "c887b66202a6215985e3370d6f0275d725ab262c5a05badb7744f5e0ce47f707",
@@ -38,7 +38,7 @@
   },
   "patches": {
     "workspace.patch": "afefabddb68b89d50737efa8af7f8afd375ecb52e51132ec7d08a6491e7c8301",
-    "entrypoint.patch": "8e0f5e38891db1305de5b0bceb60f55eb6c58a916089d8badad36094bf7f82c4",
+    "entrypoint.patch": "959cac9e14e0e61a9941a475e2dacf204d03060874247e5cbb8df3a0c7650257",
     "auth.patch": "4d15b9710376ffa45ed0131015bff3f0fa66d33cacf3ab2e041353a21579b418",
     "entry-guide.patch": "935295251ff66e0e7d313680108d122f3f4532e28ce538df1f4d5e6bd337687f",
     "runner.patch": "3ca6c16b567dfdd96c77b7aadf4100d71a9366dc7259a42abc912b6820f43f57"

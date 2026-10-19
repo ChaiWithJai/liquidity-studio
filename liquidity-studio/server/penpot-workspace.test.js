@@ -36,3 +36,18 @@ test('pristine clean state requires a valid revision and permits return without 
  assert.equal(penpotMayHaveUnsavedChanges('clean'),false);assert.equal(penpotMayHaveUnsavedChanges('saved'),false);
  for(const status of ['unknown','editing','pending','saving','error'])assert.equal(penpotMayHaveUnsavedChanges(status),true);
 });
+
+test('explicit loopback development origins retain exact frame and caller-origin binding',()=>{
+ for(const host of ['localhost','127.0.0.1','[::1]']){
+  const local={studioOrigin:`http://${host}:3002`,nativeOrigin:`http://${host}:39008`};
+  assert.equal(embeddingAvailable(local,local.studioOrigin),true);
+  assert.equal(embeddingAvailable(local,'http://localhost:3003'),false);
+  const saved={...design,nativeUrl:design.nativeUrl.replace(embedding.nativeOrigin,local.nativeOrigin)};
+  assert.equal(boundPenpotFrameUrl(saved,{...context,embedding:local,studioOrigin:local.studioOrigin}),saved.nativeUrl);
+  assert.throws(()=>boundPenpotFrameUrl({...saved,nativeUrl:saved.nativeUrl.replace(':39008',':39009')},{...context,embedding:local,studioOrigin:local.studioOrigin}));
+ }
+ for(const origin of ['http://remote.example:3002','http://app.localhost:3002','http://127.0.0.2:3002','http://localhost','http://localhost:80','http://localhost:0','http://localhost:65536','http://localhost:03002','http://localhost:3002/','http://user@localhost:3002','http://localhost:3002?next=anything']){
+  assert.equal(embeddingAvailable({...embedding,studioOrigin:origin},origin),false,origin);
+  assert.equal(embeddingAvailable({...embedding,nativeOrigin:origin},embedding.studioOrigin),false,origin);
+ }
+});
