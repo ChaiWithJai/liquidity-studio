@@ -217,7 +217,7 @@
       if (requestedId && !existing) throw new Error("That saved layout is no longer available in this story and format.");
       const created = existing ? await capturedRequest(`/api/studio/native-editor/documents/${existing.id}`) : await capturedRequest("/api/studio/native-editor/documents", { method:"POST", body:JSON.stringify({storyId,format:openingFormat,expectedRevision:story.revision,generationId:story.generationId,expectedBrandRevision:bootstrap.nativeEditorContext.brandRevision,idempotencyKey:crypto.randomUUID()}) });
       if (workspaceClient !== client || selectedStory?.id !== storyId || format !== openingFormat) return;
-      nativeHost = { client, scopeKey:client.scopeKey, request:capturedRequest, getScopeKey:()=>workspaceClient === client ? client.scopeKey : "context-changed" };
+      nativeHost = { cutoutAvailable: bootstrap.operatorCapabilities?.nativeCutout === true, client, scopeKey:client.scopeKey, request:capturedRequest, getScopeKey:()=>workspaceClient === client ? client.scopeKey : "context-changed" };
       nativeRecord = created; nativeDirty = false; nativeSaveState = "idle"; preparedEditingStoryId = "";
     } catch (failure) { if (workspaceClient === client) error = failure.message; }
     finally { if (workspaceClient === client) busy = false; }
@@ -1538,7 +1538,7 @@
                 <div><button class="secondary" disabled={nativeDirty} onclick={() => leaveNativeEditor()}>Return to saved copy and preview</button>
                 {#if nativeDirty}<button class="secondary" onclick={() => leaveNativeEditor(true)}>Discard local native changes and return</button>{/if}</div>
               </div>
-              {#key nativeHost}<NativeEditorHost record={nativeRecord} request={nativeHost.request} scopeKey={nativeHost.scopeKey} getScopeKey={nativeHost.getScopeKey}
+              {#key nativeHost}<NativeEditorHost cutoutAvailable={nativeHost.cutoutAvailable} record={nativeRecord} request={nativeHost.request} scopeKey={nativeHost.scopeKey} getScopeKey={nativeHost.getScopeKey}
                 onSaved={(saved) => { if (workspaceClient === nativeHost?.client && nativeRecord?.id === saved.id) nativeRecord = saved; }}
                 canRebind={user.role === "founder"} canReviewSource={sourcePreparationEnabled}
                 onReviewSource={async () => { if (!leaveNativeEditor()) return; if (campaign) await editReviewedCopy(); else focusWorkflow("workflow-preview"); }}

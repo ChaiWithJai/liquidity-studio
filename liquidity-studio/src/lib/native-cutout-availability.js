@@ -1,6 +1,7 @@
 /** Probe only the existing authenticated manifest, never model chunks/inference.
  * Keep the editor usable and report a safe recovery path if its tool is absent. */
-export async function nativeCutoutAvailability(request) {
+export async function nativeCutoutAvailability(request, { enabled = false } = {}) {
+  if (!enabled) return { enabled: false, message: "" };
   try {
     await request("/api/studio/native-editor/cutout/model");
     return { enabled: true, message: "" };

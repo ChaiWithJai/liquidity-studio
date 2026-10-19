@@ -10,6 +10,7 @@ test("disabled model never reads operator files", async () => {
       throw Error("private");
     },
   });
+  assert.equal(provider.configured, false);
   await assert.rejects(provider.manifest(), { code: "CUTOUT_UNAVAILABLE" });
   assert.equal(reads, 0);
 });

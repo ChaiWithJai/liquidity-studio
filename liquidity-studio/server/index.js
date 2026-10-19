@@ -1419,6 +1419,7 @@ export function createHttpServer(
           operatorCapabilities: {
             helperControl: helperControlEnabled && !trustedTestMode,
             nativeEditor: nativeEditorEnabled && !trustedTestMode,
+            nativeCutout: nativeEditorEnabled && !trustedTestMode && platform.nativeCutoutConfigured === true,
             nativePortable:
               nativeEditorEnabled &&
               !trustedTestMode &&

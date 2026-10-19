@@ -88,7 +88,7 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | A29 | Self-host Penpot MCP or full Doory stack on GCP | P,N,G; local investigated, full production editor GCP not delivered. |
 | A30 | Reel 0:00–0:03,0:03–0:15,0:15–0:30 → three sequential `drfPayload.pages` → MP4 | M,A; both-brand timed motion plus actual stereo MP4/WebM; encoded audio output30.08s/30.02s, exact source timeline and learner transfer distinguished. |
 | A31 | Avoid Node+Django+Clojure operational bloat; emit specs and optionally connect external URLs | N,G; Studio-owned avoids new Django/SQL/Redis, external path conditional. |
-| A32 | Very young Oct 2026 Doory/AAL; pin commit, retain attribution or render primitives | N; upstream pinned/notices preserved, GPG distribution condition unresolved. |
+| A32 | Very young Oct 2026 Doory/AAL; pin commit, retain attribution or render primitives | N; upstream pinned/notices preserved; [signed upstream license verified](doory-signed-license/README.md), retained-artifact notice reconciliation and human practice remain. |
 | A33 | Run backwards/QA to prove entire experience | N,P,R; actual task evidence required, human learning not inferred from CI. |
 | B01 | Creative team uses Doory co-editing then Penpot pre-post composition | N,P,D; separate-persona shared planning notes observed, not simultaneous native coediting or a mandatory Doory→Penpot sequence. |
 | B02 | Founder hosts unified topology for two brands, sovereignty/no seat taxes/DPO | R,G; private pilot/exit advances, no automatic preference training/zero-cost claim. |

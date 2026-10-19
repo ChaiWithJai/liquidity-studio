@@ -7,7 +7,7 @@
   import NativeBrandRefreshPanel from './NativeBrandRefreshPanel.svelte';
 
   let {
-    record, request, scopeKey, getScopeKey,
+    record, request, scopeKey, getScopeKey, cutoutAvailable = false,
     onSaved = () => {}, onSaveStateChange = () => {}, onDirtyChange = () => {},
     canRebind = false, canReviewSource = false, onRebound = () => {}, onReviewSource = () => {},
   } = $props();
@@ -19,6 +19,7 @@
   let rightsDeclaration = $state('');
   let consent = $state('');
   let cutoutConfirmed = $state(false);
+  let cutoutStatus = $state('');
   let localRecord = $state.raw(null);
   let reloadEpoch = $state(0);
   let recoveryMessage = $state('');
@@ -62,6 +63,7 @@
       editorReady = false;
       activeBroker = createNativeEditorBroker({
         frameWindow: frame.contentWindow,
+        cutoutAvailable: untrack(() => cutoutAvailable),
         request: capturedRequest,
         scopeKey: openingScope,
         getScopeKey,
@@ -89,6 +91,7 @@
           }
         },
         onState(state) {
+          if (typeof state.cutoutStatus === 'string') cutoutStatus = state.cutoutStatus;
           if (state.status === 'error') { clearTimeout(watchdog); loading = false; editorReady = false; }
           editorDirty = state.dirty ?? ['dirty', 'saving', 'conflict'].includes(state.status);
           if (editorDirty) canvasEpoch += 1;
@@ -147,7 +150,7 @@
     <NativeBrandRefreshPanel record={localRecord?.id === record.id ? localRecord : record} {request} {scopeKey} {getScopeKey} dirty={editorDirty} ready={editorReady} getCanvasEpoch={() => canvasEpoch} onRefreshed={refreshedBrand} />
   {/key}
     </div></details>
-    <details name={`native-tools-${record.id}`} data-native-tool="images"><summary>Upload rights</summary><div class="tool-panel image-rights">
+    <details name={`native-tools-${record.id}`} data-native-tool="images"><summary>Upload rights{#if cutoutStatus}<span class="cutout-update"> · Background removal update</span>{/if}</summary><div class="tool-panel image-rights">
     <label>Rights declaration <input bind:value={rightsDeclaration} maxlength="500" placeholder="Describe your permission to use uploaded images or audio" /></label>
     <label>Consent
       <select bind:value={consent}>
@@ -156,7 +159,9 @@
         <option value="not_personal_data">Owned media with no personal data</option>
       </select>
     </label>
-    <label><input type="checkbox" bind:checked={cutoutConfirmed} /> I confirm the selected image’s recorded rights and consent permit background removal.</label>
+    {#if !cutoutAvailable}<p>Background removal is not configured here. Image upload and editing remain available.</p>{/if}
+    {#if cutoutStatus}<p data-testid="native-cutout-status" role="status" aria-live="polite">{cutoutStatus}</p>{/if}
+    <label><input type="checkbox" disabled={!cutoutAvailable} bind:checked={cutoutConfirmed} /> I confirm the selected image’s recorded rights and consent permit background removal.</label>
     <p>Images support PNG, JPEG and WebP up to 512 KiB and four megapixels. Audio Uploads supports 16-bit stereo PCM WAV up to 6 MiB, 30 seconds, at 44.1 or 48 kHz, with at most four saved tracks. Other audio formats and microphone recording are not supported in Studio yet. When configured locally, background removal preserves pixel dimensions and rejects PNG output above 512 KiB. It never silently resizes or overwrites the original; native Undo restores the original reference.</p>
     <button type="button" onclick={(event) => { const details = event.currentTarget.closest("details"); if (details) { details.open = false; details.querySelector("summary")?.focus(); } }}>Done</button>
     </div></details>
