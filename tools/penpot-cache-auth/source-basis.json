@@ -2,8 +2,18 @@
   "inspectedImage": "valkey/valkey@sha256:640c5e62cea04b6d6f2084232651d0cc70362d31f4f805e7be94dbed6855e8f2",
   "inspectedPlatform": "linux/arm64",
   "imageUser": "",
-  "entrypoint": ["tini", "--", "docker-entrypoint.sh"],
+  "entrypoint": [
+    "tini",
+    "--",
+    "docker-entrypoint.sh"
+  ],
   "officialEntrypointSha256": "2a8a83f3265e56d6282b715b9101efa590e1c9c096283aa08df97087fce8c30a",
   "serverPrivilegeDrop": "setpriv --reuid=valkey --regid=valkey --clear-groups",
-  "scope": "Source/file inspection only; no authenticated native runtime acceptance yet. Other image/platform selections must satisfy the same startup source guard."
+  "scope": "Source/file inspection only; no authenticated native runtime acceptance yet. Other image/platform selections must satisfy the same startup source guard.",
+  "cliAuthentication": {
+    "version": "8.1.10",
+    "environmentVariable": "REDISCLI_AUTH",
+    "source": "https://github.com/valkey-io/valkey/blob/8.1.10/src/valkey-cli.c#L82",
+    "behavior": "parseEnv reads CLI_AUTH_ENV; no password argument is required."
+  }
 }

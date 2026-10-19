@@ -38,7 +38,7 @@ with tempfile.TemporaryDirectory(prefix='cache-auth-ci-') as temp:
  run(['docker','pull','--platform','linux/amd64',IMAGE],timeout=180)
  name='cache-auth-ci-'+uuid.uuid4().hex
  def client(user,secret,*command):
-  code='IFS= read -r VALKEYCLI_AUTH; export VALKEYCLI_AUTH; exec valkey-cli --user "$1" '+ ' '.join(command)
+  code='IFS= read -r REDISCLI_AUTH; export REDISCLI_AUTH; exec valkey-cli --user "$1" '+ ' '.join(command)
   return run(['docker','exec','-i',name,'sh','-ec',code,'sh',user],input=secret+'\n',check=False)
  def ready():
   last=None

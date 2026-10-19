@@ -16,7 +16,7 @@ The generator creates a 0700 directory and exclusive 0600 files. `users.acl` con
 
 Set `PENPOT_CACHE_AUTH_DIRECTORY` to that directory and `PENPOT_CACHE_AUTH_TOOLS` to the absolute path of this reviewed tool directory. The managed template loads `client.env` into backend and exporter. Its cache wrapper verifies the pinned official entrypoint, copies the two host files into private tmpfs, and gives the copies to Valkey. Host ownership and 0600 permissions remain unchanged. The official entrypoint drops the server to its existing Valkey account. The outer `tini` process remains in use.
 
-The pinned image and inspected entrypoint hash are recorded in `source-basis.json`. A different entrypoint fails closed and requires source review. The health command reads its password file into `VALKEYCLI_AUTH`; no password enters its argv. Readiness requires an actual authenticated PONG.
+The pinned image and inspected entrypoint hash are recorded in `source-basis.json`. A different entrypoint fails closed and requires source review. The health command reads its password file into `REDISCLI_AUTH`; no password enters its argv. Readiness requires an actual authenticated PONG.
 
 ## Optional existing recovery fixture overlay
 
