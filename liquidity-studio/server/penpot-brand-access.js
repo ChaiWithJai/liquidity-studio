@@ -5,6 +5,7 @@ import {nativePublicOrigin,nativeRpcOrigin} from './penpot-origins.js';
 import {fail} from './auth.js';
 import {createHash} from 'node:crypto';
 const hash=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const CURRENT_PERSON=Symbol('current-person-admission');
 const UUID=/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/;
 const scopeEqual=(a,b)=>a?.organizationId===b?.organizationId&&a?.brandId===b?.brandId;
 const sameWorkspace=(a,b)=>['nativeInstanceId','teamId','projectId','operatorProfileId'].every(key=>a?.[key]===b?.[key]);
@@ -29,11 +30,12 @@ export class PenpotBrandAccess {
   return {workspace,mapping:{nativeInstanceId:this.pairing.nativeInstanceId,teamId:workspace.teamId,projectId:workspace.projectId,operatorProfileId:workspace.ownerPrincipal},members};
  }
  dto(record,grant){const ready=record?.state==='current'&&record.sharingPolicy==='disabled'&&record.liveFence==='current'&&grant?.state==='current';return {state:record?.state||'not-configured',nativeTeamId:record?.teamId||null,grantState:grant?.state||'not-paired',actingNativeProfileId:grant?.nativeProfileId||null,editingEnabled:ready,reason:ready?null:'Native sharing policy and live access fencing must be verified before editing.'};}
- async registerWorkspace(actor,input={}){
-  if(!input||Object.keys(input).length)throw fail(400,'Native workspace registration has no browser-supplied IDs');this.identity.requireFounder(actor);this.current(await this.store.get('identity'),actor.id,true);
+ async registerCurrentWorkspace(actor){return this.registerWorkspace(actor,{},CURRENT_PERSON);}
+ async registerWorkspace(actor,input={},authority=null){
+  if(!input||Object.keys(input).length)throw fail(400,'Native workspace registration has no browser-supplied IDs');if(authority!==CURRENT_PERSON)this.identity.requireFounder(actor);this.current(await this.store.get('identity'),actor.id,authority!==CURRENT_PERSON);
   const snapshot=await this.nativeWorkspace(actor);let result;
   await this.store.transact(['identity',this.key,this.teamsKey],([identity,record,registry])=>{
-   this.current(identity,actor.id,true);registry=registry||{teams:[]};const reused=registry.teams.find(x=>x.teamId===snapshot.mapping.teamId);
+   this.current(identity,actor.id,authority!==CURRENT_PERSON);registry=registry||{teams:[]};const reused=registry.teams.find(x=>x.teamId===snapshot.mapping.teamId);
    if(reused&&!scopeEqual(reused.scope,this.scope))throw fail(409,'Each governed brand requires a separate native team');
    if(record&&!sameWorkspace(record,snapshot.mapping))throw fail(409,'Existing native brand mapping is immutable; preserve its work');
    record=record||{...snapshot.mapping,scope:this.scope,epoch:1,createdAt:this.now(),state:'pending',sharingPolicy:'unverified',liveFence:'unverified',grants:[]};
@@ -64,14 +66,16 @@ export class PenpotBrandAccess {
  }
  /** One durable exact intent is saved BEFORE the native side effect. Pending/unknown
   * retries reuse the same payload and key; no email or arbitrary native IDs. */
- async reconcile(actor,{actorId,idempotencyKey}={}){
+ async reconcileCurrent(actor,idempotencyKey){return this.reconcile(actor,{actorId:actor.id,idempotencyKey},CURRENT_PERSON);}
+ async reconcile(actor,{actorId,idempotencyKey}={},authority=null){
   if(!UUID.test(actorId||'')||!UUID.test(idempotencyKey||''))throw fail(400,'Current Studio person and reconciliation key required');
   if(typeof this.reconcileMembership!=='function')throw fail(503,'Native membership hook is unavailable');
-  this.identity.requireFounder(actor);this.current(await this.store.get('identity'),actor.id,true);
+  const self=authority===CURRENT_PERSON;if(self&&actorId!==actor.id)throw fail(403,'Current person only');
+  if(!self)this.identity.requireFounder(actor);this.current(await this.store.get('identity'),actor.id,!self);
   const native=await this.nativeWorkspace(actor);let command;
   const targetPairKey=this.pairing.pairKey(actorId);
   await this.store.transact(['identity',this.key,targetPairKey],([identity,record,pair])=>{
-   this.current(identity,actor.id,true);if(!record||!sameWorkspace(record,native.mapping))throw fail(409,'Native workspace changed');
+   this.current(identity,actor.id,!self);if(!record||!sameWorkspace(record,native.mapping))throw fail(409,'Native workspace changed');
    if(record.grants.some(x=>x.actorId!==actorId&&x.reconciliation?.id===idempotencyKey))throw fail(409,'Reconciliation key belongs to another Studio person');
    const existing=record.grants.find(x=>x.actorId===actorId),connected=pair?.connection;
    const present=Boolean(identity.users.some(x=>x.id===actorId&&!x.disabled)&&identity.memberships.some(x=>x.userId===actorId&&x.organizationId===this.scope.organizationId&&x.brandIds.includes(this.scope.brandId))&&connected);
@@ -81,7 +85,7 @@ export class PenpotBrandAccess {
    const oldIntent=existing?.reconciliation;
    if(oldIntent?.id===idempotencyKey){if(oldIntent.initiator!==actor.id||oldIntent.nativeProfileId!==nativeProfileId||oldIntent.present!==present||oldIntent.pairingEpoch!==(pair?.epoch||0))throw fail(409,'Reconciliation intent changed; preserve the existing request');command=structuredClone(oldIntent);return [identity,record,pair];}
    if(oldIntent?.state==='pending')throw fail(409,'Preserve the unresolved native reconciliation intent');
-   const intent={id:idempotencyKey,initiator:actor.id,actorId,nativeProfileId,present,pairingEpoch:pair?.epoch||0,workspaceEpoch:record.epoch,expectedEpoch:existing?.nativeEpoch||0,grantEpoch:(existing?.nativeEpoch||0)+1,state:'pending'};
+   const intent={...(self?{kind:'current-person'}:{}),id:idempotencyKey,initiator:actor.id,actorId,nativeProfileId,present,pairingEpoch:pair?.epoch||0,workspaceEpoch:record.epoch,expectedEpoch:existing?.nativeEpoch||0,grantEpoch:(existing?.nativeEpoch||0)+1,state:'pending'};
    const grant={...(existing||{actorId,nativeProfileId,epoch:0}),nativeProfileId,pairingEpoch:intent.pairingEpoch,epoch:(existing?.epoch||0)+1,state:'pending-reconciliation',reconciliation:intent};record.grants=record.grants.filter(x=>x.actorId!==actorId);record.grants.push(grant);command=structuredClone(intent);return [identity,record,pair];
   });
   const payload={'team-id':native.mapping.teamId,'member-id':command.nativeProfileId,'intent-id':command.id,'expected-epoch':command.expectedEpoch,'grant-epoch':command.grantEpoch,present:command.present};
@@ -90,7 +94,7 @@ export class PenpotBrandAccess {
    if(!ack?.acknowledged||ack.teamId!==payload['team-id']||ack.memberId!==payload['member-id']||ack.intentId!==command.id||ack.grantEpoch!==command.grantEpoch||ack.present!==command.present)throw fail(502,'Native membership acknowledgement did not match; preserve intent');
   }
   await this.store.transact(['identity',this.key,targetPairKey],([identity,record,pair])=>{
-   this.current(identity,actor.id,true);const grant=record?.grants.find(x=>x.actorId===actorId),intent=grant?.reconciliation;
+   this.current(identity,actor.id,!self);const grant=record?.grants.find(x=>x.actorId===actorId),intent=grant?.reconciliation;
    if(!record||!sameWorkspace(record,native.mapping)||record.epoch!==command.workspaceEpoch||!intent||hash({...intent,state:'pending'})!==hash({...command,state:'pending'})||pair?.epoch!==command.pairingEpoch)throw fail(409,'Native reconciliation changed; preserve the accepted native receipt');
    const stillGranted=Boolean(identity.users.some(x=>x.id===actorId&&!x.disabled)&&identity.memberships.some(x=>x.userId===actorId&&x.organizationId===this.scope.organizationId&&x.brandIds.includes(this.scope.brandId))&&pair?.connection?.nativeProfileId===command.nativeProfileId);
    if(stillGranted!==command.present)throw fail(409,'Studio membership changed before native acknowledgement');
@@ -102,7 +106,8 @@ export class PenpotBrandAccess {
   const record=await this.store.get(this.key),grant=record?.grants.find(x=>x.reconciliation?.id===input.intentId),intent=grant?.reconciliation;
   if(!intent||record.teamId!==input.nativeTeamId||record.operatorProfileId!==input.nativeOperatorProfileId||intent.nativeProfileId!==input.nativeMemberId||intent.expectedEpoch!==input.expectedEpoch||intent.grantEpoch!==input.grantEpoch||intent.present!==input.present)throw fail(403,'Exact current native reconciliation intent required');
   await this.store.transact(['identity',this.key,this.pairing.pairKey(grant.actorId)],([identity,current,pair])=>{
-   this.current(identity,intent.initiator,true);const live=current?.grants.find(x=>x.actorId===grant.actorId)?.reconciliation;
+   const self=intent.kind==='current-person';if(self&&(intent.initiator!==grant.actorId||intent.actorId!==grant.actorId||intent.present!==true))throw fail(403,'Current person reconciliation changed');
+   this.current(identity,intent.initiator,!self);const live=current?.grants.find(x=>x.actorId===grant.actorId)?.reconciliation;
    if(!live||hash(live)!==hash(intent)||current.epoch!==intent.workspaceEpoch||pair?.epoch!==intent.pairingEpoch)throw fail(403,'Native reconciliation intent changed');
    const present=Boolean(identity.users.some(x=>x.id===grant.actorId&&!x.disabled)&&identity.memberships.some(x=>x.userId===grant.actorId&&x.organizationId===this.scope.organizationId&&x.brandIds.includes(this.scope.brandId))&&pair?.connection?.nativeProfileId===intent.nativeProfileId);
    if(present!==intent.present||(present&&(current.state!=='current'||current.sharingPolicy!=='disabled'||current.liveFence!=='current')))throw fail(403,'Current native membership or fencing changed');return [identity,current,pair];
@@ -178,6 +183,6 @@ export function createPenpotMembershipReconciler({sessions,transportMode='loopba
   if(response.status!==200){await response.body?.cancel().catch(()=>{});throw fail([401,403,409].includes(response.status)?response.status:502,'Native membership was not acknowledged; preserve intent');}
   const reader=response.body?.getReader();if(!reader)throw fail(502,'Native membership acknowledgement missing');const chunks=[];let bytes=0,done=false;
   try{for(;;){const part=await reader.read();if(part.done){done=true;break;}bytes+=part.value.byteLength;if(bytes>4096)throw fail(502,'Native acknowledgement exceeds its bound');chunks.push(part.value);}}finally{if(!done)await reader.cancel().catch(()=>{});reader.releaseLock();}
-  try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw fail(502,'Native membership acknowledgement invalid');}
+  try{const wire=JSON.parse(Buffer.concat(chunks).toString('utf8'));return {acknowledged:wire.acknowledged,teamId:wire['team-id']??wire.teamId,memberId:wire['member-id']??wire.memberId,intentId:wire['intent-id']??wire.intentId,grantEpoch:wire['grant-epoch']??wire.grantEpoch,present:wire.present};}catch{throw fail(502,'Native membership acknowledgement invalid');}
  };
 }

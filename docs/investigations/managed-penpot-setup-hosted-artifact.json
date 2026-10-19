@@ -1,0 +1,88 @@
+{
+  "run": 39299940601,
+  "artifactId": 12212385715,
+  "artifactSource": "2c762c76d164fba2da701896818b3e5cb261d751",
+  "ciMerge": "334d6e9db5ac42cd626b911d97fcce88aa90f72c",
+  "zipSha256": "97a19d795b0a3404dc9a514d8d43a66e9d823bc43f1e7e87c2382205be9ec86f",
+  "allProductionBuildInputsVerified": true,
+  "inputCount": 413,
+  "inputInventorySha256": "e52849fb2168b2e2dcf61ae0da6d50e74d382e40b0a96ea6de9a11964d0e35b4",
+  "sourceCorrespondence": "Entire application Git tree identical between hosted checkout merge and reviewed source; every tracked non-dist application input verified byte-for-byte.",
+  "outputs": [
+    {
+      "path": "assets/index-CETLzB0m.js",
+      "bytes": 606823,
+      "sha256": "0dbc0961f33351042880f883445add2e29f69cc98d27c06006995f1e2bcbaaa7"
+    },
+    {
+      "path": "assets/index-oeDJJ19d.css",
+      "bytes": 68932,
+      "sha256": "a2a2e4dc12feb314b825df118fefb5bda2aaa87427ae8b878a476cafbbb40ddf"
+    },
+    {
+      "path": "fonts/DejaVuSans-Bold.ttf",
+      "bytes": 708920,
+      "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
+    },
+    {
+      "path": "fonts/DejaVuSans.ttf",
+      "bytes": 759720,
+      "sha256": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322"
+    },
+    {
+      "path": "fonts/InstrumentSerif-OFL.txt",
+      "bytes": 4405,
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "path": "fonts/InstrumentSerif-Regular.ttf",
+      "bytes": 70012,
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "path": "fonts/Inter-LICENSE.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "fonts/InterVariable.ttf",
+      "bytes": 879708,
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf"
+    },
+    {
+      "path": "fonts/LICENSE.txt",
+      "bytes": 3859,
+      "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9"
+    },
+    {
+      "path": "fonts/MonaSans-Bold.otf",
+      "bytes": 116248,
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641"
+    },
+    {
+      "path": "fonts/MonaSans-OFL.txt",
+      "bytes": 4419,
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+    },
+    {
+      "path": "fonts/MonaSans-Regular.otf",
+      "bytes": 113784,
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari-OFL.txt",
+      "bytes": 4386,
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari.ttf",
+      "bytes": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "path": "index.html",
+      "bytes": 455,
+      "sha256": "e26bd0f944327da3006eb438683707011cf5bde2898bfdb526a2adfe1f07ccce"
+    }
+  ]
+}

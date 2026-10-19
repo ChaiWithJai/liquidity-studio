@@ -4,7 +4,7 @@
   let { request, onConnectionChange = () => {}, returnContext = {} } = $props();
   let reportedStatus;
   let info = $state(null), loading = $state(true), busy = $state(false), error = $state('');
-  let connectUrl = $state(''), pollingStopped = $state(false);
+  let connectUrl = $state(''), pollingStopped = $state(false), settingUp = $state(false);
   let alive = true, sequence = 0, timer, pollUntil = 0;
   const states = new Set(['not-connected', 'pending', 'native-confirmed', 'connected', 'expired']);
   function validExpiry(value) { return typeof value === 'number' && Number.isSafeInteger(value) && value > 0 && value <= 8640000000000000; }
@@ -50,11 +50,25 @@
   async function complete() {
     if (busy || info?.state !== 'native-confirmed' || !info.challenge?.id) return;
     stopPolling(); const ticket = ++sequence; const challengeId = info.challenge.id; busy = true; error = '';
+    let setUpAfterConnection = false;
     try {
       await request('/api/studio/penpot/access/complete', { method: 'POST', body: JSON.stringify({ challengeId }) });
-      if (alive && ticket === sequence) { onConnectionChange(); await load(true, false); }
+      if (alive && ticket === sequence) {
+        onConnectionChange(); await load(true, false);
+        setUpAfterConnection = info?.state === 'connected' && info.setupAvailable === true && info.editingEnabled !== true;
+      }
     } catch (failure) { if (alive && ticket === sequence) error = failure.message; }
     finally { if (alive) busy = false; }
+    if (alive && setUpAfterConnection) await setupAccess();
+  }
+  async function setupAccess() {
+    if (busy || info?.state !== 'connected' || info.setupAvailable !== true || info.editingEnabled === true) return;
+    stopPolling(); const ticket = ++sequence; busy = true; settingUp = true; error = '';
+    try {
+      await request('/api/studio/penpot/access/setup', { method: 'POST', body: '{}' });
+      if (alive && ticket === sequence) { onConnectionChange(); await load(false, false); }
+    } catch (failure) { if (alive && ticket === sequence) error = failure.message; }
+    finally { if (alive) { busy = false; settingUp = false; } }
   }
   async function disconnect() {
     if (busy) return;
@@ -74,6 +88,7 @@
   {#if loading}<p role="status">Checking your connection…</p>
   {:else if info?.state === 'connected'}
     <p role="status">Penpot connected{info.connection?.nativeProfileName ? ` as ${info.connection.nativeProfileName}` : ''}. {info.editingEnabled === true ? 'Ready to edit this brand’s designs.' : info.accessReason || 'Design access is not enabled yet.'}</p>
+    {#if info.editingEnabled !== true && info.setupAvailable === true}<button class="primary" disabled={busy} onclick={setupAccess}>{settingUp ? 'Setting up brand access…' : 'Set up brand access'}</button>{/if}
     <details><summary>Account connection</summary><button class="secondary" disabled={busy} onclick={disconnect}>Disconnect my account</button></details>
   {:else if info?.state === 'native-confirmed'}
     <p>Penpot confirmed {info.challenge?.nativeProfileName || 'your account'}. Confirm here to connect it to your current Studio account.</p>

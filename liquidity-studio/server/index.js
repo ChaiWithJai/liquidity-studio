@@ -882,9 +882,14 @@ export function createHttpServer(
         if (!nativePairing || trustedTestMode) throw fail(404, "Native connection is not configured");
         const credential = token(req, identity.mode);
         const context = createHash("sha256").update(credential).digest("hex");
-        if (["/api/studio/penpot/access/workspace", "/api/studio/penpot/access/inspect", "/api/studio/penpot/access/reconcile"].includes(route)) {
+        if (["/api/studio/penpot/access/workspace", "/api/studio/penpot/access/inspect", "/api/studio/penpot/access/reconcile", "/api/studio/penpot/access/setup"].includes(route)) {
           if (!nativeAccess || req.method !== "POST") throw fail(404, "Native brand access is not configured");
           const service=await nativeAccess.forScope(scope);
+          if(route.endsWith("/setup")) {
+            workspaceExact(body,[]);
+            if(typeof service.setupCurrent!=="function")throw fail(404,"Managed brand setup is not configured");
+            return json(200,await service.setupCurrent(user,context));
+          }
           if(route.endsWith("/reconcile")) {
             workspaceExact(body,["actorId","idempotencyKey"]);
             return json(200,await service.reconcile(user,body));
@@ -896,7 +901,7 @@ export function createHttpServer(
         if (route === "/api/studio/penpot/access" && req.method === "GET") {
           const connection=await nativePairing.status(user,scope,context);
           if(nativeAccess&&connection.state==="connected"){
-            try {const service=await nativeAccess.forScope(scope);Object.assign(connection,await service.connectionStatus(user,context));}
+            try {const service=await nativeAccess.forScope(scope);Object.assign(connection,await service.connectionStatus(user,context),{setupAvailable:typeof service.setupCurrent==="function"});}
             catch(error){if(![401,403,409,503].includes(error.status))throw error;connection.editingEnabled=false;connection.accessReason=error.message;}
           }
           return json(200,connection);
@@ -907,7 +912,13 @@ export function createHttpServer(
             return json(201, await nativePairing.issue(user, scope, context,body));
           }
           if (route === "/api/studio/penpot/access/complete")
-            return json(200, await nativePairing.complete(user, scope, context, body));
+            {
+              const connection=await nativePairing.complete(user, scope, context, body);
+              let setupAvailable=false;
+              try{const service=nativeAccess?await nativeAccess.forScope(scope):null;setupAvailable=typeof service?.setupCurrent==="function";}
+              catch(error){if(![401,403,409,503].includes(error.status))throw error;}
+              return json(200,{...connection,setupAvailable});
+            }
           if (route === "/api/studio/penpot/access/disconnect")
             return json(200, await nativePairing.disconnect(user, scope, context, body));
         }
