@@ -39,12 +39,11 @@ services:
   penpot-backend:
     image: ${PENPOT_BACKEND_IMAGE:?Verified hook-bearing linux/amd64 backend digest required}
     restart: unless-stopped
-    env_file: ["${PENPOT_CACHE_AUTH_DIRECTORY:?Private generated cache directory required}/client.env"]
+    env_file:
+      - "${PENPOT_CACHE_AUTH_DIRECTORY:?Private generated cache directory required}/client.env"
+      - "${PENPOT_DATABASE_OWNER_DIRECTORY:?Private application DB credential directory required}/application.env"
     environment:
       <<: *native
-      PENPOT_DATABASE_URI: postgresql://penpot-postgres/penpot
-      PENPOT_DATABASE_USERNAME: penpot
-      PENPOT_DATABASE_PASSWORD: ${PENPOT_DB_PASSWORD:?Persistent private DB password required}
       PENPOT_OBJECTS_STORAGE_BACKEND: fs
       PENPOT_OBJECTS_STORAGE_FS_DIRECTORY: /opt/data/assets
       STUDIO_NATIVE_ACCESS_CONFIG: /run/studio-native/access.json
@@ -74,15 +73,15 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: penpot
-      POSTGRES_USER: penpot
-      POSTGRES_PASSWORD: ${PENPOT_DB_PASSWORD:?required}
+      POSTGRES_USER: ${PENPOT_DB_OPERATOR_USER:?Existing bootstrap operator name required}
+      POSTGRES_PASSWORD: ${PENPOT_DB_OPERATOR_PASSWORD:?Existing private bootstrap credential required}
       POSTGRES_INITDB_ARGS: --data-checksums
     volumes: ["database:/var/lib/postgresql/data"]
     networks: [native]
     mem_limit: 384m
     cpus: 0.5
     healthcheck:
-      test: [CMD-SHELL, "pg_isready -U penpot"]
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d penpot']
       interval: 10s
       timeout: 5s
       retries: 12
