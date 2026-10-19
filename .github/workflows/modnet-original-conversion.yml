@@ -176,6 +176,7 @@ jobs:
               text='## MODNet numerical result (metadata only)\n```json\n'+json.dumps(metadata,indent=2)+'\n```\n'
               assert len(text.encode())<65536
           with summary.open('a') as stream:stream.write(text)
+          print(text,end='')
           PYSUMMARY
       - name: Record original recipe and source hashes
         if: always()
