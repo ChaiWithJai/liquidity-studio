@@ -1,0 +1,20 @@
+--- a/frontend/src/app/main/ui/workspace.cljs
++++ b/frontend/src/app/main/ui/workspace.cljs
+@@ -18,6 +18,7 @@
+    [app.main.refs :as refs]
+    [app.main.router :as-alias rt]
+    [app.main.store :as st]
++   [app.main.studio-host :as studio-host]
+    [app.main.ui.context :as ctx]
+    [app.main.ui.ds.product.loader :refer [loader*]]
+    [app.main.ui.hooks :as hooks]
+@@ -224,6 +225,9 @@
+ 
+         background-color (:background-color wglobal)]
+ 
++    (mf/with-effect [file-id]
++      (studio-host/mount! file-id))
++
+     (mf/with-effect []
+       (st/emit! (dps/initialize-persistence)
+                 (dpl/update-plugins-permissions-peek)))

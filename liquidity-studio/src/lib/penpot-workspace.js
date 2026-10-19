@@ -11,3 +11,8 @@ export function boundPenpotFrameUrl(design,{designId,storyId,generationId,embedd
     return url.href;
   }catch{throw Error('The saved design link is unavailable. Open the design from its preview.');}
 }
+export function readPenpotSaveState(event,{source,origin,nonce,fileId}){
+  const data=event.data;
+  if(!/^[A-Za-z0-9_-]{43}$/.test(nonce)||event.source!==source||event.origin!==origin||!data||data.type!=='studio-penpot-state'||data.version!==1||data.nonce!==nonce||data.fileId!==fileId||!['unknown','editing','pending','saving','saved','error'].includes(data.status)||!(data.revision===null||Number.isSafeInteger(data.revision)&&data.revision>=0))return null;
+  return {status:data.status,revision:data.revision};
+}

@@ -177,7 +177,7 @@
   let sourcePreparationEnabled=$state(false),preparedDirty=$state(false),preparedEditingStoryId=$state(""),preparedForkIntent=$state(null);
   let preparedWorkspace=$derived(sourcePreparationEnabled&&(!campaign||preparedEditingStoryId===selectedStory?.id));
   let nativeRecord = $state(null);
-  let penpotEmbedding = $state(null), penpotRecord = $state(null);
+  let penpotEmbedding = $state(null), penpotRecord = $state(null), penpotSaveState=$state("unknown");
   const penpotEmbedded = $derived(embeddingAvailable(penpotEmbedding,window.location.origin));
   async function openPenpotDesign(designId) {
     if(!penpotEmbedded || !selectedStory || !penpotHost) { error="Open this saved design from the configured Studio address."; return; }
@@ -188,7 +188,7 @@
       if(penpotHost!==host || selectedStory?.id!==story.id || selectedStory?.generationId!==story.generationId || selectedStory?.revision!==story.revision || format!==openingFormat)return;
       const url=boundPenpotFrameUrl(value.design,{designId,storyId:story.id,generationId:story.generationId,embedding:penpotEmbedding,studioOrigin:window.location.origin});
       if(!leaveNativeEditor())return;
-      penpotRecord={...value.design,frameUrl:url};
+      penpotSaveState="unknown";penpotRecord={...value.design,frameUrl:url};
       window.scrollTo(0,0);
     } catch(failure) { if(penpotHost===host)error=failure.message; }
   }
@@ -202,13 +202,13 @@
       error = "Save native changes or explicitly discard them before leaving the native editor.";
       return false;
     }
-    if(penpotRecord && !discard && !window.confirm("Finish saving in Penpot before leaving this design. Return to Studio copy and preview?"))return false;
-    penpotRecord=null;
+    if(penpotRecord && penpotSaveState!=="saved" && !discard && !window.confirm("Finish saving in Penpot before leaving this design. Return to Studio copy and preview?"))return false;
+    penpotRecord=null;penpotSaveState="unknown";
     nativeRecord = null; nativeHost = null; nativeDirty = false; nativeSaveState = "idle";
     return true;
   }
   $effect(() => {
-    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty && !strategyDirty && !penpotRecord) return;
+    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty && !strategyDirty && !(penpotRecord&&penpotSaveState!=="saved")) return;
     const protect = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
@@ -1410,7 +1410,7 @@
       {#if tab==='strategy'&&strategyHost&&(currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable)}
         {#key strategyHost.key}<DefiantWorkspace request={strategyHost.request} location={strategyLocation} onNavigate={strategyNavigation} onDirtyChange={value=>strategyDirty=value} canEnable={currentOrganization.strategy.canEnable} onEnabled={refreshStrategyOrganizations}/>{/key}
       {:else if penpotRecord && selectedStory}
-        <PenpotWorkspace design={penpotRecord} storyTitle={selectedStory.title} brandName={currentBrand?.name || ""} formatName={formats.find(item=>item.id===format)?.name || format} onReturn={()=>leaveNativeEditor()} />
+        <PenpotWorkspace design={penpotRecord} storyTitle={selectedStory.title} brandName={currentBrand?.name || ""} formatName={formats.find(item=>item.id===format)?.name || format} onReturn={()=>leaveNativeEditor()} onSaveStateChange={value=>penpotSaveState=value} />
       {:else if scopeLoading}
         <div class="panel" role="status">Loading {currentBrand?.name || "brand"} workspace…</div>
       {:else if lockedRecovery && canAdmin}

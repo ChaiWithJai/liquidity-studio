@@ -1,6 +1,6 @@
-# Proposed: a nested Penpot workspace in Studio
+# A nested Penpot workspace in Studio
 
-**Status:** Human review required. Architecture discovery and bounded proposal for [#283](https://github.com/ChaiWithJai/liquidity-studio/issues/283); no implementation, DNS/OAuth change or running-deployment change is authorized by this document. Existing #279 deployment and #52/#57 acceptance remain separately attributed. Module: operator-workflow, consuming identity-tenant-access. Baseline inspected: `0389832160684f7635621a4cd3c2f3dec9dafb89`.
+**Status:** Human approved the specification and sequence on October 19, 2026: “Approve spec and sequence; implement.” [Approval record](https://github.com/ChaiWithJai/liquidity-studio/issues/283#issuecomment-6271474365). Implementation is underway under [#283](https://github.com/ChaiWithJai/liquidity-studio/issues/283), without further planning approvals; actual nested-workflow acceptance remains pending. Existing #279 deployment and #52/#57 acceptance remain separately attributed. Module: operator-workflow, consuming identity-tenant-access. Baseline inspected: `0389832160684f7635621a4cd3c2f3dec9dafb89`.
 
 ## Objective and customer outcome
 
@@ -78,6 +78,6 @@ Use existing JavaScript ESM/Svelte 5, explicit narrow DTOs and safe errors. Keep
 
 Done means the nested journey is observed with preserved story/brand context, meaningful dirty/Saved feedback, current human attribution, private media/export and a useful return action. Initial consent/profile confirmation remains truthful; repeat authenticated use does not detour through native dashboard onboarding. Existing scope and session authority work independently of UI containment. Direct native entry, personal/operator recovery and rollback have defined behavior. A successfully framed login page alone is not completion.
 
-Always preserve current grants, files, dirty work, attribution and source-review boundaries. Never share service sessions with humans, accept arbitrary native origins/return URLs, disable native authorization, or claim unobserved human acceptance. Architecture/configuration changes remain unimplemented until the human reviews this proposal.
+Always preserve current grants, files, dirty work, attribution and source-review boundaries. Never share service sessions with humans, accept arbitrary native origins/return URLs, disable native authorization, or claim unobserved human acceptance. Architecture/configuration changes follow the approved bounded sequence; actual delivery and browser acceptance must be recorded separately.
 
-**Single requested decision:** approve the recommended same-site, separate-origin Studio shell and bounded compatibility-first implementation, including exact framing policy and minimal dirty/return integration; retain full-page handoff as fallback. This is a new #283 architecture decision. The earlier #52 implementation waiver and #279 deployment approval do not supply that approval automatically. No additional identity vendor, account matrix or platform plan is requested.
+**Approved decision:** use the same-site, separate-origin Studio shell and bounded compatibility-first implementation, including exact framing policy and minimal dirty/return integration; retain full-page handoff as fallback. This is a new #283 architecture decision. The earlier #52 implementation waiver and #279 deployment approval do not supply that approval automatically. No additional identity vendor, account matrix or platform plan is requested.

@@ -27,6 +27,7 @@ services:
     restart: unless-stopped
     environment:
       <<: *native
+      PENPOT_STUDIO_ORIGIN: https://${STUDIO_HOST:?Exact approved Studio hostname required}
       PENPOT_BACKEND_URI: http://penpot-backend:6060
       PENPOT_EXPORTER_URI: http://penpot-exporter:6061
       PENPOT_HTTP_SERVER_MAX_BODY_SIZE: "10485760"

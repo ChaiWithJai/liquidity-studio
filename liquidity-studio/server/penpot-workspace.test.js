@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {boundPenpotFrameUrl,embeddingAvailable} from '../src/lib/penpot-workspace.js';
+import {boundPenpotFrameUrl,embeddingAvailable,readPenpotSaveState} from '../src/lib/penpot-workspace.js';
 import {readWorkflowLocation,workflowHref} from '../src/lib/workflow-location.js';
 const embedding={studioOrigin:'https://studio.example.com',nativeOrigin:'https://design.example.com'};
 const id='11111111-1111-4111-8111-111111111111';
@@ -18,4 +18,12 @@ test('frame binds the newly authorized saved record and exact constructor origin
  assert.equal(embeddingAvailable(embedding,'https://candidate.run.app'),false);
  for(const changed of [{...design,id:'another'},{...design,storyId:'another'},{...design,generationId:'old'},{...design,status:'pending'},{...design,fileId:'different'},{...design,nativeUrl:design.nativeUrl.replace('design.example.com','attacker.example.com')},{...design,nativeUrl:design.nativeUrl+'&file-id='+id},{...design,nativeUrl:design.nativeUrl.replace('/#/','/other#/')}])assert.throws(()=>boundPenpotFrameUrl(changed,context));
  assert.throws(()=>boundPenpotFrameUrl(design,{...context,studioOrigin:'https://candidate.run.app'}));
+});
+
+test('save messages cannot come from another frame, document, origin or saved file',()=>{
+ const source={},context={source,origin:embedding.nativeOrigin,nonce:'a'.repeat(43),fileId:id};
+ const event={source,origin:embedding.nativeOrigin,data:{type:'studio-penpot-state',version:1,nonce:context.nonce,fileId:id,status:'saved',revision:8}};
+ assert.deepEqual(readPenpotSaveState(event,context),{status:'saved',revision:8});
+ for(const changed of [{...event,source:{}},{...event,origin:embedding.studioOrigin},{...event,data:{...event.data,nonce:'b'.repeat(43)}},{...event,data:{...event.data,fileId:'another'}},{...event,data:{...event.data,revision:-1}},{...event,data:{...event.data,status:'loaded'}}])assert.equal(readPenpotSaveState(changed,context),null);
+ assert.equal(readPenpotSaveState(event,{...context,nonce:''}),null);
 });

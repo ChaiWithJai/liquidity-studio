@@ -1,0 +1,20 @@
+--- a/docker/images/files/nginx-entrypoint.sh
++++ b/docker/images/files/nginx-entrypoint.sh
+@@ -44,6 +44,17 @@
+   fi
+ }
+ 
++# Public UI-only parent origin. No tokens or native permissions are exposed.
++# Remove a previous startup value so an unset constructor disables the bridge.
++echo "$(sed '/^var penpotStudioOrigin = /d' /var/www/app/js/config.js)" > /var/www/app/js/config.js
++if [ -n "${PENPOT_STUDIO_ORIGIN:-}" ]; then
++  if [[ ! "$PENPOT_STUDIO_ORIGIN" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?$ ]]; then
++    echo "Invalid Studio parent origin" >&2
++    exit 1
++  fi
++  printf 'var penpotStudioOrigin = "%s";\n' "$PENPOT_STUDIO_ORIGIN" >> /var/www/app/js/config.js
++fi
++
+ update_flags /var/www/app/js/config.js
+ update_oidc_name /var/www/app/js/config.js
+ 
