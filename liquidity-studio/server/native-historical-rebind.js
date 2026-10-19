@@ -172,7 +172,8 @@ async function context(service, actor, id, validate) {
     );
   registeredFonts(document, service.availableFonts);
   const initial = await service.hydrate(original, {documentRef:original.initialDocumentRef});
-  if (hash(initial.document) !== original.initialDocumentRef.sha256)
+  const initialChecksum = original.initialDocumentRef.artifact?.sha256 || original.initialDocumentRef.sha256;
+  if (hash(initial.document) !== initialChecksum)
     throw fail(422, 'Historical initial layout checksum mismatch');
   const {layerTokenBindings, omittedGeneratedPlaceholders} = retainedBindings(document, initial.document, original.origin);
   const retokened = applyDooryBrandTokens({

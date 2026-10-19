@@ -237,3 +237,33 @@ test('historical reconciliation still rejects missing real layers, duplicates an
   await assert.rejects(f.native.rebindPlan(f.actor,id),kind==='duplicate'?{status:422,message:'Invalid native object identity'}:/missing or duplicate/i);
  }
 });
+
+test('historical initial provenance accepts generation-pinned artifact descriptors and rejects altered checksums',async t=>{
+ const f=await historicalRebindFixture('vedic_dharma',['reel']);t.after(()=>f.close());
+ const {FirestoreStore}=await import('./cloud-store.js');
+ const objects=new Map(),bucket={name:'private-recovery-fixture',file(object){return {
+  async save(bytes,options){objects.set(object,{bytes:Buffer.from(bytes),metadata:{...options.metadata,size:String(bytes.length),generation:'1'}});},
+  async getMetadata(){return [objects.get(object).metadata];},
+  async download(){return [Buffer.from(objects.get(object).bytes)];},
+  async delete(){objects.delete(object);}
+ };}};
+ const artifactStore=new FirestoreStore({firestore:{collection:()=>({})},bucket});
+ f.store.uploadArtifact=artifactStore.uploadArtifact.bind(artifactStore);
+ f.store.downloadArtifact=artifactStore.downloadArtifact.bind(artifactStore);
+ f.store.deleteArtifact=artifactStore.deleteArtifact.bind(artifactStore);
+ const id=f.ids[0],key=f.native.key(id),record=await f.store.get(key);
+ const initial=await f.native.hydrate(record,{documentRef:record.initialDocumentRef});
+ const initialRef=await f.native.persistDocument(initial.document);
+ assert.equal(initialRef.sha256,undefined);assert.match(initialRef.artifact.sha256,/^[a-f0-9]{64}$/);
+ const document=structuredClone((await f.native.read(f.actor,id)).document);
+ document.pages[1].objects=document.pages[1].objects.filter(o=>o.id!=='subject_cutout_layer');
+ const currentRef=await f.native.persistDocument(document);
+ await f.store.update(key,r=>({...r,initialDocumentRef:initialRef,documentRef:currentRef}));
+ await f.reviewCurrent();const plan=await f.native.rebindPlan(f.actor,id);
+ assert.deepEqual(plan.omittedGeneratedPlaceholders,[{pageId:document.pages[1].id,objectId:'subject_cutout_layer'}]);
+ const copy=await f.native.rebind(f.actor,id,{planSha256:plan.planSha256,expectedHistoricalRevision:record.revision,confirmed:true,idempotencyKey:randomUUID()});
+ assert.deepEqual(copy.document,document);
+ // Actual artifact-store checksum/ownership verification remains in the path.
+ objects.get(initialRef.artifact.object).bytes=Buffer.from('{}');
+ await assert.rejects(f.native.rebindPlan(f.actor,id),{code:'ARTIFACT_INTEGRITY'});
+});
