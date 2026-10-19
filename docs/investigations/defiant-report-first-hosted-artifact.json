@@ -1,0 +1,91 @@
+{
+  "run": 39289981723,
+  "artifactId": 12205077372,
+  "artifactSource": "5c4c114c02819384735ffa21d0938efcd54f4980",
+  "ciMerge": "501d3bcb2766ea4d35126914b2a3b1bf8998ac2a",
+  "zipSha256": "d8745bb84268cbcffae059e69da31ac156f1ebd599d09f92dc4c6bfd237d7b57",
+  "allProductionBuildInputsVerified": true,
+  "inputCount": 411,
+  "inputInventorySha256": "57768e8a9ba687ed475456b0537c0e14f6077fc8867f62a14aa8502b60c7a116",
+  "onlyInterveningAppChange": "liquidity-studio/tests/defiant-workspace.spec.js",
+  "testCorrection": "Select Explore explicitly before testing map-only broken-route diagnostics; same diagnostic and rejection assertions retained.",
+  "outputs": [
+    {
+      "path": "assets/index-oeDJJ19d.css",
+      "bytes": 68932,
+      "sha256": "a2a2e4dc12feb314b825df118fefb5bda2aaa87427ae8b878a476cafbbb40ddf"
+    },
+    {
+      "path": "assets/index-CR7XVKRI.js",
+      "bytes": 606008,
+      "sha256": "bcdd60cda61c8c05bfe61dfad4225165ba7b767ae9f5a134edc112e4f7e392dd"
+    },
+    {
+      "path": "fonts/DejaVuSans-Bold.ttf",
+      "bytes": 708920,
+      "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
+    },
+    {
+      "path": "fonts/DejaVuSans.ttf",
+      "bytes": 759720,
+      "sha256": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322"
+    },
+    {
+      "path": "fonts/InstrumentSerif-OFL.txt",
+      "bytes": 4405,
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "path": "fonts/Inter-LICENSE.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "fonts/InstrumentSerif-Regular.ttf",
+      "bytes": 70012,
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "path": "fonts/InterVariable.ttf",
+      "bytes": 879708,
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf"
+    },
+    {
+      "path": "fonts/LICENSE.txt",
+      "bytes": 3859,
+      "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9"
+    },
+    {
+      "path": "fonts/MonaSans-Bold.otf",
+      "bytes": 116248,
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641"
+    },
+    {
+      "path": "fonts/MonaSans-OFL.txt",
+      "bytes": 4419,
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+    },
+    {
+      "path": "fonts/MonaSans-Regular.otf",
+      "bytes": 113784,
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari-OFL.txt",
+      "bytes": 4386,
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari.ttf",
+      "bytes": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "path": "index.html",
+      "bytes": 455,
+      "sha256": "eec40ec7596a8d69277f6a55c93dc57b4bbee1eb566afe21e0709a6c773a0cd7"
+    }
+  ],
+  "hostedOutcome": "605 Node contracts passed, 10 skipped, zero failures; 39 auxiliary contracts passed. New saved-report viewport/reload/Explore/Back browser regression passed. Only old route-test navigation needed adaptation; final exact-head checks remain required.",
+  "localExecution": "Read/hash/archive copy only; no local builds, installs, suites, model or runtime work."
+}
