@@ -145,6 +145,21 @@ test('managed setup preserves owned-QA provenance and never admits the operator 
  const g=await setup(t),session=await g.connect(g.founder,operator);installManagedAdmission(g.service,{readNativeStatus:async()=>readyStatus()});await assert.rejects(g.service.setupCurrent(g.founder.user,session),{status:403});assert.equal(g.store.get(g.service.key).grants.length,0);
 });
 test('managed readiness uses only fixed private status transport, not story RPC or caller metadata',async()=>{
- const requests=[],reader=createManagedStatusReader({sessions:new Map([[operator,{cookie:'auth-token=private-fixture'}]]),grantKey:'g'.repeat(43),nativeOrigin:'https://design.example.com',rpcOrigin:'http://penpot-frontend:8080',fetchImpl:async(url,options)=>{requests.push({url,options});return Response.json(readyStatus());}});
+ const requests=[],reader=createManagedStatusReader({sessions:new Map([[operator,{cookie:'auth-token=private-fixture'}]]),grantKey:'g'.repeat(43),nativeOrigin:'https://design.example.com',rpcOrigin:'http://penpot-frontend:8080',fetchImpl:async(url,options)=>{requests.push({url,options});return Response.json({'native-pin':readyStatus().nativePin,'team-id':teamId,'operator-profile-id':operator,'installed-features':{'rpc-policy':'v1',session:'v1',live:'v1',assets:'v1'},'measured-revocation-proof':false});}});
  assert.deepEqual(await reader({ownerPrincipal:operator,teamId}),readyStatus());assert.equal(requests[0].url,'http://penpot-frontend:8080/api/rpc/command/studio-access-status');assert.deepEqual(JSON.parse(requests[0].options.body),{'team-id':teamId});assert.equal(requests[0].options.headers.Origin,'https://design.example.com');assert.equal(requests[0].options.headers['X-Studio-Native-Grant-Key'],'g'.repeat(43));assert.equal(requests[0].options.headers.Cookie,'auth-token=private-fixture');
+});
+
+import {createPenpotMembershipReconciler} from './penpot-brand-access.js';
+test('native membership wire acknowledgement is normalized without losing false present',async()=>{
+ const reconcile=createPenpotMembershipReconciler({sessions:new Map([[operator,{cookie:'auth-token=private-fixture'}]]),grantKey:'g'.repeat(43),fetchImpl:async()=>Response.json({acknowledged:true,'team-id':teamId,'member-id':human,'intent-id':id('7'),'grant-epoch':2,present:false})});
+ assert.deepEqual(await reconcile({ownerPrincipal:operator},{}),{acknowledged:true,teamId,memberId:human,intentId:id('7'),grantEpoch:2,present:false});
+});
+test('current-person setup does not replay completed revocation but preserves incompatible pending intent',async t=>{
+ const f=await managedFixture(t);await f.service.setupCurrent(f.login.user,f.session);
+ f.store.update(f.service.key,r=>{const g=r.grants[0];g.state='revoked';g.reconciliation.present=false;g.reconciliation.state='acknowledged';return r;});
+ f.setMembers([{id:operator,isOwner:true,isAdmin:true,isActive:true,canEdit:true}]);
+ const old=f.store.get(f.service.key).grants[0].reconciliation.id;
+ assert.equal((await f.service.setupCurrent(f.login.user,f.session)).editingEnabled,true);assert.notEqual(f.store.get(f.service.key).grants[0].reconciliation.id,old);assert.equal(f.calls(),2);
+ f.store.update(f.service.key,r=>{const g=r.grants[0];g.state='pending-reconciliation';g.reconciliation.present=false;g.reconciliation.state='pending';return r;});
+ await assert.rejects(f.service.setupCurrent(f.login.user,f.session),{status:409});assert.equal(f.calls(),2);
 });

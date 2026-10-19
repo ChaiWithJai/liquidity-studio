@@ -914,8 +914,10 @@ export function createHttpServer(
           if (route === "/api/studio/penpot/access/complete")
             {
               const connection=await nativePairing.complete(user, scope, context, body);
-              const service=nativeAccess?await nativeAccess.forScope(scope):null;
-              return json(200,{...connection,setupAvailable:typeof service?.setupCurrent==="function"});
+              let setupAvailable=false;
+              try{const service=nativeAccess?await nativeAccess.forScope(scope):null;setupAvailable=typeof service?.setupCurrent==="function";}
+              catch(error){if(![401,403,409,503].includes(error.status))throw error;}
+              return json(200,{...connection,setupAvailable});
             }
           if (route === "/api/studio/penpot/access/disconnect")
             return json(200, await nativePairing.disconnect(user, scope, context, body));

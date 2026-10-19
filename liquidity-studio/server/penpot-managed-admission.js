@@ -13,7 +13,7 @@ export function createManagedStatusReader({sessions,grantKey,nativeOrigin,rpcOri
   const response=await fetchImpl(origin+'/api/rpc/command/studio-access-status',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Origin:publicOrigin,Cookie:cookie,'X-Studio-Native-Grant-Key':grantKey},body:JSON.stringify({'team-id':workspace.teamId}),redirect:'error',signal:AbortSignal.timeout(10000)});
   if(response.status!==200){await response.body?.cancel().catch(()=>{});throw fail(503,'Native deployment readiness is unavailable');}
   let size=0;const chunks=[];for await(const chunk of response.body){size+=chunk.length;if(size>4096)throw fail(502,'Native readiness response exceeds its bound');chunks.push(chunk);}
-  try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw fail(502,'Native readiness response is invalid');}
+  try{const wire=JSON.parse(Buffer.concat(chunks).toString('utf8'));return {nativePin:wire['native-pin']??wire.nativePin,teamId:wire['team-id']??wire.teamId,operatorProfileId:wire['operator-profile-id']??wire.operatorProfileId,installedFeatures:{rpcPolicy:wire['installed-features']?.['rpc-policy']??wire.installedFeatures?.rpcPolicy,session:wire['installed-features']?.session??wire.installedFeatures?.session,live:wire['installed-features']?.live??wire.installedFeatures?.live,assets:wire['installed-features']?.assets??wire.installedFeatures?.assets},measuredRevocationProof:wire['measured-revocation-proof']??wire.measuredRevocationProof};}catch{throw fail(502,'Native readiness response is invalid');}
  };
 }
 export function installManagedAdmission(access,{readNativeStatus,now=()=>Date.now()}){
@@ -44,7 +44,10 @@ export function installManagedAdmission(access,{readNativeStatus,now=()=>Date.no
   const record=await access.store.get(access.key),grant=record.grants.find(g=>g.actorId===actor.id);
   // Retain a pending/acknowledged intent across a lost reply; never create a new
   // native side effect merely because the client retries this empty-body action.
-  if(grant?.state!=='current')await access.reconcileCurrent(actor,grant?.reconciliation?.pairingEpoch===grant?.pairingEpoch?grant.reconciliation.id:randomUUID());
+  const intent=grant?.reconciliation;
+  const reusable=intent?.kind==='current-person'&&intent.present===true&&intent.initiator===actor.id&&intent.actorId===actor.id&&intent.nativeProfileId===paired.connection.nativeProfileId&&intent.pairingEpoch===grant?.pairingEpoch;
+  if(intent?.state==='pending'&&!reusable)throw fail(409,'Preserve the unresolved native reconciliation intent');
+  if(grant?.state!=='current')await access.reconcileCurrent(actor,reusable?intent.id:randomUUID());
   await access.inspect(actor,sessionContext);
   return {...await access.pairing.status(actor,access.scope,sessionContext),...await access.connectionStatus(actor,sessionContext),setupAvailable:true};
  };

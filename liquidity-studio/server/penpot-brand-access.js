@@ -183,6 +183,6 @@ export function createPenpotMembershipReconciler({sessions,transportMode='loopba
   if(response.status!==200){await response.body?.cancel().catch(()=>{});throw fail([401,403,409].includes(response.status)?response.status:502,'Native membership was not acknowledged; preserve intent');}
   const reader=response.body?.getReader();if(!reader)throw fail(502,'Native membership acknowledgement missing');const chunks=[];let bytes=0,done=false;
   try{for(;;){const part=await reader.read();if(part.done){done=true;break;}bytes+=part.value.byteLength;if(bytes>4096)throw fail(502,'Native acknowledgement exceeds its bound');chunks.push(part.value);}}finally{if(!done)await reader.cancel().catch(()=>{});reader.releaseLock();}
-  try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw fail(502,'Native membership acknowledgement invalid');}
+  try{const wire=JSON.parse(Buffer.concat(chunks).toString('utf8'));return {acknowledged:wire.acknowledged,teamId:wire['team-id']??wire.teamId,memberId:wire['member-id']??wire.memberId,intentId:wire['intent-id']??wire.intentId,grantEpoch:wire['grant-epoch']??wire.grantEpoch,present:wire.present};}catch{throw fail(502,'Native membership acknowledgement invalid');}
  };
 }
