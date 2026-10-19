@@ -57,13 +57,15 @@ def capture(out):
    with zipfile.ZipFile(wheel) as z:
     # Vendored packages can carry their own nested dist-info records. Only
     # this wheel's top-level distribution metadata identifies the resolved row.
-    members=[n for n in z.namelist() if n.count('/')==1 and n.endswith('.dist-info/METADATA')]
+    metadata_paths=[n for n in z.namelist() if n.endswith('.dist-info/METADATA')]
+    if len(metadata_paths)>128 or any(len(n)>1024 for n in metadata_paths):raise ValueError('Unbounded wheel metadata path inventory')
+    members=[n for n in metadata_paths if n.count('/')==1]
     if len(members)!=1:
      raise ValueError(f'Expected one root wheel METADATA for {name[:100]}=={version[:100]}; found {len(members)}')
     assert z.getinfo(members[0]).file_size<=2*1024*1024
     m=email.message_from_bytes(z.read(members[0]));assert re.sub(r'[-_.]+','-',m['Name']).lower()==name and m['Version']==version
     notices=[{'path':n,'sha256':sha(z.read(n)),'bytes':z.getinfo(n).file_size} for n in z.namelist() if '.dist-info/' in n and re.search(r'(?i)(license|notice|copying)',n) and not n.endswith('/') and z.getinfo(n).file_size<=2*1024*1024]
-   packages.append({'name':name,'version':version,'url':url,'filename':filename,'bytes':len(data),'sha256':digest,'requiresDist':m.get_all('Requires-Dist',[]),'license':m.get('License-Expression') or m.get('License'),'notices':notices})
+   packages.append({'name':name,'version':version,'url':url,'filename':filename,'bytes':len(data),'sha256':digest,'requiresDist':m.get_all('Requires-Dist',[]),'license':m.get('License-Expression') or m.get('License'),'notices':notices,'metadataPath':members[0],'nestedMetadataPaths':[n for n in metadata_paths if n!=members[0]]})
    requirements.append(f'{name}=={version} --hash=sha256:{digest}');wheel.unlink()
   assert len({x['name'] for x in packages})==len(packages)
   (out/'requirements.lock').write_text('\n'.join(sorted(requirements))+'\n')
