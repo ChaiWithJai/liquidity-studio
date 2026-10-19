@@ -1,0 +1,8 @@
+# Optional connection-only overlay AFTER reviewed owner-neutral restore.
+# Supply application.env as a second private Compose --env-file for interpolation.
+services:
+  penpot-backend:
+    environment:
+      PENPOT_DATABASE_URI: ${PENPOT_DATABASE_URI:?Reviewed restored application database required}
+      PENPOT_DATABASE_USERNAME: ${PENPOT_DATABASE_USERNAME:?Distinct application owner required}
+      PENPOT_DATABASE_PASSWORD: ${PENPOT_DATABASE_PASSWORD:?Private application credential required}
