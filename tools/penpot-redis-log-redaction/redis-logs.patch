@@ -1,0 +1,47 @@
+--- a/backend/src/app/redis.clj
++++ b/backend/src/app/redis.clj
+@@ -536,10 +536,20 @@
+   [_ params]
+   (check-client-params params))
+ 
++(defn- parse-uri
++  [uri]
++  (try
++    (RedisURI/create ^String (str uri))
++    (catch IllegalArgumentException _
++      ;; URI parser diagnostics can contain credentials from the original input.
++      ;; Keep neither that input nor its exception as a chained cause.
++      (throw (ex-info "Invalid Redis connection URI"
++                      {:type :configuration :code :invalid-redis-uri})))))
++
+ (defmethod ig/init-key ::client
+   [_ {:keys [::uri ::wrk/netty-io-executor] :as params}]
+ 
+-  (l/inf :hint "initialize redis client" :uri (str uri))
++  (l/inf :hint "initialize redis client")
+ 
+   (let [timer     (HashedWheelTimer.)
+         cache     (atom {})
+@@ -564,7 +574,7 @@
+                       (timer ^Timer timer)
+                       (build))
+ 
+-        redis-uri (RedisURI/create ^String (str uri))
++        redis-uri (parse-uri uri)
+         client    (RedisClient/create ^ClientResources resources
+                                       ^RedisURI redis-uri)]
+ 
+--- a/exporter/src/app/redis.cljs
++++ b/exporter/src/app/redis.cljs
+@@ -20,9 +20,9 @@
+   [uri]
+   (let [^js client (new redis/default uri)]
+     (.on client "connect"
+-         (fn [] (l/info :hint "redis connection established" :uri uri)))
++         (fn [] (l/info :hint "redis connection established")))
+     (.on client "error"
+-         (fn [cause] (l/error :hint "error on redis connection" :cause cause)))
++         (fn [cause] (l/error :hint "error on redis connection")))
+     (.on client "close"
+          (fn [] (l/warn :hint "connection closed")))
+     (.on client "reconnect"

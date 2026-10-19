@@ -1,0 +1,236 @@
+name: Encrypted Penpot Redis log fix runtime artifacts
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full reviewed source matching successful native-hook verification
+        required: true
+        type: string
+      verification_run:
+        description: Successful exact-source native-hook verification run ID
+        required: true
+        type: string
+      recipient_public_key_base64:
+        description: Operator RSA public PEM base64; private key stays local
+        required: true
+        type: string
+      recipient_sha256:
+        description: Independently verified recipient SPKI DER SHA256
+        required: true
+        type: string
+      confirmation:
+        description: build-reviewed-penpot-redis-runtime
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: penpot-redis-runtime-artifact
+  cancel-in-progress: false
+jobs:
+  runtime-artifacts:
+    if: inputs.confirmation == 'build-reviewed-penpot-redis-runtime'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      VERIFY_RUN: ${{ inputs.verification_run }}
+      DEVENV: penpotapp/devenv@sha256:912d522803d94fa3e5c9f304088887a45fa6d90517751094f22a14a8754d2b37
+      BASE: penpotapp/backend@sha256:47d33d6c94685332fb115f815be2414cefbf022d93d79fa03a8d439ea587c109
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          path: recipe
+      - name: Validate immutable input
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$VERIFY_RUN" =~ ^[1-9][0-9]{0,19}$ ]]
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+          path: studio
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: penpot/penpot
+          ref: ff7a66f51938b2293260ea27a64e2c4e0833b5e3
+          persist-credentials: false
+          path: upstream
+      - name: Require existing exact-source successful verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p admission/proof output
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VERIFY_RUN" > admission/run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$VERIFY_RUN/artifacts" > admission/artifacts.json
+          python3 - <<'PY'
+          import json, os
+          values=json.load(open('admission/artifacts.json'))['artifacts']
+          selected=[a for a in values if a['name']=='penpot-native-hook-verification-'+os.environ['VERIFY_RUN'] and not a['expired']]
+          assert len(selected)==1 and 0 < selected[0]['size_in_bytes'] <= 64*1024*1024, 'Missing or unbounded verification artifact'
+          PY
+          gh run download "$VERIFY_RUN" --repo "$GITHUB_REPOSITORY" --name "penpot-native-hook-verification-$VERIFY_RUN" --dir admission/proof
+          python3 recipe/tools/penpot-backend-candidate/verify-proof.py admission > output/verification-admission.json
+      - name: Hosted source and resource admission
+        run: |
+          set -euo pipefail
+          test "$(git -C studio rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(git -C recipe rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$(df --output=avail -B1 . | tail -1)" -ge 12000000000
+          test "$(awk '/MemTotal/{print $2}' /proc/meminfo)" -ge 12000000
+          git -C recipe rev-parse HEAD > output/recipe-source.txt
+          printf '%s\n' "$SOURCE_SHA" > output/studio-source.txt
+          sha256sum upstream/backend/deps.edn upstream/common/deps.edn > output/dependencies-before.sha256
+          cp admission/proof/manifest.json output/verification-manifest.json
+          cp admission/run.json output/verification-run.json
+      - name: Construct production-basis JAR without rerunning tests
+        run: |
+          set -euo pipefail
+          docker pull --platform linux/amd64 "$DEVENV"
+          docker image inspect "$DEVENV" > output/toolchain-image.json
+          chmod -R g+rwX upstream output
+          name="penpot-candidate-jar-$GITHUB_RUN_ID"
+          trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          timeout --signal=TERM --kill-after=30s 25m docker run --rm --name "$name" \
+            --memory 8g --memory-swap 8g --cpus 4 --cap-drop ALL --security-opt no-new-privileges \
+            --group-add "$(id -g)" \
+            --mount type=bind,src="$GITHUB_WORKSPACE/upstream",dst=/work \
+            --mount type=bind,src="$GITHUB_WORKSPACE/studio/tools",dst=/hooks,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/recipe/tools/penpot-backend-candidate",dst=/recipe,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/output",dst=/output \
+            -w /work -e JAVA_TOOL_OPTIONS=-Xmx4096m -e CI=true --entrypoint bash "$DEVENV" /recipe/build-jar.sh \
+            2>&1 | tee output/jar-build.log
+          sha256sum -c output/dependencies-before.sha256
+          git -C upstream diff --exit-code -- '**/deps.edn' '**/*lock*' '**/package.json'
+          sha256sum output/penpot.jar output/corresponding-source.tar.gz > output/artifact-hashes.sha256
+      - name: Runtime platform and source admission
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          test "$(df --output=avail -B1 . | tail -1)" -ge 8000000000
+          test "$(awk '/MemTotal/{print $2}' /proc/meminfo)" -ge 6000000
+          sha256sum -c output/artifact-hashes.sha256
+          test "$(cat output/studio-source.txt)" = "$SOURCE_SHA"
+          test "$(cat output/recipe-source.txt)" = "$(git -C recipe rev-parse HEAD)"
+          docker pull --platform linux/amd64 "$BASE"
+          test "$(docker image inspect "$BASE" --format '{{.Os}}/{{.Architecture}}')" = linux/amd64
+          test "$(docker image inspect "$BASE" --format '{{index .Config.Labels "bundle_version"}}')" = 2.18.3
+          docker image inspect "$BASE" > output/runtime-base.json
+      - name: Java26 JAR compatibility without starting the application
+        run: |
+          set -euo pipefail
+          name="penpot-redis-jar-smoke-$GITHUB_RUN_ID"
+          trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          timeout --signal=TERM --kill-after=15s 180s docker run --rm --name "$name" --network none \
+            --read-only --tmpfs /tmp:size=64m --memory 1536m --memory-swap 1536m --cpus 2 \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --mount type=bind,src="$GITHUB_WORKSPACE/output/penpot.jar",dst=/opt/penpot/backend/penpot.jar,readonly \
+            --entrypoint /bin/bash "$BASE" -c '
+              set -euo pipefail
+              test -z "$(printenv STUDIO_NATIVE_ACCESS_CONFIG || true)"
+              mkdir -p /tmp/penpot
+              "$JAVA_HOME/bin/java" -version 2>&1 | grep "26.0.2"
+              exec "$JAVA_HOME/bin/java" -Xmx1024m --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED \
+                --enable-preview -Dlog4j2.configurationFile=log4j2.xml -jar penpot.jar -e \
+                "(require '\''app.main '\''app.redis '\''app.studio.access '\''app.studio.live '\''app.studio.configuration '\''app.studio.assets) (println :redis-log-jar-namespaces-loaded) (shutdown-agents)"
+            ' 2>&1 | tee output/java26-namespace-smoke.log
+      - name: Prepare the existing verified frozen pnpm wrapper
+        run: |
+          set -euo pipefail
+          mkdir -p review-tools/home review-tools/bin
+          cp studio/scripts/investigations/penpot-font-ui-repair/pnpm-frozen.sh review-tools/bin/pnpm
+          chmod 755 review-tools/bin/pnpm
+          docker run --rm --memory 1g --memory-swap 1g --cpus 1 \
+            --mount type=bind,src="$GITHUB_WORKSPACE/review-tools",dst=/review-tools \
+            --mount type=bind,src="$GITHUB_WORKSPACE/studio/scripts/investigations/penpot-font-ui-repair",dst=/recipe,readonly \
+            -e PNPM_HOME=/review-tools/home -w / --entrypoint bash "$DEVENV" -lc '
+              set -euo pipefail
+              /opt/node/bin/pnpm self-update 12.5.1 --registry=https://registry.npmjs.org
+              export PATH="$PNPM_HOME/bin:$PATH"
+              bin_dir="$(/opt/node/bin/pnpm bin --global)"
+              test "$bin_dir" = /review-tools/home/bin
+              resolved="$(readlink -f "$bin_dir/pnpm")"
+              case "$resolved" in /review-tools/home/*) ;; *) exit 1 ;; esac
+              printf "%s\n" "$bin_dir/pnpm" > /review-tools/installed-pnpm.path
+              printf "%s\n" "$resolved" > /review-tools/resolved-pnpm.path
+              python3 /recipe/verify-pnpm.py "$bin_dir/pnpm" > /review-tools/pnpm-integrity.json
+              verified="$(cat /review-tools/verified-pnpm.path)"
+              test "$("$verified" --version)" = 12.5.1
+            ' 2>&1 | tee output/pnpm-manager.log
+      - name: Build only the official pinned exporter
+        run: |
+          set -euo pipefail
+          sha256sum upstream/exporter/deps.edn upstream/exporter/package.json upstream/exporter/pnpm-lock.yaml upstream/exporter/pnpm-workspace.yaml > output/exporter-dependencies-before.sha256
+          name="penpot-redis-exporter-$GITHUB_RUN_ID"
+          trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          timeout --signal=TERM --kill-after=30s 25m docker run --rm --name "$name" \
+            --memory 8g --memory-swap 8g --cpus 4 --cap-drop ALL --security-opt no-new-privileges \
+            --group-add "$(id -g)" \
+            --mount type=bind,src="$GITHUB_WORKSPACE/upstream",dst=/work \
+            --mount type=bind,src="$GITHUB_WORKSPACE/studio/tools",dst=/hooks,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/recipe/tools/penpot-redis-log-redaction",dst=/recipe,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/review-tools",dst=/review-tools,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/output",dst=/output \
+            -w /work -e PNPM_HOME=/review-tools/home -e JAVA_TOOL_OPTIONS=-Xmx4096m \
+            -e NODE_OPTIONS=--max-old-space-size=1536 -e CI=true --entrypoint bash "$DEVENV" /recipe/build-exporter.sh \
+            2>&1 | tee output/exporter-build.log
+          sha256sum -c output/dependencies-before.sha256
+          sha256sum -c output/exporter-dependencies-before.sha256
+          git -C upstream diff --exit-code -- '**/deps.edn' '**/*lock*' '**/package.json'
+      - name: Bind exporter output to the existing ARM64 runtime base
+        run: |
+          set -euo pipefail
+          exporter_base=penpotapp/exporter@sha256:418232d6ca3120b1c2bfde298a56a05a1f41f567cd8494deac3fe7fbc186cfbd
+          docker pull --platform linux/arm64 "$exporter_base"
+          docker image inspect "$exporter_base" > output/exporter-runtime-base.json
+          test "$(docker image inspect "$exporter_base" --format '{{.Os}}/{{.Architecture}}')" = linux/arm64
+          id=$(docker create --platform linux/arm64 "$exporter_base")
+          trap 'docker rm "$id" >/dev/null' EXIT
+          mkdir base-exporter
+          docker cp "$id:/opt/penpot/exporter/package.json" base-exporter/package.json
+          docker cp "$id:/opt/penpot/exporter/pnpm-lock.yaml" base-exporter/pnpm-lock.yaml
+          python3 recipe/tools/penpot-redis-log-redaction/package-exporter.py upstream output base-exporter
+          rm -rf output/exporter-runtime
+          sha256sum output/penpot.jar output/corresponding-source.tar.gz output/exporter-bundle.tar.gz output/exporter-corresponding-source.tar.gz output/exporter-manifest.json output/exporter-mount-manifest.json > output/artifact-hashes.sha256
+          printf 'No listener, data service, private access configuration, credentials, activation, image push or deployment.\n' > output/acceptance-limits.txt
+      - name: Encrypt complete Penpot delivery for the explicit operator
+        env:
+          NATIVE_RECIPIENT_PUBLIC_KEY_BASE64: ${{ inputs.recipient_public_key_base64 }}
+          NATIVE_RECIPIENT_SHA256: ${{ inputs.recipient_sha256 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir encrypted-delivery
+          tar -cf "$RUNNER_TEMP/penpot-delivery.tar" -C output .
+          test "$(stat -c %s "$RUNNER_TEMP/penpot-delivery.tar")" -le 3221225472
+          sha256sum "$RUNNER_TEMP/penpot-delivery.tar" | sed "s|$RUNNER_TEMP/||" > encrypted-delivery/plaintext-archive.sha256
+          split -d -a 3 -b 268435456 "$RUNNER_TEMP/penpot-delivery.tar" "$RUNNER_TEMP/penpot.part-"
+          for part in "$RUNNER_TEMP"/penpot.part-*; do
+            name=$(basename "$part")
+            node recipe/liquidity-studio/scripts/native-artifact-envelope.mjs seal "$part" "encrypted-delivery/$name.enc" "encrypted-delivery/$name.envelope.json"
+          done
+          python3 - <<'PYINDEX'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP']);archive=root/'penpot-delivery.tar'
+          digest=lambda p: hashlib.file_digest(p.open('rb'),'sha256').hexdigest()
+          parts=sorted(root.glob('penpot.part-*'))
+          assert 1<=len(parts)<=12
+          entries=[]
+          for i,p in enumerate(parts):
+              assert p.name==f'penpot.part-{i:03d}' and p.is_file() and not p.is_symlink()
+              assert 0<p.stat().st_size<=268435456
+              entries.append({'index':i,'plaintextFile':p.name,'ciphertextFile':p.name+'.enc','envelopeFile':p.name+'.envelope.json','plaintextBytes':p.stat().st_size,'plaintextSha256':digest(p)})
+          assert sum(x['plaintextBytes'] for x in entries)==archive.stat().st_size<=3221225472
+          pathlib.Path('encrypted-delivery/delivery-index.json').write_text(json.dumps({'schemaVersion':1,'archiveName':'penpot-delivery.tar','archiveBytes':archive.stat().st_size,'archiveSha256':digest(archive),'partCount':len(entries),'parts':entries},indent=2)+'\n')
+          PYINDEX
+          printf 'Decrypt ONLY each ciphertextFile listed by delivery-index.json using its envelopeFile and the local operator private key. Verify every plaintextBytes/SHA; concatenate ONLY the listed plaintextFile values in numeric index order, with no wildcard. Verify archiveBytes/SHA before extracting. No image push or deployment.\n' > encrypted-delivery/README.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: encrypted-penpot-redis-runtime-${{ github.run_id }}
+          path: encrypted-delivery/
+          retention-days: 3
+          if-no-files-found: error
