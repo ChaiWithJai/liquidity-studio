@@ -32,3 +32,5 @@ Private receipts comprise the clean-start admission, source outage event journal
 No fresh Doory media export is claimed during this outage or the separate after-resumption continuation above. Earlier recovered MP4/WebM evidence and the 161-second continuation checkpoint do not substitute for that missing step.
 
 This result does not establish deletion or relocation of installed local bundles/JARs/assets, internet independence, managed cloud recovery/sizing, consented human practice, or full Issue #57 completion. Source data and verified backups remain preserved. No local test suite, build, model inference, cloud change or human SSO setup was performed for this checkpoint.
+
+A subsequent [destination-owned runtime cold restart](destination-owned-runtime-coldrestart.md) copied and verified the installation closure, cold-started the destination during a separate source outage, and exercised native editing plus sound-bearing MP4 export. Its failed attempts, rollback and installation limits are recorded separately.
