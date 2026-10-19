@@ -1,4 +1,5 @@
 import {strategyOrganizations} from './defiant-strategy.js';
+import {clipBinaryRequest} from './defiant-clips-http.js';
 import {strategyRequest} from './defiant-strategy-http.js';
 import { readPenpotExportBody } from "./penpot-native-export.js";
 import { editorRestoreStatus } from "./editor-recovery.js";
@@ -728,6 +729,7 @@ export function createHttpServer(
           };
         }
       }
+      if(route.startsWith("/api/studio/strategy/")&&!trustedTestMode&&await clipBinaryRequest({platform,user,route,req,res}))return;
       const body =
         req.method === "POST"
           ? await readBody(

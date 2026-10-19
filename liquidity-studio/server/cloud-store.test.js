@@ -177,3 +177,16 @@ test('SDK boundary: conditional deletion checks current guards and removes owned
  await assert.rejects(store.deleteIf('owned',['reservation'],async()=>true),/synchronous boolean/);assert.ok(await store.get('owned'));
  await store.update('reservation',()=>({installation:'old'}));assert.equal(await store.deleteIf('owned',['reservation'],([value,guard])=>value.installation===guard.installation),true);assert.equal(await store.get('owned'),null);assert.deepEqual(await store.keys('owned'),[]);assert.equal(firestore.records.size,2);
 });
+
+test('strategy media uses a private organization prefix without inventing a publishing brand',async()=>{
+ const store=new FirestoreStore({firestore:fakeFirestore(),bucket:fakeBucket()}),strategy={kind:'strategy',organizationId:'org-defiant'},bytes=Buffer.from('supplied source media');
+ const reference=await store.uploadArtifact(strategy,'source-one',bytes,'video/mp4');assert.ok(reference.object.startsWith('organizations/org-defiant/strategy/artifacts/'));assert.deepEqual(await store.downloadArtifact(strategy,reference),bytes);
+ await assert.rejects(store.downloadArtifact({kind:'strategy',organizationId:'org-foreign'},reference));await assert.rejects(store.downloadArtifact({organizationId:'org-defiant',brandId:'strategy'},reference));
+ const audio=await store.uploadArtifact(strategy,'audio-one',bytes,'audio/wav');assert.equal(audio.contentType,'audio/wav');
+});
+test('provider TTL parent contains all observation bytes so expiry leaves no orphan chunk data or manager deletion',async()=>{
+ const firestore=fakeFirestore(),store=new FirestoreStore({firestore}),key='defiant-youtube-observations:org-one:run-one',cache={kind:'youtube-observation-cache',expiresAt:'2026-11-18T12:00:00Z',items:[{statistics:{views:17}}]};
+ await store.update('defiant-strategy:org-one',()=>({notes:'Retain manager wording'}));await store.update(key,()=>cache);assert.deepEqual(await store.get(key),cache);
+ const ref=store.ref(key),parent=firestore.records.get(ref.path);assert.equal(parent.chunkCount,0);assert.ok(parent.expiresAt instanceof Date);assert.equal(parent.expiresAt.toISOString(),cache.expiresAt);assert.ok(parent.providerBytes.length>0);assert.equal([...firestore.records.keys()].filter(k=>k.startsWith(ref.path+'/')).length,0);
+ firestore.records.delete(ref.path);assert.equal(await store.get(key),null);assert.deepEqual(await store.get('defiant-strategy:org-one'),{notes:'Retain manager wording'});
+});

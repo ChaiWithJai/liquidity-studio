@@ -31,9 +31,9 @@ export function importInbox(state,input,actor,at){
  return {counts:preview.counts,packId:data.packId};
 }
 export function saveInboxMatch(state,sourceId,input,actor,at){
- exact(input,['recordingId','rationale','workstreamId','stage']);const box=state.inbox||emptyInbox(),source=box.sources.find(s=>s.id===sourceId),old=box.matches.find(m=>m.sourceId===sourceId);
- if(!source||!old)throw fail(404,'Source match unavailable');if(!box.recordings.some(r=>r.id===input.recordingId)||!box.workstreams.some(w=>w.id===input.workstreamId)||!inboxStages.includes(input.stage))throw fail(422,'Choose a current recording, workstream and planning stage');
- const match={...old,recordingId:input.recordingId,workstreamId:input.workstreamId,stage:input.stage,rationale:text(input.rationale,'match rationale',2000),revision:old.revision+1,updatedBy:actor.id,updatedAt:at};box.matches=box.matches.map(m=>m.id===old.id?match:m);return clone(match);
+ exact(input,['recordingId','rationale','workstreamId','stage']);const box=state.inbox||emptyInbox(),source=box.sources.find(s=>s.id===sourceId),old=box.matches.find(m=>m.sourceId===sourceId)||{id:`match:${sourceId}`,sourceId,revision:0};
+ if(!source)throw fail(404,'Source match unavailable');if(!box.recordings.some(r=>r.id===input.recordingId)||!box.workstreams.some(w=>w.id===input.workstreamId)||!inboxStages.includes(input.stage))throw fail(422,'Choose a current recording, workstream and planning stage');
+ const match={...old,recordingId:input.recordingId,workstreamId:input.workstreamId,stage:input.stage,rationale:text(input.rationale,'match rationale',2000),revision:old.revision+1,updatedBy:actor.id,updatedAt:at};box.matches=box.matches.filter(m=>m.id!==old.id);box.matches.push(match);return clone(match);
 }
 export function readInbox(state,input={}){
  exact(input,['sourceId','query','workstream','stage','recording']);const box=state.inbox||emptyInbox();if(input.query!==undefined&&(typeof input.query!=='string'||input.query.length>200))throw fail(400,'Search is too long');if(input.stage&&!inboxStages.includes(input.stage))throw fail(400,'Unknown inbox stage');
