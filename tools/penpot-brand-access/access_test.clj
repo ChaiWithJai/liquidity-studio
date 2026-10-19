@@ -23,11 +23,11 @@
     (is (= {:governed false :allowed true}
            (access/authorize-resource (assoc cfg ::access/authorize (fn [_] (throw (Exception. "unavailable"))))
                                       (assoc resource :native-team-id personal))))
-    (is (= {:governed true :allowed false}
+    (is (= {:governed true :allowed false :reason :authority-unavailable}
            (access/authorize-resource {::access/governed-teams #{team}} resource)))
-    (is (= {:governed true :allowed false}
+    (is (= {:governed true :allowed false :reason :authority-unavailable}
            (access/authorize-resource (assoc cfg ::access/authorize (fn [_] (throw (Exception. "unavailable")))) resource)))
-    (is (= {:governed true :allowed false}
+    (is (= {:governed true :allowed false :reason :authority-unavailable}
            (access/authorize-resource cfg (dissoc resource :native-profile-id))))))
 (deftest native-permission-context-enforces-governed-only-and-keeps-private-metadata-narrow
   (let [operator (uuid/parse "55555555-5555-4555-8555-555555555555")

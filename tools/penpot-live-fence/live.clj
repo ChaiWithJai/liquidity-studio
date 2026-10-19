@@ -7,6 +7,8 @@
             [app.common.time :as ct]
             [app.config :as cf]
             [app.common.exceptions :as ex]
+            [app.common.logging :as l]
+            [yetti.websocket :as yws]
             [app.msgbus :as mbus]
             [app.studio.access :as access]
             [app.util.websocket :as ws]
@@ -74,50 +76,67 @@
   (when-not (uuid? team-id) (denied!))
   {:kind :team :topic team-id :native-team-id team-id})
 
-(defn allowed?
-  "Resolve current ownership first; bound the entire session/authority check."
+(defn decision
+  "Resolve current ownership and preserve only finite credential-free failures."
   [cfg wsp resource operation]
-  (let [work
-        (future
-          (try
-            (let [same-team? (case (:kind resource)
-                               :team true
-                               :file (= (:native-team-id resource)
-                                        (access/current-file-team (::db/pool cfg) (:topic resource)))
-                               false)
-                  context (::context wsp)]
-              (and same-team?
-                   (or (not (access/governed-team? cfg (:native-team-id resource)))
-                       (and (session-current? cfg context)
-                            (true? (:allowed
-                                     (access/authorize-resource
-                                       cfg
-                                       {:native-profile-id (:native-profile-id context)
-                                        :native-team-id (:native-team-id resource)
-                                        :native-session (:native-session context)
-                                        :operation operation})))))))
-            (catch Throwable _ false)))]
+  (let [work (future
+               (try
+                 (let [same-team? (case (:kind resource)
+                                    :team true
+                                    :file (= (:native-team-id resource)
+                                             (access/current-file-team (::db/pool cfg) (:topic resource)))
+                                    false)
+                       context (::context wsp)]
+                   (cond
+                     (not same-team?) {:allowed false :reason :file-team-changed}
+                     (not (access/governed-team? cfg (:native-team-id resource))) {:allowed true}
+                     (not (session-current? cfg context)) {:allowed false :reason :native-session-invalid}
+                     :else (access/authorize-resource cfg
+                             {:native-profile-id (:native-profile-id context)
+                              :native-team-id (:native-team-id resource)
+                              :native-session (:native-session context)
+                              :operation operation})))
+                 (catch Throwable _ {:allowed false :reason :authority-unavailable})))]
     (try
-      (true? (deref work 1000 false))
-      (finally
-        (when-not (realized? work) (future-cancel work))))))
+      (deref work 1000 {:allowed false :reason :check-timeout})
+      (finally (when-not (realized? work) (future-cancel work))))))
+
+(defn allowed? [cfg wsp resource operation]
+  (true? (:allowed (decision cfg wsp resource operation))))
 
 (defn- subscription-key [resource]
   (if (= :file (:kind resource))
     :app.http.websocket/file-subscription
     :app.http.websocket/team-subscription))
 
+(defn log-fence! [reason]
+  (binding [l/*context* nil]
+    (l/warn :hint "studio live subscription fenced" :reason reason)))
+
 (defn fence!
-  "Purge only the affected subscription. Never erase a native document/buffer."
-  [cfg wsp resource]
-  (let [state (::ws/state wsp)
-        k (subscription-key resource)
-        current (get @state k)]
-    (when (= (:topic resource) (:topic current))
-      (swap! state dissoc k)
-      (when-let [channel (:channel current)]
-        (sp/close! channel)
-        (mbus/purge! (::mbus/msgbus cfg) [channel])))))
+  "Purge before closing once. Existing native reconnect must authorize anew."
+  ([cfg wsp resource] (fence! cfg wsp resource :authority-denied))
+  ([cfg wsp resource reason]
+   (let [state (::ws/state wsp)
+         k (subscription-key resource)
+         [before _] (swap-vals! state
+                       (fn [value]
+                         (if (::fenced value) value
+                           (cond-> (assoc value ::fenced true)
+                             (= (:topic resource) (:topic (get value k))) (dissoc k)))))]
+     (when-not (::fenced before)
+       (let [current (get before k)]
+         (try
+           (when (= (:topic resource) (:topic current))
+             (when-let [channel (:channel current)]
+               (sp/close! channel)
+               (mbus/purge! (::mbus/msgbus cfg) [channel])))
+           (finally
+             ;; Never log a callback response, exception, ID, key or session.
+             (log-fence! (if (#{:native-session-invalid :file-team-changed
+                                :authority-denied :authority-unavailable :check-timeout
+                                :subscription-stale} reason) reason :authority-denied))
+             (yws/close (::ws/channel wsp) 4003 "Studio live authorization changed"))))))))
 
 (defn check!
   "Called by the native IO loop at a persistent one-second check boundary."
@@ -125,40 +144,57 @@
   (doseq [k [:app.http.websocket/file-subscription
             :app.http.websocket/team-subscription]
           :let [resource (::resource (get @(::ws/state wsp) k))]
-          :when resource]
-    (when-not (allowed? cfg wsp resource :read)
-      (fence! cfg wsp resource))))
+          :when (and resource (not (::fenced @(::ws/state wsp))))]
+    (let [result (decision cfg wsp resource :read)]
+      (when-not (true? (:allowed result))
+        (fence! cfg wsp resource (:reason result))))))
 
 (defn allow-output?
-  "Channel tags are server-owned. Check queued output too, immediately before send."
+  "Drop all late output after fencing; tags never grant a fresh subscription."
   [cfg wsp message]
-  (if-let [resource (::resource message)]
-    (let [current (get @(::ws/state wsp) (subscription-key resource))]
-      (if (and (= (:topic resource) (:topic current))
-               (allowed? cfg wsp resource :read))
-        true
-        (do (fence! cfg wsp resource) false)))
-    true))
+  (if (::fenced @(::ws/state wsp))
+    false
+    (if-let [resource (::resource message)]
+      (let [current (get @(::ws/state wsp) (subscription-key resource))
+            result (if (= (:topic resource) (:topic current))
+                     (decision cfg wsp resource :read)
+                     {:allowed false :reason :subscription-stale})]
+        (if (and (true? (:allowed result)) (not (::fenced @(::ws/state wsp)))) true
+          (do (fence! cfg wsp resource (:reason result)) false)))
+      true)))
+
+(defn- admit-subscription! [cfg wsp resource]
+  (let [result (decision cfg wsp resource :read)]
+    (when-not (and (true? (:allowed result)) (not (::fenced @(::ws/state wsp))))
+      ;; A reconnect during the same outage must retry too. Explicit refusals
+      ;; stay denied/open instead of creating an endless revoked-account loop.
+      (when (#{:authority-unavailable :check-timeout} (:reason result))
+        (fence! cfg wsp resource (:reason result)))
+      (denied!))))
 
 (defn handle-message [cfg delegate wsp message]
   (let [message (dissoc message ::resource)]
     (if-not (enabled? cfg)
       (delegate cfg wsp message)
-      (case (:type message)
+      (do
+       (when (and (::fenced @(::ws/state wsp)) (not (#{:open :close} (:type message)))) (denied!))
+       (case (:type message)
         :subscribe-file
         (let [resource (file-resource cfg (:file-id message))]
-          (when-not (allowed? cfg wsp resource :read) (denied!))
+          (admit-subscription! cfg wsp resource)
           (delegate cfg wsp (assoc message ::resource resource)))
         :subscribe-team
         (let [resource (team-resource (:team-id message))]
-          (when-not (allowed? cfg wsp resource :read) (denied!))
+          (admit-subscription! cfg wsp resource)
           (delegate cfg wsp (assoc message ::resource resource)))
         :pointer-update
         (let [subscription (:app.http.websocket/file-subscription @(::ws/state wsp))
-              resource (::resource subscription)]
-          (when-not (and resource (= (:file-id message) (:topic resource))
-                         (allowed? cfg wsp resource :write))
-            (when resource (fence! cfg wsp resource))
+              resource (::resource subscription)
+              result (if (and resource (= (:file-id message) (:topic resource)))
+                       (decision cfg wsp resource :write)
+                       {:allowed false :reason :subscription-stale})]
+          (when-not (and (true? (:allowed result)) (not (::fenced @(::ws/state wsp))))
+            (when resource (fence! cfg wsp resource (:reason result)))
             (denied!))
           (delegate cfg wsp message))
-        (delegate cfg wsp message)))))
+        (delegate cfg wsp message))))))

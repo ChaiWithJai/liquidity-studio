@@ -77,3 +77,18 @@
     (is (fn? (authority/create (assoc settings :callback-origin "http://studio-native-connect:39044"))))
     (doseq [origin ["http://studio-native-connect:39044/path" "http://studio-native-connect.evil:39044" "http://other:39044"]]
       (is (thrown? IllegalArgumentException (authority/create (assoc settings :callback-origin origin)))))))
+
+(deftest only-finite-authority-denial-or-unavailability-leaves-the-http-adapter
+  (let [native-client (http/build-client {:follow-redirects :never})
+        callback (authority/create {::client/client native-client :grant-key (apply str (repeat 43 "a"))
+                                    :callback-origin "http://host.docker.internal:39044"})
+        profile (uuid/parse "33333333-3333-4333-8333-333333333333")
+        resource {:native-profile-id profile :native-team-id profile :operation :read
+                  :native-session {:id profile :profile-id profile}}]
+    (doseq [[status expected] [[401 :authority-denied] [403 :authority-denied] [500 :authority-unavailable] [504 :authority-unavailable]]]
+      (with-redefs [http/send-async (fn [_ _] (CompletableFuture/completedFuture
+                                             {:status status :body (ByteArrayInputStream. (.getBytes "private arbitrary response" "UTF-8"))}))]
+        (let [result (callback resource)]
+          (is (false? (:allowed result)))
+          (is (= expected (:reason result)))
+          (is (= #{:allowed :authorized :reason} (set (keys result)))))))))
