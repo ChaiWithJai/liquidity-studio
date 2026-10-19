@@ -1,7 +1,7 @@
 <script>
   import PenpotReconnect from './PenpotReconnect.svelte';
   import {onMount, onDestroy} from 'svelte';
-  let {request, storyId, format, storyRevision, generationId, onStateChange = () => {}, compact = false} = $props();
+  let {request, storyId, format, storyRevision, generationId, onStateChange = () => {}, compact = false, embedded = false, onOpenDesign = () => {}} = $props();
   let loading = $state(true), busy = $state(false), error = $state(''), rejected = $state(false);
   let result = $state(null), attempt = $state(null);
   let styleAttempt=$state(null),styleReceipt=$state(null),styleCapability=$state(''),styleError=$state(''),styleNotice=$state(''),styleRejected=$state(false);
@@ -101,7 +101,7 @@
 <section class={["penpot-design-action", {compact}]} aria-label="Campaign design in Penpot">
   {#if !compact}<h3>Design your campaign</h3>{/if}
   {#if loading}<p role="status">Finding this campaign’s design…</p>
-  {:else if !error && openUrl}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a><p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>{#if result.design.styles?.needsRefresh}<p>Brand Kit styles changed. This existing design and your Penpot edits are preserved.</p>{#if result.design.styles.refreshAvailable}<button class="secondary" disabled={busy||loading} onclick={prepareStyles}>{busy?'Preparing colors…':styleRejected?'Prepare a new color update':styleAttempt?'Retry same color update':'Refresh Brand Kit colors'}</button><button class="secondary" disabled={busy||loading} onclick={checkStyles}>Check saved colors</button>{/if}{/if}
+  {:else if !error && openUrl}{#if embedded}<button class="primary" onclick={() => onOpenDesign(result.design.id)}>Open design in Studio</button><a href={openUrl} target="_blank" rel="noopener noreferrer">Open in a separate tab ↗</a>{:else}<a class="primary" href={openUrl} target="_blank" rel="noopener noreferrer">Open design in Penpot ↗</a>{/if}<p>Edits save in Penpot. This Studio preview keeps the reviewed source copy.</p>{#if result.design.styles?.needsRefresh}<p>Brand Kit styles changed. This existing design and your Penpot edits are preserved.</p>{#if result.design.styles.refreshAvailable}<button class="secondary" disabled={busy||loading} onclick={prepareStyles}>{busy?'Preparing colors…':styleRejected?'Prepare a new color update':styleAttempt?'Retry same color update':'Refresh Brand Kit colors'}</button><button class="secondary" disabled={busy||loading} onclick={checkStyles}>Check saved colors</button>{/if}{/if}
   {:else if !error && (result?.available || attempt || result?.design)}<button class="primary" disabled={busy||rejected} onclick={create}>{busy?'Creating design…':attempt?'Retry design creation':result?.design?'Resume design creation':'Create design in Penpot'}</button><p>Create an editable design from the saved copy and brand.</p>
   {:else if result?.reason}<p>{result.reason}</p>{/if}
   {#if !loading && openUrl && result?.svgAvailable}<button class="secondary" disabled={busy} onclick={prepareSvg}>{busy?'Preparing download…':'Save SVG'}</button>

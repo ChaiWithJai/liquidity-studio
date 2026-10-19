@@ -294,3 +294,15 @@ test("walk-away jobs revalidate the current managed Google principal without per
     false,
   );
 });
+
+test('embedding origins come only from the managed constructor provider, not request origin',async t=>{
+ const store=new DurableStore(':memory:');
+ const platform=createPlatform({store,authMode:'google',googleAuth:{configuration,verifyIdToken:async()=>valid()}});await platform.ready;
+ const provider=async()=>null;
+ provider.penpotEmbedding=Object.freeze({studioOrigin:'https://studio.example.com',nativeOrigin:'https://design.example.com'});
+ const server=createHttpServer(null,{platform,managedPenpotStoryDesigns:provider});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ t.after(async()=>{await new Promise(resolve=>server.close(resolve));store.close();});
+ const response=await fetch(`http://127.0.0.1:${server.address().port}/api/auth/config`);
+ assert.deepEqual((await response.json()).penpotEmbedding,provider.penpotEmbedding);
+});

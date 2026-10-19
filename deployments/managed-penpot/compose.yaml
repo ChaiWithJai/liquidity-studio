@@ -13,6 +13,8 @@ services:
     ports: ["80:80", "443:443"]
     environment:
       NATIVE_HOST: ${NATIVE_HOST:?required}
+      STUDIO_HOST: ${STUDIO_HOST:?Exact approved Studio hostname required}
+      STUDIO_UPSTREAM_HOST: ${STUDIO_UPSTREAM_HOST:?Existing Cloud Run tag hostname required}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - tls-data:/data

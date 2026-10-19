@@ -1,6 +1,20 @@
-# Exact hostname supplied by operator; no Studio auth or proxy to private DBs.
+# Operator-supplied exact hosts. Native and Studio remain separate origins.
 {$NATIVE_HOST} {
-  reverse_proxy penpot-frontend:8080
+  reverse_proxy penpot-frontend:8080 {
+    header_down -X-Frame-Options
+    header_down Content-Security-Policy "frame-ancestors 'self' https://{$STUDIO_HOST}"
+  }
+  log {
+    output discard
+  }
+}
+{$STUDIO_HOST} {
+  reverse_proxy https://{$STUDIO_UPSTREAM_HOST} {
+    header_up Host {$STUDIO_UPSTREAM_HOST}
+    transport http {
+      tls_server_name {$STUDIO_UPSTREAM_HOST}
+    }
+  }
   log {
     output discard
   }

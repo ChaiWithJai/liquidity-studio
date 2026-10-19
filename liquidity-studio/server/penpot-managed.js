@@ -28,6 +28,7 @@ export async function createManagedPenpot({store,identity,configurationPath,fetc
  const provider=createPenpotStoryProvider({store,identity,configuration:configuration.workspace,grantKey:configuration.grantKey,fetchImpl,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.rpcOrigin,localTools:false,
   brandAccessFor:({scope,workspaceFor,rpc,nativeSessions})=>new PenpotBrandAccess({store,identity,pairing:nativePairing,scope,workspaceFor,rpc,reconcileMembership:createPenpotMembershipReconciler({sessions:nativeSessions,grantKey:configuration.grantKey,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.rpcOrigin,fetchImpl})})});
  provider.pairedAccess=true;
+ provider.penpotEmbedding=Object.freeze({studioOrigin:configuration.studioOrigin,nativeOrigin:configuration.nativeOrigin});
  const nativeAccess=createNativeAccessController({store,nativeInstanceId:configuration.nativeInstanceId,grantKey:configuration.grantKey,accessFor:async scope=>(await provider(scope)).brandAccess});
  return {storyDesigns:provider,nativePairing,nativeAccess};
 }
