@@ -61,9 +61,21 @@ export class DefiantYouTube {
   });
  }
  async project(actor,input={}){
-  const {state}=await this.strategy.raw(actor),inbox=await this.strategy.inbox(actor,{}),runs=state.inbox?.discovery?.runs||[];const now=Date.parse(this.strategy.now()),latest=new Map();
-  for(const run of runs.slice(-32)){const cache=await this.store.get(cachePrefix(this.strategy.organizationId)+run.id);if(!cache)continue;if(Date.parse(cache.expiresAt)<=now){await this.store.delete(cachePrefix(this.strategy.organizationId)+run.id);continue;}for(const item of cache.items)latest.set('youtube:'+item.videoId,{...item,observedAt:cache.observedAt,expiresAt:cache.expiresAt});}
+  const {state}=await this.strategy.raw(actor),inbox=await this.strategy.inbox(actor,{}),runs=state.inbox?.discovery?.runs||[];const now=Date.parse(this.strategy.now()),latest=new Map(),history=[];
+  for(const run of runs.slice(-32)){
+   const key=cachePrefix(this.strategy.organizationId)+run.id,cache=await this.store.get(key);if(!cache)continue;
+   const observed=Date.parse(cache.observedAt),expires=Date.parse(cache.expiresAt);
+   if(!Number.isFinite(expires)||expires<=now){await this.store.delete(key);continue;}
+   if(!Number.isFinite(observed))continue;
+   for(const item of cache.items){
+    const id='youtube:'+item.videoId,previous=latest.get(id);
+    if(!previous||observed>=Date.parse(previous.observedAt))latest.set(id,{...item,observedAt:cache.observedAt,expiresAt:cache.expiresAt});
+    if(id===input.sourceId)history.push({runId:run.id,queryId:run.queryId,observedAt:cache.observedAt,expiresAt:cache.expiresAt,statistics:clone(item.statistics)});
+   }
+  }
   const merge=s=>{if(!s)return s;const i=latest.get(s.id);if(!i)return s;const {statistics,videoId,observedAt,expiresAt,...metadata}=i;return {...s,...metadata,liveMetadata:{...metadata,observedAt,expiresAt},observations:[...Object.entries(statistics).map(([metric,value])=>({metric,value,unit:'count',observedAt,expiresAt,method:'youtube-data-api',provenance:{provider:'youtube',videoId}})),...s.observations]};};
-  await this.strategy.authority(actor);return readInbox({...state,inbox:{...state.inbox,sources:inbox.sources.map(merge)}},input);
+  await this.strategy.authority(actor);const result=readInbox({...state,inbox:{...state.inbox,sources:inbox.sources.map(merge)}},input);
+  if(result.selected)result.selected.observationHistory=history.sort((a,b)=>Date.parse(b.observedAt)-Date.parse(a.observedAt)).slice(0,32);
+  return result;
  }
 }

@@ -28,3 +28,18 @@ test('official provider is fixed-origin one search page and one batched videos r
  const calls=[],provider=createYouTubeMetadataProvider({apiKey:'private-provider-fixture',fetchImpl:async(url,options)=>{calls.push({url:new URL(url),options});return Response.json(calls.length===1?{items:[{id:{videoId}}],nextPageToken:'next'}:{items:[{id:videoId,snippet:{title:'Supplied API title',channelTitle:'Channel',publishedAt:'2026-10-01T00:00:00Z'},statistics:{viewCount:'123'},status:{embeddable:true}}]});}});
  const actual=await provider.search({query:'Nipsey',pageToken:'page'});assert.equal(calls.length,2);assert.equal(calls[0].url.origin,'https://www.googleapis.com');assert.equal(calls[0].url.searchParams.get('maxResults'),'25');assert.equal(calls[0].url.searchParams.get('type'),'video');assert.equal(calls[1].url.searchParams.get('id'),videoId);assert.deepEqual(actual.items[0].statistics,{views:123});assert.equal(actual.nextPageToken,'next');assert.ok(!JSON.stringify(actual).includes('private-provider-fixture'));assert.equal(createYouTubeMetadataProvider({}),null);
 });
+test('selected history retains dated API observations only while their original caches are live',async t=>{
+ const f=await fixture(t);let views=42;const service=new DefiantYouTube(f.strategy,{search:async()=>{const value=result();value.items[0].statistics={views};return value;}});
+ await service.queries(f.actor,f.input({queries:[{id:'history',query:'Manual history'}]}));
+ const first=f.input({queryId:'history'});await service.run(f.actor,first);
+ f.setNow('2026-10-20T12:00:00.000Z');views=48;await service.run(f.actor,f.input({queryId:'history'}));
+ const projected=await service.project(f.actor,{sourceId});
+ assert.deepEqual(projected.selected.observationHistory.map(o=>[o.observedAt,o.statistics.views]),[['2026-10-20T12:00:00.000Z',48],['2026-10-19T12:00:00.000Z',42]]);
+ assert.equal(projected.selected.liveMetadata.observedAt,'2026-10-20T12:00:00.000Z');assert.equal(projected.selected.observationHistory[0].statistics.comments,undefined);
+ assert.equal(projected.sources[0].observationHistory,undefined,'History does not multiply the source-list payload');
+ assert.deepEqual(f.store.get(f.strategy.key).inbox.sources[0].observations,[]);
+ f.setNow('2026-11-18T12:00:00.000Z');const boundary=await service.project(f.actor,{sourceId});
+ assert.equal(boundary.selected.observationHistory.length,1);assert.equal(boundary.selected.observationHistory[0].statistics.views,48);
+ assert.equal(f.store.get(`defiant-youtube-observations:${f.org.id}:${first.idempotencyKey}`),null);
+ f.setNow('2026-11-19T12:00:00.000Z');assert.deepEqual((await service.project(f.actor,{sourceId})).selected.observationHistory,[]);
+});
