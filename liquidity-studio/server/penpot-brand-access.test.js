@@ -96,3 +96,55 @@ test('server-side design RPC carries a separate private acting profile without c
  assert.equal(requests[1].options.headers['X-Studio-Acting-Profile'],undefined);
  assert.equal(requests[1].options.headers['X-Studio-Native-Grant-Key'],grantKey);
 });
+
+// Source-authored hosted regressions; these use the real admission/transaction
+// implementation with explicit native RPC doubles, not native runtime evidence.
+import {installManagedAdmission,createManagedStatusReader} from './penpot-managed-admission.js';
+const readyStatus=()=>({nativePin:'ff7a66f51938b2293260ea27a64e2c4e0833b5e3',teamId,operatorProfileId:operator,installedFeatures:{rpcPolicy:'v1',session:'v1',live:'v1',assets:'v1'},measuredRevocationProof:false});
+async function managedFixture(t,loginRole='marketer'){
+ const f=await setup(t),login=f[loginRole],session=await f.connect(login);let calls=0,lose=false;
+ f.setMembers([{id:operator,isOwner:true,isAdmin:true,isActive:true,canEdit:true}]);
+ f.service.reconcileMembership=async(workspace,payload)=>{
+  calls++;assert.equal(workspace.ownerPrincipal,operator);assert.equal(payload['member-id'],human);
+  await f.service.authorizeReconciliation({nativeOperatorProfileId:operator,nativeTeamId:teamId,nativeMemberId:human,intentId:payload['intent-id'],expectedEpoch:payload['expected-epoch'],grantEpoch:payload['grant-epoch'],present:true});
+  f.setMembers([{id:operator,isOwner:true,isAdmin:true,isActive:true,canEdit:true},{id:human,isOwner:false,isAdmin:false,isActive:true,canEdit:true}]);
+  if(lose){lose=false;throw Error('Lost acknowledgement');}
+  return {acknowledged:true,teamId,memberId:human,intentId:payload['intent-id'],grantEpoch:payload['grant-epoch'],present:true};
+ };
+ installManagedAdmission(f.service,{readNativeStatus:async()=>readyStatus()});
+ return {...f,login,session,calls:()=>calls,loseNext:()=>{lose=true;}};
+}
+test('managed current-person setup admits founder and authorized marketer idempotently without owner substitution',async t=>{
+ for(const role of ['founder','marketer']){
+  const f=await managedFixture(t,role);f.store.update('human-work',()=>({headline:'Keep this',fileId:id('8')}));
+  const result=await f.service.setupCurrent(f.login.user,f.session);assert.equal(result.editingEnabled,true);assert.equal(result.setupAvailable,true);assert.equal(f.calls(),1);
+  const before=f.store.get(f.service.key),grant=before.grants[0];assert.equal(grant.nativeProfileId,human);assert.equal(grant.reconciliation.kind,'current-person');assert.equal(before.policyAcceptance.kind,'managed-deployment');assert.equal(before.policyAcceptance.humanAcceptance,false);assert.equal(before.policyAcceptance.measuredRevocation,false);assert.equal(before.operatorProfileId,operator);
+  assert.equal((await f.service.setupCurrent(f.login.user,f.session)).editingEnabled,true);assert.equal(f.calls(),1);assert.equal(f.store.get(f.service.key).epoch,before.epoch);assert.deepEqual(f.store.get('human-work'),{headline:'Keep this',fileId:id('8')});
+  await assert.rejects(f.service.reconcile(f.marketer.user,{actorId:f.founder.user.id,idempotencyKey:id('7')}),{status:403});
+ }
+});
+test('managed setup preserves the exact native reconciliation intent after a lost acknowledgement',async t=>{
+ const f=await managedFixture(t);f.loseNext();await assert.rejects(f.service.setupCurrent(f.login.user,f.session),/Lost acknowledgement/);
+ const pending=f.store.get(f.service.key).grants[0].reconciliation;assert.equal(pending.state,'pending');
+ assert.equal((await f.service.setupCurrent(f.login.user,f.session)).editingEnabled,true);
+ const after=f.store.get(f.service.key).grants[0].reconciliation;assert.equal(after.id,pending.id);assert.equal(after.grantEpoch,pending.grantEpoch);assert.equal(f.calls(),2);
+});
+test('missing hooks or membership revoked during private status read cannot activate managed policy',async t=>{
+ for(const scenario of ['missing-hook','revoked']){
+  const f=await managedFixture(t);installManagedAdmission(f.service,{readNativeStatus:async()=>{
+   const status=readyStatus();if(scenario==='missing-hook')status.installedFeatures.assets=false;
+   else f.store.update('identity',i=>{i.memberships.find(m=>m.userId===f.login.user.id).brandIds=[];return i;});return status;
+  }});
+  await assert.rejects(f.service.setupCurrent(f.login.user,f.session),{status:scenario==='missing-hook'?503:403});assert.equal(f.calls(),0);assert.equal(f.store.get(f.service.key).policyAcceptance,undefined);
+ }
+});
+test('managed setup preserves owned-QA provenance and never admits the operator as an editing person',async t=>{
+ const f=await managedFixture(t);await f.service.registerWorkspace(f.founder.user,{});const receipt={kind:'owned-qa',ownedQa:true,customerAccepted:false,receiptSha256:'a'.repeat(64)};
+ f.store.update(f.service.key,r=>{r.state='current';r.sharingPolicy='disabled';r.liveFence='current';r.policyAcceptance=receipt;return r;});
+ assert.equal((await f.service.setupCurrent(f.login.user,f.session)).editingEnabled,true);assert.deepEqual(f.store.get(f.service.key).policyAcceptance,receipt);
+ const g=await setup(t),session=await g.connect(g.founder,operator);installManagedAdmission(g.service,{readNativeStatus:async()=>readyStatus()});await assert.rejects(g.service.setupCurrent(g.founder.user,session),{status:403});assert.equal(g.store.get(g.service.key).grants.length,0);
+});
+test('managed readiness uses only fixed private status transport, not story RPC or caller metadata',async()=>{
+ const requests=[],reader=createManagedStatusReader({sessions:new Map([[operator,{cookie:'auth-token=private-fixture'}]]),grantKey:'g'.repeat(43),nativeOrigin:'https://design.example.com',rpcOrigin:'http://penpot-frontend:8080',fetchImpl:async(url,options)=>{requests.push({url,options});return Response.json(readyStatus());}});
+ assert.deepEqual(await reader({ownerPrincipal:operator,teamId}),readyStatus());assert.equal(requests[0].url,'http://penpot-frontend:8080/api/rpc/command/studio-access-status');assert.deepEqual(JSON.parse(requests[0].options.body),{'team-id':teamId});assert.equal(requests[0].options.headers.Origin,'https://design.example.com');assert.equal(requests[0].options.headers['X-Studio-Native-Grant-Key'],'g'.repeat(43));assert.equal(requests[0].options.headers.Cookie,'auth-token=private-fixture');
+});

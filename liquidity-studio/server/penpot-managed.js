@@ -6,6 +6,7 @@ import {validatePenpotWorkspaceConfiguration} from './penpot-workspace-configura
 import {createPenpotStoryProvider} from './penpot-story-development.js';
 import {PenpotProfilePairing} from './penpot-profile-pairing.js';
 import {PenpotBrandAccess,createPenpotMembershipReconciler} from './penpot-brand-access.js';
+import {installManagedAdmission,createManagedStatusReader} from './penpot-managed-admission.js';
 import {createNativeAccessController} from './penpot-native-access-controller.js';
 import {publicHttpsOrigin,nativeRpcOrigin} from './penpot-origins.js';
 export function validateManagedPenpotConfiguration(value){
@@ -26,7 +27,7 @@ export async function createManagedPenpot({store,identity,configurationPath,fetc
  const configuration=await loadManagedPenpotConfiguration(configurationPath);
  const nativePairing=new PenpotProfilePairing({store,identity,...configuration});
  const provider=createPenpotStoryProvider({store,identity,configuration:configuration.workspace,grantKey:configuration.grantKey,fetchImpl,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.rpcOrigin,localTools:false,
-  brandAccessFor:({scope,workspaceFor,rpc,nativeSessions})=>new PenpotBrandAccess({store,identity,pairing:nativePairing,scope,workspaceFor,rpc,reconcileMembership:createPenpotMembershipReconciler({sessions:nativeSessions,grantKey:configuration.grantKey,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.rpcOrigin,fetchImpl})})});
+  brandAccessFor:({scope,workspaceFor,rpc,nativeSessions})=>installManagedAdmission(new PenpotBrandAccess({store,identity,pairing:nativePairing,scope,workspaceFor,rpc,reconcileMembership:createPenpotMembershipReconciler({sessions:nativeSessions,grantKey:configuration.grantKey,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.rpcOrigin,fetchImpl})}),{readNativeStatus:createManagedStatusReader({sessions:nativeSessions,grantKey:configuration.grantKey,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.rpcOrigin,fetchImpl})})});
  provider.pairedAccess=true;
  provider.penpotEmbedding=Object.freeze({studioOrigin:configuration.studioOrigin,nativeOrigin:configuration.nativeOrigin});
  const nativeAccess=createNativeAccessController({store,nativeInstanceId:configuration.nativeInstanceId,grantKey:configuration.grantKey,accessFor:async scope=>(await provider(scope)).brandAccess});
