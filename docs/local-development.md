@@ -150,7 +150,7 @@ status; merely loading an iframe does not establish saved state.
 For the existing native backend whose exported asset URLs use `localhost:39008`,
 start Studio with `--host localhost --port 39052` and configure both workspace and
 pairing `studioOrigin` as `http://localhost:39052`, with nativeOrigin and native
-public URI `http://localhost:39008`. The listener still binds only127.0.0.1; the
+public URI `http://localhost:39008`. The listener still binds only `127.0.0.1`; the
 option selects the browser hostname, exact Host/Origin checks and HMR address.
-The default remains127.0.0.1. This keeps exported assets on the same native origin
+The default remains `127.0.0.1`. This keeps exported assets on the same native origin
 without rewriting backend responses or changing native accounts.
