@@ -1,0 +1,4610 @@
+{
+  "schemaVersion": 1,
+  "packId": "nipsey-example-v1",
+  "provenance": {
+    "repository": "ChaiWithJai/defiant-os",
+    "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+    "path": "database.py",
+    "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+    "mappingVersion": 1,
+    "verification": "example"
+  },
+  "sources": [
+    {
+      "id": "youtube:lwmf42Rpie4",
+      "provider": "youtube",
+      "videoId": "lwmf42Rpie4",
+      "sourceUrl": "https://www.youtube.com/watch?v=lwmf42Rpie4",
+      "title": "Nipsey WASN'T Wrong About His Brother. Everyone Found Out Too Late.",
+      "creator": "Hustlers N The Hood Documentaries",
+      "creatorHandle": "@HustlersNTheHoodStories",
+      "channelId": null,
+      "publishedAt": "2026-10-04",
+      "duration": "28:05",
+      "format": "UGC Mini-Documentary",
+      "narrativeHook": "Brotherhood & Estate Protection",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 1000000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 15000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 843,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 1,
+        "url": "https://www.youtube.com/watch?v=lwmf42Rpie4",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Whitelisted + 50/50 RevShare"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:P5WCijZTpJ4",
+      "provider": "youtube",
+      "videoId": "P5WCijZTpJ4",
+      "sourceUrl": "https://www.youtube.com/watch?v=P5WCijZTpJ4",
+      "title": "Nipsey Hussle on Ownership, Leadership & Building a Legacy | Culture Builders",
+      "creator": "Culture Builders (247HH)",
+      "creatorHandle": "@Culture-Builders",
+      "channelId": null,
+      "publishedAt": "2026-04-02",
+      "duration": "20:18",
+      "format": "Archival Interview Compilation",
+      "narrativeHook": "Ownership & Vertical Integration",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 282000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 7700,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 252,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 2,
+        "url": "https://www.youtube.com/watch?v=P5WCijZTpJ4",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Whitelisted + Stems Seeded"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:HkFvQAco8KM",
+      "provider": "youtube",
+      "videoId": "HkFvQAco8KM",
+      "sourceUrl": "https://www.youtube.com/watch?v=HkFvQAco8KM",
+      "title": "BINO RIDEAUX, BLACC SAM, & BH - MILLION DOLLAZ WORTH OF GAME EPISODE 386",
+      "creator": "MILLION DOLLAZ WORTH OF GAME",
+      "creatorHandle": "@MWORTHOFGAME",
+      "channelId": null,
+      "publishedAt": "2026-07-05",
+      "duration": "58:25",
+      "format": "Culture Podcast",
+      "narrativeHook": "PROLIFIC Rollout & Studio Stories",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 258000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 7300,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 842,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 3,
+        "url": "https://www.youtube.com/watch?v=HkFvQAco8KM",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:T_iRdSDV9wE",
+      "provider": "youtube",
+      "videoId": "T_iRdSDV9wE",
+      "sourceUrl": "https://www.youtube.com/watch?v=T_iRdSDV9wE",
+      "title": "Trying Marathon Burger in Los Angeles…",
+      "creator": "Peaks100",
+      "creatorHandle": "@Peaks100",
+      "channelId": null,
+      "publishedAt": "2026-01-24",
+      "duration": "15:30",
+      "format": "Creator Food & Lifestyle Vlog",
+      "narrativeHook": "Marathon Burger IRL Experience",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 243000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 7900,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 847,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 4,
+        "url": "https://www.youtube.com/watch?v=T_iRdSDV9wE",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Marathon Vlog Audio Pack"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:btMUO5YuTQM",
+      "provider": "youtube",
+      "videoId": "btMUO5YuTQM",
+      "sourceUrl": "https://www.youtube.com/watch?v=btMUO5YuTQM",
+      "title": "Blacc Sam Breaks His Silence: Nipsey's New Album, Documentary & The Marathon Empire...ALL FACTS",
+      "creator": "Created Playerz",
+      "creatorHandle": "@CreatedPlayerzz",
+      "channelId": null,
+      "publishedAt": "2026-02-28",
+      "duration": "1:40:06",
+      "format": "Deep-Dive Podcast Interview",
+      "narrativeHook": "Blacc Sam Anchor Interview (PROLIFIC & Empire)",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 238000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 8700,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 1000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 5,
+        "url": "https://www.youtube.com/watch?v=btMUO5YuTQM",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:i7YdgoloV-E",
+      "provider": "youtube",
+      "videoId": "i7YdgoloV-E",
+      "sourceUrl": "https://www.youtube.com/watch?v=i7YdgoloV-E",
+      "title": "It's Been 8 Years Since Nipsey Died, His GF Lauren Just Revealed Her New Husband",
+      "creator": "Rap Dynasty",
+      "creatorHandle": "@RapDynastyYT",
+      "channelId": null,
+      "publishedAt": "2026-06-17",
+      "duration": "20:15",
+      "format": "UGC Hip-Hop Commentary",
+      "narrativeHook": "Celebrity / Family Update",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 204000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 5000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 292,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 6,
+        "url": "https://www.youtube.com/watch?v=i7YdgoloV-E",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + 50/50 RevShare"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:3fo2MIgACQE",
+      "provider": "youtube",
+      "videoId": "3fo2MIgACQE",
+      "sourceUrl": "https://www.youtube.com/watch?v=3fo2MIgACQE",
+      "title": "How Nipsey Hussle Daughter Just Inherited $11M After A 7 Year Court Battle With Step Mom",
+      "creator": "Rap Dynasty",
+      "creatorHandle": "@RapDynastyYT",
+      "channelId": null,
+      "publishedAt": "2026-07-08",
+      "duration": "23:36",
+      "format": "UGC Estate & Wealth Essay",
+      "narrativeHook": "$11M Estate Probate Settlement",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 197000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 5800,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 272,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 7,
+        "url": "https://www.youtube.com/watch?v=3fo2MIgACQE",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Whitelisted + 50/50 RevShare"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:BM2Ly1buvXw",
+      "provider": "youtube",
+      "videoId": "BM2Ly1buvXw",
+      "sourceUrl": "https://www.youtube.com/watch?v=BM2Ly1buvXw",
+      "title": "Blacc Sam Reacts To Big U Getting Charged With Nipsey's M*rder",
+      "creator": "Rap Dynasty",
+      "creatorHandle": "@RapDynastyYT",
+      "channelId": null,
+      "publishedAt": "2026-02-25",
+      "duration": "20:30",
+      "format": "UGC Hip-Hop News Commentary",
+      "narrativeHook": "Big U RICO Indictment & Street Lore",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 195000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 8000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 387,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 8,
+        "url": "https://www.youtube.com/watch?v=BM2Ly1buvXw",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + 50/50 RevShare"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:IJJdCwenY_w",
+      "provider": "youtube",
+      "videoId": "IJJdCwenY_w",
+      "sourceUrl": "https://www.youtube.com/watch?v=IJJdCwenY_w",
+      "title": "A Marathon From Crenshaw. A Nipsey Hussle Story",
+      "creator": "When The Mic Fades",
+      "creatorHandle": "@WhenTheMicFades",
+      "channelId": null,
+      "publishedAt": "2026-02-15",
+      "duration": "59:00",
+      "format": "Fan-Made Feature Documentary",
+      "narrativeHook": "Full Career & Ownership Biography",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 149000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 2400,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 320,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 9,
+        "url": "https://www.youtube.com/watch?v=IJJdCwenY_w",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + Stems Seeded"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:441Enl7QSDQ",
+      "provider": "youtube",
+      "videoId": "441Enl7QSDQ",
+      "sourceUrl": "https://www.youtube.com/watch?v=441Enl7QSDQ",
+      "title": "Blacc Sam Previews UNHEARD Nipsey Hussle music project from the new Prolific release w/ Bino Rideaux",
+      "creator": "BigBoyTV",
+      "creatorHandle": "@Big.Boy.",
+      "channelId": null,
+      "publishedAt": "2026-06-13",
+      "duration": "36:54",
+      "format": "Studio Interview & Music Preview",
+      "narrativeHook": "Unheard PROLIFIC Tracks & Studio Process",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 141000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 5200,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 577,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 10,
+        "url": "https://www.youtube.com/watch?v=441Enl7QSDQ",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:hHtx_yhEm84",
+      "provider": "youtube",
+      "videoId": "hHtx_yhEm84",
+      "sourceUrl": "https://www.youtube.com/watch?v=hHtx_yhEm84",
+      "title": "Shady Blue Talks About the Shootout at the Beach Nipsey Hussle Rapped About on 'Blue Laces 2'",
+      "creator": "Dontletthatgooveryohead",
+      "creatorHandle": "@Da_shadiest_uno",
+      "channelId": null,
+      "publishedAt": "2026-09-27",
+      "duration": "9:12",
+      "format": "Firsthand Behind-the-Lyrics Story",
+      "narrativeHook": "Real 1990s Venice Shootout from 'Blue Laces 2'",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 116000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 2200,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 261,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 11,
+        "url": "https://www.youtube.com/watch?v=hHtx_yhEm84",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Whitelisted + Audio Linked"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:ZDbhP5XO0Es",
+      "provider": "youtube",
+      "videoId": "ZDbhP5XO0Es",
+      "sourceUrl": "https://www.youtube.com/watch?v=ZDbhP5XO0Es",
+      "title": "Black Sam Sent Nipsey Hussle Killer A Strong Warning In New Interview",
+      "creator": "Poetik Flakko",
+      "creatorHandle": "@PoetikFlakko",
+      "channelId": null,
+      "publishedAt": "2026-02-28",
+      "duration": "14:28",
+      "format": "Creator Reaction / Clipper",
+      "narrativeHook": "Reaction to Created Playerz Interview",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 110000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 2200,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 724,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 12,
+        "url": "https://www.youtube.com/watch?v=ZDbhP5XO0Es",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Clipper Network Member"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:-APYi599sRg",
+      "provider": "youtube",
+      "videoId": "-APYi599sRg",
+      "sourceUrl": "https://www.youtube.com/watch?v=-APYi599sRg",
+      "title": "Keeping Nipsey's Mission Alive & Prolific Album Update w/ Blacc Sam & Bino Rideaux",
+      "creator": "ALL THE SMOKE",
+      "creatorHandle": "@AllTheSmokeProductions",
+      "channelId": null,
+      "publishedAt": "2026-05-07",
+      "duration": "1:05:04",
+      "format": "Sports & Culture Podcast",
+      "narrativeHook": "PROLIFIC Album & Marathon Mission",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 109000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 4000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 360,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 13,
+        "url": "https://www.youtube.com/watch?v=-APYi599sRg",
+        "tier": "Tier 1 (100K-1M+)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:I-idYK7fSTs",
+      "provider": "youtube",
+      "videoId": "I-idYK7fSTs",
+      "sourceUrl": "https://www.youtube.com/watch?v=I-idYK7fSTs",
+      "title": "Big U CAUGHT On Wiretap Threatening Nipsey Hussle?! Feds Drop BOMBSHELL",
+      "creator": "Ceddy Nash",
+      "creatorHandle": "@CeddyNash",
+      "channelId": null,
+      "publishedAt": "2026-02-21",
+      "duration": "13:19",
+      "format": "UGC Legal/Paperwork Breakdown",
+      "narrativeHook": "Federal Wiretap Paperwork Analysis",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 87000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1600,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 398,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 14,
+        "url": "https://www.youtube.com/watch?v=I-idYK7fSTs",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Clipper Network Member"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:IbTGUVPggl0",
+      "provider": "youtube",
+      "videoId": "IbTGUVPggl0",
+      "sourceUrl": "https://www.youtube.com/watch?v=IbTGUVPggl0",
+      "title": "Nipsey Hussle Wife Just Inherited $20M, How She Lives Is Inane",
+      "creator": "Rap Thread",
+      "creatorHandle": "@RapThreadYT",
+      "channelId": null,
+      "publishedAt": "2026-09-22",
+      "duration": "23:52",
+      "format": "UGC Estate & IP Breakdown Essay",
+      "narrativeHook": "$20M Estate, Trademarks & Marathon IP",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 86000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 677,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 37,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 15,
+        "url": "https://www.youtube.com/watch?v=IbTGUVPggl0",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + Stems Seeded"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:k-YX3ABVgak",
+      "provider": "youtube",
+      "videoId": "k-YX3ABVgak",
+      "sourceUrl": "https://www.youtube.com/watch?v=k-YX3ABVgak",
+      "title": "Blacc Sam Responds To Opps Sh**ting Up Nipsey Hussle Restaurant Opening",
+      "creator": "Rap Dynasty",
+      "creatorHandle": "@RapDynastyYT",
+      "channelId": null,
+      "publishedAt": "2026-03-02",
+      "duration": "20:34",
+      "format": "UGC Hip-Hop News Commentary",
+      "narrativeHook": "Marathon Burger Long Beach Opening",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 80000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1300,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 163,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 16,
+        "url": "https://www.youtube.com/watch?v=k-YX3ABVgak",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + 50/50 RevShare"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:8lJLSMJztpU",
+      "provider": "youtube",
+      "videoId": "8lJLSMJztpU",
+      "sourceUrl": "https://www.youtube.com/watch?v=8lJLSMJztpU",
+      "title": "Bino Rideaux on NEW ALBUM 'Prolific' with Nipsey Hussle dropping AUGUST 14 | Jeff Teague & 520",
+      "creator": "Club 520 Podcast",
+      "creatorHandle": "@club520podcast",
+      "channelId": null,
+      "publishedAt": "2026-08-13",
+      "duration": "38:02",
+      "format": "Sports Podcast Clip",
+      "narrativeHook": "Bino Rideaux on Recording PROLIFIC",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 68000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1600,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 201,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 17,
+        "url": "https://www.youtube.com/watch?v=8lJLSMJztpU",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:ZpXbmTle8jg",
+      "provider": "youtube",
+      "videoId": "ZpXbmTle8jg",
+      "sourceUrl": "https://www.youtube.com/watch?v=ZpXbmTle8jg",
+      "title": "Blacc Sam on Nipsey Hussle's Square Ceremony, The Marathon Empire & New Prolific Album",
+      "creator": "SBRBN",
+      "creatorHandle": "@sbrbnla",
+      "channelId": null,
+      "publishedAt": "2026-02-27",
+      "duration": "1:05:25",
+      "format": "LA Culture Podcast Interview",
+      "narrativeHook": "Nipsey Square Ceremony & Marathon Brand",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 61000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1600,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 155,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 18,
+        "url": "https://www.youtube.com/watch?v=ZpXbmTle8jg",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:cfd1RNDc6hQ",
+      "provider": "youtube",
+      "videoId": "cfd1RNDc6hQ",
+      "sourceUrl": "https://www.youtube.com/watch?v=cfd1RNDc6hQ",
+      "title": "Nipsey Hussle's Brother Blacc Sam Gives An Emotional Speech With India Love At Dedication Ceremony",
+      "creator": "TheHollywoodFix",
+      "creatorHandle": "@TheHollywoodFix",
+      "channelId": null,
+      "publishedAt": "2026-03-02",
+      "duration": "5:12",
+      "format": "Raw Event Speech Clip",
+      "narrativeHook": "Nipsey Hussle Square Dedication Speech",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 60000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1200,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 80,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 19,
+        "url": "https://www.youtube.com/watch?v=cfd1RNDc6hQ",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Audio Linked via Content ID"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:e--4VCXNedk",
+      "provider": "youtube",
+      "videoId": "e--4VCXNedk",
+      "sourceUrl": "https://www.youtube.com/watch?v=e--4VCXNedk",
+      "title": "The Game Talks 'The Documentary 3,' Kendrick Lamar, Drake, Kobe, Nipsey & His Legacy",
+      "creator": "REAL 92.3 LA",
+      "creatorHandle": "@REAL923LA",
+      "channelId": null,
+      "publishedAt": "2026-08-25",
+      "duration": "39:57",
+      "format": "Radio Interview Clip",
+      "narrativeHook": "Peer Tribute & West Coast Legacy",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 60000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1400,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 423,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 20,
+        "url": "https://www.youtube.com/watch?v=e--4VCXNedk",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "TOFU_DISCOVERED",
+        "rightsLabel": "Pending Outreach"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:Qwv2CrRdiCc",
+      "provider": "youtube",
+      "videoId": "Qwv2CrRdiCc",
+      "sourceUrl": "https://www.youtube.com/watch?v=Qwv2CrRdiCc",
+      "title": "The Trap Nipsey Hussle Never Escaped",
+      "creator": "The Fatal Detail",
+      "creatorHandle": "@FatalDetail",
+      "channelId": null,
+      "publishedAt": "2026-09-18",
+      "duration": "11:58",
+      "format": "Documentary Video Essay",
+      "narrativeHook": "Psychology, Loyalty & Apple Co-Sign",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 57000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 530,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 93,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 21,
+        "url": "https://www.youtube.com/watch?v=Qwv2CrRdiCc",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + Stems Seeded"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:ycXLmIhkN40",
+      "provider": "youtube",
+      "videoId": "ycXLmIhkN40",
+      "sourceUrl": "https://www.youtube.com/watch?v=ycXLmIhkN40",
+      "title": "BREAKING: The FBI Just LEAKED What Big U Had Done To Nipsey Hussle",
+      "creator": "Hip Hop News Uncensored",
+      "creatorHandle": "@HipHopNewsUncensored",
+      "channelId": null,
+      "publishedAt": "2026-08-01",
+      "duration": "12:45",
+      "format": "UGC Hip-Hop News Clip",
+      "narrativeHook": "FBI Filing & Street History Breakdown",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 54000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 930,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 126,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 22,
+        "url": "https://www.youtube.com/watch?v=ycXLmIhkN40",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "TOFU_DISCOVERED",
+        "rightsLabel": "Pending Outreach"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:tvl2bhr8mUI",
+      "provider": "youtube",
+      "videoId": "tvl2bhr8mUI",
+      "sourceUrl": "https://www.youtube.com/watch?v=tvl2bhr8mUI",
+      "title": "Blacc Sam & Bino Rideaux Interview | JBP Patreon Exclusive",
+      "creator": "DUB HERE",
+      "creatorHandle": "@TheFilesWithDub",
+      "channelId": null,
+      "publishedAt": "2026-08-10",
+      "duration": "21:32",
+      "format": "Pure Fan Clipper Channel",
+      "narrativeHook": "Clipped Joe Budden Patreon Interview",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 53000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 954,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 207,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 23,
+        "url": "https://www.youtube.com/watch?v=tvl2bhr8mUI",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Clipper Network Member"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:t8Z4snVpAn4",
+      "provider": "youtube",
+      "videoId": "t8Z4snVpAn4",
+      "sourceUrl": "https://www.youtube.com/watch?v=t8Z4snVpAn4",
+      "title": "Allmoneyin BH - Nipsey Hussle Square Shot By @Gage.films",
+      "creator": "Allmoneyin BH",
+      "creatorHandle": "@AllmoneyinBH",
+      "channelId": null,
+      "publishedAt": "2026-03-01",
+      "duration": "3:15",
+      "format": "Street/Event Visual",
+      "narrativeHook": "Nipsey Hussle Square Dedication Visual",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 50000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1500,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 105,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 24,
+        "url": "https://www.youtube.com/watch?v=t8Z4snVpAn4",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "First-Party Camp Channel"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:_f5X4-qiop0",
+      "provider": "youtube",
+      "videoId": "_f5X4-qiop0",
+      "sourceUrl": "https://www.youtube.com/watch?v=_f5X4-qiop0",
+      "title": "Rimpau Breaks Silence On Nipsey Hussle, Blacc Sam & The Day Everything Changed",
+      "creator": "Rocstar2800",
+      "creatorHandle": "@rocstar2800",
+      "channelId": null,
+      "publishedAt": "2026-06-20",
+      "duration": "28:42",
+      "format": "Creator Reaction / Commentary",
+      "narrativeHook": "Rimpau Eyewitness Account Breakdown",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 42000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 600,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 25,
+        "url": "https://www.youtube.com/watch?v=_f5X4-qiop0",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "TOFU_DISCOVERED",
+        "rightsLabel": "Pending Outreach"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:5YIfY0EOj0Q",
+      "provider": "youtube",
+      "videoId": "5YIfY0EOj0Q",
+      "sourceUrl": "https://www.youtube.com/watch?v=5YIfY0EOj0Q",
+      "title": "New Court Docs Reveal Big U Had Nipsey K*LLED Over A Diss Song",
+      "creator": "The Lionel B Show",
+      "creatorHandle": "@TheLionelBShow",
+      "channelId": null,
+      "publishedAt": "2026-07-31",
+      "duration": "18:10",
+      "format": "Creator Commentary",
+      "narrativeHook": "Diss Song Lore & Mixtape Era Backstory",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 41000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1800,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 75,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 26,
+        "url": "https://www.youtube.com/watch?v=5YIfY0EOj0Q",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Clipper Network Member"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:g7tGN81oCGQ",
+      "provider": "youtube",
+      "videoId": "g7tGN81oCGQ",
+      "sourceUrl": "https://www.youtube.com/watch?v=g7tGN81oCGQ",
+      "title": "Crip Mac Reacts To Blacc Sam Saying He Wishes Eric Holder Was Free So He'd Get X'd Out",
+      "creator": "Cam Capone News",
+      "creatorHandle": "@CamCaponeNews",
+      "channelId": null,
+      "publishedAt": "2026-03-26",
+      "duration": "10:15",
+      "format": "Interview Reaction Clip",
+      "narrativeHook": "Secondary Clip from Created Playerz Run",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 41000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 774,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 309,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 27,
+        "url": "https://www.youtube.com/watch?v=g7tGN81oCGQ",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "TOFU_DISCOVERED",
+        "rightsLabel": "Pending Outreach"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:puX51KR7X1w",
+      "provider": "youtube",
+      "videoId": "puX51KR7X1w",
+      "sourceUrl": "https://www.youtube.com/watch?v=puX51KR7X1w",
+      "title": "Nipsey Hussle vs 8 Trey: The Real Story Behind Rollin 60s and The Marathon",
+      "creator": "WGWN",
+      "creatorHandle": "@hotboylopez",
+      "channelId": null,
+      "publishedAt": "2026-08-18",
+      "duration": "18:50",
+      "format": "UGC Street/Music History Essay",
+      "narrativeHook": "History Behind Crenshaw, The Marathon & Victory Lap",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 39000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 390,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 56,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 28,
+        "url": "https://www.youtube.com/watch?v=puX51KR7X1w",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + Stems Seeded"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:NQ2ZU2J5t5E",
+      "provider": "youtube",
+      "videoId": "NQ2ZU2J5t5E",
+      "sourceUrl": "https://www.youtube.com/watch?v=NQ2ZU2J5t5E",
+      "title": "The TRUTH About the Marathon Burger Shooting: Blacc Sam & The Grand Opening Tragedy",
+      "creator": "The Lionel B Show",
+      "creatorHandle": "@TheLionelBShow",
+      "channelId": null,
+      "publishedAt": "2026-03-02",
+      "duration": "10:44",
+      "format": "Creator News Breakdown",
+      "narrativeHook": "Marathon Burger Long Beach Grand Opening",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 36000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 968,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 135,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 29,
+        "url": "https://www.youtube.com/watch?v=NQ2ZU2J5t5E",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Clipper Network Member"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:lgGd9203xqw",
+      "provider": "youtube",
+      "videoId": "lgGd9203xqw",
+      "sourceUrl": "https://www.youtube.com/watch?v=lgGd9203xqw",
+      "title": "Why Blacc Sam Finally Released Nipsey Hussle's Unreleased Music | SWAY'S UNIVERSE",
+      "creator": "SWAY'S UNIVERSE",
+      "creatorHandle": "@SWAYSUNIVERSE",
+      "channelId": null,
+      "publishedAt": "2026-08-22",
+      "duration": "35:56",
+      "format": "Radio/Podcast Interview",
+      "narrativeHook": "Why Unreleased Vault Was Opened for PROLIFIC",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 35000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1100,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 80,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 30,
+        "url": "https://www.youtube.com/watch?v=lgGd9203xqw",
+        "tier": "Tier 2 (35K-99K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:kvO5ybmnZrE",
+      "provider": "youtube",
+      "videoId": "kvO5ybmnZrE",
+      "sourceUrl": "https://www.youtube.com/watch?v=kvO5ybmnZrE",
+      "title": "Black Sam Reacts To Nipsey Hussles Daughter Hanging With Bloods",
+      "creator": "Rap Dynasty",
+      "creatorHandle": "@RapDynastyYT",
+      "channelId": null,
+      "publishedAt": "2026-06-12",
+      "duration": "21:10",
+      "format": "UGC Hip-Hop Commentary",
+      "narrativeHook": "Family & Culture Commentary",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 33000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 2100,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 70,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 31,
+        "url": "https://www.youtube.com/watch?v=kvO5ybmnZrE",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + 50/50 RevShare"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:zN08JYLF9ks",
+      "provider": "youtube",
+      "videoId": "zN08JYLF9ks",
+      "sourceUrl": "https://www.youtube.com/watch?v=zN08JYLF9ks",
+      "title": "Nipsey Hussle Never Stood A Chance | Psychological Analysis",
+      "creator": "HipHop History",
+      "creatorHandle": "@HipHopHistoryYT",
+      "channelId": null,
+      "publishedAt": "2026-09-06",
+      "duration": "46:40",
+      "format": "Deep-Dive Video Essay",
+      "narrativeHook": "46-Min Psychological & Lyrical Analysis",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 32000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 341,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 60,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 32,
+        "url": "https://www.youtube.com/watch?v=zN08JYLF9ks",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Whitelisted + Stems Seeded"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:T90xFinDU_k",
+      "provider": "youtube",
+      "videoId": "T90xFinDU_k",
+      "sourceUrl": "https://www.youtube.com/watch?v=T90xFinDU_k",
+      "title": "Blacc Sam & Bino Rideaux Talk Nipsey's Legacy, New Album, Documentary & Unreleased Music",
+      "creator": "Bootleg Kev",
+      "creatorHandle": "@BootlegKev",
+      "channelId": null,
+      "publishedAt": "2026-08-13",
+      "duration": "1:12:39",
+      "format": "Music Podcast Interview",
+      "narrativeHook": "PROLIFIC Rollout & Atlantic Deal History",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 32000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 1000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 124,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 33,
+        "url": "https://www.youtube.com/watch?v=T90xFinDU_k",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:TER76wLojYM",
+      "provider": "youtube",
+      "videoId": "TER76wLojYM",
+      "sourceUrl": "https://www.youtube.com/watch?v=TER76wLojYM",
+      "title": "Nipsey Hussle & Black Sam Taught You How To Get Rich (But Nobody Noticed)",
+      "creator": "HipHop History",
+      "creatorHandle": "@HipHopHistoryYT",
+      "channelId": null,
+      "publishedAt": "2026-08-11",
+      "duration": "46:53",
+      "format": "Business & Wealth Documentary",
+      "narrativeHook": "The Marathon Financial & Real Estate Blueprint",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 28000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 838,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 33,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 34,
+        "url": "https://www.youtube.com/watch?v=TER76wLojYM",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Whitelisted + Stems Seeded"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:NXgpWkVse5c",
+      "provider": "youtube",
+      "videoId": "NXgpWkVse5c",
+      "sourceUrl": "https://www.youtube.com/watch?v=NXgpWkVse5c",
+      "title": "Blacc Sam Didn't Hold Back about NIPSEY HUSSLE Killer… But Was He Out Of Line?",
+      "creator": "Ceddy Nash",
+      "creatorHandle": "@CeddyNash",
+      "channelId": null,
+      "publishedAt": "2026-03-01",
+      "duration": "15:20",
+      "format": "Creator Reaction Clip",
+      "narrativeHook": "Secondary Clip of Created Playerz Interview",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 28000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 924,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 185,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 35,
+        "url": "https://www.youtube.com/watch?v=NXgpWkVse5c",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Clipper Network Member"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:DPlKnSMokwU",
+      "provider": "youtube",
+      "videoId": "DPlKnSMokwU",
+      "sourceUrl": "https://www.youtube.com/watch?v=DPlKnSMokwU",
+      "title": "Blacc Sam Speaks On Altercation With Roccstar",
+      "creator": "BACK ON FIGG",
+      "creatorHandle": "@BACKONFIGGG",
+      "channelId": null,
+      "publishedAt": "2026-05-12",
+      "duration": "15:37",
+      "format": "LA Podcast Clip",
+      "narrativeHook": "West Coast Podcasters Reacting to Blacc Sam",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 27000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 421,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 32,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 36,
+        "url": "https://www.youtube.com/watch?v=DPlKnSMokwU",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "TOFU_DISCOVERED",
+        "rightsLabel": "Pending Outreach"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:BBgO8D9bf5c",
+      "provider": "youtube",
+      "videoId": "BBgO8D9bf5c",
+      "sourceUrl": "https://www.youtube.com/watch?v=BBgO8D9bf5c",
+      "title": "Blacc Sam Tells The HORROR Story Of What BIG U Had Done To Nipsey",
+      "creator": "Hip Hop News Uncensored",
+      "creatorHandle": "@HipHopNewsUncensored",
+      "channelId": null,
+      "publishedAt": "2026-08-15",
+      "duration": "13:17",
+      "format": "Clipper Breakdown",
+      "narrativeHook": "Clips Breakfast Club Interview on Nipsey Diss Track",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 23000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 638,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 88,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 37,
+        "url": "https://www.youtube.com/watch?v=BBgO8D9bf5c",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "TOFU_DISCOVERED",
+        "rightsLabel": "Pending Outreach"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:kQy0DwN2uUY",
+      "provider": "youtube",
+      "videoId": "kQy0DwN2uUY",
+      "sourceUrl": "https://www.youtube.com/watch?v=kQy0DwN2uUY",
+      "title": "INDIA LOVE @ THE MARATHON BURGER LONG BEACH GRAND OPENING!!!",
+      "creator": "India Love",
+      "creatorHandle": "@thelifeofindialove",
+      "channelId": null,
+      "publishedAt": "2026-03-10",
+      "duration": "15:40",
+      "format": "Creator Lifestyle Vlog",
+      "narrativeHook": "Behind-the-Scenes at Marathon Burger Opening",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 23000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 574,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 44,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 38,
+        "url": "https://www.youtube.com/watch?v=kQy0DwN2uUY",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Marathon Vlog Audio Pack"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:OURGoAQxf_4",
+      "provider": "youtube",
+      "videoId": "OURGoAQxf_4",
+      "sourceUrl": "https://www.youtube.com/watch?v=OURGoAQxf_4",
+      "title": "Rimpau Crashed out & broke his silence on Nipsey Hussle, Black Sam & the Rollin 60s",
+      "creator": "NINABOY",
+      "creatorHandle": "@NINABOY",
+      "channelId": null,
+      "publishedAt": "2026-06-23",
+      "duration": "1:02:54",
+      "format": "Creator Livestream Commentary",
+      "narrativeHook": "Community Reaction to Eyewitness Posts",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 17000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 450,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 198,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 39,
+        "url": "https://www.youtube.com/watch?v=OURGoAQxf_4",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "TOFU_DISCOVERED",
+        "rightsLabel": "Pending Outreach"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:9PHoRJ6ZYaI",
+      "provider": "youtube",
+      "videoId": "9PHoRJ6ZYaI",
+      "sourceUrl": "https://www.youtube.com/watch?v=9PHoRJ6ZYaI",
+      "title": "Cowboy FINALLY reveal LAST WORDS he said to NIPSEY before going back in MARATHON STORE",
+      "creator": "Nothin 2 Somethin",
+      "creatorHandle": "@Paulpnothin2somethin",
+      "channelId": null,
+      "publishedAt": "2026-09-22",
+      "duration": "16:12",
+      "format": "Eyewitness Podcast Clip",
+      "narrativeHook": "Firsthand Account at The Marathon Store",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 15000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 178,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 88,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 40,
+        "url": "https://www.youtube.com/watch?v=9PHoRJ6ZYaI",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "TOFU_DISCOVERED",
+        "rightsLabel": "Pending Outreach"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:vz0mHj92Sis",
+      "provider": "youtube",
+      "videoId": "vz0mHj92Sis",
+      "sourceUrl": "https://www.youtube.com/watch?v=vz0mHj92Sis",
+      "title": "Trying Nipsey Hussle's Marathon Burger in LA ft. Mya Nicole & Miya",
+      "creator": "RNS Dus",
+      "creatorHandle": "@rnsdusss",
+      "channelId": null,
+      "publishedAt": "2026-09-16",
+      "duration": "16:05",
+      "format": "Creator Food Review Vlog",
+      "narrativeHook": "Gen-Z Creators Reviewing Marathon Burger",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 15000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 846,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 30,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 41,
+        "url": "https://www.youtube.com/watch?v=vz0mHj92Sis",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Marathon Vlog Audio Pack"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:0kvY4l4Klqw",
+      "provider": "youtube",
+      "videoId": "0kvY4l4Klqw",
+      "sourceUrl": "https://www.youtube.com/watch?v=0kvY4l4Klqw",
+      "title": "Blacc Sam & Bino Rideaux Talk Protecting Nipsey Hussle's Legacy, 'Prolific' & Unheard Stories",
+      "creator": "REAL 92.3 LA",
+      "creatorHandle": "@REAL923LA",
+      "channelId": null,
+      "publishedAt": "2026-08-14",
+      "duration": "39:42",
+      "format": "Radio Interview",
+      "narrativeHook": "Release-Day PROLIFIC Interview",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 15000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 463,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 48,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 42,
+        "url": "https://www.youtube.com/watch?v=0kvY4l4Klqw",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:m7dQC1g6bLc",
+      "provider": "youtube",
+      "videoId": "m7dQC1g6bLc",
+      "sourceUrl": "https://www.youtube.com/watch?v=m7dQC1g6bLc",
+      "title": "Nipsey Hussle WARNED Us About Blacc Sam! NOBODY Listened! TOO LATE Now!",
+      "creator": "Spider Loc",
+      "creatorHandle": "@SpiderLocBlacbox",
+      "channelId": null,
+      "publishedAt": "2026-10-05",
+      "duration": "11:20",
+      "format": "Creator Commentary Clip",
+      "narrativeHook": "West Coast Veteran Praising Blacc Sam's Execution",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 14000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 453,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 53,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 43,
+        "url": "https://www.youtube.com/watch?v=m7dQC1g6bLc",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "MOFU_WHITELISTED",
+        "rightsLabel": "Clipper Network Member"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:0wzWUOLK_t8",
+      "provider": "youtube",
+      "videoId": "0wzWUOLK_t8",
+      "sourceUrl": "https://www.youtube.com/watch?v=0wzWUOLK_t8",
+      "title": "Blacc Sam Reveals More Unreleased Nipsey Hussle Music Is Coming",
+      "creator": "Bootleg Kev",
+      "creatorHandle": "@BootlegKev",
+      "channelId": null,
+      "publishedAt": "2026-08-14",
+      "duration": "9:52",
+      "format": "Segmented Podcast Micro-Clip",
+      "narrativeHook": "10-Min Cut Focused Strictly on Unreleased Music",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 13000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 367,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 55,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 44,
+        "url": "https://www.youtube.com/watch?v=0wzWUOLK_t8",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Anchor Media Partner"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "youtube:lq5QlSyhtpU",
+      "provider": "youtube",
+      "videoId": "lq5QlSyhtpU",
+      "sourceUrl": "https://www.youtube.com/watch?v=lq5QlSyhtpU",
+      "title": "We Spent a Day With Bino Rideaux | Nipsey Hussle, Prolific & Where It All Started",
+      "creator": "POW TV",
+      "creatorHandle": "@POWMagLA",
+      "channelId": null,
+      "publishedAt": "2026-08-12",
+      "duration": "21:15",
+      "format": "Studio Mini-Documentary",
+      "narrativeHook": "Inside No Name Studios Where PROLIFIC Was Recorded",
+      "revision": 1,
+      "observations": [
+        {
+          "metric": "views",
+          "value": 11000,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "likes",
+          "value": 413,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        },
+        {
+          "metric": "comments",
+          "value": 32,
+          "unit": "count",
+          "observedAt": null,
+          "method": "supplied-example",
+          "provenance": {
+            "repository": "ChaiWithJai/defiant-os",
+            "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+            "path": "database.py",
+            "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+            "mappingVersion": 1,
+            "verification": "example"
+          }
+        }
+      ],
+      "original": {
+        "rank": 45,
+        "url": "https://www.youtube.com/watch?v=lq5QlSyhtpU",
+        "tier": "Tier 3 (10K-34K)",
+        "stage": "BOFU_AD_BOOSTED",
+        "rightsLabel": "Whitelisted + Stems Seeded"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    }
+  ],
+  "recordings": [
+    {
+      "id": "nipsey:recording:US-AMI-26-00001",
+      "title": "Prolific (Title Track)",
+      "artist": "Nipsey Hussle",
+      "album": "PROLIFIC (w/ Bino Rideaux)",
+      "suppliedIsrc": "US-AMI-26-00001",
+      "verification": "unverified",
+      "original": {
+        "year": 2026,
+        "bpm": 92,
+        "key": "C Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-26-00002",
+      "title": "No Name Sessions",
+      "artist": "Nipsey Hussle",
+      "album": "PROLIFIC (w/ Bino Rideaux)",
+      "suppliedIsrc": "US-AMI-26-00002",
+      "verification": "unverified",
+      "original": {
+        "year": 2026,
+        "bpm": 88,
+        "key": "F Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-26-00003",
+      "title": "All Facts (feat. Bino Rideaux)",
+      "artist": "Nipsey Hussle",
+      "album": "PROLIFIC (w/ Bino Rideaux)",
+      "suppliedIsrc": "US-AMI-26-00003",
+      "verification": "unverified",
+      "original": {
+        "year": 2026,
+        "bpm": 95,
+        "key": "G Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-18-00101",
+      "title": "Hussle & Motivate",
+      "artist": "Nipsey Hussle",
+      "album": "Victory Lap",
+      "suppliedIsrc": "US-AMI-18-00101",
+      "verification": "unverified",
+      "original": {
+        "year": 2018,
+        "bpm": 73,
+        "key": "B Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-18-00102",
+      "title": "Blue Laces 2",
+      "artist": "Nipsey Hussle",
+      "album": "Victory Lap",
+      "suppliedIsrc": "US-AMI-18-00102",
+      "verification": "unverified",
+      "original": {
+        "year": 2018,
+        "bpm": 84,
+        "key": "D Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-18-00103",
+      "title": "Double Up (feat. Belly & Dom Kennedy)",
+      "artist": "Nipsey Hussle",
+      "album": "Victory Lap",
+      "suppliedIsrc": "US-AMI-18-00103",
+      "verification": "unverified",
+      "original": {
+        "year": 2018,
+        "bpm": 89,
+        "key": "A Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-18-00104",
+      "title": "Grinding All My Life",
+      "artist": "Nipsey Hussle",
+      "album": "Victory Lap",
+      "suppliedIsrc": "US-AMI-18-00104",
+      "verification": "unverified",
+      "original": {
+        "year": 2018,
+        "bpm": 75,
+        "key": "E Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-18-00105",
+      "title": "Dedication (feat. Kendrick Lamar)",
+      "artist": "Nipsey Hussle",
+      "album": "Victory Lap",
+      "suppliedIsrc": "US-AMI-18-00105",
+      "verification": "unverified",
+      "original": {
+        "year": 2018,
+        "bpm": 91,
+        "key": "C# Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-18-00106",
+      "title": "Last Time That I Checc'd (feat. YG)",
+      "artist": "Nipsey Hussle",
+      "album": "Victory Lap",
+      "suppliedIsrc": "US-AMI-18-00106",
+      "verification": "unverified",
+      "original": {
+        "year": 2018,
+        "bpm": 98,
+        "key": "F# Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-19-00201",
+      "title": "Racks In The Middle (feat. Roddy Ricch)",
+      "artist": "Nipsey Hussle",
+      "album": "Single / Victory Lap Era",
+      "suppliedIsrc": "US-AMI-19-00201",
+      "verification": "unverified",
+      "original": {
+        "year": 2019,
+        "bpm": 100,
+        "key": "E Minor",
+        "rightsLabel": "Cleared Stems + Instrumental"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-13-00301",
+      "title": "Checc Me Out",
+      "artist": "Nipsey Hussle",
+      "album": "Crenshaw ($100 Mixtape)",
+      "suppliedIsrc": "US-AMI-13-00301",
+      "verification": "unverified",
+      "original": {
+        "year": 2013,
+        "bpm": 86,
+        "key": "C Minor",
+        "rightsLabel": "100% Master & Publishing Owned"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:recording:US-AMI-11-00401",
+      "title": "Forever On Some Fly Shit",
+      "artist": "Nipsey Hussle",
+      "album": "The Marathon",
+      "suppliedIsrc": "US-AMI-11-00401",
+      "verification": "unverified",
+      "original": {
+        "year": 2010,
+        "bpm": 82,
+        "key": "G Minor",
+        "rightsLabel": "100% Master & Publishing Owned"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    }
+  ],
+  "workstreams": [
+    {
+      "id": "nipsey:workstream:1",
+      "name": "PROLIFIC press run",
+      "objective": "Clip Blacc Sam & Bino Rideaux studio stories from Million Dollaz Worth of Game, Created Playerz, JBP Patreon, & BigBoyTV; swell 'Prolific' stems at -18dB to 0dB outro.",
+      "proposedBudget": 25000.0,
+      "currency": "USD",
+      "recordingId": "nipsey:recording:US-AMI-26-00001",
+      "original": {
+        "name": "PROLIFIC Album & Unheard Vault Press-Run Blitz",
+        "type": "TOFU Clipping & Shorts Audio Seeding",
+        "status": "ACTIVE",
+        "creatorBounty": 2.5,
+        "reportedSpent": 14250.0,
+        "date": "2026-08-01"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:workstream:2",
+      "name": "Estate and ownership",
+      "objective": "Supply cleared 'Hussle & Motivate', 'Double Up', and 'Grinding All My Life' stems to mini-doc creators covering Nipsey's $11M-$20M estate settlement & vertical integration.",
+      "proposedBudget": 35000.0,
+      "currency": "USD",
+      "recordingId": "nipsey:recording:US-AMI-18-00101",
+      "original": {
+        "name": "The $20M Estate & Ownership Blueprint Series",
+        "type": "TOFU Video Essay Whitelisting & Micro-Docs",
+        "status": "ACTIVE",
+        "creatorBounty": 3.0,
+        "reportedSpent": 28400.0,
+        "date": "2026-06-15"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:workstream:3",
+      "name": "Behind the Bars / lyric lore",
+      "objective": "Splice firsthand street accounts (e.g. Shady Blue on 'Blue Laces 2' Venice Beach shootout, Rollin 60s history) directly into the corresponding catalog verse.",
+      "proposedBudget": 18000.0,
+      "currency": "USD",
+      "recordingId": "nipsey:recording:US-AMI-18-00102",
+      "original": {
+        "name": "'Behind The Bars' Street & Lyric Lore Funnel",
+        "type": "TOFU Story-to-Song Conversion Clips",
+        "status": "ACTIVE",
+        "creatorBounty": 2.25,
+        "reportedSpent": 11800.0,
+        "date": "2026-07-20"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:workstream:4",
+      "name": "Marathon Burger / lifestyle",
+      "objective": "Provide pre-cleared 'Marathon Vlog Audio Pack' to food/lifestyle vloggers visiting Marathon Burger (Melrose, Venice, Long Beach) & Nipsey Hussle Square.",
+      "proposedBudget": 15000.0,
+      "currency": "USD",
+      "recordingId": "nipsey:recording:US-AMI-19-00201",
+      "original": {
+        "name": "Marathon Burger & Nipsey Square IRL Creator Pack",
+        "type": "TOFU Lifestyle Vlog & Event Seeding",
+        "status": "ACTIVE",
+        "creatorBounty": 2.75,
+        "reportedSpent": 9600.0,
+        "date": "2026-02-25"
+      },
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    }
+  ],
+  "matches": [
+    {
+      "id": "nipsey:match:lwmf42Rpie4",
+      "sourceId": "youtube:lwmf42Rpie4",
+      "recordingId": "nipsey:recording:US-AMI-18-00103",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "Brotherhood & Estate Protection",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:P5WCijZTpJ4",
+      "sourceId": "youtube:P5WCijZTpJ4",
+      "recordingId": "nipsey:recording:US-AMI-18-00101",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "Ownership & Vertical Integration",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:HkFvQAco8KM",
+      "sourceId": "youtube:HkFvQAco8KM",
+      "recordingId": "nipsey:recording:US-AMI-26-00001",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "PROLIFIC Rollout & Studio Stories",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:T_iRdSDV9wE",
+      "sourceId": "youtube:T_iRdSDV9wE",
+      "recordingId": "nipsey:recording:US-AMI-19-00201",
+      "workstreamId": "nipsey:workstream:4",
+      "rationale": "Marathon Burger IRL Experience",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:btMUO5YuTQM",
+      "sourceId": "youtube:btMUO5YuTQM",
+      "recordingId": "nipsey:recording:US-AMI-26-00003",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Blacc Sam Anchor Interview (PROLIFIC & Empire)",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:i7YdgoloV-E",
+      "sourceId": "youtube:i7YdgoloV-E",
+      "recordingId": "nipsey:recording:US-AMI-18-00103",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "Celebrity / Family Update",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:3fo2MIgACQE",
+      "sourceId": "youtube:3fo2MIgACQE",
+      "recordingId": "nipsey:recording:US-AMI-18-00104",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "$11M Estate Probate Settlement",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:BM2Ly1buvXw",
+      "sourceId": "youtube:BM2Ly1buvXw",
+      "recordingId": "nipsey:recording:US-AMI-18-00106",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Big U RICO Indictment & Street Lore",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:IJJdCwenY_w",
+      "sourceId": "youtube:IJJdCwenY_w",
+      "recordingId": "nipsey:recording:US-AMI-13-00301",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "Full Career & Ownership Biography",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:441Enl7QSDQ",
+      "sourceId": "youtube:441Enl7QSDQ",
+      "recordingId": "nipsey:recording:US-AMI-26-00001",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Unheard PROLIFIC Tracks & Studio Process",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:hHtx_yhEm84",
+      "sourceId": "youtube:hHtx_yhEm84",
+      "recordingId": "nipsey:recording:US-AMI-18-00102",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Real 1990s Venice Shootout from 'Blue Laces 2'",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:ZDbhP5XO0Es",
+      "sourceId": "youtube:ZDbhP5XO0Es",
+      "recordingId": "nipsey:recording:US-AMI-18-00106",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Reaction to Created Playerz Interview",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:-APYi599sRg",
+      "sourceId": "youtube:-APYi599sRg",
+      "recordingId": "nipsey:recording:US-AMI-26-00002",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "PROLIFIC Album & Marathon Mission",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:I-idYK7fSTs",
+      "sourceId": "youtube:I-idYK7fSTs",
+      "recordingId": "nipsey:recording:US-AMI-18-00102",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Federal Wiretap Paperwork Analysis",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:IbTGUVPggl0",
+      "sourceId": "youtube:IbTGUVPggl0",
+      "recordingId": "nipsey:recording:US-AMI-18-00101",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "$20M Estate, Trademarks & Marathon IP",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:k-YX3ABVgak",
+      "sourceId": "youtube:k-YX3ABVgak",
+      "recordingId": "nipsey:recording:US-AMI-19-00201",
+      "workstreamId": "nipsey:workstream:4",
+      "rationale": "Marathon Burger Long Beach Opening",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:8lJLSMJztpU",
+      "sourceId": "youtube:8lJLSMJztpU",
+      "recordingId": "nipsey:recording:US-AMI-26-00001",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Bino Rideaux on Recording PROLIFIC",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:ZpXbmTle8jg",
+      "sourceId": "youtube:ZpXbmTle8jg",
+      "recordingId": "nipsey:recording:US-AMI-13-00301",
+      "workstreamId": "nipsey:workstream:4",
+      "rationale": "Nipsey Square Ceremony & Marathon Brand",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:cfd1RNDc6hQ",
+      "sourceId": "youtube:cfd1RNDc6hQ",
+      "recordingId": "nipsey:recording:US-AMI-18-00105",
+      "workstreamId": "nipsey:workstream:4",
+      "rationale": "Nipsey Hussle Square Dedication Speech",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:e--4VCXNedk",
+      "sourceId": "youtube:e--4VCXNedk",
+      "recordingId": "nipsey:recording:US-AMI-18-00105",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Peer Tribute & West Coast Legacy",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:Qwv2CrRdiCc",
+      "sourceId": "youtube:Qwv2CrRdiCc",
+      "recordingId": "nipsey:recording:US-AMI-18-00101",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "Psychology, Loyalty & Apple Co-Sign",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:ycXLmIhkN40",
+      "sourceId": "youtube:ycXLmIhkN40",
+      "recordingId": "nipsey:recording:US-AMI-18-00102",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "FBI Filing & Street History Breakdown",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:tvl2bhr8mUI",
+      "sourceId": "youtube:tvl2bhr8mUI",
+      "recordingId": "nipsey:recording:US-AMI-26-00001",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Clipped Joe Budden Patreon Interview",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:t8Z4snVpAn4",
+      "sourceId": "youtube:t8Z4snVpAn4",
+      "recordingId": "nipsey:recording:US-AMI-26-00003",
+      "workstreamId": "nipsey:workstream:4",
+      "rationale": "Nipsey Hussle Square Dedication Visual",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:_f5X4-qiop0",
+      "sourceId": "youtube:_f5X4-qiop0",
+      "recordingId": "nipsey:recording:US-AMI-18-00105",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Rimpau Eyewitness Account Breakdown",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:5YIfY0EOj0Q",
+      "sourceId": "youtube:5YIfY0EOj0Q",
+      "recordingId": "nipsey:recording:US-AMI-11-00401",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Diss Song Lore & Mixtape Era Backstory",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:g7tGN81oCGQ",
+      "sourceId": "youtube:g7tGN81oCGQ",
+      "recordingId": "nipsey:recording:US-AMI-18-00106",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Secondary Clip from Created Playerz Run",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:puX51KR7X1w",
+      "sourceId": "youtube:puX51KR7X1w",
+      "recordingId": "nipsey:recording:US-AMI-11-00401",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "History Behind Crenshaw, The Marathon & Victory Lap",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:NQ2ZU2J5t5E",
+      "sourceId": "youtube:NQ2ZU2J5t5E",
+      "recordingId": "nipsey:recording:US-AMI-19-00201",
+      "workstreamId": "nipsey:workstream:4",
+      "rationale": "Marathon Burger Long Beach Grand Opening",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:lgGd9203xqw",
+      "sourceId": "youtube:lgGd9203xqw",
+      "recordingId": "nipsey:recording:US-AMI-26-00002",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Why Unreleased Vault Was Opened for PROLIFIC",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:kvO5ybmnZrE",
+      "sourceId": "youtube:kvO5ybmnZrE",
+      "recordingId": "nipsey:recording:US-AMI-18-00104",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "Family & Culture Commentary",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:zN08JYLF9ks",
+      "sourceId": "youtube:zN08JYLF9ks",
+      "recordingId": "nipsey:recording:US-AMI-18-00105",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "46-Min Psychological & Lyrical Analysis",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:T90xFinDU_k",
+      "sourceId": "youtube:T90xFinDU_k",
+      "recordingId": "nipsey:recording:US-AMI-26-00001",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "PROLIFIC Rollout & Atlantic Deal History",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:TER76wLojYM",
+      "sourceId": "youtube:TER76wLojYM",
+      "recordingId": "nipsey:recording:US-AMI-18-00101",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "The Marathon Financial & Real Estate Blueprint",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:NXgpWkVse5c",
+      "sourceId": "youtube:NXgpWkVse5c",
+      "recordingId": "nipsey:recording:US-AMI-18-00106",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Secondary Clip of Created Playerz Interview",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:DPlKnSMokwU",
+      "sourceId": "youtube:DPlKnSMokwU",
+      "recordingId": "nipsey:recording:US-AMI-13-00301",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "West Coast Podcasters Reacting to Blacc Sam",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:BBgO8D9bf5c",
+      "sourceId": "youtube:BBgO8D9bf5c",
+      "recordingId": "nipsey:recording:US-AMI-11-00401",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Clips Breakfast Club Interview on Nipsey Diss Track",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:kQy0DwN2uUY",
+      "sourceId": "youtube:kQy0DwN2uUY",
+      "recordingId": "nipsey:recording:US-AMI-19-00201",
+      "workstreamId": "nipsey:workstream:4",
+      "rationale": "Behind-the-Scenes at Marathon Burger Opening",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:OURGoAQxf_4",
+      "sourceId": "youtube:OURGoAQxf_4",
+      "recordingId": "nipsey:recording:US-AMI-18-00102",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Community Reaction to Eyewitness Posts",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:9PHoRJ6ZYaI",
+      "sourceId": "youtube:9PHoRJ6ZYaI",
+      "recordingId": "nipsey:recording:US-AMI-18-00105",
+      "workstreamId": "nipsey:workstream:3",
+      "rationale": "Firsthand Account at The Marathon Store",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:vz0mHj92Sis",
+      "sourceId": "youtube:vz0mHj92Sis",
+      "recordingId": "nipsey:recording:US-AMI-19-00201",
+      "workstreamId": "nipsey:workstream:4",
+      "rationale": "Gen-Z Creators Reviewing Marathon Burger",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:0kvY4l4Klqw",
+      "sourceId": "youtube:0kvY4l4Klqw",
+      "recordingId": "nipsey:recording:US-AMI-26-00001",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Release-Day PROLIFIC Interview",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:m7dQC1g6bLc",
+      "sourceId": "youtube:m7dQC1g6bLc",
+      "recordingId": "nipsey:recording:US-AMI-18-00103",
+      "workstreamId": "nipsey:workstream:2",
+      "rationale": "West Coast Veteran Praising Blacc Sam's Execution",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:0wzWUOLK_t8",
+      "sourceId": "youtube:0wzWUOLK_t8",
+      "recordingId": "nipsey:recording:US-AMI-26-00002",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "10-Min Cut Focused Strictly on Unreleased Music",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    },
+    {
+      "id": "nipsey:match:lq5QlSyhtpU",
+      "sourceId": "youtube:lq5QlSyhtpU",
+      "recordingId": "nipsey:recording:US-AMI-26-00002",
+      "workstreamId": "nipsey:workstream:1",
+      "rationale": "Inside No Name Studios Where PROLIFIC Was Recorded",
+      "stage": "new",
+      "revision": 1,
+      "provenance": {
+        "repository": "ChaiWithJai/defiant-os",
+        "commit": "5e6b5c3542e9b2bd3d74080fda649abc650b80ec",
+        "path": "database.py",
+        "sha256": "a606c4436659db4c45a505d6a7c374eea6db4349873a5c5688b5dc6103162331",
+        "mappingVersion": 1,
+        "verification": "example"
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import {readInbox,inboxPreview,importInbox,saveInboxMatch} from './defiant-inbox.js';
 import {resourceConfirmation} from './defiant-resource-confirmation.js';
 import {createDraftDestination,handoffReport} from './defiant-draft-handoff.js';
 import {createHash} from 'node:crypto';
@@ -34,6 +35,18 @@ export class DefiantStrategyService {
   return {...publicState,items:[...nodes,...edges,...publicState.graph.clusters],regions:nodes.filter(n=>n.kind==='region'),artists:nodes.filter(n=>n.kind==='artist'),corridors:edges.filter(e=>e.kind==='route'),resources:publicState.resources.map(r=>({...nodes.find(n=>n.id===r.nodeId),...r})),destinations:organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(({id,name})=>({id,name,socialConnectionVerified:false}))};
  }
 
+ async inbox(actor,input={}){const {state}=await this.raw(actor);return readInbox(state,input);}
+ async previewInbox(actor,input){const {state}=await this.raw(actor);return inboxPreview(state,input);}
+ async importInbox(actor,input){
+  planningExact(input,['expectedRevision','idempotencyKey','kind','previewDigest']);return this.inboxWrite(actor,input,'inbox-import',state=>importInbox(state,input,actor,this.now()));
+ }
+ async updateInboxMatch(actor,sourceId,input){
+  planningExact(input,['expectedRevision','idempotencyKey','expectedMatchRevision','match']);return this.inboxWrite(actor,input,`inbox-match:${sourceId}`,state=>{const old=state.inbox?.matches.find(m=>m.sourceId===sourceId);if(!old||old.revision!==input.expectedMatchRevision)throw fail(409,'Proposed match changed; keep your working text');return {match:saveInboxMatch(state,sourceId,input.match,actor,this.now())};});
+ }
+ async inboxWrite(actor,input,operation,change){
+  validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation,input});let result;
+  await this.store.transact(['identity',this.key],([identity,state])=>{planningMember(identity,actor,this.organizationId);const prior=planningReceipt(state,actor,input,requestHash,this.organizationId);if(prior){result=prior;return [identity,state];}const value=change(state);result=planningAck(state,actor,input,requestHash,value);return [identity,state];});return result;
+ }
  async graph(actor,input={}){
   exact(input,['focusId','selectedId','query','kinds','showExamples']);if(input.kinds!==undefined&&(typeof input.kinds!=='string'||input.kinds.split(',').some(k=>!['region','artist','signal','person','resource','format','catalog','external','route'].includes(k))))throw fail(400,'Invalid graph type filter');if(input.showExamples!==undefined&&!['true','false'].includes(input.showExamples))throw fail(400,'Invalid graph example filter');for(const k of ['focusId','selectedId'])if(input[k]!==undefined&&input[k]!==''&&(typeof input[k]!=='string'||input[k].length>128))throw fail(400,'Invalid graph selection');if(input.query!==undefined&&(typeof input.query!=='string'||input.query.length>200))throw fail(400,'Invalid graph search');return projectGraph(await this.read(actor),input);
  }
@@ -83,7 +96,7 @@ export class DefiantStrategyService {
   });return result;
  }
  async refreshReport(actor,reportId,input){
-  planningExact(input,['expectedRevision','idempotencyKey','expectedReportRevision','planIds','annotationIds','viewId']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'refresh-report',reportId,input});let result;
+  planningExact(input,['expectedRevision','idempotencyKey','expectedReportRevision','planIds','annotationIds','viewId','sourceRefs','matchRefs']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'refresh-report',reportId,input});let result;
   await this.store.transact(['identity',this.key],([identity,state])=>{
    planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
    const {expectedRevision,idempotencyKey,...selection}=input,record=reportRecord(state,selection,actor,this.now(),{refreshId:reportId});state.reports=state.reports.filter(r=>r.id!==record.id);state.reports.push(record);result=planningAck(state,actor,input,requestHash,{report:record});return [identity,state];
