@@ -2,7 +2,7 @@
 
 This slice adds an opt-in original Studio host around the actual pinned Doory `EditorApp` and engine. It does not integrate Django sessions or claim external SSO. See the [network, storage and license specification](../../specs/studio-native-editor-host.md), [source inventory](../../specs/doory-host-source-inventory.json) and [direct dependency inventory](../../specs/doory-host-dependency-inventory.json).
 
-The upstream [pinned license](https://github.com/shaongitbd/doory/blob/27b6f68221fdbf1ef1bedc182e303210ca9e39f5/LICENSE) refers to GPG-signed text in verifiable form, while the inspected file is unsigned plain text. This condition remains unresolved. Copied upstream source, its local frame bundle and license file are not included in this public change. Source preparation preserves the exact bytes locally, and launch attribution remains visible. No distribution or commercial clearance is inferred from that preservation.
+The originally inspected [pinned license](https://github.com/shaongitbd/doory/blob/27b6f68221fdbf1ef1bedc182e303210ca9e39f5/LICENSE) was unsigned. Upstream subsequently supplied a [cryptographically verified signed license](../doory-signed-license/README.md); the missing upstream signed-text evidence is resolved. Reconciling that notice basis with the retained private source/artifacts and their accompanying notices remains separate. Copied upstream source, its local frame bundle and license file are not included in this public change. Source preparation preserves the exact bytes locally, and launch attribution remains visible. No distribution or commercial clearance is inferred from that preservation.
 
 ## What was exercised
 
