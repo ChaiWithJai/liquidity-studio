@@ -135,8 +135,12 @@ acting-profile checks. No Google authentication mode is fabricated.
 
 An existing private version2 Penpot workspace configuration may additionally set
 `studioOrigin` to the exact local launcher origin, for example
-`http://127.0.0.1:39042`. Its existing `nativeOrigin` selects the native frontend
-(default `http://localhost:39008`). Both origins must be loopback HTTP origins.
+`http://127.0.0.1:39042`. Set `nativeOrigin` to `http://127.0.0.1:39008` in both the workspace and
+pairing configuration when Studio uses `127.0.0.1`. The native frontend's public
+URI must use that same hostname too. Mixing `127.0.0.1` Studio with a `localhost`
+iframe makes native login cross-site and browsers may discard its session cookie.
+The legacy unset native origin remains `http://localhost:39008`. Both origins must
+be loopback HTTP origins.
 The launcher rejects an origin that differs from its current address. This exposes
 the existing contained workspace UI; it does not alter persona membership, native
 pairing or grants. Without `studioOrigin`, the existing direct-tab fallback remains.
