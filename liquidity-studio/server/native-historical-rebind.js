@@ -42,6 +42,31 @@ function registeredFonts(document, registry) {
   }
   visit(document);
 }
+// Old native saves legitimately removed this compiler-generated editing aid.
+// Reconcile its obsolete binding only against the immutable creation payload;
+// missing text, human shapes, replacement objects and duplicates still reject.
+function retainedBindings(document, initial, manifest) {
+  const omittedGeneratedPlaceholders = [];
+  const seen = new Set();
+  const layerTokenBindings = manifest.layerTokenBindings.filter(binding => {
+    const key = JSON.stringify([binding.pageId,binding.objectId]);
+    if (seen.has(key)) throw fail(422, 'Duplicate historical layer binding; reconcile explicitly');
+    seen.add(key);
+    const page = document.pages.find(page => page.id === binding.pageId);
+    if (page?.objects.some(object => object.id === binding.objectId)) return true;
+    const originals = initial.pages.find(page => page.id === binding.pageId)?.objects.filter(object => object.id === binding.objectId) || [];
+    const object = originals[0];
+    if (binding.objectId !== 'subject_cutout_layer' || binding.fill !== null || binding.stroke !== 'accent' || binding.font !== undefined || originals.length !== 1 ||
+      object.type !== 'rect' || object.name !== 'Missing subject asset · not a cutout' ||
+      ![undefined,true].includes(object.isPlaceholder) || object.fill !== 'transparent' ||
+      object.left !== 540 || object.top !== 105 || object.width !== 900 || object.height !== 90 ||
+      object.originX !== 'center' || object.originY !== 'center' || object.strokeWidth !== 2 ||
+      JSON.stringify(object.strokeDashArray) !== '[8,8]') return true;
+    omittedGeneratedPlaceholders.push({pageId:binding.pageId,objectId:binding.objectId});
+    return false;
+  });
+  return {layerTokenBindings, omittedGeneratedPlaceholders};
+}
 async function context(service, actor, id, validate) {
   await service.authorize(actor);
   const identity = await service.store.get("identity"),
@@ -146,9 +171,13 @@ async function context(service, actor, id, validate) {
       "Historical reel must retain three valid timecoded pages totaling 30 seconds",
     );
   registeredFonts(document, service.availableFonts);
+  const initial = await service.hydrate(original, {documentRef:original.initialDocumentRef});
+  if (hash(initial.document) !== original.initialDocumentRef.sha256)
+    throw fail(422, 'Historical initial layout checksum mismatch');
+  const {layerTokenBindings, omittedGeneratedPlaceholders} = retainedBindings(document, initial.document, original.origin);
   const retokened = applyDooryBrandTokens({
     document,
-    manifest: original.origin,
+    manifest: {...original.origin,layerTokenBindings},
     tokens: spec.tokens,
     expectedBrandRevision: original.origin.brandRevision,
     brandRevision: spec.brandRevision,
@@ -157,6 +186,7 @@ async function context(service, actor, id, validate) {
   registeredFonts(retokened.document, service.availableFonts);
   const origin = {
     ...compiled.manifest,
+    layerTokenBindings: retokened.manifest.layerTokenBindings,
     sourceContentRevision: story.contentRevision || 1,
     documentSha256: hash(retokened.document),
     historicalRebind: {
@@ -167,6 +197,7 @@ async function context(service, actor, id, validate) {
       sourceReviewCandidateRevision: review.candidateRevision,
       actorId: actor.id,
       authority: "new-proposal-only",
+      omittedGeneratedPlaceholders,
     },
   };
   const fields = {
@@ -185,6 +216,7 @@ async function context(service, actor, id, validate) {
     ownerId: actor.id,
     format: original.format,
     pageCount: document.pages.length,
+    omittedGeneratedPlaceholders,
     reviewAuthority: "not-transferred",
     sourceCopyUnchanged: true,
     nativeCopyRequiresReview: true,
