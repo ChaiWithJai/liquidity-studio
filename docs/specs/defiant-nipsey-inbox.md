@@ -1,6 +1,6 @@
 # Spec: Defiant Nipsey source inbox
 
-**Status: proposed for human review; no feature implementation authorized by this document.** Track [#281](https://github.com/ChaiWithJai/liquidity-studio/issues/281). This is an extension of the approved [Defiant strategy workspace](defiant-strategy-workspace.md), within the existing `operator-workflow` module. It does not change that approved specification. The proposed [delivery plan](../plans/defiant/nipsey-inbox-plan.md) is included for the same review; its tasks have not started.
+**Status: human approved on 2026-10-19.** The owner approved the specification and implementation sequence: [approval record](https://github.com/ChaiWithJai/liquidity-studio/issues/281#issuecomment-6271474802). Track [#281](https://github.com/ChaiWithJai/liquidity-studio/issues/281). This is an extension of the approved [Defiant strategy workspace](defiant-strategy-workspace.md), within the existing `operator-workflow` module. It does not change that approved specification. The approved [delivery plan](../plans/defiant/nipsey-inbox-plan.md) is being implemented in bounded increments. Runtime acceptance remains separate.
 
 ## Objective and scope
 
@@ -108,4 +108,4 @@ Accept the first milestone only after an ordinary Neo journey: explicit example 
 
 Always preserve imported originals, current manager edits, unknown observations, report snapshots and visible save/retry states. Never infer rights, factual endorsement, measured delivery or approval from a source link, track choice, stage or render. No automatic seed into publishing brands, live calls, source media download, paid model, ad spend, outreach or publishing in this milestone. A later change to these boundaries needs an explicit scoped product decision, not a generic platform exercise.
 
-**Review decision:** approve this bounded first-milestone specification and proposed implementation sequence, or request changes. No implementation, runtime reproduction, external source playback or third-party media acquisition has occurred for this proposal. Broader #281 delivery remains open.
+The approved scope covers this first milestone. Source implementation and hosted verification do not establish actual browser acceptance. Broader #281 delivery remains open.

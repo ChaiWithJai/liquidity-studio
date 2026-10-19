@@ -1,6 +1,6 @@
 # Proposed delivery plan: Nipsey source inbox
 
-**Pending the same human review as the [specification](../../specs/defiant-nipsey-inbox.md). No tasks started.** Track tasks in [#281](https://github.com/ChaiWithJai/liquidity-studio/issues/281); do not overwrite the unrelated #56 `tasks/plan.md`. This document is the proposed first-milestone sequence, not an approval or a second implementation gate. The requested review can approve the spec and this sequence together. Runtime slots remain coordinated separately.
+**Human approved with the [specification](../../specs/defiant-nipsey-inbox.md) on 2026-10-19; [approval record](https://github.com/ChaiWithJai/liquidity-studio/issues/281#issuecomment-6271474802).** Track tasks in [#281](https://github.com/ChaiWithJai/liquidity-studio/issues/281); do not overwrite the unrelated #56 `tasks/plan.md`. This is the approved first-milestone sequence. Implementation is underway; actual task acceptance is still pending. Runtime slots remain coordinated separately.
 
 ## Dependency and delivery order
 

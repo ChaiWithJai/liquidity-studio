@@ -1,0 +1,1725 @@
+{
+  "run": 39282508890,
+  "artifactId": 12202410779,
+  "artifactSource": "ff26fc76e40740b158c8125baabb90bcfd29de48",
+  "ciMerge": "8ef75d7c3241cf337f669bf8b1372644e71e78e5",
+  "reviewedTestOnlyHead": "3fd8b58ba5095f077c7e4256bc3f8fd8c4fb2380",
+  "zipSha256": "10e0acdc1ea0979d48d509b9e8bbabcfbdfe5560bc3927baf6821b84d3162fbc",
+  "productionBuildInputsByteIdentical": true,
+  "onlyInterveningAppChange": "liquidity-studio/tests/defiant-video-inbox.spec.js",
+  "inputCount": 408,
+  "inputInventorySha256": "1abbbcb1e557b141c7db181ebfa69008eb84a3b63b8eb861cd23da86382ee283",
+  "inputs": [
+    {
+      "path": "liquidity-studio/.dockerignore",
+      "sha256": "dbe6e72890df448d097d83b2720366072f1ae458240e6a6884b197058d7db4b2"
+    },
+    {
+      "path": "liquidity-studio/Dockerfile",
+      "sha256": "80eba70f3c588a1f1c69d009d2f0c0b00d18a3d8460bdf32c28d1b579cf554c9"
+    },
+    {
+      "path": "liquidity-studio/RFC-v0-LIQUIDITY-STUDIO.md",
+      "sha256": "3000467b352011d9b451babfc228ea70abfc3d019f6f0414b50e2e7ac294c631"
+    },
+    {
+      "path": "liquidity-studio/docs/decisions/local-first-pilot.md",
+      "sha256": "ea3b81348176ead805d46467f52d39622942abdda7b4744c9e47c2677ce96336"
+    },
+    {
+      "path": "liquidity-studio/docs/editor-recovery-kit.md",
+      "sha256": "50febff499d0abe11493a723a821d299a841d671572885c341fffabab7826e43"
+    },
+    {
+      "path": "liquidity-studio/docs/investigations/52-native-command-boundary-audit.md",
+      "sha256": "b39f00617b3d84c9f1827e1cf23fa979fdfcff7a7d22876ece9a12b3142cb090"
+    },
+    {
+      "path": "liquidity-studio/docs/investigations/penpot-image-readiness/README.md",
+      "sha256": "bceeee7d5115d0c6acc6343fc63d696172f624b8dd698e883d54cee2349a5ff9"
+    },
+    {
+      "path": "liquidity-studio/docs/investigations/penpot-image-readiness/cultural-ready.png",
+      "sha256": "87257a42a362e184dcc9e703101ddfb1825dbd54ef315a8bc80963d7739d4c49"
+    },
+    {
+      "path": "liquidity-studio/docs/investigations/penpot-image-readiness/evidence.json",
+      "sha256": "735860f4ee80dd1946f0d4725b8b0f5e3399da28e9a4b11e834b515d01820f1e"
+    },
+    {
+      "path": "liquidity-studio/docs/operations.md",
+      "sha256": "8a061766366ab715158220d3b071fccf442503ff3cdfdaab940281c9e466d7aa"
+    },
+    {
+      "path": "liquidity-studio/docs/penpot-font-recovery.md",
+      "sha256": "f68f47e7d9237db2d03e507babe217e5aef172d8b4b7b7f0dd563b3edd96e1d0"
+    },
+    {
+      "path": "liquidity-studio/docs/penpot-recovery-kit.md",
+      "sha256": "f772a49cde69ccfa9f5e2a5c5c6ad8909a94e91c8ef89627af4d494c2b4b4871"
+    },
+    {
+      "path": "liquidity-studio/docs/specs/penpot-studio-actions.md",
+      "sha256": "c62610f5045141e51fcedf37330b4175669cc12c7fec115dc537ec7099a5545e"
+    },
+    {
+      "path": "liquidity-studio/docs/verification/calendar-optimistic-response.md",
+      "sha256": "9eba22ef3221ac3040215bfb0d069cc395977b2fe2f58f8e55dbafebe95df2ff"
+    },
+    {
+      "path": "liquidity-studio/index.html",
+      "sha256": "370e5717fa68f816fa43d1fecda158bac1ff2d32513fad9b4c48357428963bae"
+    },
+    {
+      "path": "liquidity-studio/native-editor-frame.html",
+      "sha256": "056ce7dddd6bb736cab380647b5d936266fdf4d0fa5e3372944b4fe35c3673c2"
+    },
+    {
+      "path": "liquidity-studio/package-lock.json",
+      "sha256": "596ffb87c61d33239977777768f787bc0c2fe9b6dd923145fedc5c1418be8c97"
+    },
+    {
+      "path": "liquidity-studio/package.json",
+      "sha256": "eeeaa09c96f52fba604d59e3e612cdd00b33d5a91f431d17a99facf5eb732b64"
+    },
+    {
+      "path": "liquidity-studio/playwright.config.js",
+      "sha256": "3cb96416e80c71ad869047ec02a3eab65f0d7a03fc58abfa89ce64550c9e7ac3"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/DejaVuSans-Bold.ttf",
+      "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/DejaVuSans.ttf",
+      "sha256": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/InstrumentSerif-OFL.txt",
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/InstrumentSerif-Regular.ttf",
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/Inter-LICENSE.txt",
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/InterVariable.ttf",
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/LICENSE.txt",
+      "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/MonaSans-Bold.otf",
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/MonaSans-OFL.txt",
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/MonaSans-Regular.otf",
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/NotoSansDevanagari-OFL.txt",
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331"
+    },
+    {
+      "path": "liquidity-studio/public/fonts/NotoSansDevanagari.ttf",
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "path": "liquidity-studio/scripts/build-dist.js",
+      "sha256": "b425452e8be1226486eaa9ac89beb205717fe7e03ed5607d1ed7f3d2a797e135"
+    },
+    {
+      "path": "liquidity-studio/scripts/local-development-support.mjs",
+      "sha256": "5107aa335249a52386f5d1354c22fa51d5d39cf8d88aa407321964cdc0664561"
+    },
+    {
+      "path": "liquidity-studio/scripts/local-development.mjs",
+      "sha256": "1dade7f58a299fe3603edd277373ddfd2adb74aa338a55f04b24a39241827eae"
+    },
+    {
+      "path": "liquidity-studio/scripts/local-native-development.mjs",
+      "sha256": "de06b22a172390ed298d173b6e83e2b793dc7f8e8700b5e1c7451fa70efd95e8"
+    },
+    {
+      "path": "liquidity-studio/scripts/local-native-pairing.mjs",
+      "sha256": "1c50ffcc5de32bbdfbf5fa76cbb49fa33317342f553ff8bf727d901c737c80ad"
+    },
+    {
+      "path": "liquidity-studio/scripts/local-penpot-development.mjs",
+      "sha256": "5572e83e4a86e38a95d48cc6acdb7f2af1d7985add8bd199d136599a1c19fc5a"
+    },
+    {
+      "path": "liquidity-studio/scripts/native-artifact-envelope.mjs",
+      "sha256": "44352b34a912e1c0327e425cb779894b4cf9203c481a4810585d91745c769ec0"
+    },
+    {
+      "path": "liquidity-studio/scripts/native-editor-vite.js",
+      "sha256": "577226252999dddb8b8767005d6bad51c951b957ed3a4b90d7a1c1ffa0a3a763"
+    },
+    {
+      "path": "liquidity-studio/scripts/package-native-editor-artifact.mjs",
+      "sha256": "ce35cd336d2c76df23d3b752c4c2577f7e47941bf2febe7f55f7035065f7708a"
+    },
+    {
+      "path": "liquidity-studio/scripts/penpot-font-recovery.mjs",
+      "sha256": "958af132c5582cb4f912595d2477f389af7a7080824e317ca170718d26dcde21"
+    },
+    {
+      "path": "liquidity-studio/scripts/prepare-native-editor.mjs",
+      "sha256": "2709e8e418ed0ed923fb18aaaf66453803f33b4f0f2e9fb880df48d573cbc979"
+    },
+    {
+      "path": "liquidity-studio/scripts/record-local-native-assets.mjs",
+      "sha256": "b3425bcb9107b83b3504ea6c6552e47cbb26577aeb9a0d6b12382ba62b517de9"
+    },
+    {
+      "path": "liquidity-studio/scripts/serve-managed-native-connect.mjs",
+      "sha256": "c37f6926c8079245f41f7eec2a315c6d201e1fc2da048c29fc3cf899ad7954f1"
+    },
+    {
+      "path": "liquidity-studio/scripts/serve-native-connect.mjs",
+      "sha256": "0ddb63e547d3c14ac625550a8dc241e5a7930c1d2e8c9ef1fc5157f4d8ab6b01"
+    },
+    {
+      "path": "liquidity-studio/server/artwork.js",
+      "sha256": "5299e080b5e9a904a97cac97d1264c6b11dd7e617fa6bcba34396b059afe6fda"
+    },
+    {
+      "path": "liquidity-studio/server/auth.js",
+      "sha256": "853b808b21370d7a2f0d57a615fc568c576629ceef9496e2842c786a8573a7e5"
+    },
+    {
+      "path": "liquidity-studio/server/auth.test.js",
+      "sha256": "64c5b218f1420ffdfb5106430fab3ac9d43136373e61f1947aee8f6dd96b7d88"
+    },
+    {
+      "path": "liquidity-studio/server/backwards-test.js",
+      "sha256": "c6e2a270922daca982a986cf9eba8e96227c32a59fdb1dbb33ebe60261d70fa3"
+    },
+    {
+      "path": "liquidity-studio/server/calendar-model.test.js",
+      "sha256": "23e3cf8d40e2eefb19a7ab7f362aaef7071a83d0d8869dc58951a7f9bb0f26a0"
+    },
+    {
+      "path": "liquidity-studio/server/calendar-optimistic.test.js",
+      "sha256": "5340cf47f801a778ed37f592539307015121d24562bfed06dc254eb7efb80fc9"
+    },
+    {
+      "path": "liquidity-studio/server/clinical-source-selection.test.js",
+      "sha256": "270eb4867893d84519d1bf3c576b206a924a209bd49057092149c3678a490e57"
+    },
+    {
+      "path": "liquidity-studio/server/cloud-store.emulator.test.js",
+      "sha256": "0e9f3866f8eb01600210d83edd3d9daebf3933ebb9e02b4b98e43a08054df5f0"
+    },
+    {
+      "path": "liquidity-studio/server/cloud-store.js",
+      "sha256": "30c0612400a13dafd7cf9320bf46ab8425330fdb229cce31150f3b88ee3e63e8"
+    },
+    {
+      "path": "liquidity-studio/server/cloud-store.test.js",
+      "sha256": "4c1cc018cf42046a96b07993de68df3865481db080c2cf2249b9a99c7b9f82db"
+    },
+    {
+      "path": "liquidity-studio/server/container.js",
+      "sha256": "00dcd93a9e90b77a2dbd15f15cd67b13f62d0c74cc23f4063ba829135af83b17"
+    },
+    {
+      "path": "liquidity-studio/server/context-graph.js",
+      "sha256": "ef235f97fbebc2cde8d0d8e3db2eb1cb5ff1862a33b99901f6a371bf7f823ea4"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-draft-handoff.js",
+      "sha256": "0541487fca4f9ebc2d13da29ff3cd28c99270fb6e65b80ad174c4398c8b75194"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-draft-handoff.test.js",
+      "sha256": "756b55ec74eecaba3fc01571857f100e386a6a50716b22e63ba9278c2a5c3c48"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-inbox.js",
+      "sha256": "36d6b02db46e8a87570512ba2aa9c48971e2e68c513954b4458e92fb31ca4e39"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-inbox.test.js",
+      "sha256": "e551cdf1333c66171879aaafb319b920146f05716c08a4832cf4e20bd6491df6"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-location.test.js",
+      "sha256": "43d349a78c2ebfc3631d1a2bc4d7c2f0ddd38de902326d3b5dbca9df46692d10"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-nipsey-example.json",
+      "sha256": "00cc2462967055225b6707cbab22b59c96035070696bd7099737d278841c3c10"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-resource-confirmation.js",
+      "sha256": "ad0e8fe12d766a9a78c23441283f958325a9d3de262d859082d0f023f6a65c71"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-strategy-data.js",
+      "sha256": "1edbe1475241de4ba4a6f8c1d9061ce2ff1b5fc82ac65639ba9928268530e4df"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-strategy-http.js",
+      "sha256": "ad65517d4259aca88ec8d05ee8da4778ec758417f19c7c493681546f66916b12"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-strategy-notes.js",
+      "sha256": "c52ef508f94ad0656bb622e96b107ccf58ed875f75ac9ab3a17c9d6ad52fdd80"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-strategy-notes.test.js",
+      "sha256": "1418eb76104f84a4cda240226611e6b446d01b6553e052a1e66ce567c4f42eed"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-strategy.js",
+      "sha256": "98531c90b4ddbf2184d8a1e246bd7dce75b07c84c25a0f1cb2db108a39ecf127"
+    },
+    {
+      "path": "liquidity-studio/server/defiant-strategy.test.js",
+      "sha256": "8241b1db9db846849d122e71c3fa316824d7179bb96bc092d62fe42ac85975ed"
+    },
+    {
+      "path": "liquidity-studio/server/discovery.js",
+      "sha256": "763054b1d220713756ab99f626f7d00ae194f85020a2c7af422fdc089cf3a476"
+    },
+    {
+      "path": "liquidity-studio/server/discovery.test.js",
+      "sha256": "07b71de21b21a65a5700a9075ffb3c10affffd7d1994e1c913ff724bd5f311b8"
+    },
+    {
+      "path": "liquidity-studio/server/domain.js",
+      "sha256": "9b3661211366fb1b37b95b07811acfb8b24bcde4004d5667f0e56271c47cd019"
+    },
+    {
+      "path": "liquidity-studio/server/doory-local-transport.js",
+      "sha256": "3ad598cc3649ddf57f57e8c996ec65dd94a88f6b1c8779f21f4fff791be3b643"
+    },
+    {
+      "path": "liquidity-studio/server/doory-native-adapter.js",
+      "sha256": "f7da419a30356db4c2c104125dbc91419af0147176006d66801ea13224cd7c4c"
+    },
+    {
+      "path": "liquidity-studio/server/doory-native-adapter.test.js",
+      "sha256": "595899a9b04485a61db2a3487384cee82d09a8583e8d9446cfd89b30ed3f46a6"
+    },
+    {
+      "path": "liquidity-studio/server/durable-telemetry.js",
+      "sha256": "1528885e336f6e2e3091bf584827b1ae78148b31a2cc7dc8a77c2d6e8012fe63"
+    },
+    {
+      "path": "liquidity-studio/server/editor-approval.js",
+      "sha256": "0be99ec7ee8c73556590524bc31f10d388a8732903f25e8161b2e3f8e409d3b9"
+    },
+    {
+      "path": "liquidity-studio/server/editor-approval.test.js",
+      "sha256": "5a7588f6a397cddf3ba0ec1a20959c6cd65b4b30a70744d074049729e2091d82"
+    },
+    {
+      "path": "liquidity-studio/server/editor-boundary.js",
+      "sha256": "70f0d7ea79f5d042c5abe9e24d0f6b5e1bfdcda2545e2335771efde370cd23b8"
+    },
+    {
+      "path": "liquidity-studio/server/editor-boundary.test.js",
+      "sha256": "960eb4d7c52c0ca4829ce06e13ef72fb8f584e6d56d0015f9ba979a0e09009df"
+    },
+    {
+      "path": "liquidity-studio/server/editor-completion-envelope.js",
+      "sha256": "e8ffc6f76de3bc0fd89a8b55d74fa6fed5170ebda2a47bbb97fc15cb87cc06dc"
+    },
+    {
+      "path": "liquidity-studio/server/editor-completion-envelope.test.js",
+      "sha256": "4e2f480764e93f3e1e250d98a2a2761b5058ea2fdd8c8c9966c28e405aed7721"
+    },
+    {
+      "path": "liquidity-studio/server/editor-export.js",
+      "sha256": "e33497786dd865422b8bfee0cda6f90d7e01e99e7c95d80bbf9d88161b2e4250"
+    },
+    {
+      "path": "liquidity-studio/server/editor-export.test.js",
+      "sha256": "0600b01bb4bfd2256ad2a3b721071946f15324e55b7072f65621f59a188cbffe"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-admission.test.js",
+      "sha256": "202fa493346b6acba50ebb587454f4795465d3ec7ec30f66e79b140cd7727140"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-budget.test.js",
+      "sha256": "10254624ff9e2a2cac287a9b438338ab395a5bbffc5caa9980d0e92e1e7ec831"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-exports.js",
+      "sha256": "e56c5e9efd5967a18fa5e7630c16694a281209b463d4b1a159d2372ee5877504"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-exports.test.js",
+      "sha256": "9d39a794477760e52d36047df0800fe684d904f56c1633e6c40f206841577881"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-http.test.js",
+      "sha256": "a7545ea83b19eaa4f1b9639ded096475a29cac5056f876592f4923a74c0c9533"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-prepared-integration.test.js",
+      "sha256": "d3ed1b8abff8618666221b34f2049c86166bce1dd379256a871ab5574765d78f"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-prepared.js",
+      "sha256": "6ebcf2e8b154fcf5ff04b17b99927f31c54447fc45e3d1249d6169c4d4eff70a"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-prepared.test.js",
+      "sha256": "bb363b05af588c1ba60138573aeea663137d0c61d2af0d06b208bc77b4a73504"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack-service.js",
+      "sha256": "687e07b36465b27b9f906388ea91c0695ca6dabdbb4cbc28b575238e49158c99"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack.js",
+      "sha256": "241f374b3c39b9cda986945e2fdb455b2428a0eff4415a59d672ba94c09a18bb"
+    },
+    {
+      "path": "liquidity-studio/server/editor-pack.test.js",
+      "sha256": "43788f7f945ad4b54cfa4208aa25c7275135473fcd66d9a3ad56caf0d84afc51"
+    },
+    {
+      "path": "liquidity-studio/server/editor-recovery-kit.test.js",
+      "sha256": "6a9645e8a72c0b8155ab82e8ac10924ad3b9e6aee5e0c38c52bee6c100b8aefc"
+    },
+    {
+      "path": "liquidity-studio/server/editor-recovery.js",
+      "sha256": "cea28a175a9ba4bec7558656ed00a27ead323a89a41e37824d39858920e23fc7"
+    },
+    {
+      "path": "liquidity-studio/server/editor-recovery.test.js",
+      "sha256": "01a86729143563e0026e5274a03714b8533cabda8ee9d759ccbfd839afeaafcc"
+    },
+    {
+      "path": "liquidity-studio/server/eval-smoke.js",
+      "sha256": "c9daecd3553d750045031f5352d2fa884e2fd81afcdaf6608166ff404560465b"
+    },
+    {
+      "path": "liquidity-studio/server/export-assets.js",
+      "sha256": "8975301b3fdab022595e55cd8f095a5d2956dfd942decc82cb8899027b7ff19a"
+    },
+    {
+      "path": "liquidity-studio/server/export-assets.test.js",
+      "sha256": "aa0cd5fb61735ca9232056705b211b3668528eaaa99bded324fc5898a6083fbe"
+    },
+    {
+      "path": "liquidity-studio/server/firestore-seed-operator-fixtures.js",
+      "sha256": "a93186bcfb459e66ef8f85783153578db4b8a0660ec7d15cd8fbceffbcaa2cec"
+    },
+    {
+      "path": "liquidity-studio/server/firestore-seed-operator.js",
+      "sha256": "4139dc40c9e04fb158c55092b0bfd768df2c507ff6305efdab09bc918a97024b"
+    },
+    {
+      "path": "liquidity-studio/server/firestore-seed-operator.test.js",
+      "sha256": "48163b5796a02aeb19131d28a86cd0d686246824331d65763900bfc36e6985c6"
+    },
+    {
+      "path": "liquidity-studio/server/fixtures/clinical-primary-passages.json",
+      "sha256": "271145b8d4c1a03371eaced4d53614104df1cd93f8af552cebf1adb1bce2ff5f"
+    },
+    {
+      "path": "liquidity-studio/server/fixtures/lifecycle-child.js",
+      "sha256": "fcc87480ec1560d42e33d54bf66ef316bb75c6a79c9a50a4be33084dc2728a61"
+    },
+    {
+      "path": "liquidity-studio/server/fixtures/ncbi-efetch-three-records.provenance.json",
+      "sha256": "1e4faae684aeb7b9e8c74813317c86f515c42656b55c21ea8a98e1187d7d7ad6"
+    },
+    {
+      "path": "liquidity-studio/server/fixtures/ncbi-efetch-three-records.xml",
+      "sha256": "329017aa127d8d6c83a57b18793d299554e86b29a3746773046acbc2cd75a08c"
+    },
+    {
+      "path": "liquidity-studio/server/fixtures/source-copy-primary-passages.json",
+      "sha256": "ffaef4e7e995332ee39256560e2826b4cb9ca187bab6f76d85cabf607ddcfe29"
+    },
+    {
+      "path": "liquidity-studio/server/font-coverage.test.js",
+      "sha256": "c032616ad60fe3ce928d02dc3335475b66b545d08bfb4e4fc0965ecc495afd65"
+    },
+    {
+      "path": "liquidity-studio/server/gateway.js",
+      "sha256": "a322c1f8c4598072854e98293c12c7d76ce465cea4cdac6a6ddeaeb9f9688d81"
+    },
+    {
+      "path": "liquidity-studio/server/gateway.test.js",
+      "sha256": "18e1cffcc4d72025bd6b1e7956c04ee118d6885185e5848b063fe2f4b461141b"
+    },
+    {
+      "path": "liquidity-studio/server/generation-budget.test.js",
+      "sha256": "eac763f1c31b2e16d95ce0dcffbffa4c1c239057b901e4572252de125ebaf9f3"
+    },
+    {
+      "path": "liquidity-studio/server/google-auth.js",
+      "sha256": "b494af817d2d37a730b4aa1133eb4d154ffcb6a8d406b55afeeb479e242fc216"
+    },
+    {
+      "path": "liquidity-studio/server/google-auth.test.js",
+      "sha256": "a3077392cf8eaec19953f08e7b997a6768449d8843dc47edbd22235647eb220b"
+    },
+    {
+      "path": "liquidity-studio/server/helper-control-http.test.js",
+      "sha256": "5b1e5214755ba946736c949358b1487e44e409c3af9f95ec9fe292e482396a8a"
+    },
+    {
+      "path": "liquidity-studio/server/helper-control.js",
+      "sha256": "72c9024f802c02a03270a64048959fc80da56f2df47f83b074afc31928c12c8d"
+    },
+    {
+      "path": "liquidity-studio/server/helper-control.test.js",
+      "sha256": "fbdf161957fc870d1891bcb3c78c76d50a8927dabb6979a6812bebe1e6776873"
+    },
+    {
+      "path": "liquidity-studio/server/index.js",
+      "sha256": "2013a4c06c41ea8c5c290219982380db7d28937fffd68b617016d1f4953a22f3"
+    },
+    {
+      "path": "liquidity-studio/server/job-dispatcher.js",
+      "sha256": "690a8b60c4c878356344e370a4c6c6ce4b3106c55a81ce37f2856e54237e1b90"
+    },
+    {
+      "path": "liquidity-studio/server/job-worker.js",
+      "sha256": "66bc2dcbca376f9fe3c23e4e7ef4fc8af5916fa9bb14171d6c008436aa5d2818"
+    },
+    {
+      "path": "liquidity-studio/server/job-worker.test.js",
+      "sha256": "91f02a45f0c0307ca02223b05d3ced12103a63f64ac0be77a6281ee9bac3b232"
+    },
+    {
+      "path": "liquidity-studio/server/krug-world-eval.py",
+      "sha256": "16d293913cdd23b5e24bf0097b161d172b8b2819e5e0fe90652768327682ecda"
+    },
+    {
+      "path": "liquidity-studio/server/local-development.test.js",
+      "sha256": "1f0d424f4feeeb5a00434874270d181e3566f086ae7d071a53f71c579533a465"
+    },
+    {
+      "path": "liquidity-studio/server/local-native-development.test.js",
+      "sha256": "af9a61d75f31d1071e82df76fef54f207c99df0c0f65dbf41221c72f6286c596"
+    },
+    {
+      "path": "liquidity-studio/server/modnet-model-cache.test.js",
+      "sha256": "cd978e70009da6812cde77b472988880e9471fc08754204ece282fd617238eb3"
+    },
+    {
+      "path": "liquidity-studio/server/modnet-processor.test.js",
+      "sha256": "e504f129d6cfb503acbc949ff5afcd8501bd5ff8514ea68b62e49b0712ffc122"
+    },
+    {
+      "path": "liquidity-studio/server/modnet-worker-client.test.js",
+      "sha256": "2bb11780176724715ac638a6e1658636d93f3dacfb5e6f3e9fa0f83882bff944"
+    },
+    {
+      "path": "liquidity-studio/server/multimodal-contract.js",
+      "sha256": "739ad79b8d9cccf4f678ba936c37cb1a0876e9268bfec4a7400305e28c27c38c"
+    },
+    {
+      "path": "liquidity-studio/server/multimodal-contract.test.js",
+      "sha256": "a2a66c4327c34b87fc99981cb6df515dcef401136125ef045d1d3a5ad1d6ae81"
+    },
+    {
+      "path": "liquidity-studio/server/native-artifact-envelope.test.js",
+      "sha256": "a8c35c208c35e4c736d6d0cb0848ed7a5f733e3545612037846cdb883d0f741f"
+    },
+    {
+      "path": "liquidity-studio/server/native-audio.js",
+      "sha256": "2f73483b713f85cb90b9d5163bb73db6f92d452c6f0b8c738956404ba0a1523c"
+    },
+    {
+      "path": "liquidity-studio/server/native-audio.test.js",
+      "sha256": "605e500deaa4c213aed28e26ca36ce2df7e69e8d1f80b0f50a6d3af3073545be"
+    },
+    {
+      "path": "liquidity-studio/server/native-brand-refresh.test.js",
+      "sha256": "2f4b9c16652f1d93669fa9a33389379f65babb72b7dfc361cbf5c734f10a6c3e"
+    },
+    {
+      "path": "liquidity-studio/server/native-cutout-availability.test.js",
+      "sha256": "ef4a9177694d301e99aa7d81add9352c37b4c840095d749f117fda3997a959fb"
+    },
+    {
+      "path": "liquidity-studio/server/native-cutout-contract.js",
+      "sha256": "5db5addbd6200276d8226fd84146d21cfd55942d3a212fa3bde3bae4a14ac7cc"
+    },
+    {
+      "path": "liquidity-studio/server/native-cutout-model.js",
+      "sha256": "97a29bf2d42a256dc32643bbd7e82b2500ddc6b9b665f8094e9b23e6dc6cce99"
+    },
+    {
+      "path": "liquidity-studio/server/native-cutout-model.test.js",
+      "sha256": "bd3d62bfb3bf8225492884cf6747f996bf409c111c942934aefd781b9ad7f215"
+    },
+    {
+      "path": "liquidity-studio/server/native-cutout.js",
+      "sha256": "299574e8e54cf39496614966045a8eb1c2b4964908da043ed65c38072cbfe874"
+    },
+    {
+      "path": "liquidity-studio/server/native-cutout.test.js",
+      "sha256": "cd3b345aa6d60b7478e2cf343431d74c9714098343b6e706f2fc228d4ac30119"
+    },
+    {
+      "path": "liquidity-studio/server/native-editor-artifact.test.js",
+      "sha256": "03bb29e84d1828edf43bf8330f4368a884f318b37bfc099a42d8d16e908dd2c8"
+    },
+    {
+      "path": "liquidity-studio/server/native-editor-broker.test.js",
+      "sha256": "4ded8d85c23e0046b23b9e6713b105dc0ad91b8e5eb5227a390990de30ea1808"
+    },
+    {
+      "path": "liquidity-studio/server/native-editor-build.test.js",
+      "sha256": "d77a1c3eb5ec47a4a8415d786236c7911cf4d2bcfb5bd9b20002cd52ad5ed094"
+    },
+    {
+      "path": "liquidity-studio/server/native-editor-fonts.js",
+      "sha256": "3de0fdae6a2fc4188a0aa500479fc1e6fc8b1b78a483c7fb77645d64dfae80e3"
+    },
+    {
+      "path": "liquidity-studio/server/native-editor.js",
+      "sha256": "2b6b5a4321cbfa1cd02616f555b5cfe99cdd458b7c479fc39d585d6e526ae718"
+    },
+    {
+      "path": "liquidity-studio/server/native-editor.test.js",
+      "sha256": "bedcb6593490c43c97121e42ba424c709d23c69dd9a6e1311d2c4f250d17a5d7"
+    },
+    {
+      "path": "liquidity-studio/server/native-historical-rebind.js",
+      "sha256": "4e920778ca06184237c50bd53a1a666d5b3ca4717a888bed4461ac87fc74ac21"
+    },
+    {
+      "path": "liquidity-studio/server/native-historical-rebind.test.js",
+      "sha256": "703bf5bb40793f212c25209a0d688ab79b14a3cbfcd3f4f48fb37aa1474d2f4d"
+    },
+    {
+      "path": "liquidity-studio/server/navigation-test.js",
+      "sha256": "0d2ada48812bc0d5f092fdf32c3e85f1fcb096837ea032e77fbac5913d7cee42"
+    },
+    {
+      "path": "liquidity-studio/server/ncbi-pubmed-source.js",
+      "sha256": "9674a2e5e6e46cebd90cbfab8db39a6ba6c3bbaea354067e86fc3c2cb701dda7"
+    },
+    {
+      "path": "liquidity-studio/server/ncbi-pubmed-source.test.js",
+      "sha256": "9936624e462cac9e3d5fe551274b49a5f9af085317c8dea3407d324a1f32e1de"
+    },
+    {
+      "path": "liquidity-studio/server/neutral-brand-kit.js",
+      "sha256": "f7f54a8f41a8a3a02d965b0a6f45969fce34fb005a58747dfc0043c0986f0921"
+    },
+    {
+      "path": "liquidity-studio/server/nonclinical-source-catalog.test.js",
+      "sha256": "3ed338e632aeedfb2d7c963646a54cc5e5f907d03b4741675a56bc9da0f8ded4"
+    },
+    {
+      "path": "liquidity-studio/server/observability-labels.test.js",
+      "sha256": "2ac35938fe4ab15193a165d6943d4cac7ea9dfa1801522c13ef0fc306bb80507"
+    },
+    {
+      "path": "liquidity-studio/server/observability.js",
+      "sha256": "44fbb16f6b147a8e99679f5902e9e1e1c6ea455bffb37c83cae5d50a296edb54"
+    },
+    {
+      "path": "liquidity-studio/server/operational-health.js",
+      "sha256": "3e4dcb9906a81e95febe2b1bdd762f7e36d75b9e30877ad0d3e7966e6f633587"
+    },
+    {
+      "path": "liquidity-studio/server/operational-health.test.js",
+      "sha256": "385472e5c7b78ced6e5283e88bd2dd154f1470322afa3252baa2bb78cf5e1685"
+    },
+    {
+      "path": "liquidity-studio/server/operator-jobs-http.test.js",
+      "sha256": "f13609fcbca81d75c4402aec82ac0b39ec26438856991324e5e2f89896081e9d"
+    },
+    {
+      "path": "liquidity-studio/server/operator-jobs.js",
+      "sha256": "037de585b11f1fb277478059aeba5581bbd865350c36001caad13d6303f78948"
+    },
+    {
+      "path": "liquidity-studio/server/operator-jobs.test.js",
+      "sha256": "b4c53ab007c6e4feb83cb9e8fc0551311348d24b9466de45d6707bcc58db7bf4"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-action-ledger.js",
+      "sha256": "8231f1f1c38716eb33f6d5e97fda9c9f3e5e79e0d7807754f8dcfc9f28e7a9eb"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-action-ledger.test.js",
+      "sha256": "b0b8f64b228ce49abe5d854929945e55c6d6e157baaa550fb7d4be846eb108f4"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-archive-contract.test.js",
+      "sha256": "2222b35443d61b659b191f792099d5a7bfac16c0ccbfe9ec4d8af042ad877e57"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-brand-access.js",
+      "sha256": "a3dd30a40ca1b38e9f25eb634fec9b27a3897a7e2a9fd703a508e08864421fe6"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-brand-access.test.js",
+      "sha256": "ea0e30ff2191bd85ff83d55c2961bcc41d4a9282a40425a245a62c32474c08b6"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-connection-url.test.js",
+      "sha256": "96b620dfdf4808a40b7556b044910798837fb2c703adf755739c6537a7b03b12"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-current-binding.test.js",
+      "sha256": "86cafca6071c34e4a5dd851cdf61c0302b1632f3a75e4801f3047ad4c3e97e5c"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-docker-context.test.js",
+      "sha256": "7ea0a917d4f4e871792edcb3a1fd9dcbaa51b3d8aef7702b88e30c42533b48ea"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-font-pack.js",
+      "sha256": "2cd4261f573ad7c214334d2758bd6adb67787b5de1c6ce3a3e4e6bbe7e24421e"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-font-pack.test.js",
+      "sha256": "6e07fd36a81598d152dd95919ce0f325af0880c25990ae18a518c7cb30aa25b4"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-font-recovery.js",
+      "sha256": "2723c7d4fbd3a8bc905fee41075b833f445221fd06479a449302e2f2b8d56764"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-font-recovery.test.js",
+      "sha256": "5cedc9490382422db4d8f037b92469f04687e87c0bc02bd043cd3fa9e2d18ddf"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-image-readiness-hook.test.js",
+      "sha256": "fc1608082d75bbc7bd0342be3f06f70823243ad70550971b5d072ef457350694"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-local-configuration.js",
+      "sha256": "94c7603da909cc5d8b54d1429e535ffe1fe76445656f291e20406ad647c983ca"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-local-configuration.test.js",
+      "sha256": "5130f59c10ee148ccc5e37a9ca3292f6ed3ee835c692b0e36590fd3e6d89f474"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-local-snapshot.js",
+      "sha256": "d24e3e86796bbd729d3c47c9c27cb047b06e06b0c116a51d38b8ffb592e0a80f"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-local-snapshot.test.js",
+      "sha256": "8969504727bf39bd7ec18a869825d0395379d33d1b04b404df14a8a442fe755e"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-managed-phases.test.js",
+      "sha256": "48105d607e6016864b6350a3b99fb404f45a0c80b1c3be02fbbf314fb821113c"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-managed.js",
+      "sha256": "510d55bf6c15e022aee0f4262edee715cbd4662b069f9b04a83851365bb01b7b"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-managed.test.js",
+      "sha256": "fa0f4852906209ca7565a188935320192340fbfe9e9df8c3d8aa2eadf956b059"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-media-authorization.js",
+      "sha256": "45cdd6bd25b6f8d818b0f4af3b8edffb43aa562412e12015ad486a62ee84e3db"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-media-authorization.test.js",
+      "sha256": "96176924307fd2f229a511e33636c6eef34a1b02f82c6a991b8eeb96c0b54865"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-media-http.test.js",
+      "sha256": "69d0be9b468679ef00d22d8651099b3e9290bff607d50a393364b76b1c5dfcdb"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native-access-controller.js",
+      "sha256": "200dad90f9e199bc3e06679f9740a447a0ad3a7cad7930989d84e3cc6cd25896"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native-access-controller.test.js",
+      "sha256": "ec76173b00d61d73ad768c2baf3cc701f5437b1125cb3881bce5fa391b0723a1"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native-access-forwarder.js",
+      "sha256": "0a110d3c55c6dc748b5a743c1b78979511d3c7e4a6d72c91522b762f4990f10d"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native-access-forwarder.test.js",
+      "sha256": "45ef683a67c57677767dbec17ebc4e001ce7c902e816889aaf230df2b292fe4b"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native-connect-proof.js",
+      "sha256": "a122fd5dbf7a03370b1590bdc1b38d052f6d60b64d6e186c2b2b99c9aeb97011"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native-connect-proof.test.js",
+      "sha256": "c1dd801d16d61f843ad29e4ec06a377a4a327111056404d2cb6c54de3dadfca0"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native-export.js",
+      "sha256": "f22b98ec371682867c9a532f282e26ab1e6312fd909124af3bf013598a5253f5"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native-export.test.js",
+      "sha256": "6a52c87fd348889c1154fa5308f28cc6a88c216331e2576072a29ffba3c2d855"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native.js",
+      "sha256": "816adcd2835fbb218ee1969bf93edf0c9c73b4427359a3b8d8542ce775699d8c"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-native.test.js",
+      "sha256": "08cc5cab530d7e864a3d3d50fc1bb3550fd80bea96ec69b2530e03fc45d0b9db"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-origins.js",
+      "sha256": "fd0ff670c73d7dc3e09e75e5f0cc393e764e97a7a7da039a238f0c5f5fec06c3"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-plugin-local-host.js",
+      "sha256": "5fd4a5ecbe90879590237c36095c1f5ea6cf295818f4a141a616739fb392aa3f"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-plugin-local-host.test.js",
+      "sha256": "a52a8fe5bc6bb90a73fef01cf2170e576bda26705ff39f48861866cd60cf3592"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-policy-readiness.js",
+      "sha256": "39c7a5fdd181594f547e3ca332daed010a29a79397222c81e8474e540e0cf469"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-policy-readiness.test.js",
+      "sha256": "ccd26d4c38d24df9dc726f85834eac96f21350ac38e24a20d879184ca9498873"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-private-media.js",
+      "sha256": "f764c36a3a9dc56d5f71d3b394e9b387ea301fea4600592de61ab78c64f64ec5"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-profile-pairing.js",
+      "sha256": "c29fd879d89241981e931f79d46984c2635817ca01c6989714f8c1ff781846e0"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-profile-pairing.test.js",
+      "sha256": "4ece79de7d0b5883aced0acce4247d0843803178ab3d6bc6c0a626f0f87c44be"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-raster-proof.js",
+      "sha256": "3db326fd043a9b1ecff49703cdcb4e76e2b1f3a84d9156b616408039a930c858"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-design.js",
+      "sha256": "d89399a5c066c28c7ee6c04a854ea8f9fcab2dac662bb02e45dbdd9ca7620680"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-design.test.js",
+      "sha256": "af9ddecde63d000ab383f0a0f9dbbc914a18129284d8bd0320ea18ff8a971b42"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-development.js",
+      "sha256": "9f94aafe2182f874307dcc8e81e384ffef6cc999ed00dad47ecc1b6b64a54e2c"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-development.test.js",
+      "sha256": "0b64b3003b4eec03ff580f1a27b5dd6c736c33db334bc93f8d24a8f1e2dfce10"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-reconnect.js",
+      "sha256": "6b2c750119b0ecfdd278e5c4367f98b3429cee49258cefa2f357986ef073a2ab"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-reconnect.test.js",
+      "sha256": "14a64e63c9a960f6c57b5aea4c1f90948065725dc8866c7d4e80691c07438720"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-recovery.js",
+      "sha256": "c3015033756794728f53ef75b1bce7702d2028b1fd7f58f87fba8bdf24f51af1"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-recovery.test.js",
+      "sha256": "cb5a6d207f1d0cb96ecd11c359500d10f6551502f8367dd1c9121e6b752a4800"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-styles.js",
+      "sha256": "559f7ccede970f95e332f6ac8695f853979dfb0d6e96ff25679b045f74c925af"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-svg-gateway.js",
+      "sha256": "b81e3bda8442eb405531a1baa08ed1d0a0a539e283580615586c82e23ec5525c"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-svg.js",
+      "sha256": "e196018ff217b7f0f928bfbf6484e020d2529184c3266b21a3304fae59545e90"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-story-svg.test.js",
+      "sha256": "ea15163f792c5321f334356e3dbb68fa54e32b413d265ef765f54b8b82c18df8"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-studio-actions.js",
+      "sha256": "739b5aa4b1e52f21f2701c5b5bcc05778e6a2d5bcc4542e5c57a595b4a099316"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-studio-actions.test.js",
+      "sha256": "93cdb10df6f1041a450df6086409432bed331954a0ba1f511dabb1e39205868f"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-studio-runtime.js",
+      "sha256": "8ecbe0e2e72ef052895c976b2588ece9f04688b75b122544a4e87a576d9025be"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-svg-embed.js",
+      "sha256": "e7454099e54caec71d88e3bf16785217b47f5fee0247c3874726c2c8464c43f7"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-svg-embed.test.js",
+      "sha256": "e0bc5dc9891ff377361528172a51351af9acd386420f7373227649ef191ff3ee"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-svg-restore.js",
+      "sha256": "583934259c39311047c79fc245b2ddf0853fcbf859d61b24b9fa2d005594045d"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-svg-restore.test.js",
+      "sha256": "4ca7e723d44b710803974def0322d54777ea66bf31099ad39cf01bce4470fc15"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-token-refresh-http.test.js",
+      "sha256": "6bda01e0f66ea462047307c568edcc2941a5ca296849df73593ddb7894be8c1b"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-token-refresh.js",
+      "sha256": "157ac106828e18414d4841118a05f58a6ee4bea0bf27c2a1ba906dcdfeb35d89"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-token-refresh.test.js",
+      "sha256": "1533f18f88258304713e74d9a7a55b60ada973979f0c7a1cda6d643f2a06c648"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-workspace-configuration.js",
+      "sha256": "25baa6a1c11d684fbf96f54b8a1439bc576e1a7042eea30b1c00dfd48417871b"
+    },
+    {
+      "path": "liquidity-studio/server/penpot-workspace-configuration.test.js",
+      "sha256": "8e1ad24111712a9d072862b4f600aac1b0d461f4ffdc2961d8b3ba8b83ad8350"
+    },
+    {
+      "path": "liquidity-studio/server/platform.js",
+      "sha256": "44b2a137e18a7684862588095c51944905b8279bfd9af2548679c0e534ef5128"
+    },
+    {
+      "path": "liquidity-studio/server/platform.test.js",
+      "sha256": "f538e4531ddf9f06700021ba627b0dec9a4088d100eb63d421a3624e2749d8fd"
+    },
+    {
+      "path": "liquidity-studio/server/portable-json-accounting.js",
+      "sha256": "206f9cc3264b31f8ad305360c5820239a90ba43052675f781357e67db68a7a8b"
+    },
+    {
+      "path": "liquidity-studio/server/portable-json-accounting.test.js",
+      "sha256": "4f4d228c9ad77b5cf1d896b9382ca3cb89f70250d14c99ec29f24189c36a70cd"
+    },
+    {
+      "path": "liquidity-studio/server/ports.js",
+      "sha256": "ed48461818d8ab1f2ba02ce9d0c51b5fded1a3a3067c0339e0e37348c7f7601a"
+    },
+    {
+      "path": "liquidity-studio/server/preflight.js",
+      "sha256": "3fd312338a6f13d6bc6212d214dcfd4c215697d5c13c5355c13dc13c306614ee"
+    },
+    {
+      "path": "liquidity-studio/server/preflight.test.js",
+      "sha256": "8f7baf82f1611131a12cf3406e8c7cf97cd297d9fa041785f01ab886b020fc6b"
+    },
+    {
+      "path": "liquidity-studio/server/prepared-copy-review.js",
+      "sha256": "943491b0dbf6b576edca1bea34b072011865d7d1d185560539e2b8db40286341"
+    },
+    {
+      "path": "liquidity-studio/server/prepared-historical-pack.test.js",
+      "sha256": "e96492d2dfc12270d07c684391b7f584676486ae625297a40a5dd26a77f54c27"
+    },
+    {
+      "path": "liquidity-studio/server/prepared-historical.js",
+      "sha256": "4fe1bc4039ab95922741bbab058857b7ff306176d63d5b749a29f829b3e4244f"
+    },
+    {
+      "path": "liquidity-studio/server/prepared-historical.test.js",
+      "sha256": "2912a4c63c8899d125c6c4977e90366be2f5ecb1b6e203e74fe3a89f0e850467"
+    },
+    {
+      "path": "liquidity-studio/server/prepared-promotion.js",
+      "sha256": "06f2e844b6a29a0b639563c369512868264678453000c5300f200a72eb1de3e1"
+    },
+    {
+      "path": "liquidity-studio/server/prepared-source-candidate.js",
+      "sha256": "18a2db637eeda3ae0f87d40186cb673885ad5eeed67eefdace4e9fb9e4046fce"
+    },
+    {
+      "path": "liquidity-studio/server/prepared-source-candidate.test.js",
+      "sha256": "c78489a47ded43e2219bb0f92f81cc86f7450f175849421e0000568064250b09"
+    },
+    {
+      "path": "liquidity-studio/server/presence-heartbeat.test.js",
+      "sha256": "088f1bf0cf6899091462503416a5ae094dbc74b0b6f7cd459daea8dce2c67a3d"
+    },
+    {
+      "path": "liquidity-studio/server/public-health.test.js",
+      "sha256": "23d3520892f87391c846135cb67e205e480d8e2bf77bb05c51cca495ee9b823d"
+    },
+    {
+      "path": "liquidity-studio/server/qa-loop.js",
+      "sha256": "d2b0593be5b31e3135727acd1f8685ce65495899b81df32eac471840decd68a5"
+    },
+    {
+      "path": "liquidity-studio/server/repository.js",
+      "sha256": "52e858de19ee3559567e423f1b778f2481c63acd1c13bb9fe96cad3f4b73efa1"
+    },
+    {
+      "path": "liquidity-studio/server/resource-disposition.js",
+      "sha256": "2e7f505cf84ce96e96ebbecbcec466efb72c664f0203c2f5ba68dfb11ac477ae"
+    },
+    {
+      "path": "liquidity-studio/server/resource-disposition.test.js",
+      "sha256": "1abd169a4f6a099aca26337d27d120c7edeb53d1fdd1dd0e275b51d4979c1132"
+    },
+    {
+      "path": "liquidity-studio/server/restore-gate.js",
+      "sha256": "8a2fce22067b227e4bd61adf9e2837d22500b7436e552f59a155b95234643745"
+    },
+    {
+      "path": "liquidity-studio/server/run-firestore-seed-followthrough-apply.js",
+      "sha256": "de2451771e614f1d098543afcdcebc033defec0302425af33be53aba950a920f"
+    },
+    {
+      "path": "liquidity-studio/server/run-firestore-seed-followthrough-plan.js",
+      "sha256": "ea66c46497c8a245840921672cfbead3f4399c8f76fc33670fc9d4f5d252785a"
+    },
+    {
+      "path": "liquidity-studio/server/run-penpot-local.js",
+      "sha256": "aee865968d14654b64b2e6454cafd23b467c3d80fbb82671f9f1e410aa581d3a"
+    },
+    {
+      "path": "liquidity-studio/server/run-seed-followthrough-apply.js",
+      "sha256": "1480bfefc64b359b009481dba7a4b3fff0bf42366b4d36bbabb2592974eaaf83"
+    },
+    {
+      "path": "liquidity-studio/server/run-seed-followthrough-plan.js",
+      "sha256": "d86b4228525f6965e355a63ea5f25af0be57cc9c6df7472eebd58169c5215c4b"
+    },
+    {
+      "path": "liquidity-studio/server/run-source-preparation-bootstrap.js",
+      "sha256": "f4d756325f9b60df4c5d9a364347d6091cb0f377b35a92db7e56f43b05c8a423"
+    },
+    {
+      "path": "liquidity-studio/server/run-weekly-batch.js",
+      "sha256": "596df84f0dba8f70eb68b96916f36927fe2675869f77b46b9f3cb93ce82fcbf6"
+    },
+    {
+      "path": "liquidity-studio/server/run-weekly-batch.test.js",
+      "sha256": "23a9707ce407ce9c53b900fed499e3cfd17666f42ac4369f661cd7548ff039f2"
+    },
+    {
+      "path": "liquidity-studio/server/runtime.js",
+      "sha256": "ff7795cb4e5bc8bbd8b5d42868e77c7bbf1dc51489bac75b9f2bff3b73b292d8"
+    },
+    {
+      "path": "liquidity-studio/server/runtime.test.js",
+      "sha256": "812c9749dbfc39a5702adff0dc88abad70f9f55123db74046500656372a62b66"
+    },
+    {
+      "path": "liquidity-studio/server/scheduler-auth.js",
+      "sha256": "b2ffef31721c35d542cc670df8682959f774ead41a785fcd9aa6b6b9ed4876b1"
+    },
+    {
+      "path": "liquidity-studio/server/scheduler-auth.test.js",
+      "sha256": "c445f35acfc43d8c2c19440b07e92f7074a730e403611ff1fd1c4420c570710b"
+    },
+    {
+      "path": "liquidity-studio/server/scoped-request.test.js",
+      "sha256": "8f691eeae03b1cc512e9304eb0595df4b3ac5cc25d1ab37f9ca65f4d88f27006"
+    },
+    {
+      "path": "liquidity-studio/server/seed-followthrough-apply.js",
+      "sha256": "68f520377dcb62f3a3728dee1ff34b3765cfe641e7018b2808fbdd585234028d"
+    },
+    {
+      "path": "liquidity-studio/server/seed-followthrough-firestore.emulator.test.js",
+      "sha256": "b4bdf773a515191ea41159cf26c16d6bcac6948e7d8e4db8b3402a680e8811f7"
+    },
+    {
+      "path": "liquidity-studio/server/seed-followthrough-firestore.js",
+      "sha256": "3d0f83494472a004a0ae6db8c211b62fd1c15f25f47633ed244313eaedfb58e5"
+    },
+    {
+      "path": "liquidity-studio/server/seed-followthrough-plan.js",
+      "sha256": "4a81e59befefec901ac3d6455c22803163dfc9a7b199f620f4b55188669b84d2"
+    },
+    {
+      "path": "liquidity-studio/server/seed-followthrough-plan.test.js",
+      "sha256": "e939ebde1cd954554c4837abcfde1e0af0b87e29549bf5e54ba42b69bc2377b6"
+    },
+    {
+      "path": "liquidity-studio/server/seed-followthrough-registry.json",
+      "sha256": "03281bac9c92b2b3cb278de06e3dbac9f1b0481a01c88e0f3a5e729d43a368b7"
+    },
+    {
+      "path": "liquidity-studio/server/source-catalog.js",
+      "sha256": "6a32f20fd664ee94767a27f5325067c01b9ab8f1ae59d02fcf2f474c45457f90"
+    },
+    {
+      "path": "liquidity-studio/server/source-copy-selection.test.js",
+      "sha256": "983df0a4231608dc5f6f5240cabf72b65f544b8531b21652a59c10869333209b"
+    },
+    {
+      "path": "liquidity-studio/server/source-integrity.js",
+      "sha256": "62111c0d22e67ae6bd163dff36abc9ffd7ffdb32094b1555524cf125701688f3"
+    },
+    {
+      "path": "liquidity-studio/server/source-passage.test.js",
+      "sha256": "ea8200ad89abdee17e214a9c05e4fb54d6c95f7feb79b62fabb12b95b2924c35"
+    },
+    {
+      "path": "liquidity-studio/server/source-preparation-bootstrap.test.js",
+      "sha256": "b9c0f9b9d3a63c8298fce80b1b9f815c99b74c4d7edd0dc30adcb67958f770ae"
+    },
+    {
+      "path": "liquidity-studio/server/source-preparation-http.test.js",
+      "sha256": "b424727a844450266a5036b1bbf2cdd1d14fb3b5872b91727394bd9282334c45"
+    },
+    {
+      "path": "liquidity-studio/server/source-preparation.js",
+      "sha256": "8e87235c6317f930bd1e5d4f791e2235824d0259b4b57a443631b582ef4a4755"
+    },
+    {
+      "path": "liquidity-studio/server/source-preparation.test.js",
+      "sha256": "be3a556379a14b046f13f0713a231cc6f59b04f5233a2f66087e8fed21406b24"
+    },
+    {
+      "path": "liquidity-studio/server/source-request-slot.js",
+      "sha256": "837046a2176f85665ac85578df48010a3f45efbde4d466e037995f2091faa189"
+    },
+    {
+      "path": "liquidity-studio/server/source-retrieval.js",
+      "sha256": "45e00ec78196a03742d8d9afd8d9e793cc08e5a4f153869ecddd7c1625f0a867"
+    },
+    {
+      "path": "liquidity-studio/server/source-retrieval.test.js",
+      "sha256": "550583a9cb0abb6ec3aba38aa0524f5f4dffd6451ff2c263318b5732ce658eb1"
+    },
+    {
+      "path": "liquidity-studio/server/source-review-presentation.test.js",
+      "sha256": "137d19061bcdd6b4a4dd267418041a1ddaa31990db7838ffe7b546f1731d36e6"
+    },
+    {
+      "path": "liquidity-studio/server/storage-admin.js",
+      "sha256": "d1073780e8dd24d6d7558fab08c21b98e7de66626cb5b2eace4772c92bc5915b"
+    },
+    {
+      "path": "liquidity-studio/server/storage-transaction.js",
+      "sha256": "1e86f50041f5f20fc2b3d4b7c3e140e8a03eb50dd2129cc5baf366be256204bd"
+    },
+    {
+      "path": "liquidity-studio/server/storage-transaction.test.js",
+      "sha256": "f3000911460dd5029c0a16670346d633bcbe3782519ee715ca691f86316ce61a"
+    },
+    {
+      "path": "liquidity-studio/server/storage.js",
+      "sha256": "1d0c4b92129b7f06fd071fd5ff1f993fffa6875b8dcc1b9198aa4fc70462877b"
+    },
+    {
+      "path": "liquidity-studio/server/storage.test.js",
+      "sha256": "910715a8404d504b6282bb91c87e5c227715a40f2769a23ffec7b183651ee00d"
+    },
+    {
+      "path": "liquidity-studio/server/story-content-revision.js",
+      "sha256": "878647fdeb28a397b0498fd7c60045cd3ec01d781e4e6d9ac0337ebcbe192c14"
+    },
+    {
+      "path": "liquidity-studio/server/story-content-revision.test.js",
+      "sha256": "9ab74d16d0de2c2feffde2248ecf3a9f271c1a605e9ddaf8a9b6f14c6fb44cbd"
+    },
+    {
+      "path": "liquidity-studio/server/test-fixtures.js",
+      "sha256": "75358b20078052e47791b377f8a3b3ce8c011a157669b1424594fa60bd4fd177"
+    },
+    {
+      "path": "liquidity-studio/server/vertex-adc.js",
+      "sha256": "7187f68efc87ff3e884c0e09970db31c89a9b95b1ca2263644a1dcae1fc55e21"
+    },
+    {
+      "path": "liquidity-studio/server/vertex-adc.test.js",
+      "sha256": "32565036622cb48ab64b787e0be5378546b3a5905e60347e2fa3f1dcbd3d898f"
+    },
+    {
+      "path": "liquidity-studio/server/workspace-client.test.js",
+      "sha256": "d5101121eb20528106e81b1fff11493a1d097ab786eb1f8de2def814f4a52dcf"
+    },
+    {
+      "path": "liquidity-studio/server/workspace-query.js",
+      "sha256": "fcad53329af523c1375153cffe16ff29515449a42212350e450555e0ad65aa8b"
+    },
+    {
+      "path": "liquidity-studio/server/workspace-schema.js",
+      "sha256": "12b9f5ef946fe1fe9df6cdc8ebd58abd06db9a503b39bdf20b1d103afed27e1b"
+    },
+    {
+      "path": "liquidity-studio/server/workspace.js",
+      "sha256": "0313bcc0fb981ffee98a09bd684061cb522a0d6f7143ee1e303be33684ea416a"
+    },
+    {
+      "path": "liquidity-studio/server/workspace.test.js",
+      "sha256": "56b399910d22868ab47aa0cda026ba3b9ce0d4dbafa135eacd901bb1d6f89300"
+    },
+    {
+      "path": "liquidity-studio/src/App.svelte",
+      "sha256": "463cd53633828324191f5e65ae7dfb88d27ca4ff10a222be509a9e5fd1e70012"
+    },
+    {
+      "path": "liquidity-studio/src/Emulator.svelte",
+      "sha256": "cfaf871545824153feefa3264dd7675125d3180135efabaaab5a837c18015fbd"
+    },
+    {
+      "path": "liquidity-studio/src/SourceReviewSummary.svelte",
+      "sha256": "4aa6902a6301f9b30d265ef1314a434a35ec2add92d7bfa7f5ff00a9bb644647"
+    },
+    {
+      "path": "liquidity-studio/src/WorkspaceTable.svelte",
+      "sha256": "09fd7f131c7799e373961498a70d965f0dbaaf34037f70c959e1c9146450ec6a"
+    },
+    {
+      "path": "liquidity-studio/src/components/AudioMarquee.svelte",
+      "sha256": "15b7877f9d415f755aa61d6673745a1b19515ed16fe11f53a0860e78097f0e46"
+    },
+    {
+      "path": "liquidity-studio/src/components/EditorExportPanel.svelte",
+      "sha256": "26d63c93856282d5da51b867e842079ccb56215a7f7f06ba5d942549888fd9cc"
+    },
+    {
+      "path": "liquidity-studio/src/components/EditorReviewPanel.svelte",
+      "sha256": "f801201b9a9f2ffd6b92b44cb6315f81d132825dedcc6090f011a5db8e28a87a"
+    },
+    {
+      "path": "liquidity-studio/src/components/HelperControlPane.svelte",
+      "sha256": "0b5c071f96049833de2e58b488918db038cdf2378c66adfd049b3815f4cd4f85"
+    },
+    {
+      "path": "liquidity-studio/src/components/JobsPane.svelte",
+      "sha256": "48a193d9ea25faf1dccef081e43052746d001ac7c2aadfbfe93781568372d67b"
+    },
+    {
+      "path": "liquidity-studio/src/components/NativeBrandRefreshPanel.svelte",
+      "sha256": "badb8bd9b3c9d14bafc630bea9ae1a6dbee19c29a81e2e19c04313fd56df8e17"
+    },
+    {
+      "path": "liquidity-studio/src/components/NativeEditorHost.svelte",
+      "sha256": "996b229c7907ba8586f56accb97e4928776ed2097f3045f16f649d479e8ff21f"
+    },
+    {
+      "path": "liquidity-studio/src/components/NativeLayoutHistory.svelte",
+      "sha256": "00b23ca6c46302520afc02386c835398af26ca1739fd63a56f06a886cbf0313d"
+    },
+    {
+      "path": "liquidity-studio/src/components/NativeRebindPanel.svelte",
+      "sha256": "6a900cd62ec7c726974ad609130ccf919ee71f70c16c7627dd24daec72c8195d"
+    },
+    {
+      "path": "liquidity-studio/src/components/OperatorRecoveryPanel.svelte",
+      "sha256": "46eec1063abb00e7e78a36bdce4238ceeab7beb652c75786af654c0d5edfa388"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotConnection.svelte",
+      "sha256": "f86208586b9b51856c8ed9f52f89046ecf6d29f8d874560d2dbe0f7b56c612a3"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotDesignAction.svelte",
+      "sha256": "296aa5926c2589f313cdf9e31b8d4f10e5987ce16563202a5b9e7c288a1b761b"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotImagePicker.svelte",
+      "sha256": "6482622091183bdd8fe3f53f147bf57ce82c67c4b22aeaa43bdce80d9de06a54"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotPanel.svelte",
+      "sha256": "e6f53c2765351dd155dc618be41903691038560109dc59dd6263faa915f8dff3"
+    },
+    {
+      "path": "liquidity-studio/src/components/PenpotReconnect.svelte",
+      "sha256": "e601da8bf47f3c2a905ed11a0965ba846711388f1fc4f241e36ccb6bb83bc8f1"
+    },
+    {
+      "path": "liquidity-studio/src/components/PreparedSourcePanel.svelte",
+      "sha256": "6779333566eb465df53905558ed7e000935bc34d0fb51bc9ff7bf03e1de15852"
+    },
+    {
+      "path": "liquidity-studio/src/components/WorkspaceCalendar.svelte",
+      "sha256": "816e5989f2da0a7b2412dbf3ac0c1f089d6cb855b49475c3731308476a18c072"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/DefiantPlanning.svelte",
+      "sha256": "0dbc591bd6f3a6a8d0e565e47ff7f5707c2a2e2a03f9b197c40fb6dff95f9b48"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/DefiantVideoInbox.svelte",
+      "sha256": "5d090efae73096919978c811b523754798ae63d269bfc63f4cd079905d898d18"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/DefiantWorkspace.svelte",
+      "sha256": "c9ac33b8916b83b5d5ebbcafdf191b9b54370b7b718170b9af40de13d228b247"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/DraftBrief.svelte",
+      "sha256": "6c2059783a08795876ca004eefd8d085241251ff3a527801cde2bccb149faaec"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/EvidenceConstraints.svelte",
+      "sha256": "64b4ca7f46a0f5978ff5f3b4bd78a1640557a04120bf7cbbe293e04c7e388a68"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/GraphCanvas.svelte",
+      "sha256": "a11e48c63bea1979d245b444d6b952be5dc53328b195f9f1cbfd3495db2dc284"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/Icon.svelte",
+      "sha256": "3632ef34940051e86b4343f07ada70431cc51d06bd0abec87477d3bd171c60bd"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/InboxReportSources.svelte",
+      "sha256": "c6a0a8f842c3894590cadc3ca7d5fc0e852927571a5a97a1836a3cadb6de1e91"
+    },
+    {
+      "path": "liquidity-studio/src/components/defiant/ResourceConfirmation.svelte",
+      "sha256": "046cec87fb93b73e9df5ae261662acae975d318fcd32c1ba9628f2376d13c15b"
+    },
+    {
+      "path": "liquidity-studio/src/lib/calendar-model.js",
+      "sha256": "b1bf667956cd5c6d39d4fba9a12d5ade57e1214cc31458d29feaa4e1b2c3ebf2"
+    },
+    {
+      "path": "liquidity-studio/src/lib/calendar-optimistic.js",
+      "sha256": "9e9978065778a567a1088a5944548bb24fe8402049147dbacf5580907a488183"
+    },
+    {
+      "path": "liquidity-studio/src/lib/defiant-location.js",
+      "sha256": "a6c624a27873b8df7a70a8225dbb13bb01db8a35e349a56a3c9684632f460e1f"
+    },
+    {
+      "path": "liquidity-studio/src/lib/editor-recovery-kit.js",
+      "sha256": "ccb23732f4048508023ca717bc6cec647288d120acdd281323b13d7759656788"
+    },
+    {
+      "path": "liquidity-studio/src/lib/google-auth.js",
+      "sha256": "88ec7b9c7186300654486e2dbaf9a0b247a195e8c8ca78010a1731bfb7dd893c"
+    },
+    {
+      "path": "liquidity-studio/src/lib/modnet-model-cache.js",
+      "sha256": "3c9b7e60446d72d8e50dceb6363c62236b8afaac837cdb4b5f589be644a184b3"
+    },
+    {
+      "path": "liquidity-studio/src/lib/modnet-processor.js",
+      "sha256": "a79d721275c2eab0c55e0dfbf3c7710e9c437cd2208c093e6569956845585d03"
+    },
+    {
+      "path": "liquidity-studio/src/lib/modnet-worker-client.js",
+      "sha256": "4150264a8792bdf5f5a5131692966943e34b83496cb41848ff562aa42e089a10"
+    },
+    {
+      "path": "liquidity-studio/src/lib/modnet-worker.js",
+      "sha256": "9f539812f1aa53c4b70aa51d153644f876e059f40b24477c42b33a47f737cf05"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-cutout-availability.js",
+      "sha256": "75463b6c051cfbc8773d1ee846565e3853e18d666fc71b55e0172c7e2314cec7"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-cutout-remover.js",
+      "sha256": "03b0f691a7cfa740bc8ca9f164b5d8a8d9196728f08d1a088acc371e8dc6bcf6"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-adapter.js",
+      "sha256": "134b5ddf009f92653b65352d244cc2e024eec86be6acdfb6c33e00bef108e59c"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-broker.js",
+      "sha256": "6e0b4b8123d1c7692d6acf5591cbc0af94d984263a954717dd9ebd11cc1347f4"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-frame.js",
+      "sha256": "bb13f8c9696e33bfbdec19ecd44854f05a3d97c046f139ae9658e22f0287abac"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-mount.jsx",
+      "sha256": "6cf9c077e434d5576c718e755bc984b36bc2c97d9205c983ce083a8cca4ba14c"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-editor-size-presets.js",
+      "sha256": "fa36d627a07f6f21c62673bb4733f172653079d5d3be1b43b2349acb16cd8b3d"
+    },
+    {
+      "path": "liquidity-studio/src/lib/native-webm-duration.ts",
+      "sha256": "2ededfa85dbbd42a6b8000c36f1baa953f4dab7c40983eb74b278b043f34f079"
+    },
+    {
+      "path": "liquidity-studio/src/lib/penpot-connection-url.js",
+      "sha256": "0f1dcccadc7dc6b41478e1c7d4419c9dca53f567835d4a7343bae3bd2afb0319"
+    },
+    {
+      "path": "liquidity-studio/src/lib/presence-heartbeat.js",
+      "sha256": "37ff4c45f903cc6b9355c5d65a8816c9b4261ba8e87ec4ff7e81675badcbf336"
+    },
+    {
+      "path": "liquidity-studio/src/lib/scoped-request.js",
+      "sha256": "0ac691b459065eef0d994a01b6c791d8e4025f9f2a1aaf9997a52009b0f5ab92"
+    },
+    {
+      "path": "liquidity-studio/src/lib/source-review.js",
+      "sha256": "ce4f045ea5b36f67f148643185c200e171f08130e0fdbce7474f5529f015ffc2"
+    },
+    {
+      "path": "liquidity-studio/src/lib/workflow-location.js",
+      "sha256": "10224dbd7930719f7141964a36d39ac4adeaa1048eaf3c4852ce6900d948220e"
+    },
+    {
+      "path": "liquidity-studio/src/lib/workspace-client.js",
+      "sha256": "42cc639c26a7790e9b063715b8c2300178c7650064d8bc1ba7c63cd72706378d"
+    },
+    {
+      "path": "liquidity-studio/src/main.js",
+      "sha256": "03c41f2aae74a330c3f841267c449e17a9ada79e972cbe800799d333961e207c"
+    },
+    {
+      "path": "liquidity-studio/src/studio.css",
+      "sha256": "9a52803b3fdeff73dbc7eeffc9aaf1d8e288e50db83b52631a25267af3281838"
+    },
+    {
+      "path": "liquidity-studio/tests/backlog-filters.spec.js",
+      "sha256": "276c4522a650c2f88988277951c406c5d80914a2165686dbd9f91e0308d62650"
+    },
+    {
+      "path": "liquidity-studio/tests/calendar-workspace.spec.js",
+      "sha256": "ad485ee873dc939c6d217387cbbc2425e3199874db7d23a1ebb94848cc6eeefc"
+    },
+    {
+      "path": "liquidity-studio/tests/defiant-draft-brief.spec.js",
+      "sha256": "b8f2950090ce8b11c9299bba91bf98fecf547be8b8c36ecb764cc7735af7a728"
+    },
+    {
+      "path": "liquidity-studio/tests/defiant-workspace.spec.js",
+      "sha256": "821aae013fc6d28b0b8fde5e6ac3bf9dbe0a7db6ec22fdedb2b3aad7d56d1a37"
+    },
+    {
+      "path": "liquidity-studio/tests/editor-export-native.spec.js",
+      "sha256": "f5c9d337c1c59ac9d140e4ea8b1bd5b0676187c37e411af24eb171895f494e2f"
+    },
+    {
+      "path": "liquidity-studio/tests/editor-pack-historical-ui.spec.js",
+      "sha256": "91c083ca70d224e51ad57f4d846a3424203b972b01da329d2dff1681770daaf2"
+    },
+    {
+      "path": "liquidity-studio/tests/editor-pack-native.spec.js",
+      "sha256": "89ab6986af26058cc5892c15da85ea7ef0279dc04637a26094dba8566706ed09"
+    },
+    {
+      "path": "liquidity-studio/tests/editor-review.spec.js",
+      "sha256": "101ecc96228f146a1164236376dc8db1f71c89e8a998e141f3dc761bcc111ba4"
+    },
+    {
+      "path": "liquidity-studio/tests/emulator-marquee.spec.js",
+      "sha256": "f14a5449e663c5708354ea11d34a7e9a48e960df541cc6a62dc4d42208eb2ba3"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/CalendarHarness.svelte",
+      "sha256": "a0fa77f89a7a0689b22ba76adc62397c384756ff2ca728b51d7182981d9d9024"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/HelperHarness.svelte",
+      "sha256": "8746e2a40e51ddfb9c5bcc4b2b7576c993ca6b95ccac730bc913ebcdcc6ca898"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/JobsHarness.svelte",
+      "sha256": "bee33e200ce13527560fce671cf9bc533a87ccb79078a210f81fdaf2a3ba0e8f"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/NativeEditorHarness.svelte",
+      "sha256": "da06142d5aca9ed5980b4c09fdb7220a3b1ef98d5145c3efe0be986c85bff02d"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/calendar-host.html",
+      "sha256": "43a0f98ec398a8485565ac16998ec6c7e311ed1146b4654bf3c034e32da0657d"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/calendar-host.js",
+      "sha256": "10620611a98b478bee6835c9531a45eee17fe53e5b958de6ef4559691eb0cb57"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/editor-pack-child.mjs",
+      "sha256": "8da1f6c402da18e8b28b6df6e884767cb2227b0200172f9aadb80263ff074044"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/editor-review.html",
+      "sha256": "e93a6e6c6132f384bf50d524cc4ee5c472b76c8ac5234ab2a9eca6c22062ccc6"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/editor-review.js",
+      "sha256": "2bda1370b5ac15d07c4e074e0c6c934714514e7b48cfb9b435a4f4f814a90d2c"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/helper-host.html",
+      "sha256": "25369dd0c36c0f99d1e4060eeb49b4e9887991b7a1dd72612dc3a3c221004e3c"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/helper-host.js",
+      "sha256": "4e843540d0e049a95421407a1001a09bfa4ed17c2b2ace8f69b9e55133a45a1b"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/jobs-host.html",
+      "sha256": "069d6a0f2379c2dbd48a9b8e7f68a5a27abf7254bd89bc889d299695e90be12b"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/jobs-host.js",
+      "sha256": "31acd5801144112844f6d8bd5b32d450284849e2bf77a78a500d4bdece236674"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/native-audio.js",
+      "sha256": "01cb441638843f120860c379ef459fa653332e4a8255dd03f4e924e0a52f7900"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/native-brand-refresh-panel.html",
+      "sha256": "27732a66a2c35c4fb8255f3c337d9aed4b1e86204fc5af206699f9ceadf67176"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/native-editor-host.html",
+      "sha256": "5a6f21ba6f251d9454922472bbd9971840d8b7c45867af4f03281bfbf40921f5"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/native-editor-host.js",
+      "sha256": "c1f71c3fec2be756a35ccad3b8546f03b52b719058587387df9d38c7b4c1725c"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/native-historical-rebind.mjs",
+      "sha256": "fc23791f021bb75caec9c223607a4a32511763900563370de768284ab7814880"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/native-studio-host.html",
+      "sha256": "a0cc1759c13a62cbc0add6bf2c8219948bbc0c5b2b4e009cde74e31e793ce383"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/native-studio-host.js",
+      "sha256": "ae622c313d7e5b57db70f3a6f5c86f36534a2bfa2b2d4f37700db8632779eb3a"
+    },
+    {
+      "path": "liquidity-studio/tests/fixtures/penpot-panel-host.html",
+      "sha256": "27a98fa5f411ac90406c4aff1d3e47d77eb70d218e0e2d4541aa56cebdd0b39a"
+    },
+    {
+      "path": "liquidity-studio/tests/google-auth.spec.js",
+      "sha256": "8d1a8c191ccf2784fc0c743ba7573eb56fbd4389f7d0a1e077e6aa9e4b964bd9"
+    },
+    {
+      "path": "liquidity-studio/tests/helper-app.spec.js",
+      "sha256": "e58c6a8caa868660ba2b89571b070f0b79924325220a72f7ba6a1bbea3de9326"
+    },
+    {
+      "path": "liquidity-studio/tests/helper-calendar.spec.js",
+      "sha256": "09613caa51e9b6d134182cdad63b3d8d4aae1e2cd3e177b9accc4a524fec271d"
+    },
+    {
+      "path": "liquidity-studio/tests/helper-control.spec.js",
+      "sha256": "46b2af063c0b4782ddcae3c1ac94357741c3f4597b87a1a040a7fad0e33aaac4"
+    },
+    {
+      "path": "liquidity-studio/tests/helper-delegation.spec.js",
+      "sha256": "983fbbc7a16ea62f3177140f5e24d95db3cbca74b39dbeb57cf288cb2b342ace"
+    },
+    {
+      "path": "liquidity-studio/tests/helper-scripted-evaluation.spec.js",
+      "sha256": "cac963fc98fb1d98032b32c06477fa666e2b5ad3a9ff236474222dfa4f63d457"
+    },
+    {
+      "path": "liquidity-studio/tests/native-brand-refresh-panel.spec.js",
+      "sha256": "fbe4c8f550d3daea25304ba171bdd05ab3482e730228c355ebe8a32c707ee9d7"
+    },
+    {
+      "path": "liquidity-studio/tests/native-brand-refresh.spec.js",
+      "sha256": "75e3639718561b91f18d4ef14eb1a77f234c576e194f50d7be85332205c96f7c"
+    },
+    {
+      "path": "liquidity-studio/tests/native-editor-host.spec.js",
+      "sha256": "a775c3780b93831be54eb4e0385aa9019414b11ce483151cc97a591de5fac5a3"
+    },
+    {
+      "path": "liquidity-studio/tests/native-historical-rebind.spec.js",
+      "sha256": "545b8e0e76e013a53d1b30567e1ce4896c18ceb4b9e02d3c8a9d5a589c4c3960"
+    },
+    {
+      "path": "liquidity-studio/tests/native-host-tools.js",
+      "sha256": "82532113a69e888f379fede175f9d1632cd2c470a22c67576b53f604af4ea4eb"
+    },
+    {
+      "path": "liquidity-studio/tests/operations-retry.spec.js",
+      "sha256": "b46b447eb5c38374b7ef09cc90f1ba90d4ed3413a608134f339b15a4e7caa1cb"
+    },
+    {
+      "path": "liquidity-studio/tests/operator-jobs-app.spec.js",
+      "sha256": "f6c8540173b570a726ae977b607583148e851decf23a5ad3c4c669d5ef505955"
+    },
+    {
+      "path": "liquidity-studio/tests/operator-jobs.spec.js",
+      "sha256": "13a0fd0dc8423e477a5bd4097c81bad5fb9c574650ef266ab2af4986c8f9b174"
+    },
+    {
+      "path": "liquidity-studio/tests/operator-recovery.spec.js",
+      "sha256": "4f76e0cb877414a0861e9a14b817712d422b553ecdd8a8b07aaba8fb916e786c"
+    },
+    {
+      "path": "liquidity-studio/tests/operator-workflow.spec.js",
+      "sha256": "a757bcfd7527f156ce42eb745200852738af4ec061af4a6e12dde2134a36a7ed"
+    },
+    {
+      "path": "liquidity-studio/tests/penpot-panel.spec.js",
+      "sha256": "90cc27d4df562e36356b29c904eaa75282600fa2a82d07b4ff45f8e905c5fd83"
+    },
+    {
+      "path": "liquidity-studio/tests/prepared-historical.spec.js",
+      "sha256": "e343b7e923cd0a05267eaebbd54cf47f9cccc6f7d1631655fdf3bcf432c2a59b"
+    },
+    {
+      "path": "liquidity-studio/tests/prepared-source.spec.js",
+      "sha256": "98fd172ac63900935e6ecbbf66cb8b592756ff738dc91aa8013836aece70fa3e"
+    },
+    {
+      "path": "liquidity-studio/tests/preview-identity.spec.js",
+      "sha256": "28fb473d5af6dd6e3ae6b1f171fa8a9d15647fbe2c5fbaa375b1514a2013be34"
+    },
+    {
+      "path": "liquidity-studio/tests/studio.spec.js",
+      "sha256": "4d1ae58c31830aa9cac09c9c22e31a9da2557f2933b1dfa5f7c847a9bb038e3e"
+    },
+    {
+      "path": "liquidity-studio/tests/workspace-table.spec.js",
+      "sha256": "0b74950355af50f8b4b97cc22b986603f93a2433270cf4e83ece1956bdb6b27d"
+    },
+    {
+      "path": "liquidity-studio/tools/penpot-token-plugin/action.js",
+      "sha256": "8efa77660d17b927b05bc04d685dc28e084b6d4bf75368b4e885483a3ffee203"
+    },
+    {
+      "path": "liquidity-studio/tools/penpot-token-plugin/index.html",
+      "sha256": "ddc832442f9986b7373e6696bb51c44824e023628fd458bf8f5d9dd3964fb0b5"
+    },
+    {
+      "path": "liquidity-studio/tools/penpot-token-plugin/plugin-tail.js",
+      "sha256": "d8a599d9ba67d624b5a83a48e9cfd8d30afa96ca3df87d854701c45f00fab146"
+    },
+    {
+      "path": "liquidity-studio/tools/penpot-token-plugin/style.css",
+      "sha256": "09b58c39855a806294f2b0325c806903434cb27e6b08efa85661ec8a69d8ac98"
+    },
+    {
+      "path": "liquidity-studio/tools/penpot-token-plugin/ui.js",
+      "sha256": "b46d42e4e5b4ba699aad7b10a9bddc5464536750ccae647824a6187e5d5f59ee"
+    },
+    {
+      "path": "liquidity-studio/ux-krug-tickets.json",
+      "sha256": "0ee27e5f051a29d6a6e78f03b3dbd05d6f5318f0b06c78bdd50aa7d2146f68fb"
+    },
+    {
+      "path": "liquidity-studio/vite.config.js",
+      "sha256": "69f5af5823cb1e55df242eff14956979a8ccfc6790ddef3a7ae5eabb8f56cfb7"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "assets/index-B0UQ3Q6s.js",
+      "bytes": 598985,
+      "sha256": "3ca3eefa88bcbd31e92bd24dc7fecb187a3499eea3caacbb25fddd31e8dd35fd"
+    },
+    {
+      "path": "assets/index-UBj0HAmT.css",
+      "bytes": 67691,
+      "sha256": "1192033cffa5f1a47b874e598a5d7005b132ff5e2626274d56017144e2835651"
+    },
+    {
+      "path": "fonts/DejaVuSans-Bold.ttf",
+      "bytes": 708920,
+      "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
+    },
+    {
+      "path": "fonts/DejaVuSans.ttf",
+      "bytes": 759720,
+      "sha256": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322"
+    },
+    {
+      "path": "fonts/InstrumentSerif-OFL.txt",
+      "bytes": 4405,
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "path": "fonts/Inter-LICENSE.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "fonts/InstrumentSerif-Regular.ttf",
+      "bytes": 70012,
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "path": "fonts/InterVariable.ttf",
+      "bytes": 879708,
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf"
+    },
+    {
+      "path": "fonts/LICENSE.txt",
+      "bytes": 3859,
+      "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9"
+    },
+    {
+      "path": "fonts/MonaSans-Bold.otf",
+      "bytes": 116248,
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641"
+    },
+    {
+      "path": "fonts/MonaSans-OFL.txt",
+      "bytes": 4419,
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+    },
+    {
+      "path": "fonts/MonaSans-Regular.otf",
+      "bytes": 113784,
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari-OFL.txt",
+      "bytes": 4386,
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari.ttf",
+      "bytes": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "path": "index.html",
+      "bytes": 455,
+      "sha256": "959d25dd4ecf946d208e82c0a90e95315dad160fc8a667db80cb0b9387ba48dc"
+    }
+  ],
+  "hostedOutcome": "609 Node contracts: 599 passed, 10 skipped, 0 failures; 39 auxiliary contracts passed; generated-output comparison drift only. Browser had one new test locator failure, corrected without changing build inputs. Final-head browser and all checks still required.",
+  "localExecution": "Read/hash/archive copy only. No local build, install, suites or runtime."
+}

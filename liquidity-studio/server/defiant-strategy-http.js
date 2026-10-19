@@ -2,6 +2,8 @@ import {DefiantStrategyService} from './defiant-strategy.js';
 import {fail} from './auth.js';
 /** Mounted only after existing authentication, before brand-required publishing. */
 export async function strategyRequest({platform,user,route,method,body,url}){
+ const inbox=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/inbox(?:\/(import\/preview|import|sources\/([^/]+)\/match))?$/);
+ if(inbox){const service=new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId:inbox[1]});if(method==='GET'&&!inbox[2])return service.inbox(user,Object.fromEntries(url.searchParams));if(method==='POST'&&inbox[2]==='import/preview')return service.previewInbox(user,body);if(method==='POST'&&inbox[2]==='import')return service.importInbox(user,body);if(method==='POST'&&inbox[3])return service.updateInboxMatch(user,decodeURIComponent(inbox[3]),body);throw fail(405,'Unsupported inbox action');}
  const confirmation=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/resources\/([^/]+)\/confirmation$/);
  if(confirmation){if(method!=='POST')throw fail(405,'Unsupported resource action');return new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId:confirmation[1]}).confirmResource(user,decodeURIComponent(confirmation[2]),body);}
  const handoff=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/reports\/([a-f0-9-]{36})\/handoff$/);
