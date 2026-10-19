@@ -29,6 +29,8 @@ with tempfile.TemporaryDirectory(prefix='database-owner-ci-') as temp:
         raise AssertionError('Existing credential directory replaced')
     env = dict(line.split('=', 1) for line in (private / 'application.env').read_text().splitlines())
     password = env['PENPOT_DATABASE_PASSWORD']
+    assert password not in (private / 'create-owner.sql').read_text()
+    assert 'PASSWORD' not in (private / 'create-owner.sql').read_text()
     # This operator credential belongs only to the ephemeral hosted fixture.
     operator_env = root / 'operator.env'
     operator_env.write_text('POSTGRES_USER=recovery_operator\nPOSTGRES_DB=penpot\n'
@@ -60,6 +62,8 @@ with tempfile.TemporaryDirectory(prefix='database-owner-ci-') as temp:
         dump = run(['docker', 'exec', name, 'pg_dump', '-U', 'recovery_operator', '-d', 'penpot', '--format=custom', '--no-owner', '--no-acl']).stdout
         dump_path = root / 'retained.dump'; dump_path.write_bytes(dump); dump_path.chmod(0o600)
         run(['docker', 'exec', '-i', name, 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-U', 'recovery_operator', '-d', 'postgres'], data=(private/'create-owner.sql').read_bytes())
+        # Native psql hashes the password client-side; server receives no plaintext literal.
+        run(['docker', 'exec', '-i', name, 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-U', 'recovery_operator', '-d', 'postgres', '-c', '\\password penpot_app'], data=(password+'\n'+password+'\n').encode())
         run(['docker', 'exec', '-i', name, 'pg_restore', '-U', 'recovery_operator', '--dbname=penpot_app', '--role=penpot_app', '--no-owner', '--no-acl', '--exit-on-error'], data=dump)
         assert app('SELECT row_to_json(t) FROM retained_doc t ORDER BY id').stdout == lineage
         assert sql('penpot', 'SELECT row_to_json(t) FROM retained_doc t ORDER BY id').stdout == lineage

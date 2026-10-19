@@ -20,7 +20,7 @@ def generate(output):
             f'PENPOT_DATABASE_PASSWORD={password}\n').encode(),
         'create-owner.sql': (
             '\\set ON_ERROR_STOP on\n'
-            f"CREATE ROLE {USER} LOGIN PASSWORD '{password}' NOSUPERUSER NOCREATEDB "
+            f"CREATE ROLE {USER} LOGIN NOSUPERUSER NOCREATEDB "
             'NOCREATEROLE NOREPLICATION NOBYPASSRLS;\n'
             f'CREATE DATABASE {DATABASE} OWNER {USER} TEMPLATE template0;\n').encode(),
     }
