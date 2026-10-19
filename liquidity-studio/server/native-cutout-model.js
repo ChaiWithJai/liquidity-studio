@@ -3,9 +3,12 @@ import { createHash } from "node:crypto";
 import {
   MODNET_MODEL_SHA256,
   MODNET_PROCESSOR_VERSION,
+  MODNET_MODEL_BYTES,
+  MODNET_MODEL_CHUNK_SIZE,
+  MODNET_MODEL_CHUNKS,
 } from "./native-cutout-contract.js";
-const EXPECTED_SIZE = 25_888_640;
-const CHUNK_SIZE = 256 * 1024;
+const EXPECTED_SIZE = MODNET_MODEL_BYTES;
+const CHUNK_SIZE = MODNET_MODEL_CHUNK_SIZE;
 async function readModel(path) {
   const handle = await open(path, "r");
   try {
@@ -76,7 +79,7 @@ export function createNativeCutoutModel({
         sha256: MODNET_MODEL_SHA256,
         size: EXPECTED_SIZE,
         chunkSize: CHUNK_SIZE,
-        chunks: Math.ceil(EXPECTED_SIZE / CHUNK_SIZE),
+        chunks: MODNET_MODEL_CHUNKS,
         processorVersion: MODNET_PROCESSOR_VERSION,
         outputPolicy: "preserve-resolution-or-reject",
         maximumOutputBytes: 512 * 1024,
@@ -86,7 +89,7 @@ export function createNativeCutoutModel({
       if (
         !Number.isInteger(index) ||
         index < 0 ||
-        index >= Math.ceil(EXPECTED_SIZE / CHUNK_SIZE)
+        index >= MODNET_MODEL_CHUNKS
       )
         throw Object.assign(new Error("Invalid model chunk."), {
           status: 400,

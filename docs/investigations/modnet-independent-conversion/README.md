@@ -1,0 +1,20 @@
+# Independently converted photographic MODNet
+
+Hosted [conversion39208083665](https://github.com/ChaiWithJai/liquidity-studio/actions/runs/39208083665) succeeded on exact Studio source `0b2981ec9f19cc6ac91ca1c1eb8d19b5b763e20a`. It reacquired the reviewed authors-linked photographic checkpoint and complete CPU wheel lock, installed offline, then converted and compared offline under the unchanged 2 GiB/no-swap, one-CPU bounds. No local model execution or download was performed for this record.
+
+| Identity | Exact value |
+| --- | --- |
+| Author source | `ZHKKKe/MODNet@28165a451e4610c9d77cfdf925a94610bb2810fb` |
+| Original checkpoint | `modnet_photographic_portrait_matting.ckpt`, 26,255,603 bytes |
+| Checkpoint SHA-256 | `7c22235f0925deba15d4d63e53afcb654c47055bbcd98f56e393ab2584007ed8` |
+| New independent ONNX | 25,961,493 bytes; `0c51523c07db8279bcc7239e12f333a662a594075ce1d80a949b4f781dd1d1e3` |
+| Export | CPU/float32, explicit opset11, legacy exporter, no external tensor data or post-export optimizer |
+| Processor | Existing `studio-modnet-area-v1`, unchanged |
+
+The [retained numerical summary](numerical-summary.json) reports six cases with **five distinct input tensors**: retained square and square-resize coincide. Original PyTorch and the authors' export-specific graph agreed exactly. Maximum original-versus-ONNX error was `1.2278556823730469e-5`; the largest mean error was `7.351301398119262e-8`. Maximum 8-bit alpha difference was 1; largest mean alpha difference was `1.7801920572916668e-5`. All predeclared tolerances passed unchanged. These are finite conversion comparisons, not a claim about all portrait quality or a reconstruction of the old community conversion.
+
+The exact acquisition receipt, wheel metadata and requirements are committed under [reviewed conversion inputs](../../../tools/modnet-original-conversion/reviewed/). The checkpoint digest is operator-recorded from the authors-linked file, not an authors-published checksum. The immutable [authors' license declaration](https://github.com/ZHKKKe/MODNet/blob/28165a451e4610c9d77cfdf925a94610bb2810fb/README.md#license) releases code/models/demos under Apache-2.0, excluding example GIFs; the [full license](https://github.com/ZHKKKe/MODNet/blob/28165a451e4610c9d77cfdf925a94610bb2810fb/LICENSE), author source and recipe accompany the recipient-encrypted conversion delivery. The recorded [workflow/converter](../../../tools/modnet-original-conversion/README.md) discloses CPU/safe-loading/exporter changes and built-in constant folding. Internal wheel build tools are not redistributed in the model delivery. Doory's separate license/notice obligations remain separate.
+
+This source selects the new immutable digest and exact 100-chunk transport for future matching artifacts. Earlier assets retain their recorded old model digest, including portable recovery; historical records are never relabeled. A stale model/processor intent is refused with 409 and a new request is required, preserving the original image. New completion lineage comes from its issued permit. Browser caches remain keyed by digest and reject old or corrupt bytes.
+
+No model binary is committed or publicly released. Required hosted checks, canonical original frontend and recipient-encrypted private native artifact must match the final source before activation. Actual normal-browser quality, alpha/original preservation, undo/save/reload, timing and sampled memory for this NEW model remain subsequent acceptance. Existing old-model acceptance does not substitute for that step. No current runtime was installed, restarted or changed by this source.

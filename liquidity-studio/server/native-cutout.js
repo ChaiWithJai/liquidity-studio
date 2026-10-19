@@ -15,6 +15,10 @@ function exact(value, keys) {
   )
     throw fail(400, "Unsupported cutout fields");
 }
+function assertModelVersion(permit) {
+  if (permit.modelSha256 !== MODNET_MODEL_SHA256 || permit.processorVersion !== MODNET_PROCESSOR_VERSION)
+    throw fail(409, "Background-removal model changed; start a new request. Original image is unchanged.");
+}
 export const MAX_CUTOUT_INTENTS = 128;
 export class NativeCutoutService {
   constructor({ native, model, now = () => Date.now() }) {
@@ -114,6 +118,7 @@ export class NativeCutoutService {
         )
           throw fail(422, "Input image rights and consent must be recorded");
         if (prior) {
+          assertModelVersion(prior);
           if (prior.fingerprint !== fingerprint || prior.actorId !== actor.id)
             throw fail(409, "Cutout key was used for another intent");
           if (prior.expiresAt < now)
@@ -182,6 +187,7 @@ export class NativeCutoutService {
     );
     if (!intent || intent.actorId !== actor.id)
       throw fail(404, "Cutout intent not found");
+    assertModelVersion(intent);
     const documentKey = this.native.key(intent.documentId),
       assetKey = `${this.native.prefix}asset:${intent.inputAssetId}`;
     return this.native.uploadAsset(
@@ -214,6 +220,7 @@ export class NativeCutoutService {
             permit.expiresAt < this.now()
           )
             throw fail(409, "Cutout intent expired or changed");
+          assertModelVersion(permit);
           if (
             !current ||
             current.revision !== intent.nativeRevision ||
@@ -240,9 +247,9 @@ export class NativeCutoutService {
               "scope-source-native-input-hash-rights-dimensions-output-hash",
             inputAssetId: source.id,
             inputSha256: source.sha256,
-            modelSha256: MODNET_MODEL_SHA256,
-            processorVersion: MODNET_PROCESSOR_VERSION,
-            outputPolicy: "preserve-resolution-or-reject",
+            modelSha256: permit.modelSha256,
+            processorVersion: permit.processorVersion,
+            outputPolicy: permit.outputPolicy,
             documentId: intent.documentId,
             nativeRevision: intent.nativeRevision,
             intentId: intent.id,

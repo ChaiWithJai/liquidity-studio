@@ -128,6 +128,8 @@ test("cutout derivative is private, linked and replayable without replacing its 
     const output = await f.service.complete(f.actor, input);
     assert.notEqual(output.id, f.asset.id);
     assert.equal(output.lineage.inputAssetId, f.asset.id);
+    assert.equal(output.lineage.modelSha256, intent.modelSha256);
+    assert.equal(output.lineage.processorVersion, intent.processorVersion);
     assert.equal(output.width, 64);
     assert.deepEqual(await f.service.complete(f.actor, input), output);
     assert.equal(
@@ -289,5 +291,19 @@ test("one bounded scoped ledger prunes expired permits and preserves active repl
     );
   } finally {
     f.store.close();
+  }
+});
+test("a pre-upgrade model or processor intent cannot be replayed or mislabeled as the new conversion", async () => {
+  for(const old of [{modelSha256:'07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9'},{processorVersion:'historical-processor'}]){
+    const f=await fixture();
+    try {
+      const issued=await f.prepare(),key=`${f.native.prefix}cutout-intents`;
+      await f.store.update(key,ledger=>({...ledger,intents:ledger.intents.map(p=>p.id===issued.id?{...p,...old}:p)}));
+      const before=Object.fromEntries(f.store.keys('').map(k=>[k,f.store.get(k)]));
+      await assert.rejects(f.prepare(),{status:409,message:'Background-removal model changed; start a new request. Original image is unchanged.'});
+      await assert.rejects(f.service.complete(f.actor,{intentId:issued.id,base64:f.bytes.toString('base64'),idempotencyKey:'stale_model_completion'}),{status:409});
+      assert.deepEqual(Object.fromEntries(f.store.keys('').map(k=>[k,f.store.get(k)])),before);
+      assert.equal((await f.native.asset(f.actor,f.asset.id)).sha256,f.asset.sha256);
+    } finally {f.store.close();}
   }
 });

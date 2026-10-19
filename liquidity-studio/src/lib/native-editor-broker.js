@@ -1,3 +1,4 @@
+import { MODNET_MODEL_CHUNKS } from '../../server/native-cutout-contract.js';
 import {AUDIO_LIMITS} from '../../server/native-audio.js';
 const uuid = (value) =>
   typeof value === "string" && /^[a-f0-9-]{36}$/i.test(value);
@@ -76,7 +77,7 @@ export function createNativeEditorBroker({
       Object.keys(payload || {}).length === 1 &&
       Number.isInteger(payload.index) &&
       payload.index >= 0 &&
-      payload.index < 99
+      payload.index < MODNET_MODEL_CHUNKS
     )
       path = `/api/studio/native-editor/cutout/model/${payload.index}`;
     else if (operation === "cutout.prepare" && payload && bounded(payload)) {

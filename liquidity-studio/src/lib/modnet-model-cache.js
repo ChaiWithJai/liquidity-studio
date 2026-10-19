@@ -1,5 +1,5 @@
-import { MODNET_MODEL_SHA256 } from "./modnet-processor.js";
-const SIZE = 25_888_640;
+import { MODNET_MODEL_SHA256, MODNET_MODEL_BYTES, MODNET_MODEL_CHUNK_SIZE, MODNET_MODEL_CHUNKS } from "./modnet-processor.js";
+const SIZE = MODNET_MODEL_BYTES;
 const CACHE_NAME = "studio-modnet-fp32-v1";
 const CACHE_KEY = `/__studio_owned_model_cache__/${MODNET_MODEL_SHA256}`;
 async function valid(bytes) {
@@ -28,8 +28,8 @@ export function createModnetModelLoader({
     if (
       manifest.sha256 !== MODNET_MODEL_SHA256 ||
       manifest.size !== SIZE ||
-      manifest.chunkSize !== 256 * 1024 ||
-      manifest.chunks !== 99
+      manifest.chunkSize !== MODNET_MODEL_CHUNK_SIZE ||
+      manifest.chunks !== MODNET_MODEL_CHUNKS
     )
       throw Error("Background-removal model configuration is invalid.");
     if (memory) return memory;
