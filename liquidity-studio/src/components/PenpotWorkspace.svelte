@@ -23,7 +23,7 @@
 </script>
 <section class="design-workspace" aria-label="Campaign design workspace">
   <header>
-    <div><strong>{brandName} · {formatName}</strong><span role="status">{labels[saveState]}{saveState==='saved'&&revision!==null?` · revision ${revision}`:''}</span></div>
+    <div><strong>{brandName} · {formatName}</strong><span title={storyTitle}>{storyTitle}</span><span role="status">{labels[saveState]}{saveState==='saved'&&revision!==null?` · revision ${revision}`:''}</span></div>
     <nav aria-label="Design workspace actions">
       <button class="secondary" onclick={onReturn}>Return to copy and preview</button>
       <a href={design.frameUrl} target="_blank" rel="noopener noreferrer">Open in separate tab ↗</a>
