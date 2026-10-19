@@ -25,3 +25,30 @@ test('manager imports a source pack and retains the proposed match, note and sou
   const brief=page.getByRole('region',{name:'Strategy draft brief',exact:true});await expect(brief).toContainText('Review a possible source-to-song short');await expect(brief).toContainText('Blue Laces 2');await expect(brief).toContainText('Inspect the full source and verify context.');await expect(brief.getByRole('link',{name:'Return to saved report ↗'})).toHaveAttribute('href',/view=report/);await page.reload();await expect(brief).toContainText('Compare this supplied account with the recording before selecting a moment.');
  }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await platform.store.close();}
 });
+
+test('manager saves reactive search queries and reopens them without a configured provider',async({page})=>{
+ const platform=createPlatform({store:new DurableStore(':memory:'),authMode:'password'});await platform.ready;
+ const password=randomBytes(24).toString('base64url');await platform.identity.provision({username:'query-founder',password,role:'founder'});
+ const actor=(await platform.identity.login('query-founder',password)).user,org=await platform.identity.createOrganization(actor,'Manual query practice');
+ const server=createHttpServer(null,{platform});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base='http://127.0.0.1:'+server.address().port;
+ try{
+  await page.goto(base+`/?org=${org.id}&tab=strategy&view=inbox`);
+  await page.getByLabel('Username',{exact:true}).fill('query-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →',exact:true}).click();
+  await page.getByRole('button',{name:'Enable strategy for this organization',exact:true}).click();
+  const inbox=page.getByRole('region',{name:'Creator videos inbox',exact:true});
+  await inbox.getByText('Find more creator videos',{exact:true}).click();
+  await inbox.getByRole('button',{name:'Add query',exact:true}).click();
+  await inbox.getByRole('textbox',{name:'Query 1',exact:true}).fill('Nipsey source interview engineering practice');
+  const saved=page.waitForResponse(response=>response.url().endsWith('/inbox/discovery/queries')&&response.request().method()==='POST');
+  await inbox.getByRole('button',{name:'Save queries',exact:true}).click();expect((await saved).status()).toBe(200);
+  await expect(inbox.getByText('Search queries saved',{exact:true})).toBeVisible();
+  const before=await (await page.request.get(base+`/api/studio/strategy/${org.id}/inbox/discovery`)).json();
+  expect(before.queries).toHaveLength(1);expect(before.queries[0].query).toBe('Nipsey source interview engineering practice');expect(before.configured).toBe(false);
+  await page.reload();await inbox.getByText('Find more creator videos',{exact:true}).click();
+  await expect(inbox.getByRole('textbox',{name:'Query 1',exact:true})).toHaveValue(before.queries[0].query);
+  await expect(inbox.getByRole('button',{name:'Save queries',exact:true})).toBeDisabled();
+  await expect(inbox.getByRole('button',{name:'Run search',exact:true})).toBeDisabled();
+  await expect(inbox).toContainText('Live search is not configured. You can save queries and work with supplied references.');
+  const after=await (await page.request.get(base+`/api/studio/strategy/${org.id}/inbox/discovery`)).json();expect(after.queries).toEqual(before.queries);expect(after.lastRun).toBeNull();
+ }finally{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await platform.store.close();}
+});
