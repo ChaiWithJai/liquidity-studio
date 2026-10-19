@@ -16,10 +16,11 @@ export async function loadDevelopmentPenpotConfiguration(path,env=process.env){
 export function validateDevelopmentPenpotConfiguration(value,env=process.env){
  if(env.K_SERVICE||env.K_REVISION||env.STUDIO_PENPOT_ENABLED!=='true')invalid();
  if(value?.version===1)return validatePenpotLocalConfiguration(value,env);
- const {nativeOrigin,localTools,...workspace}=value||{};
+ const {nativeOrigin,studioOrigin,localTools,...workspace}=value||{};
  if(nativeOrigin!==undefined)localNativeOrigin(nativeOrigin);
+ if(studioOrigin!==undefined)localNativeOrigin(studioOrigin);
  if(localTools!==undefined&&localTools!==false)invalid();
- return {...validatePenpotWorkspaceConfiguration(workspace),...(nativeOrigin?{nativeOrigin}:{}),...(localTools===false?{localTools:false}:{})};
+ return {...validatePenpotWorkspaceConfiguration(workspace),...(nativeOrigin?{nativeOrigin}:{}),...(studioOrigin?{studioOrigin}:{}),...(localTools===false?{localTools:false}:{})};
 }
 /** Strict workspace-only schema shared by explicit local and managed constructors. */
 export function validatePenpotWorkspaceConfiguration(value){

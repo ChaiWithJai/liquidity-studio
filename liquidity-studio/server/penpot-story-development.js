@@ -9,12 +9,15 @@ import {ScopedRepository} from './repository.js';
 import {loadDevelopmentPenpotConfiguration} from './penpot-workspace-configuration.js';
 import {PenpotStoryDesigns,createPenpotStoryRpc} from './penpot-story-design.js';
 import {fail} from './auth.js';
-export async function createDevelopmentPenpotStoryDesigns({store,identity,configurationPath,brandAccessFor=null,grantKey=null,env=process.env,fetchImpl=fetch}) {
+export async function createDevelopmentPenpotStoryDesigns({store,identity,configurationPath,studioOrigin,brandAccessFor=null,grantKey=null,env=process.env,fetchImpl=fetch}) {
  if(env.NODE_ENV!=='development'||env.K_SERVICE||env.K_REVISION||identity.mode!=='password')throw Error('Penpot developer integration requires the local password launcher');
  // Same strict private-file schema; this does not change process feature flags.
  const configuration=await loadDevelopmentPenpotConfiguration(configurationPath,{STUDIO_PENPOT_ENABLED:'true'});
  if(configuration.transportMode!=='loopback')throw Error('Developer Penpot requires fixed loopback transport');
- return createPenpotStoryProvider({store,identity,configuration,brandAccessFor,grantKey,fetchImpl,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.nativeOrigin||null,localTools:configuration.localTools!==false});
+ if(configuration.studioOrigin&&configuration.studioOrigin!==studioOrigin)throw Error('Configured embedding origin must match the current local launcher');
+ const provider=createPenpotStoryProvider({store,identity,configuration,brandAccessFor,grantKey,fetchImpl,nativeOrigin:configuration.nativeOrigin,rpcOrigin:configuration.nativeOrigin||null,localTools:configuration.localTools!==false});
+ if(configuration.studioOrigin)provider.penpotEmbedding=Object.freeze({studioOrigin:configuration.studioOrigin,nativeOrigin:configuration.nativeOrigin||'http://localhost:39008'});
+ return provider;
 }
 /** Shared composition; callers validate their deployment-specific configuration. */
 export function createPenpotStoryProvider({store,identity,configuration,brandAccessFor=null,grantKey=null,fetchImpl=fetch,nativeOrigin='http://localhost:39008',rpcOrigin=null,localTools=true}) {

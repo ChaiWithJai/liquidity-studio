@@ -620,7 +620,7 @@ export function createHttpServer(
       if (route === "/api/auth/config" && req.method === "GET")
         return json(
           200,
-          {...(identity?.publicConfiguration?.() || { mode: "password" }), ...(managedPenpotStoryDesigns?.penpotEmbedding ? {penpotEmbedding:managedPenpotStoryDesigns.penpotEmbedding} : {})},
+          {...(identity?.publicConfiguration?.() || { mode: "password" }), ...(storyDesigns?.penpotEmbedding ? {penpotEmbedding:storyDesigns.penpotEmbedding} : {})},
         );
       let user = trustedTestMode
         ? { id: "test", username: "test", role: "founder" }
