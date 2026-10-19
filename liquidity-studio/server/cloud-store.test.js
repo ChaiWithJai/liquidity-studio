@@ -187,6 +187,6 @@ test('strategy media uses a private organization prefix without inventing a publ
 test('provider TTL parent contains all observation bytes so expiry leaves no orphan chunk data or manager deletion',async()=>{
  const firestore=fakeFirestore(),store=new FirestoreStore({firestore}),key='defiant-youtube-observations:org-one:run-one',cache={kind:'youtube-observation-cache',expiresAt:'2026-11-18T12:00:00Z',items:[{statistics:{views:17}}]};
  await store.update('defiant-strategy:org-one',()=>({notes:'Retain manager wording'}));await store.update(key,()=>cache);assert.deepEqual(await store.get(key),cache);
- const ref=store.ref(key),parent=firestore.records.get(ref.path);assert.equal(parent.chunkCount,0);assert.ok(parent.expiresAt instanceof Date);assert.equal(parent.expiresAt.toISOString(),cache.expiresAt);assert.ok(parent.providerBytes.length>0);assert.equal([...firestore.records.keys()].filter(k=>k.startsWith(ref.path+'/')).length,0);
+ const ref=store.ref(key),parent=firestore.records.get(ref.path);assert.equal(parent.chunkCount,0);assert.ok(parent.expiresAt instanceof Date);assert.equal(parent.expiresAt.toISOString(),new Date(cache.expiresAt).toISOString());assert.ok(parent.providerBytes.length>0);assert.equal([...firestore.records.keys()].filter(k=>k.startsWith(ref.path+'/')).length,0);
  firestore.records.delete(ref.path);assert.equal(await store.get(key),null);assert.deepEqual(await store.get('defiant-strategy:org-one'),{notes:'Retain manager wording'});
 });
