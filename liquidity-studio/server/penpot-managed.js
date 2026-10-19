@@ -11,7 +11,7 @@ import {createNativeAccessController} from './penpot-native-access-controller.js
 import {publicHttpsOrigin,nativeRpcOrigin} from './penpot-origins.js';
 export function validateManagedPenpotConfiguration(value){
  const keys=['schemaVersion','nativeInstanceId','nativeOrigin','rpcOrigin','studioOrigin','pairingKey','grantKey','workspace'];
- if(!value||Object.keys(value).sort().join(',')!==keys.sort().join(',')||value.schemaVersion!==1||!value.workspace||value.workspace.version!==2||!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(value.nativeInstanceId||'')||![value.pairingKey,value.grantKey].every(x=>typeof x==='string'&&/^[A-Za-z0-9_-]{43}$/.test(x))||value.pairingKey===value.grantKey)throw Error('Exact managed native configuration required');
+ if(!value||Object.keys(value).filter(k=>k!=='authorityTimeoutMs').sort().join(',')!==keys.sort().join(',')||!([undefined,800,2500].includes(value.authorityTimeoutMs))||value.schemaVersion!==1||!value.workspace||value.workspace.version!==2||!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(value.nativeInstanceId||'')||![value.pairingKey,value.grantKey].every(x=>typeof x==='string'&&/^[A-Za-z0-9_-]{43}$/.test(x))||value.pairingKey===value.grantKey)throw Error('Exact managed native configuration required');
  publicHttpsOrigin(value.nativeOrigin);publicHttpsOrigin(value.studioOrigin);nativeRpcOrigin(value.rpcOrigin);
  // Reuse the strict workspace/UUID/font schema only, not its developer runtime.
  const workspace=validatePenpotWorkspaceConfiguration(value.workspace);

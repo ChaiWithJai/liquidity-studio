@@ -92,3 +92,28 @@
           (is (false? (:allowed result)))
           (is (= expected (:reason result)))
           (is (= #{:allowed :authorized :reason} (set (keys result)))))))))
+
+(deftest managed-deadline-retains-authorized-response-beyond-local-default
+  (let [native-client (http/build-client {:follow-redirects :never})
+        response (CompletableFuture.)
+        entered (java.util.concurrent.CountDownLatch. 1)
+        done (java.util.concurrent.CountDownLatch. 1)
+        read-authority (authority/create {::client/client native-client :grant-key (apply str (repeat 43 "a"))
+                                         :callback-origin "http://studio-native-connect:39044" :callback-timeout-ms 3000})
+        resource {:native-profile-id (uuid/parse "33333333-3333-4333-8333-333333333333")
+                  :native-team-id (uuid/parse "11111111-1111-4111-8111-111111111111") :operation :read
+                  :native-session {:id (uuid/parse "44444444-4444-4444-8444-444444444444")
+                                   :profile-id (uuid/parse "33333333-3333-4333-8333-333333333333")}}]
+    (with-redefs [http/send-async (fn [request _]
+                                  (is (= 3000 (:timeout request)))
+                                  (.countDown entered) response)]
+      (let [result (future (try (read-authority resource) (finally (.countDown done))))]
+        (is (.await entered 1 java.util.concurrent.TimeUnit/SECONDS))
+        ;; Explicit completion barrier: a valid managed request remains pending
+        ;; past the old one-second bound, without retrying or caching an allow.
+        (is (false? (.await done 1200 java.util.concurrent.TimeUnit/MILLISECONDS)))
+        (.complete response {:status 200 :body (ByteArrayInputStream. (.getBytes "{\"allowed\":true}" "UTF-8"))})
+        (is (= true (:allowed (deref result 1500 {:allowed false}))))))
+    (doseq [bad [0 999 3001 "3000"]]
+      (is (thrown? Exception (authority/create {::client/client native-client :grant-key (apply str (repeat 43 "a"))
+                                               :callback-origin "http://studio-native-connect:39044" :callback-timeout-ms bad}))))))

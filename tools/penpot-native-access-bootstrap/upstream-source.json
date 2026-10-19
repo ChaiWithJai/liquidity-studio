@@ -19,11 +19,11 @@
   "originalSources": [
     {
       "path": "configuration.clj",
-      "sha256": "1754b1c1c6005783beaaf7c1dc02d4c9682580c67722b4bdece8db8ccc07f2ff"
+      "sha256": "b87798bf7108ef27fb494d9aaf912029bcf9d506485e667123e93da648431635"
     },
     {
       "path": "configuration_test.clj",
-      "sha256": "fedcbfa77a9e92e24aa7ad655e162d9d3e7e3cef95eefb28231d1915ff163fa5"
+      "sha256": "ef4764ef4244c198c989eed75cbc9fa5c965238a6f6e2b70e4994fcff064e58f"
     },
     {
       "path": "main.patch",

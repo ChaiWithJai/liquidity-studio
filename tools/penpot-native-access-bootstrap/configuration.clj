@@ -40,8 +40,9 @@
                          (catch Exception _ (invalid!)))
               teams (:governed-teams value)]
           (when-not (and (map? value)
-                         (= #{:schema-version :governed-teams :grant-key :callback-origin} (set (keys value)))
+                         (= #{:schema-version :governed-teams :grant-key :callback-origin} (disj (set (keys value)) :callback-timeout-ms))
                          (= 1 (:schema-version value))
+                         (contains? #{1000 3000} (get value :callback-timeout-ms 1000))
                          (vector? teams) (seq teams)
                          (every? #(and (map? %) (= #{:team-id :operator-profile-id} (set (keys %)))
                                        (uuid-text? (:team-id %)) (uuid-text? (:operator-profile-id %))) teams)
@@ -52,13 +53,15 @@
           {:governed-teams (set (map #(java.util.UUID/fromString (:team-id %)) teams))
            :operators (into {} (map (fn [entry] [(java.util.UUID/fromString (:team-id entry))
                                                  (java.util.UUID/fromString (:operator-profile-id entry))]) teams))
-           :grant-key (:grant-key value) :callback-origin (:callback-origin value)})))))
+           :grant-key (:grant-key value) :callback-origin (:callback-origin value)
+           :callback-timeout-ms (get value :callback-timeout-ms 1000)})))))
 
 (defmethod ig/init-key ::authority
-  [_ {:keys [::client/client grant-key callback-origin]}]
+  [_ {:keys [::client/client grant-key callback-origin callback-timeout-ms]
+      :or {callback-timeout-ms 1000}}]
   ;; The actual existing Integrant HTTP client already has redirects disabled.
   ;; The adapter validates that invariant and supplies its own total deadline.
-  (authority/create {::client/client client :grant-key grant-key :callback-origin callback-origin}))
+  (authority/create {::client/client client :grant-key grant-key :callback-origin callback-origin :callback-timeout-ms callback-timeout-ms}))
 
 (defn asset-hook-installed?
   "Fixed loaded-code markers from the original module and exact native handler patch."
@@ -76,18 +79,19 @@
   ([system filename]
    (if (nil? filename)
      system
-     (let [{:keys [governed-teams operators grant-key callback-origin]} (read-settings filename)
+     (let [{:keys [governed-teams operators grant-key callback-origin callback-timeout-ms]} (read-settings filename)
            targets [:app.rpc/methods :app.http.websocket/routes :app.http.assets/routes]]
        (when-not (and (contains? system ::client/client)
                       (every? #(map? (get system %)) targets)) (invalid!))
        (let [common {::access/governed-teams governed-teams
                      ::access/operators operators
+                     ::access/callback-timeout-ms callback-timeout-ms
                      ::access/capture-session live/context
                      ::access/session-valid? live/session-current?
                      ::access/authorize (ig/ref ::authority)}]
          (-> system
              (assoc ::authority {::client/client (ig/ref ::client/client)
-                                 :grant-key grant-key :callback-origin callback-origin})
+                                 :grant-key grant-key :callback-origin callback-origin :callback-timeout-ms callback-timeout-ms})
              (update :app.rpc/methods merge common
                      {::access/installed-features {:rpc-policy "v1" :session "v1" :live "v1" :assets (if (asset-hook-installed?) "v1" false)}
                       ::access/reconciliation-key grant-key

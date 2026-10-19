@@ -25,6 +25,8 @@ test('managed constructor never accepts password composition and exact config ha
 test('managed private config binds finite workspace and separate keys without enabling local tools',()=>{
  const id=n=>`${String(n).repeat(8)}-${String(n).repeat(4)}-4${String(n).repeat(3)}-8${String(n).repeat(3)}-${String(n).repeat(12)}`;
  const value={schemaVersion:1,nativeInstanceId:id(8),nativeOrigin:'https://design.example.com',rpcOrigin:'http://penpot-frontend:8080',studioOrigin:'https://studio.example.com',pairingKey:'a'.repeat(43),grantKey:'b'.repeat(43),workspace:{version:2,transportMode:'loopback',sessions:[{ownerPrincipal:id(1),cookie:'auth-token=controlled'}],workspaces:[{id:'brand-native',organizationId:'org_default',brandId:'brand_vedic',ownerPrincipal:id(1),projectId:id(2),teamId:id(3),fonts:[{family:'Inter',weight:400,fontId:'custom-'+id(4),fontVariantId:'normal-400',license:'OFL-1.1',sha256:'a'.repeat(64)}]}]}};
+ assert.equal(validateManagedPenpotConfiguration({...value,authorityTimeoutMs:2500}).authorityTimeoutMs,2500);
+ for(const authorityTimeoutMs of [0,799,2501,'2500'])assert.throws(()=>validateManagedPenpotConfiguration({...value,authorityTimeoutMs}));
  const actual=validateManagedPenpotConfiguration(value);assert.equal(actual.workspace.targets[0].nativeProjectId,id(2));assert.deepEqual(actual.workspace.targets[0].resources,[]);
  for(const mutate of [v=>v.workspace.workspaces[0].fileId=id(9),v=>v.workspace.sessions=[],v=>v.nativeOrigin='http://localhost:39008',v=>v.grantKey=v.pairingKey,v=>v.rpcOrigin='http://native/path']){const bad=structuredClone(value);mutate(bad);assert.throws(()=>validateManagedPenpotConfiguration(bad));}
 });
