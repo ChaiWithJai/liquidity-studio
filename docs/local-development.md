@@ -130,3 +130,15 @@ Native saved-state verification is separate from visual export approval. The
 plugin uses the currently paired native principal when paired access is enabled;
 server readback retains the real administrative native account and current
 acting-profile checks. No Google authentication mode is fabricated.
+
+### Optional contained Penpot workspace
+
+An existing private version2 Penpot workspace configuration may additionally set
+`studioOrigin` to the exact local launcher origin, for example
+`http://127.0.0.1:39042`. Its existing `nativeOrigin` selects the native frontend
+(default `http://localhost:39008`). Both origins must be loopback HTTP origins.
+The launcher rejects an origin that differs from its current address. This exposes
+the existing contained workspace UI; it does not alter persona membership, native
+pairing or grants. Without `studioOrigin`, the existing direct-tab fallback remains.
+Use the already compiled bridge-capable native frontend for actual Saved/return
+status; merely loading an iframe does not establish saved state.

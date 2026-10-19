@@ -62,7 +62,7 @@ try {
  const {localPenpotDevelopment}=await import('./local-penpot-development.mjs');
  const {localNativePairing}=await import('./local-native-pairing.mjs');
  const nativePairing=localNativePairing({configurationPath:nativePairingConfigurationPath,store,identity:platform.identity,origin});
- const developmentPenpotStoryDesigns=await localPenpotDevelopment({configurationPath:penpotConfigurationPath,platform,nativePairing,nativePairingConfigurationPath});
+ const developmentPenpotStoryDesigns=await localPenpotDevelopment({configurationPath:penpotConfigurationPath,studioOrigin:origin,platform,nativePairing,nativePairingConfigurationPath});
  if(developmentPenpotStoryDesigns?.createStylePluginHost){stylePluginHost=developmentPenpotStoryDesigns.createStylePluginHost();await new Promise((resolve,reject)=>{stylePluginHost.once('error',reject);stylePluginHost.listen(39039,'127.0.0.1',resolve);});}
  const api=createHttpServer(null,{platform,nativeEditorEnabled:!!nativeAssets,penpotEnabled:false,helperControlEnabled:true,developmentPenpotStoryDesigns,nativePairing,nativeAccess:developmentPenpotStoryDesigns?.nativeAccess});
  server=http.createServer({requestTimeout:30000,headersTimeout:10000,maxHeaderSize:8192},async(req,res)=>{try{

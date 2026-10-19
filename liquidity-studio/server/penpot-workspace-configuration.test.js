@@ -22,3 +22,9 @@ test('explicit local destination keeps workspace schema and disables auxiliary t
  for(const nativeOrigin of ['http://remote.example:39046','http://127.0.0.1:80','http://127.1:39046','http://127.0.0.1:39046/path','https://native.example'])assert.throws(()=>validateDevelopmentPenpotConfiguration({...value(),nativeOrigin},env));
  assert.throws(()=>validateDevelopmentPenpotConfiguration({...value(),localTools:true},env));
 });
+
+test('developer embedding origins are explicit loopback values and unset remains absent',()=>{
+ const env={STUDIO_PENPOT_ENABLED:'true'},plain=validateDevelopmentPenpotConfiguration(value(),env);assert.equal(plain.studioOrigin,undefined);
+ const configured=validateDevelopmentPenpotConfiguration({...value(),studioOrigin:'http://127.0.0.1:39042',nativeOrigin:'http://localhost:39008'},env);assert.equal(configured.studioOrigin,'http://127.0.0.1:39042');
+ for(const studioOrigin of ['https://studio.example.com','http://127.0.0.1:39042/','http://user@localhost:39042','http://localhost:39042/path'])assert.throws(()=>validateDevelopmentPenpotConfiguration({...value(),studioOrigin},env));
+});

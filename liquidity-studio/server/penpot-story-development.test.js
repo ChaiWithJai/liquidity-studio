@@ -75,3 +75,14 @@ test('explicit fresh loopback provider uses its owner and exposes no colliding l
  assert.equal(service.nativeOrigin,'http://127.0.0.1:39046');assert.equal(provider.createStylePluginHost,undefined);assert.equal(provider.svgDownload,undefined);assert.equal(service.styles,undefined);assert.equal(service.svg,undefined);assert.equal(service.recovery,undefined);
  assert.ok(f.calls.every(call=>call.url.startsWith('http://127.0.0.1:39046/api/rpc/command/')&&call.options.headers.Origin==='http://127.0.0.1:39046'));
 });
+
+test('explicit developer embedding reaches public auth config without native calls or secret disclosure',async t=>{
+ const f=await setup(t),old=JSON.parse(await readFile(f.path,'utf8')),fonts=old.manifests[0].manifest.nativeFonts.map(f=>({...f,fontVariantId:`normal-${f.weight}`}));
+ const configuration={version:2,transportMode:'loopback',studioOrigin:'http://127.0.0.1:39042',nativeOrigin:'http://localhost:39008',sessions:old.sessions,workspaces:[{id:'embedded-workspace',organizationId:'org_default',brandId:'brand_default',ownerPrincipal:owner,projectId:project,teamId:team,fonts}]};
+ await writeFile(f.path,JSON.stringify(configuration));await assert.rejects(f.make(),/current local launcher/);await assert.rejects(f.make({studioOrigin:'http://127.0.0.1:39043'}),/current local launcher/);
+ const provider=await f.make({studioOrigin:configuration.studioOrigin});assert.deepEqual(provider.penpotEmbedding,{studioOrigin:configuration.studioOrigin,nativeOrigin:configuration.nativeOrigin});assert.ok(Object.isFrozen(provider.penpotEmbedding));assert.equal(f.calls.length,0);
+ const {createHttpServer}=await import('./index.js');const previous=process.env.NODE_ENV;process.env.NODE_ENV='development';let server;
+ try{server=createHttpServer(null,{platform:{identity:f.identity,store:f.store},developmentPenpotStoryDesigns:provider});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const response=await fetch('http://127.0.0.1:'+server.address().port+'/api/auth/config');assert.equal(response.status,200);const dto=await response.json();assert.deepEqual(dto.penpotEmbedding,provider.penpotEmbedding);assert.equal(JSON.stringify(dto).includes('cookie'),false);assert.equal(f.calls.length,0);}
+ finally{if(server){server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}if(previous===undefined)delete process.env.NODE_ENV;else process.env.NODE_ENV=previous;}
+ delete configuration.studioOrigin;await writeFile(f.path,JSON.stringify(configuration));assert.equal((await f.make()).penpotEmbedding,undefined);
+});
