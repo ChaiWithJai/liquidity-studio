@@ -32,7 +32,7 @@ services:
       - assets:/opt/data/assets:ro
       - ./studio-connect.conf:/etc/nginx/overrides/server.d/studio-connect.conf:ro
       - ./private/gateway-header.conf:/run/studio-native-connect-gateway-header.conf:ro
-    networks: [native]
+    networks: [native, edge] # Upstream nginx resolves its external proxy hosts at startup.
     mem_limit: 384m
     cpus: 0.25
     depends_on: [penpot-backend, penpot-exporter, studio-native-connect]
