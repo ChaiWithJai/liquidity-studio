@@ -1,0 +1,20 @@
+--- a/frontend/src/app/main/ui/auth.cljs
++++ b/frontend/src/app/main/ui/auth.cljs
+@@ -10,6 +10,7 @@
+    [app.common.data.macros :as dm]
+    [app.main.data.auth :as da]
+    [app.main.store :as st]
++   [app.main.ui.studio-entry :as studio-entry]
+    [app.main.ui.auth.login :refer [login-page*]]
+    [app.main.ui.auth.recovery :refer [recovery-page*]]
+    [app.main.ui.auth.recovery-request :refer [recovery-request-page*]]
+@@ -35,6 +36,9 @@
+ 
+         error
+         (:error params)]
++
++    (mf/with-effect [section params]
++      (studio-entry/prepare-login-return! section params))
+ 
+     (mf/with-effect []
+       (dom/set-html-title (tr "title.default")))

@@ -1,0 +1,18 @@
+--- a/frontend/test/frontend_tests/runner.cljs
++++ b/frontend/test/frontend_tests/runner.cljs
+@@ -65,6 +65,7 @@
+    [frontend-tests.render-dimensions-test]
+    [frontend-tests.render-wasm.process-objects-test]
+    [frontend-tests.render-wasm.text-editor-caret-color-test]
++   [frontend-tests.studio-host-test]
+    [frontend-tests.svg-fills-test]
+    [frontend-tests.text-editor-paste-guard-test]
+    [frontend-tests.tokens.copy-paste-props-test]
+@@ -168,6 +169,7 @@
+    'frontend-tests.plugins.value-objects-test
+    'frontend-tests.render-wasm.process-objects-test
+    'frontend-tests.render-wasm.text-editor-caret-color-test
++   'frontend-tests.studio-host-test
+    'frontend-tests.svg-fills-test
+    'frontend-tests.tokens.copy-paste-props-test
+    'frontend-tests.tokens.import-export-test

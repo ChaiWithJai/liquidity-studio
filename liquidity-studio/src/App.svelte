@@ -4,6 +4,8 @@
   import {strategyOrganizationFor} from './lib/defiant-location.js';
   import PenpotConnection from "./components/PenpotConnection.svelte";
   import PenpotDesignAction from "./components/PenpotDesignAction.svelte";
+  import PenpotWorkspace from "./components/PenpotWorkspace.svelte";
+  import {boundPenpotFrameUrl,embeddingAvailable} from "./lib/penpot-workspace.js";
   import { onMount, tick } from "svelte";
   import { readWorkflowLocation, workflowHref } from "./lib/workflow-location.js";
   import { SvelteMap } from "svelte/reactivity";
@@ -86,7 +88,7 @@
   function strategyNavigation(next){strategyLocation=next;}
   async function refreshStrategyOrganizations(){const session=await request('/api/auth/session',{},false);organizations=session.organizations||organizations;}
   function workflowState() {
-    return {organizationId,brandId,tab,...(tab==="strategy"?{strategy:strategyLocation}:{}),storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",page:preparedPage};
+    return {organizationId,brandId,tab,...(tab==="strategy"?{strategy:strategyLocation}:{}),storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",penpotDesignId:penpotRecord?.id||"",page:preparedPage};
   }
   $effect(() => {
     const state=workflowState();
@@ -110,6 +112,7 @@
       };
       if(!user||booting)return;
       if(workflowRestoring||scopeLoading||busy||pendingEdits||preparedDirty||reviewDirty||nativeDirty||strategyDirty){error="Save or discard your current edits before using browser navigation.";refuse();return;}
+      if(penpotRecord && !leaveNativeEditor()){refuse();return;}
       const route=readWorkflowLocation(window.location.href);
       const org=organizations.find(item=>item.id===route.organizationId),brand=org?.brands.find(item=>item.id===route.brandId);
       if(route.tab==='strategy'){
@@ -155,6 +158,7 @@
     preparedPage=Math.min(route.page,format==="carousel"?3:format==="reel"?2:0);
     tab=route.tab==="admin"&&!canAdmin?"backlog":route.tab;
     if(route.editor==="prepared"&&sourcePreparationEnabled&&selectedStory)preparedEditingStoryId=selectedStory.id;
+    if(route.penpotDesignId&&tab==="studio"&&selectedStory)await openPenpotDesign(route.penpotDesignId);
     if(route.nativeId&&tab==="studio"&&selectedStory){
       if(nativeEditorEnabled)await openNativeEditor(route.nativeId);
       else error="This saved layout is unavailable here. The saved story remains available.";
@@ -173,6 +177,21 @@
   let sourcePreparationEnabled=$state(false),preparedDirty=$state(false),preparedEditingStoryId=$state(""),preparedForkIntent=$state(null);
   let preparedWorkspace=$derived(sourcePreparationEnabled&&(!campaign||preparedEditingStoryId===selectedStory?.id));
   let nativeRecord = $state(null);
+  let penpotEmbedding = $state(null), penpotRecord = $state(null), penpotSaveState=$state("unknown");
+  const penpotEmbedded = $derived(embeddingAvailable(penpotEmbedding,window.location.origin));
+  async function openPenpotDesign(designId) {
+    if(!penpotEmbedded || !selectedStory || !penpotHost) { error="Open this saved design from the configured Studio address."; return; }
+    if(pendingEdits || reviewDirty || preparedDirty) { error="Save your copy and source review before opening the design."; return; }
+    const host=penpotHost, story=selectedStory, openingFormat=format;
+    try {
+      const value=await host.request(`/api/studio/penpot/designs?storyId=${encodeURIComponent(story.id)}&format=${encodeURIComponent(openingFormat)}`);
+      if(penpotHost!==host || selectedStory?.id!==story.id || selectedStory?.generationId!==story.generationId || selectedStory?.revision!==story.revision || format!==openingFormat)return;
+      const url=boundPenpotFrameUrl(value.design,{designId,storyId:story.id,generationId:story.generationId,embedding:penpotEmbedding,studioOrigin:window.location.origin});
+      if(!leaveNativeEditor())return;
+      penpotSaveState="unknown";penpotRecord={...value.design,frameUrl:url};
+      window.scrollTo(0,0);
+    } catch(failure) { if(penpotHost===host)error=failure.message; }
+  }
   let nativeHost = $state.raw(null);
   let nativeDirty = $state(false);
   let nativeSaveState = $state("idle");
@@ -183,11 +202,13 @@
       error = "Save native changes or explicitly discard them before leaving the native editor.";
       return false;
     }
+    if(penpotRecord && penpotSaveState!=="saved" && !discard && !window.confirm("Finish saving in Penpot before leaving this design. Return to Studio copy and preview?"))return false;
+    penpotRecord=null;penpotSaveState="unknown";
     nativeRecord = null; nativeHost = null; nativeDirty = false; nativeSaveState = "idle";
     return true;
   }
   $effect(() => {
-    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty && !strategyDirty) return;
+    if (!nativeDirty && !preparedDirty && !pendingEdits && !reviewDirty && !strategyDirty && !(penpotRecord&&penpotSaveState!=="saved")) return;
     const protect = (event) => { event.preventDefault(); event.returnValue = ""; };
     window.addEventListener("beforeunload", protect);
     return () => window.removeEventListener("beforeunload", protect);
@@ -572,6 +593,7 @@
         if (disposed) return;
         if (!["google", "password"].includes(config.mode)) throw new Error("Unsupported sign-in configuration.");
         authMode = config.mode;
+        penpotEmbedding = config.penpotEmbedding || null;
         if (authMode === "google") {
           googleAuth = createGoogleAuth(config);
           unsubscribe = googleAuth.watch(async (identity) => {
@@ -662,6 +684,7 @@
     }
   }
   async function logout() {
+    if(!leaveNativeEditor())return;
     try {
       if (authMode === "google") await googleAuth.logout();
       else await post("/api/auth/logout", {}, false);
@@ -1314,7 +1337,7 @@
     </div>
   </main>
 {:else}
-  <div class="app-shell">
+  <div class="app-shell" class:penpot-focused={!!penpotRecord}>
     <aside class="sidebar">
       <a
         href="/"
@@ -1366,12 +1389,12 @@
       </div>
     </aside>
     <main class="workspace">
-      <header class="workspace-header" class:native-focus-header={tab === "studio" && !!nativeRecord}>
+      <header class="workspace-header" class:native-focus-header={tab === "studio" && (!!nativeRecord || !!penpotRecord)}>
         <div>
           <span class="eyebrow"
             >{currentOrganization?.name || "ORGANIZATION"}{tab==='strategy'?'':` / ${currentBrand?.name||'BRAND'}`}</span
           >
-          <h1>{tab === "studio" && nativeRecord ? selectedStory?.title || "Studio layout" : tab==='strategy'?'Defiant Strategy':tab === "backlog" ? "Story backlog" : tab === "calendar" ? "Content calendar" : tab === "studio" ? "Campaign Studio" : tab === "brand" ? "Brand Kit" : tab === "jobs" ? "Jobs" : "Operations"}</h1>
+          <h1>{tab === "studio" && (nativeRecord || penpotRecord) ? selectedStory?.title || "Studio layout" : tab==='strategy'?'Defiant Strategy':tab === "backlog" ? "Story backlog" : tab === "calendar" ? "Content calendar" : tab === "studio" ? "Campaign Studio" : tab === "brand" ? "Brand Kit" : tab === "jobs" ? "Jobs" : "Operations"}</h1>
         </div>
       </header>
       {#if error}<div class="error banner" role="alert">
@@ -1386,6 +1409,8 @@
         </div>{/if}
       {#if tab==='strategy'&&strategyHost&&(currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable)}
         {#key strategyHost.key}<DefiantWorkspace request={strategyHost.request} location={strategyLocation} onNavigate={strategyNavigation} onDirtyChange={value=>strategyDirty=value} canEnable={currentOrganization.strategy.canEnable} onEnabled={refreshStrategyOrganizations}/>{/key}
+      {:else if penpotRecord && selectedStory}
+        <PenpotWorkspace design={penpotRecord} storyTitle={selectedStory.title} brandName={currentBrand?.name || ""} formatName={formats.find(item=>item.id===format)?.name || format} onReturn={()=>leaveNativeEditor()} onSaveStateChange={value=>penpotSaveState=value} />
       {:else if scopeLoading}
         <div class="panel" role="status">Loading {currentBrand?.name || "brand"} workspace…</div>
       {:else if lockedRecovery && canAdmin}
@@ -1525,10 +1550,10 @@
               >{/each}
           </div>
           {#if penpotPairingEnabled && penpotHost && !preparedWorkspace}
-            {#key penpotHost.client}<PenpotConnection request={penpotHost.request} onConnectionChange={() => penpotConnectionChanged(penpotHost.client)} />{/key}
+            {#key penpotHost.client}<PenpotConnection returnContext={{storyId:selectedStory.id,format,editor:preparedEditingStoryId===selectedStory.id?"prepared":"handoff",page:preparedPage}} request={penpotHost.request} onConnectionChange={() => penpotConnectionChanged(penpotHost.client)} />{/key}
           {/if}
           {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
-            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction bind:this={penpotDesignAction} compact request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
+            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction bind:this={penpotDesignAction} compact embedded={penpotEmbedded} onOpenDesign={openPenpotDesign} request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
           {/if}
           </div>{/if}
           {#if nativeRecord && nativeHost}
@@ -2241,3 +2266,9 @@
     </main>
   </div>
 {/if}
+
+<style>
+  .app-shell.penpot-focused { grid-template-columns: minmax(0,1fr); }
+  .penpot-focused .sidebar { display:none; }
+  .penpot-focused .workspace { padding:12px 16px; min-width:0; }
+</style>

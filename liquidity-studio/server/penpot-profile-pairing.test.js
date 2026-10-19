@@ -53,3 +53,14 @@ test('pairing handoff publishes only the constructor-configured managed origin',
  assert.equal(new URL(challenge.nativeConnectUrl).origin,nativeOrigin);
  assert.equal(new URL(challenge.nativeConnectUrl).pathname,'/studio-connect');
 });
+
+test('connection return context is canonical navigation within the already authorized scope',async t=>{
+ const f=await setup(t),session=digest(f.founder.token);
+ const issued=await f.service.issue(f.founder.user,scope,session,{returnContext:{storyId:'research_4',format:'reel',designId:'saved_design',editor:'prepared',page:2}});
+ const challenge=new URL(issued.nativeConnectUrl).searchParams.get('challenge');
+ const descriptor=await f.service.describeChallenge(pairingKey,{challenge,nativeInstanceId});
+ const query=new URL(descriptor.returnPath,'https://studio.example.com').searchParams;
+ assert.equal(query.get('org'),scope.organizationId);assert.equal(query.get('brand'),scope.brandId);assert.equal(query.get('story'),'research_4');assert.equal(query.get('format'),'reel');assert.equal(query.get('design'),'saved_design');assert.equal(query.get('editor'),'prepared');assert.equal(query.get('page'),'2');
+ assert.equal((await f.service.status(f.founder.user,scope,session)).connection,null);
+ for(const returnContext of [{url:'https://other.example/'},{storyId:'//other.example'},{designId:'saved_design'},{storyId:'research_4',format:'unknown'},{organizationId:'another'}])await assert.rejects(f.service.issue(f.founder.user,scope,session,{returnContext}),{status:400});
+});

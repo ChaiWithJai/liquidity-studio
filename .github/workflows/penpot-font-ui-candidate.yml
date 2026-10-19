@@ -55,7 +55,8 @@ jobs:
           git -C upstream apply --check ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
           git -C upstream apply ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
           python3 studio/tools/penpot-thumbnail-refresh/apply.py upstream > evidence/thumbnail-apply.json
-          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs frontend/src/app/main/data/workspace/thumbnails.cljs frontend/src/app/main/ui/workspace/shapes/frame.cljs frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs > evidence/applied.patch
+          python3 studio/tools/penpot-studio-host/apply.py upstream > evidence/studio-host-apply.json
+          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs frontend/src/app/main/data/workspace/thumbnails.cljs frontend/src/app/main/ui/workspace/shapes/frame.cljs frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs frontend/src/app/main/ui/workspace.cljs frontend/src/app/main/ui.cljs frontend/src/app/main/ui/auth.cljs frontend/test/frontend_tests/runner.cljs docker/images/files/nginx-entrypoint.sh > evidence/applied.patch
       - name: Resolve pinned official toolchain without building an image
         shell: bash
         run: |
@@ -120,7 +121,7 @@ jobs:
             -w /work/frontend -e CI=true -e PNPM_HOME=/review-tools/home -e JAVA_TOOL_OPTIONS=-Xmx4096m \
             -e NODE_OPTIONS=--max-old-space-size=1536 \
             -e SHADOWCLJS_EXTRA_PARAMS='' --entrypoint bash "$DEVENV" \
-            -lc 'export PATH=/review-tools/bin:$PATH; test "$(pnpm --version)" = 12.5.1; ./scripts/build 2.18.3 && clojure -M:dev:shadow-cljs compile test && node target/tests/test.js --focus frontend-tests.data.workspace-thumbnails-test' 2>&1 | tee evidence/build.log
+            -lc 'export PATH=/review-tools/bin:$PATH; test "$(pnpm --version)" = 12.5.1; ./scripts/build 2.18.3 && clojure -M:dev:shadow-cljs compile test && node target/tests/test.js --focus frontend-tests.data.workspace-thumbnails-test && node target/tests/test.js --focus frontend-tests.studio-host-test' 2>&1 | tee evidence/build.log
           # The exact pnpm wrapper appends explicit --frozen-lockfile to every install/i call.
           # Preserve the independent post-build tracked-lock/dependency diff gate.
           git -C upstream diff --exit-code -- '**/*lock*' '**/deps.edn' '**/package.json'
@@ -149,9 +150,20 @@ jobs:
           cp studio/tools/penpot-thumbnail-refresh/thumbnails.patch studio/tools/penpot-thumbnail-refresh/thumbnails-test.patch studio/tools/penpot-thumbnail-refresh/frame.patch evidence/
           cp studio/tools/penpot-thumbnail-refresh/source-manifest.json evidence/thumbnail-source-manifest.json
           cp studio/tools/penpot-thumbnail-refresh/README.md evidence/thumbnail-README.md
+          cp upstream/frontend/src/app/main/ui/workspace.cljs evidence/workspace.modified.cljs
+          cp upstream/frontend/src/app/main/studio_host.cljs evidence/studio_host.modified.cljs
+          cp upstream/frontend/src/app/main/ui/studio_entry.cljs evidence/studio_entry.modified.cljs
+          cp upstream/frontend/src/app/main/ui.cljs evidence/ui.modified.cljs
+          cp upstream/frontend/src/app/main/ui/auth.cljs evidence/auth.modified.cljs
+          cp upstream/frontend/test/frontend_tests/studio_host_test.cljs evidence/studio_host_test.modified.cljs
+          cp upstream/frontend/test/frontend_tests/runner.cljs evidence/runner.modified.cljs
+          cp upstream/docker/images/files/nginx-entrypoint.sh evidence/nginx-entrypoint.modified.sh
+          cp studio/tools/penpot-studio-host/workspace.patch studio/tools/penpot-studio-host/entrypoint.patch studio/tools/penpot-studio-host/auth.patch studio/tools/penpot-studio-host/entry-guide.patch studio/tools/penpot-studio-host/runner.patch evidence/
+          cp studio/tools/penpot-studio-host/source-manifest.json evidence/studio-host-source-manifest.json
+          cp studio/tools/penpot-studio-host/README.md evidence/studio-host-README.md
           cp upstream/LICENSE evidence/UPSTREAM-LICENSE
           tar -C upstream/frontend/target/dist -czf evidence/frontend-complete-candidate.tar.gz .
-          sha256sum evidence/*.gz evidence/*.patch evidence/*.cljs evidence/assets.json > evidence/artifact-hashes.txt
+          sha256sum evidence/*.gz evidence/*.patch evidence/*.cljs evidence/*.sh evidence/assets.json > evidence/artifact-hashes.txt
           rm -rf evidence/original
       - name: Encrypt complete native frontend delivery for the explicit operator
         env:

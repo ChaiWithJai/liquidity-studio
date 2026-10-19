@@ -619,7 +619,7 @@ export function createHttpServer(
       if (route === "/api/auth/config" && req.method === "GET")
         return json(
           200,
-          identity?.publicConfiguration?.() || { mode: "password" },
+          {...(identity?.publicConfiguration?.() || { mode: "password" }), ...(managedPenpotStoryDesigns?.penpotEmbedding ? {penpotEmbedding:managedPenpotStoryDesigns.penpotEmbedding} : {})},
         );
       let user = trustedTestMode
         ? { id: "test", username: "test", role: "founder" }
@@ -903,8 +903,8 @@ export function createHttpServer(
         }
         if (req.method === "POST") {
           if (route === "/api/studio/penpot/access/challenges") {
-            workspaceExact(body, []);
-            return json(201, await nativePairing.issue(user, scope, context));
+            workspaceExact(body, ["returnContext"]);
+            return json(201, await nativePairing.issue(user, scope, context,body));
           }
           if (route === "/api/studio/penpot/access/complete")
             return json(200, await nativePairing.complete(user, scope, context, body));

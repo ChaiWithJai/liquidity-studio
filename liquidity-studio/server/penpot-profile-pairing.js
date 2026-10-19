@@ -8,6 +8,17 @@ const SECRET=/^[A-Za-z0-9_-]{43}$/;
 const hash=value=>createHash('sha256').update(value,'utf8').digest('hex');
 const sameScope=(a,b)=>a?.organizationId===b?.organizationId&&a?.brandId===b?.brandId;
 function scopeInput(scope){if(!scope||![scope.organizationId,scope.brandId].every(x=>typeof x==='string'&&/^[A-Za-z0-9_-]{1,160}$/.test(x)))throw fail(400,'Current organization and brand required');return {organizationId:scope.organizationId,brandId:scope.brandId};}
+function returnPath(scope,input={}){
+ if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!['returnContext'].includes(k)))throw fail(400,'Unsupported connection navigation');
+ const context=input.returnContext||{};
+ if(typeof context!=='object'||Array.isArray(context)||Object.keys(context).some(k=>!['storyId','format','designId','editor','page'].includes(k)))throw fail(400,'Invalid connection navigation');
+ const id=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value);
+ if(context.storyId!==undefined&&!id(context.storyId)||context.designId!==undefined&&(!id(context.designId)||!context.storyId)||context.format!==undefined&&!['infographic','carousel','story','reel'].includes(context.format)||context.editor!==undefined&&!['handoff','prepared'].includes(context.editor)||context.page!==undefined&&(!Number.isInteger(context.page)||context.page<0||context.page>3))throw fail(400,'Invalid connection navigation');
+ const query=new URLSearchParams({org:scope.organizationId,brand:scope.brandId,tab:'studio'});
+ const page=Math.min(context.page||0,context.format==='carousel'?3:context.format==='reel'?2:0);
+ for(const [key,value] of Object.entries({story:context.storyId,format:context.format,design:context.designId,editor:context.editor==='prepared'?'prepared':'',page:page?String(page):''}))if(value)query.set(key,value);
+ return '/?'+query;
+}
 function sessionInput(value){if(typeof value!=='string'||!HEX.test(value))throw fail(401,'Verified Studio session required');return value;}
 function empty(actorId,nativeInstanceId){return {actorId,nativeInstanceId,epoch:1,connection:null,pending:[]};}
 export class PenpotProfilePairing {
@@ -36,13 +47,14 @@ export class PenpotProfilePairing {
   const context=await this.context(actor,scope,sessionContext);let result;
   await this.store.transact(this.keys(actor.id,context.sessionDigest),values=>{const [identity,stored]=values;this.check(identity,actor.id,context.scope,context.sessionDigest,values.at(-1));const pair=stored||empty(actor.id,this.nativeInstanceId);result=this.dto(pair,context.scope,context.sessionDigest);return [identity,pair,...values.slice(2)];});return result;
  }
- async issue(actor,scope,sessionContext){
+ async issue(actor,scope,sessionContext,input={}){
+  const navigation=returnPath(scopeInput(scope),input);
   const context=await this.context(actor,scope,sessionContext),challenge=randomBytes(32).toString('base64url'),digest=hash(challenge),id=randomUUID(),expiresAt=this.now()+120000;let result;
   await this.store.transact(this.keys(actor.id,context.sessionDigest,[this.challengeKey(digest)]),values=>{
    const [identity,stored,existing]=values,current=this.check(identity,actor.id,context.scope,context.sessionDigest,values.at(-1));if(existing)throw fail(409,'Connection request already exists');const pair=stored||empty(actor.id,this.nativeInstanceId);
    if(pair.connection)throw fail(409,'Disconnect your current native account before connecting another');
    const active=pair.pending.filter(x=>x.expiresAt>this.now()&&['pending','native-confirmed'].includes(x.status));if(active.length>=2)throw fail(429,'Finish or disconnect your pending native connection first');
-   const record={id,tokenSha256:digest,actorId:actor.id,nativeInstanceId:this.nativeInstanceId,scope:context.scope,sessionDigest:context.sessionDigest,authVersion:current.authVersion||0,status:'pending',issuedAt:this.now(),expiresAt,epoch:pair.epoch};
+   const record={returnPath:navigation,id,tokenSha256:digest,actorId:actor.id,nativeInstanceId:this.nativeInstanceId,scope:context.scope,sessionDigest:context.sessionDigest,authVersion:current.authVersion||0,status:'pending',issuedAt:this.now(),expiresAt,epoch:pair.epoch};
    pair.pending=[...active,structuredClone(record)];result={id,expiresAt,nativeOrigin:this.nativeOrigin,nativeConnectUrl:`${this.nativeOrigin}/studio-connect?challenge=${challenge}`};return [identity,pair,record,...values.slice(3)];
   });return result;
  }
@@ -56,7 +68,7 @@ export class PenpotProfilePairing {
    const organization=identity.organizations.find(x=>x.id===record.scope.organizationId),brand=organization.brands.find(x=>x.id===record.scope.brandId);
    const label=value=>typeof value==='string'&&value.trim()&&value.length<=200&&!/[\x00-\x1f\x7f]/.test(value)?value.trim():null;
    const studioActorLabel=label(actor.username);if(!studioActorLabel)throw fail(409,'Studio account label unavailable');
-   result={studioActorLabel,...(label(organization.name)?{organizationLabel:label(organization.name)}:{}),...(label(brand.name)?{brandLabel:label(brand.name)}:{}),expiresAt:record.expiresAt};return values;
+   result={returnPath:record.returnPath||'/',studioActorLabel,...(label(organization.name)?{organizationLabel:label(organization.name)}:{}),...(label(brand.name)?{brandLabel:label(brand.name)}:{}),expiresAt:record.expiresAt};return values;
   });return result;
  }
  async receiveProof(presentedKey,input){
