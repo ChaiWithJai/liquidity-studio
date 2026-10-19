@@ -1,5 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
+  import { checkedPenpotConnectionUrl } from '../lib/penpot-connection-url.js';
   let { request, onConnectionChange = () => {} } = $props();
   let reportedStatus;
   let info = $state(null), loading = $state(true), busy = $state(false), error = $state('');
@@ -33,18 +34,13 @@
     } catch (failure) { if (alive && ticket === sequence) { error = failure.message; stopPolling(); } }
     finally { if (alive && ticket === sequence) loading = false; }
   }
-  function checkedUrl(value) {
-    const url = new URL(value);
-    if (url.origin !== 'http://localhost:39008' || url.pathname !== '/studio-connect' || url.username || url.password || url.hash || [...url.searchParams.keys()].length !== 1 || !/^[A-Za-z0-9_-]{43}$/.test(url.searchParams.get('challenge') || '')) throw new Error('The Penpot connection link is unavailable. Start again.');
-    return url.href;
-  }
   async function start() {
     if (busy) return;
     stopPolling(); const ticket = ++sequence; busy = true; error = ''; connectUrl = ''; pollingStopped = false; pollUntil = 0;
     try {
       const challenge = await request('/api/studio/penpot/access/challenges', { method: 'POST', body: '{}' });
       if (!alive || ticket !== sequence) return;
-      const url = checkedUrl(challenge.nativeConnectUrl);
+      const url = checkedPenpotConnectionUrl(challenge.nativeConnectUrl, challenge.nativeOrigin);
       if (typeof challenge.id !== 'string' || !validExpiry(challenge.expiresAt)) throw new Error('The connection request is incomplete. Check its status before starting again.');
       info = { state: 'pending', connection: null, challenge: { id: challenge.id, expiresAt: challenge.expiresAt, status: 'pending' } };
       connectUrl = url; schedule();

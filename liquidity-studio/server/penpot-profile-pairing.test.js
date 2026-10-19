@@ -42,3 +42,14 @@ test('issuer descriptor comes from current identity and scope without consuming 
  await assert.rejects(f.service.describeChallenge('b'.repeat(43),input),{status:403});await assert.rejects(f.service.describeChallenge(pairingKey,{...input,nativeInstanceId:otherProfile}),{status:400});await assert.rejects(f.service.describeChallenge(pairingKey,{...input,challenge:'B'.repeat(43)}),{status:410});
  f.tick(120000);await assert.rejects(f.service.describeChallenge(pairingKey,input),{status:410});
 });
+
+test('pairing handoff publishes only the constructor-configured managed origin',async t=>{
+ const f=await setup(t),nativeOrigin='https://design.chaiwithjai.com';
+ const service=new PenpotProfilePairing({store:f.store,identity:f.identity,nativeInstanceId,pairingKey,nativeOrigin});
+ const status=await service.status(f.founder.user,scope,digest(f.founder.token));
+ assert.equal(status.nativeOrigin,nativeOrigin);
+ const challenge=await service.issue(f.founder.user,scope,digest(f.founder.token));
+ assert.equal(challenge.nativeOrigin,nativeOrigin);
+ assert.equal(new URL(challenge.nativeConnectUrl).origin,nativeOrigin);
+ assert.equal(new URL(challenge.nativeConnectUrl).pathname,'/studio-connect');
+});
