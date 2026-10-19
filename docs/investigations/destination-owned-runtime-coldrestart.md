@@ -28,3 +28,5 @@ The operation was not first-attempt success:
 This proves a destination-owned cached-file closure and runtime cold restart, followed by saved native editing and sound-bearing media export while source service origins were unavailable. It does **not** prove deletion of source files, installation on a new machine/OS, internet independence, managed cloud recovery/sizing, human learner completion or full Issue #57 acceptance. Source data and rollback copies remain preserved. No model inference, new human account/SSO flow or cloud provisioning occurred.
 
 Private evidence includes the per-file copy receipt, both cold-restart attempts, source-outage journal, post-export source-state observation, BrowserOS receipts and actual output byte checks. Raw customer assets, configurations and credentials are not published here.
+
+A later [destination datastore restart/rejoin](destination-datastore-rejoin.md) separately restarted PostgreSQL and Valkey, retained the native backend process, and observed saved-work and same-identity live updates resume. Its graceful-process and ACL limitations are explicit.
