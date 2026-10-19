@@ -11,7 +11,7 @@ export function loadNativePairingConfiguration(filename) {
   const keys = ['schemaVersion', 'nativeInstanceId', 'nativeOrigin', 'studioOrigin', 'pairingKey', 'gatewayKey'];
   if ((keys.some(key => !Object.hasOwn(value,key)) || Object.keys(value).some(key => ![...keys,'grantKey'].includes(key))) || value.schemaVersion !== 1 ||
       !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value.nativeInstanceId || '') ||
-      value.nativeOrigin !== 'http://localhost:39008' ||
+      !['http://localhost:39008','http://127.0.0.1:39008'].includes(value.nativeOrigin) ||
       !/^[A-Za-z0-9_-]{43}$/.test(value.pairingKey || '') ||
       !/^[a-f0-9]{64}$/.test(value.gatewayKey || '') ||
       value.pairingKey === value.gatewayKey ||

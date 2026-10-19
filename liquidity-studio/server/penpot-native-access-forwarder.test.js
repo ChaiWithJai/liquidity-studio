@@ -50,6 +50,8 @@ test('six-field pairing configurations remain valid and an optional distinct gra
  const config={schemaVersion:1,nativeInstanceId:'11111111-1111-4111-8111-111111111111',nativeOrigin:'http://localhost:39008',studioOrigin,pairingKey:'p'.repeat(43),gatewayKey:'a'.repeat(64)};
  const write=value=>fs.writeFileSync(filename,JSON.stringify(value),{mode:0o600});
  write(config);assert.equal(loadNativePairingConfiguration(filename).grantKey,undefined);
+ write({...config,nativeOrigin:'http://127.0.0.1:39008'});assert.equal(loadNativePairingConfiguration(filename).nativeOrigin,'http://127.0.0.1:39008');
+ for(const nativeOrigin of ['http://127.0.0.1:39046','http://127.0.0.2:39008','http://localhost:39008/','http://remote.example:39008']){write({...config,nativeOrigin});assert.throws(()=>loadNativePairingConfiguration(filename),/Exact native pairing/);}
  write({...config,grantKey:key});assert.equal(loadNativePairingConfiguration(filename).grantKey,key);
  for(const grantKey of [config.pairingKey,'short',null]){write({...config,grantKey});assert.throws(()=>loadNativePairingConfiguration(filename),/Exact native pairing/);}
  assert.throws(()=>createPenpotNativeAccessForwarder({studioOrigin:'http://foreign.invalid',grantKey:key}));
