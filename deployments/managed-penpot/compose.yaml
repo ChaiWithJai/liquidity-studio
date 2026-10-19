@@ -67,6 +67,8 @@ services:
     environment:
       <<: *native
       PENPOT_INTERNAL_URI: http://penpot-frontend:8080
+      PENPOT_BROWSER_POOL_MIN: '1'
+      PENPOT_BROWSER_POOL_MAX: '1'
     networks: [native]
     mem_limit: 1g
     cpus: 1.5
