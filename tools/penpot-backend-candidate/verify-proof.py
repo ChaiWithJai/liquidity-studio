@@ -43,7 +43,7 @@ for line in (proof / 'hook-inputs.sha256').read_text().splitlines():
     if actual.is_symlink() or hashlib.sha256(actual.read_bytes()).hexdigest() != digest:
         raise SystemExit('Verified hook input differs from checkout')
 actual_paths = set()
-for directory in ['penpot-brand-access', 'penpot-live-fence', 'penpot-native-access-bootstrap', 'penpot-private-asset-access']:
+for directory in ['penpot-brand-access', 'penpot-live-fence', 'penpot-native-access-bootstrap', 'penpot-private-asset-access', 'penpot-redis-log-redaction']:
     for path in (pathlib.Path('studio/tools') / directory).rglob('*'):
         if path.is_symlink():
             raise SystemExit('Symlink in hook inputs')

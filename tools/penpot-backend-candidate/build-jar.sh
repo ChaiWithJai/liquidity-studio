@@ -7,6 +7,7 @@ fi
 test "$(git -C /work rev-parse HEAD)" = ff7a66f51938b2293260ea27a64e2c4e0833b5e3
 test -z "$(git -C /work status --porcelain)"
 test -z "${STUDIO_NATIVE_ACCESS_CONFIG:-}"
+python3 /hooks/penpot-redis-log-redaction/apply.py /work > /output/redis-log-application.json
 python3 /hooks/penpot-brand-access/apply.py /work > /output/c2-application.json
 git -C /work apply --check /hooks/penpot-live-fence/websocket.patch
 git -C /work apply /hooks/penpot-live-fence/websocket.patch

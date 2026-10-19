@@ -1,0 +1,19 @@
+{
+  "upstreamCommit": "ff7a66f51938b2293260ea27a64e2c4e0833b5e3",
+  "patchSha256": "cfcfdb858c344dcf95482e489d1c88f85e7d0a6a05acaa48c54ebe1528d6a7e5",
+  "files": [
+    {
+      "path": "backend/src/app/redis.clj",
+      "beforeSha256": "602deb2fd310e03b4406652f340563aabfe2f353e32f5a697dc1ccfae75090ff",
+      "afterSha256": "dfe0fd9fa6937a720f3dd45bb103203becd300f60772fb2ea0df1078740003da",
+      "eventsPreserved": true
+    },
+    {
+      "path": "exporter/src/app/redis.cljs",
+      "beforeSha256": "6606012eb6f2e15e94e5d16a626512d69f27e82be1e084d3bdb65bc510e95b1b",
+      "afterSha256": "63a063f999ced613b68659c66cb9ff021b960379cd7fc2423c3ac9756c1b367e",
+      "eventsPreserved": true
+    }
+  ],
+  "scope": "Remove URI fields and exporter raw error cause; sanitize only malformed Redis URI parser exception without original input/cause; preserve valid client/auth and event hints."
+}

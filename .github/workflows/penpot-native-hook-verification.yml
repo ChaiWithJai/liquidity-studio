@@ -60,7 +60,7 @@ jobs:
           printf '%s\n' "$UPSTREAM_SHA" > evidence/upstream-source-sha.txt
           sha256sum upstream/backend/deps.edn upstream/common/deps.edn upstream/backend/tests.edn > evidence/dependencies.before.sha256
           cp recipe/tools/penpot-native-hook-verification/kaocha.edn evidence/focused-kaocha.edn
-          find studio/tools/penpot-brand-access studio/tools/penpot-live-fence studio/tools/penpot-native-access-bootstrap studio/tools/penpot-private-asset-access -type f -print0 | sort -z | xargs -0 sha256sum > evidence/hook-inputs.sha256
+          find studio/tools/penpot-brand-access studio/tools/penpot-live-fence studio/tools/penpot-native-access-bootstrap studio/tools/penpot-private-asset-access studio/tools/penpot-redis-log-redaction -type f -print0 | sort -z | xargs -0 sha256sum > evidence/hook-inputs.sha256
       - name: Pinned official Clojure toolchain
         shell: bash
         run: |
