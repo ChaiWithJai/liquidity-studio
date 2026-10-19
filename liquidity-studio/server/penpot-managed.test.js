@@ -42,7 +42,7 @@ test('native proof uses actual presented cookie at fixed internal origin and HTT
 
 import {readFile} from 'node:fs/promises';
 test('managed adapter deployment entrypoint forwards its validated private timeout configuration',async()=>{
- const dockerfile=await readFile(new URL('../../../deployments/managed-penpot/Dockerfile.adapter',import.meta.url),'utf8');
+ const dockerfile=await readFile(new URL('../../deployments/managed-penpot/Dockerfile.adapter',import.meta.url),'utf8');
  const entry=await readFile(new URL('../scripts/serve-managed-native-connect.mjs',import.meta.url),'utf8');
  assert.match(dockerfile,/serve-managed-native-connect\.mjs/);
  assert.match(entry,/loadManagedPenpotConfiguration/);
