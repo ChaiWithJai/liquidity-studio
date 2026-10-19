@@ -27,3 +27,5 @@ Both the main driver and independent watchdog recorded zero recovery errors. Ori
 Private receipts remain local: the source-unavailable state, browser media/dependency observations and main/watchdog event journal. They are not customer payloads published with this note.
 
 This proves **post-restore editing and export without the original service origins**. It does not prove a fresh restore performed during the outage, deletion or relocation of installed local bundle/JAR files, internet independence, managed cloud sizing, human learner completion or full Issue #57 closure. Keep source data and verified backups; this drill did not remove them.
+
+A later [fresh restore during source outage](fresh-restore-during-source-outage.md) restored customer data into new empty destinations after the outage began. That separate checkpoint retains its own editing and media limitations; it does not broaden this earlier continuation result retroactively.
