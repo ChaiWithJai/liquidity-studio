@@ -8,12 +8,13 @@ export async function scopedRequest({ path, options = {}, scoped = true, context
   };
   const headers = await authorize();
   if (!current()) throw changed();
+  const { responseType, ...fetchOptions } = options;
   const response = await fetchImpl(path + (scoped ? (path.includes("?") ? "&" : "?") + context.query : ""), {
-    ...options,
+    ...fetchOptions,
     credentials: "same-origin",
     headers: { ...(options.body ? { "Content-Type": "application/json" } : {}), ...options.headers, ...headers },
   });
-  const data = await response.json().catch(() => ({}));
+  const data = response.ok && responseType === "blob" ? await response.blob() : await response.json().catch(() => ({}));
   // A stale 401 must not clear a newer sign-in or workspace.
   if (!current()) throw changed();
   if (!response.ok) {

@@ -6,6 +6,7 @@ const MAX_VALUE_BYTES = 4 * 1024 * 1024;
 const MAX_ARTIFACT_BYTES = 20 * 1024 * 1024;
 const hash = value => createHash('sha256').update(value).digest('hex');
 const failure = (code, message) => Object.assign(new Error(message), { code });
+const providerExpiry=(key,value)=>{if(!key.startsWith('defiant-youtube-observations:'))return {};const expires=new Date(value?.expiresAt);if(value?.kind!=='youtube-observation-cache'||!Number.isFinite(expires.getTime()))throw failure('INVALID_UPDATE','Provider cache requires explicit expiry');return {expiresAt:expires};};
 const identifier = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{1,128}$/.test(value);
 
 // This server-side store is not an authorization boundary: the use case must supply
@@ -27,6 +28,11 @@ export class FirestoreStore {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists) return { value: null, chunkCount: 0, revision: 0 };
     const data = snapshot.data();
+    if(key.startsWith('defiant-youtube-observations:')&&data.chunkCount===0){
+      const encoded=Buffer.from(data.providerBytes||[]);
+      if(data.key!==key||data.schemaVersion!==1||encoded.length>512*1024||encoded.length!==data.bytes||hash(encoded)!==data.sha256)throw failure('STORE_CORRUPT','Provider observation cache is invalid');
+      return {value:JSON.parse(encoded.toString('utf8')),chunkCount:0,revision:data.revision,sha256:data.sha256};
+    }
     if (data.key !== key || data.schemaVersion !== 1 || !Number.isInteger(data.chunkCount) || data.chunkCount < 1 || data.chunkCount > Math.ceil(MAX_VALUE_BYTES / CHUNK_BYTES)) throw failure('STORE_CORRUPT', 'Stored record metadata is invalid');
     const refs = Array.from({ length: data.chunkCount }, (_, i) => ref.collection('chunks').doc(String(i)));
     const parts = await transaction.getAll(...refs);
@@ -55,10 +61,17 @@ export class FirestoreStore {
       // Repository initialization can run for every request; unchanged data must
       // not rewrite all chunks or count as a new persisted revision.
       if (current.sha256 === digest) return JSON.parse(encoded.toString('utf8'));
+      const expiry=providerExpiry(key,next);
+      if(expiry.expiresAt){
+        if(encoded.length>512*1024)throw failure('STORE_CAPACITY','Provider observation cache exceeds512KiB');
+        for(let i=0;i<current.chunkCount;i++)transaction.delete(ref.collection('chunks').doc(String(i)));
+        transaction.set(ref,{schemaVersion:1,key,revision:current.revision+1,chunkCount:0,bytes:encoded.length,sha256:digest,providerBytes:encoded,...expiry});
+        return JSON.parse(encoded.toString('utf8'));
+      }
       const chunks = Math.ceil(encoded.byteLength / CHUNK_BYTES);
       for (let i = 0; i < chunks; i++) transaction.set(ref.collection('chunks').doc(String(i)), { bytes: encoded.subarray(i * CHUNK_BYTES, (i + 1) * CHUNK_BYTES) });
       for (let i = chunks; i < current.chunkCount; i++) transaction.delete(ref.collection('chunks').doc(String(i)));
-      transaction.set(ref, { schemaVersion: 1, key, revision: current.revision + 1, chunkCount: chunks, bytes: encoded.byteLength, sha256: digest });
+      transaction.set(ref, { schemaVersion: 1, key, revision: current.revision + 1, chunkCount: chunks, bytes: encoded.byteLength, sha256: digest, ...providerExpiry(key,next) });
       return JSON.parse(encoded.toString('utf8'));
     }, { maxAttempts: 5 });
   }
@@ -74,10 +87,17 @@ export class FirestoreStore {
       buffers.forEach((buffer, index) => {
         const prior = current[index], ref = refs[index], digest = hash(buffer);
         if (prior.sha256 === digest) return;
+        const expiry=providerExpiry(keys[index],JSON.parse(encoded[index]));
+        if(expiry.expiresAt){
+          if(buffer.length>512*1024)throw failure('STORE_CAPACITY','Provider observation cache exceeds512KiB');
+          for(let i=0;i<prior.chunkCount;i++)transaction.delete(ref.collection('chunks').doc(String(i)));
+          transaction.set(ref,{schemaVersion:1,key:keys[index],revision:prior.revision+1,chunkCount:0,bytes:buffer.length,sha256:digest,providerBytes:buffer,...expiry});
+          return;
+        }
         const chunks = Math.ceil(buffer.byteLength / CHUNK_BYTES);
         for (let i = 0; i < chunks; i++) transaction.set(ref.collection('chunks').doc(String(i)), { bytes: buffer.subarray(i * CHUNK_BYTES, (i + 1) * CHUNK_BYTES) });
         for (let i = chunks; i < prior.chunkCount; i++) transaction.delete(ref.collection('chunks').doc(String(i)));
-        transaction.set(ref, { schemaVersion: 1, key: keys[index], revision: prior.revision + 1, chunkCount: chunks, bytes: buffer.byteLength, sha256: digest });
+        transaction.set(ref, { schemaVersion: 1, key: keys[index], revision: prior.revision + 1, chunkCount: chunks, bytes: buffer.byteLength, sha256: digest, ...providerExpiry(keys[index],JSON.parse(encoded[index])) });
       });
       return encoded.map(value => JSON.parse(value));
     }, { maxAttempts: 5 });
@@ -131,6 +151,12 @@ export class FirestoreStore {
       buffers.forEach((buffer,index)=>{
         const prior=current[index], ref=refs[index], digest=hash(buffer);
         if(prior.sha256===digest)return;
+        const expiry=providerExpiry(keys[index],JSON.parse(encoded[index]));
+        if(expiry.expiresAt){
+          if(buffer.length>512*1024)throw failure('STORE_CAPACITY','Provider observation cache exceeds512KiB');
+          for(let i=0;i<prior.chunkCount;i++)transaction.delete(ref.collection('chunks').doc(String(i)));
+          transaction.set(ref,{schemaVersion:1,key:keys[index],revision:prior.revision+1,chunkCount:0,bytes:buffer.length,sha256:digest,providerBytes:buffer,...expiry});return;
+        }
         const chunks=Math.ceil(buffer.byteLength/CHUNK_BYTES);
         for(let i=0;i<chunks;i++)transaction.set(ref.collection('chunks').doc(String(i)),{bytes:buffer.subarray(i*CHUNK_BYTES,(i+1)*CHUNK_BYTES)});
         for(let i=chunks;i<prior.chunkCount;i++)transaction.delete(ref.collection('chunks').doc(String(i)));
@@ -173,6 +199,7 @@ export class FirestoreStore {
   }
 
   scopePrefix(scope) {
+    if (scope?.kind === 'strategy' && identifier(scope.organizationId) && scope.brandId === undefined) return `organizations/${scope.organizationId}/strategy/artifacts/`;
     if (!identifier(scope?.organizationId) || !identifier(scope?.brandId)) throw failure('INVALID_ARTIFACT_SCOPE', 'Artifact requires valid organization and brand scope');
     return `organizations/${scope.organizationId}/brands/${scope.brandId}/artifacts/`;
   }
@@ -185,12 +212,12 @@ export class FirestoreStore {
 
   async uploadArtifact(scope, id, buffer, contentType) {
     const prefix = this.scopePrefix(scope);
-    if (!this.bucket || !identifier(id) || !Buffer.isBuffer(buffer) || !buffer.length || buffer.length > MAX_ARTIFACT_BYTES || !['image/png', 'image/jpeg', 'image/webp', 'application/pdf', 'application/json', 'application/zip', 'text/plain', 'text/plain; charset=utf-8', 'video/mp4'].includes(contentType)) throw failure('INVALID_ARTIFACT', 'Artifact ID, bytes or content type is invalid');
+    if (!this.bucket || !identifier(id) || !Buffer.isBuffer(buffer) || !buffer.length || buffer.length > MAX_ARTIFACT_BYTES || !['image/png', 'image/jpeg', 'image/webp', 'application/pdf', 'application/json', 'application/zip', 'text/plain', 'text/plain; charset=utf-8', 'video/mp4', 'audio/wav'].includes(contentType)) throw failure('INVALID_ARTIFACT', 'Artifact ID, bytes or content type is invalid');
     const sha256 = hash(buffer);
     const object = `${prefix}${id}/${sha256}`;
     const file = this.bucket.file(object);
     try {
-      await file.save(buffer, { resumable: false, validation: 'crc32c', preconditionOpts: { ifGenerationMatch: 0 }, metadata: { contentType, metadata: { organizationId: scope.organizationId, brandId: scope.brandId, sha256 } } });
+      await file.save(buffer, { resumable: false, validation: 'crc32c', preconditionOpts: { ifGenerationMatch: 0 }, metadata: { contentType, metadata: { organizationId: scope.organizationId, ...(scope.kind==='strategy'?{scopeKind:'strategy'}:{brandId:scope.brandId}), sha256 } } });
     } catch (error) {
       // Retried content-addressed upload is safe only if the existing object agrees.
       if (![409, 412].includes(Number(error.code))) throw failure('ARTIFACT_UPLOAD_FAILED', 'Artifact upload failed');

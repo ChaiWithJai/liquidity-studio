@@ -1,3 +1,4 @@
+import {clipKey} from './defiant-clips.js';
 import {readInbox,inboxPreview,importInbox,saveInboxMatch} from './defiant-inbox.js';
 import {resourceConfirmation} from './defiant-resource-confirmation.js';
 import {createDraftDestination,handoffReport} from './defiant-draft-handoff.js';
@@ -19,6 +20,7 @@ const empty=(organizationId,actor,at)=>({schemaVersion:1,organizationId,enabled:
 function dataOf(state){return {nodes:state.graph.nodes,edges:state.graph.edges,evidence:state.evidence,observations:state.observations,resources:state.resources};}
 export class DefiantStrategyService {
  constructor({store,identity,organizationId,now=()=>new Date().toISOString()}){if(!store||!identity||!id(organizationId))throw Error('Strategy requires an explicit organization');Object.assign(this,{store,identity,organizationId,now,key:keyFor(organizationId)});}
+ assertCurrent(identity,state,actor){if(!state?.enabled||state.organizationId!==this.organizationId)throw fail(404,'Strategy is not enabled');return planningMember(identity,actor,this.organizationId);}
  async authority(actor,founder=false){await this.identity.ready;return current(await this.store.get('identity'),actor,this.organizationId,founder);}
  async enable(actor,input){
   exact(input,[]);const {organization}=await this.authority(actor,true);if(protectedOrganization(organization))throw fail(403,'Use a separate organization for Defiant strategy');let result;
@@ -41,7 +43,7 @@ export class DefiantStrategyService {
   planningExact(input,['expectedRevision','idempotencyKey','kind','previewDigest']);return this.inboxWrite(actor,input,'inbox-import',state=>importInbox(state,input,actor,this.now()));
  }
  async updateInboxMatch(actor,sourceId,input){
-  planningExact(input,['expectedRevision','idempotencyKey','expectedMatchRevision','match']);return this.inboxWrite(actor,input,`inbox-match:${sourceId}`,state=>{const old=state.inbox?.matches.find(m=>m.sourceId===sourceId);if(!old||old.revision!==input.expectedMatchRevision)throw fail(409,'Proposed match changed; keep your working text');return {match:saveInboxMatch(state,sourceId,input.match,actor,this.now())};});
+  planningExact(input,['expectedRevision','idempotencyKey','expectedMatchRevision','match']);return this.inboxWrite(actor,input,`inbox-match:${sourceId}`,state=>{const old=state.inbox?.matches.find(m=>m.sourceId===sourceId);if((old?.revision||0)!==input.expectedMatchRevision)throw fail(409,'Proposed match changed; keep your working text');return {match:saveInboxMatch(state,sourceId,input.match,actor,this.now())};});
  }
  async inboxWrite(actor,input,operation,change){
   validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation,input});let result;
@@ -89,17 +91,17 @@ export class DefiantStrategyService {
   });return result;
  }
  async saveReport(actor,input){
-  planningExact(input,['expectedRevision','idempotencyKey','report']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'report',input});let result;
-  await this.store.transact(['identity',this.key],([identity,state])=>{
-   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
-   const record=reportRecord(state,input.report,actor,this.now());state.reports=state.reports.filter(r=>r.id!==record.id);state.reports.push(record);result=planningAck(state,actor,input,requestHash,{report:record});return [identity,state];
+  planningExact(input,['expectedRevision','idempotencyKey','report']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'report',input}),clipKeys=input.report?.clipRefs?.length?[clipKey(this.organizationId)]:[];let result;
+  await this.store.transact(['identity',this.key,...clipKeys],([identity,state,clips])=>{
+   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state,...(clipKeys.length?[clips]:[])];}
+   const record=reportRecord(state,input.report,actor,this.now(),{clips});state.reports=state.reports.filter(r=>r.id!==record.id);state.reports.push(record);result=planningAck(state,actor,input,requestHash,{report:record});return [identity,state,...(clipKeys.length?[clips]:[])];
   });return result;
  }
  async refreshReport(actor,reportId,input){
-  planningExact(input,['expectedRevision','idempotencyKey','expectedReportRevision','planIds','annotationIds','viewId','sourceRefs','matchRefs']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'refresh-report',reportId,input});let result;
-  await this.store.transact(['identity',this.key],([identity,state])=>{
-   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state];}
-   const {expectedRevision,idempotencyKey,...selection}=input,record=reportRecord(state,selection,actor,this.now(),{refreshId:reportId});state.reports=state.reports.filter(r=>r.id!==record.id);state.reports.push(record);result=planningAck(state,actor,input,requestHash,{report:record});return [identity,state];
+  planningExact(input,['expectedRevision','idempotencyKey','expectedReportRevision','planIds','annotationIds','viewId','sourceRefs','matchRefs','clipRefs']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'refresh-report',reportId,input}),clipKeys=input.clipRefs?.length?[clipKey(this.organizationId)]:[];let result;
+  await this.store.transact(['identity',this.key,...clipKeys],([identity,state,clips])=>{
+   planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state,...(clipKeys.length?[clips]:[])];}
+   const {expectedRevision,idempotencyKey,...selection}=input,record=reportRecord(state,selection,actor,this.now(),{refreshId:reportId,clips});state.reports=state.reports.filter(r=>r.id!==record.id);state.reports.push(record);result=planningAck(state,actor,input,requestHash,{report:record});return [identity,state,...(clipKeys.length?[clips]:[])];
   });return result;
  }
 

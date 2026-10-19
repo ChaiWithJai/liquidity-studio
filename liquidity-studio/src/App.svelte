@@ -1507,7 +1507,7 @@
           </div>
         {/if}
         {#if selectedStory}
-          {#if !nativeRecord && selectedStory.draftBrief?.kind==='defiant-report'}<DraftBrief brief={selectedStory.draftBrief} reportHref={workflowHref(window.location.href,{organizationId:selectedStory.draftBrief.organizationId,tab:'strategy',strategy:{view:'report',reportId:selectedStory.draftBrief.reportId}})} onUseSource={useBriefSource} onReviewSources={()=>focusWorkflow("workflow-sources")} disabled={busy} />{/if}
+          {#if !nativeRecord && selectedStory.draftBrief?.kind==='defiant-report'}<DraftBrief request={strategyHost?.request} brief={selectedStory.draftBrief} reportHref={workflowHref(window.location.href,{organizationId:selectedStory.draftBrief.organizationId,tab:'strategy',strategy:{view:'report',reportId:selectedStory.draftBrief.reportId}})} onUseSource={useBriefSource} onReviewSources={()=>focusWorkflow("workflow-sources")} disabled={busy} />{/if}
           {#if !nativeRecord && nativeEditorEnabled && preparedHost}{#key preparedHost.client}{#key `${selectedStory.id}:${format}`}
             <NativeLayoutHistory request={preparedHost.request} storyId={selectedStory.id} {format} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} onOpen={openNativeEditor} />
           {/key}{/key}{/if}
