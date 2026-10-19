@@ -1,0 +1,25 @@
+# OPTIONAL: source-only overlay for a reviewed existing local recovery fixture.
+# Do not activate until patched backend/exporter artifacts pass root review.
+# Pass BOTH the original private runtime env and generated client.env using
+# --env-file, then this overlay AFTER the existing compose file.
+services:
+  penpot-backend:
+    environment:
+      PENPOT_REDIS_URI: ${PENPOT_REDIS_URI:?Load generated private client.env}
+  penpot-exporter:
+    environment:
+      PENPOT_REDIS_URI: ${PENPOT_REDIS_URI:?Load generated private client.env}
+  penpot-valkey:
+    user: "0:0"
+    entrypoint: [tini, --, /run/studio-cache/start-valkey.sh]
+    command: [valkey-server, --aclfile, /run/valkey-private/users.acl, --maxmemory, 128mb, --maxmemory-policy, volatile-lfu]
+    volumes:
+      - ${PENPOT_CACHE_AUTH_DIRECTORY:?Private generated directory required}/users.acl:/run/studio-cache-input/users.acl:ro
+      - ${PENPOT_CACHE_AUTH_DIRECTORY:?required}/health.password:/run/studio-cache-input/health.password:ro
+      - ${PENPOT_CACHE_AUTH_TOOLS:?Verified release tools directory required}:/run/studio-cache:ro
+    tmpfs: ["/run/valkey-private:rw,noexec,nosuid,size=64k,mode=0700"]
+    healthcheck:
+      test: [CMD, /run/studio-cache/healthcheck.sh]
+      interval: 2s
+      timeout: 3s
+      retries: 20

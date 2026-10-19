@@ -119,6 +119,8 @@ jobs:
           node-version: '22'
       - name: Build and recreate the authenticated persistent local container
         run: bash scripts/docker-smoke.sh
+      - name: Verify private cache authentication in a hosted disposable container
+        run: python3 tools/penpot-cache-auth/verify-hosted.py
 
   google-signin-browser:
     runs-on: ubuntu-latest
