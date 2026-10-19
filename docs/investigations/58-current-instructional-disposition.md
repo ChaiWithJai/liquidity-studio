@@ -1,12 +1,20 @@
 # Current disposition of all 70 instructional requirements
 
-Updated 2026-10-19 UTC from merged main `dfca281` and the dated actual recovery checkpoints below. The original ledger baseline was `e49dab5`. This addendum supersedes implementation-status observations in the [6937c53 snapshot](39-instructional-disposition.md), without rewriting that historical audit or removing either blueprint. Agent-operated product acceptance is not evidence of founder/marketer learning.
+Reconciled 2026-10-19 UTC against merged main `ae2a5c3` and the dated acceptance below. Earlier observations based on `dfca281` are retained under their original dates. The original ledger baseline was `e49dab5`. This addendum supersedes implementation-status observations in the [6937c53 snapshot](39-instructional-disposition.md), without rewriting that historical audit or removing either blueprint. Agent-operated product acceptance is not evidence of founder/marketer learning.
 
 ## Current practice instructions
 
-The [content-work walkthrough](58-native-operator-practice.md#current-content-work-walkthrough) is updated for merged PR197/198/201: preview-first Studio, More actions, Preview settings, and explicit Create/Open Penpot versus the separate Studio native layout. Its local founder/marketer persona evidence is engineering QA, not learner competence. Invitations or a fresh SSO session are not prerequisites for practicing in an already authorized local workspace. The dated 70-item implementation ledger below remains intact; this instruction update does not close issue58 or its human practice requirements.
+The [content-work walkthrough](58-native-operator-practice.md#current-content-work-walkthrough) covers preview-first Studio, More actions, Preview settings and the contained Penpot workflow delivered through PRs 287, 298 and 303–305. Native Penpot exports remain distinct from the saved Studio preview and the separate Studio native layout. Its local founder/marketer persona evidence is engineering QA, not learner competence. Invitations or a fresh SSO session are not prerequisites for practicing in an already authorized local workspace. The dated 70-item implementation ledger below remains intact; this instruction update does not close issue58 or its human practice requirements.
 
 ## Evidence index
+
+### Current completion checkpoints (2026-10-19)
+
+- **H: contained editor.** [Managed founder acceptance](https://github.com/ChaiWithJai/liquidity-studio/issues/283#issuecomment-6275902280) and [normal controlled Marketer acceptance](https://github.com/ChaiWithJai/liquidity-studio/issues/302#issuecomment-6277200080) cover story → nested design → edit → Move/Saved → reload → native export → return with context retained. [Pristine-state acceptance](https://github.com/ChaiWithJai/liquidity-studio/issues/297#issuecomment-6275864596) distinguishes **No unsaved changes** from an actual **Saved** acknowledgement. [Issue 283's closure](https://github.com/ChaiWithJai/liquidity-studio/issues/283#issuecomment-6277200784) explicitly does not claim Nicole participation or instructional practice.
+- **J: isolation and recovery.** [Issue 52's final acceptance](https://github.com/ChaiWithJai/liquidity-studio/issues/52#issuecomment-6268542407) adds natural lease expiry, protected-operation denial and prior isolation/revocation evidence. [Issue 57's reconciliation](https://github.com/ChaiWithJai/liquidity-studio/issues/57#issuecomment-6261636216) and [closure](https://github.com/ChaiWithJai/liquidity-studio/issues/57#issuecomment-6268543420) cover fresh restore while source origins were unavailable, destination-owned cold restart, datastore rejoin, authenticated Valkey and a separate PostgreSQL application-owner login. This is not DML-only runtime access, per-brand cache users, deleted-source recovery, a new machine or cloud disaster recovery.
+- **V: deployed topology.** [Issue 279's remote pilot acceptance](https://github.com/ChaiWithJai/liquidity-studio/issues/279#issuecomment-6275071403) records the existing budgeted Cloud Run Studio plus VM native Compose deployment, stable HTTPS, connection and current-person admission. The [managed template](../../deployments/managed-penpot/README.md) is inspectable; Cloud SQL/Memorystore consolidation and the blueprints' exact ports or VM size were not selected. A forecast is not a hard spending cap or performance guarantee.
+
+The [verified signed upstream license text](doory-signed-license/README.md) is source evidence, not a commercial license purchase or entitlement. MPL delivery and corresponding-source obligations for the selected vendor artifacts remain separate from any unselected business license. These checkpoints remove obsolete product prerequisites; they do not complete any learner record.
 
 ### Product follow-through (2026-10-19)
 
@@ -57,8 +65,8 @@ account-acceptance task is a prerequisite for shipping the product features.
 | E | [Explicit verified PNG completion](../design-review/issue-56/verified-native-png.md), PR116/119; [Neo both scheduling/export orders](../design-review/issue-56/neo-orders/README.md), merged PR132; fixture UI dependency disclosed. |
 | S | [Prepared source/review pilot](../deployments/prepared-source-pilot.md), PR117/122/128; retrieved candidates remain distinct from human approval. |
 | R | [Portable recovery contract](../specs/editor-portable-pack.md), PR114/119/122/129/133; original authority stripped and current-owner review required. |
-| I | [Scoped identity/private assets](../specs/editor-identity-boundary.md), PR63/134; real Google/native GCS and external room acceptance remain. |
-| G | [Architecture/cost evidence](39-penpot-contracts-and-operations.md); [Dated pilot forecast](57-pilot-cost-forecast.md), merged PR135 after the implementation audit; not a spending cap/sizing proof. |
+| I | [Scoped identity/private assets](../specs/editor-identity-boundary.md), PR63/134; later identity/session/isolation evidence is J and current managed entry is H/V; shared GCS/S3 architecture is not implied. |
+| G | [Architecture/cost evidence](39-penpot-contracts-and-operations.md); [Dated pilot forecast](57-pilot-cost-forecast.md), merged PR135 after the implementation audit; not a spending cap/sizing proof; later deployment evidence is V. |
 
 | L | [Seven local source previews](source-preview-local-seven-acceptance.md); all seven edited/reloaded, clinical quarantine retained; maintained-cloud completion separate. |
 | D | [Shared planning and report/draft retention](defiant-evidence-constraints-acceptance.md); actual local personas, no independent learner claim. |
@@ -72,7 +80,7 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | ID | Required element | Current disposition |
 | --- | --- | --- |
 | A01 | Creative marketer/social operator needs Canva-speed cutout, curved badges, motion and prefilled Monday canvas | N,C,M,A; cutout, motion and sound product paths observed; marketer speed, curved badges and independent practice unobserved. |
-| A02 | Founder/steward needs GCP sovereignty, no per-seat lock-in, inspectable tokens/SVG/Fabric and feedback | R,N; license hold and human stewardship practice remain. |
+| A02 | Founder/steward needs GCP sovereignty, no per-seat lock-in, inspectable tokens/SVG/Fabric and feedback | R,N,V; deployed pilot and portable exit are evidenced; vendor delivery/source obligations and any commercial entitlements remain distinct. Human stewardship practice is unobserved. |
 | A03 | Angel City$250 M or Bhramari 15 x story → SVG/PNG/PDF/MP4/GIF in 60 seconds | M,A,L; actual artifacts and dated clinical previews exist; 60s learner task and clinical 15× claim remain unproved. |
 | A04 | Compare paid manual Figma/Canva copy-paste or YOLO/DETR/OCR with code-native layouts | Concept only; no assumed learner Canva history or general CV capability. |
 | A05 | Weekly job emits tokens/SVG/Fabric, eliminates manual transfer and enables instantaneous cutout/video | S,K; durable jobs/spec exist, scheduled end-to-end finishing remains. |
@@ -84,7 +92,7 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | A11 | `PenpotDooryMultimodalAdapter` implementation | K,N,P; separate real canonical/native adapters, not fictional legacy class. |
 | A12 | Switch liquidity_desk/vedic_dharma, generate and inspect adapted tokens/layers | N,P,T; both-brand fixtures demonstrated, human practice pending. |
 | A13 | `compileMultimodalBundle`, valid W3 C/SVG/Fabric plus 8 backwards/5 QA | K,N,P,R; actual artifacts replace 8/5 assessment, no competence score. |
-| A14 | Deploy editor sidecar on Cloud Run+Cloud SQL/GCS through port | G,I; production sidecar/SQL topology conditional, not deployed. |
+| A14 | Deploy editor sidecar on Cloud Run+Cloud SQL/GCS through port | G,I,V; the remote Studio/native pilot is deployed. The proposed Cloud SQL sidecar topology remains an unselected alternative. |
 | A15 | One-line compiler snippet shows subject_cutout_layer, brand_pill_badge, headline_layer, metric_card_1..3 | K,N; six stable IDs/complete semantic copy, inspect actual native objects. |
 | A16 | Penpot owns kit/master grid; Doory finishing/ONNX/motion | N,P; optional tool specialization, no assumed mandatory editor order. |
 | A17 | M1 swatch updates exportW3 CDesignTokens and Fabric immediately | T,P; actual live token/native pixel checks, production handoff partial. |
@@ -99,9 +107,9 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | A26 | If Doory stability/AAL problematic, isolate port or embed “MIT” Fabric+@imgly/background-removal in Svelte | C,N; original MODNet exists, no IMGly/Doory blanket license clearance. |
 | A27 | Single-container Penpot SVG preview without external services | K,P; static/spec preview exists, native Penpot still requires its runtime. |
 | A28 | Embedded Fabric/WASM in M4 using Doory scene schema | N,C; actual upstream private host, public binary held; not subset parity. |
-| A29 | Self-host Penpot MCP or full Doory stack on GCP | P,N,G; local investigated, full production editor GCP not delivered. |
+| A29 | Self-host Penpot MCP or full Doory stack on GCP | P,N,G,V; the native Penpot pilot is deployed on GCP; a full Doory stack or Penpot MCP deployment remains an alternative, not implied. |
 | A30 | Reel 0:00–0:03,0:03–0:15,0:15–0:30 → three sequential `drfPayload.pages` → MP4 | M,A,F; both-brand timed motion and actual stereo MP4/WebM, including the complete restored saved Reel/audio; encoded audio output 30.08 s/30.02 s, exact source timeline and learner transfer distinguished. |
-| A31 | Avoid Node+Django+Clojure operational bloat; emit specs and optionally connect external URLs | N,G; Studio-owned avoids new Django/SQL/Redis, external path conditional. |
+| A31 | Avoid Node+Django+Clojure operational bloat; emit specs and optionally connect external URLs | N,G,V; Studio-owned finishing remains separate from the deployed Penpot PostgreSQL/Valkey stack; no new Django service or mandatory editor sequence. |
 | A32 | Very young Oct 2026 Doory/AAL; pin commit, retain attribution or render primitives | N; upstream pinned/notices preserved; [signed upstream license verified](doory-signed-license/README.md), retained-artifact notice reconciliation and human practice remain. |
 | A33 | Run backwards/QA to prove entire experience | N,P,R; actual task evidence required, human learning not inferred from CI. |
 | B01 | Creative team uses Doory co-editing then Penpot pre-post composition | N,P,D; separate-persona shared planning notes work; distinct-profile native live updates and callback-outage recovery now passed after the dated #261 failure (PR262). No mandatory Doory→Penpot sequence or human learner claim. |
@@ -110,17 +118,17 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | B04 | Tuesday multiplayer cutouts, filters, text and MP4/GIF passes | C,M,A,D,F; cutout, timed motion, restored audio and shared notes observed; native live updates/outage recovery passed after #261/PR262. Filter coverage and learner performance remain unobserved. |
 | B05 | Wednesday–Sunday governed 4:5/four-slide/9:16 templates and final posting packs | N,P,E; four-format layouts/review, social publication absent. |
 | B06 | Avoid duplicate databases, manual download/reupload and unclear tool ownership | N,R; fewer reconstruction steps, learner efficiency not measured. |
-| B07 | One Cloud SQL, one Redis, one GCS and deterministic port orchestration | G; chosen Firestore/SQLite differs; combined SQL/Redis alternative not built. |
-| B08 | Inspect full self-host Compose and multimodal route for CWJ pipelineStages/tokens/Fabric/Penpot | K; canonical route exists, combined Compose first-win unavailable. |
+| B07 | One Cloud SQL, one Redis, one GCS and deterministic port orchestration | G,V; Studio retains Firestore/SQLite and native Compose uses dedicated PostgreSQL/Valkey. A single shared Cloud SQL/Redis/GCS topology was not selected. |
+| B08 | Inspect full self-host Compose and multimodal route for CWJ pipelineStages/tokens/Fabric/Penpot | K,V,H; canonical route and deployed native Compose are inspectable; the literal three-stage first-win payload and learner explanation are not implied. |
 | B09 | Architect/verify Studio→Doory→Penpot on shared backing services | N,P,R; native proof partial, shared-backing architectural competency unassessed. |
 | B10 | Pixel/motion teamwork vs final token/component lock | E,K; explicit review authority/immutable generation, no assumed tool order. |
 | B11 | Logical Postgres DBs, Redis indexes and GCS S3 consolidation | I,G; no shared SQL/Redis/S3 adoption; Redis indexes not authorization. |
 | B12 | Editors compete or require duplicate clusters | Concept retained; separate clusters may improve isolation. |
-| B13 | Compose and adapter source | K,N,P; actual source/local stacks, combined production Compose absent. |
+| B13 | Compose and adapter source | K,N,P,V; adapter source and deployed native Compose are available; this is not the proposed combined Doory/Penpot shared-service stack. |
 | B14 | generate-campaign→compileDooryFabricScene→compilePenpotSvgBoard→export | N,P,M; actual edit/export, automatic Doory→Penpot private media incomplete. |
 | B15 | 8 backwards+5 QA at 100% | Actual task/security/recovery assessment replaces 8/5/100; learner not scored. |
 | B16 | Third tenant/GPU Study Hall via tokens and preset stories | R,I,F; independent local application and native destination restore, fonts and explicit current-owner reconnection observed; not a preset permission grant, fresh cloud infrastructure or human capstone. |
-| B17 | Compose services 8080/8081/9001 and shared Postgres/Redis/GCS | N,P; isolated local ports proven, requested shared production topology absent. |
+| B17 | Compose services 8080/8081/9001 and shared Postgres/Redis/GCS | N,P,V; deployed native Compose exists; the blueprints’ exact ports and shared Doory/Penpot backing topology remain unselected. |
 | B18 | Huda portrait or Bhramari acoustic diagram cutout/motion→locked component | C,L; rights-declared synthetic portrait and dated unreviewed research previews; real portrait consent and acoustic clinical scenario remain separate. |
 | B19 | M1 color updates stage 2 scene+stage 3 tokens | T,P; actual token preservation, cross-tool production identity/media remains. |
 | B20 | Final export then inspect DPO record JSONL | E; verified events preferenceLabel null, export is not preference/publication. |
@@ -130,17 +138,17 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | B24 | Penpot four-slide Mona Sans/Inter library lock/export | P; native carousel fonts/tokens/archive PNG, production identity/media remains. |
 | B25 | Shared bucket paths;3,900+ theorems,40 Hz gamma,Sutra 3.1–3.3,100%eval | S,I; each quantity/source/clinical claim needs review, no 100 evaluation guarantee. |
 | B26 | story_ramanujan_namagiri route yields 3 stages/tokens/cutout/SVG | K,S,L; Ramanujan source-linked four-format preview/edit/reload observed, not the named full cutout/native three-stage outcome. |
-| B27 | Claimed created/verified Compose | N,P; historical false claim retained, later local proof not combined production Compose. |
+| B27 | Claimed created/verified Compose | N,P,V; the historical false claim remains historical; later actual native Compose deployment does not establish the original combined topology. |
 | B28 | Claimed 8/8 and 5/5 suites | Historical counts insufficient; use dated tasks/denials/skips. |
-| B29 | Dropped Yjs cursors: Cloud Run affinity+3600 timeout+RedisDB0 | I; the dated stale-subscription failure (#261) was followed by actual two-direction local updates and recovery after an eight-second callback outage (PR262). Cloud Run affinity/Redis behavior and fresh revocation remain unproved by that run. |
+| B29 | Dropped Yjs cursors: Cloud Run affinity+3600 timeout+RedisDB0 | I,J; the dated #261 failure and PR262 outage recovery remain attributed to their runs. Later issue 52 acceptance adds actual revocation and natural expiry; it does not establish the proposed Cloud Run affinity/RedisDB0 recipe. |
 | B30 | Blank fonts/export latency:2–4 GB exporter RAM and mounted Mona Sans/Inter | P,M,A; actual mounted-font/native outputs and stereo media; <1.5s export or 2–4GB capacity target not established. |
-| B31 | Single Studio previews both specs inline | K,N; previews/native entry exist, dual-spec practice needs guidance. |
-| B32 | `docker compose -f docker-compose.gcp-selfhost.yml up -d` on e 2-standard-4 | N,P,G; local experiments exist, requested VM command unavailable/sizing unproved. |
+| B31 | Single Studio previews both specs inline | K,N,H; contained native entry, save/reload/export/return and context retention are observed; independent learner explanation remains. |
+| B32 | `docker compose -f docker-compose.gcp-selfhost.yml up -d` on e 2-standard-4 | N,P,G,V; the reviewed managed Compose template and deployed pilot exist; the literal filename/e2-standard-4 command and sizing claim were not selected. |
 | B33 | Cloud SQL+Memorystore+GCS and stateless Cloud Run web/API | G,I,R; managed scale conditional, SQL/Redis floor exceeds current envelope. |
 | B34 | PenpotReadyToPost webhook/enable-webhooks autoPOST export and calendarExported | E; explicit authenticated signed completion, no invented ReadyToPost/autopublish. |
-| B35 | Redis 0 Doory/1 Penpot prevents collisions | I,G; Redis not chosen, indexes alone insufficient ACL or blast-radius boundary. |
+| B35 | Redis 0 Doory/1 Penpot prevents collisions | I,G,J,V; native Valkey uses authenticated deployment users on a dedicated network; Redis indexes alone are not authorization and no Doory/Penpot index-sharing claim is made. |
 | B36 | Same GCS bucket makes cutouts immediately reusable without upload | I; private proxy context implemented, actual S3/Penpot media compatibility separate. |
-| B37 | Inspect Compose and run 8/5 suites | N,P,R,F; source/pack/fresh application restore advances product proof; full topology and consented human capstone remain. |
+| B37 | Inspect Compose and run 8/5 suites | N,P,R,F,J,V; source, native Compose and fresh recovery are evidenced. The exact combined topology remains an alternative; consented human capstone and explanations remain. |
 
 ## Instructional validation status
 
