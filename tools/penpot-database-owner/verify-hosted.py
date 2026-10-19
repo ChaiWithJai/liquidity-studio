@@ -6,10 +6,15 @@ if os.environ.get('GITHUB_ACTIONS') != 'true':
     raise SystemExit('Hosted Actions execution only')
 IMAGE = 'postgres@sha256:c961aa287d8698297cb26cdfadfbe9fd2cbaf77e53cfffe9636e8d8a1e4d842c'
 TOOLS = pathlib.Path(__file__).resolve().parent
+REDACT = []
 
 def run(args, data=None, check=True, timeout=30):
     result = subprocess.run(args, input=data, capture_output=True, timeout=timeout)
     if check and result.returncode:
+        detail = result.stderr.decode(errors='replace')
+        for secret in REDACT:
+            detail = detail.replace(secret, '[REDACTED]')
+        print('Disposable database operation diagnostic: '+detail[-1500:], flush=True)
         raise RuntimeError('Hosted database-owner operation rejected')
     return result
 
@@ -29,6 +34,7 @@ with tempfile.TemporaryDirectory(prefix='database-owner-ci-') as temp:
         raise AssertionError('Existing credential directory replaced')
     env = dict(line.split('=', 1) for line in (private / 'application.env').read_text().splitlines())
     password = env['PENPOT_DATABASE_PASSWORD']
+    REDACT.extend([password+'-operator', password])
     assert password not in (private / 'create-owner.sql').read_text()
     assert 'PASSWORD' not in (private / 'create-owner.sql').read_text()
     # This operator credential belongs only to the ephemeral hosted fixture.
@@ -51,10 +57,19 @@ with tempfile.TemporaryDirectory(prefix='database-owner-ci-') as temp:
              '--network', 'none', '--memory', '384m', '--memory-swap', '384m',
              '--cpus', '.5', '--pids-limit', '128', '--env-file', str(operator_env), IMAGE])
         for _ in range(100):
-            if run(['docker', 'exec', name, 'pg_isready', '-U', 'recovery_operator', '-d', 'penpot'], check=False, timeout=5).returncode == 0:
+            # Official initialization temporarily accepts Unix socket connections.
+            # Require an authenticated target-DB query on the final TCP listener.
+            ready = run(['docker', 'exec', '-i', name, 'sh', '-ec',
+                'IFS= read -r PGPASSWORD; export PGPASSWORD; exec psql -X -v ON_ERROR_STOP=1 -A -t -h 127.0.0.1 -U recovery_operator -d penpot -c \"SELECT 1\"'],
+                data=(password+'-operator\n').encode(), check=False, timeout=5)
+            if ready.returncode == 0 and ready.stdout.strip() == b'1':
                 break
             time.sleep(.2)
         else:
+            detail = ready.stderr.decode(errors='replace')
+            for secret in REDACT:
+                detail = detail.replace(secret, '[REDACTED]')
+            print('Disposable database readiness diagnostic: '+detail[-1500:], flush=True)
             raise AssertionError('Hosted PostgreSQL never became ready')
         assert sql('penpot', 'SHOW server_version_num').stdout.strip().startswith(b'15')
         sql('penpot', "CREATE EXTENSION \"uuid-ossp\"; CREATE TABLE migrations(module text,step text,created_at timestamp DEFAULT current_timestamp,UNIQUE(module,step)); INSERT INTO migrations(module,step) VALUES ('main','fixture'); CREATE TABLE retained_doc(id serial PRIMARY KEY,title text); INSERT INTO retained_doc(title) VALUES ('retained source document');")
