@@ -1006,3 +1006,16 @@ test('failed audio metadata commit cleans only its own staged payload and leaves
  source.native.commitScoped=async()=>{throw new Error('Injected metadata failure');};
  await assert.rejects(source.native.uploadAsset(actor,{name:'Owned audio',contentType:'audio/wav',base64:pcmWav().toString('base64'),rightsDeclaration:'Original generated signal',consent:'not_personal_data',idempotencyKey:'failed_audio_metadata'}),/Injected metadata failure/);source.native.commitScoped=original;assert.deepEqual(source.store.keys('').sort(),before);
 });
+test('historical community-model cutout lineage survives export and fresh restore unchanged',async t=>{
+ const source=await fixture(t),records=await allFormats(source),record=records[0],sharp=(await import('sharp')).default;
+ const bytes=await sharp({create:{width:64,height:64,channels:4,background:{r:20,g:100,b:80,alpha:1}}}).png().toBuffer();
+ const upload=key=>source.native.uploadAsset(actor,{name:'Retained licensed synthetic image',contentType:'image/png',base64:bytes.toString('base64'),rightsDeclaration:'Original synthetic fixture',consent:'not_personal_data',idempotencyKey:key});
+ const original=await upload('legacy_cutout_original'),derivative=await upload('legacy_cutout_derivative');
+ const legacy={kind:'background-removal',execution:'browser_reported',serverValidation:'scope-source-native-input-hash-rights-dimensions-output-hash',inputAssetId:original.id,inputSha256:original.sha256,modelSha256:'07c308cf0fc7e6e8b2065a12ed7fc07e1de8febb7dc7839d7b7f15dd66584df9',processorVersion:'studio-modnet-area-v1',outputPolicy:'preserve-resolution-or-reject',documentId:record.id,nativeRevision:record.revision,intentId:'a'.repeat(32),actorId:actor.id};
+ await source.store.update(source.native.prefix+'asset:'+derivative.id,asset=>({...asset,lineage:legacy}));
+ const pack=await source.service.export(actor);assert.deepEqual(pack.assets.find(a=>a.id===derivative.id).metadata.lineage,legacy);validateEditorPack(pack);
+ const target=await fixture(t,'liquidity_desk',true,'legacy-cutout-destination');await target.service.install(actor,pack,{...input,target:{organizationId:'organization',brandId:'legacy-cutout-destination'}});
+ assert.deepEqual((await target.native.asset(actor,derivative.id)).lineage,legacy);
+ assert.deepEqual((await source.native.asset(actor,derivative.id)).lineage,legacy);
+ assert.equal((await target.native.asset(actor,original.id)).sha256,original.sha256);
+});

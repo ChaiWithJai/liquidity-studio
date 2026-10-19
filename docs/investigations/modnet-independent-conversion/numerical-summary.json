@@ -1,0 +1,168 @@
+{
+  "passed": true,
+  "checkpointSha256": "7c22235f0925deba15d4d63e53afcb654c47055bbcd98f56e393ab2584007ed8",
+  "onnxSha256": "0c51523c07db8279bcc7239e12f333a662a594075ce1d80a949b4f781dd1d1e3",
+  "onnxBytes": 25961493,
+  "authorSource": "28165a451e4610c9d77cfdf925a94610bb2810fb",
+  "opset": 11,
+  "versions": {
+    "torch": "2.14.1+cpu",
+    "onnx": "1.23.2",
+    "onnxruntime": "1.31.0",
+    "numpy": "2.4.6",
+    "opencv": "5.0.0"
+  },
+  "fixtures": [
+    {
+      "fixture": "retained",
+      "dimensions": [
+        768,
+        768
+      ],
+      "modelDimensions": [
+        512,
+        512
+      ],
+      "inputSha256": "e9601cbee51f2d7c364db36179c6d36e7821ff9876c456043d98b54e2646c365",
+      "originalVsExportGraph": {
+        "maxAbsolute": 0.0,
+        "meanAbsolute": 0.0
+      },
+      "originalVsOnnx": {
+        "maxAbsolute": 1.4901161193847656e-06,
+        "meanAbsolute": 4.974293996568306e-08
+      },
+      "alpha8bit": {
+        "maxAbsolute": 1.0,
+        "meanAbsolute": 6.781684027777777e-06
+      },
+      "passed": true
+    },
+    {
+      "fixture": "portrait",
+      "dimensions": [
+        512,
+        768
+      ],
+      "modelDimensions": [
+        512,
+        768
+      ],
+      "inputSha256": "6c3eed61feb626c93347da7b1ec6602bbee83ec5ac7a1947bd66cd70622a003f",
+      "originalVsExportGraph": {
+        "maxAbsolute": 0.0,
+        "meanAbsolute": 0.0
+      },
+      "originalVsOnnx": {
+        "maxAbsolute": 3.2782554626464844e-06,
+        "meanAbsolute": 6.441432669870235e-08
+      },
+      "alpha8bit": {
+        "maxAbsolute": 1.0,
+        "meanAbsolute": 1.0172526041666666e-05
+      },
+      "passed": true
+    },
+    {
+      "fixture": "landscape",
+      "dimensions": [
+        768,
+        512
+      ],
+      "modelDimensions": [
+        768,
+        512
+      ],
+      "inputSha256": "e3827e7c02c7bd2a30fecfddd3b7aa4393e48aea14a0734c4abec5cdc826e2c1",
+      "originalVsExportGraph": {
+        "maxAbsolute": 0.0,
+        "meanAbsolute": 0.0
+      },
+      "originalVsOnnx": {
+        "maxAbsolute": 1.2278556823730469e-05,
+        "meanAbsolute": 6.432707503024142e-08
+      },
+      "alpha8bit": {
+        "maxAbsolute": 1.0,
+        "meanAbsolute": 1.7801920572916668e-05
+      },
+      "passed": true
+    },
+    {
+      "fixture": "square",
+      "dimensions": [
+        768,
+        768
+      ],
+      "modelDimensions": [
+        512,
+        512
+      ],
+      "inputSha256": "e9601cbee51f2d7c364db36179c6d36e7821ff9876c456043d98b54e2646c365",
+      "originalVsExportGraph": {
+        "maxAbsolute": 0.0,
+        "meanAbsolute": 0.0
+      },
+      "originalVsOnnx": {
+        "maxAbsolute": 1.4901161193847656e-06,
+        "meanAbsolute": 4.974293996568306e-08
+      },
+      "alpha8bit": {
+        "maxAbsolute": 1.0,
+        "meanAbsolute": 6.781684027777777e-06
+      },
+      "passed": true
+    },
+    {
+      "fixture": "small",
+      "dimensions": [
+        320,
+        480
+      ],
+      "modelDimensions": [
+        512,
+        768
+      ],
+      "inputSha256": "ced69105f9d9e3a5ec778089a5f59b7eab1c59570dda6e32db3ab81fda044032",
+      "originalVsExportGraph": {
+        "maxAbsolute": 0.0,
+        "meanAbsolute": 0.0
+      },
+      "originalVsOnnx": {
+        "maxAbsolute": 4.649162292480469e-06,
+        "meanAbsolute": 5.505928543723557e-08
+      },
+      "alpha8bit": {
+        "maxAbsolute": 1.0,
+        "meanAbsolute": 6.510416666666667e-06
+      },
+      "passed": true
+    },
+    {
+      "fixture": "noninteger",
+      "dimensions": [
+        1024,
+        640
+      ],
+      "modelDimensions": [
+        800,
+        512
+      ],
+      "inputSha256": "cea62813d50bfd8a14d7c4fbe57a031fa6cfbc0936dc628bf613aca7970308df",
+      "originalVsExportGraph": {
+        "maxAbsolute": 0.0,
+        "meanAbsolute": 0.0
+      },
+      "originalVsOnnx": {
+        "maxAbsolute": 7.3015689849853516e-06,
+        "meanAbsolute": 7.351301398119262e-08
+      },
+      "alpha8bit": {
+        "maxAbsolute": 1.0,
+        "meanAbsolute": 6.103515625e-06
+      },
+      "passed": true
+    }
+  ],
+  "scope": "NEW independent artifact; not Xenova conversion reconstruction, training-data audit, browser quality acceptance or runtime adoption"
+}

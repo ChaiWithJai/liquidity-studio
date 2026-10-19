@@ -43,9 +43,17 @@ test("invalid chunk is rejected before reading model", async () => {
       reads++;
     },
   });
-  for (const index of [-1, 99, 1.5, "0", NaN])
+  for (const index of [-1, 100, 1.5, "0", NaN])
     await assert.rejects(provider.chunk(index), {
       code: "INVALID_MODEL_CHUNK",
     });
   assert.equal(reads, 0);
+});
+test("the independently converted model admits its hundredth chunk without weakening byte integrity", async () => {
+  let reads = 0;
+  const provider = createNativeCutoutModel({enabled:true,path:'/private/model',read:async()=>{reads++;throw Error('Fixture has no model bytes');}});
+  await assert.rejects(provider.chunk(99), {code:'CUTOUT_UNAVAILABLE'});
+  assert.equal(reads,1);
+  await assert.rejects(provider.chunk(100), {code:'INVALID_MODEL_CHUNK'});
+  assert.equal(reads,1);
 });

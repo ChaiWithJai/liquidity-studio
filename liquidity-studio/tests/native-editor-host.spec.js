@@ -1,3 +1,4 @@
+import {MODNET_MODEL_BYTES, MODNET_MODEL_CHUNKS} from '../server/native-cutout-contract.js';
 import {setNativeTool, closeNativeTools} from './native-host-tools.js';
 import { test, expect } from "@playwright/test";
 import { createServer } from "node:http";
@@ -1056,7 +1057,7 @@ test("reference-correct MODNet replaces a private portrait through native undo/s
   ).json();
   expect(warmAsset.sha256).toBe(asset.sha256);
   expect(modelChunks).toBe(chunksAfterCold);
-  expect(chunksAfterCold).toBe(99);
+  expect(chunksAfterCold).toBe(MODNET_MODEL_CHUNKS);
   await frame.locator("body").press("ControlOrMeta+z");
   await expect
     .poll(
@@ -1121,7 +1122,7 @@ test("reference-correct MODNet replaces a private portrait through native undo/s
   ).toBe(warmImage.assetId);
   measurements.optionalCacheBlockedByTest = cacheBlocked;
   measurements.modelChunks = modelChunks;
-  measurements.modelBytes = 25888640;
+  measurements.modelBytes = MODNET_MODEL_BYTES;
   measurements.outputBytes = asset.size;
   measurements.outputSha256 = asset.sha256;
   measurements.outputDimensions = [asset.width, asset.height];

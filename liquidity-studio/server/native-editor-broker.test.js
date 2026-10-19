@@ -238,3 +238,16 @@ test('broker admits professional PCM upload envelope while image messages retain
  await f.message({operation:'asset.upload',payload});assert.equal(f.calls.length,1);assert.equal(f.calls[0][0],'/api/studio/native-editor/assets?kind=audio');
  await f.message({operation:'asset.upload',payload:{...payload,contentType:'image/png'}});assert.equal(f.calls.length,1);assert.equal(f.sent.at(-1).data.error.status,400);f.broker.dispose();
 });
+test("broker routes the actual hundredth model chunk and rejects index 100", async () => {
+  const f=fixture(async path=>({index:99,path}));
+  try {
+    await f.message({operation:'cutout.chunk',payload:{index:99}});
+    await tick();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.calls[0][0],'/api/studio/native-editor/cutout/model/99');
+    await f.message({operation:'cutout.chunk',payload:{index:100}});
+    await tick();
+    assert.equal(f.calls.length,1);
+    assert.equal(f.sent.at(-1).data.error.status,400);
+  } finally { f.broker.dispose(); }
+});

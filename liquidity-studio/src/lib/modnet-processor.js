@@ -5,6 +5,9 @@
 export {
   MODNET_PROCESSOR_VERSION,
   MODNET_MODEL_SHA256,
+  MODNET_MODEL_BYTES,
+  MODNET_MODEL_CHUNK_SIZE,
+  MODNET_MODEL_CHUNKS,
 } from "../../server/native-cutout-contract.js";
 
 export function modelDimensions(width, height) {

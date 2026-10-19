@@ -1,3 +1,4 @@
+import {MODNET_MODEL_BYTES, MODNET_MODEL_CHUNK_SIZE, MODNET_MODEL_CHUNKS} from './native-cutout-contract.js';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createModnetWorkerClient } from "../src/lib/modnet-worker-client.js";
@@ -81,9 +82,9 @@ test("timeout and disposal abort the real chunk loader before another authentica
         if (paths.length === 1)
           return {
             sha256: MODNET_MODEL_SHA256,
-            size: 25888640,
-            chunkSize: 262144,
-            chunks: 99,
+            size: MODNET_MODEL_BYTES,
+            chunkSize: MODNET_MODEL_CHUNK_SIZE,
+            chunks: MODNET_MODEL_CHUNKS,
           };
         return new Promise((resolve) => (release = resolve));
       },
