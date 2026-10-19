@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {clipInterval,coverCrop,recordingMime} from '../src/lib/manual-clip-render.js';
+import {clipInterval,coverCrop,recordingMime,renderManualClip,keepClipValues} from '../src/lib/manual-clip-render.js';
 import {uploadClipMedia,mediaHash} from '../src/lib/clip-media-client.js';
 import {readStrategyLocation,writeStrategyLocation} from '../src/lib/defiant-location.js';
 import {scopedRequest} from '../src/lib/scoped-request.js';
@@ -37,4 +37,32 @@ test('lost upload completion reopens accepted bytes without resending completed 
  let chunks=0;const accepted={asset:{id:'already-saved'}},blob=new Blob(['owned bytes']);
  const result=await uploadClipMedia(async(path,options)=>{if(path==='/inbox/clips/uploads')return {uploadId:'same-request',chunkBytes:262144,chunkCount:1};if(options.method==='PUT'){chunks++;throw Error('Completed chunks must not be resent');}return accepted;},blob,{kind:'source'},'same-key');
  assert.deepEqual(result,accepted);assert.equal(chunks,0);
+});
+
+test('keeping working values on a newer segment revision requires a fresh save, even when old values were clean',()=>{
+ const working={sourceId:'source',recordingId:'recording',sourceAssetId:'video',startSeconds:0,endSeconds:5,cropX:.5,cropY:.5,caption:'Original caption',videoGain:1,audioGain:.7};
+ const newer={...working,id:'proposal',revision:2,caption:'Another manager caption',updatedAt:'2026-10-19'};
+ const rebase=keepClipValues(working,newer);
+ assert.equal(rebase.revision,2);assert.equal(rebase.requiresSave,true);assert.deepEqual(rebase.working,working);
+ assert.notEqual(rebase.base,JSON.stringify(working));assert.equal(JSON.parse(rebase.base).caption,'Another manager caption');
+ assert.equal(keepClipValues(working,{...working,revision:3}).requiresSave,true,'Explicit keep still requires acknowledgement when values happen to match');
+});
+
+test('cancel during fonts or audio-context startup never begins recording or playback',async()=>{
+ const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
+ const descriptors=new Map(['document','MediaRecorder','AudioContext','cancelAnimationFrame'].map(key=>[key,Object.getOwnPropertyDescriptor(globalThis,key)]));
+ try{
+  globalThis.cancelAnimationFrame=()=>{};
+  for(const stage of ['fonts','context']){
+   const gate=deferred(),entered=deferred(),controller=new AbortController(),calls={start:0,play:0,closed:0,stopped:0};
+   class Media extends EventTarget{duration=2;videoWidth=1920;videoHeight=1080;currentTime=0;load(){queueMicrotask(()=>this.dispatchEvent(new Event('loadeddata')));}pause(){}removeAttribute(){}play(){calls.play++;return Promise.resolve();}}
+   const graphics={fillRect(){},drawImage(){},measureText(){return {width:0};},fillText(){}};
+   globalThis.document={createElement:kind=>kind==='canvas'?{getContext:()=>graphics,captureStream:()=>({addTrack(){},getTracks:()=>[{stop(){calls.stopped++;}}]})}:new Media(),fonts:{get ready(){if(stage==='fonts'){entered.resolve();return gate.promise;}return Promise.resolve();}}};
+   globalThis.MediaRecorder=class{static isTypeSupported(){return true;}start(){calls.start++;}};
+   globalThis.AudioContext=class{createMediaStreamDestination(){return {stream:{getAudioTracks:()=>[]}};}createMediaElementSource(){return {connect(){}};}createGain(){return {gain:{value:0},connect(){}};}resume(){entered.resolve();return gate.promise;}close(){calls.closed++;return Promise.resolve();}};
+   const rendering=renderManualClip({videoBlob:new Blob(['owned fixture']),proposal:{startSeconds:0,endSeconds:1,cropX:.5,cropY:.5,caption:'',videoGain:1,audioGain:0},signal:controller.signal});
+   await entered.promise;controller.abort();gate.resolve();await assert.rejects(rendering,/Rendering cancelled/);
+   assert.equal(calls.start,0,stage);assert.equal(calls.play,0,stage);assert.equal(calls.closed,stage==='context'?1:0,stage);
+  }
+ }finally{for(const [key,descriptor]of descriptors){if(descriptor)Object.defineProperty(globalThis,key,descriptor);else delete globalThis[key];}}
 });
