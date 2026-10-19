@@ -24,6 +24,6 @@ test('save messages cannot come from another frame, document, origin or saved fi
  const source={},context={source,origin:embedding.nativeOrigin,nonce:'a'.repeat(43),fileId:id};
  const event={source,origin:embedding.nativeOrigin,data:{type:'studio-penpot-state',version:1,nonce:context.nonce,fileId:id,status:'saved',revision:8}};
  assert.deepEqual(readPenpotSaveState(event,context),{status:'saved',revision:8});
- for(const changed of [{...event,source:{}},{...event,origin:embedding.studioOrigin},{...event,data:{...event.data,nonce:'b'.repeat(43)}},{...event,data:{...event.data,fileId:'another'}},{...event,data:{...event.data,revision:-1}},{...event,data:{...event.data,status:'loaded'}}])assert.equal(readPenpotSaveState(changed,context),null);
+ for(const changed of [{...event,source:{}},{...event,origin:embedding.studioOrigin},{...event,data:{...event.data,nonce:'b'.repeat(43)}},{...event,data:{...event.data,fileId:'another'}},{...event,data:{...event.data,revision:-1}},{...event,data:{...event.data,revision:null}},{...event,data:{...event.data,status:'loaded'}}])assert.equal(readPenpotSaveState(changed,context),null);
  assert.equal(readPenpotSaveState(event,{...context,nonce:''}),null);
 });
