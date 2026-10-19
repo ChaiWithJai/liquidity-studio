@@ -55,7 +55,11 @@ def capture(out):
    data,_,_=read(url,512*1024*1024);total+=len(data);assert total<=1536*1024*1024 and sha(data)==digest
    wheel=tmp/filename;wheel.write_bytes(data)
    with zipfile.ZipFile(wheel) as z:
-    members=[n for n in z.namelist() if n.endswith('.dist-info/METADATA')];assert len(members)==1
+    # Vendored packages can carry their own nested dist-info records. Only
+    # this wheel's top-level distribution metadata identifies the resolved row.
+    members=[n for n in z.namelist() if n.count('/')==1 and n.endswith('.dist-info/METADATA')]
+    if len(members)!=1:
+     raise ValueError(f'Expected one root wheel METADATA for {name[:100]}=={version[:100]}; found {len(members)}')
     assert z.getinfo(members[0]).file_size<=2*1024*1024
     m=email.message_from_bytes(z.read(members[0]));assert re.sub(r'[-_.]+','-',m['Name']).lower()==name and m['Version']==version
     notices=[{'path':n,'sha256':sha(z.read(n)),'bytes':z.getinfo(n).file_size} for n in z.namelist() if '.dist-info/' in n and re.search(r'(?i)(license|notice|copying)',n) and not n.endswith('/') and z.getinfo(n).file_size<=2*1024*1024]
