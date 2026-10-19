@@ -183,6 +183,7 @@
         channel (sp/chan) purged (atom []) closed (atom []) notices (atom [])
         cfg (assoc cfg ::access/authorize (fn [_] (if @allowed {:allowed true} {:allowed false :reason :authority-unavailable})))
         fresh (assoc wsp ::ws/state (atom {}))
+        healthy (assoc wsp ::ws/state (atom {}))
         delegate (fn [_ socket message]
                    (when (= :subscribe-file (:type message))
                      (swap! (::ws/state socket) assoc :app.http.websocket/file-subscription
@@ -211,8 +212,8 @@
       (is (= 1 (count @closed)) "A still-denied new subscription does not create a close loop")
       (reset! allowed true)
       (is (thrown? Exception (live/handle-message cfg delegate wsp {:type :subscribe-file :file-id file})))
-      (live/handle-message cfg delegate fresh {:type :subscribe-file :file-id file})
-      (is (live/allow-output? cfg fresh {::live/resource resource :type :file-change}))
+      (live/handle-message cfg delegate healthy {:type :subscribe-file :file-id file})
+      (is (live/allow-output? cfg healthy {::live/resource resource :type :file-change}))
       (is (false? (live/allow-output? cfg wsp {::live/resource resource :type :file-change})))
       (is (= 1 (count @closed))))))
 

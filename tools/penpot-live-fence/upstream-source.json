@@ -48,7 +48,7 @@
     },
     {
       "path": "live_test.clj",
-      "sha256": "3c24833ff7eefa26879862893c93bd377cc8e79cc55b566ac9829fd0d5862668"
+      "sha256": "f0bb874dc7c1ebbad082c83bf07aad60e91fe808b57dbcdd144ed77c58513f35"
     },
     {
       "path": "websocket.patch",
