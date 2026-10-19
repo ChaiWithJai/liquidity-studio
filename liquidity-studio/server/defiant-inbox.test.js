@@ -60,3 +60,14 @@ test('changed retained supplied reference conflicts before historical import wri
  const f=await fixture(t),preview=await f.service.previewInbox(f.actor,{kind:'nipsey-historical20'});await f.service.importInbox(f.actor,f.input({kind:preview.kind,previewDigest:preview.previewDigest}));f.store.update(f.service.key,s=>{s.inbox.sources[0].suppliedReferences[0].source.title='Different retained supplied input';return s;});
  const changed=await f.service.previewInbox(f.actor,{kind:preview.kind});assert.equal(changed.counts.references.conflicting,1);const before=f.store.get(f.service.key);await assert.rejects(f.service.importInbox(f.actor,f.input({kind:changed.kind,previewDigest:changed.previewDigest})),{status:409});assert.deepEqual(f.store.get(f.service.key),before);
 });
+test('cohorts reflect supplied provenance and attached references without changing manager work or durable facts',async t=>{
+ const f=await imported(t),{inboxInput}=await import('./defiant-inbox.js'),sample=inboxInput({kind:'nipsey-historical20'}),live={...sample.sources[0],title:'Current discovery',provenance:{kind:'manual-youtube-discovery'}};
+ delete live.original;f.store.update(f.service.key,s=>{s.inbox.sources.push(live);return s;});
+ const preview=await f.service.previewInbox(f.actor,{kind:'nipsey-historical20'});await f.service.importInbox(f.actor,f.input({kind:preview.kind,previewDigest:preview.previewDigest}));
+ const before=f.store.get(f.service.key),all=await f.service.inbox(f.actor,{cohort:'all'}),supplied=await f.service.inbox(f.actor,{cohort:'supplied-2026'}),historical=await f.service.inbox(f.actor,{cohort:'historical-sample',sourceId:live.id}),discovery=await f.service.inbox(f.actor,{cohort:'youtube-discovery'});
+ assert.equal(all.sources.length,65);assert.equal(supplied.sources.length,45);assert.equal(historical.sources.length,20);assert.equal(discovery.sources.length,1);assert.deepEqual(discovery.sources[0].cohorts,['historical-sample','youtube-discovery']);assert.deepEqual(historical.selected.cohorts,discovery.sources[0].cohorts);assert.ok(supplied.sources.every(s=>s.cohorts.includes('supplied-2026')));
+ const combined=await f.service.inbox(f.actor,{cohort:'historical-sample',query:'Current discovery'});assert.deepEqual(combined.sources.map(s=>s.id),[live.id]);assert.deepEqual(f.store.get(f.service.key),before);assert.equal(before.inbox.sources.find(s=>s.id===live.id).cohorts,undefined);
+ const platform={store:f.store,identity:f.identity},route='/api/studio/strategy/'+f.org.id+'/inbox',url=new URL('https://studio.example'+route+'?cohort=historical-sample');assert.equal((await strategyRequest({platform,user:f.actor,route,method:'GET',url})).sources.length,20);
+ for(const cohort of ['2026','',null,42])await assert.rejects(f.service.inbox(f.actor,{cohort}),{status:400});
+ await assert.rejects(f.service.inbox(f.actor,{cohort:'all',unsupported:true}),{status:400});
+});
