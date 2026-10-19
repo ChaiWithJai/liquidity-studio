@@ -8,6 +8,16 @@ The [content-work walkthrough](58-native-operator-practice.md#current-content-wo
 
 ## Evidence index
 
+### Product follow-through (2026-10-19)
+
+- [New-model cutout acceptance](https://github.com/ChaiWithJai/liquidity-studio/issues/55#issuecomment-6261592193) closes the local media engineering ticket. The independently converted model produced a transparent PNG, preserved the original and historical cutout, supported Undo/save/reopen, downloaded all 100 chunks cold and reused cached bytes warm. This supersedes the selected model’s conversion gap, not historical asset lineage. Single-run timing and exposed idle JS heap are bounded observations, not speed guarantees, total peak memory or a portrait-quality benchmark.
+- [Finance workspace acceptance](https://github.com/ChaiWithJai/liquidity-studio/issues/52#issuecomment-6261483468) records ordinary Create/Open, native text editing and full reload in the separate finance workspace, with foreign requests denied and CWJ still readable. Finish text entry with **Move** before waiting for **Saved** and reopening; content and measured text layout can settle separately while the editor remains active.
+- [Owned runtime follow-through](https://github.com/ChaiWithJai/liquidity-studio/issues/57#issuecomment-6261609789) retains the reviewed model, native assets and provenance inside the restored runtime’s owned directory; the saved design reopened after a path-only restart. This is not a new cloud deployment or a substitute for the separately recorded fresh-restore evidence.
+
+These are agent-operated product observations. Founder/marketer worked examples,
+explanations, independent practice and feedback still require actual consenting
+participants. Do not fill the private record template from these engineering results.
+
 ### Latest product walkthroughs (2026-10-18)
 
 These are engineering observations in the ordinary BrowserOS neo UI, not learner
