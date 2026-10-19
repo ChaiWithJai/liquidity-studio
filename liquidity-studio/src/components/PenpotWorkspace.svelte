@@ -4,7 +4,7 @@
   let {design,storyTitle,brandName,formatName,onReturn,onSaveStateChange=()=>{}}=$props();
   let loaded=$state(false),saveState=$state('unknown'),revision=$state(null),frame;
   let nonce='';
-  const labels={unknown:'Save status unavailable',editing:'Finish editing to save',pending:'Unsaved changes',saving:'Saving…',saved:'Saved',error:'Changes could not be saved'};
+  const labels={unknown:'Save status unavailable',clean:'No unsaved changes',editing:'Finish editing to save',pending:'Unsaved changes',saving:'Saving…',saved:'Saved',error:'Changes could not be saved'};
   function resetFrame(){
     nonce=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+','-').replaceAll('/','_').replaceAll('=','');
     loaded=true;saveState='unknown';revision=null;onSaveStateChange('unknown');observe();
@@ -23,7 +23,7 @@
 </script>
 <section class="design-workspace" aria-label="Campaign design workspace">
   <header>
-    <div><strong>{brandName} · {formatName}</strong><span title={storyTitle}>{storyTitle}</span><span role="status">{labels[saveState]}{saveState==='saved'&&revision!==null?` · revision ${revision}`:''}</span></div>
+    <div><strong>{brandName} · {formatName}</strong><span title={storyTitle}>{storyTitle}</span><span role="status">{labels[saveState]}{(saveState==='saved'||saveState==='clean')&&revision!==null?` · revision ${revision}`:''}</span></div>
     <nav aria-label="Design workspace actions">
       <button class="secondary" onclick={onReturn}>Return to copy and preview</button>
       <a href={design.frameUrl} target="_blank" rel="noopener noreferrer">Open in separate tab ↗</a>
@@ -31,7 +31,7 @@
   </header>
   <details>
     <summary>About this workspace</summary>
-    <p>Save and export with the Penpot controls below. The status above follows this editor’s current save acknowledgment. Finish text entry with the Move tool before waiting for Saved. If status is unavailable, check the editor before leaving. Native layout edits do not change the reviewed Studio copy.</p>
+    <p>Save and export with the Penpot controls below. The status above distinguishes a pristine loaded design from an acknowledged save. Finish text entry with the Move tool before waiting for Saved. If status is unavailable, check the editor before leaving. Native layout edits do not change the reviewed Studio copy.</p>
     <p>If sign-in or an editor feature cannot open here, use the separate tab, then return to this same saved design.</p>
   </details>
   {#if !loaded}<p role="status">Opening your saved design…</p>{/if}

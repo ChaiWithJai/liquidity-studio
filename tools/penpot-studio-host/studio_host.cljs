@@ -23,6 +23,11 @@
                (= status :pending) "pending"
                (and (= status :saved) (empty? queue)
                     (int? (:revn file)) (<= 0 (:revn file))) "saved"
+               ;; Pristine native loads have no persistence status or save ack.
+               ;; Match upstream settled-nil semantics without calling this Saved.
+               (and (nil? status) (empty? queue) (empty? (:index persistence))
+                    (nil? (:run-id persistence))
+                    (int? (:revn file)) (<= 0 (:revn file))) "clean"
                :else "unknown")}))
 
 (defn parent-origin

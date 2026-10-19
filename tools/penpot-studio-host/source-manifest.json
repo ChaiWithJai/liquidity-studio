@@ -3,11 +3,11 @@
   "copies": {
     "studio_host.cljs": {
       "destination": "frontend/src/app/main/studio_host.cljs",
-      "sha256": "bdcc575e6ffc19731112571e3ba5fd2e2a771128aa3cc6b3190e430a22d01659"
+      "sha256": "ad4db389d29d37b2dfe80870f5ccf2fac8fafdcc5f31c0719e40c19b967b6aaf"
     },
     "studio_host_test.cljs": {
       "destination": "frontend/test/frontend_tests/studio_host_test.cljs",
-      "sha256": "0a407f71918466522de663951cd02e4439493246d5c6986e993f536c14f54db5"
+      "sha256": "6e3799d8e74a673476d412ef1cef997a71c661c8450af717ebfe02a91599f336"
     },
     "studio_entry.cljs": {
       "destination": "frontend/src/app/main/ui/studio_entry.cljs",

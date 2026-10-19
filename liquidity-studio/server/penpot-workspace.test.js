@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {boundPenpotFrameUrl,embeddingAvailable,readPenpotSaveState} from '../src/lib/penpot-workspace.js';
+import {boundPenpotFrameUrl,embeddingAvailable,readPenpotSaveState,penpotMayHaveUnsavedChanges} from '../src/lib/penpot-workspace.js';
 import {readWorkflowLocation,workflowHref} from '../src/lib/workflow-location.js';
 const embedding={studioOrigin:'https://studio.example.com',nativeOrigin:'https://design.example.com'};
 const id='11111111-1111-4111-8111-111111111111';
@@ -26,4 +26,13 @@ test('save messages cannot come from another frame, document, origin or saved fi
  assert.deepEqual(readPenpotSaveState(event,context),{status:'saved',revision:8});
  for(const changed of [{...event,source:{}},{...event,origin:embedding.studioOrigin},{...event,data:{...event.data,nonce:'b'.repeat(43)}},{...event,data:{...event.data,fileId:'another'}},{...event,data:{...event.data,revision:-1}},{...event,data:{...event.data,revision:null}},{...event,data:{...event.data,status:'loaded'}}])assert.equal(readPenpotSaveState(changed,context),null);
  assert.equal(readPenpotSaveState(event,{...context,nonce:''}),null);
+});
+
+test('pristine clean state requires a valid revision and permits return without inventing a save acknowledgement',()=>{
+ const source={},context={source,origin:embedding.nativeOrigin,nonce:'a'.repeat(43),fileId:id};
+ const event={source,origin:embedding.nativeOrigin,data:{type:'studio-penpot-state',version:1,nonce:context.nonce,fileId:id,status:'clean',revision:9}};
+ assert.deepEqual(readPenpotSaveState(event,context),{status:'clean',revision:9});
+ assert.equal(readPenpotSaveState({...event,data:{...event.data,revision:null}},context),null);
+ assert.equal(penpotMayHaveUnsavedChanges('clean'),false);assert.equal(penpotMayHaveUnsavedChanges('saved'),false);
+ for(const status of ['unknown','editing','pending','saving','error'])assert.equal(penpotMayHaveUnsavedChanges(status),true);
 });
