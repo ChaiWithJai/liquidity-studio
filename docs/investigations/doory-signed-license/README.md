@@ -16,3 +16,11 @@ The narrow earlier claim “no signed text is supplied upstream” is superseded
 MODNet's separate missing checkpoint/exporter/toolchain/opset/optimization receipt remains unresolved. The selected ONNX identity is known, but its upstream reference recipe does not establish the exact conversion lineage; this license signature does not fill that gap. Issue #55 stays open.
 
 No model bytes were downloaded and no model conversion, inference, local test runner, build or runtime change occurred. Only small public license/key/source text was read and cryptographically verified.
+
+## Retained artifact reconciliation
+
+A read-only follow-up inspected the retained editor artifact built from Studio `f4ed4bc309ae19b4283db6a3108559b311517d25`. Its provenance still pins Doory `27b6f68221fdbf1ef1bedc182e303210ca9e39f5`; the accompanying license actually hashes to `677bf90df999ef9e3a7665ae146547ecb2af491b30b40c65cbf75786c7ee559d`, matching that recorded source inventory. Its historical NOTICE says the GPG-text condition remains unresolved. That immutable notice describes the earlier artifact, not the current availability of upstream signed text. The artifact was not modified or repackaged.
+
+Future packaging now distinguishes the later verified signature from the unchanged pinned artifact basis. It continues to retain the original license bytes and attribution, and explicitly does not claim incorporation or reconciliation of the later LICENSE, NOTICE and contributor credits. This wording correction neither changes the upstream pin nor resolves distribution disposition. A later reconciliation would need to record the accompanying signed license and notice/credit material explicitly; silently replacing the pinned license would break the existing source/hash contract.
+
+The retained MODNet artifact identity remains established by its immutable publisher upload, but no available receipt binds it to the original photographic checkpoint digest, actual exporter/toolchain, explicit opset and optimization steps. The reference exporter's omitted opset with its pinned PyTorch 1.7.1 default (9) does not itself explain the retained artifact's opset 11. Existing same-ONNX comparisons and working cutout evidence do not prove original-checkpoint conversion equivalence. No model download, conversion or inference was performed for this follow-up.
