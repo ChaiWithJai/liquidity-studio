@@ -29,7 +29,7 @@ export class PenpotProfilePairing {
  dto(pair,scope,sessionDigest){
   const challenge=pair.pending.filter(x=>sameScope(x.scope,scope)&&x.sessionDigest===sessionDigest).at(-1);
   const state=pair.connection?'connected':challenge?(challenge.expiresAt<=this.now()?'expired':challenge.status):'not-connected';
-  return {state,connection:pair.connection?{nativeProfileId:pair.connection.nativeProfileId,...(pair.connection.nativeProfileName?{nativeProfileName:pair.connection.nativeProfileName}:{}),verifiedAt:pair.connection.verifiedAt}:null,challenge:challenge?{id:challenge.id,status:challenge.expiresAt<=this.now()?'expired':challenge.status,expiresAt:challenge.expiresAt,...(challenge.nativeProfileName?{nativeProfileName:challenge.nativeProfileName}:{})}:null,editingEnabled:false};
+  return {state,nativeOrigin:this.nativeOrigin,connection:pair.connection?{nativeProfileId:pair.connection.nativeProfileId,...(pair.connection.nativeProfileName?{nativeProfileName:pair.connection.nativeProfileName}:{}),verifiedAt:pair.connection.verifiedAt}:null,challenge:challenge?{id:challenge.id,status:challenge.expiresAt<=this.now()?'expired':challenge.status,expiresAt:challenge.expiresAt,...(challenge.nativeProfileName?{nativeProfileName:challenge.nativeProfileName}:{})}:null,editingEnabled:false};
  }
  async context(actor,scope,sessionContext){scope=scopeInput(scope);sessionContext=sessionInput(sessionContext);if(!actor?.id)throw fail(401,'Sign in required');await this.identity.authorize(actor,scope.organizationId,scope.brandId);return {scope,sessionDigest:sessionContext};}
  async status(actor,scope,sessionContext){
@@ -43,7 +43,7 @@ export class PenpotProfilePairing {
    if(pair.connection)throw fail(409,'Disconnect your current native account before connecting another');
    const active=pair.pending.filter(x=>x.expiresAt>this.now()&&['pending','native-confirmed'].includes(x.status));if(active.length>=2)throw fail(429,'Finish or disconnect your pending native connection first');
    const record={id,tokenSha256:digest,actorId:actor.id,nativeInstanceId:this.nativeInstanceId,scope:context.scope,sessionDigest:context.sessionDigest,authVersion:current.authVersion||0,status:'pending',issuedAt:this.now(),expiresAt,epoch:pair.epoch};
-   pair.pending=[...active,structuredClone(record)];result={id,expiresAt,nativeConnectUrl:`${this.nativeOrigin}/studio-connect?challenge=${challenge}`};return [identity,pair,record,...values.slice(3)];
+   pair.pending=[...active,structuredClone(record)];result={id,expiresAt,nativeOrigin:this.nativeOrigin,nativeConnectUrl:`${this.nativeOrigin}/studio-connect?challenge=${challenge}`};return [identity,pair,record,...values.slice(3)];
   });return result;
  }
  async describeChallenge(presentedKey,input){
