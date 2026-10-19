@@ -41,10 +41,18 @@ with tempfile.TemporaryDirectory(prefix='cache-auth-ci-') as temp:
   code='IFS= read -r VALKEYCLI_AUTH; export VALKEYCLI_AUTH; exec valkey-cli --user "$1" '+ ' '.join(command)
   return run(['docker','exec','-i',name,'sh','-ec',code,'sh',user],input=secret+'\n',check=False)
  def ready():
+  last=None
   for _ in range(100):
    r=run(['docker','exec',name,'/run/studio-cache/healthcheck.sh'],check=False,timeout=5)
    if r.returncode==0:return
+   last=r
    time.sleep(.2)
+  # This isolated server receives only generated fixture secrets. Redact both
+  # before emitting bounded diagnostics; never inspect its environment.
+  logged=run(['docker','logs','--tail','30',name],check=False)
+  details=(logged.stdout+logged.stderr+'\nhealth: '+(last.stdout+last.stderr if last else 'not attempted'))
+  for secret in (runtime,health):details=details.replace(secret,'[REDACTED]')
+  print('Disposable cache readiness diagnostic: '+details[-5000:],flush=True)
   raise AssertionError('Authenticated health never became ready')
  try:
   run(['docker','run','-d','--name',name,'--platform','linux/amd64','--network','none',
