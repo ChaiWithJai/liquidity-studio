@@ -234,6 +234,6 @@ test('historical reconciliation still rejects missing real layers, duplicates an
   }
   const reference=await f.native.persistDocument(document);await f.store.update(key,r=>({...r,documentRef:reference}));
   await f.reviewCurrent();
-  await assert.rejects(f.native.rebindPlan(f.actor,id),/missing|duplicate/i);
+  await assert.rejects(f.native.rebindPlan(f.actor,id),kind==='duplicate'?{status:422,message:'Invalid native object identity'}:/missing or duplicate/i);
  }
 });
