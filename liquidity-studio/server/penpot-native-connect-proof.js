@@ -32,6 +32,13 @@ export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOr
  if(typeof gatewayKey!=='string'||!/^[a-f0-9]{64}$/.test(gatewayKey)||!UUID.test(nativeInstanceId||'')||typeof recordProof!=='function'||typeof describeChallenge!=='function')throw Error('Private native connection dependencies required');
  nativeOrigin=nativePublicOrigin(nativeOrigin);
  const studio=new URL(studioOrigin);if(!['http:','https:'].includes(studio.protocol)||studio.origin!==studioOrigin||studio.username||studio.password)throw Error('Fixed Studio origin required');
+ const returnLink=issuer=>{
+  const path=issuer?.returnPath||'/';
+  const url=new URL(path,studioOrigin),allowed=['org','brand','tab','story','format','design','editor','page'];
+  if(typeof path!=='string'||path.length>1024||!path.startsWith('/')||path.startsWith('//')||url.origin!==studioOrigin||url.pathname!=='/'||url.hash||[...url.searchParams.keys()].some(k=>!allowed.includes(k))||new Set(url.searchParams.keys()).size!==[...url.searchParams.keys()].length)throw fail(502,'Studio return context unavailable');
+  return url.href;
+ };
+ const signInLink=challenge=>`${nativeOrigin}/#/auth/login?studio-connect=${challenge}`;
  return async(req,res)=>{
   res.setHeader('Cache-Control','private, no-store');res.setHeader('Referrer-Policy','strict-origin');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
   try{
@@ -41,14 +48,15 @@ export function createNativeConnectHandler({gatewayKey,nativeInstanceId,studioOr
     const challenge=nativeConnectChallenge(url.searchParams.get('challenge')),issuer=await describeChallenge(challenge);
     if(typeof issuer?.studioActorLabel!=='string'||!issuer.studioActorLabel.trim()||issuer.studioActorLabel.length>200||!Number.isFinite(issuer.expiresAt))throw fail(502,'Studio connection identity unavailable');
     const scopeLabel=[issuer.organizationLabel,issuer.brandLabel].filter(x=>typeof x==='string'&&x.length<=200).map(escape).join(' · ');
-    html=page(`<h1>Connect your Penpot account</h1><p>Connect your Penpot account to Studio account <strong>${escape(issuer.studioActorLabel)}</strong>.</p>${scopeLabel?`<p>${scopeLabel}</p>`:''}<p>This request expires at ${escape(new Date(issuer.expiresAt).toISOString())}.</p><p>Connect the native account currently signed in here to this Studio request. This establishes identity only. It does not grant access to brand designs.</p><form method="post" action="/studio-connect/prove"><input type="hidden" name="challenge" value="${escape(challenge)}"><button type="submit">Connect this Penpot account</button></form><p>You will finish the connection in the same Studio session where you started.</p>`);
+    html=page(`<h1>Connect your Penpot account</h1><p>Connect your Penpot account to Studio account <strong>${escape(issuer.studioActorLabel)}</strong>.</p>${scopeLabel?`<p>${scopeLabel}</p>`:''}<p>This request expires at ${escape(new Date(issuer.expiresAt).toISOString())}.</p><p>Connect the native account currently signed in here to this Studio request. This establishes identity only. It does not grant access to brand designs.</p><form method="post" action="/studio-connect/prove"><input type="hidden" name="challenge" value="${escape(challenge)}"><button type="submit">Connect this Penpot account</button></form><p>You will finish the connection in the same Studio session where you started.</p><details><summary>Need to sign in?</summary><p><a href="${escape(signInLink(challenge))}">Sign in to Penpot, then return to this request</a></p></details>`);
    }else if(req.method==='POST'&&url.pathname==='/studio-connect/prove'&&!url.search){
     if(req.headers['x-studio-native-origin']!==nativeOrigin)throw fail(403,'Use the native connection page');
-    const challenge=await form(req),profile=await readProfile(req.headers['x-studio-native-session']);
+    const challenge=await form(req),issuer=await describeChallenge(challenge),destination=returnLink(issuer);
+    let profile;try{profile=await readProfile(req.headers['x-studio-native-session']);}catch(error){if(error.status!==401)throw error;res.writeHead(401,{'Content-Type':'text/html; charset=utf-8'});res.end(page(`<h1>Sign in to continue</h1><p>Your connection request is preserved. Sign in with your own Penpot account, then confirm this request.</p><a href="${escape(signInLink(challenge))}">Sign in to Penpot</a>`));return;}
     if(!UUID.test(profile?.nativeProfileId||''))throw fail(401,'A signed-in native profile is required');
     const proof={challenge,nativeInstanceId,nativeProfileId:profile.nativeProfileId,...(profile.nativeProfileName?{nativeProfileName:profile.nativeProfileName}:{})};
     const result=await recordProof(proof);if(result?.recorded!==true)throw fail(502,'Connection proof was not acknowledged');
-    html=page(`<h1>Penpot account verified</h1><p>Return to the same Studio session to finish connecting. Brand editing access has not been granted.</p><a href="${escape(studioOrigin)}/">Return to Studio</a>`);
+    html=page(`<h1>Penpot account verified</h1><p>Return to the same Studio session to finish connecting. Brand editing access has not been granted.</p><a href="${escape(destination)}">Return to your Studio task</a>`);
    }else throw fail(404,'Connection page not found');
    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);
   }catch(error){res.writeHead([400,401,403,404,409,410,413,415,429].includes(error.status)?error.status:502,{'Content-Type':'text/plain; charset=utf-8'});res.end(error.status&&error.status<500?error.message:'Connection could not be verified. Return to Studio and preserve the current request.');}

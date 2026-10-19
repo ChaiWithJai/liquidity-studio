@@ -56,7 +56,7 @@ jobs:
           git -C upstream apply ../studio/scripts/investigations/penpot-font-ui-repair/fonts.patch
           python3 studio/tools/penpot-thumbnail-refresh/apply.py upstream > evidence/thumbnail-apply.json
           python3 studio/tools/penpot-studio-host/apply.py upstream > evidence/studio-host-apply.json
-          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs frontend/src/app/main/data/workspace/thumbnails.cljs frontend/src/app/main/ui/workspace/shapes/frame.cljs frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs frontend/src/app/main/ui/workspace.cljs docker/images/files/nginx-entrypoint.sh > evidence/applied.patch
+          git -C upstream diff -- frontend/src/app/main/data/fonts.cljs frontend/src/app/main/data/workspace/thumbnails.cljs frontend/src/app/main/ui/workspace/shapes/frame.cljs frontend/test/frontend_tests/data/workspace_thumbnails_test.cljs frontend/src/app/main/ui/workspace.cljs frontend/src/app/main/ui.cljs frontend/src/app/main/ui/auth.cljs docker/images/files/nginx-entrypoint.sh > evidence/applied.patch
       - name: Resolve pinned official toolchain without building an image
         shell: bash
         run: |
@@ -152,9 +152,12 @@ jobs:
           cp studio/tools/penpot-thumbnail-refresh/README.md evidence/thumbnail-README.md
           cp upstream/frontend/src/app/main/ui/workspace.cljs evidence/workspace.modified.cljs
           cp upstream/frontend/src/app/main/studio_host.cljs evidence/studio_host.modified.cljs
+          cp upstream/frontend/src/app/main/ui/studio_entry.cljs evidence/studio_entry.modified.cljs
+          cp upstream/frontend/src/app/main/ui.cljs evidence/ui.modified.cljs
+          cp upstream/frontend/src/app/main/ui/auth.cljs evidence/auth.modified.cljs
           cp upstream/frontend/test/frontend_tests/studio_host_test.cljs evidence/studio_host_test.modified.cljs
           cp upstream/docker/images/files/nginx-entrypoint.sh evidence/nginx-entrypoint.modified.sh
-          cp studio/tools/penpot-studio-host/workspace.patch studio/tools/penpot-studio-host/entrypoint.patch evidence/
+          cp studio/tools/penpot-studio-host/workspace.patch studio/tools/penpot-studio-host/entrypoint.patch studio/tools/penpot-studio-host/auth.patch studio/tools/penpot-studio-host/entry-guide.patch evidence/
           cp studio/tools/penpot-studio-host/source-manifest.json evidence/studio-host-source-manifest.json
           cp studio/tools/penpot-studio-host/README.md evidence/studio-host-README.md
           cp upstream/LICENSE evidence/UPSTREAM-LICENSE

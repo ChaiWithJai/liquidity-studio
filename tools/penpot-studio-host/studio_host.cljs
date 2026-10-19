@@ -25,7 +25,7 @@
                     (int? (:revn file)) (<= 0 (:revn file))) "saved"
                :else "unknown")}))
 
-(defn- configured-origin
+(defn parent-origin
   []
   (try
     (let [value (unchecked-get js/window "penpotStudioOrigin")
@@ -35,7 +35,7 @@
 
 (defn mount!
   [file-id]
-  (let [origin (configured-origin)]
+  (let [origin (parent-origin)]
     (if (or (nil? origin) (identical? js/window (.-parent js/window)))
       (fn [])
       (let [nonce (atom nil)

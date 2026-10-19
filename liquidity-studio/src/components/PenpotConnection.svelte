@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { checkedPenpotConnectionUrl } from '../lib/penpot-connection-url.js';
-  let { request, onConnectionChange = () => {} } = $props();
+  let { request, onConnectionChange = () => {}, returnContext = {} } = $props();
   let reportedStatus;
   let info = $state(null), loading = $state(true), busy = $state(false), error = $state('');
   let connectUrl = $state(''), pollingStopped = $state(false);
@@ -38,7 +38,7 @@
     if (busy) return;
     stopPolling(); const ticket = ++sequence; busy = true; error = ''; connectUrl = ''; pollingStopped = false; pollUntil = 0;
     try {
-      const challenge = await request('/api/studio/penpot/access/challenges', { method: 'POST', body: '{}' });
+      const challenge = await request('/api/studio/penpot/access/challenges', { method: 'POST', body: JSON.stringify({returnContext}) });
       if (!alive || ticket !== sequence) return;
       const url = checkedPenpotConnectionUrl(challenge.nativeConnectUrl, challenge.nativeOrigin);
       if (typeof challenge.id !== 'string' || !validExpiry(challenge.expiresAt)) throw new Error('The connection request is incomplete. Check its status before starting again.');

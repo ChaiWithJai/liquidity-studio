@@ -1550,7 +1550,7 @@
               >{/each}
           </div>
           {#if penpotPairingEnabled && penpotHost && !preparedWorkspace}
-            {#key penpotHost.client}<PenpotConnection request={penpotHost.request} onConnectionChange={() => penpotConnectionChanged(penpotHost.client)} />{/key}
+            {#key penpotHost.client}<PenpotConnection returnContext={{storyId:selectedStory.id,format,editor:preparedEditingStoryId===selectedStory.id?"prepared":"handoff",page:preparedPage}} request={penpotHost.request} onConnectionChange={() => penpotConnectionChanged(penpotHost.client)} />{/key}
           {/if}
           {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
             {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction bind:this={penpotDesignAction} compact embedded={penpotEmbedded} onOpenDesign={openPenpotDesign} request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}

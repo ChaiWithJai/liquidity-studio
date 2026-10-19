@@ -33,3 +33,13 @@ test('private challenge reader requests only the fixed issuer descriptor and pro
  assert.equal((await read(challenge)).studioActorLabel,'Founder');assert.equal(sent.url,'http://localhost:3002/api/native/penpot/pairing/challenge');assert.deepEqual(JSON.parse(sent.options.body),{challenge,nativeInstanceId});assert.equal(sent.options.headers.Cookie,undefined);assert.equal(sent.options.headers['X-Studio-Native-Pairing-Key'],pairingKey);
  const expired=createNativePairingChallengeReader({callbackUrl:'http://localhost:3002/api/native/penpot/pairing/challenge',pairingKey,nativeInstanceId,fetchImpl:async()=>new Response('{}',{status:410})});await assert.rejects(expired(challenge),{status:410});
 });
+
+test('native sign-in continuation preserves the challenge and proof returns to the Studio task',async t=>{
+ let signedIn=false,proofs=0;
+ const server=http.createServer(createNativeConnectHandler({gatewayKey,nativeInstanceId,nativeOrigin:'https://design.example.com',studioOrigin:'https://studio.example.com',describeChallenge:async()=>({studioActorLabel:'Founder',expiresAt:Date.now()+120000,returnPath:'/?org=org_default&brand=brand_vedic&tab=studio&story=research_4&format=reel'}),readProfile:async()=>{if(!signedIn)throw Object.assign(Error('Sign in required'),{status:401});return {nativeProfileId};},recordProof:async()=>{proofs++;return {recorded:true};}}));
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
+ const base=`http://127.0.0.1:${server.address().port}`,headers={'X-Studio-Native-Gateway':gatewayKey,'X-Studio-Native-Origin':'https://design.example.com','Content-Type':'application/x-www-form-urlencoded'};
+ const post=()=>fetch(base+'/studio-connect/prove',{method:'POST',headers,body:'challenge='+challenge});
+ const missing=await post();assert.equal(missing.status,401);assert.match(await missing.text(),new RegExp('/#/auth/login\\?studio-connect='+challenge));assert.equal(proofs,0);
+ signedIn=true;const verified=await post();assert.equal(verified.status,200);assert.match(await verified.text(),/https:\/\/studio\.example\.com\/\?org=org_default&amp;brand=brand_vedic&amp;tab=studio&amp;story=research_4&amp;format=reel/);assert.equal(proofs,1);
+});

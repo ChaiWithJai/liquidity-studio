@@ -903,8 +903,8 @@ export function createHttpServer(
         }
         if (req.method === "POST") {
           if (route === "/api/studio/penpot/access/challenges") {
-            workspaceExact(body, []);
-            return json(201, await nativePairing.issue(user, scope, context));
+            workspaceExact(body, ["returnContext"]);
+            return json(201, await nativePairing.issue(user, scope, context,body));
           }
           if (route === "/api/studio/penpot/access/complete")
             return json(200, await nativePairing.complete(user, scope, context, body));
