@@ -1,6 +1,6 @@
 # Current disposition of all 70 instructional requirements
 
-Updated 2026-10-18 from merged main `993e79a` and the actual PR243 acceptance checkpoint (final merge/check status remains in that PR). The original ledger baseline was `e49dab5`. This addendum supersedes implementation-status observations in the [6937c53 snapshot](39-instructional-disposition.md), without rewriting that historical audit or removing either blueprint. Agent-operated product acceptance is not evidence of founder/marketer learning.
+Updated 2026-10-19 UTC from merged main `6d534ae` and the dated actual recovery checkpoints below. The original ledger baseline was `e49dab5`. This addendum supersedes implementation-status observations in the [6937c53 snapshot](39-instructional-disposition.md), without rewriting that historical audit or removing either blueprint. Agent-operated product acceptance is not evidence of founder/marketer learning.
 
 ## Current practice instructions
 
@@ -28,6 +28,10 @@ scores or timed human practice. They supplement the dated ledger below:
   file through the supported plugin, and was restored. Saved verification and
   the human headline were retained. See [#54 color evidence](https://github.com/ChaiWithJai/liquidity-studio/issues/54#issuecomment-6254220575).
 
+- Fresh native exit and reconnection: [actual local customer recovery](https://github.com/ChaiWithJai/liquidity-studio/issues/57#issuecomment-6256517675) restored the native archive and three licensed fonts into an independent local profile/team/project, edited/saved/reloaded and exported PNG. A separate Studio installation restored the application pack into a new empty brand, reviewed the unchanged retained copy as current owner, explicitly mapped the imported pages using the genuine version 2 manifest, and retained the destination Open link after reload. Source work remained intact; no approval or source identity/session snapshot was transferred.
+- Full saved Reel recovery: [restored MP4](https://github.com/ChaiWithJai/liquidity-studio/issues/57#issuecomment-6256929437) retained the complete saved document, including animation and uploaded audio, while the original revision remained byte-identical. Sound survived reload without re-upload. Ordinary native downloads produced MP4 (30.08 s) and [WebM](https://github.com/ChaiWithJai/liquidity-studio/issues/57#issuecomment-6257109047) (30.02 s); both browser-decoded stereo 48 kHz sound and played without video error. The WebM matched source bytes. This is not acoustic listening or exact 30.00 s encoded-audio proof.
+- Native live collaboration now has an actual failure, not merely missing observation: distinct existing local profiles could write and reload the same file, but live changes did not arrive. [Issue #261](https://github.com/ChaiWithJai/liquidity-studio/issues/261) tracks the observed denial leaving an open, stale subscription. Do not teach simultaneous native coediting as working acceptance.
+
 Consenting founder/marketer example, explanation, modification and independent
 practice, with actual feedback and retakes, remain unobserved. No invitation or
 account-acceptance task is a prerequisite for shipping the product features.
@@ -49,7 +53,7 @@ account-acceptance task is a prerequisite for shipping the product features.
 | L | [Seven local source previews](source-preview-local-seven-acceptance.md); all seven edited/reloaded, clinical quarantine retained; maintained-cloud completion separate. |
 | D | [Shared planning and report/draft retention](defiant-evidence-constraints-acceptance.md); actual local personas, no independent learner claim. |
 | A | [Audio workflow](native-audio-host.md) and [actual stereo output](https://github.com/ChaiWithJai/liquidity-studio/issues/55#issuecomment-6254701143); no acoustic hearing or speed claim. |
-| F | [Fresh application recovery](fresh-install-recovery-neo.md); separate local state, retained resource bytes, current-owner continuation; not fresh native infrastructure. |
+| F | [Fresh application recovery](fresh-install-recovery-neo.md), followed by [independent local native recovery and Studio reconnect](https://github.com/ChaiWithJai/liquidity-studio/issues/57#issuecomment-6256517675) and restored sound-bearing MP4/WebM above; not cloud sizing or learner transfer. |
 
 ## Per-ID current evidence or remaining disposition
 
@@ -86,14 +90,14 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | A27 | Single-container Penpot SVG preview without external services | K,P; static/spec preview exists, native Penpot still requires its runtime. |
 | A28 | Embedded Fabric/WASM in M4 using Doory scene schema | N,C; actual upstream private host, public binary held; not subset parity. |
 | A29 | Self-host Penpot MCP or full Doory stack on GCP | P,N,G; local investigated, full production editor GCP not delivered. |
-| A30 | Reel 0:00–0:03,0:03–0:15,0:15–0:30 → three sequential `drfPayload.pages` → MP4 | M,A; both-brand timed motion plus actual stereo MP4/WebM; encoded audio output30.08s/30.02s, exact source timeline and learner transfer distinguished. |
+| A30 | Reel 0:00–0:03,0:03–0:15,0:15–0:30 → three sequential `drfPayload.pages` → MP4 | M,A,F; both-brand timed motion and actual stereo MP4/WebM, including the complete restored saved Reel/audio; encoded audio output 30.08 s/30.02 s, exact source timeline and learner transfer distinguished. |
 | A31 | Avoid Node+Django+Clojure operational bloat; emit specs and optionally connect external URLs | N,G; Studio-owned avoids new Django/SQL/Redis, external path conditional. |
 | A32 | Very young Oct 2026 Doory/AAL; pin commit, retain attribution or render primitives | N; upstream pinned/notices preserved; [signed upstream license verified](doory-signed-license/README.md), retained-artifact notice reconciliation and human practice remain. |
 | A33 | Run backwards/QA to prove entire experience | N,P,R; actual task evidence required, human learning not inferred from CI. |
-| B01 | Creative team uses Doory co-editing then Penpot pre-post composition | N,P,D; separate-persona shared planning notes observed, not simultaneous native coediting or a mandatory Doory→Penpot sequence. |
+| B01 | Creative team uses Doory co-editing then Penpot pre-post composition | N,P,D; separate-persona shared planning notes work; distinct-profile native live propagation actually failed under #261. No mandatory Doory→Penpot sequence or successful live coediting claim. |
 | B02 | Founder hosts unified topology for two brands, sovereignty/no seat taxes/DPO | R,G; private pilot/exit advances, no automatic preference training/zero-cost claim. |
 | B03 | Monday 09:00 UTC, five stories×four formats, verified numbers/sutras | S,L; all seven local source previews/edit/reload complete; exact Monday five-story scheduled production and independent practice remain. |
-| B04 | Tuesday multiplayer cutouts, filters, text and MP4/GIF passes | C,M,A,D; cutout, timed motion, audio and shared notes observed; native multiplayer, filter coverage and learner performance remain unobserved. |
+| B04 | Tuesday multiplayer cutouts, filters, text and MP4/GIF passes | C,M,A,D,F; cutout, timed motion, restored audio and shared notes observed; native live propagation failed (#261). Filter coverage and learner performance remain unobserved. |
 | B05 | Wednesday–Sunday governed 4:5/four-slide/9:16 templates and final posting packs | N,P,E; four-format layouts/review, social publication absent. |
 | B06 | Avoid duplicate databases, manual download/reupload and unclear tool ownership | N,R; fewer reconstruction steps, learner efficiency not measured. |
 | B07 | One Cloud SQL, one Redis, one GCS and deterministic port orchestration | G; chosen Firestore/SQLite differs; combined SQL/Redis alternative not built. |
@@ -105,7 +109,7 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | B13 | Compose and adapter source | K,N,P; actual source/local stacks, combined production Compose absent. |
 | B14 | generate-campaign→compileDooryFabricScene→compilePenpotSvgBoard→export | N,P,M; actual edit/export, automatic Doory→Penpot private media incomplete. |
 | B15 | 8 backwards+5 QA at 100% | Actual task/security/recovery assessment replaces 8/5/100; learner not scored. |
-| B16 | Third tenant/GPU Study Hall via tokens and preset stories | R,I,F; separate new application state/destination restore observed; not a preset permission grant, fresh cloud/native infrastructure or human capstone. |
+| B16 | Third tenant/GPU Study Hall via tokens and preset stories | R,I,F; independent local application and native destination restore, fonts and explicit current-owner reconnection observed; not a preset permission grant, fresh cloud infrastructure or human capstone. |
 | B17 | Compose services 8080/8081/9001 and shared Postgres/Redis/GCS | N,P; isolated local ports proven, requested shared production topology absent. |
 | B18 | Huda portrait or Bhramari acoustic diagram cutout/motion→locked component | C,L; rights-declared synthetic portrait and dated unreviewed research previews; real portrait consent and acoustic clinical scenario remain separate. |
 | B19 | M1 color updates stage 2 scene+stage 3 tokens | T,P; actual token preservation, cross-tool production identity/media remains. |
@@ -118,7 +122,7 @@ Original required-element wording is retained. Keys refer to evidence above, not
 | B26 | story_ramanujan_namagiri route yields 3 stages/tokens/cutout/SVG | K,S,L; Ramanujan source-linked four-format preview/edit/reload observed, not the named full cutout/native three-stage outcome. |
 | B27 | Claimed created/verified Compose | N,P; historical false claim retained, later local proof not combined production Compose. |
 | B28 | Claimed 8/8 and 5/5 suites | Historical counts insufficient; use dated tasks/denials/skips. |
-| B29 | Dropped Yjs cursors: Cloud Run affinity+3600 timeout+RedisDB0 | I; room admission foundation is not continuous CRDT/cursor recovery. |
+| B29 | Dropped Yjs cursors: Cloud Run affinity+3600 timeout+RedisDB0 | I; actual distinct-profile writes/reload worked but live propagation failed with a stale open subscription (#261). Continuous live recovery is not accepted. |
 | B30 | Blank fonts/export latency:2–4 GB exporter RAM and mounted Mona Sans/Inter | P,M,A; actual mounted-font/native outputs and stereo media; <1.5s export or 2–4GB capacity target not established. |
 | B31 | Single Studio previews both specs inline | K,N; previews/native entry exist, dual-spec practice needs guidance. |
 | B32 | `docker compose -f docker-compose.gcp-selfhost.yml up -d` on e 2-standard-4 | N,P,G; local experiments exist, requested VM command unavailable/sizing unproved. |
