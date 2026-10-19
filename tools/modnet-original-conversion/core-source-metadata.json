@@ -1,0 +1,39 @@
+{
+  "observedAt": "2026-10-18",
+  "metadataOnlyNoBinaryDownloads": true,
+  "target": "Linux AMD64 CPython3.11/glibc>=2.28",
+  "python": {
+    "version": "3.11.17",
+    "officialSourceSha256": "bfb74ad39efae27cda510f134ab408e00f9992c56851cfc0b1cdb5646da11599",
+    "imageIndexDigest": "sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89",
+    "amd64ImageDigest": "sha256:8a00ecb83ed9d0864dfd102a1bdb2067fda907ceb30bb86d09da9ee558b19590",
+    "image": "docker.io/library/python:3.11.17-slim-bookworm",
+    "dockerSourceCommit": "cede844ace77284e32c03b61ebc35cdfc945e862"
+  },
+  "torchCPU": {
+    "version": "2.14.1+cpu",
+    "filename": "torch-2.14.1+cpu-cp311-cp311-manylinux_2_28_x86_64.whl",
+    "sha256": "5e38154c8896d426a5df58bf2276b603e82184dfae4f54d77dbb212f36e34f37",
+    "source": "https://download.pytorch.org/whl/cpu/torch/",
+    "bytes": null,
+    "metadataStatus": "official simple-index hash observed in Neo; cross-origin metadata fetch failed; exact CPU dependency metadata not yet resolved"
+  },
+  "onnx": {
+    "version": "1.23.2",
+    "filename": "onnx-1.23.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+    "bytes": 8886609,
+    "sha256": "c03ecf6b835d136108eeaeeafbd0026fc7b3cf98661409fbc6b63d5a29361348",
+    "source": "https://pypi.org/pypi/onnx/1.23.2/json",
+    "yanked": false
+  },
+  "onnxruntime": {
+    "version": "1.31.0",
+    "filename": "onnxruntime-1.31.0-cp311-cp311-manylinux_2_28_x86_64.whl",
+    "bytes": 23753636,
+    "sha256": "d4092b78fc5bab77ce6522393098cdb2535423045ecdcff15cc0d022162d6b66",
+    "source": "https://pypi.org/pypi/onnxruntime/1.31.0/json",
+    "yanked": false
+  },
+  "completeTransitiveLock": false,
+  "executionApproved": false
+}

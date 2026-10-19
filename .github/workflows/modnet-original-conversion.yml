@@ -1,0 +1,171 @@
+name: Reviewed independent MODNet provenance
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Full reviewed Studio source
+        required: true
+        type: string
+      phase:
+        description: Capture lock/checkpoint identity first; conversion requires committed reviewed lock
+        required: true
+        type: choice
+        options: [capture, convert]
+      checkpoint_sha256:
+        description: Reviewed authors-linked acquisition digest (conversion only)
+        required: false
+        type: string
+      recipient_public_key_base64:
+        description: Operator RSA public PEM base64; private key stays local
+        required: true
+        type: string
+      recipient_sha256:
+        description: Operator SPKI DER SHA256
+        required: true
+        type: string
+      confirmation:
+        description: prepare-reviewed-modnet-provenance
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: modnet-original-conversion
+  cancel-in-progress: false
+jobs:
+  provenance:
+    if: inputs.confirmation == 'prepare-reviewed-modnet-provenance'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      PHASE: ${{ inputs.phase }}
+      CHECKPOINT_SHA: ${{ inputs.checkpoint_sha256 }}
+      PYTHON_IMAGE: python@sha256:8a00ecb83ed9d0864dfd102a1bdb2067fda907ceb30bb86d09da9ee558b19590
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+          path: studio
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact source, resource and mode admission
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          test "$(git -C studio rev-parse HEAD)" = "$SOURCE_SHA"
+          test "$GITHUB_SHA" = "$SOURCE_SHA"
+          test "$PHASE" = capture || test "$PHASE" = convert
+          test "$(uname -m)" = x86_64
+          test "$(df --output=avail -B1 . | tail -1)" -ge 6000000000
+          test "$(awk '/MemAvailable/{print $2}' /proc/meminfo)" -ge 4000000
+          mkdir output
+          if [ "$PHASE" = convert ]; then
+            [[ "$CHECKPOINT_SHA" =~ ^[a-f0-9]{64}$ ]]
+            test -f studio/tools/modnet-original-conversion/reviewed/wheel-lock.json
+            test -f studio/tools/modnet-original-conversion/reviewed/requirements.lock
+            test "$(cat studio/tools/modnet-original-conversion/reviewed/checkpoint.sha256)" = "$CHECKPOINT_SHA"
+          fi
+          docker pull --platform linux/amd64 "$PYTHON_IMAGE"
+          test "$(docker image inspect "$PYTHON_IMAGE" --format '{{.Os}}/{{.Architecture}}')" = linux/amd64
+          docker image inspect "$PYTHON_IMAGE" > output/python-image.json
+          printf '%s\n' "$SOURCE_SHA" > output/studio-source.txt
+          cp studio/tools/modnet-original-conversion/core-source-metadata.json output/
+      - name: Capture complete wheel lock and authors-linked checkpoint receipt only
+        if: inputs.phase == 'capture'
+        run: |
+          set -euo pipefail
+          mkdir capture
+          timeout --signal=TERM --kill-after=15s 15m docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" \
+            --memory 2g --memory-swap 2g --cpus 1 --pids-limit 128 --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=2g \
+            --mount type=bind,src="$GITHUB_WORKSPACE/studio/tools/modnet-original-conversion",dst=/recipe,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/capture",dst=/capture \
+            -e GITHUB_ACTIONS=true -e PIP_NO_CACHE_DIR=1 "$PYTHON_IMAGE" \
+            python /recipe/acquire.py capture --out /capture/metadata
+          cp capture/metadata/* output/
+          test -z "$(find output -type f \( -name '*.ckpt' -o -name '*.whl' -o -name '*.onnx' \) -print)"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: inputs.phase == 'convert'
+        with:
+          repository: ZHKKKe/MODNet
+          ref: 28165a451e4610c9d77cfdf925a94610bb2810fb
+          persist-credentials: false
+          path: upstream
+      - name: Reacquire only reviewed wheels and checkpoint
+        if: inputs.phase == 'convert'
+        run: |
+          set -euo pipefail
+          test "$(git -C upstream rev-parse HEAD)" = 28165a451e4610c9d77cfdf925a94610bb2810fb
+          mkdir acquisition deps
+          timeout --signal=TERM --kill-after=15s 15m docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" \
+            --memory 2g --memory-swap 2g --cpus 1 --pids-limit 128 --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=512m \
+            --mount type=bind,src="$GITHUB_WORKSPACE/studio/tools/modnet-original-conversion",dst=/recipe,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/acquisition",dst=/acquisition \
+            -e GITHUB_ACTIONS=true "$PYTHON_IMAGE" python /recipe/acquire.py restore --out /acquisition/input \
+            --lockdir /recipe/reviewed --checkpoint-sha256 "$CHECKPOINT_SHA"
+          cp upstream/LICENSE output/MODNET-LICENSE
+          tar -czf output/corresponding-source.tar.gz -C upstream src onnx README.md LICENSE
+          cp acquisition/input/checkpoint-acquisition.json output/
+          cp studio/tools/modnet-original-conversion/reviewed/* output/
+      - name: Install complete reviewed wheel lock offline
+        if: inputs.phase == 'convert'
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=15s 5m docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" --network none \
+            --memory 2g --memory-swap 2g --cpus 1 --pids-limit 128 --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=512m \
+            --mount type=bind,src="$GITHUB_WORKSPACE/acquisition/input/wheels",dst=/wheels,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/studio/tools/modnet-original-conversion/reviewed",dst=/lock,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/deps",dst=/deps \
+            "$PYTHON_IMAGE" python -m pip --isolated --disable-pip-version-check install --no-index --no-cache-dir \
+            --only-binary=:all: --require-hashes --no-deps --no-compile --find-links /wheels --target /deps -r /lock/requirements.lock
+      - name: Convert and compare offline against original PyTorch
+        if: inputs.phase == 'convert'
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=15s 15m docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" --network none \
+            --memory 2g --memory-swap 2g --cpus 1 --pids-limit 128 --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=512m \
+            --mount type=bind,src="$GITHUB_WORKSPACE/deps",dst=/deps,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/upstream",dst=/source,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/acquisition/input/original.ckpt",dst=/input/original.ckpt,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/studio",dst=/studio,readonly \
+            --mount type=bind,src="$GITHUB_WORKSPACE/output",dst=/output \
+            -e PYTHONPATH=/deps -e PYTHONDONTWRITEBYTECODE=1 -e STUDIO_MODNET_OFFLINE_CONVERSION=1 \
+            "$PYTHON_IMAGE" python /studio/tools/modnet-original-conversion/convert.py --source /source \
+            --checkpoint /input/original.ckpt --checkpoint-sha256 "$CHECKPOINT_SHA" \
+            --portrait /studio/docs/investigations/cutout-portrait/fixtures/synthetic-portrait-input.png --out /output
+      - name: Record original recipe and source hashes
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d output ]; then
+            cp studio/tools/modnet-original-conversion/acquire.py studio/tools/modnet-original-conversion/convert.py studio/tools/modnet-original-conversion/README.md output/
+            cp studio/.github/workflows/modnet-original-conversion.yml output/
+            find output -type f -print0 | sort -z | xargs -0 sha256sum > "$RUNNER_TEMP/delivery-files.sha256"
+            cp "$RUNNER_TEMP/delivery-files.sha256" output/
+          fi
+      - name: Encrypt finite output for the operator (never upload plaintext model)
+        if: always()
+        env:
+          NATIVE_RECIPIENT_PUBLIC_KEY_BASE64: ${{ inputs.recipient_public_key_base64 }}
+          NATIVE_RECIPIENT_SHA256: ${{ inputs.recipient_sha256 }}
+        run: |
+          set -euo pipefail
+          test -d output
+          mkdir encrypted-delivery
+          tar -czf "$RUNNER_TEMP/modnet-provenance.tar.gz" -C output .
+          test "$(stat -c %s "$RUNNER_TEMP/modnet-provenance.tar.gz")" -le 134217728
+          node studio/liquidity-studio/scripts/native-artifact-envelope.mjs seal \
+            "$RUNNER_TEMP/modnet-provenance.tar.gz" encrypted-delivery/provenance.tar.gz.enc encrypted-delivery/envelope.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: encrypted-modnet-provenance-${{ github.run_id }}
+          path: encrypted-delivery/
+          retention-days: 3
+          if-no-files-found: error
