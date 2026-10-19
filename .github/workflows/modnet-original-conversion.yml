@@ -115,13 +115,33 @@ jobs:
         if: inputs.phase == 'convert'
         run: |
           set -euo pipefail
+          python3 - <<'PYADMISSION'
+          import json,pathlib,shutil,zipfile
+          root=pathlib.Path('acquisition/input/wheels')
+          lock=json.loads(pathlib.Path('studio/tools/modnet-original-conversion/reviewed/wheel-lock.json').read_text())
+          assert {p.name for p in root.iterdir()}=={e['filename'] for e in lock['packages']}
+          unpacked=0
+          for entry in lock['packages']:
+              with zipfile.ZipFile(root/entry['filename']) as archive:
+                  unpacked+=sum(member.file_size for member in archive.infolist())
+          # pip stages unpacked wheels before moving them into the target.
+          required=max(6000000000,2*unpacked+512*1024*1024)
+          free=shutil.disk_usage('.').free
+          pathlib.Path('output/install-admission.json').write_text(json.dumps({'wheelFiles':len(lock['packages']),'declaredUnpackedBytes':unpacked,'requiredFreeBytes':required,'actualFreeBytes':free,'staging':'private runner bind; RAM/CPU/network limits unchanged'},indent=2)+'\n')
+          assert free>=required, 'Insufficient runner disk for offline install staging'
+          PYADMISSION
+          stage="$GITHUB_WORKSPACE/pip-stage"
+          test ! -e "$stage"
+          mkdir -m 700 "$stage"
+          trap 'rm -rf -- "$stage"' EXIT
           timeout --signal=TERM --kill-after=15s 5m docker run --rm --platform linux/amd64 --user "$(id -u):$(id -g)" --network none \
             --memory 2g --memory-swap 2g --cpus 1 --pids-limit 128 --cap-drop ALL --security-opt no-new-privileges \
             --read-only --tmpfs /tmp:rw,noexec,nosuid,size=512m \
             --mount type=bind,src="$GITHUB_WORKSPACE/acquisition/input/wheels",dst=/wheels,readonly \
             --mount type=bind,src="$GITHUB_WORKSPACE/studio/tools/modnet-original-conversion/reviewed",dst=/lock,readonly \
             --mount type=bind,src="$GITHUB_WORKSPACE/deps",dst=/deps \
-            "$PYTHON_IMAGE" python -m pip --isolated --disable-pip-version-check install --no-index --no-cache-dir \
+            --mount type=bind,src="$stage",dst=/pip-tmp \
+            -e TMPDIR=/pip-tmp "$PYTHON_IMAGE" python -m pip --isolated --disable-pip-version-check install --no-index --no-cache-dir \
             --only-binary=:all: --require-hashes --no-deps --no-compile --find-links /wheels --target /deps -r /lock/requirements.lock
       - name: Convert and compare offline against original PyTorch
         if: inputs.phase == 'convert'
@@ -139,6 +159,24 @@ jobs:
             "$PYTHON_IMAGE" python /studio/tools/modnet-original-conversion/convert.py --source /source \
             --checkpoint /input/original.ckpt --checkpoint-sha256 "$CHECKPOINT_SHA" \
             --portrait /studio/docs/investigations/cutout-portrait/fixtures/synthetic-portrait-input.png --out /output
+      - name: Publish bounded numerical metadata (no model download needed)
+        if: always() && inputs.phase == 'convert'
+        run: |
+          python3 - <<'PYSUMMARY'
+          import json,os,pathlib
+          report=pathlib.Path('output/numerical-report.json')
+          summary=pathlib.Path(os.environ['GITHUB_STEP_SUMMARY'])
+          if not report.exists():
+              text='## MODNet numerical result\nNo numerical report was produced; conversion/equivalence is not established. Inspect the failed step.\n'
+          else:
+              assert report.is_file() and not report.is_symlink() and report.stat().st_size<65536
+              source=json.loads(report.read_text())
+              keys=['passed','checkpointSha256','onnxSha256','onnxBytes','authorSource','opset','versions','fixtures','scope']
+              metadata={key:source[key] for key in keys}
+              text='## MODNet numerical result (metadata only)\n```json\n'+json.dumps(metadata,indent=2)+'\n```\n'
+              assert len(text.encode())<65536
+          with summary.open('a') as stream:stream.write(text)
+          PYSUMMARY
       - name: Record original recipe and source hashes
         if: always()
         run: |
