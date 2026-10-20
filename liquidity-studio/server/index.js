@@ -1,3 +1,4 @@
+import {createDefiantSyntheticDemo} from './defiant-synthetic-demo.js';
 import {createDefiantUnifiedData} from './defiant-unified-data.js';
 import {defiantUnifiedRequest} from './defiant-unified-http.js';
 import {DefiantStrategyService} from './defiant-strategy.js';
@@ -206,6 +207,10 @@ export function createHttpServer(
     platform = appContainer ? null : createPlatform(),
     trustedTestMode = false,
     defiantDatasetProvider = null,
+    enableDefiantSyntheticDemo = false,
+    defiantSyntheticDemoOrigins = [],
+    defiantSyntheticDemoUiHtml,
+    defiantSyntheticDemoDomainUiHtml,
     portableBodyTimeoutMs = 15000,
     helperControlEnabled = process.env.STUDIO_HELPER_CONTROL_ENABLED === "true",
     distDir = DIST_DIR,
@@ -240,6 +245,7 @@ export function createHttpServer(
     throw new Error("Developer Penpot requires the explicit local development runtime");
   if(managedPenpotStoryDesigns&&(typeof managedPenpotStoryDesigns!=='function'||platform?.identity?.mode!=='google'||platform?.identity?.configuration?.mode!=='google'||trustedTestMode||developmentPenpotStoryDesigns))throw Error('Managed Penpot requires Google identity and one constructor-owned provider');
   const storyDesigns=managedPenpotStoryDesigns||developmentPenpotStoryDesigns;
+  const syntheticDemo=createDefiantSyntheticDemo({enabled:enableDefiantSyntheticDemo,publicOrigins:defiantSyntheticDemoOrigins,uiHtml:defiantSyntheticDemoUiHtml,domainUiHtml:defiantSyntheticDemoDomainUiHtml});
   // One bounded portable operation per server, including response serialization/backpressure.
   let portableOperationActive = false;
   const server = http.createServer(async (req, res) => {
@@ -257,6 +263,7 @@ export function createHttpServer(
       res.end(JSON.stringify(payload));
     };
     try {
+      if(await syntheticDemo.handle(req,res))return;
       const origin = req.headers.origin;
       const hostOrigin = `${req.socket.encrypted || process.env.STUDIO_COOKIE_SECURE === "true" ? "https" : "http"}://${req.headers.host}`;
       const allowed = (process.env.STUDIO_ALLOWED_ORIGINS || "")
@@ -2142,6 +2149,7 @@ export function createHttpServer(
   });
   server.requestTimeout = 30000;
   server.headersTimeout = 10000;
+  server.once('close',()=>{void syntheticDemo.close();});
   return server;
 }
 export async function startConfiguredStudio(options = {}) {
