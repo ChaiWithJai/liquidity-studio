@@ -13,7 +13,7 @@ test('finite tools require scoped server binding and current facade authority on
   const seen = []; let allowed = true;
   const service = createDefiantUnifiedData({ dataset, organizationId: 'org_a', authorize: actor => actor === 'person:a' && allowed });
   const host = harness({ resolveService: async input => { seen.push(input); return { service, actor: 'person:a' }; } });
-  assert.deepEqual([...host.tools.keys()], ['defiant_read_data', 'defiant_list_pathways', 'defiant_open_guided_view', 'defiant_artist_overview', 'defiant_compare_campaign_scenarios', 'defiant_detect_regional_opportunities', 'defiant_explain_opportunity', 'defiant_inspect_rights_and_royalties']);
+  assert.deepEqual([...host.tools.keys()], ['defiant_read_data', 'defiant_list_pathways', 'defiant_open_guided_view', 'defiant_artist_overview', 'defiant_detect_regional_opportunities', 'defiant_explain_opportunity', 'defiant_inspect_rights_and_royalties', 'defiant_compare_campaign_scenarios']);
   assert.equal(host.registration.resourceUri, null); assert.equal(host.resources.size, 0);
   const context = { authenticatedContext: 'host-only' };
   const first = await host.call('defiant_read_data', { organizationId: 'org_a', resource: 'artists' }, context);
