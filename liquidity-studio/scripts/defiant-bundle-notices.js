@@ -1,3 +1,4 @@
+import {defiantVendoredNotices} from './defiant-vendored-notices.js';
 import {readFile,readdir,writeFile} from 'node:fs/promises';
 import {dirname,resolve,join} from 'node:path';
 /** Retain complete installed license texts with the compiled fictional-demo dependency closure. */
@@ -20,6 +21,7 @@ export async function writeDefiantBundleNotices(root,metafile){
   sections.push(`\n===== ${name} (${info.license||'see included license'}) =====`);
   for(const file of files){const text=await readFile(join(directory,file),'utf8');if(Buffer.byteLength(text)>512*1024)throw Error('Dependency notice exceeds bound');sections.push(`\n--- ${file} ---\n${text}`);}
  }
+ sections.push(await defiantVendoredNotices(root,metafile));
  const text=sections.join('\n')+'\n';if(Buffer.byteLength(text)>2*1024*1024)throw Error('Combined dependency notices exceed bound');
  await writeFile(resolve(root,'dist/mcp/defiant-third-party-notices.txt'),text);
 }
