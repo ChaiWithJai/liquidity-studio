@@ -35,6 +35,10 @@ export class AIGateway {
     this.fetch = config.fetch || globalThis.fetch;
     this.accessTokenProvider = config.accessTokenProvider;
     this.adcTokenProvider = config.adcTokenProvider;
+    // Server-owned video routing; intentionally absent from editable CONFIG_FIELDS.
+    this.videoLocation = config.videoLocation ?? process.env.AI_VIDEO_LOCATION ?? "global";
+    if (!["global", "us", "eu"].includes(this.videoLocation))
+      throw new Error("Invalid server video analysis location");
     if (process.env.AI_VERTEX_USE_ADC === "true" && process.env.K_SERVICE)
       throw new Error(
         "Local Vertex ADC is forbidden on Cloud Run; use metadata identity",

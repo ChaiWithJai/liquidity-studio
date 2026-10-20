@@ -25,3 +25,10 @@ test('rejected Google response retains finite public diagnostics and bounded red
  });
  const oversized=gateway(async()=>new Response('x'.repeat(17000),{status:400}));await assert.rejects(oversized.analyzeYouTubeVideo(input),error=>{assert.equal(error.trace.providerHttpStatus,400);assert.deepEqual(error.privateDiagnostics,{});assert.equal(error.providerOutcome,'failed');return true;});
 });
+
+test('dedicated video location uses the documented global path without changing campaign configuration or retrying',async()=>{
+ const calls=[];const g=new AIGateway({provider:'gcp-vertex',projectId:'fixture-project',location:'us',model:'gemini-3.5-flash-lite',accessTokenProvider:async()=> 'fixture-token',fetch:async(url)=>{calls.push(String(url));return Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify(payload)}]}}]});}});
+ const result=await g.analyzeYouTubeVideo(input);assert.equal(calls.length,1);assert.equal(calls[0],'https://aiplatform.googleapis.com/v1/projects/fixture-project/locations/global/publishers/google/models/gemini-3.5-flash-lite:generateContent');assert.equal(result.trace.location,'global');assert.equal(g.getConfig().location,'us');assert.equal(g.getConfig().model,'gemini-3.5-flash-lite');assert.equal(g.getConfig().videoLocation,undefined);
+ g.updateConfig({videoLocation:'eu'});assert.equal(g.videoLocation,'global','Editable gateway patches cannot change server-owned video routing');
+ assert.throws(()=>new AIGateway({videoLocation:'https://untrusted.example'}),/Invalid server video analysis location/);
+});
