@@ -294,7 +294,7 @@ test("external rename reconciles filtered rows after a forced detail refresh",as
 
 test("dirty detail and inline metadata retain their opening revisions after another writer changes the story",async({page})=>{
  await page.goto(base);await page.getByLabel('Username',{exact:true}).fill('table-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →'}).click();
- await page.getByLabel('Rows per page').selectOption('50');
+ await page.getByLabel('Rows per page').selectOption('50');await showDisplay(page);
  const row=page.locator('.story-row').first();await expect(row).toBeVisible();const id=await row.getAttribute('data-story-id'),revision=Number(await row.getAttribute('data-story-revision'));
  await row.locator('[data-detail-story]').click();await page.getByLabel('Detail category').fill('Unsaved local detail');
  const response=await page.request.post(`${base}/api/studio/workspace/mutations?organizationId=org_default&brandId=brand_default`,{data:{idempotencyKey:crypto.randomUUID(),changes:[{kind:'story.patch',storyId:id,expectedRevision:revision,patch:{title:'Externally saved detail title',category:'Newer external category'}}]}});expect(response.ok()).toBeTruthy();

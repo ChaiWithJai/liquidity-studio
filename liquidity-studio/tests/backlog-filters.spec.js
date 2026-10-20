@@ -267,18 +267,19 @@ test("loading and failed scopes never masquerade as empty, and stale scope respo
 test("status, selected story and backlog scroll survive navigation; organization and sign-out boundaries are intentional", async ({
   page,
 }) => {
-  await page.setViewportSize({ width: 1280, height: 560 });
+  await page.setViewportSize({ width: 1280, height: 400 });
   await signIn(page);
   const rows = page.locator(".story-row");
   const selectedTitle = await rows.last().locator("[data-detail-story]").innerText();
   await rows.last().scrollIntoViewIfNeeded();
-  const scroll = await page.evaluate(() => window.scrollY);
-  expect(scroll).toBeGreaterThan(0);
+  const positions = () => page.evaluate(() => ({window: window.scrollY, table: document.querySelector(".table-scroll").scrollTop}));
+  const scroll = await positions();
+  expect(scroll.window + scroll.table).toBeGreaterThan(0);
   await rows.last().getByRole("button", { name: "Open story" }).click();
   await page
     .getByRole("button", { name: "Story backlog", exact: true })
     .click();
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(scroll);
+  await expect.poll(positions).toEqual(scroll);
   await page
     .getByRole("combobox", { name: "Filter by status", exact: true })
     .selectOption("In Backlog");
