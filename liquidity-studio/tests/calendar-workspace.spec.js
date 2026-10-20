@@ -68,6 +68,10 @@ test.afterEach(async () => {
   store?.close();
   if (directory) rmSync(directory, { recursive: true, force: true });
 });
+async function openCalendarSettings(page) {
+  const settings=page.locator('.calendar-settings');
+  if(!(await settings.evaluate(element=>element.open)))await settings.locator('summary').click();
+}
 async function setup(page) {
   page.on("pageerror", (error) =>
     console.error("Calendar fixture runtime:", error.message),
@@ -109,6 +113,7 @@ async function setup(page) {
       .getByRole("region", { name: "Legacy undated weekday plans" })
       .getByRole("button", { name: /Move Calendar alpha/ }),
   ).toBeVisible();
+  await openCalendarSettings(page);
   await page.getByLabel("Calendar timezone").fill("America/New_York");
   await page.getByLabel("Calendar timezone").press("Tab");
   await page.getByLabel("Calendar start date").fill("2026-03-02");
@@ -122,6 +127,7 @@ async function setup(page) {
   await expect(
     page.getByText("Loading the current brand's calendar…"),
   ).toBeHidden();
+  await page.locator(".calendar-settings > summary").click();
   return ids;
 }
 async function capture(page, name) {
@@ -164,6 +170,7 @@ test("legacy Monday becomes a dated campaign; reload, format separation and undo
     day(page).getByRole("button", { name: "Calendar alpha", exact: true }),
   ).toBeVisible();
   await capture(page, "S02-desktop-dated-campaign");
+  await openCalendarSettings(page);
   await page.getByLabel("Calendar planning unit").selectOption("format");
   await expect(
     day(page).getByRole("button", { name: "Calendar alpha", exact: true }),
@@ -188,6 +195,7 @@ test("legacy Monday becomes a dated campaign; reload, format separation and undo
   await expect(
     day(page).getByRole("button", { name: "Calendar alpha", exact: true }),
   ).toHaveCount(0);
+  await openCalendarSettings(page);
   await page.getByLabel("Calendar planning unit").selectOption("campaign");
   await expect(
     day(page).getByRole("button", { name: "Calendar alpha", exact: true }),
@@ -483,7 +491,7 @@ test("a delayed old-brand placement cannot restore its receipt or story into the
   expect(foreign.status()).toBe(404);
 });
 
-test("the full dated week stays within desktop viewport and narrow space becomes an agenda", async ({
+test("compact dated agenda and undated work share useful content width", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1024, height: 768 });
@@ -494,12 +502,19 @@ test("the full dated week stays within desktop viewport and narrow space becomes
       (element) => element.scrollWidth <= element.clientWidth + 1,
     ),
   ).toBe(true);
+  await page.evaluate(()=>window.scrollTo(0,0));
+  const pool=page.getByRole('region',{name:'Legacy undated weekday plans'});
+  await expect(pool.getByRole('button',{name:'Move Calendar alpha, Whole campaign',exact:true})).toBeInViewport();
+  const dates=await grid.boundingBox(),poolBounds=await pool.boundingBox();
+  expect(poolBounds.x).toBeGreaterThanOrEqual(dates.x+dates.width-1);
+  expect(await page.locator('.calendar-feedback').evaluate(element=>getComputedStyle(element).minHeight)).toBe('0px');
   const last = await day(page).boundingBox();
   expect(last.x + last.width).toBeLessThanOrEqual(1024);
-  await page.setViewportSize({ width: 900, height: 768 });
+  await page.setViewportSize({ width: 700, height: 768 });
   const first = await day(page, "2026-03-02").boundingBox(),
     second = await day(page, "2026-03-03").boundingBox();
   expect(second.y).toBeGreaterThan(first.y + first.height - 1);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });
 
 test("legacy and unscheduled units open their real story without manufacturing a dated assignment", async ({
@@ -516,6 +531,7 @@ test("legacy and unscheduled units open their real story without manufacturing a
   await expect(
     page.getByText("Selected story: Calendar alpha", { exact: true }),
   ).toBeVisible();
+  await openCalendarSettings(page);
   await page.getByLabel("Calendar planning unit").selectOption("format");
   await page
     .getByRole("region", { name: "Unscheduled planning units" })

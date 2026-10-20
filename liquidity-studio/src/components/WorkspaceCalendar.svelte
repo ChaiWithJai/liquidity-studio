@@ -1,4 +1,6 @@
 <script>
+  import ResearchPage from "./defiant/ResearchPage.svelte";
+  import ResearchToolbar from "./defiant/ResearchToolbar.svelte";
   import { tick, untrack } from "svelte";
   import {
     canonicalZone,
@@ -459,22 +461,27 @@
 {/snippet}
 
 <section class="workspace-calendar" aria-label="Dated content calendar">
-  <div class="calendar-heading"><button type="button" onclick={reloadCalendar} disabled={blocked}>Reload calendar</button></div>
-  <div class="calendar-controls">
-    <label>Start date<input aria-label="Calendar start date" type="date" bind:value={startDate} onchange={refresh}/></label>
-    <label>End date<input aria-label="Calendar end date" type="date" bind:value={endDate} onchange={refresh}/></label>
-    <label>Timezone<input aria-label="Calendar timezone" list="calendar-timezones" bind:value={timeZone} onchange={refresh}/></label>
-    <datalist id="calendar-timezones"><option value="America/New_York"></option><option value="America/Los_Angeles"></option><option value="Europe/London"></option><option value="UTC"></option></datalist>
-    <label>Planning unit<select aria-label="Calendar planning unit" bind:value={unitFilter} onchange={storePreferences}><option value="campaign">Whole campaigns</option><option value="format">Individual formats</option><option value="all">Campaigns and formats</option></select></label>
-    <button type="button" onclick={() => shiftRange(-1)} disabled={blocked}>Previous range</button><button type="button" onclick={() => shiftRange(1)} disabled={blocked}>Next range</button>
-  </div>
+  <ResearchPage label="Calendar planning workspace">
+  <ResearchToolbar label="Calendar range and settings">
+    <div class="calendar-range">
+      <label>Start date<input aria-label="Calendar start date" type="date" bind:value={startDate} onchange={refresh}/></label>
+      <label>End date<input aria-label="Calendar end date" type="date" bind:value={endDate} onchange={refresh}/></label>
+    </div>
+    <div class="calendar-range-actions"><button type="button" onclick={() => shiftRange(-1)} disabled={blocked}>Previous range</button><button type="button" onclick={() => shiftRange(1)} disabled={blocked}>Next range</button><button type="button" onclick={reloadCalendar} disabled={blocked}>Reload calendar</button></div>
+    <details class="calendar-settings"><summary>Calendar settings</summary><div class="calendar-settings-fields">
+      <label>Timezone<input aria-label="Calendar timezone" list="calendar-timezones" bind:value={timeZone} onchange={refresh}/></label>
+      <datalist id="calendar-timezones"><option value="America/New_York"></option><option value="America/Los_Angeles"></option><option value="Europe/London"></option><option value="UTC"></option></datalist>
+      <label>Planning unit<select aria-label="Calendar planning unit" bind:value={unitFilter} onchange={storePreferences}><option value="campaign">Whole campaigns</option><option value="format">Individual formats</option><option value="all">Campaigns and formats</option></select></label>
+    </div></details>
+  </ResearchToolbar>
+  <p class="calendar-range-context">{timeZone} · {unitFilter === 'campaign' ? 'Whole campaigns' : unitFilter === 'format' ? 'Individual formats' : 'Campaigns and formats'}</p>
   <p class="calendar-feedback" aria-live="polite" aria-atomic="true">{announcement}</p>
   {#if localError || $client.calendar.error || $client.error}<div class="calendar-error" role="alert"><strong>Calendar change needs attention.</strong> {localError || $client.calendar.error || $client.error}<button type="button" onclick={reloadCalendar}>Reload authoritative calendar</button></div>{/if}
   {#if $client.uncertain}<p class="calendar-error">Save unconfirmed. Retry to check and finish this change.<button type="button" disabled={blocked} onclick={() => commit(null,"The retried calendar action was recorded.",null,true)}>Retry calendar request</button></p>{/if}
   {#if lastOperationId}<div class="calendar-receipt"><span>{lastOperation?.undone ? "Calendar action undone." : "Calendar action saved."}</span><button type="button" onclick={undo} disabled={blocked || !lastOperation?.canUndo}>Undo calendar action</button><small>Undo checks current revisions and preserves newer work.</small></div>{/if}
   {#if $client.calendar.loading && (!data || data.startDate !== startDate || data.endDate !== endDate || data.timeZone !== timeZone)}<p role="status">Loading calendar…</p>
   {:else if data}
-    <div class="workspace-date-grid" class:moving={!!drag} aria-label="Dated plans">
+    <div class="calendar-content"><div class="workspace-date-grid" class:moving={!!drag} aria-label="Dated plans">
       {#each days as date (date)}
         <section class="calendar-day" class:drop-target={dropDate === date} data-calendar-date={date} aria-label={`Plans for ${date}`}>
           <h3>{dateLabel(date)}<small>{date} · {timeZone}</small></h3>
@@ -493,7 +500,7 @@
     <div class="calendar-pools">
       <section aria-label="Unscheduled planning units"><h3>Unscheduled units</h3><p>No dated placement. A format plan does not mean its artwork exists.</p><ul>{#each visibleUnits as item (unitKey(item))}{@render poolUnit(item)}{:else}<li>No unscheduled units in this view.</li>{/each}</ul></section>
       <section aria-label="Legacy undated weekday plans"><h3>Undated weekday plans</h3><p>Existing Monday–Sunday plans have no calendar date. Moving one to a date is explicit.</p><ul>{#each legacyIds as id (id)}{@render poolUnit({storyId:id,unit:'campaign',format:null},true)}{:else}<li>No undated weekday plans in this view.</li>{/each}</ul></section>
-    </div>
+    </div></div>
   {/if}
   {#if dialog}
     <dialog open class="calendar-move-panel" aria-modal="false" aria-label="Move planning unit" onkeydown={event => {if(event.key==='Escape')closeMove();}}>
@@ -506,6 +513,7 @@
       </form>
     </dialog>
   {/if}
+  </ResearchPage>
 </section>
 
 <style>
@@ -514,41 +522,17 @@
     color: var(--ink, #19251c);
     min-width: 0;
   }
-  .calendar-heading {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: start;
-  }
-  .calendar-pools p {
-    color: #526256;
-    font-size: 0.88rem;
-  }
-  .calendar-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    gap: 0.75rem;
-    margin: 1rem 0;
-  }
-  .calendar-controls label,
-  .calendar-move-panel label {
-    display: grid;
-    gap: 0.35rem;
-    font-size: 0.8rem;
-  }
-  .calendar-controls input,
-  .calendar-controls select,
-  .calendar-move-panel input,
-  .calendar-move-panel select {
-    min-height: 44px;
-    min-width: 0;
-  }
-  .calendar-feedback {
-    min-height: 2.5em;
-    color: #526256;
-    font-size: 0.85rem;
-  }
+  .calendar-range, .calendar-range-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:end; }
+  .calendar-range label, .calendar-settings-fields label, .calendar-move-panel label { display:grid; gap:5px; min-width:0; font-size:12px; }
+  .calendar-range input { width:145px; }
+  .calendar-settings { margin-left:auto; }
+  .calendar-settings[open] { flex-basis:100%; margin-left:0; }
+  .calendar-settings-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding-top:8px; }
+  .calendar-range-context { margin:0; padding:8px 16px; font-size:12px; color:var(--research-muted); border-bottom:1px solid var(--research-line); }
+  .calendar-feedback { margin:0; color:var(--research-muted); font-size:13px; }
+  .calendar-feedback:not(:empty) { padding:10px 16px; }
+  .calendar-content { display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,320px); align-items:start; }
+  .calendar-pools p { color:var(--research-muted); font-size:12px; margin:6px 0 12px; }
   .calendar-error {
     padding: 1rem;
     border: 1px solid #ef846e;
@@ -567,26 +551,16 @@
   .calendar-receipt small {
     color: #526256;
   }
-  .workspace-date-grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 0.65rem;
-    overflow-x: visible;
-    padding: 0.2rem 0.2rem 1rem;
-  }
-  .calendar-day {
-    border: 1px solid var(--line, #dedfd5);
-    border-radius: 8px;
-    padding: 0.65rem;
-    min-height: 200px;
-  }
+  .workspace-date-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:0; padding:0; min-width:0; }
+  .calendar-day { border-bottom:1px solid var(--research-line); padding:12px 16px; min-width:0; }
+  .calendar-day:has(.calendar-empty) { display:grid; grid-template-columns:130px minmax(0,1fr); gap:12px; align-items:center; }
   .calendar-day h3 {
     font-size: 0.9rem;
-    margin: 0 0 0.75rem;
+    margin: 0 0 8px;
   }
   .calendar-day h3 small {
     display: block;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 400;
     margin-top: 0.3rem;
     color: #526256;
@@ -648,18 +622,8 @@
     outline: 3px solid var(--accent, #e85d04);
     outline-offset: 1px;
   }
-  .calendar-pools {
-    display: grid;
-    align-items: start;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  .calendar-pools section {
-    border: 1px solid var(--line, #dedfd5);
-    border-radius: 8px;
-    padding: 1rem;
-  }
+  .calendar-pools { display:grid; gap:0; min-width:0; border-left:1px solid var(--research-line); background:var(--research-surface); }
+  .calendar-pools section { padding:12px 16px; border-bottom:1px solid var(--research-line); min-width:0; }
   .calendar-pools li {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -676,6 +640,7 @@
     border-radius: 6px;
   }
   .calendar-pools li button {
+    display: block;
     width: 100%;
     text-align: left;
     white-space: normal;
@@ -719,53 +684,19 @@
     outline: 3px solid var(--accent, #e85d04);
     outline-offset: 3px;
   }
-  @container (max-width: 900px) {
-    .workspace-date-grid {
-      grid-template-columns: 1fr;
-    }
-    .calendar-pools {
-      grid-template-columns: 1fr;
-    }
-    .calendar-day {
-      min-height: 100px;
-    }
-    .calendar-controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
-    .calendar-controls label {
-      min-width: 0;
-    }
-    .calendar-card-actions button {
-      min-height: 44px;
-    }
+  @container (max-width: 740px) {
+    .calendar-content { grid-template-columns:minmax(0,1fr); }
+    .calendar-pools { border-left:0; border-top:1px solid var(--research-line); }
+    .calendar-day:has(.calendar-empty) { grid-template-columns:130px minmax(0,1fr); padding-block:10px; }
+    .calendar-range-actions { gap:4px; }
+    .calendar-settings { margin-left:0; }
   }
-  @media (max-width: 700px) {
-    .workspace-date-grid {
-      grid-template-columns: 1fr;
-      overflow: visible;
-    }
-    .calendar-day {
-      min-height: 100px;
-    }
-    .calendar-pools {
-      grid-template-columns: 1fr;
-    }
-    .calendar-heading {
-      display: block;
-    }
-    .calendar-controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
-    .calendar-controls label {
-      min-width: 0;
-    }
-    .calendar-card-actions button {
-      min-height: 44px;
-    }
-    .calendar-day h3 small {
-      font-size: 12px;
-    }
+  @container (max-width: 420px) {
+    .calendar-range { width:100%; }
+    .calendar-range label { flex:1; }
+    .calendar-range input { width:100%; }
+    .calendar-settings-fields { grid-template-columns:minmax(0,1fr); }
+    .calendar-pools li { grid-template-columns:minmax(0,1fr); }
+    .calendar-day:has(.calendar-empty) { grid-template-columns:minmax(0,1fr); gap:4px; }
   }
 </style>
