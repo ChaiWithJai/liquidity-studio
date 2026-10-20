@@ -27,10 +27,10 @@ export function normalizeDefiantDomain(input, base) {
    if(kind==='forecasts'){
     if(row.trained!==false||row.method!=='trailing-3-month-baseline')throw fail('Unsupported forecast method');
     if(!row.horizonMonths)throw fail('Positive forecast horizon required');
-    return {...r,regionId:linked('regions',row.regionId),asOf:month(row.asOf),horizonMonths:num(row.horizonMonths,12,true),baselineMonthlyStreams:num(row.baselineMonthlyStreams),projectedStreams:num(row.projectedStreams),method:row.method,explanation:text(row.explanation),trained:false};
+    return {...r,regionId:linked('regions',row.regionId),asOf:month(row.asOf),horizonMonths:num(row.horizonMonths,12,true),baselineMonthlyStreams:num(row.baselineMonthlyStreams),projectedStreams:num(row.projectedStreams,1e12,true),method:row.method,explanation:text(row.explanation),trained:false};
    }
    r.date=month(row.date);r.period='month';if(row.period!=='month')throw fail('Monthly observation required');
-   if(base.dataset.asOf&&r.date>base.dataset.asOf.slice(0,10))throw fail('Observation exceeds dataset date');
+   if(base.dataset.asOf&&r.date>=`${base.dataset.asOf.slice(0,7)}-01`)throw fail('Monthly observation overlaps dataset date');
    r.artistId=linked('artists',row.artistId);if(base.tracks.find(x=>x.id===r.trackId).artistId!==r.artistId)throw fail('Artist and recording disagree');
    r.streams=num(row.streams,1e9,true);
    if(kind==='demand'){
@@ -43,11 +43,20 @@ export function normalizeDefiantDomain(input, base) {
     if(!Array.isArray(row.splits)||!row.splits.length||row.splits.length>8)throw fail('Royalty splits required');
     r.splits=row.splits.map(x=>{const partyId=id(x.partyId);if(!has('artists',partyId)&&!has('collaborators',partyId))throw fail('Unknown royalty party');return {partyId,shareBps:num(x.shareBps,10000,true),amountCents:num(x.amountCents,1e12,true)};});
     if(new Set(r.splits.map(x=>x.partyId)).size!==r.splits.length||r.splits.reduce((s,x)=>s+x.shareBps,0)!==10000||r.splits.reduce((s,x)=>s+x.amountCents,0)!==r.royaltyCents)throw fail('Royalty splits do not conserve amounts');
+    if(r.splits.some(x=>Math.abs(x.amountCents-r.royaltyCents*x.shareBps/10000)>1))throw fail('Royalty split disagrees with declared share');
    }
    const nk=[r.trackId,r.date,r.regionId??''].join('|');if(natural.has(nk))throw fail('Duplicate monthly observation');natural.add(nk);return r;
   });
  }
  if(out.demand&&out.royalties)for(const row of out.royalties){const total=out.demand.filter(x=>x.trackId===row.trackId&&x.date===row.date).reduce((s,x)=>s+x.streams,0);if(total!==row.streams)throw fail('Demand and royalty streams do not reconcile');}
+ for(const row of out.forecasts??[]){
+  if(!base.dataset.asOf||row.asOf!==base.dataset.asOf.slice(0,10))throw fail('Forecast and dataset dates disagree');
+  const observations=(out.demand??[]).filter(x=>x.trackId===row.trackId&&x.regionId===row.regionId).sort((a,b)=>a.date.localeCompare(b.date)).slice(-3);
+  const asOfMonth=Number(row.asOf.slice(0,4))*12+Number(row.asOf.slice(5,7));
+  if(observations.length!==3||observations.some((x,i)=>Number(x.date.slice(0,4))*12+Number(x.date.slice(5,7))!==asOfMonth-3+i))throw fail('Forecast requires three complete preceding months');
+  const baseline=observations.reduce((s,x)=>s+x.streams,0)/3;
+  if(Math.abs(row.baselineMonthlyStreams-baseline)>1e-6||row.projectedStreams!==Math.round(baseline*row.horizonMonths))throw fail('Forecast does not match declared baseline method');
+ }
  // Artist profiles are bounded metadata, not inferred from creator names.
  for(const artist of base.artists){const raw=input.artists.find(x=>x.id===artist.id);if(raw.profile!==undefined){if(!object(raw.profile))throw fail('Invalid artist profile');artist.profile={summary:text(raw.profile.summary),genres:refs(raw.profile.genres),homeRegionId:linked('regions',raw.profile.homeRegionId)};}if(raw.homeRegionId!==undefined)artist.homeRegionId=linked('regions',raw.homeRegionId);}
  for(const row of [...base.campaigns,...base.opportunities])if(row.regionId)linked('regions',row.regionId);
@@ -92,7 +101,7 @@ export function queryDefiantDomain(data, request) {
   num(horizonMonths,12,true);if(!horizonMonths||!Array.isArray(request.budgets)||!request.budgets.length||request.budgets.length>3)throw fail('One to three explicit scenario budgets required');
   if(new Set(request.budgets).size!==request.budgets.length)throw fail('Distinct scenario budgets required');
   const rows=(data.royalties??[]).filter(x=>x.trackId===recording.id),streams=total(rows,'streams'),rate=streams?total(rows,'royaltyCents')/100/streams:null,baselineMonthlyStreams=item?item.recentStreams/3:null;
-  const assumptions=['Incremental streams = budget / assumed $0.05 acquisition cost per stream; this is an editable planning assumption, not measured campaign lift.','Baseline uses the last three complete monthly observations; scenario output is not an ML forecast or a budget recommendation.'];
+  const assumptions=['Incremental streams = budget / assumed $0.05 acquisition cost per stream; this is a fixed explicit planning assumption, not measured campaign lift.','Baseline uses the last three complete monthly observations; scenario output is not an ML forecast or a budget recommendation.'];
   result={available:baselineMonthlyStreams!==null,recording,region,baselineMonthlyStreams,scenarios:request.budgets.map(budget=>{num(budget,100000);const baselineStreams=baselineMonthlyStreams===null?null:Math.round(baselineMonthlyStreams*horizonMonths),assumedIncrementalStreams=Math.round(budget/0.05),projectedStreams=baselineStreams===null?null:baselineStreams+assumedIncrementalStreams,projectedRoyaltyCents=projectedStreams===null||rate===null?null:Math.round(projectedStreams*rate*100);return {budget,currency:'USD',horizonMonths,baselineStreams,assumedIncrementalStreams,projectedStreams,assumedRatePerStream:rate,projectedRoyaltyCents,netAfterBudget:projectedRoyaltyCents===null?null:round(projectedRoyaltyCents/100-budget),assumptions};}),trained:false,reviewRequired:true,evidenceIds:[...(item?.evidenceIds??[]),...rows.map(x=>x.id)],assumptions};
  }
  return structuredClone({...envelope,...result});
