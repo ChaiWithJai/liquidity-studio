@@ -1,0 +1,41 @@
+--- a/frontend/src/app/main/ui/workspace/sidebar.cljs
++++ b/frontend/src/app/main/ui/workspace/sidebar.cljs
+@@ -22,6 +22,7 @@
+    [app.main.features :as features]
+    [app.main.refs :as refs]
+    [app.main.store :as st]
++   [app.main.ui.studio-panels :as studio-panels]
+    [app.main.ui.context :as muc]
+    [app.main.ui.ds.buttons.icon-button :refer [icon-button*]]
+    [app.main.ui.ds.foundations.assets.icon :refer [icon*] :as i]
+@@ -389,8 +390,10 @@
+         resolved-active-tokens-force-set
+         (sd/use-resolved-tokens* active-tokens-force-set)]
+ 
+-    [:*
+-     (if (:collapse-left-sidebar layout)
++    [:> studio-panels/panels*
++     {:left (mf/html
++       [:*
++        (if (:collapse-left-sidebar layout)
+        [:> collapsed-button*]
+        [:> left-sidebar* {:layout layout
+                           :file file
+@@ -399,8 +402,9 @@
+                           :active-tokens active-tokens-force-set
+                           :resolved-active-tokens (if tokenscript?
+                                                     tokenscript-resolved-active-tokens-force-set
+-                                                    resolved-active-tokens-force-set)}])
+-     [:> right-sidebar* {:section section
++                                                    resolved-active-tokens-force-set)}])])
++      :right (mf/html
++       [:> right-sidebar* {:section section
+                          :selected selected
+                          :drawing-tool drawing-tool
+                          :layout layout
+@@ -410,4 +414,4 @@
+                          :tokens-lib tokens-lib
+                          :active-tokens (if tokenscript?
+                                           tokenscript-resolved-active-tokens
+-                                          resolved-active-tokens)}]]))
++                                          resolved-active-tokens)}])}]))

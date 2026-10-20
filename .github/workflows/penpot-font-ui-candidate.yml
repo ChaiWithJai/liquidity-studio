@@ -153,12 +153,15 @@ jobs:
           cp upstream/frontend/src/app/main/ui/workspace.cljs evidence/workspace.modified.cljs
           cp upstream/frontend/src/app/main/studio_host.cljs evidence/studio_host.modified.cljs
           cp upstream/frontend/src/app/main/ui/studio_entry.cljs evidence/studio_entry.modified.cljs
+          cp upstream/frontend/src/app/main/ui/studio_panels.cljs evidence/studio_panels.modified.cljs
+          cp upstream/frontend/src/app/main/ui/workspace/sidebar.cljs evidence/sidebar.modified.cljs
           cp upstream/frontend/src/app/main/ui.cljs evidence/ui.modified.cljs
           cp upstream/frontend/src/app/main/ui/auth.cljs evidence/auth.modified.cljs
           cp upstream/frontend/test/frontend_tests/studio_host_test.cljs evidence/studio_host_test.modified.cljs
           cp upstream/frontend/test/frontend_tests/runner.cljs evidence/runner.modified.cljs
           cp upstream/docker/images/files/nginx-entrypoint.sh evidence/nginx-entrypoint.modified.sh
           cp studio/tools/penpot-studio-host/workspace.patch studio/tools/penpot-studio-host/entrypoint.patch studio/tools/penpot-studio-host/auth.patch studio/tools/penpot-studio-host/entry-guide.patch studio/tools/penpot-studio-host/runner.patch evidence/
+          cp studio/tools/penpot-studio-host/sidebar.patch evidence/
           cp studio/tools/penpot-studio-host/source-manifest.json evidence/studio-host-source-manifest.json
           cp studio/tools/penpot-studio-host/README.md evidence/studio-host-README.md
           cp upstream/LICENSE evidence/UPSTREAM-LICENSE

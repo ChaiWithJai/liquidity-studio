@@ -7,11 +7,15 @@
     },
     "studio_host_test.cljs": {
       "destination": "frontend/test/frontend_tests/studio_host_test.cljs",
-      "sha256": "d8e505b450ca489112c60aebc6ae73fc54901bc2a081aec83bb001c61d20d000"
+      "sha256": "c140cea080d94c69ffd5e8c2aecba2fb0481b4132ff4e31c83c6dd84e8768cef"
     },
     "studio_entry.cljs": {
       "destination": "frontend/src/app/main/ui/studio_entry.cljs",
       "sha256": "7b6b38e4d89617f60be55216f8cb46b063c5f837a9b1bf6446d39976a804e45f"
+    },
+    "studio_panels.cljs": {
+      "destination": "frontend/src/app/main/ui/studio_panels.cljs",
+      "sha256": "a017370f3b804b3a7a687c28fd0257e82c06fcb89744ceb831a0f4935c148e53"
     }
   },
   "files": {
@@ -34,6 +38,10 @@
     "frontend/test/frontend_tests/runner.cljs": {
       "beforeSha256": "71548e192999a6554ebd0f24db36b636a26e0c8a8e2aefc47b532b52e40ecd29",
       "afterSha256": "16e4f9a68a22bbf49512ce8b5d8038700671d9e136a8f0e076b34c8b4bde134e"
+    },
+    "frontend/src/app/main/ui/workspace/sidebar.cljs": {
+      "beforeSha256": "63ca4006516744a8f893e73387a8dba0646826aeab2103ec63e0d43558f3c3a3",
+      "afterSha256": "2fc9f245a622dac0e0f5ce43c977eb9d38287e3ad7dd16c9fda3b901524d44b0"
     }
   },
   "patches": {
@@ -41,6 +49,7 @@
     "entrypoint.patch": "959cac9e14e0e61a9941a475e2dacf204d03060874247e5cbb8df3a0c7650257",
     "auth.patch": "4d15b9710376ffa45ed0131015bff3f0fa66d33cacf3ab2e041353a21579b418",
     "entry-guide.patch": "935295251ff66e0e7d313680108d122f3f4532e28ce538df1f4d5e6bd337687f",
-    "runner.patch": "3ca6c16b567dfdd96c77b7aadf4100d71a9366dc7259a42abc912b6820f43f57"
+    "runner.patch": "3ca6c16b567dfdd96c77b7aadf4100d71a9366dc7259a42abc912b6820f43f57",
+    "sidebar.patch": "434b5a099d7ddb3aeb9d08e6c4347712f5e0f57ab600333eaf142c5b6aef0868"
   }
 }

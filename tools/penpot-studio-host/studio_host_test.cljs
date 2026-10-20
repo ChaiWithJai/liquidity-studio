@@ -1,7 +1,8 @@
 (ns frontend-tests.studio-host-test
   (:require [cljs.test :as t]
             [app.main.studio-host :as host]
-            [app.main.ui.studio-entry :as entry]))
+            [app.main.ui.studio-entry :as entry]
+            [app.main.ui.studio-panels :as panels]))
 
 (t/deftest reports-actual-acknowledgment-not-iframe-readiness
   (let [state {:current-file-id "file" :current-page-id "page"
@@ -42,3 +43,14 @@
                   "http://localhost:3002/" "http://user@localhost:3002"
                   "http://localhost:3002?next=other"]]
     (t/is (nil? (host/configured-parent-origin origin)))))
+
+(t/deftest compact-panels-are-contained-only-and-have-one-local-selection
+  (t/is (panels/embedded? "https://studio.example.com" false))
+  (t/is (panels/embedded? "http://localhost:39052" false))
+  (t/is (not (panels/embedded? "https://studio.example.com" true)))
+  (t/is (not (panels/embedded? nil false)))
+  (t/is (not (panels/embedded? "http://remote.example:39052" false)))
+  (t/is (= :canvas (panels/selected-panel nil)))
+  (t/is (= :canvas (panels/selected-panel :unknown)))
+  (t/is (= :layers (panels/selected-panel :layers)))
+  (t/is (= :properties (panels/selected-panel :properties))))
