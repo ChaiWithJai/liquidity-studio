@@ -6,6 +6,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --engine-strict
 COPY index.html vite.config.js ./
 COPY scripts ./scripts
+COPY licenses/defiant-vendored ./licenses/defiant-vendored
 COPY src ./src
 COPY public ./public
 COPY server ./server

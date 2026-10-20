@@ -23,3 +23,11 @@ test('unknown source-map vendor, changed SDK publication and corrupted license f
  await writeFile(join(root,input+'.map'),JSON.stringify({sources:[]}));await writeFile(join(root,'node_modules/@modelcontextprotocol/server/package.json'),JSON.stringify({version:'2.4.0'}));await assert.rejects(defiantVendoredNotices(root,metafile),/pinned/);
  await writeFile(join(root,'node_modules/@modelcontextprotocol/server/package.json'),JSON.stringify({version:'2.3.1'}));const manifest=JSON.parse(await readFile(join(root,'licenses/defiant-vendored/manifest.json'),'utf8'));await writeFile(join(root,'licenses/defiant-vendored',manifest.packages[0].files[0].file),'corrupted');await assert.rejects(defiantVendoredNotices(root,metafile),/integrity/);
 });
+
+test('published mapless utility chunks do not suppress assessed vendor maps',async t=>{
+ const {root,input,metafile}=await fixture(t),mapless='node_modules/@modelcontextprotocol/server/dist/chunk-mapless.mjs';
+ await writeFile(join(root,mapless),'// Published utility chunk without a source map');metafile.inputs[mapless]={};
+ assert.match(await defiantVendoredNotices(root,metafile),/content-type@1.0.5/);
+ await assert.rejects(defiantVendoredNotices(root,{inputs:{[mapless]:{}}}),/No published SDK source maps/);
+ await writeFile(join(root,mapless),'//# sourceMappingURL=chunk-mapless.mjs.map');await assert.rejects(defiantVendoredNotices(root,metafile),{code:'ENOENT'});
+});

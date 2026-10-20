@@ -6,13 +6,14 @@ export async function defiantVendoredNotices(root,metafile){
  const directory=resolve(root,'licenses/defiant-vendored');
  const manifest=JSON.parse(await readFile(resolve(directory,'manifest.json'),'utf8'));
  const known=new Map(manifest.packages.map(row=>[row.name,row]));
- const observed=new Set();
+ const observed=new Set();let assessedMaps=0;
  for(const input of Object.keys(metafile.inputs)){
   const match=/node_modules\/(\@modelcontextprotocol\/(?:server|client|core))\//.exec(input);if(!match)continue;
   const packageDirectory=resolve(root,input.slice(0,input.indexOf(match[0])),'node_modules',match[1]);
   if(JSON.parse(await readFile(resolve(packageDirectory,'package.json'),'utf8')).version!==manifest.sdkVersion)throw Error('Vendored SDK notice assessment requires the pinned publication version');
   if(!input.endsWith('.mjs'))continue;
-  const map=JSON.parse(await readFile(resolve(root,input)+'.map','utf8'));
+  let text;try{text=await readFile(resolve(root,input)+'.map','utf8');}catch(error){if(error.code==='ENOENT'&&!/sourceMappingURL=/.test(await readFile(resolve(root,input),'utf8')))continue;throw error;}
+  const map=JSON.parse(text);assessedMaps++;
   for(const source of map.sources??[]){
    const vendor=/\/\.pnpm\/([^/]+)\/node_modules\/((?:@[^/]+\/)?[^/]+)\//.exec(source);if(!vendor)continue;
    const name=vendor[2],prefix=name.replace('/','+')+'@',version=vendor[1].startsWith(prefix)?vendor[1].slice(prefix.length).split('_')[0]:null;
@@ -20,6 +21,7 @@ export async function defiantVendoredNotices(root,metafile){
    observed.add(`${name}@${version}`);
   }
  }
+ if(!assessedMaps)throw Error('No published SDK source maps were assessed');
  const sections=[`\n===== Supplemental upstream-vendored SDK notices =====\n${manifest.scope}\nSDK publication: ${manifest.sdkVersion}\nVersion evidence: ${manifest.upstreamLockUrl}\nObserved source-map identities: ${[...observed].sort().join(', ')||'none in selected published chunks'}`];
  for(const row of manifest.packages){
   sections.push(`\n===== ${row.name}@${row.version} (${row.license}) — supplemental =====\nExact package metadata: ${row.metadataUrl}\nPublished archive integrity: ${row.tarballIntegrity}`);
