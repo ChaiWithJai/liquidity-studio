@@ -562,18 +562,18 @@
   .projection-switch button[aria-pressed="true"] {background:var(--research-selected,#dfe8d2);color:var(--research-ink,#25371d);font-weight:650;}
   .workspace-table-surface .view-picker {min-width:0;flex-direction:row;align-items:center;gap:6px;font-weight:400;}
   .workspace-table-surface .view-picker select {width:145px;max-width:100%;}
-  .table-tools {margin:0;}
+  .table-tools {margin:0;min-width:0;max-width:100%;box-sizing:border-box;}
   .table-tools > summary {padding:8px 4px;white-space:nowrap;}
-  .table-tools[open] {flex-basis:100%;order:1;}
-  .table-tool-panels {display:flex;align-items:start;flex-wrap:wrap;gap:8px;padding-top:8px;}
+  .table-tools[open] {flex-basis:100%;width:100%;order:1;}
+  .table-tool-panels {min-width:0;max-width:100%;box-sizing:border-box;display:flex;align-items:start;flex-wrap:wrap;gap:8px;padding-top:8px;}
   .table-tool-panels > details {min-width:0;}
-  .table-tool-panels > details[open] {flex-basis:100%;order:1;}
+  .table-tool-panels > details[open] {flex-basis:100%;width:100%;max-width:100%;box-sizing:border-box;order:1;}
   .table-tool-panels > details > summary {padding:8px 10px;border:1px solid var(--research-line,#cbd3c5);border-radius:6px;min-height:36px;box-sizing:border-box;}
   .table-query-summary {padding:6px var(--research-space,16px);font-size:12px;}
   .table-query-summary :global(p) {margin:0;font-size:12px;}
   .table-query-summary :global(.active-filters) {margin:5px 0 0;}
   .table-query-summary :global(.active-filters button) {min-height:28px;padding:4px 8px;font-size:12px;}
-  .display-options,.advanced-filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(185px,100%),1fr));max-width:none;gap:12px;padding:14px;margin-top:6px;}
+  .display-options,.advanced-filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(185px,100%),1fr));min-width:0;max-width:100%;box-sizing:border-box;gap:12px;padding:14px;margin-top:6px;}
   .display-options label,.advanced-filters label {align-items:start;flex-direction:column;min-width:0;}
   .display-options select,.advanced-filters select,.advanced-filters input {width:100%;max-width:100%;box-sizing:border-box;}
   .column-options {display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));}
