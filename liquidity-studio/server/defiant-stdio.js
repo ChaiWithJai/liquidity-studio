@@ -11,7 +11,7 @@ async function start() {
   const actor = Object.freeze({ kind: 'private-local-owner-process' });
   const service = createDefiantUnifiedData({ dataset, organizationId, authorize: candidate => candidate === actor ? isCurrent() : false });
   const handle = serveStdio(() => {
-    const server = new McpServer({ name: 'defiant-private-research', version: '1.0.0' }, { instructions: DEFIANT_DOMAIN_INSTRUCTIONS });
+    const server = new McpServer({ name: 'defiant-private-research', version: '1.0.0' }, { instructions: `This private process is bound to organizationId ${organizationId}. Use that exact scope for all tools. ${DEFIANT_DOMAIN_INSTRUCTIONS}` });
     registerDefiantTools(server, { resolveService: async input => {
       if (input.organizationId !== organizationId) throw Object.assign(new Error('Private scope denied'), { status: 403 });
       return { service, actor };
