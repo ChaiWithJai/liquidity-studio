@@ -1,3 +1,4 @@
+import {expectSmallTextContrast} from './support/text-contrast.js';
 import { test, expect } from "@playwright/test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -67,6 +68,10 @@ test("table view, detail edit, shared receipt and undo preserve canonical story 
   page,
 }) => {
   await signIn(page);
+  await expectSmallTextContrast(page.locator('.workspace-header .eyebrow'));
+  const loadedTable = page.getByRole('table', {name:'Scoped story table',exact:true});
+  await expectSmallTextContrast(loadedTable.getByRole('columnheader'));
+  await expectSmallTextContrast(loadedTable.getByRole('button',{name:'Select loaded rows',exact:true}));
   await page
     .getByLabel("Sort stories", { exact: true })
     .selectOption("category");
