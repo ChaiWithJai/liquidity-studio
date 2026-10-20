@@ -71,3 +71,10 @@ test('cohorts reflect supplied provenance and attached references without changi
  for(const cohort of ['2026','',null,42])await assert.rejects(f.service.inbox(f.actor,{cohort}),{status:400});
  await assert.rejects(f.service.inbox(f.actor,{cohort:'all',unsupported:true}),{status:400});
 });
+
+test('catalog anchor separates supplied reference counts from actual imported records and discovery',async t=>{
+ const f=await fixture(t),empty=await f.service.inbox(f.actor);assert.equal(empty.catalogGroups[0].artist,'Nipsey Hussle');assert.deepEqual(empty.catalogGroups[0].referenceCounts,{sources:45,recordings:12});assert.deepEqual(empty.catalogGroups[0].sourceIds,[]);
+ const preview=await f.service.previewInbox(f.actor,{kind:'nipsey-example'});await f.service.importInbox(f.actor,f.input({kind:preview.kind,previewDigest:preview.previewDigest}));
+ const state=f.store.get(f.service.key);state.inbox.sources.push({id:'youtube:discovered1',title:'A live discovery',provenance:{kind:'manual-youtube-discovery'},observations:[]});f.store.update(f.service.key,()=>state);
+ const anchor=(await f.service.inbox(f.actor)).catalogGroups[0];assert.equal(anchor.sourceIds.length,45);assert.equal(anchor.recordingIds.length,12);assert.ok(!anchor.sourceIds.includes('youtube:discovered1'));assert.equal(anchor.verification,'supplied-example');
+});

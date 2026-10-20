@@ -54,3 +54,17 @@ test('analysis moment selection roundtrips with its source and is removed on cam
  const draft=workflowHref(url,{organizationId:'org_default',brandId:'brand_default',tab:'studio'});assert.equal(new URL(draft).searchParams.has('moment'),false);
  assert.equal(readWorkflowLocation('http://localhost/?tab=strategy&moment=%3Cscript%3E').strategy.momentId,undefined);
 });
+
+test('catalog and talent origins retain exact selection on report return without changing legacy links',async()=>{
+ const {strategyReturnContext,strategyReportReturn}=await import('../src/lib/defiant-location.js');
+ for(const origin of ['catalog','talent']){
+  const context=strategyReturnContext({origin,view:origin==='catalog'?'inbox':'map',regionId:'region:one',artistId:'artist:one',sourceId:'youtube:one',recordingId:'recording:one',focus:'artist:one',selected:'person:one',query:'retained words',cohort:'supplied-2026'});
+  const href=workflowHref('http://localhost/',{organizationId:'defiant_org',tab:'strategy',strategy:{...context,view:'report',reportId:'report:one'}});
+  const read=readWorkflowLocation(href).strategy;assert.equal(read.origin,origin);assert.equal(read.regionId,'region:one');assert.equal(read.artistId,'artist:one');
+  const back=strategyReportReturn(read,{returnContext:context});assert.deepEqual(back,{...context,reportId:''});
+  const publishing=new URL(workflowHref(href,{organizationId:'org_default',brandId:'brand_default',tab:'studio'}));for(const key of ['origin','region','artist','source','recording','select'])assert.equal(publishing.searchParams.has(key),false);
+ }
+ assert.equal(strategyReportReturn({view:'report'},{sourceRefs:['youtube:one'],planIds:[]}).view,'inbox');
+ assert.equal(strategyReportReturn({view:'report'},{planIds:['artist:one']}).view,'map');
+ assert.equal(readWorkflowLocation('http://localhost/?tab=strategy&view=map').strategy.origin,undefined);
+});
