@@ -41,6 +41,8 @@ test('actual joined fictional domain results render through SDK; explicit scenar
  const app=page.frameLocator('iframe[title="Defiant domain review"]');
  await expect(page.getByLabel('Domain host initialization')).toHaveText('complete');
  await expect(app.getByRole('heading',{name:'Catalog activation review',exact:true})).toBeVisible();
+ await expect(app.getByRole('main')).toHaveAttribute('aria-busy','false');
+ await test.info().attach('domain-review-input-accessibility',{body:await app.getByRole('form',{name:'Review inputs',exact:true}).ariaSnapshot(),contentType:'text/plain'});
  await expect(app.getByRole('combobox',{name:'Artist',exact:true})).toBeEnabled();
  await expect(app.getByRole('combobox',{name:'Artist',exact:true})).toHaveValue('artist:fictional-1');
  await expect(app.getByRole('combobox',{name:'Recording',exact:true})).toHaveValue('track:fictional-1-1');
