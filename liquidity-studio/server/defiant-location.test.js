@@ -77,6 +77,7 @@ test('legacy bookmarked source reports recover their single source and only an u
  const moment={sourceId:'youtube:one',moment:{id:'moment:one',savedAt:'2026-10-19T00:00:00Z'}};
  assert.equal(strategyReportReturn(bookmarked,{...legacy,momentSnapshots:[moment]}).momentId,'moment:one');
  const stale=strategyReportReturn({...bookmarked,sourceId:'youtube:other',momentId:'moment:other'},{...legacy,momentSnapshots:[moment]});assert.equal(stale.sourceId,'youtube:one');assert.equal(stale.momentId,'moment:one');
+ const catalogStale=strategyReportReturn({...bookmarked,origin:'catalog',sourceId:'youtube:other',momentId:'moment:other'},{...legacy,momentSnapshots:[moment]});assert.equal(catalogStale.sourceId,'youtube:one');assert.equal(catalogStale.momentId,'moment:one');
  assert.equal(strategyReportReturn({...bookmarked,sourceId:'youtube:other',momentId:'moment:other'},legacy).momentId,undefined);
  assert.equal(strategyReportReturn(bookmarked,{...legacy,momentSnapshots:[moment,{...moment,moment:{...moment.moment,id:'moment:two'}}]}).momentId,undefined);
  assert.equal(strategyReportReturn(bookmarked,{sourceRefs:['youtube:one','youtube:two'],planIds:[]}).sourceId,undefined);

@@ -34,7 +34,7 @@ export function strategyReturnContext(location={}){
 }
 export function strategyReportReturn(location={},report){
  const captured=report?.returnContext||location;
- const sourceOnly=!captured.origin&&report?.sourceRefs?.length&&!report?.planIds?.length;
+ const sourceOnly=!report?.returnContext&&report?.sourceRefs?.length&&!report?.planIds?.length;
  const singleSource=sourceOnly&&report.sourceRefs.length===1?report.sourceRefs[0]:'';
  const legacySource=sourceOnly?(report.sourceRefs.includes(captured.sourceId)?captured.sourceId:singleSource):'';
  const moments=legacySource?(report.momentSnapshots||[]).filter(s=>s.sourceId===legacySource&&s.moment?.savedAt):[];
