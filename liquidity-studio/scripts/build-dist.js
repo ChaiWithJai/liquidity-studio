@@ -4,3 +4,6 @@ await build();
 
 import {buildDefiantChat} from './build-defiant-chat.js';
 await buildDefiantChat();
+
+import {buildDefiantStdio} from './build-defiant-stdio.js';
+await buildDefiantStdio();
