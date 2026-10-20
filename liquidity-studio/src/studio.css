@@ -1,3 +1,4 @@
+@import "./app-chrome.css";
 /* Noto Sans Devanagari, SIL OFL: google/fonts @ 2bc5d431b584d89e646214bf6cfa75494e76ceea */
 @font-face { font-family: "Noto Sans Devanagari"; src: url("/fonts/NotoSansDevanagari.ttf"); font-weight: 100 900; font-style: normal; font-display: block; }
 @font-face { font-family: "DejaVu Sans"; src: url("/fonts/DejaVuSans.ttf"); font-weight: 400; font-style: normal; font-display: block; }
@@ -7,16 +8,16 @@
 @font-face { font-family: "Inter"; src: url("/fonts/InterVariable.ttf"); font-weight: 100 900; font-style: normal; font-display: block; }
 @font-face { font-family: "Instrument Serif"; src: url("/fonts/InstrumentSerif-Regular.ttf"); font-weight: 400; font-style: normal; font-display: block; }
 :root {
-  font-family: "DM Sans", system-ui, sans-serif;
-  color: #222a24;
-  background: #f5f5ef;
+  font-family: var(--app-shell-font);
+  color: var(--app-shell-text);
+  background: var(--app-canvas);
   font-synthesis: none;
   font-size: 14px;
-  --ink: #19251c;
-  --muted: #738075;
-  --line: #dedfd5;
-  --lime: #d9ef83;
-  --cream: #f5f5ef;
+  --ink: var(--app-ink);
+  --muted: var(--app-shell-muted);
+  --line: var(--app-line);
+  --lime: var(--app-highlight);
+  --cream: var(--app-canvas);
 }
 * {
   box-sizing: border-box;
