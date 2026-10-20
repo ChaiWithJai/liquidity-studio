@@ -54,3 +54,30 @@
   (t/is (= :canvas (panels/selected-panel :unknown)))
   (t/is (= :layers (panels/selected-panel :layers)))
   (t/is (= :properties (panels/selected-panel :properties))))
+
+(t/deftest compact-panel-activation-keeps-button-default-without-workspace-shortcuts
+  (doseq [event-type ["keydown" "keyup"]
+          key ["Enter" " "]]
+    (let [stopped (atom 0)
+          prevented (atom 0)
+          event #js {:type event-type :key key
+                     :stopPropagation #(swap! stopped inc)
+                     :preventDefault #(swap! prevented inc)}]
+      (t/is (panels/panel-activation-key? event))
+      (panels/isolate-panel-key! event)
+      (t/is (= 1 @stopped))
+      (t/is (zero? @prevented))))
+  (doseq [key ["Tab" "Escape" "ArrowLeft" "ArrowRight" "a"]]
+    (let [stopped (atom 0)
+          event #js {:key key :stopPropagation #(swap! stopped inc)}]
+      (t/is (not (panels/panel-activation-key? event)))
+      (panels/isolate-panel-key! event)
+      (t/is (zero? @stopped))))
+  (doseq [modifier ["altKey" "ctrlKey" "metaKey" "shiftKey"]
+          key ["Enter" " "]]
+    (let [stopped (atom 0)
+          event #js {:key key :stopPropagation #(swap! stopped inc)}]
+      (unchecked-set event modifier true)
+      (t/is (not (panels/panel-activation-key? event)))
+      (panels/isolate-panel-key! event)
+      (t/is (zero? @stopped)))))
