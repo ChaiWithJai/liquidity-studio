@@ -491,7 +491,7 @@ test("a delayed old-brand placement cannot restore its receipt or story into the
   expect(foreign.status()).toBe(404);
 });
 
-test("compact dated agenda and undated work share useful content width", async ({
+test("wide dated week and compact agenda keep undated work available", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1024, height: 768 });
@@ -510,6 +510,13 @@ test("compact dated agenda and undated work share useful content width", async (
   expect(await page.locator('.calendar-feedback').evaluate(element=>getComputedStyle(element).minHeight)).toBe('0px');
   const last = await day(page).boundingBox();
   expect(last.x + last.width).toBeLessThanOrEqual(1024);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(()=>window.scrollTo(0,0));
+  const wideFirst=await day(page,'2026-03-02').boundingBox(),wideSecond=await day(page,'2026-03-03').boundingBox();
+  expect(wideSecond.x).toBeGreaterThanOrEqual(wideFirst.x+wideFirst.width-1);
+  expect(Math.abs(wideSecond.y-wideFirst.y)).toBeLessThan(1);
+  await expect(pool.getByRole('button',{name:'Move Calendar alpha, Whole campaign',exact:true})).toBeInViewport();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.setViewportSize({ width: 700, height: 768 });
   const first = await day(page, "2026-03-02").boundingBox(),
     second = await day(page, "2026-03-03").boundingBox();

@@ -684,6 +684,15 @@
     outline: 3px solid var(--accent, #e85d04);
     outline-offset: 3px;
   }
+  /* Seven useful day columns need at least ~157px each; compact content stays an agenda. */
+  @container (min-width: 1100px) {
+    .calendar-content { grid-template-columns:minmax(0,1fr); }
+    .workspace-date-grid { grid-template-columns:repeat(7,minmax(0,1fr)); }
+    .calendar-day, .calendar-day:has(.calendar-empty) { display:block; min-height:120px; border-right:1px solid var(--research-line); padding:12px; }
+    .calendar-day:last-child { border-right:0; }
+    .calendar-pools { grid-template-columns:repeat(2,minmax(0,1fr)); border-left:0; border-top:1px solid var(--research-line); }
+    .calendar-pools section:first-child { border-right:1px solid var(--research-line); }
+  }
   @container (max-width: 740px) {
     .calendar-content { grid-template-columns:minmax(0,1fr); }
     .calendar-pools { border-left:0; border-top:1px solid var(--research-line); }
