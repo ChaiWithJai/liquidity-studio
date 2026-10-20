@@ -4,6 +4,16 @@ import {request as httpRequest} from 'node:http';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { createHttpServer, defiantSyntheticDemoConfiguration } from './index.js';
 const path='/mcp/defiant-synthetic';
+// Node fetch does not reliably preserve an overridden Host. Use real HTTP bytes
+// for the public-origin boundary while retaining the actual SDK transport.
+async function publicFetch(url,init={}){
+ const request=new Request(url,init),bytes=request.body?Buffer.from(await request.arrayBuffer()):undefined;
+ return new Promise((resolve,reject)=>{
+  const req=httpRequest(new URL(request.url),{method:request.method,headers:Object.fromEntries(request.headers),signal:request.signal},res=>{
+   const chunks=[];res.on('data',chunk=>chunks.push(chunk));res.on('error',reject);res.on('end',()=>resolve(new Response([204,205,304].includes(res.statusCode)?null:Buffer.concat(chunks),{status:res.statusCode,headers:res.headers})));
+  });req.on('error',reject);req.end(bytes);
+ });
+}
 async function host(t,options={}){
  let identityReads=0,privateLoads=0;
  const platform={ready:Promise.resolve(),identity:{mode:'password',authenticate(){identityReads++;throw Error('Must not read private identity');}}};
@@ -18,13 +28,13 @@ test('synthetic mount is absent by default and requires exact public origins to 
 });
 test('public fictional MCP uses actual fixed build fixture and never cookies, identity or private provider',async t=>{
  const h=await host(t,{enableDefiantSyntheticDemo:true,defiantSyntheticDemoOrigins:['https://demo.example']});
- const transport=new StreamableHTTPClientTransport(new URL(h.base+path),{requestInit:{headers:{Host:'demo.example',cookie:'studio_session=fixture-private-sentinel',Authorization:'Bearer fixture-private-sentinel'}}});
+ const transport=new StreamableHTTPClientTransport(new URL(h.base+path),{fetch:publicFetch,requestInit:{headers:{Host:'demo.example',cookie:'studio_session=fixture-private-sentinel',Authorization:'Bearer fixture-private-sentinel'}}});
  const client=new Client({name:'fictional-public-http-contract',version:'1.0.0'},{versionNegotiation:{mode:'auto'}});t.after(()=>client.close());await client.connect(transport);
  const tools=await client.listTools();assert.ok(tools.tools.some(tool=>tool.name==='defiant_artist_overview'));assert.ok(tools.tools.every(tool=>tool._meta.securitySchemes[0].type==='noauth'));
  const overview=await client.callTool({name:'defiant_artist_overview',arguments:{organizationId:'defiant_synthetic_demo',artistId:'artist:fictional-1'}});
  assert.equal(overview.structuredContent.dataset.provenance,'synthetic');assert.equal(overview.structuredContent.artist.name,'Harbor Lantern');assert.equal(overview.structuredContent.recordings.length,6);
  const denied=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'private_workspace',resource:'manifest'}});assert.equal(denied.isError,true);assert.equal(denied.structuredContent,undefined);
- const rest=(resource,options={})=>fetch(h.base+'/api/defiant-synthetic/'+resource,{...options,headers:{Host:'demo.example',...options.headers}});
+ const rest=(resource,options={})=>publicFetch(h.base+'/api/defiant-synthetic/'+resource,{...options,headers:{Host:'demo.example',...options.headers}});
  const data=await rest('artists?limit=25');assert.equal(data.status,200);const mcpRead=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'defiant_synthetic_demo',resource:'artists',limit:25}});assert.deepEqual(await data.json(),mcpRead.structuredContent);
  const scenario={operation:'compare-scenarios',trackId:'track:fictional-1-1',regionId:'region:nj',budgets:[0,500],horizonMonths:3};
  const restScenario=await rest('domain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(scenario)});assert.equal(restScenario.status,200);
@@ -35,7 +45,7 @@ test('public fictional MCP uses actual fixed build fixture and never cookies, id
 });
 test('public mount rejects host/origin/query/method/body violations before SDK processing',async t=>{
  const h=await host(t,{enableDefiantSyntheticDemo:true,defiantSyntheticDemoOrigins:['https://demo.example']});
- const req=(suffix='',options={})=>fetch(h.base+path+suffix,{...options,headers:{Host:'demo.example',...options.headers}});
+ const req=(suffix='',options={})=>publicFetch(h.base+path+suffix,{...options,headers:{Host:'demo.example',...options.headers}});
  assert.equal((await fetch(h.base+path)).status,403);
  assert.equal((await req('',{headers:{Origin:'https://other.example'}})).status,403);
  assert.equal((await req('?file=/private/file')).status,403);
