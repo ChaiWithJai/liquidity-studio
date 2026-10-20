@@ -40,7 +40,13 @@ jobs:
       - name: Verify structural graph and source checks
         run: npm run qa:loop
       - name: Require generated assets to match committed source
-        run: git diff --exit-code -- dist
+        run: |
+          git diff --exit-code -- dist
+          generated_untracked="$(git ls-files --others --exclude-standard -- dist)"
+          if [ -n "$generated_untracked" ]; then
+            printf 'Uncommitted generated output paths:\n%s\n' "$generated_untracked"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
