@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 /** Read-only projection of an explicitly supplied, unverified reference dataset. */
 const RESOURCES = ['artists', 'tracks', 'sources', 'campaigns', 'opportunities'];
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -72,6 +73,7 @@ function normalize(input) {
   }
   output.opportunities.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
   dataset.counts = Object.fromEntries(RESOURCES.map(resource => [resource, output[resource].length]));
+  dataset.revision = createHash('sha256').update(JSON.stringify({dataset,...output})).digest('hex');
   return { schemaVersion: 1, dataset, ...output, capabilities: CAPS };
 }
 export function createDefiantUnifiedData({ dataset, organizationId, authorize } = {}) {

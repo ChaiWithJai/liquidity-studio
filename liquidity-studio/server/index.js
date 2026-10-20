@@ -1,3 +1,6 @@
+import {createDefiantUnifiedData} from './defiant-unified-data.js';
+import {defiantUnifiedRequest} from './defiant-unified-http.js';
+import {DefiantStrategyService} from './defiant-strategy.js';
 import {strategyOrganizations} from './defiant-strategy.js';
 import {clipBinaryRequest} from './defiant-clips-http.js';
 import {strategyRequest} from './defiant-strategy-http.js';
@@ -202,6 +205,7 @@ export function createHttpServer(
   {
     platform = appContainer ? null : createPlatform(),
     trustedTestMode = false,
+    defiantDatasetProvider = null,
     portableBodyTimeoutMs = 15000,
     helperControlEnabled = process.env.STUDIO_HELPER_CONTROL_ENABLED === "true",
     distDir = DIST_DIR,
@@ -217,6 +221,7 @@ export function createHttpServer(
       "true",
   } = {},
 ) {
+  if(defiantDatasetProvider!==null&&typeof defiantDatasetProvider!=="function")throw Error("Defiant dataset provider must be constructor-owned");
   if (appContainer && !trustedTestMode && !platform)
     throw new Error(
       "Injected containers require an authenticated platform or explicit trustedTestMode",
@@ -756,6 +761,17 @@ export function createHttpServer(
               portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
+      if(route.startsWith("/api/studio/defiant-data/")) {
+        if(trustedTestMode||!defiantDatasetProvider)throw fail(404,"Defiant data is not configured");
+        const scope=/^\/api\/studio\/defiant-data\/([A-Za-z0-9_-]{1,128})\//.exec(route);
+        if(!scope)throw fail(404,"Unknown Defiant data scope");
+        const organizationId=scope[1],strategy=new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId});
+        await strategy.raw(user);
+        const dataset=await defiantDatasetProvider({organizationId,actor:user});
+        if(!dataset)throw fail(404,"Defiant dataset is unavailable for this organization");
+        const service=createDefiantUnifiedData({dataset,organizationId,authorize:async actor=>{await strategy.raw(actor);return true;}});
+        return json(200,await defiantUnifiedRequest({service,user,route,method:req.method,url}));
+      }
       if (route.startsWith("/api/studio/strategy/")) {
         if (trustedTestMode) throw fail(404, "Strategy requires current organization identity");
         return json(200, await strategyRequest({platform,user,route,method:req.method,body,url}));

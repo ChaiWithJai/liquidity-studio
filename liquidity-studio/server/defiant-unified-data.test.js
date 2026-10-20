@@ -51,3 +51,9 @@ test('rejects dangling references, duplicate IDs, executable and credential-bear
     assert.throws(() => createDefiantUnifiedData({ dataset, organizationId: 'org:a', authorize: () => true }), { status: 400 });
   }
 });
+test('snapshot revision changes with served facts but ignores dropped private fields', async()=>{
+ const read=dataset=>createDefiantUnifiedData({dataset,organizationId:'org:a',authorize:()=>true}).read('person:a');
+ const before=fixture(),same=fixture();same.artists[0].privateSecret='different';
+ const first=await read(before),second=await read(same);assert.match(first.dataset.revision,/^[a-f0-9]{64}$/);assert.equal(first.dataset.revision,second.dataset.revision);
+ same.tracks[0].title='Changed served recording';assert.notEqual(first.dataset.revision,(await read(same)).dataset.revision);
+});
