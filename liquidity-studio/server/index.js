@@ -1,4 +1,3 @@
-import {createDefiantSyntheticDemo} from './defiant-synthetic-demo.js';
 import {createDefiantUnifiedData} from './defiant-unified-data.js';
 import {defiantUnifiedRequest} from './defiant-unified-http.js';
 import {DefiantStrategyService} from './defiant-strategy.js';
@@ -209,8 +208,6 @@ export function createHttpServer(
     defiantDatasetProvider = null,
     enableDefiantSyntheticDemo = false,
     defiantSyntheticDemoOrigins = [],
-    defiantSyntheticDemoUiHtml,
-    defiantSyntheticDemoDomainUiHtml,
     portableBodyTimeoutMs = 15000,
     helperControlEnabled = process.env.STUDIO_HELPER_CONTROL_ENABLED === "true",
     distDir = DIST_DIR,
@@ -245,7 +242,10 @@ export function createHttpServer(
     throw new Error("Developer Penpot requires the explicit local development runtime");
   if(managedPenpotStoryDesigns&&(typeof managedPenpotStoryDesigns!=='function'||platform?.identity?.mode!=='google'||platform?.identity?.configuration?.mode!=='google'||trustedTestMode||developmentPenpotStoryDesigns))throw Error('Managed Penpot requires Google identity and one constructor-owned provider');
   const storyDesigns=managedPenpotStoryDesigns||developmentPenpotStoryDesigns;
-  const syntheticDemo=createDefiantSyntheticDemo({enabled:enableDefiantSyntheticDemo,publicOrigins:defiantSyntheticDemoOrigins,uiHtml:defiantSyntheticDemoUiHtml,domainUiHtml:defiantSyntheticDemoDomainUiHtml});
+  if(typeof enableDefiantSyntheticDemo!=='boolean'||!Array.isArray(defiantSyntheticDemoOrigins)||defiantSyntheticDemoOrigins.length>4||(enableDefiantSyntheticDemo&&!defiantSyntheticDemoOrigins.length))throw new TypeError('Invalid public fictional demo configuration');
+  for(const origin of defiantSyntheticDemoOrigins){const url=new URL(origin);if(url.origin!==origin||url.protocol!=='https:'||url.username||url.password)throw new TypeError('Exact HTTPS fictional demo origins required');}
+  let syntheticDemo;
+  const loadSyntheticDemo=()=>syntheticDemo??=import(new URL('../dist/mcp/defiant-demo-server.mjs',import.meta.url).href).then(module=>module.createDefiantSyntheticDemo({enabled:true,publicOrigins:defiantSyntheticDemoOrigins}));
   // One bounded portable operation per server, including response serialization/backpressure.
   let portableOperationActive = false;
   const server = http.createServer(async (req, res) => {
@@ -262,8 +262,12 @@ export function createHttpServer(
       res.writeHead(status, { "Content-Type": "application/json" });
       res.end(JSON.stringify(payload));
     };
+    if((req.url||'').split('?')[0]==='/mcp/defiant-synthetic'){
+      if(!enableDefiantSyntheticDemo)return json(404,{error:'Not found'});
+      try{await(await loadSyntheticDemo()).handle(req,res);}catch{return json(503,{error:'Synthetic demo unavailable'});}
+      return;
+    }
     try {
-      if(await syntheticDemo.handle(req,res))return;
       const origin = req.headers.origin;
       const hostOrigin = `${req.socket.encrypted || process.env.STUDIO_COOKIE_SECURE === "true" ? "https" : "http"}://${req.headers.host}`;
       const allowed = (process.env.STUDIO_ALLOWED_ORIGINS || "")
@@ -2149,18 +2153,24 @@ export function createHttpServer(
   });
   server.requestTimeout = 30000;
   server.headersTimeout = 10000;
-  server.once('close',()=>{void syntheticDemo.close();});
+  server.once('close',()=>{if(syntheticDemo)void syntheticDemo.then(demo=>demo.close()).catch(()=>{});});
   return server;
 }
+export function defiantSyntheticDemoConfiguration(environment=process.env){
+  const flag=environment.STUDIO_DEFIANT_SYNTHETIC_DEMO_ENABLED;
+  if(flag!==undefined&&!['','true','false'].includes(flag))throw new TypeError('Invalid fictional demo enable flag');
+  return {enableDefiantSyntheticDemo:flag==='true',defiantSyntheticDemoOrigins:(environment.STUDIO_DEFIANT_SYNTHETIC_DEMO_ORIGINS||'').split(',').map(value=>value.trim()).filter(Boolean)};
+}
 export async function startConfiguredStudio(options = {}) {
+  const syntheticDemoConfiguration=defiantSyntheticDemoConfiguration();
   if(process.env.STUDIO_PENPOT_MANAGED_CONFIG){
     const platform=createPlatform();await platform.ready;
     const {createManagedPenpot}=await import('./penpot-managed.js');
     const managed=await createManagedPenpot({store:platform.store,identity:platform.identity,configurationPath:process.env.STUDIO_PENPOT_MANAGED_CONFIG});
-    return startServer(createHttpServer(null,{platform,penpotEnabled:false,managedPenpotStoryDesigns:managed.storyDesigns,nativePairing:managed.nativePairing,nativeAccess:managed.nativeAccess}),options);
+    return startServer(createHttpServer(null,{platform,penpotEnabled:false,managedPenpotStoryDesigns:managed.storyDesigns,nativePairing:managed.nativePairing,nativeAccess:managed.nativeAccess,...syntheticDemoConfiguration}),options);
   }
   if (process.env.STUDIO_PENPOT_ENABLED !== "true")
-    return startServer(createHttpServer(), options);
+    return startServer(createHttpServer(null,syntheticDemoConfiguration), options);
   if (process.env.K_SERVICE)
     throw new Error("Local Penpot startup is unavailable in Cloud Run");
   const platform = createPlatform();
@@ -2179,7 +2189,7 @@ export async function startConfiguredStudio(options = {}) {
       resolve,
     );
   });
-  const server = createHttpServer(null, { platform, penpotEnabled: true });
+  const server = createHttpServer(null, { platform, penpotEnabled: true, ...syntheticDemoConfiguration });
   server.once("close", () => plugin.close());
   return startServer(server, options);
 }

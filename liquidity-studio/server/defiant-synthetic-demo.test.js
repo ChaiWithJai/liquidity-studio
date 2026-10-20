@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
-import { createHttpServer } from './index.js';
+import { createHttpServer, defiantSyntheticDemoConfiguration } from './index.js';
 const path='/mcp/defiant-synthetic';
 async function host(t,options={}){
  let identityReads=0,privateLoads=0;
@@ -36,4 +36,10 @@ test('public mount rejects host/origin/query/method/body violations before SDK p
  assert.equal((await req('',{method:'POST',headers:{'Content-Type':'application/json'},body:' '.repeat(65537)})).status,413);
  const cors=await req('',{method:'OPTIONS',headers:{Origin:'https://demo.example'}});assert.equal(cors.status,204);assert.equal(cors.headers.get('access-control-allow-origin'),'https://demo.example');assert.equal(cors.headers.get('access-control-allow-credentials'),null);
  assert.equal(h.identityReads,0);assert.equal(h.privateLoads,0);
+});
+
+test('deployment constructor flags remain explicit and managed origin configuration is finite',()=>{
+ assert.deepEqual(defiantSyntheticDemoConfiguration({}),{enableDefiantSyntheticDemo:false,defiantSyntheticDemoOrigins:[]});
+ assert.deepEqual(defiantSyntheticDemoConfiguration({STUDIO_DEFIANT_SYNTHETIC_DEMO_ENABLED:'true',STUDIO_DEFIANT_SYNTHETIC_DEMO_ORIGINS:'https://demo.example'}),{enableDefiantSyntheticDemo:true,defiantSyntheticDemoOrigins:['https://demo.example']});
+ assert.throws(()=>defiantSyntheticDemoConfiguration({STUDIO_DEFIANT_SYNTHETIC_DEMO_ENABLED:'yes'}));
 });

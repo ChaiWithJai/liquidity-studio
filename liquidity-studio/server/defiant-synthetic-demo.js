@@ -1,5 +1,6 @@
 import { open } from 'node:fs/promises';
 import { constants } from 'node:fs';
+import { resolve } from 'node:path';
 import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import { createDefiantUnifiedData } from './defiant-unified-data.js';
@@ -10,7 +11,7 @@ const ORGANIZATION = 'defiant_synthetic_demo';
 const reject = (status, message) => Object.assign(new Error(message), { status });
 async function loadFixture() {
   // Fixed build output, never distDir, a user file, URL or private dataset provider.
-  const handle = await open(new URL('../dist/mcp/defiant-synthetic-portfolio.json', import.meta.url), constants.O_RDONLY | constants.O_NOFOLLOW);
+  const handle = await open(resolve(process.cwd(),'dist/mcp/defiant-synthetic-portfolio.json'), constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const stat = await handle.stat();
     if (!stat.isFile() || stat.size < 1 || stat.size > 4 * 1024 * 1024) throw new Error('Invalid build fixture');
@@ -34,11 +35,13 @@ function body(req) {
   });
 }
 /** Anonymous access is limited to this fixed, publicly safe fictional data process. */
-export function createDefiantSyntheticDemo({ enabled=false, publicOrigins=[], uiHtml, domainUiHtml }={}) {
+export async function createDefiantSyntheticDemo({ enabled=false, publicOrigins=[] }={}) {
   if(typeof enabled!=='boolean'||!Array.isArray(publicOrigins)||publicOrigins.length>4)throw new TypeError('Invalid synthetic demo configuration');
   const origins=publicOrigins.map(value=>{let url;try{url=new URL(value);}catch{throw new TypeError('Exact HTTPS demo origins required');}if(url.origin!==value||url.protocol!=='https:'||url.username||url.password||url.hostname==='localhost'||url.hostname.endsWith('.localhost')||url.hostname==='127.0.0.1'||url.hostname==='[::1]')throw new TypeError('Exact public HTTPS demo origins required');return url;});
   if(enabled&&!origins.length)throw new TypeError('An exact public demo origin is required');
   const hosts=new Set(origins.map(url=>url.host)),allowedOrigins=new Set(publicOrigins);
+  const readUi=async name=>{const handle=await open(resolve(process.cwd(),'dist/mcp',name),constants.O_RDONLY|constants.O_NOFOLLOW);try{const stat=await handle.stat();if(!stat.isFile()||stat.size<1||stat.size>512*1024)throw Error('Invalid build UI');const bytes=Buffer.alloc(stat.size+1);let length=0;while(length<bytes.length){const read=await handle.read(bytes,length,bytes.length-length,null);if(!read.bytesRead)break;length+=read.bytesRead;}if(length!==stat.size)throw Error('Build UI changed');return bytes.subarray(0,length).toString('utf8');}finally{await handle.close();}};
+  const uiHtml=await readUi('defiant-research.html'),domainUiHtml=await readUi('defiant-domain-review.html');
   const actor=Object.freeze({kind:'public-fictional-demo'});let servicePromise;
   const service=()=>servicePromise??=(async()=>createDefiantUnifiedData({dataset:await loadFixture(),organizationId:ORGANIZATION,authorize:candidate=>candidate===actor}))();
   const handler=createMcpHandler(()=>{
