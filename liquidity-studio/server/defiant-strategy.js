@@ -1,3 +1,4 @@
+import {readManualMoments,saveManualMoment} from './defiant-manual-moments.js';
 import {clipKey} from './defiant-clips.js';
 import {readInbox,inboxPreview,importInbox,saveInboxMatch} from './defiant-inbox.js';
 import {resourceConfirmation} from './defiant-resource-confirmation.js';
@@ -38,6 +39,8 @@ export class DefiantStrategyService {
  }
 
  async inbox(actor,input={}){const {state}=await this.raw(actor);return readInbox(state,input);}
+ async manualMoments(actor,sourceId){const {state}=await this.raw(actor);return readManualMoments(state,sourceId);}
+ async saveManualMoment(actor,input){planningExact(input,['expectedRevision','idempotencyKey','sourceId','expectedSourceRevision','expectedMomentRevision','moment']);return this.inboxWrite(actor,input,'human-selected-moment',state=>saveManualMoment(state,input,actor,this.now()));}
  async previewInbox(actor,input){const {state}=await this.raw(actor);return inboxPreview(state,input);}
  async importInbox(actor,input){
   planningExact(input,['expectedRevision','idempotencyKey','kind','previewDigest']);return this.inboxWrite(actor,input,'inbox-import',state=>importInbox(state,input,actor,this.now()));
