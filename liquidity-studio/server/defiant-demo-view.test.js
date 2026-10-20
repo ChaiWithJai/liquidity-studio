@@ -58,3 +58,9 @@ test('unknown IDs and unrelated evidence cannot masquerade as the selected track
   data.sources[0].trackIds=['other-track'];
   assert.throws(()=>buildDefiantDemoView({data,pathwayId:'catalog-to-campaign',selection:{trackId:'track-a',sourceId:'source-a'}}),/do not share/);
 });
+
+test('campaign and source selections must share evidence even without an explicit track selection', () => {
+  const data=fixture();
+  data.campaigns[0].sourceIds=[];
+  assert.throws(()=>buildDefiantDemoView({data,pathwayId:'catalog-to-campaign',selection:{campaignId:'campaign-a',sourceId:'source-a'}}),/do not share/);
+});

@@ -22,6 +22,7 @@ export function buildDefiantDemoView({data,pathwayId,selection={}}) {
       track && source && !source.trackIds?.includes(track.id) ||
       track && campaign && campaign.trackId !== track.id ||
       track && opportunity && opportunity.trackId !== track.id ||
+      source && campaign && !campaign.sourceIds?.includes(source.id) ||
       source && opportunity && !opportunity.sourceIds?.includes(source.id) ||
       campaign && opportunity && opportunity.campaignId && opportunity.campaignId !== campaign.id) throw new TypeError('Selected records do not share the proposed research context');
   const evidenceIds = new Set([
