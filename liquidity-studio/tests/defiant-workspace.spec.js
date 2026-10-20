@@ -1,6 +1,6 @@
 // Hosted browser contract: real existing auth/store/API, no mocked save success.
 import {test,expect} from '@playwright/test';
-import {randomBytes} from 'node:crypto';
+import {randomBytes,randomUUID} from 'node:crypto';
 import {createPlatform} from '../server/platform.js';
 import {DurableStore} from '../server/storage.js';
 import {createHttpServer} from '../server/index.js';
@@ -94,4 +94,33 @@ test('guided talent intake previews without writes and retains artist collaborat
  const saved=platform.store.get(key).reports[0];expect(saved.returnContext).toMatchObject({origin:'talent',regionId:region.id,artistId:artist.id,selected:person.id});expect(saved.findings[0].evidence[0].excerpt).toBe('A manager-supplied rehearsal reference needing verification.');await expect(planning).toContainText('Hosted reference artist · source reference');await expect(planning.getByRole('link',{name:'Source',exact:true})).toHaveAttribute('href','https://example.org/hosted-talent-source');
  await planning.getByRole('button',{name:'Continue to campaign draft',exact:true}).click();await planning.getByText('Create a separate draft destination',{exact:true}).click();await planning.getByLabel('Destination name',{exact:true}).fill('Guided talent proposals');await planning.getByRole('button',{name:'Create draft destination',exact:true}).click();await expect(planning.getByRole('status')).toHaveText('Draft destination created');await planning.getByLabel('Objective',{exact:true}).fill('Review the proposed collaboration evidence');await planning.getByLabel('Proposed deliverables, one per line (up to 16)',{exact:true}).fill('Unreviewed talent brief');await planning.getByRole('button',{name:'Create review-required draft',exact:true}).click();await planning.getByRole('link',{name:'Open draft in Campaign Studio →',exact:true}).click();
  const brief=page.getByRole('region',{name:'Strategy draft brief',exact:true});await expect(brief).toContainText('Review the proposed collaboration evidence');await page.reload();await brief.getByRole('link',{name:'Return to saved report ↗'}).click();await planning.getByRole('button',{name:'Back to talent',exact:true}).click();await expect(page).toHaveURL(new RegExp('artist='+artist.id));await expect(page).toHaveURL(new RegExp('select='+person.id));await expect(detail.getByRole('heading',{name:'Hosted reference producer',exact:true})).toBeVisible();
+});
+
+
+test('Talent intent clears an active catalog report and Build report starts a separate shortlist draft',async({page})=>{
+ await page.goto(base+`/?org=${org.id}&tab=strategy&view=map`);
+ await page.getByLabel('Username',{exact:true}).fill('strategy-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →',exact:true}).click();
+ const workspace=page.getByRole('region',{name:'Defiant strategy workspace',exact:true}),planning=workspace.getByRole('region',{name:'Shared planning',exact:true}),api=base+'/api/studio/strategy/'+org.id;
+ await workspace.getByRole('button',{name:'Enable strategy for this organization',exact:true}).click();
+ const get=async()=>await(await page.request.get(api)).json();
+ const post=async(path,data)=>{const response=await page.request.post(api+path,{data});expect(response.ok()).toBeTruthy();return response.json();};
+ const command=async value=>({expectedRevision:(await get()).revision,idempotencyKey:randomUUID(),...value});
+ const preview=await post('/inbox/import/preview',{kind:'nipsey-example'});await post('/inbox/import',await command({kind:'nipsey-example',previewDigest:preview.previewDigest}));
+ const source=(await get()).inbox.sources[0];
+ const original=(await post('/reports',await command({report:{title:'Existing catalog report',thesis:'Retain this source report unchanged.',planIds:[],sourceRefs:[source.id],returnContext:{origin:'catalog',view:'inbox',sourceId:source.id}}}))).report;
+ const owned={nodes:[{id:'region:owned',kind:'region',name:'Owned region'},{id:'artist:owned',kind:'artist',name:'Owned artist',regionId:'region:owned',evidenceIds:['evidence:owned']},{id:'person:owned',kind:'person',name:'Owned collaborator',regionId:'region:owned',evidenceIds:['evidence:owned']}],edges:[{id:'edge:owned',kind:'relationship',name:'Research reference',from:'artist:owned',to:'person:owned',evidenceIds:['evidence:owned']}],evidence:[{id:'evidence:owned',title:'Owned source',sourceUrl:'https://example.org/owned-talent-reference',excerpt:'Manager-reported reference; verify before action.'}],observations:[],resources:[]};
+ await post('/import',await command({kind:'owned',data:owned}));
+ await page.goto(base+`/?org=${org.id}&tab=strategy&view=report&origin=catalog&report=${original.id}&source=${encodeURIComponent(source.id)}`);
+ await expect(planning.getByRole('heading',{name:'Existing catalog report',exact:true})).toBeVisible();
+ await page.getByRole('navigation',{name:'Defiant task views'}).getByRole('button',{name:'Talent-led',exact:true}).click();
+ await expect.poll(()=>new URL(page.url()).searchParams.get('report')).toBeNull();await expect(page).toHaveURL(/origin=talent/);await expect(planning.getByRole('heading',{name:'Existing catalog report',exact:true})).toHaveCount(0);
+ // A retained legacy map URL can still contain a report ID. Build report must not edit that report.
+ await page.goto(base+`/?org=${org.id}&tab=strategy&view=map&origin=talent&region=region%3Aowned&artist=artist%3Aowned&focus=artist%3Aowned&select=person%3Aowned&report=${original.id}`);
+ const detail=workspace.getByLabel('Selection details',{exact:true});await expect(detail.getByRole('heading',{name:'Owned collaborator',exact:true})).toBeVisible();await detail.getByRole('button',{name:'Add to shortlist',exact:true}).click();
+ await planning.getByLabel('Your note',{exact:true}).fill('Retain my unsaved note.');await workspace.getByRole('button',{name:'Build a report',exact:true}).click();await expect(workspace.getByRole('alert')).toContainText('Save or clear your working text');await expect(planning.getByLabel('Your note',{exact:true})).toHaveValue('Retain my unsaved note.');expect(new URL(page.url()).searchParams.get('report')).toBe(original.id);
+ await planning.getByRole('button',{name:'Clear working text',exact:true}).click();await workspace.getByRole('button',{name:'Build a report',exact:true}).click();
+ await expect(page).toHaveURL(/view=report/);await expect.poll(()=>new URL(page.url()).searchParams.get('report')).toBeNull();await expect(planning.getByLabel('Report title',{exact:true})).toBeFocused();await expect(planning.getByLabel('Report title',{exact:true})).toHaveValue('');
+ await planning.getByLabel('Report title',{exact:true}).fill('New talent shortlist report');await planning.getByRole('button',{name:'Save shortlist as report',exact:true}).click();await expect(planning.getByRole('status')).toHaveText('Report saved');
+ const saved=await get();expect(saved.reports).toHaveLength(2);expect(saved.reports.find(report=>report.id===original.id)).toEqual(original);const created=saved.reports.find(report=>report.id!==original.id);expect(created.planIds).toEqual(['person:owned']);expect(created.returnContext).toMatchObject({origin:'talent',regionId:'region:owned',artistId:'artist:owned',selected:'person:owned'});
+ await planning.getByRole('button',{name:'Existing catalog report',exact:true}).click();await expect(planning.getByRole('heading',{name:'Existing catalog report',exact:true})).toBeVisible();await expect(planning).toContainText('Retain this source report unchanged.');
 });
