@@ -1606,7 +1606,6 @@ fieldset[id^="source-claim-"] { scroll-margin-top: 36vh; }
 .workflow-target:focus, #workflow-handoff:focus { outline: 3px solid #4c713b; outline-offset: 4px; }
 .preview-workspace { min-width: 0; }
 .field-guidance { display: block; color: #52604a; font-size: 12px; font-weight: 400; margin: 4px 0; }
-@media (max-width: 1100px) { .preview-workspace { order: 1; } }
 @media (max-width: 760px), (max-height: 600px) { .workflow-context { position: static; } .workflow-target, #workflow-handoff { scroll-margin-top: 0; } }
 .workflow-target .generation-review-context--editor { position: static; max-height: none; }
 html:has(.workflow-context) { scroll-padding-top: var(--workflow-offset, 16px); }
