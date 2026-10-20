@@ -1,4 +1,5 @@
 <script>
+  import BrandKitPreview from "./components/BrandKitPreview.svelte";
   import ResearchPage from "./components/defiant/ResearchPage.svelte";
   import ResearchToolbar from "./components/defiant/ResearchToolbar.svelte";
   import ResearchInspector from "./components/defiant/ResearchInspector.svelte";
@@ -1994,7 +1995,12 @@
             >
           </div>{/if}
       {:else if tab === "brand" && brandProfile}
-        <form class="panel brand-form form-grid" onsubmit={saveProfile}>
+        <div class="brand-kit-shell"><div class="brand-kit-layout">
+          <ResearchPage label="Edit Brand Kit">
+          <form class="brand-form" onsubmit={saveProfile}>
+            <section class="brand-field-group" aria-labelledby="brand-identity-heading">
+              <h2 id="brand-identity-heading">Identity</h2>
+              <div class="brand-fields">
           <label
             >Brand name<input
               bind:value={brandProfile.brandName}
@@ -2003,15 +2009,18 @@
           ><label>Website<input bind:value={brandProfile.websiteUrl} /></label
           ><label class="full"
             >Tagline<input bind:value={brandProfile.tagline} /></label
-          ><label class="full"
-            >Editorial mission<textarea
-              bind:value={brandProfile.mission}
-              rows="4"></textarea></label
-          ><label
-            >Wordmark / monogram<input
-              bind:value={brandProfile.logoText}
-            /></label
-          ><label
+          >
+              <label>Wordmark / monogram<input bind:value={brandProfile.logoText} /></label>
+              </div>
+            </section>
+            <section class="brand-field-group" aria-labelledby="brand-editorial-heading">
+              <h2 id="brand-editorial-heading">Editorial voice</h2>
+              <label>Editorial mission<textarea bind:value={brandProfile.mission} rows="3"></textarea></label>
+            </section>
+            <section class="brand-field-group" aria-labelledby="brand-type-heading">
+              <h2 id="brand-type-heading">Typography</h2>
+              <div class="brand-fields">
+              <label
             >Heading font<select
               aria-label="Heading font"
               bind:value={brandProfile.fonts.heading}
@@ -2027,7 +2036,11 @@
                   >{family}</option
                 >{/each}</select
             ></label
-          >
+              >
+              </div>
+            </section>
+            <section class="brand-field-group" aria-labelledby="brand-palette-heading">
+              <h2 id="brand-palette-heading">Palette</h2>
           {#if !brandProfile.colors?.length}
             <div class="full">
               <p>This kit has no colors yet. Start with neutral colors and Mona Sans / Inter, then adjust them for this brand.</p>
@@ -2050,8 +2063,12 @@
                 </div></label
               >{/each}
           </div>
-          <button class="primary">Save Brand Kit</button>
-        </form>
+            </section>
+            <ResearchToolbar label="Brand Kit save action"><button class="primary">Save Brand Kit</button><span class="brand-save-note">Preview follows this form. Save to retain changes.</span></ResearchToolbar>
+          </form>
+          </ResearchPage>
+          <BrandKitPreview profile={brandProfile}/>
+        </div></div>
         {#if brandProfile.strategy}<section
             class="panel"
             style="margin-top:24px"
@@ -2304,4 +2321,20 @@
   .operations-research .trace-table { margin-top:12px; }
   @container(max-width:740px) { .operations-diagnostics,.organization-forms { grid-template-columns:minmax(0,1fr); }.operations-diagnostics>.panel:first-child { border-right:0; } }
 
+
+  .brand-kit-shell {container:brand-kit / inline-size;}
+  .brand-kit-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:16px;align-items:start;}
+  .brand-form {display:block;min-width:0;}
+  .brand-field-group {padding:16px;border-bottom:1px solid var(--research-line,#dedfd5);min-width:0;}
+  .brand-field-group h2 {margin-bottom:12px;font-size:16px;}
+  .brand-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .brand-fields .full {grid-column:1 / -1;}
+  .brand-form .color-list {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .brand-form .color-list label {min-width:0;}
+  .brand-form .color-list label > div {display:flex;gap:6px;min-width:0;}
+  .brand-form .color-list input[type="color"] {width:36px;min-width:36px;height:36px;padding:3px;}
+  .brand-form .color-list input:not([type="color"]) {width:100%;min-width:0;}
+  .brand-save-note {font-size:12px;color:var(--research-muted,#59665d);}
+  @container brand-kit (max-width:680px) {.brand-kit-layout {grid-template-columns:minmax(0,1fr);}}
+  @container brand-kit (max-width:400px) {.brand-fields,.brand-form .color-list {grid-template-columns:minmax(0,1fr);}}
 </style>

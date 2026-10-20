@@ -771,3 +771,46 @@ test("dirty source review retains its opening revision while canonical projectio
  const pending=page.waitForResponse(response=>response.url().includes('/source-claims')&&response.request().method()==='POST');await page.getByRole('button',{name:'Save source review',exact:true}).click();expect((await pending).status()).toBe(409);
  const saved=await (await page.request.get(base+'/api/studio/workspace/stories/'+story.id+scope)).json();expect(saved.story.sourceClaims[0].text).toBe(external.text);await expect(page.getByLabel('Claim text',{exact:true})).toHaveValue('Local unreviewed source edit.');
 });
+
+
+test("Brand Kit live specimen follows unsaved values and retains only an explicit save", async ({page}) => {
+  await page.setViewportSize({width:1051,height:868});
+  await signIn(page);
+  const before = (await (await page.request.get(base + "/api/studio/bootstrap" + scope)).json()).brandProfile;
+  let writes = 0;
+  const observe = request => { if (new URL(request.url()).pathname === "/api/studio/brand-profile" && request.method() === "POST") writes++; };
+  page.on("request", observe);
+  try {
+    await page.getByRole("button", {name:"Brand Kit",exact:true}).click();
+    const preview = page.getByRole("complementary", {name:"Brand Kit live preview",exact:true});
+    await page.getByLabel("Brand name", {exact:true}).fill("Live specimen fixture");
+    await page.getByLabel("Tagline", {exact:true}).fill("Unsaved typography and palette preview");
+    await page.getByLabel("Wordmark / monogram", {exact:true}).fill("CWJ // ॐ");
+    await page.getByLabel("Heading font", {exact:true}).selectOption("Instrument Serif");
+    await page.getByLabel("Body font", {exact:true}).selectOption("Inter");
+    await page.getByLabel(`${before.colors[0].name} hex`, {exact:true}).fill("#214B38");
+    await expect(preview.locator(".specimen-name")).toHaveText("Live specimen fixture");
+    await expect(preview.locator(".specimen-tagline")).toHaveText("Unsaved typography and palette preview");
+    await expect(preview.locator(".specimen-wordmark")).toHaveText("CWJ // ॐ");
+    await expect(preview.locator(".specimen-name")).toHaveCSS("font-family", /Instrument Serif/);
+    await expect(preview.locator(".brand-specimen")).toHaveCSS("background-color", "rgb(33, 75, 56)");
+    await expect(preview).toContainText("Brand Kit preview only");
+    expect(writes).toBe(0);
+    expect((await (await page.request.get(base + "/api/studio/bootstrap" + scope)).json()).brandProfile).toEqual(before);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const controls = await page.getByRole("region", {name:"Edit Brand Kit",exact:true}).boundingBox();
+    const specimen = await preview.boundingBox();
+    expect(specimen.x).toBeGreaterThanOrEqual(controls.x + controls.width);
+    await page.getByRole("button", {name:"Save Brand Kit",exact:true}).click();
+    await expect(page.getByRole("status").filter({hasText:"Brand profile saved for this brand."})).toBeVisible();
+    expect(writes).toBe(1);
+    await page.reload();
+    await expect(page.getByLabel("Brand name", {exact:true})).toHaveValue("Live specimen fixture");
+    await expect(preview.locator(".specimen-name")).toHaveText("Live specimen fixture");
+    await expect(preview.locator(".brand-specimen")).toHaveCSS("background-color", "rgb(33, 75, 56)");
+  } finally {
+    page.off("request", observe);
+    const restored = await page.request.post(base + "/api/studio/brand-profile" + scope, {data:Object.fromEntries(["brandName","tagline","logoText","fonts","colors"].map(key => [key,before[key]]))});
+    expect(restored.ok()).toBe(true);
+  }
+});
