@@ -238,9 +238,10 @@ test('actual private-home HTTP picker and backend accept only the namespaced coo
  }finally{await app?.close();restoreEnvironment(before);fs.rmSync(home,{recursive:true,force:true});}
 });
 
-test('local iframe CSP permits only the explicit current workspace origin and preserves unset fallback',()=>{
- assert.equal(localFrameSource(origin,undefined),"'self'");
- assert.equal(localFrameSource(origin,{studioOrigin:origin,nativeOrigin:'http://localhost:39008'}),"'self' http://localhost:39008");
+test('local iframe CSP allows only the fixed YouTube privacy host and explicit current workspace origin',()=>{
+ assert.equal(localFrameSource(origin,undefined),"'self' https://www.youtube-nocookie.com");
+ assert.doesNotMatch(localFrameSource(origin,undefined),/\*|https:\/\/www\.youtube\.com|https:\/\/youtube-nocookie\.com(?:\s|$)/);
+ assert.equal(localFrameSource(origin,{studioOrigin:origin,nativeOrigin:'http://localhost:39008'}),"'self' https://www.youtube-nocookie.com http://localhost:39008");
  assert.throws(()=>localFrameSource(origin,{studioOrigin:'http://127.0.0.1:39052',nativeOrigin:'http://localhost:39008'}),/another local origin/);
  assert.throws(()=>localFrameSource(origin,{studioOrigin:origin,nativeOrigin:'http://remote.example:39008'}),/loopback/);
 });
