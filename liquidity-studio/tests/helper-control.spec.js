@@ -88,6 +88,9 @@ test("two authenticated actors review and apply a proposal without focus theft; 
   try {
     await login(owner, "browser-owner");
     await login(helper, "browser-helper");
+    await expect(helper.getByLabel('Proposal action', {exact: true})).toHaveCount(0);
+    await expect(helper.getByLabel('Proposed category', {exact: true})).toHaveCount(0);
+    await expect(helper.getByText('Proposal inputs appear when you receive an active grant for this story.', {exact: true})).toBeVisible();
     await owner
       .getByLabel("Proposal operator", { exact: true })
       .selectOption(helperId);
@@ -98,10 +101,15 @@ test("two authenticated actors review and apply a proposal without focus theft; 
       })
       .click();
     await expect(owner.getByRole("article")).toHaveCount(1);
+    // An outgoing grant authorizes the other actor; it is not an incoming proposal capability.
+    await expect(owner.getByLabel('Proposal action', {exact: true})).toHaveCount(0);
+    await expect(owner.getByLabel('Proposed category', {exact: true})).toHaveCount(0);
+    await expect(owner.getByText('Proposal inputs appear when you receive an active grant for this story.', {exact: true})).toBeVisible();
     await helper
       .getByRole("button", { name: "Refresh shared control", exact: true })
       .click();
     await expect(helper.getByRole("article")).toHaveCount(1);
+    await expect(helper.getByLabel('Proposal action', {exact: true})).toBeVisible();
     await helper
       .getByLabel("Proposed category", { exact: true })
       .fill("Shared browser proposal");
@@ -217,6 +225,21 @@ test("two authenticated actors review and apply a proposal without focus theft; 
     const restored = afterUndo.backlog.find(row => row.id === story.id);
     expect(restored.category).toBe(proposal.preview[0].before.category);
     expect(restored.revision).toBe(proposal.changes[0].expectedRevision + 2);
+
+    // Only this browser's clock advances: ordinary refresh must stop offering
+    // proposal fields when its incoming grant has expired, without hiding history.
+    const incoming = afterUndo.operatorControl.grants.find(grant => grant.helperId === helperId);
+    await helper.clock.install({time: new Date(Date.parse(incoming.expiresAt) + 1000)});
+    await helper.getByRole('button', {name: 'Refresh shared control', exact: true}).click();
+    await expect(helper.getByRole('article', {name: `Grant ${incoming.id}`, exact: true})).toContainText('Expired');
+    await expect(helper.getByLabel('Proposal action', {exact: true})).toHaveCount(0);
+    await expect(helper.getByLabel('Proposed category', {exact: true})).toHaveCount(0);
+    await expect(helper.getByRole('button', {name: 'Propose category change', exact: true})).toHaveCount(0);
+    await expect(helper.getByRole('heading', {name: /Proposal · applied/})).toBeVisible();
+    await expect(helper.getByText('Proposal inputs appear when you receive an active grant for this story.', {exact: true})).toBeVisible();
+    const afterExpiryRead = (await (await platform.forScope({organizationId: 'org_default', brandId: 'brand_default'})).ports.repo.read()).operatorControl;
+    expect(afterExpiryRead.grants).toEqual(afterUndo.operatorControl.grants);
+    expect(afterExpiryRead.proposals).toEqual(afterUndo.operatorControl.proposals);
 
   } finally {
     await ownerContext.close();
