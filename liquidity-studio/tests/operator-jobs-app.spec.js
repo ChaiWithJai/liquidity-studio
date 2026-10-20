@@ -71,6 +71,11 @@ async function worker() {
     );
   });
 }
+async function openNewPlan(page) {
+  const plan=page.locator('.new-plan');
+  await expect(plan).toBeVisible();
+  if(!(await plan.evaluate(element=>element.open)))await plan.locator(':scope > summary').click();
+}
 async function login(page, role = "founder") {
   await page.goto(base);
   await page.getByLabel("Username", { exact: true }).fill(`job-app-${role}`);
@@ -87,6 +92,7 @@ test("mounted App reviews a bounded job then reopens same completed job after br
 }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await login(page);
+  await openNewPlan(page);
   await page
     .getByLabel("Plan Reviewed walk-away campaign", { exact: true })
     .check();
@@ -116,6 +122,15 @@ test("mounted App reviews a bounded job then reopens same completed job after br
   await expect(next.getByRole("region", { name: "Job details" })).toContainText(
     "Committed revision 2",
   );
+  // Returning to a saved job keeps history and its result beside each other,
+  // without reopening the prerequisite form above them.
+  const historyBounds=await next.getByRole('region',{name:'Job history'}).boundingBox(),detailBounds=await next.getByRole('region',{name:'Job details'}).boundingBox();
+  expect(detailBounds.x).toBeGreaterThanOrEqual(historyBounds.x+historyBounds.width-1);
+  expect(Math.abs(detailBounds.y-historyBounds.y)).toBeLessThan(1);
+  await expect(next.getByRole('heading',{name:'Job history',exact:true})).toBeInViewport();
+  await expect(next.getByRole('heading',{name:'Job details',exact:true})).toBeInViewport();
+  expect(await next.locator('.new-plan').evaluate(element=>element.open)).toBe(false);
+  expect(await next.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   if (process.env.STUDIO_CAPTURE_JOBS_APP_DIR) {
     const target = process.env.STUDIO_CAPTURE_JOBS_APP_DIR;
     mkdirSync(target, { recursive: true });

@@ -75,6 +75,11 @@ test.afterAll(async () => {
   store.close();
   rmSync(dir, { recursive: true, force: true });
 });
+async function openNewPlan(page) {
+  const plan=page.locator('.new-plan');
+  await expect(plan).toBeVisible();
+  if(!(await plan.evaluate(element=>element.open)))await plan.locator(':scope > summary').click();
+}
 async function login(page) {
   expect(
     (
@@ -129,7 +134,9 @@ test("reviewed job survives closed browser; independent workers commit one item 
   const a = await source("Walk-away A"),
     b = await source("Walk-away B");
   await login(page);
+  await openNewPlan(page);
   await page.getByLabel("Plan Walk-away A", { exact: true }).check();
+  await openNewPlan(page);
   await page.getByLabel("Plan Walk-away B", { exact: true }).check();
   await page.getByLabel(/I reviewed these 2 campaigns/).check();
   const queued = page.waitForResponse(
@@ -195,6 +202,7 @@ test("lost queue response retries identical plan key and browser reload resolves
   const before = (
     await (await page.request.get(base + "/api/studio/jobs" + scope)).json()
   ).jobs.length;
+  await openNewPlan(page);
   await page.getByLabel("Plan Lost response campaign", { exact: true }).check();
   await page.getByLabel(/I reviewed these 1 campaigns/).check();
   let lose = true;
@@ -232,6 +240,7 @@ test('pending queue and same-key retry show progress; only a lost response offer
   await source('Pending progress campaign');
   await login(page);
   const before = (await (await page.request.get(base + '/api/studio/jobs' + scope)).json()).jobs.length;
+  await openNewPlan(page);
   await page.getByLabel('Plan Pending progress campaign', { exact: true }).check();
   await page.getByLabel(/I reviewed these 1 campaigns/).check();
   let release, entered;
@@ -261,6 +270,7 @@ test('pending queue and same-key retry show progress; only a lost response offer
     expect(calls).toBe(1);
     // A second real durable write loses its response; only then is its retained key uncertain.
     await page.reload();
+    await openNewPlan(page);
     await page.getByLabel('Plan Pending progress campaign', { exact: true }).check();
     await page.getByLabel(/I reviewed these 1 campaigns/).check();
     mode = 'lost';
