@@ -1358,11 +1358,11 @@
               >{/each}</select
           ></label
         >{#if currentOrganization?.brands?.length}<label
-          >{tab === "strategy" ? "Campaign destination" : "Brand"}<select
-            aria-label={tab === "strategy" ? "Campaign destination" : "Brand"}
+          >{tab === "strategy" ? "Publishing brand" : "Brand"}<select
+            aria-label={tab === "strategy" ? "Publishing brand" : "Brand"}
             value={brandId}
             onchange={switchBrand}
-            >{#if !brandId}<option value="" disabled>{tab === "strategy" ? "Choose a campaign destination" : "Choose a brand"}</option>{/if}{#each currentOrganization?.brands || [] as brand (brand.id)}<option
+            >{#if !brandId}<option value="" disabled>{tab === "strategy" ? "Open a brand workspace" : "Choose a brand"}</option>{/if}{#each currentOrganization?.brands || [] as brand (brand.id)}<option
                 value={brand.id}>{brand.name}</option
               >{/each}</select
           ></label
