@@ -9,10 +9,12 @@ addEventListener('message',event=>{
  if(event.source!==frame.contentWindow||event.origin!==location.origin)return;
  const message=event.data;
  if(message?.method==='ui/initialize'){
-  post({id:message.id,result:{protocolVersion:message.params.protocolVersion,hostInfo:{name:'fictional-browser-host',version:'1.0.0'},hostCapabilities:{serverTools:{}}}});
+  post({id:message.id,result:{protocolVersion:message.params.protocolVersion,hostInfo:{name:'fictional-browser-host',version:'1.0.0'},hostCapabilities:{serverTools:{}},hostContext:{}}});
   const args={...scope,pathwayId:'catalog-to-campaign',selection:{}};
   post({method:'ui/notifications/tool-input',params:{arguments:args}});
   post({method:'ui/notifications/tool-result',params:guided(args)});
+ }else if(message?.method==='ui/notifications/initialized'){
+  document.querySelector('[aria-label="Host initialization"]').textContent='complete';
  }else if(message?.method==='tools/call'){
   calls++;counter.textContent=String(calls);const args=message.params.arguments;
   if(args.organizationId!==scope.organizationId){post({id:message.id,result:{isError:true,content:[{type:'text',text:'Fixture scope denied'}]}});return;}

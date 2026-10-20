@@ -21,6 +21,7 @@ test('actual SDK postMessage handshake delivers initial view and bound read-only
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.goto(base+'/tests/fixtures/defiant-sdk-parent.html');
  const app=page.frameLocator('iframe[title="Defiant SDK research"]');
+ await expect(page.getByLabel('Host initialization')).toHaveText('complete');
  await expect(app.getByRole('heading',{name:'Catalog to campaign',exact:true})).toBeVisible();
  await expect(app.getByLabel('Artist',{exact:true})).toBeEnabled();
  await expect(page.getByLabel('Host tool calls')).toHaveText('4');
