@@ -3,6 +3,7 @@ import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { registerDefiantTools } from './defiant-mcp.js';
 import { createDefiantUnifiedData } from './defiant-unified-data.js';
 import { loadDefiantPrivateDataset } from './defiant-private-dataset.js';
+import {DEFIANT_DOMAIN_INSTRUCTIONS} from './defiant-domain-pathways.js';
 // Exactly one private input file. This process has no HTTP listener or Studio session.
 async function start() {
   if (process.argv.length !== 3) throw new Error('Private input required');
@@ -10,7 +11,7 @@ async function start() {
   const actor = Object.freeze({ kind: 'private-local-owner-process' });
   const service = createDefiantUnifiedData({ dataset, organizationId, authorize: candidate => candidate === actor ? isCurrent() : false });
   const handle = serveStdio(() => {
-    const server = new McpServer({ name: 'defiant-private-research', version: '1.0.0' }, { instructions: 'Read-only media and entertainment research: (1) inspect the data manifest and list pathways; (2) use bounded recording/source lookups to inspect evidence; (3) open a governed guided view and explain the next human review step. Keep synthetic scenarios, unknown rights and missing demand/royalty history explicit. These tools do not execute campaigns, approve claims or integrate Databricks/Foundry.' });
+    const server = new McpServer({ name: 'defiant-private-research', version: '1.0.0' }, { instructions: `This private process is bound to organizationId ${organizationId}. Use that exact scope for all tools. ${DEFIANT_DOMAIN_INSTRUCTIONS}` });
     registerDefiantTools(server, { resolveService: async input => {
       if (input.organizationId !== organizationId) throw Object.assign(new Error('Private scope denied'), { status: 403 });
       return { service, actor };

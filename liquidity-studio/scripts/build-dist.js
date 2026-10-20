@@ -7,3 +7,6 @@ await buildDefiantChat();
 
 import {buildDefiantStdio} from './build-defiant-stdio.js';
 await buildDefiantStdio();
+
+import {buildDefiantSynthetic} from './build-defiant-synthetic.js';
+await buildDefiantSynthetic();

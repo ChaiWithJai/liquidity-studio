@@ -5,7 +5,7 @@ import { createDefiantUnifiedData } from './defiant-unified-data.js';
 const dataset = { dataset: { id: 'fictional', label: 'Fictional MCP contract', provenance: 'synthetic', asOf: null }, artists: [{ id: 'artist:a', name: 'Example Artist' }], tracks: [], sources: [], campaigns: [], opportunities: [] };
 function harness(options) {
   const tools = new Map(), resources = new Map();
-  const server = { registerTool(name, config, callback) { tools.set(name, { config, callback }); return {}; }, registerResource(name, uri, config, callback) { resources.set(uri, { config, callback }); return {}; } };
+  const server = { registerTool(name, config, callback) { tools.set(name, { config, callback }); return {}; }, registerResource(name, uri, config, callback) { resources.set(uri, { config, callback }); return {}; }, registerPrompt(){return {};} };
   const registration = registerDefiantTools(server, options);
   return { tools, resources, registration, call(name, args, context) { const tool = tools.get(name); return tool.callback(tool.config.inputSchema.parse(args), context); } };
 }
@@ -13,7 +13,7 @@ test('finite tools require scoped server binding and current facade authority on
   const seen = []; let allowed = true;
   const service = createDefiantUnifiedData({ dataset, organizationId: 'org_a', authorize: actor => actor === 'person:a' && allowed });
   const host = harness({ resolveService: async input => { seen.push(input); return { service, actor: 'person:a' }; } });
-  assert.deepEqual([...host.tools.keys()], ['defiant_read_data', 'defiant_list_pathways', 'defiant_open_guided_view']);
+  assert.deepEqual([...host.tools.keys()], ['defiant_read_data', 'defiant_list_pathways', 'defiant_open_guided_view', 'defiant_artist_overview', 'defiant_detect_regional_opportunities', 'defiant_explain_opportunity', 'defiant_inspect_rights_and_royalties', 'defiant_compare_campaign_scenarios']);
   assert.equal(host.registration.resourceUri, null); assert.equal(host.resources.size, 0);
   const context = { authenticatedContext: 'host-only' };
   const first = await host.call('defiant_read_data', { organizationId: 'org_a', resource: 'artists' }, context);

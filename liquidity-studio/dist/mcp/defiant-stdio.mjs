@@ -781,9 +781,9 @@ function floatSafeRemainder(val, step) {
   return valInt % stepInt / 10 ** decCount;
 }
 var EVALUATING = Symbol("evaluating");
-function defineLazy(object2, key, getter) {
+function defineLazy(object3, key, getter) {
   let value = void 0;
-  Object.defineProperty(object2, key, {
+  Object.defineProperty(object3, key, {
     get() {
       if (value === EVALUATING) {
         return void 0;
@@ -795,7 +795,7 @@ function defineLazy(object2, key, getter) {
       return value;
     },
     set(v) {
-      Object.defineProperty(object2, key, {
+      Object.defineProperty(object3, key, {
         value: v
         // configurable: true,
       });
@@ -3043,24 +3043,24 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     }
     doc.write(`const newResult = {};`);
     for (const key of normalized.keys) {
-      const id2 = ids2[key];
+      const id3 = ids2[key];
       const k = esc(key);
-      doc.write(`const ${id2} = ${parseStr(key)};`);
+      doc.write(`const ${id3} = ${parseStr(key)};`);
       doc.write(`
-        if (${id2}.issues.length) {
-          payload.issues = payload.issues.concat(${id2}.issues.map(iss => ({
+        if (${id3}.issues.length) {
+          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
         
-        if (${id2}.value === undefined) {
+        if (${id3}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id2}.value;
+          newResult[${k}] = ${id3}.value;
         }
         
       `);
@@ -7326,8 +7326,8 @@ var parsedTypeFromType = (t, data = void 0) => {
   }
   return t;
 };
-var capitalizeFirstCharacter = (text2) => {
-  return text2.charAt(0).toUpperCase() + text2.slice(1);
+var capitalizeFirstCharacter = (text3) => {
+  return text3.charAt(0).toUpperCase() + text3.slice(1);
 };
 function getUnitTypeFromNumber(number4) {
   const abs = Math.abs(number4);
@@ -10980,13 +10980,13 @@ function extractDefs(ctx, schema) {
     const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
     if (ctx.external) {
       const externalId = ctx.external.registry.get(entry[0])?.id;
-      const uriGenerator = ctx.external.uri ?? ((id3) => id3);
+      const uriGenerator = ctx.external.uri ?? ((id4) => id4);
       if (externalId) {
         return { ref: uriGenerator(externalId) };
       }
-      const id2 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-      entry[1].defId = id2;
-      return { defId: id2, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id2}` };
+      const id3 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+      entry[1].defId = id3;
+      return { defId: id3, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id3}` };
     }
     if (entry[1] === root) {
       return { ref: "#" };
@@ -11034,8 +11034,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         continue;
       }
     }
-    const id2 = ctx.metadataRegistry.get(entry[0])?.id;
-    if (id2) {
+    const id3 = ctx.metadataRegistry.get(entry[0])?.id;
+    if (id3) {
       extractToDef(entry);
       continue;
     }
@@ -11096,10 +11096,10 @@ function finalize(ctx, schema) {
   } else {
   }
   if (ctx.external?.uri) {
-    const id2 = ctx.external.registry.get(schema)?.id;
-    if (!id2)
+    const id3 = ctx.external.registry.get(schema)?.id;
+    if (!id3)
       throw new Error("Schema is missing an `id` property");
-    result2.$id = ctx.external.uri(id2);
+    result2.$id = ctx.external.uri(id3);
   }
   Object.assign(result2, root.def ?? root.schema);
   const defs = ctx.external?.defs ?? {};
@@ -15444,8 +15444,8 @@ var REF_REWRITE_NAME_MAP_KEYS = /* @__PURE__ */ new Set([
   "dependentSchemas",
   "dependencies"
 ]);
-function establishesNewBase(id2) {
-  return id2 !== void 0 && !(typeof id2 === "string" && id2.startsWith("#"));
+function establishesNewBase(id3) {
+  return id3 !== void 0 && !(typeof id3 === "string" && id3.startsWith("#"));
 }
 function wrapOutputSchemaForLegacy(natural) {
   const $schema = typeof natural["$schema"] === "string" ? natural["$schema"] : void 0;
@@ -16798,9 +16798,9 @@ function resolveCacheScope(fallback) {
   return fallback !== void 0 && isValidCacheScope(fallback.cacheScope) ? fallback.cacheScope : DEFAULT_CACHE_SCOPE;
 }
 function stripCacheHintFallback(result2) {
-  const copy3 = { ...result2 };
-  delete copy3[RESULT_CACHE_HINT_FALLBACK];
-  return copy3;
+  const copy4 = { ...result2 };
+  delete copy4[RESULT_CACHE_HINT_FALLBACK];
+  return copy4;
 }
 var INPUT_REQUEST_METHODS_2026 = [
   "elicitation/create",
@@ -16911,7 +16911,7 @@ var REQUIRED_ENVELOPE_KEYS = [PROTOCOL_VERSION_META_KEY, CLIENT_CAPABILITIES_MET
 function enforceDeletedFields(method, result2) {
   let next = result2;
   let copied = false;
-  const copy3 = () => {
+  const copy4 = () => {
     if (!copied) {
       next = { ...next };
       copied = true;
@@ -16919,7 +16919,7 @@ function enforceDeletedFields(method, result2) {
     return next;
   };
   const tools = result2.tools;
-  if (method === "tools/list" && Array.isArray(tools) && tools.some((tool) => isPlainObject$4(tool) && "execution" in tool)) copy3().tools = tools.map((tool) => {
+  if (method === "tools/list" && Array.isArray(tools) && tools.some((tool) => isPlainObject$4(tool) && "execution" in tool)) copy4().tools = tools.map((tool) => {
     if (!isPlainObject$4(tool) || !("execution" in tool)) return tool;
     const rest = { ...tool };
     delete rest["execution"];
@@ -16929,7 +16929,7 @@ function enforceDeletedFields(method, result2) {
   if (isPlainObject$4(capabilities) && "tasks" in capabilities) {
     const rest = { ...capabilities };
     delete rest["tasks"];
-    copy3().capabilities = rest;
+    copy4().capabilities = rest;
   }
   return next;
 }
@@ -19027,9 +19027,9 @@ var require_code$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     get names() {
       var _a2;
-      return (_a2 = this._names) !== null && _a2 !== void 0 ? _a2 : this._names = this._items.reduce((names, c) => {
-        if (c instanceof Name) names[c.str] = (names[c.str] || 0) + 1;
-        return names;
+      return (_a2 = this._names) !== null && _a2 !== void 0 ? _a2 : this._names = this._items.reduce((names2, c) => {
+        if (c instanceof Name) names2[c.str] = (names2[c.str] || 0) + 1;
+        return names2;
       }, {});
     }
   };
@@ -19364,9 +19364,9 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
       return `${varKind} ${this.name}${rhs};` + _n;
     }
-    optimizeNames(names, constants2) {
-      if (!names[this.name.str]) return;
-      if (this.rhs) this.rhs = optimizeExpr(this.rhs, names, constants2);
+    optimizeNames(names2, constants2) {
+      if (!names2[this.name.str]) return;
+      if (this.rhs) this.rhs = optimizeExpr(this.rhs, names2, constants2);
       return this;
     }
     get names() {
@@ -19383,9 +19383,9 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     render({ _n }) {
       return `${this.lhs} = ${this.rhs};` + _n;
     }
-    optimizeNames(names, constants2) {
-      if (this.lhs instanceof code_1.Name && !names[this.lhs.str] && !this.sideEffects) return;
-      this.rhs = optimizeExpr(this.rhs, names, constants2);
+    optimizeNames(names2, constants2) {
+      if (this.lhs instanceof code_1.Name && !names2[this.lhs.str] && !this.sideEffects) return;
+      this.rhs = optimizeExpr(this.rhs, names2, constants2);
       return this;
     }
     get names() {
@@ -19444,8 +19444,8 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     optimizeNodes() {
       return `${this.code}` ? this : void 0;
     }
-    optimizeNames(names, constants2) {
-      this.code = optimizeExpr(this.code, names, constants2);
+    optimizeNames(names2, constants2) {
+      this.code = optimizeExpr(this.code, names2, constants2);
       return this;
     }
     get names() {
@@ -19471,19 +19471,19 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       }
       return nodes.length > 0 ? this : void 0;
     }
-    optimizeNames(names, constants2) {
+    optimizeNames(names2, constants2) {
       const { nodes } = this;
       let i = nodes.length;
       while (i--) {
         const n = nodes[i];
-        if (n.optimizeNames(names, constants2)) continue;
-        subtractNames(names, n.names);
+        if (n.optimizeNames(names2, constants2)) continue;
+        subtractNames(names2, n.names);
         nodes.splice(i, 1);
       }
       return nodes.length > 0 ? this : void 0;
     }
     get names() {
-      return this.nodes.reduce((names, n) => addNames(names, n.names), {});
+      return this.nodes.reduce((names2, n) => addNames(names2, n.names), {});
     }
   };
   var BlockNode = class extends ParentNode {
@@ -19523,18 +19523,18 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       if (cond === false || !this.nodes.length) return void 0;
       return this;
     }
-    optimizeNames(names, constants2) {
+    optimizeNames(names2, constants2) {
       var _a2;
-      this.else = (_a2 = this.else) === null || _a2 === void 0 ? void 0 : _a2.optimizeNames(names, constants2);
-      if (!(super.optimizeNames(names, constants2) || this.else)) return;
-      this.condition = optimizeExpr(this.condition, names, constants2);
+      this.else = (_a2 = this.else) === null || _a2 === void 0 ? void 0 : _a2.optimizeNames(names2, constants2);
+      if (!(super.optimizeNames(names2, constants2) || this.else)) return;
+      this.condition = optimizeExpr(this.condition, names2, constants2);
       return this;
     }
     get names() {
-      const names = super.names;
-      addExprNames(names, this.condition);
-      if (this.else) addNames(names, this.else.names);
-      return names;
+      const names2 = super.names;
+      addExprNames(names2, this.condition);
+      if (this.else) addNames(names2, this.else.names);
+      return names2;
     }
   };
   If.kind = "if";
@@ -19549,9 +19549,9 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     render(opts) {
       return `for(${this.iteration})` + super.render(opts);
     }
-    optimizeNames(names, constants2) {
-      if (!super.optimizeNames(names, constants2)) return;
-      this.iteration = optimizeExpr(this.iteration, names, constants2);
+    optimizeNames(names2, constants2) {
+      if (!super.optimizeNames(names2, constants2)) return;
+      this.iteration = optimizeExpr(this.iteration, names2, constants2);
       return this;
     }
     get names() {
@@ -19586,9 +19586,9 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     render(opts) {
       return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
     }
-    optimizeNames(names, constants2) {
-      if (!super.optimizeNames(names, constants2)) return;
-      this.iterable = optimizeExpr(this.iterable, names, constants2);
+    optimizeNames(names2, constants2) {
+      if (!super.optimizeNames(names2, constants2)) return;
+      this.iterable = optimizeExpr(this.iterable, names2, constants2);
       return this;
     }
     get names() {
@@ -19627,18 +19627,18 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       (_b = this.finally) === null || _b === void 0 || _b.optimizeNodes();
       return this;
     }
-    optimizeNames(names, constants2) {
+    optimizeNames(names2, constants2) {
       var _a2, _b;
-      super.optimizeNames(names, constants2);
-      (_a2 = this.catch) === null || _a2 === void 0 || _a2.optimizeNames(names, constants2);
-      (_b = this.finally) === null || _b === void 0 || _b.optimizeNames(names, constants2);
+      super.optimizeNames(names2, constants2);
+      (_a2 = this.catch) === null || _a2 === void 0 || _a2.optimizeNames(names2, constants2);
+      (_b = this.finally) === null || _b === void 0 || _b.optimizeNames(names2, constants2);
       return this;
     }
     get names() {
-      const names = super.names;
-      if (this.catch) addNames(names, this.catch.names);
-      if (this.finally) addNames(names, this.finally.names);
-      return names;
+      const names2 = super.names;
+      if (this.catch) addNames(names2, this.catch.names);
+      if (this.finally) addNames(names2, this.finally.names);
+      return names2;
     }
   };
   var Catch = class extends BlockNode {
@@ -19873,14 +19873,14 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
   };
   exports.CodeGen = CodeGen;
-  function addNames(names, from) {
-    for (const n in from) names[n] = (names[n] || 0) + (from[n] || 0);
-    return names;
+  function addNames(names2, from) {
+    for (const n in from) names2[n] = (names2[n] || 0) + (from[n] || 0);
+    return names2;
   }
-  function addExprNames(names, from) {
-    return from instanceof code_1._CodeOrName ? addNames(names, from.names) : names;
+  function addExprNames(names2, from) {
+    return from instanceof code_1._CodeOrName ? addNames(names2, from.names) : names2;
   }
-  function optimizeExpr(expr, names, constants2) {
+  function optimizeExpr(expr, names2, constants2) {
     if (expr instanceof code_1.Name) return replaceName(expr);
     if (!canOptimize(expr)) return expr;
     return new code_1._Code(expr._items.reduce((items, c) => {
@@ -19891,16 +19891,16 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     }, []));
     function replaceName(n) {
       const c = constants2[n.str];
-      if (c === void 0 || names[n.str] !== 1) return n;
-      delete names[n.str];
+      if (c === void 0 || names2[n.str] !== 1) return n;
+      delete names2[n.str];
       return c;
     }
     function canOptimize(e) {
-      return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names[c.str] === 1 && constants2[c.str] !== void 0);
+      return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names2[c.str] === 1 && constants2[c.str] !== void 0);
     }
   }
-  function subtractNames(names, from) {
-    for (const n in from) names[n] = (names[n] || 0) - (from[n] || 0);
+  function subtractNames(names2, from) {
+    for (const n in from) names2[n] = (names2[n] || 0) - (from[n] || 0);
   }
   function not(x) {
     return typeof x == "boolean" || typeof x == "number" || x === null ? !x : (0, code_1._)`!${par(x)}`;
@@ -20065,7 +20065,7 @@ var require_util = /* @__PURE__ */ __commonJSMin(((exports) => {
 var require_names = /* @__PURE__ */ __commonJSMin(((exports) => {
   Object.defineProperty(exports, "__esModule", { value: true });
   const codegen_1 = require_codegen();
-  const names = {
+  const names2 = {
     data: new codegen_1.Name("data"),
     valCxt: new codegen_1.Name("valCxt"),
     instancePath: new codegen_1.Name("instancePath"),
@@ -20083,7 +20083,7 @@ var require_names = /* @__PURE__ */ __commonJSMin(((exports) => {
     jsonLen: new codegen_1.Name("jsonLen"),
     jsonPart: new codegen_1.Name("jsonPart")
   };
-  exports.default = names;
+  exports.default = names2;
 }));
 var require_errors = /* @__PURE__ */ __commonJSMin(((exports) => {
   Object.defineProperty(exports, "__esModule", { value: true });
@@ -20931,9 +20931,9 @@ var require_resolve = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     return count;
   }
-  function getFullPath(resolver, id2 = "", normalize2) {
-    if (normalize2 !== false) id2 = normalizeId(id2);
-    return _getFullPath(resolver, resolver.parse(id2));
+  function getFullPath(resolver, id3 = "", normalize2) {
+    if (normalize2 !== false) id3 = normalizeId(id3);
+    return _getFullPath(resolver, resolver.parse(id3));
   }
   exports.getFullPath = getFullPath;
   function _getFullPath(resolver, p) {
@@ -20941,13 +20941,13 @@ var require_resolve = /* @__PURE__ */ __commonJSMin(((exports) => {
   }
   exports._getFullPath = _getFullPath;
   const TRAILING_SLASH_HASH = /#\/?$/;
-  function normalizeId(id2) {
-    return id2 ? id2.replace(TRAILING_SLASH_HASH, "") : "";
+  function normalizeId(id3) {
+    return id3 ? id3.replace(TRAILING_SLASH_HASH, "") : "";
   }
   exports.normalizeId = normalizeId;
-  function resolveUrl(resolver, baseId, id2) {
-    id2 = normalizeId(id2);
-    return resolver.resolve(baseId, id2);
+  function resolveUrl(resolver, baseId, id3) {
+    id3 = normalizeId(id3);
+    return resolver.resolve(baseId, id3);
   }
   exports.resolveUrl = resolveUrl;
   const ANCHOR = /^[a-z_][-a-z0-9._]*$/i;
@@ -21592,8 +21592,8 @@ var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
     const refPath = (0, resolve_1._getFullPath)(this.opts.uriResolver, p);
     let baseId = (0, resolve_1.getFullPath)(this.opts.uriResolver, root.baseId, void 0);
     if (Object.keys(root.schema).length > 0 && refPath === baseId) return getJsonPointer.call(this, p, root);
-    const id2 = (0, resolve_1.normalizeId)(refPath);
-    const schOrRef = this.refs[id2] || this.schemas[id2];
+    const id3 = (0, resolve_1.normalizeId)(refPath);
+    const schOrRef = this.refs[id3] || this.schemas[id3];
     if (typeof schOrRef == "string") {
       const sch = resolveSchema.call(this, root, schOrRef);
       if (typeof (sch === null || sch === void 0 ? void 0 : sch.schema) !== "object") return;
@@ -21601,7 +21601,7 @@ var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     if (typeof (schOrRef === null || schOrRef === void 0 ? void 0 : schOrRef.schema) !== "object") return;
     if (!schOrRef.validate) compileSchema.call(this, schOrRef);
-    if (id2 === (0, resolve_1.normalizeId)(ref)) {
+    if (id3 === (0, resolve_1.normalizeId)(ref)) {
       const { schema } = schOrRef;
       const { schemaId } = this.opts;
       const schId = schema[schemaId];
@@ -22469,13 +22469,13 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
         for (const sch of schema) this.addSchema(sch, void 0, _meta, _validateSchema);
         return this;
       }
-      let id2;
+      let id3;
       if (typeof schema === "object") {
         const { schemaId } = this.opts;
-        id2 = schema[schemaId];
-        if (id2 !== void 0 && typeof id2 != "string") throw new Error(`schema ${schemaId} must be string`);
+        id3 = schema[schemaId];
+        if (id3 !== void 0 && typeof id3 != "string") throw new Error(`schema ${schemaId} must be string`);
       }
-      key = (0, resolve_1.normalizeId)(key || id2);
+      key = (0, resolve_1.normalizeId)(key || id3);
       this._checkUnique(key);
       this.schemas[key] = this._addSchema(schema, _meta, key, _validateSchema, true);
       return this;
@@ -22540,11 +22540,11 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
         case "object": {
           const cacheKey = schemaKeyRef;
           this._cache.delete(cacheKey);
-          let id2 = schemaKeyRef[this.opts.schemaId];
-          if (id2) {
-            id2 = (0, resolve_1.normalizeId)(id2);
-            delete this.schemas[id2];
-            delete this.refs[id2];
+          let id3 = schemaKeyRef[this.opts.schemaId];
+          if (id3) {
+            id3 = (0, resolve_1.normalizeId)(id3);
+            delete this.schemas[id3];
+            delete this.refs[id3];
           }
           return this;
         }
@@ -22552,8 +22552,8 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
           throw new Error("ajv.removeSchema: invalid parameter");
       }
     }
-    addVocabulary(definitions2) {
-      for (const def of definitions2) this.addKeyword(def);
+    addVocabulary(definitions3) {
+      for (const def of definitions3) this.addKeyword(def);
       return this;
     }
     addKeyword(kwdOrDef, def) {
@@ -22604,7 +22604,7 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
       if (!errors || errors.length === 0) return "No errors";
-      return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text2, msg) => text2 + separator + msg);
+      return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text3, msg) => text3 + separator + msg);
     }
     $dataMetaSchema(metaSchema, keywordsJsonPointers) {
       const rules = this.RULES.all;
@@ -22636,14 +22636,14 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
       }
     }
     _addSchema(schema, meta3, baseId, validateSchema = this.opts.validateSchema, addSchema = this.opts.addUsedSchema) {
-      let id2;
+      let id3;
       const { schemaId } = this.opts;
-      if (typeof schema == "object") id2 = schema[schemaId];
+      if (typeof schema == "object") id3 = schema[schemaId];
       else if (this.opts.jtd) throw new Error("schema must be object");
       else if (typeof schema != "boolean") throw new Error("schema must be object or boolean");
       let sch = this._cache.get(schema);
       if (sch !== void 0) return sch;
-      baseId = (0, resolve_1.normalizeId)(id2 || baseId);
+      baseId = (0, resolve_1.normalizeId)(id3 || baseId);
       const localRefs = resolve_1.getSchemaRefs.call(this, schema, baseId);
       sch = new compile_1.SchemaEnv({
         schema,
@@ -22660,8 +22660,8 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
       if (validateSchema) this.validateSchema(schema, true);
       return sch;
     }
-    _checkUnique(id2) {
-      if (this.schemas[id2] || this.refs[id2]) throw new Error(`schema with key or id "${id2}" already exists`);
+    _checkUnique(id3) {
+      if (this.schemas[id3] || this.refs[id3]) throw new Error(`schema with key or id "${id3}" already exists`);
     }
     _compileSchemaEnv(sch) {
       if (sch.meta) this._compileMetaSchema(sch);
@@ -25709,9 +25709,9 @@ var require_formats = /* @__PURE__ */ __commonJSMin(((exports) => {
     const matches = DATE.exec(str);
     if (!matches) return false;
     const year = +matches[1];
-    const month = +matches[2];
+    const month2 = +matches[2];
     const day = +matches[3];
-    return month >= 1 && month <= 12 && day >= 1 && day <= (month === 2 && isLeapYear(year) ? 29 : DAYS[month]);
+    return month2 >= 1 && month2 <= 12 && day >= 1 && day <= (month2 === 2 && isLeapYear(year) ? 29 : DAYS[month2]);
   }
   function compareDate(d1, d2) {
     if (!(d1 && d2)) return void 0;
@@ -26081,8 +26081,8 @@ var StdioListenRouter = class {
     if (serverInfo !== void 0) this._serverInfo = serverInfo;
   }
   /** Whether `id` is an active listen subscription on this connection. */
-  has(id2) {
-    return this._subs.has(id2);
+  has(id3) {
+    return this._subs.has(id3);
   }
   /**
   * Serve one inbound `subscriptions/listen` request: registers the
@@ -26126,8 +26126,8 @@ var StdioListenRouter = class {
   * `true` when a subscription was removed. After this call NOTHING further
   * is delivered for that subscription id (the post-cancel hardening).
   */
-  cancel(id2) {
-    return this._subs.delete(id2);
+  cancel(id3) {
+    return this._subs.delete(id3);
   }
   /**
   * Route an outbound notification through the active subscriptions.
@@ -26159,13 +26159,13 @@ var StdioListenRouter = class {
   */
   teardownAll() {
     const out = [];
-    for (const id2 of this._subs.keys()) out.push({
+    for (const id3 of this._subs.keys()) out.push({
       jsonrpc: "2.0",
-      id: id2,
+      id: id3,
       result: {
         resultType: "complete",
         _meta: {
-          [SUBSCRIPTION_ID_META_KEY]: id2,
+          [SUBSCRIPTION_ID_META_KEY]: id3,
           ...this._serverInfo !== void 0 && { [SERVER_INFO_META_KEY]: this._serverInfo }
         }
       }
@@ -26241,10 +26241,10 @@ var LegacyInputRequiredShim = class {
     const { maxRounds, roundTimeoutMs } = this._host;
     const outerSignal = ctx.mcpReq.signal;
     let current = firstResult;
-    let round = 0;
+    let round2 = 0;
     while (true) {
-      round += 1;
-      if (round > maxRounds) return legacyShimFailure(method, inputRequiredRoundsExceededMessage(method, maxRounds));
+      round2 += 1;
+      if (round2 > maxRounds) return legacyShimFailure(method, inputRequiredRoundsExceededMessage(method, maxRounds));
       const inputRequests = current.inputRequests;
       const hasInputRequests = inputRequests != null && Object.keys(inputRequests).length > 0;
       const requestState = typeof current.requestState === "string" ? current.requestState : void 0;
@@ -26804,7 +26804,7 @@ var Server = class extends Protocol {
       if (hasPreviousToolUse) {
         const toolUseIds = new Set(previousContent.filter((c) => c.type === "tool_use").map((c) => c.id));
         const toolResultIds = new Set(lastContent.filter((c) => c.type === "tool_result").map((c) => c.toolUseId));
-        if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id2) => toolResultIds.has(id2))) throw new ProtocolError(ProtocolErrorCode.InvalidParams, "ids of tool_result blocks and tool_use blocks from previous message do not match");
+        if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id3) => toolResultIds.has(id3))) throw new ProtocolError(ProtocolErrorCode.InvalidParams, "ids of tool_result blocks and tool_use blocks from previous message do not match");
       }
     }
     const hasTools = Boolean(params.tools || params.toolChoice);
@@ -27716,8 +27716,8 @@ var StdioConnectionChannel = class {
   }
   async send(message, options) {
     if (isJSONRPCResultResponse(message) || isJSONRPCErrorResponse(message)) {
-      const { id: id2 } = message;
-      if (id2 !== void 0) this._settle(id2);
+      const { id: id3 } = message;
+      if (id3 !== void 0) this._settle(id3);
     }
     if (this._closed) return;
     if (this._outboundIntercept?.(message) === "handled") return;
@@ -27770,8 +27770,8 @@ var StdioConnectionChannel = class {
       this.onclose?.();
     }
   }
-  _settle(id2) {
-    this._pendingRequests.delete(id2);
+  _settle(id3) {
+    this._pendingRequests.delete(id3);
     if (this._pendingRequests.size === 0) this._releaseDrainWaiters();
   }
   _releaseDrainWaiters() {
@@ -27827,9 +27827,9 @@ function serveStdio(factory, options = {}) {
     } catch {
     }
   };
-  const writeErrorResponse = (id2, code, message, data) => wire.send({
+  const writeErrorResponse = (id3, code, message, data) => wire.send({
     jsonrpc: "2.0",
-    id: id2,
+    id: id3,
     error: {
       code,
       message,
@@ -28151,8 +28151,8 @@ var copy = (value) => structuredClone(value);
 function listGoldenPathways() {
   return copy(definitions);
 }
-function getGoldenPathway(id2) {
-  const pathway = definitions.find((item) => item.id === id2);
+function getGoldenPathway(id3) {
+  const pathway = definitions.find((item) => item.id === id3);
   if (!pathway) throw new TypeError("Unknown Defiant pathway");
   return copy(pathway);
 }
@@ -28167,17 +28167,17 @@ function buildDefiantDemoView({ data, pathwayId, selection: selection2 = {} }) {
   for (const [key, kind] of Object.entries(selectionKinds)) {
     if (selection2[key] === void 0 || selection2[key] === "") continue;
     if (typeof selection2[key] !== "string") throw new TypeError("Research selections require record IDs");
-    const record2 = data[kind].find((item) => item.id === selection2[key]);
-    if (!record2) throw new TypeError("Selected research record is unavailable");
-    resolved[key] = record2.id;
-    selectedRecords[kind] = copy2(record2);
+    const record3 = data[kind].find((item) => item.id === selection2[key]);
+    if (!record3) throw new TypeError("Selected research record is unavailable");
+    resolved[key] = record3.id;
+    selectedRecords[kind] = copy2(record3);
   }
-  const track = selectedRecords.tracks, artist = selectedRecords.artists, source = selectedRecords.sources, campaign = selectedRecords.campaigns, opportunity = selectedRecords.opportunities;
-  if (track && artist && track.artistId !== artist.id || track && source && !source.trackIds?.includes(track.id) || track && campaign && campaign.trackId !== track.id || track && opportunity && opportunity.trackId !== track.id || source && campaign && !campaign.sourceIds?.includes(source.id) || source && opportunity && !opportunity.sourceIds?.includes(source.id) || campaign && opportunity && opportunity.campaignId && opportunity.campaignId !== campaign.id) throw new TypeError("Selected records do not share the proposed research context");
+  const track = selectedRecords.tracks, artist = selectedRecords.artists, source = selectedRecords.sources, campaign = selectedRecords.campaigns, opportunity2 = selectedRecords.opportunities;
+  if (track && artist && track.artistId !== artist.id || track && source && !source.trackIds?.includes(track.id) || track && campaign && campaign.trackId !== track.id || track && opportunity2 && opportunity2.trackId !== track.id || source && campaign && !campaign.sourceIds?.includes(source.id) || source && opportunity2 && !opportunity2.sourceIds?.includes(source.id) || campaign && opportunity2 && opportunity2.campaignId && opportunity2.campaignId !== campaign.id) throw new TypeError("Selected records do not share the proposed research context");
   const evidenceIds = /* @__PURE__ */ new Set([
     ...source ? [source.id] : [],
     ...campaign?.sourceIds || [],
-    ...opportunity?.sourceIds || []
+    ...opportunity2?.sourceIds || []
   ]);
   const evidence = data.sources.filter((item) => evidenceIds.has(item.id)).map(copy2);
   const steps = pathway.steps.map((step) => {
@@ -28208,12 +28208,69 @@ function buildDefiantDemoView({ data, pathwayId, selection: selection2 = {} }) {
   };
 }
 
+// server/defiant-domain-mcp.js
+var recordId = external_exports.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/);
+var organizationId = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
+function registerDefiantDomainTools(server, { execute }) {
+  const definitions3 = [
+    ["defiant_artist_overview", "Artist portfolio overview", "Join an explicit artist to recordings, collaborators, regional demand and royalty totals. Synthetic observations are not actual performance.", "artist-overview", { artistId: recordId }],
+    ["defiant_detect_regional_opportunities", "Detect regional opportunities", "Rank recording-region pairs using three recent versus three prior complete monthly observations. Return the explicit heuristic and evidence, never an execution recommendation.", "regional-opportunities", { artistId: recordId.optional(), regionId: recordId.optional(), limit: external_exports.number().int().min(1).max(25).optional() }],
+    ["defiant_explain_opportunity", "Explain a regional opportunity", "Explain an explicit recording and region using the same evidence and score as detection, with simulated rights context and human review required.", "explain-opportunity", { trackId: recordId, regionId: recordId }],
+    ["defiant_inspect_rights_and_royalties", "Inspect rights and royalties", "Inspect reconciled monthly streams, integer-cent royalty splits and simulated territory restrictions. Simulated-clear is not actual clearance; this tool cannot approve rights.", "rights-and-royalties", { trackId: recordId, territory: external_exports.string().min(1).max(12).optional() }],
+    ["defiant_compare_campaign_scenarios", "Compare explicit campaign scenarios", "Compare one to three caller-supplied budgets against a trailing-three-month baseline and explicit acquisition-cost assumption. Not ML, campaign execution, measured lift or a budget recommendation.", "compare-scenarios", { trackId: recordId, regionId: recordId, budgets: external_exports.array(external_exports.number().min(0).max(1e5)).min(1).max(3), horizonMonths: external_exports.number().int().min(1).max(12).optional() }]
+  ];
+  for (const [name, title, description, operation, fields] of definitions3) server.registerTool(name, { title, description, inputSchema: external_exports.object({ organizationId, ...fields }).strict(), annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } }, execute(({ service, actor }, { organizationId: _organizationId, ...args }) => service.domain(actor, { operation, ...args })));
+}
+
+// server/defiant-domain-pathways.js
+var toolSequence = [
+  { operation: "artist-overview", tool: "defiant_artist_overview", label: "Inspect artist and catalog" },
+  { operation: "regional-opportunities", tool: "defiant_detect_regional_opportunities", label: "Compare regional demand evidence" },
+  { operation: "rights-and-royalties", tool: "defiant_inspect_rights_and_royalties", label: "Inspect linked rights and royalty records" },
+  { operation: "explain-opportunity", tool: "defiant_explain_opportunity", label: "Explain the selected recording and region" },
+  { operation: "compare-scenarios", tool: "defiant_compare_campaign_scenarios", label: "Compare explicit illustrative budgets" }
+];
+var definitions2 = [
+  { id: "catalog-to-campaign", title: "Catalog activation review", audience: "Campaign strategist", question: "Which recording and region merit a review-required campaign proposal?", reviewQuestions: ["Does the supplied catalog and demand evidence support the proposed recording/region?", "Which intended uses, rights and budget assumptions require human confirmation?"] },
+  { id: "talent-to-campaign", title: "Regional artist research review", audience: "Artist manager", question: "Where is the artist showing a regional signal, and what remains unverified?", reviewQuestions: ["Is the regional change supported by the linked periods rather than a claimed real-world trend?", "Who must confirm collaborator availability, participation and use rights?"] },
+  { id: "opportunity-to-plan", title: "Opportunity and scenario review", audience: "Commercial decision maker", question: "How do linked demand, royalty and rights records constrain an illustrative plan?", reviewQuestions: ["Can every proposed opportunity be traced to the selected artist, recording and region?", "How sensitive is the scenario to budget, rate and untrained baseline assumptions?"] }
+].map((pathway) => ({ ...pathway, requiredInputs: ["artistId", "budgets"], toolSequence }));
+var copy3 = (value) => structuredClone(value);
+var DEFIANT_DOMAIN_INSTRUCTIONS = "Use the unified data layer to identify an artist and catalog, then the media-and-entertainment domain tools to inspect regional demand and linked royalties/rights, then the governed pathway to compare explicit illustrative scenarios and produce a human-review packet. Trace claims to returned evidence IDs and periods. All demonstration data is fictional; baseline/scenario math is deterministic and untrained, not measured real-world demand or a financial forecast. Simulated rights statuses never constitute actual approval. Do not invent missing records, execute campaigns, approve rights or imply Databricks/Foundry integration.";
+var listDefiantDomainPathways = () => copy3(definitions2);
+
+// server/defiant-domain-prompts.js
+var record2 = external_exports.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/);
+var budgetValues = (value) => value.split(",").map((item) => Number(item.trim()));
+var budgetText = external_exports.string().min(1).max(80).refine((value) => /^[0-9., ]+$/.test(value) && value.split(",").every((item) => item.trim()) && budgetValues(value).length <= 3 && new Set(budgetValues(value)).size === budgetValues(value).length && budgetValues(value).every((number4) => Number.isFinite(number4) && number4 >= 0 && number4 <= 1e5), "Supply one to three explicit illustrative budgets");
+var names = { "catalog-to-campaign": "defiant_catalog_activation_review", "talent-to-campaign": "defiant_regional_talent_review", "opportunity-to-plan": "defiant_opportunity_scenario_review" };
+function registerDefiantDomainPrompts(server) {
+  for (const pathway of listDefiantDomainPathways()) server.registerPrompt(names[pathway.id], {
+    title: pathway.title,
+    description: `${pathway.audience}: ${pathway.question} Fictional evidence only; finish at human review.`,
+    argsSchema: external_exports.object({ organizationId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/), artistId: record2, trackId: record2.optional(), regionId: record2.optional(), budgets: budgetText, horizonMonths: external_exports.string().regex(/^(?:[1-9]|1[0-2])$/).optional() }).strict()
+  }, (args) => {
+    const scope = { organizationId: args.organizationId }, artist = { ...scope, artistId: args.artistId }, budgets = budgetValues(args.budgets), horizonMonths = Number(args.horizonMonths || 3);
+    return { description: pathway.title, messages: [{ role: "user", content: { type: "text", text: [
+      DEFIANT_DOMAIN_INSTRUCTIONS,
+      `Audience: ${pathway.audience}. Task: ${pathway.question}`,
+      `1. Call defiant_artist_overview with ${JSON.stringify(artist)}. Use returned catalog IDs, never an invented recording.`,
+      `2. Call defiant_detect_regional_opportunities with ${JSON.stringify({ ...artist, ...args.regionId ? { regionId: args.regionId } : {}, limit: 25 })}. Compare the actual returned monthly periods and evidence IDs. ${args.trackId ? `Use supplied recording ${JSON.stringify(args.trackId)}.` : "Propose a recording/region from the returned ranked synthetic results and state that it is a proposal."}`,
+      "3. Call defiant_inspect_rights_and_royalties for that exact trackId and organizationId. Join ledger and rights records by recording; simulated-clear is not actual approval.",
+      "4. Call defiant_explain_opportunity for the same organizationId, trackId and regionId. Explain actual evidence and deterministic method; do not describe a synthetic change as an observed real-world trend.",
+      `5. Call defiant_compare_campaign_scenarios for that same organizationId, trackId and regionId with budgets=${JSON.stringify(budgets)} and horizonMonths=${horizonMonths}. These are explicit illustrative inputs, not a budget recommendation.`,
+      `6. Produce a human-review packet: artist/recording/region, linked periods/evidence IDs, royalty and rights constraints, scenario assumptions, and these questions: ${JSON.stringify(pathway.reviewQuestions)}. Mark review pending. No campaign action, rights approval or real financial result is authorized.`,
+      "If a required record or result is missing, inaccessible or from a different dataset revision, stop and request the missing context. Never fill the gap with fabricated facts or execute arbitrary code."
+    ].join("\n") } }] };
+  });
+}
+
 // server/defiant-mcp.js
 var RESOURCE_URI = "ui://defiant/research-v1.html";
-var organizationId = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
-var recordId = external_exports.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/);
+var organizationId2 = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
+var recordId2 = external_exports.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/);
 var boundedText = external_exports.string().trim().min(1).max(200).refine((value) => !/[\u0000-\u001f\u007f]/.test(value));
-var selection = external_exports.object({ artistId: recordId.optional(), trackId: recordId.optional(), sourceId: recordId.optional(), campaignId: recordId.optional(), opportunityId: recordId.optional() }).strict();
+var selection = external_exports.object({ artistId: recordId2.optional(), trackId: recordId2.optional(), sourceId: recordId2.optional(), campaignId: recordId2.optional(), opportunityId: recordId2.optional() }).strict();
 var annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 var result = (structuredContent) => ({ content: [{ type: "text", text: "Read-only Defiant research. Supplied claims and rights remain unverified." }], structuredContent });
 function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
@@ -28233,14 +28290,14 @@ function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
   j(server, "defiant_read_data", {
     title: "Read Defiant reference data",
     description: "Read a bounded reference resource. Does not fetch sources, infer rights or execute campaigns.",
-    inputSchema: external_exports.object({ organizationId, resource: external_exports.enum(["manifest", "artists", "tracks", "sources", "campaigns", "demand", "royalties", "opportunities"]), id: recordId.optional(), query: boundedText.optional(), cursor: external_exports.string().regex(/^(0|[1-9]\d{0,5})$/).optional(), limit: external_exports.number().int().min(1).max(100).optional() }).strict(),
+    inputSchema: external_exports.object({ organizationId: organizationId2, resource: external_exports.enum(["manifest", "artists", "tracks", "sources", "campaigns", "demand", "royalties", "opportunities", "regions", "collaborators", "rights", "forecasts"]), id: recordId2.optional(), query: boundedText.optional(), cursor: external_exports.string().regex(/^(0|[1-9]\d{0,5})$/).optional(), limit: external_exports.number().int().min(1).max(100).optional() }).strict(),
     annotations,
     _meta: {}
   }, execute(({ service, actor }, { organizationId: _organizationId, ...request }) => service.read(actor, request)));
   j(server, "defiant_list_pathways", {
     title: "List Defiant research pathways",
     description: "List finite guided research pathways for the authorized reference dataset.",
-    inputSchema: external_exports.object({ organizationId }).strict(),
+    inputSchema: external_exports.object({ organizationId: organizationId2 }).strict(),
     annotations,
     _meta: {}
   }, execute(async ({ service, actor }) => {
@@ -28250,10 +28307,12 @@ function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
   j(server, "defiant_open_guided_view", {
     title: "Open Defiant guided research",
     description: "Inspect linked supplied records and the next human review step. Does not create a campaign or approve claims.",
-    inputSchema: external_exports.object({ organizationId, pathwayId: external_exports.enum(["catalog-to-campaign", "talent-to-campaign", "opportunity-to-plan"]), selection: selection.optional() }).strict(),
+    inputSchema: external_exports.object({ organizationId: organizationId2, pathwayId: external_exports.enum(["catalog-to-campaign", "talent-to-campaign", "opportunity-to-plan"]), selection: selection.optional() }).strict(),
     annotations,
     _meta: resourceUri ? { ui: { resourceUri } } : {}
   }, execute(async ({ service, actor }, input) => buildDefiantDemoView({ data: await service.read(actor, { resource: "manifest" }), pathwayId: input.pathwayId, selection: input.selection })));
+  registerDefiantDomainTools(server, { execute });
+  registerDefiantDomainPrompts(server);
   if (resourceUri) {
     const meta3 = { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [] } } };
     G(server, "Defiant guided research", resourceUri, { mimeType: L, _meta: meta3 }, async () => ({ contents: [{ uri: resourceUri, mimeType: L, text: uiHtml, _meta: meta3 }] }));
@@ -28263,45 +28322,236 @@ function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
 
 // server/defiant-unified-data.js
 import { createHash } from "node:crypto";
+
+// server/defiant-domain.js
+var fail = (message, status = 400) => Object.assign(new Error(message), { status });
+var object2 = (x) => x && typeof x === "object" && !Array.isArray(x);
+var text = (x, max = 500) => {
+  if (typeof x !== "string" || !x.trim() || x.length > max || /[\u0000-\u001f\u007f]/.test(x)) throw fail("Invalid domain text");
+  return x.trim();
+};
+var id = (x) => {
+  const s = text(x, 160);
+  if (!/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(s)) throw fail("Invalid domain identifier");
+  return s;
+};
+var num = (x, max = 1e12, integer2 = false) => {
+  if (!Number.isFinite(x) || x < 0 || x > max || integer2 && !Number.isSafeInteger(x)) throw fail("Invalid domain quantity");
+  return x;
+};
+var month = (x) => {
+  if (typeof x !== "string" || !/^\d{4}-(0[1-9]|1[0-2])-01$/.test(x)) throw fail("Monthly observation required");
+  return x;
+};
+var refs = (x) => {
+  if (!Array.isArray(x) || x.length > 100) throw fail("Invalid domain references");
+  return [...new Set(x.map(id))];
+};
+var DOMAIN_RESOURCES = ["regions", "collaborators", "demand", "royalties", "rights", "forecasts"];
+function normalizeDefiantDomain(input, base) {
+  const out = {};
+  const has = (kind, key) => base[kind]?.some((x) => x.id === key) || out[kind]?.some((x) => x.id === key);
+  const linked = (kind, key) => {
+    const value = id(key);
+    if (!has(kind, value)) throw fail("Unknown domain reference");
+    return value;
+  };
+  for (const kind of DOMAIN_RESOURCES) {
+    if (input[kind] === void 0) continue;
+    if (!Array.isArray(input[kind]) || input[kind].length > 2e4) throw fail("Domain resource exceeds limit");
+    const seen = /* @__PURE__ */ new Set(), natural = /* @__PURE__ */ new Set();
+    out[kind] = input[kind].map((row) => {
+      if (!object2(row)) throw fail("Invalid domain record");
+      const key = id(row.id);
+      if (seen.has(key)) throw fail("Duplicate domain identifier");
+      seen.add(key);
+      const r = { id: key, provenance: base.dataset.provenance };
+      if (kind === "regions") return { ...r, name: text(row.name, 160), country: text(row.country, 3) };
+      if (kind === "collaborators") return { ...r, name: text(row.name, 160), role: text(row.role, 160), artistIds: refs(row.artistIds).map((x) => linked("artists", x)), trackIds: refs(row.trackIds ?? []).map((x) => linked("tracks", x)) };
+      r.trackId = linked("tracks", row.trackId);
+      if (kind === "rights") {
+        if (!["simulated-clear", "simulated-review", "simulated-restricted"].includes(row.status) || row.method !== "simulation" || row.actualApproval !== false || base.dataset.provenance !== "synthetic") throw fail("Rights simulation must remain explicit");
+        return { ...r, territory: text(row.territory, 12), status: row.status, method: "simulation", actualApproval: false };
+      }
+      if (kind === "forecasts") {
+        if (row.trained !== false || row.method !== "trailing-3-month-baseline") throw fail("Unsupported forecast method");
+        if (!row.horizonMonths) throw fail("Positive forecast horizon required");
+        return { ...r, regionId: linked("regions", row.regionId), asOf: month(row.asOf), horizonMonths: num(row.horizonMonths, 12, true), baselineMonthlyStreams: num(row.baselineMonthlyStreams), projectedStreams: num(row.projectedStreams, 1e12, true), method: row.method, explanation: text(row.explanation), trained: false };
+      }
+      r.date = month(row.date);
+      r.period = "month";
+      if (row.period !== "month") throw fail("Monthly observation required");
+      if (base.dataset.asOf && r.date >= `${base.dataset.asOf.slice(0, 7)}-01`) throw fail("Monthly observation overlaps dataset date");
+      r.artistId = linked("artists", row.artistId);
+      if (base.tracks.find((x) => x.id === r.trackId).artistId !== r.artistId) throw fail("Artist and recording disagree");
+      r.streams = num(row.streams, 1e9, true);
+      if (kind === "demand") {
+        if (row.method !== "synthetic-observation" || base.dataset.provenance !== "synthetic") throw fail("Demand history must identify its origin");
+        r.regionId = linked("regions", row.regionId);
+        r.method = row.method;
+      } else {
+        if (row.method !== "synthetic-ledger" || base.dataset.provenance !== "synthetic" || row.currency !== "USD") throw fail("Unsupported royalty ledger");
+        r.rate = num(row.rate, 1);
+        r.rateMicros = num(row.rateMicros, 1e6, true);
+        r.amountMicros = num(row.amountMicros, 1e15, true);
+        r.royaltyCents = num(row.royaltyCents, 1e12, true);
+        r.amount = num(row.amount, 1e10);
+        r.currency = "USD";
+        r.method = row.method;
+        if (Math.abs(r.rate - r.rateMicros / 1e6) > 1e-12 || r.amountMicros !== r.streams * r.rateMicros || r.royaltyCents !== Math.round(r.amountMicros / 1e4) || Math.abs(r.amount - r.royaltyCents / 100) > 1e-8) throw fail("Royalty units do not reconcile");
+        if (!Array.isArray(row.splits) || !row.splits.length || row.splits.length > 8) throw fail("Royalty splits required");
+        r.splits = row.splits.map((x) => {
+          const partyId = id(x.partyId);
+          if (!has("artists", partyId) && !has("collaborators", partyId)) throw fail("Unknown royalty party");
+          return { partyId, shareBps: num(x.shareBps, 1e4, true), amountCents: num(x.amountCents, 1e12, true) };
+        });
+        if (new Set(r.splits.map((x) => x.partyId)).size !== r.splits.length || r.splits.reduce((s, x) => s + x.shareBps, 0) !== 1e4 || r.splits.reduce((s, x) => s + x.amountCents, 0) !== r.royaltyCents) throw fail("Royalty splits do not conserve amounts");
+        if (r.splits.some((x) => Math.abs(x.amountCents - r.royaltyCents * x.shareBps / 1e4) > 1)) throw fail("Royalty split disagrees with declared share");
+      }
+      const nk = [r.trackId, r.date, r.regionId ?? ""].join("|");
+      if (natural.has(nk)) throw fail("Duplicate monthly observation");
+      natural.add(nk);
+      return r;
+    });
+  }
+  if (out.demand && out.royalties) for (const row of out.royalties) {
+    const total2 = out.demand.filter((x) => x.trackId === row.trackId && x.date === row.date).reduce((s, x) => s + x.streams, 0);
+    if (total2 !== row.streams) throw fail("Demand and royalty streams do not reconcile");
+  }
+  for (const row of out.forecasts ?? []) {
+    if (!base.dataset.asOf || row.asOf !== base.dataset.asOf.slice(0, 10)) throw fail("Forecast and dataset dates disagree");
+    const observations = (out.demand ?? []).filter((x) => x.trackId === row.trackId && x.regionId === row.regionId).sort((a, b) => a.date.localeCompare(b.date)).slice(-3);
+    const asOfMonth = Number(row.asOf.slice(0, 4)) * 12 + Number(row.asOf.slice(5, 7));
+    if (observations.length !== 3 || observations.some((x, i) => Number(x.date.slice(0, 4)) * 12 + Number(x.date.slice(5, 7)) !== asOfMonth - 3 + i)) throw fail("Forecast requires three complete preceding months");
+    const baseline = observations.reduce((s, x) => s + x.streams, 0) / 3;
+    if (Math.abs(row.baselineMonthlyStreams - baseline) > 1e-6 || row.projectedStreams !== Math.round(baseline * row.horizonMonths)) throw fail("Forecast does not match declared baseline method");
+  }
+  for (const artist of base.artists) {
+    const raw = input.artists.find((x) => x.id === artist.id);
+    if (raw.profile !== void 0) {
+      if (!object2(raw.profile)) throw fail("Invalid artist profile");
+      artist.profile = { summary: text(raw.profile.summary), genres: refs(raw.profile.genres), homeRegionId: linked("regions", raw.profile.homeRegionId) };
+    }
+    if (raw.homeRegionId !== void 0) artist.homeRegionId = linked("regions", raw.homeRegionId);
+  }
+  for (const row of [...base.campaigns, ...base.opportunities]) if (row.regionId) linked("regions", row.regionId);
+  return out;
+}
+var total = (rows, key) => rows.reduce((s, x) => s + x[key], 0);
+var round = (n) => Math.round(n * 1e6) / 1e6;
+var requireRow = (rows, key) => {
+  const row = rows?.find((x) => x.id === id(key));
+  if (!row) throw fail("Domain record not found", 404);
+  return row;
+};
+function windows(data) {
+  const dates = [...new Set((data.demand ?? []).map((x) => x.date))].sort();
+  return { baseline: dates.slice(-6, -3), recent: dates.slice(-3) };
+}
+function opportunity(data, trackId, regionId) {
+  const recording = requireRow(data.tracks, trackId), region = requireRow(data.regions, regionId), periods = windows(data);
+  const rows = (data.demand ?? []).filter((x) => x.trackId === trackId && x.regionId === regionId), base = rows.filter((x) => periods.baseline.includes(x.date)), recent = rows.filter((x) => periods.recent.includes(x.date));
+  const six = [...periods.baseline, ...periods.recent], indices = six.map((x) => Number(x.slice(0, 4)) * 12 + Number(x.slice(5, 7)));
+  if (periods.baseline.length !== 3 || periods.recent.length !== 3 || base.length !== 3 || recent.length !== 3 || indices.some((x, i) => i && x !== indices[i - 1] + 1)) return null;
+  const baselineStreams = total(base, "streams"), recentStreams = total(recent, "streams"), growthRate = baselineStreams ? round((recentStreams - baselineStreams) / baselineStreams) : null;
+  const score = round(Math.min(100, Math.max(0, (growthRate ?? 0) * 50) + Math.min(50, recentStreams / 1e4)));
+  return { id: `regional:${trackId}:${regionId}`, trackId, regionId, artistId: recording.artistId, baselineStreams, recentStreams, growthRate, absoluteGrowth: recentStreams - baselineStreams, score, method: "trailing-3-month-vs-prior-3-month", periods, evidenceIds: rows.filter((x) => [...periods.baseline, ...periods.recent].includes(x.date)).map((x) => x.id), assumptions: ["Score = min(100, max(0, growthRate \xD7 50) + min(50, recentStreams / 10000)); an explicit review heuristic, not a learned prediction.", "Zero baseline has unknown growth rate; no percentage is invented."] };
+}
+function queryDefiantDomain(data, request) {
+  if (!object2(request)) throw fail("Domain request required");
+  const fields = { "artist-overview": ["artistId"], "regional-opportunities": ["artistId", "regionId", "limit"], "explain-opportunity": ["trackId", "regionId"], "rights-and-royalties": ["trackId", "territory"], "compare-scenarios": ["trackId", "regionId", "budgets", "horizonMonths"] };
+  const keys = fields[request.operation];
+  if (!keys || Object.keys(request).some((x) => x !== "operation" && !keys.includes(x))) throw fail("Unsupported domain operation");
+  const envelope = { schemaVersion: 1, dataset: data.dataset, operation: request.operation, provenance: data.dataset.provenance, asOf: data.dataset.asOf, evidenceIds: [], assumptions: ["Synthetic observations and financial amounts are demonstration data, not observed performance or rights clearance."], capabilities: data.capabilities };
+  let result2;
+  if (request.operation === "artist-overview") {
+    const artist = requireRow(data.artists, request.artistId), recordings = data.tracks.filter((x) => x.artistId === artist.id), trackIds = new Set(recordings.map((x) => x.id)), demand = (data.demand ?? []).filter((x) => trackIds.has(x.trackId)), royalties = (data.royalties ?? []).filter((x) => trackIds.has(x.trackId));
+    result2 = { artist, recordings, collaborators: (data.collaborators ?? []).filter((x) => x.artistIds.includes(artist.id)), regions: (data.regions ?? []).filter((x) => demand.some((y) => y.regionId === x.id)), demandSummary: { available: demand.length > 0, streams: total(demand, "streams"), period: "month", observationCount: demand.length }, royaltySummary: { available: royalties.length > 0, amountCents: total(royalties, "royaltyCents"), currency: "USD", observationCount: royalties.length }, evidenceIds: [...recordings, ...demand, ...royalties].map((x) => x.id) };
+  } else if (request.operation === "regional-opportunities") {
+    if (request.artistId) requireRow(data.artists, request.artistId);
+    if (request.regionId) requireRow(data.regions, request.regionId);
+    const limit = request.limit ?? 10;
+    num(limit, 25, true);
+    if (!limit) throw fail("Positive domain limit required");
+    const items = [];
+    for (const track of data.tracks.filter((x) => !request.artistId || x.artistId === request.artistId)) for (const region of (data.regions ?? []).filter((x) => !request.regionId || x.id === request.regionId)) {
+      const item = opportunity(data, track.id, region.id);
+      if (item) items.push(item);
+    }
+    items.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+    result2 = { available: items.length > 0, items: items.slice(0, limit), total: items.length, periods: windows(data), evidenceIds: items.slice(0, limit).flatMap((x) => x.evidenceIds) };
+  } else if (request.operation === "rights-and-royalties") {
+    const recording = requireRow(data.tracks, request.trackId), territory = request.territory === void 0 ? null : text(request.territory, 12), rights = (data.rights ?? []).filter((x) => x.trackId === recording.id && (!territory || x.territory === territory)), rows = (data.royalties ?? []).filter((x) => x.trackId === recording.id), splits = /* @__PURE__ */ new Map();
+    for (const row of rows) for (const split of row.splits) splits.set(split.partyId, (splits.get(split.partyId) ?? 0) + split.amountCents);
+    result2 = { recording, rights, rightsStatus: rights.length ? "simulation-only" : "unknown", royalties: { available: rows.length > 0, streams: total(rows, "streams"), amountCents: total(rows, "royaltyCents"), currency: "USD", rows, splits: [...splits].map(([partyId, amountCents]) => ({ partyId, amountCents })) }, canApproveRights: false, reviewRequired: true, evidenceIds: [...rights, ...rows].map((x) => x.id) };
+  } else if (request.operation === "explain-opportunity") {
+    const item = opportunity(data, request.trackId, request.regionId);
+    result2 = { available: Boolean(item), item, recording: requireRow(data.tracks, request.trackId), artist: requireRow(data.artists, requireRow(data.tracks, request.trackId).artistId), region: requireRow(data.regions, request.regionId), rightsSummary: (data.rights ?? []).filter((x) => x.trackId === request.trackId).map((x) => ({ id: x.id, status: x.status, territory: x.territory, actualApproval: false })), reviewRequired: true, evidenceIds: item?.evidenceIds ?? [] };
+  } else {
+    const recording = requireRow(data.tracks, request.trackId), region = requireRow(data.regions, request.regionId), item = opportunity(data, recording.id, region.id), horizonMonths = request.horizonMonths ?? 3;
+    num(horizonMonths, 12, true);
+    if (!horizonMonths || !Array.isArray(request.budgets) || !request.budgets.length || request.budgets.length > 3) throw fail("One to three explicit scenario budgets required");
+    if (new Set(request.budgets).size !== request.budgets.length) throw fail("Distinct scenario budgets required");
+    const rows = (data.royalties ?? []).filter((x) => x.trackId === recording.id), streams = total(rows, "streams"), rate = streams ? total(rows, "royaltyCents") / 100 / streams : null, baselineMonthlyStreams = item ? item.recentStreams / 3 : null;
+    const assumptions = ["Incremental streams = budget / assumed $0.05 acquisition cost per stream; this is a fixed explicit planning assumption, not measured campaign lift.", "Baseline uses the last three complete monthly observations; scenario output is not an ML forecast or a budget recommendation."];
+    result2 = { available: baselineMonthlyStreams !== null, recording, region, baselineMonthlyStreams, scenarios: request.budgets.map((budget) => {
+      num(budget, 1e5);
+      const baselineStreams = baselineMonthlyStreams === null ? null : Math.round(baselineMonthlyStreams * horizonMonths), assumedIncrementalStreams = Math.round(budget / 0.05), projectedStreams = baselineStreams === null ? null : baselineStreams + assumedIncrementalStreams, projectedRoyaltyCents = projectedStreams === null || rate === null ? null : Math.round(projectedStreams * rate * 100);
+      return { budget, currency: "USD", horizonMonths, baselineStreams, assumedIncrementalStreams, projectedStreams, assumedRatePerStream: rate, projectedRoyaltyCents, netAfterBudget: projectedRoyaltyCents === null ? null : round(projectedRoyaltyCents / 100 - budget), assumptions };
+    }), trained: false, reviewRequired: true, evidenceIds: [...item?.evidenceIds ?? [], ...rows.map((x) => x.id)], assumptions };
+  }
+  return structuredClone({ ...envelope, ...result2 });
+}
+
+// server/defiant-unified-data.js
 var RESOURCES = ["artists", "tracks", "sources", "campaigns", "opportunities"];
-var fail = (status, message) => Object.assign(new Error(message), { status });
-var text = (value, max = 300) => {
-  if (typeof value !== "string" || !value.trim() || value.length > max || /[\u0000-\u001f\u007f]/.test(value)) throw fail(400, "Invalid dataset text");
+var fail2 = (status, message) => Object.assign(new Error(message), { status });
+var text2 = (value, max = 300) => {
+  if (typeof value !== "string" || !value.trim() || value.length > max || /[\u0000-\u001f\u007f]/.test(value)) throw fail2(400, "Invalid dataset text");
   return value.trim();
 };
-var id = (value) => {
-  const result2 = text(value, 160);
-  if (!/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(result2)) throw fail(400, "Invalid dataset identifier");
+var id2 = (value) => {
+  const result2 = text2(value, 160);
+  if (!/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(result2)) throw fail2(400, "Invalid dataset identifier");
   return result2;
 };
 var ids = (value) => {
-  if (!Array.isArray(value) || value.length > 100) throw fail(400, "Invalid dataset references");
-  return [...new Set(value.map(id))];
+  if (!Array.isArray(value) || value.length > 100) throw fail2(400, "Invalid dataset references");
+  return [...new Set(value.map(id2))];
 };
 var CAPS = Object.freeze({ readOnly: true, canApproveRights: false, canPublish: false });
 function normalize(input) {
-  if (!input || typeof input !== "object" || Array.isArray(input)) throw fail(400, "Dataset required");
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw fail2(400, "Dataset required");
   const metadata = input.dataset;
-  if (!metadata || !["synthetic", "user-reported"].includes(metadata.provenance)) throw fail(400, "Dataset provenance required");
-  if (metadata.asOf != null && (typeof metadata.asOf !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(metadata.asOf) || !Number.isFinite(Date.parse(metadata.asOf)))) throw fail(400, "Invalid dataset date");
-  const dataset = { id: id(metadata.id), label: text(metadata.label), provenance: metadata.provenance, asOf: metadata.asOf ?? null };
+  if (!metadata || !["synthetic", "user-reported"].includes(metadata.provenance)) throw fail2(400, "Dataset provenance required");
+  if (metadata.asOf != null && (typeof metadata.asOf !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(metadata.asOf) || !Number.isFinite(Date.parse(metadata.asOf)))) throw fail2(400, "Invalid dataset date");
+  const dataset = { id: id2(metadata.id), label: text2(metadata.label), provenance: metadata.provenance, asOf: metadata.asOf ?? null };
+  if (metadata.seed !== void 0) dataset.seed = text2(metadata.seed, 100);
+  if (metadata.reason !== void 0) dataset.reason = text2(metadata.reason, 500);
   const output = {};
   for (const resource of RESOURCES) {
     const rows = input[resource] ?? [];
-    if (!Array.isArray(rows) || rows.length > 1e3) throw fail(400, "Dataset resource exceeds limit");
+    if (!Array.isArray(rows) || rows.length > 1e3) throw fail2(400, "Dataset resource exceeds limit");
     const seen = /* @__PURE__ */ new Set();
     output[resource] = rows.map((row) => {
-      if (!row || typeof row !== "object" || Array.isArray(row)) throw fail(400, "Invalid dataset record");
-      const key = id(row.id);
-      if (seen.has(key)) throw fail(400, "Duplicate dataset identifier");
+      if (!row || typeof row !== "object" || Array.isArray(row)) throw fail2(400, "Invalid dataset record");
+      const key = id2(row.id);
+      if (seen.has(key)) throw fail2(400, "Duplicate dataset identifier");
       seen.add(key);
-      const result2 = { id: key, [resource === "artists" ? "name" : "title"]: text(resource === "artists" ? row.name : row.title), provenance: dataset.provenance, rightsStatus: "unknown" };
+      const result2 = { id: key, [resource === "artists" ? "name" : "title"]: text2(resource === "artists" ? row.name : row.title), provenance: dataset.provenance, rightsStatus: "unknown" };
       if (resource === "tracks") {
-        result2.artistId = id(row.artistId);
-        if (row.isrc != null) result2.isrc = text(row.isrc, 40);
+        result2.artistId = id2(row.artistId);
+        if (row.isrc != null) result2.isrc = text2(row.isrc, 40);
+        if (row.genre !== void 0) result2.genre = text2(row.genre, 100);
+        if (row.releaseDate !== void 0) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(row.releaseDate) || !Number.isFinite(Date.parse(row.releaseDate))) throw fail2(400, "Invalid recording date");
+          result2.releaseDate = row.releaseDate;
+        }
       }
       if (["sources", "campaigns", "opportunities"].includes(resource)) {
-        if (row.trackId != null) result2.trackId = id(row.trackId);
+        if (row.trackId != null) result2.trackId = id2(row.trackId);
+        if (row.artistId != null) result2.artistId = id2(row.artistId);
+        if (row.regionId != null) result2.regionId = id2(row.regionId);
         if (resource === "sources") result2.trackIds = ids(row.trackIds ?? []);
         else result2.sourceIds = ids(row.sourceIds ?? []);
       }
@@ -28310,23 +28560,23 @@ function normalize(input) {
         try {
           url2 = new URL(row.url);
         } catch {
-          throw fail(400, "Invalid source URL");
+          throw fail2(400, "Invalid source URL");
         }
-        if (url2.protocol !== "https:" || url2.username || url2.password || String(row.url).length > 2e3) throw fail(400, "Invalid source URL");
+        if (url2.protocol !== "https:" || url2.username || url2.password || String(row.url).length > 2e3) throw fail2(400, "Invalid source URL");
         result2.url = url2.href;
       }
-      if (resource === "campaigns" && row.stage != null) result2.stage = text(row.stage, 80);
+      if (resource === "campaigns" && row.stage != null) result2.stage = text2(row.stage, 80);
       if (resource === "opportunities") {
-        if (!Number.isFinite(row.score) || row.score < 0 || row.score > 100 || !Array.isArray(row.reasons) || !row.reasons.length || row.reasons.length > 8) throw fail(400, "Invalid opportunity explanation");
-        Object.assign(result2, { score: row.score, reasons: row.reasons.map((reason) => text(reason, 500)), method: "scenario", status: "proposed" });
-        if (row.campaignId != null) result2.campaignId = id(row.campaignId);
+        if (!Number.isFinite(row.score) || row.score < 0 || row.score > 100 || !Array.isArray(row.reasons) || !row.reasons.length || row.reasons.length > 8) throw fail2(400, "Invalid opportunity explanation");
+        Object.assign(result2, { score: row.score, reasons: row.reasons.map((reason) => text2(reason, 500)), method: "scenario", status: "proposed" });
+        if (row.campaignId != null) result2.campaignId = id2(row.campaignId);
       }
       if (row.scenario != null) {
-        if (typeof row.scenario !== "object" || Array.isArray(row.scenario)) throw fail(400, "Invalid scenario");
+        if (typeof row.scenario !== "object" || Array.isArray(row.scenario)) throw fail2(400, "Invalid scenario");
         const metrics = {};
         for (const field of ["budget", "spend", "impressions", "clicks", "streams", "royaltyPerStream", "roas"]) {
           if (row.scenario[field] != null) {
-            if (!Number.isFinite(row.scenario[field]) || row.scenario[field] < 0) throw fail(400, "Invalid scenario metric");
+            if (!Number.isFinite(row.scenario[field]) || row.scenario[field] < 0) throw fail2(400, "Invalid scenario metric");
             metrics[field] = row.scenario[field];
           }
         }
@@ -28337,36 +28587,41 @@ function normalize(input) {
   }
   const has = (resource, key) => output[resource].some((row) => row.id === key);
   for (const [resource, rows] of Object.entries(output)) for (const row of rows) {
-    if (row.artistId && !has("artists", row.artistId)) throw fail(400, "Unknown artist reference");
-    for (const key of [...row.trackIds ?? [], ...row.trackId ? [row.trackId] : []]) if (!has("tracks", key)) throw fail(400, "Unknown track reference");
-    for (const key of row.sourceIds ?? []) if (!has("sources", key)) throw fail(400, "Unknown source reference");
-    if (row.campaignId && !has("campaigns", row.campaignId)) throw fail(400, "Unknown campaign reference");
+    if (row.artistId && !has("artists", row.artistId)) throw fail2(400, "Unknown artist reference");
+    for (const key of [...row.trackIds ?? [], ...row.trackId ? [row.trackId] : []]) if (!has("tracks", key)) throw fail2(400, "Unknown track reference");
+    for (const key of row.sourceIds ?? []) if (!has("sources", key)) throw fail2(400, "Unknown source reference");
+    if (row.campaignId && !has("campaigns", row.campaignId)) throw fail2(400, "Unknown campaign reference");
   }
+  Object.assign(output, normalizeDefiantDomain(input, { dataset, ...output }));
   output.opportunities.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
-  dataset.counts = Object.fromEntries(RESOURCES.map((resource) => [resource, output[resource].length]));
+  dataset.counts = Object.fromEntries(Object.keys(output).map((resource) => [resource, output[resource].length]));
   dataset.revision = createHash("sha256").update(JSON.stringify({ dataset, ...output })).digest("hex");
   return { schemaVersion: 1, dataset, ...output, capabilities: CAPS };
 }
-function createDefiantUnifiedData({ dataset, organizationId: organizationId2, authorize } = {}) {
-  if (typeof authorize !== "function") throw fail(500, "Current authority callback required");
-  const scope = Object.freeze({ organizationId: id(organizationId2) });
+function createDefiantUnifiedData({ dataset, organizationId: organizationId3, authorize } = {}) {
+  if (typeof authorize !== "function") throw fail2(500, "Current authority callback required");
+  const scope = Object.freeze({ organizationId: id2(organizationId3) });
   const projection = normalize(dataset);
   return Object.freeze({
+    async domain(actor, request) {
+      if (!await authorize(actor, scope)) throw fail2(403, "Dataset access denied");
+      return queryDefiantDomain(projection, request);
+    },
     async read(actor, request = {}) {
-      if (!await authorize(actor, scope)) throw fail(403, "Dataset access denied");
-      if (!request || typeof request !== "object" || Array.isArray(request) || Object.keys(request).some((key) => !["resource", "id", "query", "cursor", "limit"].includes(key))) throw fail(400, "Invalid dataset read");
+      if (!await authorize(actor, scope)) throw fail2(403, "Dataset access denied");
+      if (!request || typeof request !== "object" || Array.isArray(request) || Object.keys(request).some((key) => !["resource", "id", "query", "cursor", "limit"].includes(key))) throw fail2(400, "Invalid dataset read");
       const { resource = "manifest", query, cursor, limit = 25 } = request;
-      if (!["manifest", ...RESOURCES, "demand", "royalties"].includes(resource) || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, "Invalid dataset resource or limit");
+      if (!["manifest", ...RESOURCES, ...DOMAIN_RESOURCES].includes(resource) || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail2(400, "Invalid dataset resource or limit");
       if (resource === "manifest") {
-        if (request.id != null || query != null || cursor != null) throw fail(400, "Manifest does not accept filters");
+        if (request.id != null || query != null || cursor != null) throw fail2(400, "Manifest does not accept filters");
         return structuredClone(projection);
       }
-      const needle = query == null ? "" : text(query, 200).toLowerCase();
-      const selectedId = request.id == null ? null : id(request.id);
-      if (cursor != null && (typeof cursor !== "string" || !/^(0|[1-9]\d{0,5})$/.test(cursor))) throw fail(400, "Invalid dataset cursor");
+      const needle = query == null ? "" : text2(query, 200).toLowerCase();
+      const selectedId = request.id == null ? null : id2(request.id);
+      if (cursor != null && (typeof cursor !== "string" || !/^(0|[1-9]\d{0,5})$/.test(cursor))) throw fail2(400, "Invalid dataset cursor");
       const offset = cursor == null ? 0 : Number(cursor);
-      if (["demand", "royalties"].includes(resource)) return structuredClone({ schemaVersion: 1, dataset: projection.dataset, resource, available: false, reason: "No verified history or ledger supplied", items: [], total: 0, nextCursor: null, capabilities: CAPS });
-      const rows = projection[resource].filter((row) => (!selectedId || row.id === selectedId) && (!needle || `${row.title ?? row.name} ${row.id}`.toLowerCase().includes(needle)));
+      if (!projection[resource]) return structuredClone({ schemaVersion: 1, dataset: projection.dataset, resource, available: false, reason: "No history or ledger supplied for this resource", items: [], total: 0, nextCursor: null, capabilities: CAPS });
+      const rows = projection[resource].filter((row) => (!selectedId || row.id === selectedId) && (!needle || `${row.title ?? row.name ?? ""} ${row.id}`.toLowerCase().includes(needle)));
       return structuredClone({ schemaVersion: 1, dataset: projection.dataset, resource, available: true, items: rows.slice(offset, offset + limit), total: rows.length, nextCursor: offset + limit < rows.length ? String(offset + limit) : null, capabilities: CAPS });
     }
   });
@@ -28414,13 +28669,13 @@ async function loadDefiantPrivateDataset(filePath) {
 // server/defiant-stdio.js
 async function start() {
   if (process.argv.length !== 3) throw new Error("Private input required");
-  const { organizationId: organizationId2, dataset, isCurrent } = await loadDefiantPrivateDataset(process.argv[2]);
+  const { organizationId: organizationId3, dataset, isCurrent } = await loadDefiantPrivateDataset(process.argv[2]);
   const actor = Object.freeze({ kind: "private-local-owner-process" });
-  const service = createDefiantUnifiedData({ dataset, organizationId: organizationId2, authorize: (candidate) => candidate === actor ? isCurrent() : false });
+  const service = createDefiantUnifiedData({ dataset, organizationId: organizationId3, authorize: (candidate) => candidate === actor ? isCurrent() : false });
   const handle = serveStdio(() => {
-    const server = new McpServer({ name: "defiant-private-research", version: "1.0.0" }, { instructions: "Read-only media and entertainment research: (1) inspect the data manifest and list pathways; (2) use bounded recording/source lookups to inspect evidence; (3) open a governed guided view and explain the next human review step. Keep synthetic scenarios, unknown rights and missing demand/royalty history explicit. These tools do not execute campaigns, approve claims or integrate Databricks/Foundry." });
+    const server = new McpServer({ name: "defiant-private-research", version: "1.0.0" }, { instructions: `This private process is bound to organizationId ${organizationId3}. Use that exact scope for all tools. ${DEFIANT_DOMAIN_INSTRUCTIONS}` });
     registerDefiantTools(server, { resolveService: async (input) => {
-      if (input.organizationId !== organizationId2) throw Object.assign(new Error("Private scope denied"), { status: 403 });
+      if (input.organizationId !== organizationId3) throw Object.assign(new Error("Private scope denied"), { status: 403 });
       return { service, actor };
     } });
     return server;

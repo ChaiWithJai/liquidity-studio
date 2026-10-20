@@ -29,3 +29,22 @@ Owner describes six artists,36tracks,220752demand observations,7344royalty recor
 - https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp
 
 No local installs/builds/suites/model calls, new infrastructure or runtime changes have occurred.
+
+## Corrected acceptance: unified synthetic picture and domain tools
+
+Owner rejected the reference-only slice as insufficient. Sparse recovered records and generic read/view tools do not satisfy the requested demo. Missing data labels remain truthful, but cannot substitute for deliberately constructing the requested synthetic data model. Existing source recovery and protocol evidence remain valid only for that narrower infrastructure slice.
+
+### Required unified fixture
+A newly authored deterministic fixture contains six fictional artists,36tracks,regional demand over12monthly periods,monthly track royalties,simulated rights constraints and collaborator links. Every row joins through stable IDs and carries explicit synthetic provenance and a pinned as-of. A planted New Jersey growth pattern must lead to relevant fictional portfolio opportunities. Counts are chosen for coherent demonstration, not copied from the unverified original POC. Financial values are scenarios, simulated permissions never authorize real use, and no data enters maintained Studio source facts. Generate and validate the materialized fixture in hosted CI only; keep operational input separate from public runtime configuration.
+
+### Required domain tools
+Named read-only tools must answer artist overview,regional opportunity discovery,opportunity explanation,rights and royalty inspection,and campaign scenario comparison. They must call the same scoped service as the API, expose linked supporting IDs,as-of,assumptions,units and synthetic labels,and deny cross-scope reads. Generic search is an ingredient rather than the domain capability. No raw SQL,arbitrary code or campaign execution is introduced.
+
+### Demo gates
+1. Ask which fictional artists to prioritize in New Jersey and why. Return a ranking grounded in the demand window and catalog links; inspect actual contributing records.
+2. Inspect an artist's recordings,simulated rights limitations and royalty economics through the same API/tool authority. Explain incompatible or missing permissions rather than turn a simulation into real approval.
+3. Compare bounded campaign scenarios with explicit formulas and costs; distinguish scenario arithmetic from learned forecasts or measured lift.
+4. Follow a golden pathway that supplies those tools and evidence to the intelligence consumer and recommends the next review action. It must join available facts rather than only announce missing data.
+5. Record actual tool consumption of this complete fixture, then compare the app view of the same result. A registered MCP config,protocol fixture or old campaign-only read is not completion. Native host availability and manual protocol consumption stay separately labelled.
+
+No new approval loop is needed: this correction implements the owner's stated standard. No local installs,builds,suites or model execution; hosted verification and independent review remain mandatory.
