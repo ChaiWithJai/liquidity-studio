@@ -148,6 +148,34 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
   await signIn(page);
   let panel = await open(page);
   const initialCalls = calls;
+  // Inspect the existing saved candidate without saving, preparing or approving it.
+  for (const width of [1280, 1051, 768]) {
+    await page.setViewportSize({ width, height: 868 });
+    const layout = panel.locator('.prepared-layout');
+    const reading = panel.locator('.prepared-reading');
+    const working = panel.locator('.prepared-working');
+    const review = panel.getByRole('button', {name: 'Review saved draft and evidence', exact: true});
+    await expect(review).toBeEnabled();
+    const [layoutBox, readingBox, workingBox, artworkBox, reviewBox] = await Promise.all(
+      [layout, reading, working, panel.getByAltText('Unreviewed source candidate artwork'), review].map(locator => locator.boundingBox()),
+    );
+    expect(readingBox.width).toBeGreaterThan(260);
+    expect(workingBox.width).toBeGreaterThan(260);
+    if (layoutBox.width <= 650) {
+      expect(workingBox.y).toBeGreaterThanOrEqual(readingBox.y + readingBox.height - 1);
+      expect(Math.abs(workingBox.x - readingBox.x)).toBeLessThan(2);
+    } else {
+      expect(workingBox.x).toBeGreaterThanOrEqual(readingBox.x + readingBox.width - 1);
+      expect(Math.abs(workingBox.y - readingBox.y)).toBeLessThan(2);
+    }
+    expect(reviewBox.y).toBeGreaterThanOrEqual(artworkBox.y + artworkBox.height - 1);
+    expect(reviewBox.y - artworkBox.y - artworkBox.height).toBeLessThan(80);
+    expect(reviewBox.x).toBeGreaterThanOrEqual(readingBox.x - 1);
+    expect(reviewBox.x + reviewBox.width).toBeLessThanOrEqual(readingBox.x + readingBox.width + 1);
+    expect(await panel.locator('.prepared-copy').evaluate(element => ['auto', 'scroll'].includes(getComputedStyle(element).overflowY) && element.scrollHeight > element.clientHeight + 1)).toBe(false);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  }
+  await page.setViewportSize({ width: 883, height: 695 });
   const image = panel.getByAltText("Unreviewed source candidate artwork");
   await expect(image).toHaveJSProperty("naturalWidth", 1080);
   const box = await image.boundingBox();
@@ -194,12 +222,12 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
       exact: false,
     }),
   ).toBeVisible();
-  await panel
-    .getByRole("button", {
-      name: "Review saved draft and evidence",
-      exact: true,
-    })
-    .click();
+  const reviewAction = panel.getByRole('button', {name: 'Review saved draft and evidence', exact: true});
+  await panel.getByLabel('Preview format', {exact: true}).focus();
+  await page.keyboard.press('Tab');
+  await expect(reviewAction).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(panel.getByRole('region', {name: 'Review prepared draft', exact: true})).toBeVisible();
   await panel
     .getByRole("combobox", { name: "Content classification", exact: true })
     .selectOption("financial");
