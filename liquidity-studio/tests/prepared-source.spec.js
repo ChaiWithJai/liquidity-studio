@@ -226,7 +226,7 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
     }),
   ).toBeVisible();
   const reviewAction = panel.getByRole('button', {name: 'Review saved draft and evidence', exact: true});
-  await panel.getByLabel('Preview format', {exact: true}).focus();
+  await panel.getByRole('group', {name: 'Source preview format', exact: true}).getByRole('combobox').focus();
   await page.keyboard.press('Tab');
   await expect(reviewAction).toBeFocused();
   await page.keyboard.press('Enter');
