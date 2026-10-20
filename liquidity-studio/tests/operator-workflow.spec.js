@@ -37,8 +37,8 @@ async function signIn(page, name = "founder") {
     page.getByRole("heading", { name: "Story backlog", exact: true }),
   ).toBeVisible();
 }
-async function openMoreActions(task) {
- const details=task.locator('.workflow-more-actions');
+async function openMoreActions(page) {
+ const details=page.locator('.workflow-more-actions');
  if (!(await details.evaluate(element=>element.open))) await details.locator('summary').click();
 }
 for(const role of ['founder','marketer']) test(`${role} source, edit, preview, handoff and unfinished return`,async({page},info)=>{
@@ -48,27 +48,27 @@ for(const role of ['founder','marketer']) test(`${role} source, edit, preview, h
  await page.getByLabel('Search stories',{exact:true}).fill(title);await expect(page.locator('.story-row')).toHaveCount(1);await page.getByRole('button',{name:'Open story ↗',exact:true}).click();
  const task=page.getByRole('region',{name:'Current editorial task'});
  await expect(task).toContainText('No draft yet');await expect(page.getByRole('button',{name:'Generate draft',exact:true})).toBeDisabled();
- await task.getByRole('button',{name:'Review sources',exact:true}).click();await expect(page.locator('#workflow-sources')).toBeFocused();await page.getByLabel('Review status',{exact:true}).selectOption('approved');await expect(task).toContainText('Unsaved source review');
+ await page.getByRole('button',{name:'Review sources',exact:true}).click();await expect(page.locator('#workflow-sources')).toBeFocused();await page.getByLabel('Review status',{exact:true}).selectOption('approved');await expect(task).toContainText('Unsaved source review');
  await page.getByRole('button',{name:'Save source review',exact:true}).click();await expect(task).toContainText('Source prerequisites saved');await page.getByRole('button',{name:'Generate four-format draft',exact:true}).click();await expect(page.getByLabel('Headline',{exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Reel 30s script'}).click();for(const label of ['Time range','Voiceover','On-screen text','B-roll direction'])await expect(page.getByLabel(`Beat 1 ${label}`,{exact:true})).toBeVisible();await expect(page.locator('.field-editor')).not.toContainText('onScreenText');await expect(page.locator('.field-editor')).not.toContainText('bRollDirection');
- const field=page.getByLabel('Beat 1 On-screen text',{exact:true});await field.fill('Unfinished operator wording');await task.getByRole('button',{name:'Preview & validation',exact:true}).click();await expect(page.locator('#workflow-preview')).toBeFocused();await expect(task).toContainText('Unsaved artwork changes');await expect(page.getByRole('button',{name:'Measure again',exact:true})).toBeDisabled();await openMoreActions(task);await task.getByRole('button',{name:'Validation results',exact:true}).click();await expect(page.getByRole('region',{name:'Measured validation results'})).toBeFocused();
- await task.getByRole('button',{name:'Edit wording',exact:true}).click();await expect(page.locator('#workflow-editor')).toBeFocused();await expect(field).toHaveValue('Unfinished operator wording');await task.getByRole('button',{name:'Save artwork changes',exact:true}).click();await expect(task).toContainText('Artwork saved');
- await openMoreActions(task);await task.getByRole('button',{name:'Plan in calendar',exact:true}).click();
+ const field=page.getByLabel('Beat 1 On-screen text',{exact:true});await field.fill('Unfinished operator wording');await openMoreActions(page);await page.getByRole('button',{name:'Preview & validation',exact:true}).click();await expect(page.locator('#workflow-preview')).toBeFocused();await expect(task).toContainText('Unsaved artwork changes');await expect(page.getByRole('button',{name:'Measure again',exact:true})).toBeDisabled();await openMoreActions(page);await page.getByRole('button',{name:'Validation results',exact:true}).click();await expect(page.getByRole('region',{name:'Measured validation results'})).toBeFocused();
+ await page.getByRole('button',{name:'Edit wording',exact:true}).click();await expect(page.locator('#workflow-editor')).toBeFocused();await expect(field).toHaveValue('Unfinished operator wording');await page.getByRole('button',{name:'Save artwork changes',exact:true}).click();await expect(task).toContainText('Artwork saved');
+ await openMoreActions(page);await page.getByRole('button',{name:'Plan in calendar',exact:true}).click();
  await page.getByRole('button',{name:`Move ${title}, Whole campaign`,exact:true}).click();await page.getByLabel('Destination date',{exact:true}).fill('2026-10-17');await page.getByRole('button',{name:'Save dated placement',exact:true}).click();await expect(page.getByRole('region',{name:'Plans for 2026-10-17'})).toContainText(title);
  await page.getByRole('button',{name:'Campaign Studio',exact:true}).click();
- await openMoreActions(task);await task.getByRole('button',{name:'Export handoff',exact:true}).click();await expect(page.locator('#workflow-handoff')).toBeFocused();await page.getByRole('button',{name:'Export Studio preview script ↗',exact:true}).click();const link=page.locator('a[download]');await expect(link).toBeVisible();const download=page.waitForEvent('download');await link.click();expect((await download).suggestedFilename()).toMatch(/\.txt$/);
- await field.fill('Return unfinished wording');await openMoreActions(task);await task.getByRole('button',{name:'Plan in calendar',exact:true}).click();await expect(page.getByRole('region',{name:'Dated content calendar'})).toBeVisible();await page.getByRole('button',{name:'Campaign Studio',exact:true}).click();await expect(field).toHaveValue('Return unfinished wording');await expect(task).toContainText('Unsaved artwork changes');
- await openMoreActions(task);await task.getByRole('button',{name:'Return to backlog',exact:true}).click();await expect(page.getByLabel('Search stories',{exact:true})).toHaveValue(title);await page.getByRole('button',{name:'Campaign Studio',exact:true}).click();await expect(field).toHaveValue('Return unfinished wording');
- for(const width of [780,820,900,1280]) {
-  await page.setViewportSize({width,height:1000});await openMoreActions(task);const validation=task.getByRole('button',{name:'Validation results',exact:true});await validation.focus();await page.keyboard.press('Enter');await expect(page.getByRole('region',{name:'Measured validation results'})).toBeFocused();
-  const bounds=await page.evaluate(()=>{const bar=document.querySelector('.workflow-context');const target=document.querySelector('#workflow-validation');return{position:getComputedStyle(bar).position,bottom:bar.getBoundingClientRect().bottom,targetTop:target.getBoundingClientRect().top};});
-  expect(bounds.position).toBe('sticky');expect(bounds.targetTop).toBeGreaterThanOrEqual(0);if(bounds.position==='sticky')expect(bounds.targetTop).toBeGreaterThanOrEqual(bounds.bottom);
+ await openMoreActions(page);await page.getByRole('button',{name:'Export handoff',exact:true}).click();await expect(page.locator('#workflow-handoff')).toBeFocused();await page.getByRole('button',{name:'Export Studio preview script ↗',exact:true}).click();const link=page.locator('a[download]');await expect(link).toBeVisible();const download=page.waitForEvent('download');await link.click();expect((await download).suggestedFilename()).toMatch(/\.txt$/);
+ await field.fill('Return unfinished wording');await openMoreActions(page);await page.getByRole('button',{name:'Plan in calendar',exact:true}).click();await expect(page.getByRole('region',{name:'Dated content calendar'})).toBeVisible();await page.getByRole('button',{name:'Campaign Studio',exact:true}).click();await expect(field).toHaveValue('Return unfinished wording');await expect(task).toContainText('Unsaved artwork changes');
+ await openMoreActions(page);await page.getByRole('button',{name:'Return to backlog',exact:true}).click();await expect(page.getByLabel('Search stories',{exact:true})).toHaveValue(title);await page.getByRole('button',{name:'Campaign Studio',exact:true}).click();await expect(field).toHaveValue('Return unfinished wording');
+ // The campaign status is deliberately static: focused support targets must remain visible
+ // without the superseded tall sticky task card covering their content.
+ for(const width of [1440,1280,1051,768]) {
+  await page.setViewportSize({width,height:900});await openMoreActions(page);
+  const validation=page.getByRole('button',{name:'Validation results',exact:true});await validation.focus();await page.keyboard.press('Enter');
+  await expect(page.getByRole('region',{name:'Measured validation results'})).toBeFocused();
+  const bounds=await page.evaluate(()=>({position:getComputedStyle(document.querySelector('.workflow-context')).position,targetTop:document.querySelector('#workflow-validation').getBoundingClientRect().top}));
+  expect(bounds.position).toBe('static');expect(bounds.targetTop).toBeGreaterThanOrEqual(0);
  }
- await task.evaluate(e=>e.style.maxWidth='320px');
- await openMoreActions(task);const validation=task.getByRole('button',{name:'Validation results',exact:true});await validation.focus();await page.keyboard.press('Enter');
- const wrapped=await page.evaluate(()=>({height:document.querySelector('.workflow-context').getBoundingClientRect().height,bottom:document.querySelector('.workflow-context').getBoundingClientRect().bottom,targetTop:document.querySelector('#workflow-validation').getBoundingClientRect().top}));expect(wrapped.height).toBeGreaterThan(180);expect(wrapped.targetTop).toBeGreaterThanOrEqual(wrapped.bottom);
- await task.evaluate(e=>e.style.maxWidth='');
  await page.setViewportSize({width:390,height:844});await expect(task).toBeVisible();expect(await task.evaluate(e=>getComputedStyle(e).position)).toBe('static');expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
- await openMoreActions(task);await task.getByRole('button',{name:'Return to backlog',exact:true}).click();await expect.poll(()=>page.evaluate(()=>document.documentElement.style.getPropertyValue('--workflow-offset'))).toBe('');
+ await openMoreActions(page);await page.getByRole('button',{name:'Return to backlog',exact:true}).click();await expect.poll(()=>page.evaluate(()=>document.documentElement.style.getPropertyValue('--workflow-offset'))).toBe('');
  await info.attach('workflow-limits',{body:JSON.stringify({role,limits:'Controlled synthetic source-review and real HTTP edit/export/return journey; no human fatigue, live provider, external editor, helper or unattended certification.'}),contentType:'application/json'});
 });

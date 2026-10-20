@@ -80,6 +80,33 @@ test("saved edits, download and all interactive emulator surfaces use scoped rea
     page.getByText("Synthetic draft · source review required", { exact: true }),
   ).toBeVisible();
   await expect(page.getByLabel("Assigned day")).toHaveValue("Monday");
+  // Reuse the real edit/export journey to cover the approved content-first sizes.
+  for (const width of [1440, 1280, 1051, 768]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const preview = page.getByRole('region', { name: 'Preview and validation', exact: true });
+    const wording = page.getByRole('region', { name: 'Campaign wording', exact: true });
+    await expect(preview.getByRole('button', { name: 'Edit wording', exact: true })).toBeInViewport();
+    await expect(preview.locator('.asset-stage')).toBeInViewport();
+    const geometry = await page.evaluate(() => {
+      const preview = document.querySelector('#workflow-preview').getBoundingClientRect();
+      const wording = document.querySelector('#workflow-editor').getBoundingClientRect();
+      return { preview: { top: preview.top, left: preview.left, right: preview.right }, wording: { top: wording.top, left: wording.left }, overflow: document.documentElement.scrollWidth > innerWidth };
+    });
+    expect(geometry.overflow).toBe(false);
+    if (width >= 1051) {
+      await expect(wording.getByRole('heading', { name: 'Edit artwork text', exact: true })).toBeInViewport();
+      expect(geometry.wording.left).toBeGreaterThanOrEqual(geometry.preview.right - 1);
+      expect(Math.abs(geometry.wording.top - geometry.preview.top)).toBeLessThan(80);
+    } else {
+      expect(geometry.wording.top).toBeGreaterThan(geometry.preview.top);
+      await preview.getByRole('button', { name: 'Edit wording', exact: true }).click();
+      await expect(wording).toBeFocused();
+      await expect(page.getByLabel('Headline', { exact: true })).toBeInViewport();
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+
   await page
     .getByLabel("Headline", { exact: true })
     .fill("AN EDITED SOURCE NOTE");
@@ -290,6 +317,7 @@ test("source review, failed generation preservation, responsive layout and unaut
   await page.route("**/api/studio/generate-campaign?*", (route) =>
     route.abort("failed"),
   );
+  await page.locator(".workflow-more-actions > summary").click();
   await page
     .getByRole("button", { name: "Regenerate draft", exact: true })
     .click();
