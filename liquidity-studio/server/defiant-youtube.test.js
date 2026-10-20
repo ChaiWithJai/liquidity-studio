@@ -43,3 +43,10 @@ test('selected history retains dated API observations only while their original 
  assert.equal(f.store.get(`defiant-youtube-observations:${f.org.id}:${first.idempotencyKey}`),null);
  f.setNow('2026-11-19T12:00:00.000Z');assert.deepEqual((await service.project(f.actor,{sourceId})).selected.observationHistory,[]);
 });
+
+
+test('empty owned inbox projection keeps complete read collections without creating an inbox record',async t=>{
+ const f=await fixture(t),before=f.store.get(f.strategy.key),service=new DefiantYouTube(f.strategy);
+ assert.equal(before.inbox,undefined);const projected=await service.project(f.actor,{});
+ assert.equal(projected.total,0);assert.deepEqual(projected.sources,[]);assert.deepEqual(projected.recordings,[]);assert.deepEqual(projected.matches,[]);assert.deepEqual(projected.workstreams,[]);assert.equal(projected.selected,null);assert.equal(projected.catalogGroups[0].sourceIds.length,0);assert.deepEqual(f.store.get(f.strategy.key),before);
+});
