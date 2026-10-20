@@ -20,7 +20,7 @@ export function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
     try {
       const binding = await resolveService({ organizationId: input.organizationId, context });
       if (!binding || !binding.actor || typeof binding.service?.read !== 'function') throw Object.assign(new Error('Unavailable'), { status: 403 });
-      return result(await operation(binding, input));
+      return result({...await operation(binding, input),scope:{organizationId:input.organizationId}});
     } catch (error) {
       const status = [400, 401, 403, 404, 409, 503].includes(error?.status) ? error.status : error instanceof TypeError ? 400 : 500;
       return { isError: true, content: [{ type: 'text', text: `Defiant research request unavailable (${status}).` }] };

@@ -19,7 +19,7 @@ test('real SDK client discovers tools/resource and current authority through sta
  t.after(async()=>{await client.close();await handler.close();});await client.connect(transport);
  const tools=await client.listTools();assert.deepEqual(tools.tools.map(x=>x.name).sort(),['defiant_list_pathways','defiant_open_guided_view','defiant_read_data']);
  const read=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'org_a',resource:'artists'}});assert.equal(read.structuredContent.items[0].name,'Fictional Artist');
- const view=await client.callTool({name:'defiant_open_guided_view',arguments:{organizationId:'org_a',pathwayId:'talent-to-campaign',selection:{artistId:'artist_a'}}});assert.equal(view.structuredContent.status,'needs-workspace-context');
+ const view=await client.callTool({name:'defiant_open_guided_view',arguments:{organizationId:'org_a',pathwayId:'talent-to-campaign',selection:{artistId:'artist_a'}}});assert.equal(view.structuredContent.status,'needs-workspace-context');assert.deepEqual(view.structuredContent.scope,{organizationId:'org_a'});
  const resources=await client.listResources();assert.equal(resources.resources[0].uri,'ui://defiant/research-v1.html');
  const resource=await client.readResource({uri:'ui://defiant/research-v1.html'});assert.equal(resource.contents[0].mimeType,'text/html;profile=mcp-app');
  const wrongScope=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'other_org',resource:'manifest'}});assert.equal(wrongScope.isError,true);assert.equal(JSON.stringify(wrongScope).includes('Private resolver'),false);
