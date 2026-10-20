@@ -1,12 +1,12 @@
 {
   "kind": "hosted-canonical-frontend-import",
-  "sourceCommit": "44df66b2345e58efb86bf82fa198f4445e02b877",
-  "verifiedCiMergeCommit": "25f1f47b67d37eba53b694b3484af941be4875cb",
-  "sourceAndCiMergeTree": "9ecd754ce06fc348c5a0ede9064486315fdf673c",
+  "sourceCommit": "9cae335b2fe4202779ed98fcd86c751890d45e00",
+  "verifiedCiMergeCommit": "690b0d8fa6f84c3d794008fbd964487d4b6113cc",
+  "sourceAndCiMergeTree": "0ff1679c7b48b19e7129de64af6e99898e17d7d2",
   "completeTreeIdenticalToCiMerge": true,
-  "workflowRun": 39349888004,
-  "artifactId": 12232239650,
-  "artifactSha256": "9b7d724c0f2b47acdb2d5d6b662d56114918149dea12309418841e18cadec379",
+  "workflowRun": 39350576406,
+  "artifactId": 12233086847,
+  "artifactSha256": "d671e6b132108e41bc7814010845d8ee002ba61a4f78b767a78522202a351fc6",
   "lockSha256": "596ffb87c61d33239977777768f787bc0c2fe9b6dd923145fedc5c1418be8c97",
   "sourceFiles": [
     {
@@ -2332,6 +2332,12 @@
       "gitObject": "5b27e36d01d3adb42bea441be63de1b45c2535e8"
     },
     {
+      "path": "docs/investigations/defiant-video-preprocess-hosted-artifact.json",
+      "mode": "100644",
+      "type": "blob",
+      "gitObject": "ebdce104d33e6c734f39bd61bf73105ed14860b9"
+    },
+    {
       "path": "docs/investigations/destination-datastore-rejoin.md",
       "mode": "100644",
       "type": "blob",
@@ -3418,16 +3424,16 @@
       "gitObject": "af74af0074aa714da0ea5e6fd85cc3be716c61f8"
     },
     {
-      "path": "liquidity-studio/dist/assets/index-DWFoQ1b3.js",
+      "path": "liquidity-studio/dist/assets/index-8PzI7JNR.css",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "0a144d619e58b92b2bc2a2580405ce23e452eddc"
+      "gitObject": "da733be90272358926d89eb9d0353750c8282033"
     },
     {
-      "path": "liquidity-studio/dist/assets/index-DbbCIA1K.css",
+      "path": "liquidity-studio/dist/assets/index-DJ7ZiKHI.js",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "e1935635f8070b2853548dceb433f6daa5400020"
+      "gitObject": "5f9d24cbfd8a3c8f931e6634520951300e768d1c"
     },
     {
       "path": "liquidity-studio/dist/fonts/DejaVuSans-Bold.ttf",
@@ -3505,7 +3511,7 @@
       "path": "liquidity-studio/dist/index.html",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "e848047a2d1803e7487483798080a6e1aa631dfa"
+      "gitObject": "a93f08e30e01981254494897cedd7d3b5384deb0"
     },
     {
       "path": "liquidity-studio/docs/decisions/local-first-pilot.md",
@@ -5503,13 +5509,13 @@
       "path": "liquidity-studio/src/components/defiant/DefiantPreprocess.svelte",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "b49893240b42ac4e8600008e3928ed216655e220"
+      "gitObject": "5338549852d72c8d74bbd54faf5414438faf6cc5"
     },
     {
       "path": "liquidity-studio/src/components/defiant/DefiantVideoInbox.svelte",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "16766ae415f7a62aaeff14f6bc2c4a31f9e65dbf"
+      "gitObject": "b54b97713929bb23b71b755d4e8ed41a55689c3b"
     },
     {
       "path": "liquidity-studio/src/components/defiant/DefiantWorkspace.svelte",
@@ -5743,7 +5749,7 @@
       "path": "liquidity-studio/tests/defiant-video-analysis.spec.js",
       "mode": "100644",
       "type": "blob",
-      "gitObject": "f3bca534944dde491c4c3b1826da0fcecd873c80"
+      "gitObject": "8be99ad0ded9d4a5d4b6c94885a7f31a41be7d67"
     },
     {
       "path": "liquidity-studio/tests/defiant-video-inbox.spec.js",
@@ -7116,9 +7122,9 @@
   ],
   "files": [
     {
-      "path": "assets/index-8PzI7JNR.css",
-      "bytes": 72746,
-      "sha256": "c7b7ce40c0cc2b29599f7c9ae6d5945e1b3b7d704ae2f989fad6be06e498135a"
+      "path": "assets/index-C6JpCmXi.js",
+      "bytes": 659266,
+      "sha256": "4fba23600b31b97fb0a1a85b67a08039c10c2dfa9e0c5f7c2b8e000bbb9b1588"
     },
     {
       "path": "fonts/DejaVuSans-Bold.ttf",
@@ -7126,9 +7132,9 @@
       "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
     },
     {
-      "path": "assets/index-DJ7ZiKHI.js",
-      "bytes": 658949,
-      "sha256": "454c5579d3f486c4b1b36e6af50caf2de3848d4c6d22aef295574beffb9d49ab"
+      "path": "assets/index-8PzI7JNR.css",
+      "bytes": 72746,
+      "sha256": "c7b7ce40c0cc2b29599f7c9ae6d5945e1b3b7d704ae2f989fad6be06e498135a"
     },
     {
       "path": "fonts/DejaVuSans.ttf",
@@ -7188,7 +7194,7 @@
     {
       "path": "index.html",
       "bytes": 455,
-      "sha256": "1f94f5a9916da3736e479a62ee311514c16f458d716df7f033410e77ff906fe0"
+      "sha256": "3038afa0c9d8aafadc960772d26351202428d5e7abf54031fa9e8d360fc36437"
     }
   ],
   "validation": {
@@ -7203,5 +7209,9 @@
     "svelteMcpIssues": 0,
     "localTestsOrBuilds": false,
     "liveProviderCalls": false
+  },
+  "supersedes": {
+    "artifactId": 12232239650,
+    "reason": "Reviewed empty-analysis selection and recovery UI follow-up"
   }
 }
