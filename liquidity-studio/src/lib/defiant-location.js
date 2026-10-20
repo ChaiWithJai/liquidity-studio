@@ -39,6 +39,6 @@ export function strategyReportReturn(location={},report){
  const legacySource=sourceOnly?(report.sourceRefs.includes(captured.sourceId)?captured.sourceId:singleSource):'';
  const moments=legacySource?(report.momentSnapshots||[]).filter(s=>s.sourceId===legacySource&&s.moment?.savedAt):[];
  const legacyMoment=moments.some(s=>s.moment.id===captured.momentId)?captured.momentId:moments.length===1?moments[0].moment.id:'';
- const inferred=sourceOnly&&!report.returnContext?{...captured,view:'inbox',sourceId:legacySource,momentId:legacyMoment}:captured;
+ const inferred=sourceOnly&&!report.returnContext?{...captured,origin:'catalog',view:'inbox',sourceId:legacySource,momentId:legacyMoment}:captured;
  return {...strategyReturnContext(inferred),reportId:''};
 }
