@@ -12,6 +12,7 @@
     error = $state(""),
     notice = $state(""),
     retained = $state(null);
+  let newPlanOpen = $state(false);
   let loadSequence = 0,
     detailSequence = 0;
   let epoch = 0,
@@ -43,6 +44,7 @@
         notice =
           "Saved inputs changed. Review the current plan again before queueing.";
       }
+      if (!plan) newPlanOpen = list.jobs.length === 0;
       plan = nextPlan;
       jobs = list.jobs;
       if (activeId && active?.id === activeId && detail === detailSequence) {
@@ -90,6 +92,7 @@
       if (!current(captured)) return;
       detailSequence++;
       active = result.job;
+      newPlanOpen = false;
       retained = null;
       notice =
         result.dispatchError ||
@@ -132,6 +135,7 @@
     untrack(()=>{
     epoch++;
     plan = null;
+    newPlanOpen = false;
     jobs = [];
     active = null;
     selected = [];
@@ -171,7 +175,7 @@
       {#if ['failed','unknown','conflict'].includes(item.state)}<button disabled={active.canControl===false||pending||!!retained} onclick={()=>control('retry',[item.id])}>Retry this item with reviewed inputs</button><p>Changed input revisions require a new reviewed plan. An unknown provider attempt may be billed again.</p>{/if}
     </li>{/each}</ol>
   </section>{:else}<section class="job-detail job-empty" aria-label="Job selection"><h3>{jobs.length ? "Select a saved job" : "No saved jobs yet"}</h3><p>{jobs.length ? "Choose a job from history to see its progress, results and available actions." : "Review a new campaign plan below. Queueing requires saved source review and configured delivery."}</p></section>{/if}
-  {#if plan}    <details class="new-plan" open={!jobs.length&&!active}><summary>Review a new campaign plan</summary><section aria-label="Reviewed job plan"><h3>Plan · up to {plan.maxItems} campaigns</h3><p class="dispatcher-state" role="status">{plan.dispatcher.configured ? "Delivery ready" : "Delivery unavailable"}</p><details class="job-implementation"><summary>Delivery configuration</summary><p>{plan.dispatcher.message}</p></details><p>Each campaign produces four formats. Sources, access and limits are rechecked before generation. Retrying an interrupted provider call may incur another charge.</p>
+  {#if plan}    <details class="new-plan" bind:open={newPlanOpen}><summary>Review a new campaign plan</summary><section aria-label="Reviewed job plan"><h3>Plan · up to {plan.maxItems} campaigns</h3><p class="dispatcher-state" role="status">{plan.dispatcher.configured ? "Delivery ready" : "Delivery unavailable"}</p><details class="job-implementation"><summary>Delivery configuration</summary><p>{plan.dispatcher.message}</p></details><p>Each campaign produces four formats. Sources, access and limits are rechecked before generation. Retrying an interrupted provider call may incur another charge.</p>
       <fieldset disabled={pending||!!retained}><legend>Select saved source-backed stories</legend>
         {#each plan.stories as story (story.id)}<label class="plan-story"><input type="checkbox" aria-label={`Plan ${story.title}`} checked={selected.includes(story.id)} disabled={story.sourceReadiness!=='approved'||(!selected.includes(story.id)&&selected.length>=plan.maxItems)} onchange={event=>toggle(story.id,event.currentTarget.checked)}/><span>{story.title} · revision {story.revision} · {story.sourceReadiness==='approved'?'sources approved':'source review required'}</span></label>{/each}
         {#if !plan.stories.length}<p>No stories in this brand. Add a story and review its sources first.</p>{/if}

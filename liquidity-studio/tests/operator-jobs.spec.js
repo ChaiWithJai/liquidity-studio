@@ -242,6 +242,8 @@ test('pending queue and same-key retry show progress; only a lost response offer
   const before = (await (await page.request.get(base + '/api/studio/jobs' + scope)).json()).jobs.length;
   await openNewPlan(page);
   await page.getByLabel('Plan Pending progress campaign', { exact: true }).check();
+  await expect(page.getByLabel(/I reviewed these 1 campaigns/)).toBeVisible();
+  expect(await page.locator('.new-plan').evaluate(element=>element.open)).toBe(true);
   await page.getByLabel(/I reviewed these 1 campaigns/).check();
   let release, entered;
   const seen = new Promise(resolve => { entered = resolve; });
