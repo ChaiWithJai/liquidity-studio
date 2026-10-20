@@ -156,8 +156,10 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
     const working = panel.locator('.prepared-working');
     const review = panel.getByRole('button', {name: 'Review saved draft and evidence', exact: true});
     await expect(review).toBeEnabled();
-    const [layoutBox, readingBox, workingBox, artworkBox, reviewBox] = await Promise.all(
-      [layout, reading, working, panel.getByAltText('Unreviewed source candidate artwork'), review].map(locator => locator.boundingBox()),
+    const context = panel.locator('.prepared-source-context');
+    await expect(context).toContainText('Unreviewed source excerpts and labels. Check the full context before use.');
+    const [layoutBox, readingBox, workingBox, artworkBox, contextBox, reviewBox] = await Promise.all(
+      [layout, reading, working, panel.getByAltText('Unreviewed source candidate artwork'), context, review].map(locator => locator.boundingBox()),
     );
     expect(readingBox.width).toBeGreaterThan(260);
     expect(workingBox.width).toBeGreaterThan(260);
@@ -168,8 +170,9 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
       expect(workingBox.x).toBeGreaterThanOrEqual(readingBox.x + readingBox.width - 1);
       expect(Math.abs(workingBox.y - readingBox.y)).toBeLessThan(2);
     }
-    expect(reviewBox.y).toBeGreaterThanOrEqual(artworkBox.y + artworkBox.height - 1);
-    expect(reviewBox.y - artworkBox.y - artworkBox.height).toBeLessThan(80);
+    expect(contextBox.y).toBeGreaterThanOrEqual(artworkBox.y + artworkBox.height - 1);
+    expect(reviewBox.y).toBeGreaterThanOrEqual(contextBox.y + contextBox.height - 1);
+    expect(reviewBox.y - contextBox.y - contextBox.height).toBeLessThan(40);
     expect(reviewBox.x).toBeGreaterThanOrEqual(readingBox.x - 1);
     expect(reviewBox.x + reviewBox.width).toBeLessThanOrEqual(readingBox.x + readingBox.width + 1);
     expect(await panel.locator('.prepared-copy').evaluate(element => ['auto', 'scroll'].includes(getComputedStyle(element).overflowY) && element.scrollHeight > element.clientHeight + 1)).toBe(false);
