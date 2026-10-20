@@ -23,7 +23,7 @@
   import OperatorRecoveryPanel from "./components/OperatorRecoveryPanel.svelte";
   import PreparedSourcePanel from "./components/PreparedSourcePanel.svelte";
   import HelperControlPane from "./components/HelperControlPane.svelte";
-  import { createWorkspaceClient } from "./lib/workspace-client.js";
+  import { createWorkspaceClient, DEFAULT_WORKSPACE_QUERY } from "./lib/workspace-client.js";
   import { scopedRequest } from "./lib/scoped-request.js";
   import SourceReviewSummary from "./SourceReviewSummary.svelte";
   import { sourceReviewSummary, reviewSignature } from "./lib/source-review.js";
@@ -170,7 +170,8 @@
     if(tab==="backlog"&&route.backlog&&!route.unavailable){
       search=route.backlog.search;statusFilter=route.backlog.status;
       const definition=client.snapshot.query.definition;
-      await client.query({...definition,filters:{...definition.filters,search,statuses:statusFilter==='All'?[]:[statusFilter]}});
+      if((definition.filters?.search||'').trim()!==search||(definition.filters?.statuses?.[0]||'All')!==statusFilter)
+        await client.query({...definition,filters:{...definition.filters,search,statuses:statusFilter==='All'?[]:[statusFilter]}});
       if(workspaceClient!==client)return;
       rememberBacklogView();
     }
@@ -780,7 +781,8 @@
       : cached;
     if(workflowTarget?.tab==='backlog'&&workflowTarget.backlog&&!workflowTarget.unavailable&&workflowTarget.organizationId===organizationId&&workflowTarget.brandId===brandId){
       const filters=workflowTarget.backlog;
-      view={...view,search:filters.search,statusFilter:filters.status,workspaceQuery:{...view?.workspaceQuery,filters:{...view?.workspaceQuery?.filters,search:filters.search,statuses:filters.status==='All'?[]:[filters.status]}}};
+      const query=view?.workspaceQuery||DEFAULT_WORKSPACE_QUERY;
+      view={...view,search:filters.search,statusFilter:filters.status,workspaceQuery:{...query,filters:{...query.filters,search:filters.search,statuses:filters.status==='All'?[]:[filters.status]}}};
     }
     activeBacklogScopeKey = key;
     search = view?.search || "";

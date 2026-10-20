@@ -114,13 +114,15 @@ test("S01–S05 and S09–S10 counts, no-match recovery and per-brand return con
   ).toBeVisible();
   await expect(page.getByLabel("Active filters")).toContainText("Huda");
   await capture(page, "S02", "Search Huda; one of five visible");
-  await page.getByLabel('Filter by status',{exact:true}).selectOption('Ready for Campaign');
+  const savedStatus=(await page.locator('.story-row').getByRole('button',{name:/^Edit Status for /}).innerText()).trim();
+  expect(savedStatus).not.toBe('All');
+  await page.getByLabel('Filter by status',{exact:true}).selectOption(savedStatus);
   await expect.poll(()=>new URL(page.url()).searchParams.get('backlogSearch')).toBe('Huda');
-  await expect.poll(()=>new URL(page.url()).searchParams.get('backlogStatus')).toBe('Ready for Campaign');
-  await page.reload();await expect(search).toHaveValue('Huda');await expect(page.getByLabel('Filter by status',{exact:true})).toHaveValue('Ready for Campaign');await expect(page.locator('.story-row')).toHaveCount(1);
+  await expect.poll(()=>new URL(page.url()).searchParams.get('backlogStatus')).toBe(savedStatus);
+  await page.reload();await expect(search).toHaveValue('Huda');await expect(page.getByLabel('Filter by status',{exact:true})).toHaveValue(savedStatus);await expect(page.locator('.story-row')).toHaveCount(1);
   await page.getByRole('button',{name:'Clear filters',exact:true}).click();await expect(page.locator('.story-row')).toHaveCount(5);
   await expect.poll(()=>new URL(page.url()).searchParams.has('backlogSearch')||new URL(page.url()).searchParams.has('backlogStatus')).toBe(false);
-  await page.goBack();await expect(search).toHaveValue('Huda');await expect(page.getByLabel('Filter by status',{exact:true})).toHaveValue('Ready for Campaign');await expect(page.locator('.story-row')).toHaveCount(1);
+  await page.goBack();await expect(search).toHaveValue('Huda');await expect(page.getByLabel('Filter by status',{exact:true})).toHaveValue(savedStatus);await expect(page.locator('.story-row')).toHaveCount(1);
   await page.goForward();await expect(search).toHaveValue('');await expect(page.locator('.story-row')).toHaveCount(5);
   await search.fill('Huda');await expect(page.locator('.story-row')).toHaveCount(1);
 
