@@ -53,14 +53,15 @@ test.afterAll(async () => {
   platform.store.close();
   rmSync(directory, { recursive: true, force: true });
 });
-async function showDisplay(page) { if (!(await page.getByLabel("Sort stories",{exact:true}).isVisible())) await page.getByText("Display options",{exact:true}).click(); }
+async function showTools(page) { const tools = page.locator(".table-tools"); if (await tools.getAttribute("open") === null) await tools.locator(":scope > summary").click(); }
+async function showDisplay(page) { await showTools(page); if (!(await page.getByLabel("Sort stories",{exact:true}).isVisible())) await page.getByText("Display options",{exact:true}).click(); }
 async function signIn(page) {
   await page.goto(base);
   await page.getByLabel("Username", { exact: true }).fill("table-founder");
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in →" }).click();
   await expect(page.locator(".story-row")).toHaveCount(5);
-  await page.getByText("Display options", {exact:true}).click();
+  await showDisplay(page);
 }
 test("table view, detail edit, shared receipt and undo preserve canonical story identity", async ({
   page,
@@ -308,7 +309,7 @@ test("dirty detail and inline metadata retain their opening revisions after anot
 
 test("immediate view create and update save visible search/status before debounce dispatch",async({page})=>{
  await page.goto(base);await page.getByLabel('Username',{exact:true}).fill('table-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →'}).click();await expect(page.locator('.story-row').first()).toBeVisible();
- await page.getByText('Saved views',{exact:true}).click();await page.getByLabel('Workspace view name').fill('Immediate control intent');
+ await showTools(page);await page.getByText('Saved views',{exact:true}).click();await page.getByLabel('Workspace view name').fill('Immediate control intent');
  async function changeAndSave(search,status,action){
   const pending=page.waitForResponse(response=>response.url().includes('/workspace/views')&&response.request().method()==='POST');
   // One event turn flushes bound UI values but cannot run the query timeout.
@@ -365,9 +366,9 @@ for (const movedFocus of [false, true]) test(`delayed canonical sort ${movedFocu
   await expect(movedFocus ? search : rowButton).toBeFocused();
 });
 
-for (const viewport of [{width:883,height:695},{width:1280,height:720}]) test(`task hierarchy and progressive table controls remain usable at ${viewport.width}×${viewport.height}`,async({page},info)=>{
+for (const viewport of [{width:883,height:695},{width:1051,height:868},{width:1280,height:720}]) test(`task hierarchy and progressive table controls remain usable at ${viewport.width}×${viewport.height}`,async({page},info)=>{
  await page.setViewportSize(viewport);await page.goto(base);await page.getByLabel("Username",{exact:true}).fill("table-founder");await page.getByLabel("Password",{exact:true}).fill(password);await page.getByRole("button",{name:"Sign in →"}).click();await expect(page.locator(".story-row").first()).toBeVisible();await showDisplay(page);
- const display=page.getByText('Display options',{exact:true});await display.click();
+ const display=page.getByText('Display options',{exact:true});await display.click();await page.locator('.table-tools > summary').click();
  const capture=async name=>{if(process.env.STUDIO_CAPTURE_TASK_HIERARCHY){const {mkdirSync}=await import('node:fs');mkdirSync(process.env.STUDIO_CAPTURE_TASK_HIERARCHY,{recursive:true});await page.screenshot({path:`${process.env.STUDIO_CAPTURE_TASK_HIERARCHY}/${viewport.width}-${name}.png`});}};
  const noOverflow=async()=>expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
  await expect(page.getByRole('heading',{level:1,name:'Story backlog',exact:true})).toBeVisible();
@@ -376,6 +377,8 @@ for (const viewport of [{width:883,height:695},{width:1280,height:720}]) test(`t
  await expect(page.getByRole('columnheader',{name:'Assignee',exact:true})).toHaveCount(0);await expect(page.getByRole('columnheader',{name:'Revision',exact:true})).toHaveCount(0);
  const tableBounds=await page.locator('.table-scroll').boundingBox(),openBounds=await page.locator('.story-row [data-open-story]').first().boundingBox(),titleBounds=await page.locator('.story-row [data-detail-story]').first().boundingBox();expect(openBounds.x+openBounds.width).toBeLessThanOrEqual(tableBounds.x+tableBounds.width+1);expect(titleBounds.width).toBeGreaterThanOrEqual(180);
  await noOverflow();await capture('backlog');
+ const header=await page.locator('.workspace-header').boundingBox();expect(tableBounds.y-header.y-header.height).toBeLessThan(viewport.width>=1051?130:180);
+ await showTools(page);
  for(const label of ['Display options','More filters','Saved views']){await page.getByText(label,{exact:true}).click();await noOverflow();await capture(label.toLowerCase().replaceAll(' ','-'));}
  await page.getByText('Columns',{exact:true}).click();await page.locator('.column-options').getByLabel('Assignee',{exact:true}).check();await page.locator('.column-options').getByLabel('Revision',{exact:true}).check();
  await expect(page.getByRole('columnheader',{name:'Assignee',exact:true})).toBeVisible();await expect(page.getByRole('columnheader',{name:'Revision',exact:true})).toBeVisible();await noOverflow();await capture('optional-columns');

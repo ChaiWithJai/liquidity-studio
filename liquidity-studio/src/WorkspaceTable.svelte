@@ -1,7 +1,10 @@
 <script>
+  import ResearchToolbar from "./components/defiant/ResearchToolbar.svelte";
   import { onMount, tick } from "svelte";
   let {
     client,
+    filterControls,
+    querySummary,
     scopeKey,
     actorId,
     canAdmin = false,
@@ -418,12 +421,12 @@
 
 <svelte:window onkeydown={onKey}/>
 <section bind:this={host} tabindex="-1" class="workspace-table-surface" aria-label="Story work table" data-scope-key={scopeKey}>
-  <div class="table-primary">
+  <div class="table-primary"><ResearchToolbar label="Backlog search and views">
+    {@render filterControls?.()}
     <div class="projection-switch" role="group" aria-label="Story projection"><button class="secondary" aria-pressed={($client.ui.viewKind||"table")==="table"} onclick={()=>client.setUi({viewKind:"table"})}>Table view</button><button class="secondary" aria-pressed={$client.ui.viewKind==="board"} onclick={()=>client.setUi({viewKind:"board"})}>Board view</button></div>
     {#if $client.ui.viewKind==="board"}<button class="secondary" disabled={!rows.length||$client.mutationPending} onclick={selectLoaded}>Select loaded rows</button>{/if}
     <label class="view-picker">View <select aria-label="Saved workspace view" bind:value={viewId} onchange={applyView}><option value="">Current view</option>{#each $client.views as view (view.id)}<option value={view.id}>{view.name} · {view.sharing==="brand"?"Shared":"Personal"}</option>{/each}</select></label>
-  </div>
-  <div class="table-tools">
+  <details class="table-tools"><summary>Table tools</summary><div class="table-tool-panels">
     <details class="display-controls"><summary>Display options</summary><div class="display-options">
     <label>Sort by <select aria-label="Sort stories" value={$client.query.definition.sort?.[0]?.field||"title"} onchange={event=>runQuery({sort:[{field:event.currentTarget.value,direction:$client.query.definition.sort?.[0]?.direction||"asc"}]})}>{#each ["title","category","status","revision","plannedDate","assigneeId","exportedAt"] as field (field)}<option value={field}>{labels[field]||"Export date"}</option>{/each}</select></label>
     <label>Direction <select aria-label="Sort direction" value={$client.query.definition.sort?.[0]?.direction||"asc"} onchange={event=>runQuery({sort:[{field:$client.query.definition.sort?.[0]?.field||"title",direction:event.currentTarget.value}]})}><option value="asc">Ascending</option><option value="desc">Descending</option></select></label>
@@ -448,7 +451,9 @@
       {#if $client.deletedView}<button class="secondary" onclick={restoreView}>Restore deleted view</button>{/if}
       <p class="small">Save this layout and its filters. Shared views are visible to this brand’s members.</p>
     </div></details>
-  </div>
+  </div></details>
+  </ResearchToolbar></div>
+  <div class="table-query-summary">{@render querySummary?.()}</div>
   {#if localError||$client.error}<div role="alert" class="table-error">{localError||$client.error}<button aria-label="Dismiss table error" onclick={()=>{localError="";client.clearError();}}>×</button></div>{/if}
   {#if message}<p role="status">{message}</p>{/if}
   {#if selected.length}<div class="selection-toolbar">
@@ -522,10 +527,9 @@
   .board-card { display:grid;gap:8px;background:white;padding:12px;border:1px solid #d2d9c9;border-radius:8px;margin-top:10px; }
   .board-card p {margin:0;font-size:12px;}
   .workspace-table-surface { position: relative; min-width:0; }
-  .table-tools,.selection-toolbar,.pagination { display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0; }
+  .selection-toolbar,.pagination { display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0; }
   label { display:flex;gap:6px;align-items:center;font-size:12px; }
   select,input { max-width:200px;padding:7px;border:1px solid #cbd3c5;border-radius:6px;background:white; }
-  .table-tools details { position:relative; }
   summary { cursor:pointer;font-size:13px; }
   .column-options,.advanced-filters { background:#fff;border:1px solid #cbd3c5;padding:12px;border-radius:8px;display:flex;gap:10px;flex-wrap:wrap;max-width:720px; }
   .table-scroll { max-height:60vh;overflow:auto;border:1px solid #d2d9c9;border-radius:10px;background:white; }
@@ -548,16 +552,27 @@
   .context-drawer input { max-width:none; }
   .context-drawer:focus { outline:2px solid #536b41; }
 
-  .table-primary {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
-  .projection-switch {gap:0;border:1px solid #bdc6b7;border-radius:8px;overflow:hidden;}
-  .projection-switch button {border:0;border-radius:0;margin:0;padding:8px 12px;min-height:36px;}
-  .projection-switch button[aria-pressed="true"] {background:#dfe8d2;color:#25371d;font-weight:650;}
-  .view-picker {margin-left:auto;}
-  .view-picker select {width:220px;max-width:100%;}
-  .table-tools {align-items:flex-start;padding-bottom:10px;border-bottom:1px solid #d2d9c9;gap:8px;}
-  .table-tools > details {min-width:0;}
-  .table-tools > details[open] {flex-basis:100%;order:1;}
-  .table-tools summary {padding:8px 10px;border:1px solid #cbd3c5;border-radius:6px;min-height:36px;box-sizing:border-box;}
+  .table-primary {min-width:0;}
+  .table-primary :global(.research-toolbar) {gap:8px;align-items:center;}
+  .table-primary :global(.backlog-search) {display:flex;gap:8px;flex:1;min-width:210px;}
+  .table-primary :global(.backlog-search input) {width:100%;min-width:100px;}
+  .table-primary :global(.backlog-search select) {width:110px;flex:0 0 110px;}
+  .projection-switch {gap:0;border:1px solid var(--research-line,#bdc6b7);border-radius:6px;overflow:hidden;flex-wrap:nowrap;}
+  .workspace-table-surface .projection-switch button {border:0;border-radius:0;margin:0;padding:8px;min-height:36px;font-size:12px;white-space:nowrap;}
+  .projection-switch button[aria-pressed="true"] {background:var(--research-selected,#dfe8d2);color:var(--research-ink,#25371d);font-weight:650;}
+  .workspace-table-surface .view-picker {min-width:0;flex-direction:row;align-items:center;gap:6px;font-weight:400;}
+  .workspace-table-surface .view-picker select {width:145px;max-width:100%;}
+  .table-tools {margin:0;}
+  .table-tools > summary {padding:8px 4px;white-space:nowrap;}
+  .table-tools[open] {flex-basis:100%;order:1;}
+  .table-tool-panels {display:flex;align-items:start;flex-wrap:wrap;gap:8px;padding-top:8px;}
+  .table-tool-panels > details {min-width:0;}
+  .table-tool-panels > details[open] {flex-basis:100%;order:1;}
+  .table-tool-panels > details > summary {padding:8px 10px;border:1px solid var(--research-line,#cbd3c5);border-radius:6px;min-height:36px;box-sizing:border-box;}
+  .table-query-summary {padding:6px var(--research-space,16px);font-size:12px;}
+  .table-query-summary :global(p) {margin:0;font-size:12px;}
+  .table-query-summary :global(.active-filters) {margin:5px 0 0;}
+  .table-query-summary :global(.active-filters button) {min-height:28px;padding:4px 8px;font-size:12px;}
   .display-options,.advanced-filters {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(185px,100%),1fr));max-width:none;gap:12px;padding:14px;margin-top:6px;}
   .display-options label,.advanced-filters label {align-items:start;flex-direction:column;min-width:0;}
   .display-options select,.advanced-filters select,.advanced-filters input {width:100%;max-width:100%;box-sizing:border-box;}
@@ -573,6 +588,10 @@
   .pagination {font-size:12px;justify-content:space-between;}
   .pagination p {margin:0;}
   @media(max-width:1000px) {.view-picker select {width:170px;} .title-button {min-width:190px;} th,td {padding:10px;}}
-  @media(max-width:600px) {.view-picker {margin-left:0;flex:1;} .view-picker select {width:100%;} .table-tools > details[open] {width:100%;}}
-  td:last-child button {max-width:76px;white-space:normal;padding:6px 8px;line-height:1.35;}
+  @media(max-width:600px) {.workspace-table-surface .view-picker {flex:1;} .workspace-table-surface .view-picker select {width:100%;} .table-tool-panels > details[open] {width:100%;}}
+  .workspace-table-surface .title-button,.workspace-table-surface .cell-button,.workspace-table-surface .select-page {min-height:0;border:0;border-radius:0;display:inline;text-align:left;font:inherit;color:inherit;background:none;}
+  .workspace-table-surface .title-button,.workspace-table-surface .select-page {padding:0;}
+  .workspace-table-surface .title-button {font-weight:650;line-height:1.45;}
+  .workspace-table-surface .cell-button {padding:5px 6px;line-height:1.4;}
+  .workspace-table-surface td:last-child button {max-width:76px;white-space:normal;padding:6px 8px;line-height:1.35;}
 </style>
