@@ -1,11 +1,18 @@
 import {listGoldenPathways} from './defiant-golden-pathways.js';
 import {buildDefiantDemoView} from './defiant-demo-view.js';
 import {fail} from './auth.js';
-const resources=new Set(['manifest','artists','tracks','sources','campaigns','demand','royalties','opportunities','regions','collaborators','rights','forecasts','pathways','view','domain']);
+import {runDefiantDomainPathway} from './defiant-domain-pathways.js';
+const resources=new Set(['manifest','artists','tracks','sources','campaigns','demand','royalties','opportunities','regions','collaborators','rights','forecasts','pathways','view','domain','domain-review']);
 /** Transport-only adapter. The injected facade owns authorization and data projection. */
 export async function defiantUnifiedRequest({service,user,route,method,url,body}) {
- const match=/^\/api\/studio\/defiant-data\/([A-Za-z0-9_-]{1,128})\/([a-z]+)$/.exec(route);
+ const match=/^\/api\/studio\/defiant-data\/([A-Za-z0-9_-]{1,128})\/([a-z-]+)$/.exec(route);
  if(!match||!resources.has(match[2]))throw fail(404,'Unknown Defiant data resource');
+ if(match[2]==='domain-review'){
+  if(method!=='POST')throw fail(405,'Domain review requires an explicit read-only command');
+  if(url.search)throw fail(400,'Domain review does not accept query filters');
+  if(!body?.artistId||!body?.budgets)throw fail(400,'Artist and explicit scenario budgets required');
+  try{return {...await runDefiantDomainPathway(service,user,body),view:'domain-review',scope:{organizationId:match[1]}};}catch(error){if(error instanceof TypeError)throw fail(400,error.message);throw error;}
+ }
  if(match[2]==='domain'){
   if(method!=='POST')throw fail(405,'Domain research requires an explicit read-only command');
   if(url.search)throw fail(400,'Domain commands do not accept query filters');

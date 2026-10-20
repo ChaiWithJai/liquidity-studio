@@ -13,7 +13,7 @@ test('finite tools require scoped server binding and current facade authority on
   const seen = []; let allowed = true;
   const service = createDefiantUnifiedData({ dataset, organizationId: 'org_a', authorize: actor => actor === 'person:a' && allowed });
   const host = harness({ resolveService: async input => { seen.push(input); return { service, actor: 'person:a' }; } });
-  assert.deepEqual([...host.tools.keys()], ['defiant_read_data', 'defiant_list_pathways', 'defiant_open_guided_view', 'defiant_artist_overview', 'defiant_detect_regional_opportunities', 'defiant_explain_opportunity', 'defiant_inspect_rights_and_royalties', 'defiant_compare_campaign_scenarios']);
+  assert.deepEqual([...host.tools.keys()], ['defiant_read_data', 'defiant_list_pathways', 'defiant_open_guided_view', 'defiant_artist_overview', 'defiant_detect_regional_opportunities', 'defiant_explain_opportunity', 'defiant_inspect_rights_and_royalties', 'defiant_compare_campaign_scenarios', 'defiant_open_domain_review']);
   assert.equal(host.registration.resourceUri, null); assert.equal(host.resources.size, 0);
   const context = { authenticatedContext: 'host-only' };
   const first = await host.call('defiant_read_data', { organizationId: 'org_a', resource: 'artists' }, context);
@@ -34,6 +34,8 @@ test('exact schemas reject authority injection, arbitrary resources and unbounde
   for (const args of [{ organizationId: 'org_a', resource: 'raw' }, { organizationId: 'org_a', resource: 'tracks', limit: 101 }, { organizationId: 'org_a', resource: 'tracks', actor: 'founder' }]) assert.throws(() => host.call('defiant_read_data', args));
   assert.throws(() => host.call('defiant_open_guided_view', { organizationId: 'org_a', pathwayId: 'eval' }));
   assert.throws(() => host.call('defiant_open_guided_view', { organizationId: 'org_a', pathwayId: 'catalog-to-campaign', selection: { rightsApproved: true } }));
+  assert.throws(()=>host.call('defiant_open_domain_review',{organizationId:'org_a',pathwayId:'catalog-to-campaign',artistId:'artist:a',budgets:[]}));
+  assert.throws(()=>host.call('defiant_open_domain_review',{organizationId:'org_a',pathwayId:'catalog-to-campaign',artistId:'artist:a',budgets:[500],actor:'founder'}));
 });
 test('only explicit static HTML registers an MCP Apps resource; errors never expose resolver internals', async () => {
   const html = '<!doctype html><html><body>Fictional built UI contract</body></html>';
