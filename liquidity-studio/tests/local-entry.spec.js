@@ -25,6 +25,9 @@ test('local persona entry retains current workflow through an ordinary persona c
   await page.goto(runtime.origin+workflow);
   await expect(page.getByRole('heading',{name:'Choose a local persona',exact:true})).toBeVisible();
   await expect(page.getByText('development · local emulation',{exact:true})).toBeVisible();
+  // The standalone response must carry usable chrome values without the app CSS entry.
+  await expect(page.locator('html')).toHaveCSS('background-color','rgb(245, 245, 239)');
+  await expect(page.getByRole('button',{name:'Founder · current grants (initially both brands)',exact:true})).toHaveCSS('border-top-color','rgb(222, 223, 213)');
   await expect(page.getByRole('link',{name:'Open Studio',exact:true})).toHaveAttribute('href',workflow);
   await page.getByRole('button',{name:'Founder · current grants (initially both brands)',exact:true}).click();
   await expect(page.getByRole('heading',{level:1,name:'Story backlog',exact:true})).toBeVisible();
@@ -40,5 +43,7 @@ test('local persona entry retains current workflow through an ordinary persona c
   await expect(page.getByRole('heading',{level:1,name:'Brand Kit',exact:true})).toBeVisible();
   expect(new URL(page.url()).pathname+new URL(page.url()).search).toBe(returnTo);
   await expect(page.getByRole('complementary',{name:'Local emulation environment',exact:true})).toContainText('LOCAL DEVELOPMENT EMULATION');
+  await expect(page.getByRole('complementary',{name:'Local emulation environment',exact:true})).toHaveCSS('background-color','rgb(233, 239, 223)');
+  await expect(page.locator('.research-page')).toHaveCSS('color','rgb(25, 37, 28)');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
 });

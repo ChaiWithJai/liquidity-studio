@@ -1,0 +1,16 @@
+/* Application chrome values only. Component geometry and artwork remain locally owned. */
+:root {
+  --app-canvas: #f5f5ef;
+  --app-surface: #fff;
+  --app-ink: #19251c;
+  --app-muted: #59665d;
+  --app-line: #dedfd5;
+  --app-selected: #e9efdf;
+  --app-accent: #315d45;
+  --app-shell-text: #222a24;
+  --app-shell-muted: #738075;
+  --app-highlight: #d9ef83;
+  --app-font: "Inter", system-ui, sans-serif;
+  /* Preserve the existing shell fallback; choosing a shipped face is a visual change. */
+  --app-shell-font: "DM Sans", system-ui, sans-serif;
+}
