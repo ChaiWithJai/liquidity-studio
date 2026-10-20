@@ -1,5 +1,5 @@
 import {buildDefiantDemoView} from '../../server/defiant-demo-view.js';
-const frame=document.querySelector('iframe'),counter=document.querySelector('output');
+const frame=document.querySelector('iframe'),counter=document.querySelector('[aria-label="Host tool calls"]');
 const data={schemaVersion:1,dataset:{id:'fictional-sdk',label:'Fictional SDK bridge',provenance:'synthetic',asOf:null,revision:'f'.repeat(64),counts:{artists:1,tracks:1,sources:1,campaigns:0,opportunities:0}},artists:[{id:'artist-a',name:'Fictional SDK Artist'}],tracks:[{id:'track-a',artistId:'artist-a',title:'Fictional SDK Recording'}],sources:[{id:'source-a',title:'Fictional SDK Source',trackIds:['track-a'],url:'https://example.org/fictional',provenance:'synthetic'}],campaigns:[],opportunities:[],capabilities:{readOnly:true,canApproveRights:false,canPublish:false}};
 const scope={organizationId:'org_fixture'};
 const guided=args=>({content:[],structuredContent:{...buildDefiantDemoView({data,pathwayId:args.pathwayId,selection:args.selection}),scope}});
