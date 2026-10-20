@@ -17,6 +17,6 @@ test('built standalone stdio bundle serves the same scoped tools and rejects rev
  const list=await client.listTools();assert.deepEqual(list.tools.map(tool=>tool.name).sort(),['defiant_list_pathways','defiant_open_guided_view','defiant_read_data']);
  const result=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'fictional_local',resource:'artists'}});assert.equal(result.structuredContent.items[0].name,'Fictional Artist');
  const wrong=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'other',resource:'manifest'}});assert.equal(wrong.isError,true);
- const resources=await client.listResources();assert.deepEqual(resources.resources,[]);
+ assert.equal(client.getServerCapabilities()?.resources,undefined);
  await chmod(file,0o644);const revoked=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'fictional_local',resource:'artists'}});assert.equal(revoked.isError,true);assert.equal(revoked.structuredContent,undefined);
 });
