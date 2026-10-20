@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {request as httpRequest} from 'node:http';
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 import { createHttpServer, defiantSyntheticDemoConfiguration } from './index.js';
 const path='/mcp/defiant-synthetic';
@@ -23,6 +24,13 @@ test('public fictional MCP uses actual fixed build fixture and never cookies, id
  const overview=await client.callTool({name:'defiant_artist_overview',arguments:{organizationId:'defiant_synthetic_demo',artistId:'artist:fictional-1'}});
  assert.equal(overview.structuredContent.dataset.provenance,'synthetic');assert.equal(overview.structuredContent.artist.name,'Harbor Lantern');assert.equal(overview.structuredContent.recordings.length,6);
  const denied=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'private_workspace',resource:'manifest'}});assert.equal(denied.isError,true);assert.equal(denied.structuredContent,undefined);
+ const rest=(resource,options={})=>fetch(h.base+'/api/defiant-synthetic/'+resource,{...options,headers:{Host:'demo.example',...options.headers}});
+ const data=await rest('artists?limit=25');assert.equal(data.status,200);const mcpRead=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'defiant_synthetic_demo',resource:'artists',limit:25}});assert.deepEqual(await data.json(),mcpRead.structuredContent);
+ const scenario={operation:'compare-scenarios',trackId:'track:fictional-1-1',regionId:'region:nj',budgets:[0,500],horizonMonths:3};
+ const restScenario=await rest('domain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(scenario)});assert.equal(restScenario.status,200);
+ const {operation:_operation,...scenarioArgs}=scenario,mcpScenario=await client.callTool({name:'defiant_compare_campaign_scenarios',arguments:{organizationId:'defiant_synthetic_demo',...scenarioArgs}});assert.deepEqual(await restScenario.json(),mcpScenario.structuredContent);
+ assert.equal((await rest('artists?organizationId=private_workspace')).status,400);
+ assert.equal((await rest('domain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...scenario,organizationId:'private_workspace'})})).status,400);
  assert.equal((await client.listPrompts()).prompts.length,3);assert.equal(h.identityReads,0);assert.equal(h.privateLoads,0);
 });
 test('public mount rejects host/origin/query/method/body violations before SDK processing',async t=>{
@@ -42,4 +50,12 @@ test('deployment constructor flags remain explicit and managed origin configurat
  assert.deepEqual(defiantSyntheticDemoConfiguration({}),{enableDefiantSyntheticDemo:false,defiantSyntheticDemoOrigins:[]});
  assert.deepEqual(defiantSyntheticDemoConfiguration({STUDIO_DEFIANT_SYNTHETIC_DEMO_ENABLED:'true',STUDIO_DEFIANT_SYNTHETIC_DEMO_ORIGINS:'https://demo.example'}),{enableDefiantSyntheticDemo:true,defiantSyntheticDemoOrigins:['https://demo.example']});
  assert.throws(()=>defiantSyntheticDemoConfiguration({STUDIO_DEFIANT_SYNTHETIC_DEMO_ENABLED:'yes'}));
+});
+
+test('malformed public REST prefixes are final 404 responses, never private-route fallthrough',async t=>{
+ const h=await host(t,{enableDefiantSyntheticDemo:true,defiantSyntheticDemoOrigins:['https://demo.example']});
+ for(const path of ['/api/defiant-synthetic','/api/defiant-synthetic/private_org/artists','/api/defiant-synthetic/%2e%2e/private','/api/defiant-synthetic/raw','/mcp/defiant-synthetic/extra']){
+  const status=await new Promise((resolve,reject)=>{const req=httpRequest(new URL(h.base),{path,headers:{Host:'demo.example'}},res=>{res.resume();res.on('end',()=>resolve(res.statusCode));});req.on('error',reject);req.end();});assert.equal(status,404);
+ }
+ assert.equal(h.identityReads,0);assert.equal(h.privateLoads,0);
 });

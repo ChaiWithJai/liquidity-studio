@@ -5,8 +5,11 @@ import { createMcpHandler, McpServer } from '@modelcontextprotocol/server';
 import { toNodeHandler } from '@modelcontextprotocol/node';
 import { createDefiantUnifiedData } from './defiant-unified-data.js';
 import { registerDefiantTools } from './defiant-mcp.js';
+import { defiantUnifiedRequest } from './defiant-unified-http.js';
 import { DEFIANT_DOMAIN_INSTRUCTIONS } from './defiant-domain-pathways.js';
 export const DEFIANT_SYNTHETIC_MCP_PATH = '/mcp/defiant-synthetic';
+const REST_PREFIX='/api/defiant-synthetic';
+const REST_RESOURCES=new Set(['manifest','artists','tracks','sources','campaigns','demand','royalties','opportunities','regions','collaborators','rights','forecasts','pathways','view','domain','domain-review']);
 const ORGANIZATION = 'defiant_synthetic_demo';
 const reject = (status, message) => Object.assign(new Error(message), { status });
 async function loadFixture() {
@@ -52,15 +55,17 @@ export async function createDefiantSyntheticDemo({ enabled=false, publicOrigins=
   },{responseMode:'json'});
   const node=toNodeHandler(handler);
   return Object.freeze({close:()=>handler.close(),async handle(req,res){
-    const url=new URL(req.url,'https://demo.invalid');
-    if(url.pathname!==DEFIANT_SYNTHETIC_MCP_PATH)return false;
+    const rawPath=(req.url||'').split('?')[0],url=new URL(req.url,'https://demo.invalid');
+    const mcp=rawPath===DEFIANT_SYNTHETIC_MCP_PATH,rest=/^\/api\/defiant-synthetic\/([a-z-]+)$/.exec(rawPath);
+    if(!rawPath.startsWith(DEFIANT_SYNTHETIC_MCP_PATH)&&!rawPath.startsWith(REST_PREFIX))return false;
     const json=(status,message)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({error:message}));};
-    if(!enabled){json(404,'Not found');return true;}
-    if(url.search||!hosts.has(req.headers.host)||req.headers.origin&&!allowedOrigins.has(req.headers.origin)){json(403,'Demo origin or host denied');return true;}
+    if(!enabled||(!mcp&&(!rest||!REST_RESOURCES.has(rest[1])))){json(404,'Not found');return true;}
+    if(mcp&&url.search||!hosts.has(req.headers.host)||req.headers.origin&&!allowedOrigins.has(req.headers.origin)){json(403,'Demo origin or host denied');return true;}
     res.setHeader('Cache-Control','no-store');res.setHeader('Vary','Origin');
     if(req.headers.origin)res.setHeader('Access-Control-Allow-Origin',req.headers.origin);
     if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Methods':'GET,POST,OPTIONS','Access-Control-Allow-Headers':'Content-Type,MCP-Protocol-Version,Mcp-Method,Mcp-Name','Access-Control-Max-Age':'300'});res.end();return true;}
     if(!['GET','POST'].includes(req.method)){json(405,'Demo supports GET and POST only');return true;}
+    if(rest&&((['domain','domain-review'].includes(rest[1])&&req.method!=='POST')||(!['domain','domain-review'].includes(rest[1])&&req.method!=='GET'))){json(405,'Unsupported read-only demo method');return true;}
     try{
       let parsed;
       if(req.method==='POST'){
@@ -68,8 +73,12 @@ export async function createDefiantSyntheticDemo({ enabled=false, publicOrigins=
         if(req.headers['content-length']&&(!/^\d+$/.test(req.headers['content-length'])||Number(req.headers['content-length'])>65536))throw reject(413,'Demo request exceeds limit');
         parsed=await body(req);
       }
-      await node(req,res,parsed);
-    }catch(error){if(!res.headersSent)json([400,408,413,415].includes(error?.status)?error.status:503,'Synthetic demo request unavailable');else res.end();}
+      if(rest){
+        const route=`/api/studio/defiant-data/${ORGANIZATION}/${rest[1]}`;
+        const result=await defiantUnifiedRequest({service:await service(),user:actor,route,method:req.method,url,body:parsed});
+        res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({...result,scope:{organizationId:ORGANIZATION}}));
+      }else await node(req,res,parsed);
+    }catch(error){if(!res.headersSent)json([400,403,404,405,408,409,413,415].includes(error?.status)?error.status:503,'Synthetic demo request unavailable');else res.end();}
     return true;
   }});
 }

@@ -262,7 +262,7 @@ export function createHttpServer(
       res.writeHead(status, { "Content-Type": "application/json" });
       res.end(JSON.stringify(payload));
     };
-    if((req.url||'').split('?')[0]==='/mcp/defiant-synthetic'){
+    if((req.url||'').split('?')[0].startsWith('/mcp/defiant-synthetic')||(req.url||'').split('?')[0].startsWith('/api/defiant-synthetic')){
       if(!enableDefiantSyntheticDemo)return json(404,{error:'Not found'});
       try{await(await loadSyntheticDemo()).handle(req,res);}catch{return json(503,{error:'Synthetic demo unavailable'});}
       return;
