@@ -7342,7 +7342,8 @@
     "serviceFailures": 0,
     "auxiliaryTests": 40,
     "auxiliaryFailures": 0,
-    "sourceBrowserOutcome": "119 passed, 20 skipped, one new assertion failed because retained Huda projection 2 warning was compared to projection 3 wording; exact warning assertion corrected in test-only ea3b310; final exact-head browser rerun required"
+    "sourceBrowserOutcome": "119 passed, 20 skipped, one new assertion failed because retained Huda projection 2 warning was compared to projection 3 wording; exact warning assertion corrected in test-only ea3b310; final exact-head browser rerun required",
+    "finalBrowserOutcome": "39424766100: 119 passed, 20 skipped; new exact label selector missed nested select options, corrected to same native combobox inside exact Source preview format group; next exact-head browser check required."
   },
   "limits": "Hosted compiled output only; no local build, test suite, provider call or runtime adoption. Responsive and resume browser contracts are controlled fixtures; actual managed visual acceptance remains separate.",
   "frontendInputEquivalence": {
@@ -7352,6 +7353,10 @@
       "liquidity-studio/tests/prepared-source.spec.js"
     ],
     "productionInputsIdentical": true,
-    "basis": "Complete source difference is one browser-test assertion; src/public/scripts/package/lock/index/build config inputs are byte-identical. No recompilation required for this test-only correction."
+    "basis": "Complete runtime source/build-input difference is empty; only browser test assertions and canonical receipt/output changed. Both test corrections preserve physical Tab, Review focus and Enter activation. No recompilation required.",
+    "testCorrectionCommits": [
+      "ea3b310",
+      "46943c3f99b7151456e94f66df39caf07c7ea046"
+    ]
   }
 }
