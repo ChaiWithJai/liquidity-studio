@@ -113,11 +113,18 @@ test('actual developer HTTP sessions preserve memberships, reject foreign scope 
     assert.equal(new URL(pickerRedirect.headers.location,app.origin).searchParams.get('returnTo'),workflow);
     const picker=await httpRequest(app.origin,pickerRedirect.headers.location);
     assert.match(picker.text,/name="returnTo"/);assert.ok(picker.text.includes('org=org_default&amp;brand=brand_default'));
-    for(const returnTo of ['https://example.org/','//example.org/','/\\example.org/'])assert.equal((await httpRequest(app.origin,'/__dev/session',{method:'POST',headers:{origin:app.origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({persona:'founder',returnTo}).toString()})).status,400);
+    assert.ok(picker.text.includes(`href="${workflow.replaceAll('&','&amp;')}"`),'Open Studio retains the validated workflow');
+    assert.match(picker.text,/<meta name="viewport" content="width=device-width, initial-scale=1">/);
+    assert.match(picker.text,/aria-label="Local persona selection"/);
+    for(const returnTo of ['https://example.org/','//example.org/','/\\example.org/']){assert.equal((await httpRequest(app.origin,'/__dev?'+new URLSearchParams({returnTo}))).status,400);assert.equal((await httpRequest(app.origin,'/__dev/session',{method:'POST',headers:{origin:app.origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({persona:'founder',returnTo}).toString()})).status,400);}
     const founderReply=await httpRequest(app.origin,'/__dev/session',{method:'POST',headers:{origin:app.origin,'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({persona:'founder',returnTo:workflow}).toString()});assert.equal(founderReply.status,303);assert.equal(founderReply.headers.location,workflow);
     const founderCookie=sessionCookie(founderReply);assert.match(founderCookie,/^studio_dev_development=/);
     const founder=(await httpRequest(app.origin,'/api/auth/session',{headers:{cookie:founderCookie}}));
     assert.equal(founder.status,200);assert.equal(founder.json.user.role,'founder');
+    const workflowPage=await httpRequest(app.origin,workflow,{headers:{cookie:founderCookie}});
+    assert.equal(workflowPage.status,200);
+    assert.ok(workflowPage.text.includes('/__dev?'+new URLSearchParams({returnTo:workflow})),'Switch persona starts with the exact workflow target');
+    assert.match(workflowPage.text,/aria-label="Local emulation environment"/);
     assert.deepEqual(founder.json.organizations[0].brands.map(b=>b.id).sort(),['brand_default','brand_vedic']);
     const founderId=founder.json.user.id;
     const marketerReply=await select(app,'marketer',founderCookie),marketerCookie=sessionCookie(marketerReply);

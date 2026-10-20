@@ -1,4 +1,5 @@
 <script>
+  import BrandKitPreview from "./components/BrandKitPreview.svelte";
   import ResearchPage from "./components/defiant/ResearchPage.svelte";
   import ResearchToolbar from "./components/defiant/ResearchToolbar.svelte";
   import ResearchInspector from "./components/defiant/ResearchInspector.svelte";
@@ -22,7 +23,7 @@
   import OperatorRecoveryPanel from "./components/OperatorRecoveryPanel.svelte";
   import PreparedSourcePanel from "./components/PreparedSourcePanel.svelte";
   import HelperControlPane from "./components/HelperControlPane.svelte";
-  import { createWorkspaceClient } from "./lib/workspace-client.js";
+  import { createWorkspaceClient, DEFAULT_WORKSPACE_QUERY } from "./lib/workspace-client.js";
   import { scopedRequest } from "./lib/scoped-request.js";
   import SourceReviewSummary from "./SourceReviewSummary.svelte";
   import { sourceReviewSummary, reviewSignature } from "./lib/source-review.js";
@@ -91,7 +92,7 @@
   function strategyNavigation(next){strategyLocation=next;}
   async function refreshStrategyOrganizations(){const session=await request('/api/auth/session',{},false);organizations=session.organizations||organizations;}
   function workflowState() {
-    return {organizationId,brandId,tab,...(tab==="strategy"?{strategy:strategyLocation}:{}),storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",penpotDesignId:penpotRecord?.id||"",page:preparedPage};
+    return {organizationId,brandId,tab,...(tab==="backlog"?{backlog:{search,status:statusFilter}}:{}),...(tab==="strategy"?{strategy:strategyLocation}:{}),storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",penpotDesignId:penpotRecord?.id||"",page:preparedPage};
   }
   $effect(() => {
     const state=workflowState();
@@ -165,6 +166,14 @@
     if(route.nativeId&&tab==="studio"&&selectedStory){
       if(nativeEditorEnabled)await openNativeEditor(route.nativeId);
       else error="This saved layout is unavailable here. The saved story remains available.";
+    }
+    if(tab==="backlog"&&route.backlog&&!route.unavailable){
+      search=route.backlog.search;statusFilter=route.backlog.status;
+      const definition=client.snapshot.query.definition;
+      if((definition.filters?.search||'').trim()!==search||(definition.filters?.statuses?.[0]||'All')!==statusFilter)
+        await client.query({...definition,filters:{...definition.filters,search,statuses:statusFilter==='All'?[]:[statusFilter]}});
+      if(workspaceClient!==client)return;
+      rememberBacklogView();
     }
     if(tab==="admin")await loadAdmin(true);
     if(route.unavailable)error="That workspace is unavailable for your current account. Your permitted workspace is shown.";
@@ -760,7 +769,7 @@
     leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; penpotPairingEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
-    const view = key === activeBacklogScopeKey
+    let view = key === activeBacklogScopeKey
       ? {
           search,
           statusFilter,
@@ -770,6 +779,11 @@
           workspaceUi: workspaceClient?.snapshot.ui || cached?.workspaceUi,
         }
       : cached;
+    if(workflowTarget?.tab==='backlog'&&workflowTarget.backlog&&!workflowTarget.unavailable&&workflowTarget.organizationId===organizationId&&workflowTarget.brandId===brandId){
+      const filters=workflowTarget.backlog;
+      const query=view?.workspaceQuery||DEFAULT_WORKSPACE_QUERY;
+      view={...view,search:filters.search,statusFilter:filters.status,workspaceQuery:{...query,filters:{...query.filters,search:filters.search,statuses:filters.status==='All'?[]:[filters.status]}}};
+    }
     activeBacklogScopeKey = key;
     search = view?.search || "";
     statusFilter = view?.statusFilter || "All";
@@ -1994,7 +2008,12 @@
             >
           </div>{/if}
       {:else if tab === "brand" && brandProfile}
-        <form class="panel brand-form form-grid" onsubmit={saveProfile}>
+        <div class="brand-kit-shell"><div class="brand-kit-layout">
+          <ResearchPage label="Edit Brand Kit">
+          <form class="brand-form" onsubmit={saveProfile}>
+            <section class="brand-field-group" aria-labelledby="brand-identity-heading">
+              <h2 id="brand-identity-heading">Identity</h2>
+              <div class="brand-fields">
           <label
             >Brand name<input
               bind:value={brandProfile.brandName}
@@ -2003,15 +2022,18 @@
           ><label>Website<input bind:value={brandProfile.websiteUrl} /></label
           ><label class="full"
             >Tagline<input bind:value={brandProfile.tagline} /></label
-          ><label class="full"
-            >Editorial mission<textarea
-              bind:value={brandProfile.mission}
-              rows="4"></textarea></label
-          ><label
-            >Wordmark / monogram<input
-              bind:value={brandProfile.logoText}
-            /></label
-          ><label
+          >
+              <label>Wordmark / monogram<input bind:value={brandProfile.logoText} /></label>
+              </div>
+            </section>
+            <section class="brand-field-group" aria-labelledby="brand-editorial-heading">
+              <h2 id="brand-editorial-heading">Editorial voice</h2>
+              <label>Editorial mission<textarea bind:value={brandProfile.mission} rows="3"></textarea></label>
+            </section>
+            <section class="brand-field-group" aria-labelledby="brand-type-heading">
+              <h2 id="brand-type-heading">Typography</h2>
+              <div class="brand-fields">
+              <label
             >Heading font<select
               aria-label="Heading font"
               bind:value={brandProfile.fonts.heading}
@@ -2027,7 +2049,11 @@
                   >{family}</option
                 >{/each}</select
             ></label
-          >
+              >
+              </div>
+            </section>
+            <section class="brand-field-group" aria-labelledby="brand-palette-heading">
+              <h2 id="brand-palette-heading">Palette</h2>
           {#if !brandProfile.colors?.length}
             <div class="full">
               <p>This kit has no colors yet. Start with neutral colors and Mona Sans / Inter, then adjust them for this brand.</p>
@@ -2050,8 +2076,12 @@
                 </div></label
               >{/each}
           </div>
-          <button class="primary">Save Brand Kit</button>
-        </form>
+            </section>
+            <ResearchToolbar label="Brand Kit save action"><button class="primary">Save Brand Kit</button><span class="brand-save-note">Preview follows this form. Save to retain changes.</span></ResearchToolbar>
+          </form>
+          </ResearchPage>
+          <BrandKitPreview profile={brandProfile}/>
+        </div></div>
         {#if brandProfile.strategy}<section
             class="panel"
             style="margin-top:24px"
@@ -2126,13 +2156,11 @@
             </p>{/each}
         </section>
       {:else if tab === "admin" && canAdmin}
+        <div class="operations-research"><ResearchPage label="Operations workspace">
         {#if nativePortableEnabled && workspaceClient}{#key workspaceClient}<OperatorRecoveryPanel actorId={user.id} {organizationId} {brandId} scopeKey={workspaceClient.scopeKey} getScopeKey={()=>workspaceClient?.scopeKey} request={recoveryRequest} onRestored={recoveryFinished}/>{/key}{/if}
-        <div class="admin-grid">
+        <div class="admin-grid"><div class="operations-diagnostics" role="region" aria-label="Diagnostics and brand activity">
           <section class="panel">
-            <div class="panel-heading">
-              <h2>Health & readiness</h2>
-              <button class="secondary" onclick={loadAdmin}>Refresh</button>
-            </div>
+            <ResearchToolbar label="Readiness actions"><h2>Health & readiness</h2><button class="secondary" onclick={loadAdmin}>Refresh</button></ResearchToolbar>
             <p class="muted">
               Provider connectivity is checked separately below.
             </p>
@@ -2195,33 +2223,7 @@
               {/each}
             </ul>
           </section>
-          <section class="panel">
-            <h2>Organization management</h2>
-            <form onsubmit={createOrganization}>
-              <label
-                >New organization name<input
-                  bind:value={newOrganization}
-                  required
-                /></label
-              ><button class="secondary">Create organization</button>
-            </form>
-            <form onsubmit={createBrand}>
-              <label
-                >New brand in {currentOrganization?.name}<input
-                  bind:value={newBrand}
-                  required
-                /></label
-              ><label
-                >Brand preset<select
-                  aria-label="Brand preset"
-                  bind:value={newBrandPreset}
-                  ><option value="liquidity_desk">The Liquidity Desk</option
-                  ><option value="vedic_dharma">Chai With Jai</option></select
-                ></label
-              ><button class="secondary">Create brand</button>
-            </form>
-          </section>
-          <section class="panel">
+          <section class="panel operations-telemetry">
             <h2>Telemetry & generation</h2>
             <div class="ops-metrics">
               <div>
@@ -2267,11 +2269,40 @@
               <pre>{JSON.stringify(adminData, null, 2)}</pre>
             </details>
           </section>
+        </div>
+          <section class="panel organization-management">
+            <h2>Organization management</h2><div class="organization-forms">
+            <form onsubmit={createOrganization}>
+              <label
+                >New organization name<input
+                  bind:value={newOrganization}
+                  required
+                /></label
+              ><button class="secondary">Create organization</button>
+            </form>
+            <form onsubmit={createBrand}>
+              <label
+                >New brand in {currentOrganization?.name}<input
+                  bind:value={newBrand}
+                  required
+                /></label
+              ><label
+                >Brand preset<select
+                  aria-label="Brand preset"
+                  bind:value={newBrandPreset}
+                  ><option value="liquidity_desk">The Liquidity Desk</option
+                  ><option value="vedic_dharma">Chai With Jai</option></select
+                ></label
+              ><button class="secondary">Create brand</button>
+            </form>
+            </div>
+          </section>
           <details class="panel">
             <summary>Architecture reference</summary>
             <pre>{JSON.stringify(graph, null, 2)}</pre>
           </details>
         </div>
+        </ResearchPage></div>
       {/if}
     </main>
   </div>
@@ -2281,4 +2312,42 @@
   .app-shell.penpot-focused { grid-template-columns: minmax(0,1fr); }
   .penpot-focused .sidebar { display:none; }
   .penpot-focused .workspace { padding:12px 16px; min-width:0; }
+  .operations-research { container-type:inline-size; min-width:0; }
+  .operations-research .admin-grid { display:block; }
+  .operations-diagnostics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+  .operations-research .panel { min-width:0; padding:16px; margin:0; border:0; border-bottom:1px solid var(--research-line); border-radius:0; background:var(--research-surface); box-shadow:none; }
+  .operations-diagnostics>.panel:first-child { border-right:1px solid var(--research-line); }
+  .operations-research .operations-telemetry { grid-column:1/-1; }
+  .operations-research :global(.research-toolbar) { padding:0 0 10px; margin-bottom:10px; justify-content:space-between; }
+  .operations-research h2 { font-size:18px; margin:0 0 12px; }
+  .operations-research h3 { font-size:14px; margin:16px 0 8px; }
+  .operations-research p,.operations-research li { font-size:13px; overflow-wrap:anywhere; }
+  .operations-research .ops-metrics { gap:10px; }
+  .operations-research .ops-metrics>div { padding:10px; border-color:var(--research-line); background:var(--research-canvas); }
+  .operations-research .ops-metrics b { font-size:16px; }
+  .operations-research .ops-metrics span { font-size:11px; }
+  .operations-research details { margin-top:12px; }
+  .operations-research pre { max-width:100%; overflow:auto; font-size:11px; }
+  .organization-forms { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; align-items:start; }
+  .operations-research .organization-forms form { margin:0; display:grid; gap:10px; min-width:0; }
+  .operations-research .organization-forms button { justify-self:start; }
+  .operations-research .trace-table { margin-top:12px; }
+  @container(max-width:740px) { .operations-diagnostics,.organization-forms { grid-template-columns:minmax(0,1fr); }.operations-diagnostics>.panel:first-child { border-right:0; } }
+
+
+  .brand-kit-shell {container:brand-kit / inline-size;}
+  .brand-kit-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,300px);gap:16px;align-items:start;}
+  .brand-form {display:block;min-width:0;}
+  .brand-field-group {padding:16px;border-bottom:1px solid var(--research-line,#dedfd5);min-width:0;}
+  .brand-field-group h2 {margin-bottom:12px;font-size:16px;}
+  .brand-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .brand-fields .full {grid-column:1 / -1;}
+  .brand-form .color-list {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .brand-form .color-list label {min-width:0;}
+  .brand-form .color-list label > div {display:flex;gap:6px;min-width:0;}
+  .brand-form .color-list input[type="color"] {width:36px;min-width:36px;height:36px;padding:3px;}
+  .brand-form .color-list input:not([type="color"]) {width:100%;min-width:0;}
+  .brand-save-note {font-size:12px;color:var(--research-muted,#59665d);}
+  @container brand-kit (max-width:680px) {.brand-kit-layout {grid-template-columns:minmax(0,1fr);}}
+  @container brand-kit (max-width:400px) {.brand-fields,.brand-form .color-list {grid-template-columns:minmax(0,1fr);}}
 </style>
