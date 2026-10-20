@@ -46,6 +46,7 @@
   const root = '/api/studio/workspace/control';
   const display = id => members.find(member => member.id === id)?.displayName || id;
   function active(grant) { return grant.status === 'active' && Date.parse(grant.expiresAt) > Date.now(); }
+  function incomingGrantForCurrentStory(grant) { return grant.helperId === actorId && active(grant) && story && grant.storyIds.includes(story.id); }
   async function refresh(owner = lifecycle, send = request) {
     const read = ++reads, entityId = story?.id;
     try {
@@ -199,6 +200,7 @@
     {#if grantStory()}<p>Grant applies only to: {grantStory().title}. Your current editor remains {story.title}.</p>{/if}
     <label>Allowed proposal types<select aria-label="Allowed proposal types" bind:value={permission}><option value="metadata">Category changes only</option><option value="calendar">Calendar plans only</option><option value="both">Category changes and calendar plans</option></select></label>
     <button disabled={pending > 0 || !helperId || grantSearching || !grantStory()} onclick={createGrant}>{permission === 'metadata' ? 'Grant metadata proposals for 10 minutes' : permission === 'calendar' ? 'Grant calendar proposals for 10 minutes' : 'Grant metadata and calendar proposals for 10 minutes'}</button>
+    {#if projection.grants.some(incomingGrantForCurrentStory)}
     <label>Proposal action<select aria-label="Proposal action" bind:value={proposalKind}><option value="story.patch">Change category</option><option value="assignment.place">Place or move a calendar plan</option><option value="assignment.remove">Remove a calendar plan</option></select></label>
     {#if proposalKind === 'story.patch'}
       <label>Proposed category<input bind:value={category} maxlength="100" /></label>
@@ -215,6 +217,7 @@
         <p role="status">Observed {unitLabel(observation.intent)} at saved story revision {observation.intent.expectedRevision}. {observation.assignment ? `Current placement: ${observation.assignment.date} (${observation.assignment.timeZone}), revision ${observation.assignment.revision}.` : 'No current dated placement.'} Calendar order revisions are captured; newer work requires a fresh observation.</p>
       {:else}<p>Load saved story and calendar revisions before proposing. Changed settings or story revisions require a new observation.</p>{/if}
     {/if}
+    {:else}<p>Proposal inputs appear when you receive an active grant for this story.</p>{/if}
   {:else}<p>Open a story to create a bounded grant or proposal.</p>{/if}
   {#if uncertain}<p role="status">An operation result is unknown. Its request key is retained for retry.</p>{#if uncertain.operationId}<button disabled={pending > 0} onclick={() => undo(uncertain.operationId)}>Retry same undo</button>{/if}{/if}
   {#each projection.grants as grant (grant.id)}
@@ -229,7 +232,7 @@
         <button class="secondary" onclick={() => action(`/grants/${grant.id}/stop`, { expectedEpoch: grant.epoch }, 'Stopped. Prior accepted changes remain recorded.')}>Stop</button>
         <button class="secondary" onclick={() => action(`/grants/${grant.id}/takeover`, { expectedEpoch: grant.epoch }, 'Taken over. This grant cannot execute further work.')}>Take over</button>
       {/if}
-      {#if grant.helperId === actorId && active(grant) && story && grant.storyIds.includes(story.id)}
+      {#if incomingGrantForCurrentStory(grant)}
         <button disabled={pending > 0 || !!uncertain || !grant.kinds.includes(proposalKind) || (proposalKind === 'story.patch' ? !category.trim() : !ready())} onclick={() => propose(grant)}>{proposalKind === 'story.patch' ? 'Propose category change' : proposalKind === 'assignment.remove' ? 'Propose calendar removal' : 'Propose calendar placement'}</button>
       {/if}
       {#each projection.proposals.filter(proposal => proposal.grantId === grant.id) as proposal (proposal.id)}
