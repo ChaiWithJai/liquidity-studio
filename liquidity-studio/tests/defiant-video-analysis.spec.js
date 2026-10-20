@@ -22,7 +22,7 @@ test('manager analyzes a source without files, saves an addressable moment and r
  try{
   await page.goto(base+`/?org=${org.id}&tab=strategy&view=inbox&source=${encodeURIComponent(source.id)}`);
   await page.getByLabel('Username',{exact:true}).fill('moment-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →',exact:true}).click();
-  const detail=page.getByRole('complementary',{name:'Source inspector'}),analysis=detail.getByRole('region',{name:'Analyze source video'});
+  const detail=page.getByRole('complementary',{name:'Source inspector'}),analysis=detail.getByRole('region',{name:'Analyze source video'});await detail.getByText('AI-assisted moment proposals',{exact:true}).click();
   await analysis.getByRole('button',{name:'Analyze YouTube source',exact:true}).click();await expect(analysis).toContainText('Analysis ready. Review the proposed moments.');
   await analysis.getByLabel('Proposed in (seconds)',{exact:true}).fill('9');await analysis.getByLabel('Moment context',{exact:true}).fill('Manager revised context for later verification.');
   await expect(analysis.getByRole('link',{name:'Open source at proposed time ↗'})).toHaveAttribute('href',source.sourceUrl+'&t=9s');
