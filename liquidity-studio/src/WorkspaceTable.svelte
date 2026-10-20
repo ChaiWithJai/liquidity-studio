@@ -535,6 +535,7 @@
   .table-scroll { max-height:60vh;overflow:auto;border:1px solid #d2d9c9;border-radius:10px;background:white; }
   table { border-collapse:collapse;width:100%;font-size:13px; }
   th,td { text-align:left;padding:6px 8px;border-bottom:1px solid #e7ebdf;vertical-align:middle;white-space:nowrap; }
+  th { color:var(--app-muted); }
   thead { position:sticky;top:0;background:#eef1e8;z-index:1; }
   tr.story-row { display:table-row;box-shadow:none;border-radius:0; }
   .title-button,.cell-button { text-align:left;padding:0;background:none;border:0;color:inherit;font:inherit; }

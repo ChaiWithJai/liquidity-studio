@@ -1617,7 +1617,7 @@ html:has(.workflow-context) { scroll-padding-top: var(--workflow-offset, 16px); 
 .workspace {padding-top:24px;}
 .workspace-header {margin-bottom:20px;}
 .workspace-header h1 {font-family:"Mona Sans",sans-serif;font-size:28px;font-weight:650;line-height:1.2;letter-spacing:-.6px;margin:6px 0 0;}
-.workspace-header .eyebrow {font-size:11px;}
+.workspace-header .eyebrow {font-size:11px;color:var(--app-muted);}
 .section-line {margin-bottom:12px;align-items:center;flex-wrap:wrap;}
 .section-line > div:first-child {flex:1;min-width:150px;}
 .filters {flex:1;min-width:230px;justify-content:flex-end;}
