@@ -43,13 +43,14 @@ function reportSnapshot(state,input,clips){
  return {momentRefs:momentSnapshots.map(s=>({analysisId:s.analysisId,momentId:s.moment.id,revision:s.moment.revision})),momentSnapshots,clipRefs:clipSnapshots.map(a=>({artifactId:a.id})),clipSnapshots,sourceRefs:sourceSnapshots.map(x=>x.source.id),matchRefs:sourceSnapshots.filter(x=>x.match).map(x=>({sourceId:x.source.id,id:x.match.id,revision:x.match.revision})),sourceSnapshots,planIds,annotationIds:chosen.map(a=>a.id),annotations:clone(chosen),annotationEvidence:clone(state.evidence.filter(e=>chosen.some(a=>a.evidenceIds.includes(e.id)))),viewId:view?.id||null,viewRevision:view?.revision||null,view:clone(view),sourceRevision:state.revision,findings};
 }
 export function reportRecord(state,input,actor,at,{refreshId,clips}={}){
- exact(input,refreshId?['expectedReportRevision','planIds','annotationIds','viewId','sourceRefs','matchRefs','clipRefs','momentRefs']:['id','expectedReportRevision','title','thesis','planIds','annotationIds','viewId','sections','sourceRefs','matchRefs','clipRefs','momentRefs']);
+ exact(input,refreshId?['expectedReportRevision','planIds','annotationIds','viewId','sourceRefs','matchRefs','clipRefs','momentRefs']:['id','expectedReportRevision','title','thesis','planIds','annotationIds','viewId','sections','sourceRefs','matchRefs','clipRefs','momentRefs','returnContext']);
  const oldId=refreshId||input.id,old=oldId?state.reports.find(r=>r.id===oldId):null;if(oldId&&!old)throw fail(404,'Saved report is unavailable');
  if(old&&(input.expectedReportRevision!==old.revision))throw fail(409,'Report changed; compare before saving your text');if(!old&&input.expectedReportRevision!==undefined)throw fail(400,'New report has no previous revision');
  if(!old&&state.reports.length>=32)throw fail(429,'Report capacity reached');if(old?.history.length>=16)throw fail(429,'Report history capacity reached; prior snapshots are preserved');
  let snapshot;if(!old||refreshId)snapshot=reportSnapshot(state,input,clips);else{if(input.momentRefs!==undefined&&JSON.stringify(input.momentRefs)!==JSON.stringify(old.momentRefs||[])||input.clipRefs!==undefined&&JSON.stringify(input.clipRefs)!==JSON.stringify(old.clipRefs||[])||input.sourceRefs!==undefined&&JSON.stringify(input.sourceRefs)!==JSON.stringify(old.sourceRefs||[])||input.matchRefs!==undefined&&JSON.stringify(input.matchRefs)!==JSON.stringify(old.matchRefs||[])||input.planIds!==undefined&&JSON.stringify(input.planIds)!==JSON.stringify(old.planIds)||input.annotationIds!==undefined&&JSON.stringify(input.annotationIds)!==JSON.stringify(old.annotationIds)||input.viewId!==undefined&&input.viewId!==old.viewId)throw fail(409,'Use explicit Refresh from selection to change saved findings');snapshot=Object.fromEntries(['momentRefs','momentSnapshots','clipRefs','clipSnapshots','sourceRefs','matchRefs','sourceSnapshots','planIds','annotationIds','annotations','annotationEvidence','viewId','viewRevision','view','sourceRevision','findings'].map(k=>[k,clone(old[k])]));}
+ const returnContext=old?.returnContext?clone(old.returnContext):input.returnContext===undefined?undefined:reportReturnContext(input.returnContext);
  const history=old?clone(old.history):[];if(old){const {history:_,...previous}=old;history.push(clone(previous));}
- return {id:old?.id||randomUUID(),title:refreshId?old.title:text(input.title,'report title',300),thesis:refreshId?old.thesis:draftText(input.thesis,'report thesis',12000),sections:refreshId||old&&input.sections===undefined?clone(old.sections):sections(input.sections),...snapshot,revision:(old?.revision||0)+1,authorId:old?.authorId||actor.id,updatedBy:actor.id,createdAt:old?.createdAt||at,updatedAt:at,history};
+ return {id:old?.id||randomUUID(),title:refreshId?old.title:text(input.title,'report title',300),thesis:refreshId?old.thesis:draftText(input.thesis,'report thesis',12000),sections:refreshId||old&&input.sections===undefined?clone(old.sections):sections(input.sections),...snapshot,...(returnContext?{returnContext}:{}),revision:(old?.revision||0)+1,authorId:old?.authorId||actor.id,updatedBy:actor.id,createdAt:old?.createdAt||at,updatedAt:at,history};
 }
 
 export function clusterRecord(state,input,actor,at){
@@ -57,4 +58,18 @@ export function clusterRecord(state,input,actor,at){
  for(const id of nodeIds)if(!state.graph.nodes.some(n=>n.id===id))throw fail(409,'A working group member is unavailable');
  const old=input.id?state.graph.clusters.find(c=>c.id===input.id):null;if(input.id&&!old)throw fail(404,'Working group is unavailable');if(!old&&state.graph.clusters.length>=64)throw fail(429,'Working group capacity reached');
  return {id:old?.id||randomUUID(),kind:'cluster',verification:'working-selection',name:text(input.name,'working group name',200),nodeIds,revision:(old?.revision||0)+1,sourceRevision:state.revision,authorId:old?.authorId||actor.id,updatedBy:actor.id,createdAt:old?.createdAt||at,updatedAt:at};
+}
+
+function reportReturnContext(value){
+ exact(value,['view','origin','regionId','artistId','sourceId','recordingId','focus','selected','savedViewId','routeEdgeIds','kinds','showExamples','query','workstreamId','inboxStage','clipId','momentId','cohort']);
+ if(!['map','inbox'].includes(value.view)||value.origin!==undefined&&!['catalog','talent'].includes(value.origin))throw fail(422,'Invalid report return context');
+ for(const [key,current] of Object.entries(value)){
+  if(['view','origin'].includes(key))continue;
+  if(key==='showExamples'){if(typeof current!=='boolean')throw fail(422,'Invalid report return filter');continue;}
+  if(key==='query'){if(typeof current!=='string'||current.length>200)throw fail(422,'Invalid report return search');continue;}
+  if(key==='routeEdgeIds'||key==='kinds'){if(!Array.isArray(current)||current.length>16||new Set(current).size!==current.length||current.some(id=>typeof id!=='string'||!/^[A-Za-z0-9_:-]{1,128}$/.test(id)))throw fail(422,'Invalid report return selection');continue;}
+  if(typeof current!=='string'||current.length>128||current!==''&&!/^[A-Za-z0-9_:-]+$/.test(current))throw fail(422,'Invalid report return identity');
+ }
+ if(value.origin==='catalog'&&value.view!=='inbox'||value.origin==='talent'&&value.view!=='map')throw fail(422,'Report return origin and view disagree');
+ return clone(value);
 }

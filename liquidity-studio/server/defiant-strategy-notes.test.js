@@ -99,3 +99,14 @@ test('unlocated artist suggestions do not leak into unrelated person or overview
  assert.deepEqual((await f.service.graph(f.actor,{})).relatedResources,[]);assert.deepEqual((await f.service.graph(f.actor,{focusId:'unlocated-person'})).relatedResources,[]);
  assert.equal((await f.service.graph(f.actor,{focusId:'unlocated-artist'})).relatedResources[0].id,'unlocated-resource');
 });
+
+test('saved talent report return context survives wording, refresh, history and draft handoff',async t=>{
+ const f=await fixture(t),context={origin:'talent',view:'map',regionId:'region:manual',artistId:'yt_sig_lagos_01',focus:'yt_sig_lagos_01',selected:'yt_sig_lagos_01',query:'retained search'};
+ const first=await f.service.saveReport(f.actor,f.command({report:{title:'Talent evidence',thesis:'Working interpretation',planIds:['yt_sig_lagos_01'],returnContext:context}}));
+ const edited=await f.service.saveReport(f.actor,f.command({report:{id:first.report.id,expectedReportRevision:1,title:'Edited wording',thesis:'Human words'}}));
+ assert.equal(edited.report.returnContext.origin,'talent');assert.equal(edited.report.returnContext.artistId,context.artistId);assert.deepEqual(edited.report.returnContext,first.report.returnContext);assert.deepEqual(edited.report.history[0].returnContext,first.report.returnContext);
+ const refreshed=await f.service.refreshReport(f.actor,first.report.id,f.command({expectedReportRevision:2,planIds:['yt_sig_lagos_01']}));assert.deepEqual(refreshed.report.returnContext,first.report.returnContext);
+ const destination=await f.service.createDestination(f.actor,f.command({name:'Explicit talent draft'}));
+ const handoff=await f.service.handoff(f.actor,first.report.id,f.command({expectedReportRevision:3,destinationId:destination.destination.id,objective:'Review talent evidence',deliverables:['Unreviewed brief']}));
+ const {scopeKey}=await import('./repository.js'),scope=f.store.get(scopeKey({organizationId:f.org.id,brandId:destination.destination.id}));assert.deepEqual(scope.backlog.find(s=>s.id===handoff.draft.id).draftBrief.report.returnContext,first.report.returnContext);
+});

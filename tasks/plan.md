@@ -7,3 +7,8 @@ Approved semantics: docs/specs/editor-approval-workflow.md, user review 2026-10-
 3. Connect authenticated HTTP and a dedicated Svelte panel to actual source/native review revisions. Founder/current marketer role policy stays explicit. Preserve dirty editor state, focus, canonical client lifecycle and default-off native distribution gate.
 4. Implement adapter-owned export with private artifact verification, authenticated bounded envelope and replay journal. Stage artifact bytes before transaction, commit only after matching all approval preconditions, retain retry/uncertain state and audit. No unproven upstream event listener or automatic publication.
 5. Replay two-role built-App and actual private artifact paths. Independent review, all hosted gates, combined local image and deployment verification precede closure. Original-only public build remains mandatory until the separate native license hold is resolved.
+
+
+## Active Defiant journey correction #310
+
+The prior #56 plan above is preserved. The scoped implementation sequence, parallel ownership and acceptance for the approved Defiant experience correction are in [310.md](310.md).

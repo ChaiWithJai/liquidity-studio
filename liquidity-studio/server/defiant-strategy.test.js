@@ -96,3 +96,22 @@ test('resource confirmation uses current organization revision and same-key rece
  const ack=await f.service.confirmResource(f.founder,'resource',input);assert.equal(ack.revision,3);assert.equal(ack.resource.confirmation.actorId,f.founder.id);assert.deepEqual(ack.resource.rights,original.rights);assert.deepEqual(ack.resource.availability,original.availability);assert.deepEqual(await f.service.confirmResource(f.founder,'resource',input),ack);
  await assert.rejects(f.service.confirmResource(f.founder,'resource',{...input,confirmation:{...input.confirmation,notes:'Changed'}}),{status:409});await assert.rejects(f.service.confirmResource(f.founder,'resource',{...input,idempotencyKey:randomUUID()}),{status:409});await assert.rejects(f.service.confirmResource(f.marketer,'resource',{...input,expectedRevision:3,idempotencyKey:randomUUID()}),{status:403});assert.equal((await f.service.read(f.founder)).revision,3);
 });
+
+test('sample graph browsing is nonmutating and sample-only findings cannot become owned reports',async t=>{
+ const f=await setup(t);await f.service.enable(f.founder,{});const before=f.store.get(f.service.key);
+ const sample=await f.service.graph(f.founder,{sample:'demo'});assert.equal(sample.sample,true);assert.ok(sample.regions.length);assert.ok(sample.artists.length);
+ const artist=sample.artists[0],detail=await f.service.graph(f.founder,{sample:'demo',focusId:artist.id,selectedId:artist.id});assert.equal(detail.selectedItem.id,artist.id);
+ assert.deepEqual(f.store.get(f.service.key),before);
+ await assert.rejects(f.service.saveReport(f.founder,{expectedRevision:before.revision,idempotencyKey:randomUUID(),report:{title:'Cannot save preview as owned',thesis:'',planIds:[artist.id]}}),{status:409});
+ assert.deepEqual(f.store.get(f.service.key),before);await assert.rejects(f.service.graph(f.founder,{sample:'arbitrary'}),{status:400});
+});
+
+
+test('regional owned artist projection includes the actual collaborator relationship and its evidence',async t=>{
+ const f=await setup(t);await f.service.enable(f.founder,{});
+ const data={nodes:[{id:'owned:region',kind:'region',name:'Manager region'},{id:'owned:artist',kind:'artist',name:'Manager artist',regionId:'owned:region'},{id:'owned:person',kind:'person',name:'Manager collaborator',regionId:'owned:region',evidenceIds:['owned:evidence']}],edges:[{id:'owned:relationship',kind:'relationship',name:'Proposed collaboration',from:'owned:artist',to:'owned:person',evidenceIds:['owned:evidence']}],evidence:[{id:'owned:evidence',sourceUrl:'https://example.com/manager-source',title:'Manager supplied reference'}]};
+ await f.service.import(f.founder,{expectedRevision:1,idempotencyKey:randomUUID(),kind:'owned',data});
+ const graph=await f.service.graph(f.founder,{focusId:'owned:artist',selectedId:'owned:relationship'});
+ assert.ok(graph.nodes.some(n=>n.id==='owned:person'));const relationship=graph.edges.find(e=>e.id==='owned:relationship');assert.equal(relationship.from,'owned:artist');assert.equal(relationship.to,'owned:person');assert.equal(relationship.verification,'user-reported');assert.equal(relationship.derived,undefined);assert.equal(graph.selectedItem.evidence[0].id,'owned:evidence');assert.equal(graph.selectedItem.contextual,undefined);
+ const person=await f.service.graph(f.founder,{focusId:'owned:person',selectedId:'owned:person'});assert.ok(person.nodes.some(n=>n.id==='owned:person'));assert.ok(person.nodes.some(n=>n.id==='owned:artist'));assert.ok(person.edges.some(e=>e.id==='owned:relationship'));assert.equal(person.selectedItem.evidence[0].id,'owned:evidence');
+});

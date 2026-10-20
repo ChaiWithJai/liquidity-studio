@@ -54,3 +54,35 @@ test('analysis moment selection roundtrips with its source and is removed on cam
  const draft=workflowHref(url,{organizationId:'org_default',brandId:'brand_default',tab:'studio'});assert.equal(new URL(draft).searchParams.has('moment'),false);
  assert.equal(readWorkflowLocation('http://localhost/?tab=strategy&moment=%3Cscript%3E').strategy.momentId,undefined);
 });
+
+test('catalog and talent origins retain exact selection on report return without changing legacy links',async()=>{
+ const {strategyReturnContext,strategyReportReturn}=await import('../src/lib/defiant-location.js');
+ for(const origin of ['catalog','talent']){
+  const context=strategyReturnContext({origin,view:origin==='catalog'?'inbox':'map',regionId:'region:one',artistId:'artist:one',sourceId:'youtube:one',recordingId:'recording:one',focus:'artist:one',selected:'person:one',query:'retained words',cohort:'supplied-2026'});
+  const href=workflowHref('http://localhost/',{organizationId:'defiant_org',tab:'strategy',strategy:{...context,view:'report',reportId:'report:one'}});
+  const read=readWorkflowLocation(href).strategy;assert.equal(read.origin,origin);assert.equal(read.regionId,'region:one');assert.equal(read.artistId,'artist:one');
+  const back=strategyReportReturn(read,{returnContext:context});assert.deepEqual(back,{...context,reportId:''});
+  const publishing=new URL(workflowHref(href,{organizationId:'org_default',brandId:'brand_default',tab:'studio'}));for(const key of ['origin','region','artist','source','recording','select'])assert.equal(publishing.searchParams.has(key),false);
+ }
+ assert.equal(strategyReportReturn({view:'report'},{sourceRefs:['youtube:one'],planIds:[]}).view,'inbox');
+ assert.equal(strategyReportReturn({view:'report'},{planIds:['artist:one']}).view,'map');
+ assert.equal(readWorkflowLocation('http://localhost/?tab=strategy&view=map').strategy.origin,undefined);
+});
+
+
+test('legacy bookmarked source reports recover their single source and only an unambiguous saved moment',async()=>{
+ const {strategyReportReturn,strategyReturnContext}=await import('../src/lib/defiant-location.js');
+ const legacy={sourceRefs:['youtube:one'],planIds:[]},bookmarked={view:'report',reportId:'report:old'};
+ assert.equal(strategyReportReturn(bookmarked,legacy).sourceId,'youtube:one');
+ const moment={sourceId:'youtube:one',moment:{id:'moment:one',savedAt:'2026-10-19T00:00:00Z'}};
+ assert.equal(strategyReportReturn(bookmarked,{...legacy,momentSnapshots:[moment]}).momentId,'moment:one');
+ const stale=strategyReportReturn({...bookmarked,sourceId:'youtube:other',momentId:'moment:other'},{...legacy,momentSnapshots:[moment]});assert.equal(stale.sourceId,'youtube:one');assert.equal(stale.momentId,'moment:one');
+ const catalogStale=strategyReportReturn({...bookmarked,origin:'catalog',sourceId:'youtube:other',momentId:'moment:other'},{...legacy,momentSnapshots:[moment]});assert.equal(catalogStale.sourceId,'youtube:one');assert.equal(catalogStale.momentId,'moment:one');
+ const talentStale=strategyReportReturn({...bookmarked,origin:'talent',sourceId:'youtube:other',momentId:'moment:other'},{...legacy,momentSnapshots:[moment]});assert.equal(talentStale.view,'inbox');assert.equal(talentStale.origin,'catalog');assert.equal(talentStale.sourceId,'youtube:one');assert.equal(talentStale.momentId,'moment:one');
+ assert.equal(strategyReportReturn({...bookmarked,sourceId:'youtube:other',momentId:'moment:other'},legacy).momentId,undefined);
+ assert.equal(strategyReportReturn(bookmarked,{...legacy,momentSnapshots:[moment,{...moment,moment:{...moment.moment,id:'moment:two'}}]}).momentId,undefined);
+ assert.equal(strategyReportReturn(bookmarked,{sourceRefs:['youtube:one','youtube:two'],planIds:[]}).sourceId,undefined);
+ const sample=workflowHref('http://localhost/',{organizationId:'defiant_org',tab:'strategy',strategy:{origin:'talent',view:'map',sample:'demo',regionId:'lagos'}});
+ assert.equal(readWorkflowLocation(sample).strategy.sample,'demo');assert.equal(strategyReturnContext(readWorkflowLocation(sample).strategy).sample,undefined);
+ assert.equal(new URL(workflowHref(sample,{organizationId:'org_default',brandId:'brand_default',tab:'studio'})).searchParams.has('sample'),false);
+});

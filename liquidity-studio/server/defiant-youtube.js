@@ -74,7 +74,7 @@ export class DefiantYouTube {
    }
   }
   const merge=s=>{if(!s)return s;const i=latest.get(s.id);if(!i)return s;const {statistics,videoId,observedAt,expiresAt,...metadata}=i;return {...s,...metadata,liveMetadata:{...metadata,observedAt,expiresAt},observations:[...Object.entries(statistics).map(([metric,value])=>({metric,value,unit:'count',observedAt,expiresAt,method:'youtube-data-api',provenance:{provider:'youtube',videoId}})),...s.observations]};};
-  await this.strategy.authority(actor);const result=readInbox({...state,inbox:{...state.inbox,sources:inbox.sources.map(merge)}},input);
+  await this.strategy.authority(actor);const result=readInbox({...state,inbox:{...(state.inbox||emptyInbox()),sources:inbox.sources.map(merge)}},input);
   if(result.selected)result.selected.observationHistory=history.sort((a,b)=>Date.parse(b.observedAt)-Date.parse(a.observedAt)).slice(0,32);
   return result;
  }

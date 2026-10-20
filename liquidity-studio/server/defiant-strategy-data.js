@@ -676,6 +676,14 @@ export function projectGraph(state,{focusId='',selectedId='',query='',kinds='',s
  }
  if(focus?.kind==='cluster'){nodes=ring(focus.nodeIds.map(find).filter(Boolean));visible=new Set(nodes.map(n=>n.id));edges=allEdges.filter(e=>visible.has(e.from)&&visible.has(e.to));}
  if(city){const routes=allEdges.filter(e=>e.kind==='route'&&e.from===city.id),targets=[...new Set(routes.map(e=>e.to))].map(find).filter(Boolean);nodes=[{...city,x:18,y:46},...(artist?[{...artist,x:44,y:46}]:[]),...targets.map((n,i)=>({...n,x:78,y:targets.length===1?46:23+i*47/Math.max(1,targets.length-1)}))];edges=routes.map(e=>({...e,from:artist?.id||city.id,sourceRegion:e.from}));if(artist)edges.push({id:`discovery:${artist.id}`,from:city.id,to:artist.id,kind:'discovery',derived:true,label:'Referenced in',verification:artist.verification});if(focus.kind==='artist'&&related[0]){const n=related.find(x=>x.kind==='person')||related[0];nodes.push({...n,x:45,y:79});edges.push({id:`suggestion:${artist.id}:${n.id}`,from:artist.id,to:n.id,kind:'match',derived:true,label:'Possible collaboration',suggestion:true,verification:'unverified'});}}
+ // Owned relationships remain visible even when the artist has a region but
+ // no resource registry entry. These are the persisted edges, not suggestions.
+ if(city&&['artist','person','resource'].includes(focus?.kind)){
+  const incident=allEdges.filter(e=>e.from===focus.id||e.to===focus.id),neighborIds=[...new Set(incident.flatMap(e=>[e.from,e.to]).filter(id=>id!==focus.id))].slice(0,24);
+  const extra=[focus.id,...neighborIds].map(find).filter(n=>n&&!nodes.some(existing=>existing.id===n.id));
+  nodes.push(...extra.map((n,i)=>({...n,x:28+(i%4)*16,y:70+Math.floor(i/4)*5})));
+  const visibleIds=new Set(nodes.map(n=>n.id));for(const edge of incident)if(visibleIds.has(edge.from)&&visibleIds.has(edge.to)&&!edges.some(existing=>existing.id===edge.id))edges.push({...edge});
+ }
  const selectedKinds=kinds?kinds.split(','):[],allows=n=>(showExamples!=='false'||n.verification!=='example')&&(!selectedKinds.length||selectedKinds.includes(n.kind)||selectedKinds.includes('route')&&allEdges.some(e=>e.kind==='route'&&(e.from===n.id||e.to===n.id||e.from===n.regionId)));
  if(!focus&&selectedKinds.length){nodes=ring(all.filter(allows).slice(0,24));const ids=new Set(nodes.map(n=>n.id));edges=allEdges.filter(e=>ids.has(e.from)&&ids.has(e.to));}
  nodes=nodes.filter(allows);const filteredIds=new Set(nodes.map(n=>n.id));edges=edges.filter(e=>filteredIds.has(e.from)&&filteredIds.has(e.to)&&(showExamples!=='false'||e.verification!=='example')&&(selectedKinds.length!==1||selectedKinds[0]!=='route'||e.kind==='route'));
