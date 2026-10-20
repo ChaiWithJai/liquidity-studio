@@ -37,3 +37,31 @@ test('authenticated HTTP creates an empty destination then hands off the exact s
  const destination=await post('/destinations',f.command({name:'HTTP empty destination'})),report=await post('/reports',{expectedRevision:destination.revision,idempotencyKey:randomUUID(),report:{title:'HTTP report brief',thesis:'Needs editorial review',planIds:['yt_sig_lagos_01']}}),handed=await post('/reports/'+report.report.id+'/handoff',{expectedRevision:report.revision,idempotencyKey:randomUUID(),...handoffChoice,expectedReportRevision:report.report.revision,destinationId:destination.destination.id});
  assert.equal(handed.draft.reportRevision,report.report.revision);const stored=f.store.get(scopeKey({organizationId:f.org.id,brandId:destination.destination.id}));assert.equal(stored.backlog.length,1);assert.equal(stored.backlog[0].draftBrief.report.id,report.report.id);assert.equal(stored.backlog[0].id,handed.draft.id);
 });
+
+test('read resumes all retained report handoffs after reload without changing snapshots or creating drafts',async t=>{
+ const f=await fixture(t),destination=(await f.service.createDestination(f.actor,f.command({name:'Retained destination'}))).destination,report=(await f.service.saveReport(f.actor,f.command({report:{title:'Original report',thesis:'Working context',planIds:['yt_sig_lagos_01']}}))).report;
+ const first=await f.service.handoff(f.actor,report.id,f.command({...handoffChoice,expectedReportRevision:1,destinationId:destination.id}));
+ await f.service.saveReport(f.actor,f.command({report:{id:report.id,expectedReportRevision:1,title:'Revised report',thesis:'New wording'}}));
+ const second=await f.service.handoff(f.actor,report.id,f.command({...handoffChoice,expectedReportRevision:2,destinationId:destination.id})),key=scopeKey({organizationId:f.org.id,brandId:destination.id});
+ f.store.update(key,s=>{s.backlog.find(story=>story.id===first.draft.id).title='Human edited campaign';return s;});
+ f.store.update(f.service.key,s=>{s.receipts.push(structuredClone(s.receipts.find(r=>r.result.draft?.id===first.draft.id)));return s;});
+ const before=f.store.get(f.service.key),scopeBefore=f.store.get(key),fresh=new DefiantStrategyService({store:f.store,identity:f.identity,organizationId:f.org.id}),read=await fresh.read(f.actor);
+ assert.deepEqual(read.handoffs.map(d=>[d.id,d.reportId,d.reportRevision,d.title]),[[first.draft.id,report.id,1,'Human edited campaign'],[second.draft.id,report.id,2,'Revised report']]);
+ assert.equal(read.handoffs[0].destinationName,'Retained destination');assert.equal(read.handoffs[0].organizationId,f.org.id);assert.equal(read.handoffs[0].brandId,destination.id);assert.equal(read.handoffs[0].createdAt,scopeBefore.backlog.find(s=>s.id===first.draft.id).draftBrief.createdAt);
+ assert.equal(read.receipts,undefined);assert.deepEqual(read.reports,before.reports);assert.deepEqual(f.store.get(f.service.key),before);assert.deepEqual(f.store.get(key),scopeBefore);assert.equal(scopeBefore.backlog.length,2);
+});
+
+test('resume links require current destination access and a real matching draft brief before exposure',async t=>{
+ const f=await fixture(t),destination=(await f.service.createDestination(f.actor,f.command({name:'Scoped destination'}))).destination,report=(await f.service.saveReport(f.actor,f.command({report:{title:'Scoped report',thesis:'',planIds:['yt_sig_lagos_01']}}))).report;
+ await f.service.handoff(f.actor,report.id,f.command({...handoffChoice,expectedReportRevision:1,destinationId:destination.id}));
+ const key=scopeKey({organizationId:f.org.id,brandId:destination.id}),original=f.store.get(key),identityBefore=f.store.get('identity'),get=f.store.get.bind(f.store);let scopedReads=0;
+ f.store.get=k=>{if(k===key)scopedReads++;return get(k);};
+ f.store.update('identity',s=>{s.memberships.find(m=>m.userId===f.actor.id&&m.organizationId===f.org.id).brandIds=[];return s;});assert.deepEqual((await f.service.read(f.actor)).handoffs,[]);assert.equal(scopedReads,0);
+ f.store.update('identity',()=>structuredClone(identityBefore));f.store.update('identity',s=>{s.organizations.find(o=>o.id===f.org.id).brands=[];return s;});assert.deepEqual((await f.service.read(f.actor)).handoffs,[]);assert.equal(scopedReads,0);
+ f.store.update('identity',()=>structuredClone(identityBefore));
+ for(const change of [s=>{s.backlog=[];},s=>{s.backlog[0].draftBrief.reportRevision=99;},s=>{s.backlog[0].draftBrief.reportId='different-report';},s=>{s.backlog[0].draftBrief.organizationId='different-org';},s=>{s.editorRestore={status:'installing'};}]){
+  f.store.update(key,()=>{const s=structuredClone(original);change(s);return s;});assert.deepEqual((await f.service.read(f.actor)).handoffs,[]);
+ }
+ f.store.update(key,()=>structuredClone(original));let revoke=true;f.store.get=async k=>{const value=get(k);if(k===key&&revoke){revoke=false;f.store.update('identity',s=>{s.memberships.find(m=>m.userId===f.actor.id&&m.organizationId===f.org.id).brandIds=[];return s;});}return value;};
+ assert.deepEqual((await f.service.read(f.actor)).handoffs,[]);
+});
