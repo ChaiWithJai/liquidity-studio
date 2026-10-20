@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createDefiantDomainBridge} from './defiant-domain-bridge.js';
-import {generateDefiantSyntheticDataset} from '../../server/defiant-synthetic-dataset.js';
-import {createDefiantUnifiedData} from '../../server/defiant-unified-data.js';
-import {runDefiantDomainPathway} from '../../server/defiant-domain-pathways.js';
+import {createDefiantDomainBridge} from '../src/lib/defiant-domain-bridge.js';
+import {generateDefiantSyntheticDataset} from './defiant-synthetic-dataset.js';
+import {createDefiantUnifiedData} from './defiant-unified-data.js';
+import {runDefiantDomainPathway} from './defiant-domain-pathways.js';
 const organizationId='fictional_domain_test';
 const input={organizationId,pathwayId:'catalog-to-campaign',artistId:'artist:fictional-1',trackId:'track:fictional-1-1',regionId:'region:nj',budgets:[0,500,1000],horizonMonths:3};
 const actor={id:'fictional-reviewer'};
@@ -41,9 +41,18 @@ test('stale requests and mismatched dataset choices cannot replace the current j
 test('result guards reject another scope, changed budgets or joined recording without approving or writing',async()=>{
  const f=fixture();await f.bridge.start();f.app.ontoolinput({arguments:input});
  const wrongScope=await reply(input);wrongScope.structuredContent.scope.organizationId='another_org';f.app.ontoolresult(wrongScope);assert.equal(f.state.view,null);
- const wrongBudget=await reply(input);wrongBudget.structuredContent.scenarioComparison.scenarios[0].budget=99;f.app.ontoolresult(wrongBudget);assert.equal(f.state.view,null);assert.match(f.state.error,/could not refresh/);
+ const wrongBudget=await reply(input);wrongBudget.structuredContent.scenarioComparison.scenarios[0].budget=99;f.app.ontoolresult(wrongBudget);assert.equal(f.state.view,null);assert.equal(f.state.loading,true);
  f.app.ontoolinput({arguments:input});const wrongRecording=await reply(input);wrongRecording.structuredContent.rightsAndRoyalties.recording.id='track:fictional-2-1';f.app.ontoolresult(wrongRecording);assert.equal(f.state.view,null);
  assert.equal(f.calls.length,0);await f.bridge.dispose();
+});
+test('late host result for the same artist with older explicit inputs does not consume the new response',async()=>{
+ const f=fixture();await f.bridge.start();f.app.ontoolinput({arguments:input});
+ const old=await reply(input),next={...input,budgets:[0,250],horizonMonths:2};
+ f.app.ontoolinput({arguments:next});f.app.ontoolresult(old);
+ assert.equal(f.state.view,null);assert.equal(f.state.loading,true);assert.equal(f.state.error,'');
+ f.app.ontoolresult(await reply(next));await tick();
+ assert.equal(f.state.view.selection.regionId,'region:nj');assert.deepEqual(f.state.view.scenarioComparison.scenarios.map(row=>row.budget),[0,250]);assert.equal(f.state.loading,false);
+ await f.bridge.dispose();
 });
 test('a static missing-input outcome can populate bounded choices without inventing budgets or a ready review',async()=>{
  const f=fixture(),missing={organizationId,pathwayId:'talent-to-campaign'};

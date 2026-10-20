@@ -5,7 +5,7 @@ const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value)
 const id=value=>typeof value==='string'&&value.length>0&&value.length<=160&&/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(value);
 const copy=value=>structuredClone(value);
 function input(value){
- if(!object(value)||Object.keys(value).some(key=>!fields.includes(key))||!/^[A-Za-z0-9_-]{1,128}$/.test(value.organizationId??'')||!pathways.has(value.pathwayId))throw Error('Invalid domain input');
+ if(!object(value)||Object.keys(value).some(key=>!fields.includes(key))||typeof value.organizationId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(value.organizationId)||!pathways.has(value.pathwayId))throw Error('Invalid domain input');
  for(const key of ['artistId','trackId','regionId'])if(value[key]!==undefined&&!id(value[key]))throw Error('Invalid reference');
  if(value.budgets!==undefined&&(!Array.isArray(value.budgets)||value.budgets.length<1||value.budgets.length>3||value.budgets.some(x=>!Number.isFinite(x)||x<0||x>100000)||new Set(value.budgets).size!==value.budgets.length))throw Error('Invalid budgets');
  if(value.horizonMonths!==undefined&&(!Number.isInteger(value.horizonMonths)||value.horizonMonths<1||value.horizonMonths>12))throw Error('Invalid horizon');
@@ -30,6 +30,15 @@ function choices(reply,binding,resource,snapshot){
  const data=reply?.structuredContent;
  if(reply?.isError||data?.scope?.organizationId!==binding.organizationId||data?.schemaVersion!==1||!dataset(data.dataset)||data.capabilities?.readOnly!==true||data.capabilities.canApproveRights!==false||data.capabilities.canPublish!==false||data.resource!==resource||data.available!==true||!Array.isArray(data.items)||data.items.length>25||!data.items.every(row=>object(row)&&id(row.id)&&typeof row[resource==='tracks'?'title':'name']==='string')||(snapshot&&!sameDataset(snapshot,data.dataset)))throw Error('Invalid domain choices');
  return data;
+}
+function anotherRequest(data,binding){
+ if(data?.scope?.organizationId!==binding.organizationId||data?.pathway?.id!==binding.pathwayId)return true;
+ if(data.status!=='human-review-required')return false;
+ const selected=data.selection;
+ if(selected&&(selected.artistId!==binding.artistId||binding.trackId&&selected.trackId!==binding.trackId||binding.regionId&&selected.regionId!==binding.regionId))return true;
+ const scenarios=data.scenarioComparison?.scenarios;
+ // A recognizable result for a previous input is delayed, not a failure of the latest request.
+ return Array.isArray(scenarios)&&scenarios.every(row=>Number.isFinite(row.budget)&&Number.isInteger(row.horizonMonths))&&Array.isArray(binding.budgets)&&(scenarios.length!==binding.budgets.length||scenarios.some((row,index)=>row.budget!==binding.budgets[index]||row.horizonMonths!==(binding.horizonMonths??3)));
 }
 /** Only finite read-only MCP calls. Host scope and dataset revision stay bound across async work. */
 export function createDefiantDomainBridge({app,onState}){
@@ -62,7 +71,7 @@ export function createDefiantDomainBridge({app,onState}){
   if(disposed)return;++epoch;
   try{const next=input(params?.arguments),same=binding?.organizationId===next.organizationId&&binding?.pathwayId===next.pathwayId;binding=next;awaitingHost=true;failed=null;if(!same)state={view:null,input:copy(next),choices:{artists:[],tracks:[],regions:[]},loading:true,error:''};else{state.input=copy(next);state.loading=true;state.error='';}emit();}catch{binding=null;awaitingHost=false;failed=null;state={view:null,input:null,choices:{artists:[],tracks:[],regions:[]},loading:false,error:'Open a valid domain review tool with an organization and pathway.'};emit();}
  };
- app.ontoolresult=reply=>{if(disposed||!binding||!awaitingHost)return;const data=reply?.structuredContent;if(!reply?.isError&&(data?.scope?.organizationId!==binding.organizationId||data?.pathway?.id!==binding.pathwayId||data?.selection&&data.selection.artistId!==binding.artistId))return;awaitingHost=false;adopt(reply,epoch);};
+ app.ontoolresult=reply=>{if(disposed||!binding||!awaitingHost)return;if(!reply?.isError&&anotherRequest(reply?.structuredContent,binding))return;awaitingHost=false;adopt(reply,epoch);};
  app.ontoolcancelled=()=>{if(disposed)return;++epoch;awaitingHost=false;failed=binding?'view':null;state.loading=false;state.error='Review cancelled. Previous results are retained.';emit();};
  app.onteardown=()=>{disposed=true;++epoch;return {};};
  async function start(){if(disposed||connected)return;if(connecting)return connecting;connecting=(async()=>{try{await app.connect();if(disposed)return;connected=true;if(failed==='connect'){failed=null;state.error='';}if(state.view&&!failed)void loadChoices(epoch);else emit();}catch{if(!disposed){failed='connect';state.loading=false;state.error='Could not connect to this chat host. Retry review.';emit();}}finally{connecting=null;}})();return connecting;}

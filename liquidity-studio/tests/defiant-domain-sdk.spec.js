@@ -42,6 +42,11 @@ test('actual joined fictional domain results render through SDK; explicit scenar
  await expect(page.getByLabel('Domain host initialization')).toHaveText('complete');
  await expect(app.getByRole('heading',{name:'Catalog activation review',exact:true})).toBeVisible();
  await expect(app.getByLabel('Artist',{exact:true})).toBeEnabled();
+ await expect(app.getByLabel('Artist',{exact:true})).toHaveValue('artist:fictional-1');
+ await expect(app.getByLabel('Recording',{exact:true})).toHaveValue('track:fictional-1-1');
+ await expect(app.getByLabel('Region',{exact:true})).toHaveValue('region:nj');
+ await expect(app.getByLabel('Illustrative budgets (USD)',{exact:true})).toHaveValue('0, 500, 1000');
+ await expect(app.getByLabel('Horizon (months)',{exact:true})).toHaveValue('5');
  await expect(app.getByLabel('Joined review context')).toContainText('Harbor Lantern');
  await expect(app.getByLabel('Joined review context')).toContainText('New Jersey');
  await expect(app.getByLabel('Monthly regional demand chart').locator('.chart-row')).toHaveCount(12);
@@ -66,6 +71,14 @@ test('actual joined fictional domain results render through SDK; explicit scenar
  await app.getByRole('button',{name:'Retry review',exact:true}).click();
  await expect(app.getByLabel('Joined review context')).toContainText('Juniper Static');
  await expect(app.getByLabel('Artist',{exact:true})).toBeEnabled();
+ await page.getByRole('button',{name:'Host opens another domain review',exact:true}).click();
+ await expect(app.getByLabel('Artist',{exact:true})).toBeEnabled();
+ await expect(app.getByLabel('Joined review context')).toContainText('Harbor Lantern');
+ await expect(app.getByLabel('Joined review context')).toContainText('California');
+ await expect(app.getByLabel('Artist',{exact:true})).toHaveValue('artist:fictional-1');
+ await expect(app.getByLabel('Region',{exact:true})).toHaveValue('region:ca');
+ await expect(app.getByLabel('Illustrative budgets (USD)',{exact:true})).toHaveValue('0, 250');
+ await expect(app.getByLabel('Horizon (months)',{exact:true})).toHaveValue('2');
  await page.setViewportSize({width:390,height:844});
  const geometry=await app.locator('main').evaluate(element=>({width:element.getBoundingClientRect().width,viewport:innerWidth,scroll:document.documentElement.scrollWidth}));
  expect(geometry.width).toBeLessThanOrEqual(geometry.viewport);expect(geometry.scroll).toBeLessThanOrEqual(geometry.viewport);

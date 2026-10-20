@@ -10,3 +10,8 @@ await buildDefiantStdio();
 
 import {buildDefiantSynthetic} from './build-defiant-synthetic.js';
 await buildDefiantSynthetic();
+
+import {buildDefiantDomain} from './build-defiant-domain.js';
+await buildDefiantDomain();
+import {buildDefiantDemoServer} from './build-defiant-demo-server.js';
+await buildDefiantDemoServer();
