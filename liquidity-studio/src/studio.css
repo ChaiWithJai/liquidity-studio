@@ -253,7 +253,7 @@ form {
 }
 .scope-selectors label {
   font-size: 10px;
-  color: #667261;
+  color: var(--app-muted);
   letter-spacing: 0.5px;
 }
 .scope-selectors select {
@@ -560,7 +560,7 @@ form {
   min-width: 110px;
   font-weight: 600;
   border-bottom: 2px solid transparent;
-  color: #74806c;
+  color: var(--app-muted);
 }
 .format-tabs button.active {
   border-color: #344b2c;
