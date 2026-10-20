@@ -68,3 +68,17 @@ test('catalog and talent origins retain exact selection on report return without
  assert.equal(strategyReportReturn({view:'report'},{planIds:['artist:one']}).view,'map');
  assert.equal(readWorkflowLocation('http://localhost/?tab=strategy&view=map').strategy.origin,undefined);
 });
+
+
+test('legacy bookmarked source reports recover their single source and only an unambiguous saved moment',async()=>{
+ const {strategyReportReturn,strategyReturnContext}=await import('../src/lib/defiant-location.js');
+ const legacy={sourceRefs:['youtube:one'],planIds:[]},bookmarked={view:'report',reportId:'report:old'};
+ assert.equal(strategyReportReturn(bookmarked,legacy).sourceId,'youtube:one');
+ const moment={sourceId:'youtube:one',moment:{id:'moment:one',savedAt:'2026-10-19T00:00:00Z'}};
+ assert.equal(strategyReportReturn(bookmarked,{...legacy,momentSnapshots:[moment]}).momentId,'moment:one');
+ assert.equal(strategyReportReturn(bookmarked,{...legacy,momentSnapshots:[moment,{...moment,moment:{...moment.moment,id:'moment:two'}}]}).momentId,undefined);
+ assert.equal(strategyReportReturn(bookmarked,{sourceRefs:['youtube:one','youtube:two'],planIds:[]}).sourceId,undefined);
+ const sample=workflowHref('http://localhost/',{organizationId:'defiant_org',tab:'strategy',strategy:{origin:'talent',view:'map',sample:'demo',regionId:'lagos'}});
+ assert.equal(readWorkflowLocation(sample).strategy.sample,'demo');assert.equal(strategyReturnContext(readWorkflowLocation(sample).strategy).sample,undefined);
+ assert.equal(new URL(workflowHref(sample,{organizationId:'org_default',brandId:'brand_default',tab:'studio'})).searchParams.has('sample'),false);
+});
