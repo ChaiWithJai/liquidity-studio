@@ -37,3 +37,20 @@ export async function handoffReport(service,actor,reportId,input){
   result=ack(state,actor,input,requestHash,{draft:{id:story.id,title:story.title,organizationId:service.organizationId,brandId:input.destinationId,reportId,reportRevision:report.revision,reviewRequired:true}});return [identity,state,scope];
  });return result;
 }
+
+// Receipts already retain successful handoffs; resolve links against current scoped work.
+export async function readReportHandoffs(service,actor,{state,organization,membership}){
+ const allowed=new Map(organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(b=>[b.id,b])),scopes=new Map(),seen=new Set(),links=[];
+ for(const receipt of state.receipts||[]){
+  const draft=receipt.result?.draft;
+  if(!draft||draft.organizationId!==service.organizationId||!allowed.has(draft.brandId)||seen.has(draft.id))continue;
+  if(!scopes.has(draft.brandId))scopes.set(draft.brandId,await service.store.get(scopeKey({organizationId:service.organizationId,brandId:draft.brandId})));
+  const scope=scopes.get(draft.brandId),story=scope?.backlog?.find(s=>s.id===draft.id),brief=story?.draftBrief;
+  if(scope?.editorRestore?.status==='installing'||!brief||brief.kind!=='defiant-report'||brief.organizationId!==service.organizationId||brief.reportId!==draft.reportId||brief.reportRevision!==draft.reportRevision)continue;
+  seen.add(draft.id);links.push({id:story.id,title:story.title,organizationId:service.organizationId,brandId:draft.brandId,destinationName:allowed.get(draft.brandId).name,reportId:brief.reportId,reportRevision:brief.reportRevision,createdAt:brief.createdAt});
+ }
+ // Scoped reads can await remote storage; do not expose links after membership changes.
+ if(!links.length)return links;
+ const latest=await service.raw(actor),currentBrands=new Set(latest.organization.brands.filter(b=>latest.membership.brandIds.includes(b.id)).map(b=>b.id));
+ return links.filter(link=>currentBrands.has(link.brandId));
+}

@@ -1,4 +1,7 @@
 <script>
+  import ResearchPage from "./components/defiant/ResearchPage.svelte";
+  import ResearchToolbar from "./components/defiant/ResearchToolbar.svelte";
+  import ResearchInspector from "./components/defiant/ResearchInspector.svelte";
   import DraftBrief from './components/defiant/DraftBrief.svelte';
   import DefiantWorkspace from './components/defiant/DefiantWorkspace.svelte';
   import {strategyOrganizationFor} from './lib/defiant-location.js';
@@ -1389,7 +1392,7 @@
       </div>
     </aside>
     <main class="workspace">
-      <header class="workspace-header" class:native-focus-header={tab === "studio" && (!!nativeRecord || !!penpotRecord)}>
+      <header class="workspace-header" class:native-focus-header={tab === "studio" && (!!nativeRecord || !!penpotRecord)} class:campaign-page-header={tab === "studio" && !!campaign && !preparedWorkspace && !nativeRecord && !penpotRecord}>
         <div>
           <span class="eyebrow"
             >{currentOrganization?.name || "ORGANIZATION"}{tab==='strategy'?'':` / ${currentBrand?.name||'BRAND'}`}</span
@@ -1507,33 +1510,16 @@
           </div>
         {/if}
         {#if selectedStory}
+          {#snippet campaignContent()}
           {#if !nativeRecord && selectedStory.draftBrief?.kind==='defiant-report'}<DraftBrief request={strategyHost?.request} brief={selectedStory.draftBrief} reportHref={workflowHref(window.location.href,{organizationId:selectedStory.draftBrief.organizationId,tab:'strategy',strategy:{view:'report',reportId:selectedStory.draftBrief.reportId}})} onUseSource={useBriefSource} onReviewSources={()=>focusWorkflow("workflow-sources")} disabled={busy} />{/if}
           {#if !nativeRecord && nativeEditorEnabled && preparedHost}{#key preparedHost.client}{#key `${selectedStory.id}:${format}`}
             <NativeLayoutHistory request={preparedHost.request} storyId={selectedStory.id} {format} scopeKey={preparedHost.scopeKey} getScopeKey={preparedHost.getScopeKey} onOpen={openNativeEditor} />
           {/key}{/key}{/if}
           {#if preparedWorkspace}<div class="prepared-story-context"><strong>{selectedStory.title}</strong><button class="secondary" onclick={()=>navigateTab("backlog")}>Return to backlog</button></div>{/if}
           {#if !nativeRecord && !(preparedWorkspace)}<section class="workflow-context" aria-label="Current editorial task" bind:this={workflowContext}>
-            <div class="workflow-identity"><h2 title={selectedStory.title}>{selectedStory.title}</h2><span>{currentOrganization?.name} / {currentBrand?.name} · {formats.find(item => item.id === format)?.name} · revision {selectedStory.revision}</span></div>
+            <div class="workflow-identity"><h2 title={selectedStory.title}>{selectedStory.title}</h2><span>{#if campaign}Source copy · revision {selectedStory.revision}{:else}{currentOrganization?.name} / {currentBrand?.name} · {formats.find(item => item.id === format)?.name} · revision {selectedStory.revision}{/if}</span></div>
             <p class="workflow-state" role="status">{preparedDirty ? "Unsaved prepared preview" : pendingEdits ? "Unsaved artwork changes" : campaign ? "Artwork saved" : sourcePreparationEnabled ? selectedStory.preparationStatus==='ready' ? "Source preview saved" : "Source preparation workspace" : "No draft yet"} · {reviewDirty ? "Unsaved source review" : preparedWorkspace ? "Evidence awaits explicit human review" : generationReview.ready ? "Source prerequisites saved" : `${generationReview.blockers.length} source prerequisite${generationReview.blockers.length === 1 ? "" : "s"} to review`}{editorConflictRevision ? ` · Newer saved revision ${editorConflictRevision}; resolve the conflict before saving.` : ""} · Next: {nextWorkflowAction}</p>
-            <nav aria-label="Editorial task actions">
-              <button class="secondary" onclick={() => focusWorkflow("workflow-sources")}>Review sources</button>
-              {#if campaign}
-                <button class="secondary" onclick={() => focusWorkflow("workflow-editor")}>Edit wording</button>
-                <button class="secondary" onclick={() => focusWorkflow("workflow-preview")}>Preview & validation</button>
-                {#if pendingEdits}<button class="primary" disabled={busy || Boolean(editorConflictRevision)} onclick={saveEdit}>Save artwork changes</button>{/if}
-              {/if}
-              <details class="workflow-more-actions">
-                <summary>More actions</summary>
-                <div class="workflow-secondary-actions">
-                  {#if campaign}
-                    <button class="secondary" onclick={() => focusWorkflow("workflow-validation")}>Validation results</button>
-                    <button class="secondary" onclick={() => focusWorkflow("workflow-handoff")}>Export handoff</button>
-                  {/if}
-                  <button class="secondary" onclick={() => navigateTab("calendar")}>Plan in calendar</button>
-                  <button class="secondary" onclick={() => navigateTab("backlog")}>Return to backlog</button>
-                </div>
-              </details>
-            </nav>
+
           </section>
           {/if}
           {#if campaign && promotedStoryId===selectedStory.id && !nativeRecord && !preparedWorkspace && !((penpotEnabled || penpotStoryDesignsEnabled) && penpotHost)}
@@ -1542,7 +1528,7 @@
               {:else}<button class="primary" onclick={()=>focusWorkflow("workflow-preview")}>Preview saved artwork</button>{/if}
             </section>
           {/if}
-          {#if !nativeRecord && !preparedWorkspace}<div class="campaign-design-toolbar"><div class="format-tabs" aria-label="Campaign format">
+          {#if !nativeRecord && !preparedWorkspace}<div class="campaign-design-toolbar"><ResearchToolbar label="Campaign format and connection"><div class="format-tabs" aria-label="Campaign format">
             {#each formats as item (item.id)}<button
                 class:active={format === item.id}
                 onclick={() => selectFormat(item.id)}
@@ -1550,12 +1536,29 @@
               >{/each}
           </div>
           {#if penpotPairingEnabled && penpotHost && !preparedWorkspace}
-            {#key penpotHost.client}<PenpotConnection returnContext={{storyId:selectedStory.id,format,editor:preparedEditingStoryId===selectedStory.id?"prepared":"handoff",page:preparedPage}} request={penpotHost.request} onConnectionChange={() => penpotConnectionChanged(penpotHost.client)} />{/key}
+            <details class="campaign-account"><summary>Design account</summary>{#key penpotHost.client}<PenpotConnection returnContext={{storyId:selectedStory.id,format,editor:preparedEditingStoryId===selectedStory.id?"prepared":"handoff",page:preparedPage}} request={penpotHost.request} onConnectionChange={() => penpotConnectionChanged(penpotHost.client)} />{/key}</details>
           {/if}
-          {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
-            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction bind:this={penpotDesignAction} compact embedded={penpotEmbedded} onOpenDesign={openPenpotDesign} request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
-          {/if}
-          </div>{/if}
+
+            <nav class="campaign-task-actions" aria-label="Editorial task actions">
+              <button class="secondary" onclick={() => focusWorkflow("workflow-sources")}>Review sources</button>
+              {#if campaign}
+                {#if pendingEdits}<button class="primary" disabled={busy || Boolean(editorConflictRevision)} onclick={saveEdit}>Save artwork changes</button>{/if}
+              {/if}
+              <details class="workflow-more-actions">
+                <summary>More actions</summary>
+                <div class="workflow-secondary-actions">
+                  {#if campaign}
+                    <button class="secondary" disabled={busy || !generationReview.ready} onclick={generate}>{busy ? "Working…" : "Regenerate draft"}</button>
+                    <button class="secondary" onclick={() => focusWorkflow("workflow-preview")}>Preview & validation</button>
+                    <button class="secondary" onclick={() => focusWorkflow("workflow-validation")}>Validation results</button>
+                    <button class="secondary" onclick={() => focusWorkflow("workflow-handoff")}>Export handoff</button>
+                  {/if}
+                  <button class="secondary" onclick={() => navigateTab("calendar")}>Plan in calendar</button>
+                  <button class="secondary" onclick={() => navigateTab("backlog")}>Return to backlog</button>
+                </div>
+              </details>
+            </nav>
+          </ResearchToolbar></div>{/if}
           {#if nativeRecord && nativeHost}
             <section class="native-focus-workspace" aria-label="Native proposal workspace">
               <div class="native-focus-toolbar">
@@ -1572,7 +1575,7 @@
             </section>
           {:else}
           {#if campaign&&!preparedWorkspace}<div class="studio-grid">
-              <section class="preview-workspace workflow-target" id="workflow-preview" aria-label="Preview and validation" tabindex="-1">{#key organizationId + brandId + selectedStory.id + format}<Emulator
+              <section class="preview-workspace workflow-target" id="workflow-preview" aria-label="Preview and validation" tabindex="-1"><div id="workflow-handoff" tabindex="-1"><p class="campaign-artifact-provenance">{provenance}</p><ResearchToolbar label="Studio preview actions">{#if nativeEditorEnabled && campaign && !nativeRecord}<button class="secondary" disabled={busy || reviewDirty || !!editorConflictRevision} onclick={openNativeEditor}>Edit layout in Studio</button>{/if}<button class="secondary" onclick={() => focusWorkflow("workflow-editor")}>Edit wording</button><button class="secondary" disabled={busy || !campaign} onclick={exportAsset}>Export Studio preview {format === "carousel" ? "ZIP" : format === "reel" ? "script" : "PNG"} ↗</button></ResearchToolbar></div>{#key organizationId + brandId + selectedStory.id + format}<Emulator
                   {campaign}
                   {brandProfile}
                   {format}
@@ -1582,7 +1585,10 @@
                   {pendingEdits}
                   onpreflight={recordPreflight}
                 />{/key}</section>
-              <section class="editor-panel workflow-target" id="workflow-editor" aria-label="Campaign wording" tabindex="-1">
+              <div class="campaign-inspector"><ResearchInspector label="Campaign design and wording tools">
+          {#if (penpotEnabled || penpotStoryDesignsEnabled) && penpotHost && campaign && !preparedWorkspace}
+            {#key `${penpotHost.client.scopeKey}:${selectedStory.id}:${format}:${selectedStory.generationId}:${selectedStory.revision}`}<PenpotDesignAction bind:this={penpotDesignAction} compact embedded={penpotEmbedded} onOpenDesign={openPenpotDesign} request={penpotHost.request} storyId={selectedStory.id} {format} storyRevision={selectedStory.revision} generationId={selectedStory.generationId} onStateChange={penpotStatusHandler(penpotTaskKey)} />{/key}
+          {/if}<section class="editor-panel workflow-target" id="workflow-editor" aria-label="Campaign wording" tabindex="-1">
                 <div class="panel-heading">
                   <h3>Edit artwork text</h3>
                   <span class="status-tag"
@@ -1846,7 +1852,7 @@
                 {#if preflight?.artifact}
                   <p class="small muted" data-testid="recorded-preflight">Recorded {preflight.artifact.format} · saved revision {preflight.artifact.storyRevision}</p>
                 {/if}
-              </section>
+              </section></ResearchInspector></div>
 
             </div>{:else}
             {#snippet manualSourcePrerequisites()}<section class="panel workflow-target" id="workflow-sources" aria-label="Source prerequisites" tabindex="-1">
@@ -1928,7 +1934,7 @@
               <details open={reviewDirty}><summary>Manual source review and existing source edits</summary>{@render manualSourcePrerequisites()}</details>
             {:else}{@render manualSourcePrerequisites()}{/if}
             {/if}
-          {#if !preparedWorkspace}<div class="studio-toolbar" id="workflow-handoff" tabindex="-1">
+          {#if !preparedWorkspace && !campaign}<div class="studio-toolbar" id="workflow-handoff" tabindex="-1">
             <div>
               <span class="eyebrow">SAVED CAMPAIGN</span>
               <span class="provenance"
@@ -1974,6 +1980,8 @@
             </details>{/key}
           {/if}
           {/if}
+          {/snippet}
+          {#if campaign && !preparedWorkspace && !nativeRecord}<div class="campaign-research"><ResearchPage label="Campaign research and artwork">{@render campaignContent()}</ResearchPage></div>{:else}{@render campaignContent()}{/if}
         {:else}<div class="empty">
             <h2>No story selected</h2>
             <p>

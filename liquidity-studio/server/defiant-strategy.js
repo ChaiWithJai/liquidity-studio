@@ -2,7 +2,7 @@ import {readManualMoments,saveManualMoment} from './defiant-manual-moments.js';
 import {clipKey} from './defiant-clips.js';
 import {readInbox,inboxPreview,importInbox,saveInboxMatch} from './defiant-inbox.js';
 import {resourceConfirmation} from './defiant-resource-confirmation.js';
-import {createDraftDestination,handoffReport} from './defiant-draft-handoff.js';
+import {createDraftDestination,handoffReport,readReportHandoffs} from './defiant-draft-handoff.js';
 import {createHash} from 'node:crypto';
 import {fail} from './auth.js';
 import {exact as planningExact,annotationRecord,viewRecord,reportRecord,clusterRecord} from './defiant-strategy-notes.js';
@@ -34,8 +34,8 @@ export class DefiantStrategyService {
   return {state,organization:latest.organization,membership};
  }
  async read(actor){
-  const {state,organization,membership}=await this.raw(actor),{receipts,...publicState}=clone(state),nodes=publicState.graph.nodes.map(n=>({...n,sourceId:n.seedRef||n.id})),edges=publicState.graph.edges.map(e=>({...e,sourceId:e.seedRef||e.id}));
-  return {...publicState,items:[...nodes,...edges,...publicState.graph.clusters],regions:nodes.filter(n=>n.kind==='region'),artists:nodes.filter(n=>n.kind==='artist'),corridors:edges.filter(e=>e.kind==='route'),resources:publicState.resources.map(r=>({...nodes.find(n=>n.id===r.nodeId),...r})),destinations:organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(({id,name})=>({id,name,socialConnectionVerified:false}))};
+  const current=await this.raw(actor),{state,organization,membership}=current,handoffs=await readReportHandoffs(this,actor,current),{receipts,...publicState}=clone(state),nodes=publicState.graph.nodes.map(n=>({...n,sourceId:n.seedRef||n.id})),edges=publicState.graph.edges.map(e=>({...e,sourceId:e.seedRef||e.id}));
+  return {...publicState,handoffs,items:[...nodes,...edges,...publicState.graph.clusters],regions:nodes.filter(n=>n.kind==='region'),artists:nodes.filter(n=>n.kind==='artist'),corridors:edges.filter(e=>e.kind==='route'),resources:publicState.resources.map(r=>({...nodes.find(n=>n.id===r.nodeId),...r})),destinations:organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(({id,name})=>({id,name,socialConnectionVerified:false}))};
  }
 
  async inbox(actor,input={}){const {state}=await this.raw(actor);return readInbox(state,input);}
