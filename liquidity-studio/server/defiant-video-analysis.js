@@ -5,10 +5,11 @@ import {videoWindow,videoMoments} from './vertex-video.js';
 const clone=x=>structuredClone(x),hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const uuid=x=>typeof x==='string'&&/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(x);
 const exact=(x,keys)=>{if(!x||typeof x!=='object'||Array.isArray(x)||Object.keys(x).some(k=>!keys.includes(k)))throw fail(400,'Unsupported video preprocessing fields');};
+export function publicAnalysis(analysis){const {requestHash,saveReceipts,privateDiagnostics,...safe}=analysis;return clone(safe);}
 export class DefiantVideoAnalysis {
  constructor(strategy,gateway){this.strategy=strategy;this.store=strategy.store;this.gateway=gateway;}
  configured(){return this.gateway?.getConfig().provider==='gcp-vertex';}
- dto(state,sourceId,analysisId){const analyses=(state.inbox?.analyses||[]).filter(a=>a.sourceId===sourceId).map(a=>{const {requestHash,saveReceipts,...safe}=a;return clone(safe);});return {configured:this.configured(),revision:state.revision,analysis:(analysisId?analyses.find(a=>a.id===analysisId):analyses.at(-1))||null,analyses};}
+ dto(state,sourceId,analysisId){const analyses=(state.inbox?.analyses||[]).filter(a=>a.sourceId===sourceId).map(publicAnalysis);return {configured:this.configured(),revision:state.revision,analysis:(analysisId?analyses.find(a=>a.id===analysisId):analyses.at(-1))||null,analyses};}
  async read(actor,sourceId,analysisId){let {state}=await this.strategy.raw(actor);if(!state.inbox?.sources.some(s=>s.id===sourceId))throw fail(404,'Select a current inbox source');
   if(state.inbox.analyses?.some(a=>a.sourceId===sourceId&&a.status==='running'&&Date.parse(a.deadlineAt)<=Date.parse(this.strategy.now())))await this.store.transact(['identity',this.strategy.key],([identity,current])=>{this.strategy.assertCurrent(identity,current,actor);for(const a of current.inbox.analyses||[])if(a.sourceId===sourceId&&a.status==='running'&&Date.parse(a.deadlineAt)<=Date.parse(this.strategy.now())){a.status='unknown';a.error='The provider outcome is unavailable. This request will not call the model again.';a.revision++;current.revision++;}state=current;return [identity,current];});
   return this.dto(state,sourceId,analysisId);
@@ -35,7 +36,7 @@ export class DefiantVideoAnalysis {
    this.strategy.assertCurrent(identity,state,actor);const current=state.inbox.analyses.find(a=>a.id===record.id);if(!current||current.status!=='running')throw fail(409,'Analysis state changed; reload its saved outcome');
    const source=state.inbox.sources.find(s=>s.id===record.sourceId);if(!source||source.revision!==record.sourceRevision)throw fail(409,'Selected source changed during preprocessing');
    const unknown=error&&(error.providerOutcome==='unknown'||!error.providerOutcome&&(error.status===504||!error.status));current.status=error?(unknown?'unknown':'failed'):'ready';current.error=error?(unknown?'The provider outcome is unavailable. This request will not call the model again.':reservation?'The provider did not return a usable proposal. You can explicitly start a new analysis; this request will not call the model again.':'Analysis was not started; check the current generation budget.'):null;
-   current.trace=result?.trace||error?.trace||null;current.moments=result?videoMoments(result.moments,current.window,state.inbox.recordings).map(m=>({...m,id:randomUUID(),revision:1,savedAt:null,savedBy:null})):[];current.revision++;current.updatedAt=this.strategy.now();state.revision++;return [identity,state];
+   current.trace=result?.trace||error?.trace||null;current.privateDiagnostics=error?.privateDiagnostics||null;current.moments=result?videoMoments(result.moments,current.window,state.inbox.recordings).map(m=>({...m,id:randomUUID(),revision:1,savedAt:null,savedBy:null})):[];current.revision++;current.updatedAt=this.strategy.now();state.revision++;return [identity,state];
   });
   if(reservation)await budget.finalizeGeneration(reservation,{status:error?'error':'completed',mode:'youtube-video-analysis',traceId:result?.trace?.traceId||error?.trace?.traceId});
   return this.read(actor,input.sourceId,input.analysisId||input.idempotencyKey);

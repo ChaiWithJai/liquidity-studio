@@ -15,3 +15,13 @@ test('out-of-window timestamps and failed video provider never become synthetic 
  const interrupted=gateway(async()=>{throw Error('transport interrupted');});await assert.rejects(interrupted.analyzeYouTubeVideo(input),{status:502,providerOutcome:'unknown'});
  let calls=0;const configured=new AIGateway({provider:'gcp-gemini',allowSynthetic:true,fetch:async()=>{calls++;}});await assert.rejects(configured.analyzeYouTubeVideo(input),{status:503});assert.equal(calls,0);
 });
+
+test('rejected Google response retains finite public diagnostics and bounded redacted private detail',async()=>{
+ const bearer='private-fixture-bearer-value',key='AIza'+ 'x'.repeat(35),jwt='abcdefghijk.abcdefghijkl.abcdefghijk';
+ const g=gateway(async()=>Response.json({error:{code:400,status:'INVALID_ARGUMENT',message:'YouTube input is not supported in this location. Authorization: Bearer '+bearer+' api_key='+key+' token='+jwt+' '+ 'z'.repeat(800),details:[{'@type':'type.googleapis.com/google.rpc.ErrorInfo',reason:'SENSITIVE_UNLISTED_REASON',metadata:{credential:bearer}}]}},{status:400}));
+ await assert.rejects(g.analyzeYouTubeVideo(input),error=>{
+  assert.equal(error.providerOutcome,'failed');assert.equal(error.trace.errorCode,'provider-rejected');assert.equal(error.trace.providerHttpStatus,400);assert.equal(error.trace.googleErrorCode,400);assert.equal(error.trace.googleErrorStatus,'INVALID_ARGUMENT');assert.equal(error.trace.googleErrorReason,'OTHER');assert.equal(error.trace.providerFailureCategory,'youtube-region-unsupported');
+  assert.ok(!JSON.stringify(error.trace).includes('YouTube input is not supported'));const message=error.privateDiagnostics.googleErrorMessage;assert.match(message,/YouTube input is not supported in this location/);assert.ok(message.length<=500);for(const secret of [bearer,key,jwt,'SENSITIVE_UNLISTED_REASON'])assert.ok(!JSON.stringify(error).includes(secret));return true;
+ });
+ const oversized=gateway(async()=>new Response('x'.repeat(17000),{status:400}));await assert.rejects(oversized.analyzeYouTubeVideo(input),error=>{assert.equal(error.trace.providerHttpStatus,400);assert.deepEqual(error.privateDiagnostics,{});assert.equal(error.providerOutcome,'failed');return true;});
+});
