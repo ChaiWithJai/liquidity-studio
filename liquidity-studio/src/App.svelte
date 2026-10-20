@@ -92,7 +92,7 @@
   function strategyNavigation(next){strategyLocation=next;}
   async function refreshStrategyOrganizations(){const session=await request('/api/auth/session',{},false);organizations=session.organizations||organizations;}
   function workflowState() {
-    return {organizationId,brandId,tab,...(tab==="strategy"?{strategy:strategyLocation}:{}),storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",penpotDesignId:penpotRecord?.id||"",page:preparedPage};
+    return {organizationId,brandId,tab,...(tab==="backlog"?{backlog:{search,status:statusFilter}}:{}),...(tab==="strategy"?{strategy:strategyLocation}:{}),storyId:selectedStory?.id||"",format,editor:preparedEditingStoryId===selectedStory?.id?"prepared":"handoff",nativeId:nativeRecord?.id||"",penpotDesignId:penpotRecord?.id||"",page:preparedPage};
   }
   $effect(() => {
     const state=workflowState();
@@ -166,6 +166,13 @@
     if(route.nativeId&&tab==="studio"&&selectedStory){
       if(nativeEditorEnabled)await openNativeEditor(route.nativeId);
       else error="This saved layout is unavailable here. The saved story remains available.";
+    }
+    if(tab==="backlog"&&route.backlog&&!route.unavailable){
+      search=route.backlog.search;statusFilter=route.backlog.status;
+      const definition=client.snapshot.query.definition;
+      await client.query({...definition,filters:{...definition.filters,search,statuses:statusFilter==='All'?[]:[statusFilter]}});
+      if(workspaceClient!==client)return;
+      rememberBacklogView();
     }
     if(tab==="admin")await loadAdmin(true);
     if(route.unavailable)error="That workspace is unavailable for your current account. Your permitted workspace is shown.";
@@ -761,7 +768,7 @@
     leaveNativeEditor(true); nativeEditorEnabled = false; nativePortableEnabled = false; penpotEnabled = false; penpotStoryDesignsEnabled = false; penpotPairingEnabled = false; sourcePreparationEnabled=false;preparedEditingStoryId="";preparedForkIntent=null;
     const key = backlogScopeKey();
     const cached = backlogViews.get(key);
-    const view = key === activeBacklogScopeKey
+    let view = key === activeBacklogScopeKey
       ? {
           search,
           statusFilter,
@@ -771,6 +778,10 @@
           workspaceUi: workspaceClient?.snapshot.ui || cached?.workspaceUi,
         }
       : cached;
+    if(workflowTarget?.tab==='backlog'&&workflowTarget.backlog&&!workflowTarget.unavailable&&workflowTarget.organizationId===organizationId&&workflowTarget.brandId===brandId){
+      const filters=workflowTarget.backlog;
+      view={...view,search:filters.search,statusFilter:filters.status,workspaceQuery:{...view?.workspaceQuery,filters:{...view?.workspaceQuery?.filters,search:filters.search,statuses:filters.status==='All'?[]:[filters.status]}}};
+    }
     activeBacklogScopeKey = key;
     search = view?.search || "";
     statusFilter = view?.statusFilter || "All";

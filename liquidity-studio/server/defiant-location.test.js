@@ -86,3 +86,13 @@ test('legacy bookmarked source reports recover their single source and only an u
  assert.equal(readWorkflowLocation(sample).strategy.sample,'demo');assert.equal(strategyReturnContext(readWorkflowLocation(sample).strategy).sample,undefined);
  assert.equal(new URL(workflowHref(sample,{organizationId:'org_default',brandId:'brand_default',tab:'studio'})).searchParams.has('sample'),false);
 });
+
+test('backlog URL filters roundtrip within current query bounds and never follow other tabs',()=>{
+ const href=workflowHref('https://studio.example/?org=org_a&brand=brand_a&tab=backlog',{organizationId:'org_a',brandId:'brand_a',tab:'backlog',backlog:{search:' Huda & ownership ',status:'In Backlog'}}),route=readWorkflowLocation(href);
+ assert.deepEqual(route.backlog,{search:'Huda & ownership',status:'In Backlog'});
+ const cleared=new URL(workflowHref(href,{...route,backlog:{search:'',status:'All'}}));assert.equal(cleared.searchParams.has('backlogSearch'),false);assert.equal(cleared.searchParams.has('backlogStatus'),false);
+ for(const tab of ['studio','calendar','brand','strategy']){const url=new URL(workflowHref(href,{...route,tab}));assert.equal(url.searchParams.has('backlogSearch'),false);assert.equal(url.searchParams.has('backlogStatus'),false);}
+ const bad=new URL(href);bad.searchParams.set('backlogSearch','x'.repeat(501));bad.searchParams.set('backlogStatus','x'.repeat(121));assert.deepEqual(readWorkflowLocation(bad.href).backlog,{search:'',status:'All'});
+ bad.searchParams.set('backlogSearch','bad\u0000query');assert.equal(readWorkflowLocation(bad.href).backlog.search,'');
+ assert.equal(readWorkflowLocation(href).brandId,'brand_a');assert.equal(readWorkflowLocation(href).organizationId,'org_a');
+});
