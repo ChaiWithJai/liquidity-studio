@@ -27,7 +27,7 @@ export class DefiantVideoAnalysis {
   });
   if(replay)return this.read(actor,input.sourceId,input.analysisId||input.idempotencyKey);
   const budget=new GenerationBudget(this.store,{organizationId:this.strategy.organizationId,brandId:null});let reservation,result,error;
-  try{reservation=await budget.reserveGeneration();await budget.assertGenerationReservation(reservation);await this.strategy.raw(actor);result=await this.gateway.analyzeYouTubeVideo({sourceUrl:record.sourceUrl,window:record.window,recordings});}
+  try{reservation=await budget.reserveGeneration();await budget.assertGenerationReservation(reservation);await this.store.transact(['identity',this.strategy.key],([identity,state])=>{this.strategy.assertCurrent(identity,state,actor);const issued=state.inbox.analyses.find(a=>a.id===record.id),source=state.inbox.sources.find(s=>s.id===record.sourceId);if(issued?.status!=='running'||Date.parse(issued.deadlineAt)<=Date.parse(this.strategy.now())||source?.revision!==record.sourceRevision)throw fail(409,'Analysis admission changed; reload the saved request');return [identity,state];});result=await this.gateway.analyzeYouTubeVideo({sourceUrl:record.sourceUrl,window:record.window,recordings});}
   catch(e){error=e;}
   // An issued provider attempt is never repeated by replaying this request key.
   // A process interruption leaves its durable running record for explicit inspection.

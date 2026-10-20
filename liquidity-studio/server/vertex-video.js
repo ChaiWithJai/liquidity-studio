@@ -30,7 +30,7 @@ export async function analyzeYouTubeVideo(gateway,{sourceUrl,window,recordings=[
    let size=0,parts=[];for await(const chunk of response.body||[]){size+=chunk.length;if(size>128000){controller.abort();throw fail(502,'Video analysis response exceeded its limit');}parts.push(chunk);}
    stage='response-complete';
    const data=JSON.parse(Buffer.concat(parts).toString('utf8')),candidate=data.candidates?.[0];if(candidate?.finishReason!=='STOP')throw fail(502,'Video analysis returned no complete proposal');
-   const parsed=JSON.parse(candidate.content.parts.filter(p=>typeof p.text==='string').map(p=>p.text).join(''));if(Object.keys(parsed).some(k=>k!=='moments'))throw fail(502,'Video analysis returned unsupported fields');
+   const parsed=JSON.parse(candidate.content.parts.filter(p=>typeof p.text==='string'&&p.thought!==true).map(p=>p.text).join(''));if(Object.keys(parsed).some(k=>k!=='moments'))throw fail(502,'Video analysis returned unsupported fields');
    const usage=Object.fromEntries(['promptTokenCount','candidatesTokenCount','totalTokenCount'].filter(k=>Number.isSafeInteger(data.usageMetadata?.[k])&&data.usageMetadata[k]>=0).map(k=>[k,data.usageMetadata[k]]));
    return {moments:videoMoments(parsed.moments,window,recordings),trace:{...trace(),status:'success',usage}};
   })(),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(fail(504,'Video analysis outcome is unknown; retain this request'));},config.timeoutMs);})]);
