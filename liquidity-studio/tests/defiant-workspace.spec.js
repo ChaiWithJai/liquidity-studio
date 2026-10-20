@@ -103,7 +103,9 @@ test('guided talent intake previews without writes and retains artist collaborat
  const viewPlanning=workspace.getByRole('region',{name:'Shared planning',exact:true});await viewPlanning.getByText('Saved views',{exact:false}).first().click();await viewPlanning.getByLabel('Name this view',{exact:true}).fill('Owned graph layout');await viewPlanning.getByRole('button',{name:'Save current view',exact:true}).click();await expect(viewPlanning.getByRole('status')).toHaveText('View saved');
  const savedPosition=platform.store.get(key).views.find(view=>view.name==='Owned graph layout').positions[person.id];expect(savedPosition).toBeTruthy();
  await viewPlanning.getByRole('button',{name:'Owned graph layout',exact:true}).click();await page.reload();
- await expect.poll(()=>personNode.evaluate(node=>({x:parseFloat(node.style.left),y:parseFloat(node.style.top)}))).toEqual(savedPosition);
+ // CSSOM serializes percentage styles with limited decimal precision; the durable view stays exact.
+ expect(platform.store.get(key).views.find(view=>view.name==='Owned graph layout').positions[person.id]).toEqual(savedPosition);
+ await expect.poll(()=>personNode.evaluate((node,saved)=>Math.abs(parseFloat(node.style.left)-saved.x)<1e-4&&Math.abs(parseFloat(node.style.top)-saved.y)<1e-4,savedPosition)).toBe(true);
  expect(platform.store.get(key).graph).toEqual(imported.graph);
 
 

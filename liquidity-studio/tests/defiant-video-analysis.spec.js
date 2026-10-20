@@ -33,7 +33,7 @@ test('manager analyzes a source without files, saves an addressable moment and r
   await analysis.getByRole('button',{name:'Analyze YouTube source',exact:true}).click();
   await expect(analysis).toContainText('No suitable moments found in this window. Try another time range.');
   await expect(page).not.toHaveURL(/moment=/);await expect(analysis.getByLabel('Moment context',{exact:true})).toHaveCount(0);
-  await page.reload();await expect(analysis).toContainText('No suitable moments found in this window. Try another time range.');
+  await page.reload();await detail.getByText('AI-assisted moment proposals',{exact:true}).click();await expect(analysis).toContainText('No suitable moments found in this window. Try another time range.');
   await page.goto(momentUrl);await expect(analysis.getByLabel('Moment context',{exact:true})).toHaveValue('Manager revised context for later verification.');expect(calls).toBe(2);
   await analysis.getByRole('button',{name:'Use saved moment in clip settings'}).click();const clip=detail.getByRole('group',{name:'Create a source clip'});
   await expect(clip.getByLabel('Start (seconds)',{exact:true})).toHaveValue('9');await expect(clip.getByRole('button',{name:'Save segment',exact:true})).toBeDisabled();
