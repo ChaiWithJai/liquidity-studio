@@ -105,3 +105,12 @@ test('sample graph browsing is nonmutating and sample-only findings cannot becom
  await assert.rejects(f.service.saveReport(f.founder,{expectedRevision:before.revision,idempotencyKey:randomUUID(),report:{title:'Cannot save preview as owned',thesis:'',planIds:[artist.id]}}),{status:409});
  assert.deepEqual(f.store.get(f.service.key),before);await assert.rejects(f.service.graph(f.founder,{sample:'arbitrary'}),{status:400});
 });
+
+
+test('regional owned artist projection includes the actual collaborator relationship and its evidence',async t=>{
+ const f=await setup(t);await f.service.enable(f.founder,{});
+ const data={nodes:[{id:'owned:region',kind:'region',name:'Manager region'},{id:'owned:artist',kind:'artist',name:'Manager artist',regionId:'owned:region'},{id:'owned:person',kind:'person',name:'Manager collaborator',evidenceIds:['owned:evidence']}],edges:[{id:'owned:relationship',kind:'relationship',name:'Proposed collaboration',from:'owned:artist',to:'owned:person',evidenceIds:['owned:evidence']}],evidence:[{id:'owned:evidence',sourceUrl:'https://example.com/manager-source',title:'Manager supplied reference'}]};
+ await f.service.import(f.founder,{expectedRevision:1,idempotencyKey:randomUUID(),kind:'owned',data});
+ const graph=await f.service.graph(f.founder,{focusId:'owned:artist',selectedId:'owned:relationship'});
+ assert.ok(graph.nodes.some(n=>n.id==='owned:person'));const relationship=graph.edges.find(e=>e.id==='owned:relationship');assert.equal(relationship.from,'owned:artist');assert.equal(relationship.to,'owned:person');assert.equal(relationship.verification,'user-reported');assert.equal(relationship.derived,undefined);assert.equal(graph.selectedItem.evidence[0].id,'owned:evidence');assert.equal(graph.selectedItem.contextual,undefined);
+});
