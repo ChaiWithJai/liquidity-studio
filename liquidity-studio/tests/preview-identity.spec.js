@@ -113,14 +113,14 @@ test("S17–S21 identifies projection and locates measured text with current per
       .locator(".generation-review-context--editor")
       .evaluate((node) => getComputedStyle(node).position),
   ).toBe("static");
-  // The task area owns persistent context; nested source review must not form a second overlay.
+  // Campaign context and nested source review are static; neither may cover the focused target.
   const task = page.getByRole("region", {name:"Current editorial task"});
-  expect(await task.evaluate(node=>getComputedStyle(node).position)).toBe("sticky");
-  await task.getByRole("button",{name:"Review sources",exact:true}).focus();
+  expect(await task.evaluate(node=>getComputedStyle(node).position)).toBe("static");
+  await page.getByRole("button",{name:"Review sources",exact:true}).focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("#workflow-sources")).toBeFocused();
-  const bounds=await page.evaluate(()=>({bar:document.querySelector(".workflow-context").getBoundingClientRect().bottom,target:document.querySelector("#workflow-sources").getBoundingClientRect().top}));
-  expect(bounds.target).toBeGreaterThanOrEqual(bounds.bar);
+  const bounds=await page.evaluate(()=>({target:document.querySelector("#workflow-sources").getBoundingClientRect().top}));
+  expect(bounds.target).toBeGreaterThanOrEqual(0);
   await page.locator("details.sources > summary").click();
   await page.getByRole("button", { name: "Carousel 4 slides" }).click();
   await page.getByRole("button", { name: "Design Mode", exact: true }).click();
