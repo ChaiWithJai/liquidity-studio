@@ -260,11 +260,11 @@ form {
   padding: 10px 7px;
   background: #f8f9f2;
 }
-nav {
+.sidebar nav {
   display: grid;
   gap: 6px;
 }
-nav button {
+.sidebar nav button {
   display: flex;
   align-items: center;
   gap: 13px;
@@ -274,11 +274,11 @@ nav button {
   color: #5b695c;
   font-weight: 500;
 }
-nav button.active {
+.sidebar nav button.active {
   background: #dce5cb;
   color: #253b26;
 }
-nav button span {
+.sidebar nav button span {
   font-size: 19px;
 }
 .sidebar-bottom {
