@@ -770,7 +770,7 @@ export function createHttpServer(
         const dataset=await defiantDatasetProvider({organizationId,actor:user});
         if(!dataset)throw fail(404,"Defiant dataset is unavailable for this organization");
         const service=createDefiantUnifiedData({dataset,organizationId,authorize:async actor=>{await strategy.raw(actor);return true;}});
-        return json(200,await defiantUnifiedRequest({service,user,route,method:req.method,url}));
+        return json(200,await defiantUnifiedRequest({service,user,route,method:req.method,url,body}));
       }
       if (route.startsWith("/api/studio/strategy/")) {
         if (trustedTestMode) throw fail(404, "Strategy requires current organization identity");

@@ -1,11 +1,16 @@
 import {listGoldenPathways} from './defiant-golden-pathways.js';
 import {buildDefiantDemoView} from './defiant-demo-view.js';
 import {fail} from './auth.js';
-const resources=new Set(['manifest','artists','tracks','sources','campaigns','demand','royalties','opportunities','pathways','view']);
+const resources=new Set(['manifest','artists','tracks','sources','campaigns','demand','royalties','opportunities','regions','collaborators','rights','forecasts','pathways','view','domain']);
 /** Transport-only adapter. The injected facade owns authorization and data projection. */
-export async function defiantUnifiedRequest({service,user,route,method,url}) {
+export async function defiantUnifiedRequest({service,user,route,method,url,body}) {
  const match=/^\/api\/studio\/defiant-data\/([A-Za-z0-9_-]{1,128})\/([a-z]+)$/.exec(route);
  if(!match||!resources.has(match[2]))throw fail(404,'Unknown Defiant data resource');
+ if(match[2]==='domain'){
+  if(method!=='POST')throw fail(405,'Domain research requires an explicit read-only command');
+  if(url.search)throw fail(400,'Domain commands do not accept query filters');
+  return service.domain(user,body);
+ }
  if(method!=='GET')throw fail(405,'Defiant data resources are read-only');
  if(['pathways','view'].includes(match[2])) {
   const selection={},viewKeys=['artistId','trackId','sourceId','campaignId','opportunityId'];let pathwayId;

@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {DOMAIN_RESOURCES,normalizeDefiantDomain,queryDefiantDomain} from './defiant-domain.js';
 /** Read-only projection of an explicitly supplied, unverified reference dataset. */
 const RESOURCES = ['artists', 'tracks', 'sources', 'campaigns', 'opportunities'];
 const fail = (status, message) => Object.assign(new Error(message), { status });
@@ -22,6 +23,8 @@ function normalize(input) {
   if (!metadata || !['synthetic', 'user-reported'].includes(metadata.provenance)) throw fail(400, 'Dataset provenance required');
   if (metadata.asOf != null && (typeof metadata.asOf !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(metadata.asOf) || !Number.isFinite(Date.parse(metadata.asOf)))) throw fail(400, 'Invalid dataset date');
   const dataset = { id: id(metadata.id), label: text(metadata.label), provenance: metadata.provenance, asOf: metadata.asOf ?? null };
+  if(metadata.seed!==undefined)dataset.seed=text(metadata.seed,100);
+  if(metadata.reason!==undefined)dataset.reason=text(metadata.reason,500);
   const output = {};
   for (const resource of RESOURCES) {
     const rows = input[resource] ?? [];
@@ -33,9 +36,11 @@ function normalize(input) {
       if (seen.has(key)) throw fail(400, 'Duplicate dataset identifier');
       seen.add(key);
       const result = { id: key, [resource === 'artists' ? 'name' : 'title']: text(resource === 'artists' ? row.name : row.title), provenance: dataset.provenance, rightsStatus: 'unknown' };
-      if (resource === 'tracks') { result.artistId = id(row.artistId); if (row.isrc != null) result.isrc = text(row.isrc, 40); }
+      if (resource === 'tracks') { result.artistId = id(row.artistId); if (row.isrc != null) result.isrc = text(row.isrc, 40); if(row.genre!==undefined)result.genre=text(row.genre,100);if(row.releaseDate!==undefined){if(!/^\d{4}-\d{2}-\d{2}$/.test(row.releaseDate)||!Number.isFinite(Date.parse(row.releaseDate)))throw fail(400,'Invalid recording date');result.releaseDate=row.releaseDate;} }
       if (['sources', 'campaigns', 'opportunities'].includes(resource)) {
         if (row.trackId != null) result.trackId = id(row.trackId);
+        if(row.artistId!=null)result.artistId=id(row.artistId);
+        if(row.regionId!=null)result.regionId=id(row.regionId);
         if (resource === 'sources') result.trackIds = ids(row.trackIds ?? []);
         else result.sourceIds = ids(row.sourceIds ?? []);
       }
@@ -71,8 +76,9 @@ function normalize(input) {
     for (const key of row.sourceIds ?? []) if (!has('sources', key)) throw fail(400, 'Unknown source reference');
     if (row.campaignId && !has('campaigns', row.campaignId)) throw fail(400, 'Unknown campaign reference');
   }
+  Object.assign(output,normalizeDefiantDomain(input,{dataset,...output}));
   output.opportunities.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
-  dataset.counts = Object.fromEntries(RESOURCES.map(resource => [resource, output[resource].length]));
+  dataset.counts = Object.fromEntries(Object.keys(output).map(resource => [resource, output[resource].length]));
   dataset.revision = createHash('sha256').update(JSON.stringify({dataset,...output})).digest('hex');
   return { schemaVersion: 1, dataset, ...output, capabilities: CAPS };
 }
@@ -81,11 +87,15 @@ export function createDefiantUnifiedData({ dataset, organizationId, authorize } 
   const scope = Object.freeze({ organizationId: id(organizationId) });
   const projection = normalize(dataset); // detached allowlist: caller changes cannot alter this snapshot
   return Object.freeze({
+    async domain(actor,request) {
+      if (!await authorize(actor,scope)) throw fail(403,'Dataset access denied');
+      return queryDefiantDomain(projection,request);
+    },
     async read(actor, request = {}) {
       if (!await authorize(actor, scope)) throw fail(403, 'Dataset access denied');
       if (!request || typeof request !== 'object' || Array.isArray(request) || Object.keys(request).some(key => !['resource', 'id', 'query', 'cursor', 'limit'].includes(key))) throw fail(400, 'Invalid dataset read');
       const { resource = 'manifest', query, cursor, limit = 25 } = request;
-      if (!['manifest', ...RESOURCES, 'demand', 'royalties'].includes(resource) || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid dataset resource or limit');
+      if (!['manifest', ...RESOURCES, ...DOMAIN_RESOURCES].includes(resource) || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid dataset resource or limit');
       if (resource === 'manifest') {
         if (request.id != null || query != null || cursor != null) throw fail(400, 'Manifest does not accept filters');
         return structuredClone(projection);
@@ -94,8 +104,8 @@ export function createDefiantUnifiedData({ dataset, organizationId, authorize } 
       const selectedId = request.id == null ? null : id(request.id);
       if (cursor != null && (typeof cursor !== 'string' || !/^(0|[1-9]\d{0,5})$/.test(cursor))) throw fail(400, 'Invalid dataset cursor');
       const offset = cursor == null ? 0 : Number(cursor);
-      if (['demand', 'royalties'].includes(resource)) return structuredClone({ schemaVersion: 1, dataset: projection.dataset, resource, available: false, reason: 'No verified history or ledger supplied', items: [], total: 0, nextCursor: null, capabilities: CAPS });
-      const rows = projection[resource].filter(row => (!selectedId || row.id === selectedId) && (!needle || `${row.title ?? row.name} ${row.id}`.toLowerCase().includes(needle)));
+      if (!projection[resource]) return structuredClone({ schemaVersion: 1, dataset: projection.dataset, resource, available: false, reason: 'No history or ledger supplied for this resource', items: [], total: 0, nextCursor: null, capabilities: CAPS });
+      const rows = projection[resource].filter(row => (!selectedId || row.id === selectedId) && (!needle || `${row.title ?? row.name ?? ''} ${row.id}`.toLowerCase().includes(needle)));
       return structuredClone({ schemaVersion: 1, dataset: projection.dataset, resource, available: true, items: rows.slice(offset, offset + limit), total: rows.length, nextCursor: offset + limit < rows.length ? String(offset + limit) : null, capabilities: CAPS });
     }
   });

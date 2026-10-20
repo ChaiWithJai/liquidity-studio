@@ -2,6 +2,7 @@ import { z } from 'zod/v4';
 import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { listGoldenPathways } from './defiant-golden-pathways.js';
 import { buildDefiantDemoView } from './defiant-demo-view.js';
+import {registerDefiantDomainTools} from './defiant-domain-mcp.js';
 
 const RESOURCE_URI = 'ui://defiant/research-v1.html';
 const organizationId = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
@@ -28,7 +29,7 @@ export function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
   };
   registerAppTool(server, 'defiant_read_data', {
     title: 'Read Defiant reference data', description: 'Read a bounded reference resource. Does not fetch sources, infer rights or execute campaigns.',
-    inputSchema: z.object({ organizationId, resource: z.enum(['manifest', 'artists', 'tracks', 'sources', 'campaigns', 'demand', 'royalties', 'opportunities']), id: recordId.optional(), query: boundedText.optional(), cursor: z.string().regex(/^(0|[1-9]\d{0,5})$/).optional(), limit: z.number().int().min(1).max(100).optional() }).strict(),
+    inputSchema: z.object({ organizationId, resource: z.enum(['manifest', 'artists', 'tracks', 'sources', 'campaigns', 'demand', 'royalties', 'opportunities','regions','collaborators','rights','forecasts']), id: recordId.optional(), query: boundedText.optional(), cursor: z.string().regex(/^(0|[1-9]\d{0,5})$/).optional(), limit: z.number().int().min(1).max(100).optional() }).strict(),
     annotations, _meta: {},
   }, execute(({ service, actor }, { organizationId: _organizationId, ...request }) => service.read(actor, request)));
   registerAppTool(server, 'defiant_list_pathways', {
@@ -43,6 +44,7 @@ export function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
     inputSchema: z.object({ organizationId, pathwayId: z.enum(['catalog-to-campaign', 'talent-to-campaign', 'opportunity-to-plan']), selection: selection.optional() }).strict(),
     annotations, _meta: resourceUri ? { ui: { resourceUri } } : {},
   }, execute(async ({ service, actor }, input) => buildDefiantDemoView({ data: await service.read(actor, { resource: 'manifest' }), pathwayId: input.pathwayId, selection: input.selection })));
+  registerDefiantDomainTools(server,{execute});
   if (resourceUri) {
     const meta = { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [] } } };
     registerAppResource(server, 'Defiant guided research', resourceUri, { mimeType: RESOURCE_MIME_TYPE, _meta: meta }, async () => ({ contents: [{ uri: resourceUri, mimeType: RESOURCE_MIME_TYPE, text: uiHtml, _meta: meta }] }));
