@@ -1,0 +1,5 @@
+<script>
+ let {snapshots=[]}=$props();
+</script>
+{#if snapshots.length}<section class="moments" aria-label="Retained proposed moments"><h3>Proposed video moments</h3><p>Approximate planning times, not verified quotations, source approval or media permission.</p>{#each snapshots as entry(`${entry.analysisId}:${entry.moment.id}:${entry.moment.revision}`)}<article><h4>{entry.moment.startSeconds}–{entry.moment.endSeconds} seconds</h4><a href={entry.sourceUrl} target="_blank" rel="noopener noreferrer">Open analyzed source ↗</a><p class="context">{entry.moment.context}</p>{#if entry.recording}<p>Proposed recording: {entry.recording.title} · supplied, unverified</p>{/if}{#if entry.moment.recordingFit}<p><strong>Proposed recording fit:</strong> {entry.moment.recordingFit}</p>{/if}<small>Saved proposal revision {entry.moment.revision} · {entry.moment.savedAt}</small></article>{/each}</section>{/if}
+<style>.moments{margin:18px 0}.moments article{border-left:2px solid #bdcbb4;padding-left:12px;margin:14px 0}.moments p{line-height:1.6}.moments h4{margin:6px 0}.context{white-space:pre-wrap}.moments small{color:#69765f}</style>

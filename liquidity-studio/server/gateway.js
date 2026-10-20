@@ -1,3 +1,4 @@
+import {analyzeYouTubeVideo} from "./vertex-video.js";
 import { randomUUID } from "node:crypto";
 import { createLocalADCTokenProvider } from "./vertex-adc.js";
 import {
@@ -119,6 +120,29 @@ export class AIGateway {
     this.config = next;
     return this.getConfig();
   }
+
+  async vertexAccessToken(signal) {
+    let token = this.accessTokenProvider
+      ? await this.accessTokenProvider({ signal })
+      : process.env.GOOGLE_OAUTH_ACCESS_TOKEN;
+    if (!token && process.env.AI_VERTEX_USE_METADATA === "true") {
+      const response = await this.fetch(
+        "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+        { headers: { "Metadata-Flavor": "Google" }, signal },
+      );
+      if (!response.ok) throw new Error("Metadata identity unavailable");
+      token = (await response.json()).access_token;
+    }
+    if (!token && process.env.AI_VERTEX_USE_ADC === "true" && process.env.AI_VERTEX_USE_METADATA !== "true") {
+      if (process.env.K_SERVICE)
+        throw Object.assign(new Error("Local ADC is forbidden on Cloud Run"), { code: "PROVIDER_CONFIG_INVALID" });
+      this.adcTokenProvider ||= createLocalADCTokenProvider();
+      token = await this.adcTokenProvider({ signal });
+    }
+    return token;
+  }
+
+  async analyzeYouTubeVideo(input) { return analyzeYouTubeVideo(this,input); }
 
   async generateStructured({
     systemInstruction,
@@ -263,36 +287,7 @@ export class AIGateway {
           let token;
           let base;
           if (provider === "gcp-vertex") {
-            token = this.accessTokenProvider
-              ? await this.accessTokenProvider({ signal: controller.signal })
-              : process.env.GOOGLE_OAUTH_ACCESS_TOKEN;
-            if (!token && process.env.AI_VERTEX_USE_METADATA === "true") {
-              const tokenResponse = await this.fetch(
-                "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
-                {
-                  headers: { "Metadata-Flavor": "Google" },
-                  signal: controller.signal,
-                },
-              );
-              if (!tokenResponse.ok)
-                throw new Error("Metadata identity unavailable");
-              token = (await tokenResponse.json()).access_token;
-            }
-            if (
-              !token &&
-              process.env.AI_VERTEX_USE_ADC === "true" &&
-              process.env.AI_VERTEX_USE_METADATA !== "true"
-            ) {
-              if (process.env.K_SERVICE)
-                throw Object.assign(
-                  new Error("Local ADC is forbidden on Cloud Run"),
-                  { code: "PROVIDER_CONFIG_INVALID" },
-                );
-              this.adcTokenProvider ||= createLocalADCTokenProvider();
-              token = await this.adcTokenProvider({
-                signal: controller.signal,
-              });
-            }
+            token = await this.vertexAccessToken(controller.signal);
             base = vertexOpenAIBase(
               this.config.projectId,
               this.config.location,

@@ -1,9 +1,13 @@
+import {DefiantVideoAnalysis} from './defiant-video-analysis.js';
+import {AIGateway} from './gateway.js';
 import {DefiantClips} from './defiant-clips.js';
 import {DefiantYouTube,createYouTubeMetadataProvider} from './defiant-youtube.js';
 import {DefiantStrategyService} from './defiant-strategy.js';
 import {fail} from './auth.js';
 /** Mounted only after existing authentication, before brand-required publishing. */
 export async function strategyRequest({platform,user,route,method,body,url}){
+ const analysis=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/inbox\/analysis(?:\/(moments))?$/);
+ if(analysis){const service=new DefiantVideoAnalysis(new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId:analysis[1]}),platform.videoAnalysisGateway||new AIGateway());if(method==='GET'&&!analysis[2]){if([...url.searchParams.keys()].some(k=>k!=='sourceId'))throw fail(400,'Unsupported analysis query');return service.read(user,url.searchParams.get('sourceId'));}if(method==='POST'&&!analysis[2])return service.analyze(user,body);if(method==='POST'&&analysis[2]==='moments')return service.saveMoment(user,body);throw fail(405,'Unsupported analysis action');}
  const media=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/inbox\/clips(?:\/(uploads|uploads\/([a-f0-9-]{36})\/complete|proposals))?$/);
  if(media){const service=new DefiantClips(new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId:media[1]}));if(method==='GET'&&!media[2])return service.read(user,url.searchParams.get('sourceId'));if(method==='POST'&&media[2]==='uploads')return service.begin(user,body);if(method==='POST'&&media[3]){if(!body||Object.keys(body).length)throw fail(400,'Upload completion has no extra fields');return service.complete(user,media[3]);}if(method==='POST'&&media[2]==='proposals')return service.propose(user,body);throw fail(405,'Unsupported clip action');}
  const discovery=route.match(/^\/api\/studio\/strategy\/([A-Za-z0-9_-]{1,128})\/inbox\/discovery(?:\/(queries|run))?$/);

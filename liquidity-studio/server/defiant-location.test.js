@@ -46,3 +46,11 @@ test('ordered route IDs roundtrip with bounded syntax and stay out of publishing
  const published=new URL(workflowHref(url,{organizationId:'org_default',brandId:'brand_default',tab:'studio'}));assert.equal(published.searchParams.has('path'),false);
  for(const path of ['route:ab,route:ab','route:ab,<bad>',Array.from({length:17},(_,i)=>'edge:'+i).join(',')])assert.equal(readWorkflowLocation('http://localhost/?tab=strategy&path='+encodeURIComponent(path)).strategy.routeEdgeIds,undefined);
 });
+
+// Hosted contract: candidate identity survives reload without becoming campaign authority.
+test('analysis moment selection roundtrips with its source and is removed on campaign handoff',()=>{
+ const url=workflowHref('http://localhost/',{organizationId:'defiant_org',tab:'strategy',strategy:{view:'inbox',sourceId:'youtube:source',momentId:'moment:one'}});
+ const selected=readWorkflowLocation(url).strategy;assert.equal(selected.sourceId,'youtube:source');assert.equal(selected.momentId,'moment:one');
+ const draft=workflowHref(url,{organizationId:'org_default',brandId:'brand_default',tab:'studio'});assert.equal(new URL(draft).searchParams.has('moment'),false);
+ assert.equal(readWorkflowLocation('http://localhost/?tab=strategy&moment=%3Cscript%3E').strategy.momentId,undefined);
+});
