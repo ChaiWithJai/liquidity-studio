@@ -10,6 +10,8 @@ test('real Vertex video part carries canonical URL and actual absolute clipping 
 });
 test('out-of-window timestamps and failed video provider never become synthetic proposals',async()=>{
  const invalid=gateway(async()=>Response.json({candidates:[{finishReason:'STOP',content:{parts:[{text:JSON.stringify({moments:[{...payload.moments[0],startSeconds:5,endSeconds:25}]})}]}}]}));await assert.rejects(invalid.analyzeYouTubeVideo(input),{status:502});
- const failed=gateway(async()=>new Response('unavailable',{status:503}));await assert.rejects(failed.analyzeYouTubeVideo(input),{status:502});
+ const failed=gateway(async()=>new Response('unavailable',{status:503}));await assert.rejects(failed.analyzeYouTubeVideo(input),{status:502,providerOutcome:'failed'});
+ const rejected=gateway(async()=>new Response('quota',{status:429}));await assert.rejects(rejected.analyzeYouTubeVideo(input),{status:429,providerOutcome:'failed'});
+ const interrupted=gateway(async()=>{throw Error('transport interrupted');});await assert.rejects(interrupted.analyzeYouTubeVideo(input),{status:502,providerOutcome:'unknown'});
  let calls=0;const configured=new AIGateway({provider:'gcp-gemini',allowSynthetic:true,fetch:async()=>{calls++;}});await assert.rejects(configured.analyzeYouTubeVideo(input),{status:503});assert.equal(calls,0);
 });
