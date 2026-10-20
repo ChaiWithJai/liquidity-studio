@@ -22,7 +22,7 @@ test('manager analyzes a source without files, saves an addressable moment and r
  try{
   await page.goto(base+`/?org=${org.id}&tab=strategy&view=inbox&source=${encodeURIComponent(source.id)}`);
   await page.getByLabel('Username',{exact:true}).fill('moment-founder');await page.getByLabel('Password',{exact:true}).fill(password);await page.getByRole('button',{name:'Sign in →',exact:true}).click();
-  const detail=page.getByRole('complementary',{name:'Source inspector'}),analysis=detail.getByRole('region',{name:'Analyze source video'});
+  const detail=page.getByRole('complementary',{name:'Source inspector'}),analysis=detail.getByRole('region',{name:'Analyze source video'});await detail.getByText('AI-assisted moment proposals',{exact:true}).click();
   await analysis.getByRole('button',{name:'Analyze YouTube source',exact:true}).click();await expect(analysis).toContainText('Analysis ready. Review the proposed moments.');
   await analysis.getByLabel('Proposed in (seconds)',{exact:true}).fill('9');await analysis.getByLabel('Moment context',{exact:true}).fill('Manager revised context for later verification.');
   await expect(analysis.getByRole('link',{name:'Open source at proposed time ↗'})).toHaveAttribute('href',source.sourceUrl+'&t=9s');
@@ -33,7 +33,7 @@ test('manager analyzes a source without files, saves an addressable moment and r
   await analysis.getByRole('button',{name:'Analyze YouTube source',exact:true}).click();
   await expect(analysis).toContainText('No suitable moments found in this window. Try another time range.');
   await expect(page).not.toHaveURL(/moment=/);await expect(analysis.getByLabel('Moment context',{exact:true})).toHaveCount(0);
-  await page.reload();await expect(analysis).toContainText('No suitable moments found in this window. Try another time range.');
+  await page.reload();await detail.getByText('AI-assisted moment proposals',{exact:true}).click();await expect(analysis).toContainText('No suitable moments found in this window. Try another time range.');
   await page.goto(momentUrl);await expect(analysis.getByLabel('Moment context',{exact:true})).toHaveValue('Manager revised context for later verification.');expect(calls).toBe(2);
   await analysis.getByRole('button',{name:'Use saved moment in clip settings'}).click();const clip=detail.getByRole('group',{name:'Create a source clip'});
   await expect(clip.getByLabel('Start (seconds)',{exact:true})).toHaveValue('9');await expect(clip.getByRole('button',{name:'Save segment',exact:true})).toBeDisabled();
