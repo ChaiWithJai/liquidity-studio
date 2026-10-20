@@ -3,6 +3,7 @@ import { registerAppTool, registerAppResource, RESOURCE_MIME_TYPE } from '@model
 import { listGoldenPathways } from './defiant-golden-pathways.js';
 import { buildDefiantDemoView } from './defiant-demo-view.js';
 import {registerDefiantDomainTools} from './defiant-domain-mcp.js';
+import {registerDefiantDomainPrompts} from './defiant-domain-prompts.js';
 
 const RESOURCE_URI = 'ui://defiant/research-v1.html';
 const organizationId = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
@@ -45,6 +46,7 @@ export function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
     annotations, _meta: resourceUri ? { ui: { resourceUri } } : {},
   }, execute(async ({ service, actor }, input) => buildDefiantDemoView({ data: await service.read(actor, { resource: 'manifest' }), pathwayId: input.pathwayId, selection: input.selection })));
   registerDefiantDomainTools(server,{execute});
+  registerDefiantDomainPrompts(server);
   if (resourceUri) {
     const meta = { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [] } } };
     registerAppResource(server, 'Defiant guided research', resourceUri, { mimeType: RESOURCE_MIME_TYPE, _meta: meta }, async () => ({ contents: [{ uri: resourceUri, mimeType: RESOURCE_MIME_TYPE, text: uiHtml, _meta: meta }] }));

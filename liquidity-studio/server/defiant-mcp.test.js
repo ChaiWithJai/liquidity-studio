@@ -5,7 +5,7 @@ import { createDefiantUnifiedData } from './defiant-unified-data.js';
 const dataset = { dataset: { id: 'fictional', label: 'Fictional MCP contract', provenance: 'synthetic', asOf: null }, artists: [{ id: 'artist:a', name: 'Example Artist' }], tracks: [], sources: [], campaigns: [], opportunities: [] };
 function harness(options) {
   const tools = new Map(), resources = new Map();
-  const server = { registerTool(name, config, callback) { tools.set(name, { config, callback }); return {}; }, registerResource(name, uri, config, callback) { resources.set(uri, { config, callback }); return {}; } };
+  const server = { registerTool(name, config, callback) { tools.set(name, { config, callback }); return {}; }, registerResource(name, uri, config, callback) { resources.set(uri, { config, callback }); return {}; }, registerPrompt(){return {};} };
   const registration = registerDefiantTools(server, options);
   return { tools, resources, registration, call(name, args, context) { const tool = tools.get(name); return tool.callback(tool.config.inputSchema.parse(args), context); } };
 }
