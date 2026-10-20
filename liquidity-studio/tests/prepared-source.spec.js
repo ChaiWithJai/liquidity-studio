@@ -157,7 +157,7 @@ test("prepared Huda artwork opens first, saves edits, rejoins and explicitly pro
     const review = panel.getByRole('button', {name: 'Review saved draft and evidence', exact: true});
     await expect(review).toBeEnabled();
     const context = panel.locator('.prepared-source-context');
-    await expect(context).toContainText('Unreviewed source excerpts and labels. Check the full context before use.');
+    await expect(context).toHaveText('Preview copy uses shortened source excerpts, not complete quotations or conclusions. Open Evidence and unresolved questions for the full retrieved text, and review the copy before using it.');
     const [layoutBox, readingBox, workingBox, artworkBox, contextBox, reviewBox] = await Promise.all(
       [layout, reading, working, panel.getByAltText('Unreviewed source candidate artwork'), context, review].map(locator => locator.boundingBox()),
     );
