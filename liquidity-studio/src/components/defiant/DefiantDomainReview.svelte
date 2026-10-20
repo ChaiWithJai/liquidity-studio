@@ -68,7 +68,7 @@
     {:else}<p>Monthly observations were not supplied in this result. The period totals below remain available.</p>{/if}
     {#if regional}<dl class="metrics"><div><dt>Prior 3 months</dt><dd>{number(regional.baselineStreams)}</dd></div><div><dt>Recent 3 months</dt><dd>{number(regional.recentStreams)}</dd></div><div><dt>Change</dt><dd>{regional.growthRate===null?'No nonzero baseline':`${number(regional.growthRate*100)}%`}</dd></div></dl>{/if}
     <p class="small">Baseline: {view.regional.periods?.baseline?.join(', ')??'not supplied'}. Recent: {view.regional.periods?.recent?.join(', ')??'not supplied'}.</p>
-    <details><summary>Comparison method and assumptions</summary><p>{regional?.method??'Unavailable'}</p>{#each view.regional.assumptions??[] as assumption,index(`${index}:${assumption}`)}<p>{assumption}</p>{/each}</details>
+    <details><summary>Comparison method and assumptions</summary><p>{regional?.method??'Unavailable'}</p>{#each regional?.assumptions??[] as assumption,index(`${index}:${assumption}`)}<p>{assumption}</p>{/each}</details>
    </section>
    <section aria-labelledby="rights-heading">
     <h2 id="rights-heading">Linked rights &amp; royalties</h2>
