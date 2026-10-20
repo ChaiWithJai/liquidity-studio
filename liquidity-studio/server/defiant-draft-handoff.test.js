@@ -62,6 +62,6 @@ test('resume links require current destination access and a real matching draft 
  for(const change of [s=>{s.backlog=[];},s=>{s.backlog[0].draftBrief.reportRevision=99;},s=>{s.backlog[0].draftBrief.reportId='different-report';},s=>{s.backlog[0].draftBrief.organizationId='different-org';},s=>{s.editorRestore={status:'installing'};}]){
   f.store.update(key,()=>{const s=structuredClone(original);change(s);return s;});assert.deepEqual((await f.service.read(f.actor)).handoffs,[]);
  }
- f.store.update(key,()=>structuredClone(original));let revoke=true;f.store.get=async k=>{const value=get(k);if(k===key&&revoke){revoke=false;f.store.update('identity',s=>{s.memberships.find(m=>m.userId===f.actor.id&&m.organizationId===f.org.id).brandIds=[];return s;});}return value;};
+ f.store.update(key,()=>structuredClone(original));let revoke=true;f.store.get=k=>{const value=get(k);if(k===key&&revoke){revoke=false;f.store.update('identity',s=>{s.memberships.find(m=>m.userId===f.actor.id&&m.organizationId===f.org.id).brandIds=[];return s;});}return value;};
  assert.deepEqual((await f.service.read(f.actor)).handoffs,[]);
 });
