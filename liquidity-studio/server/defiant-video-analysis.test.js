@@ -27,3 +27,10 @@ test('unknown provider outcome retains issued intent without another call and so
  f.gateway.analyzeYouTubeVideo=async()=>{calls++;throw Object.assign(Error('quota rejected'),{status:429,providerOutcome:'failed'});};const explicitNew={...request,idempotencyKey:randomUUID()},rejected=await f.service.analyze(f.actor,explicitNew);assert.equal(rejected.analysis.status,'failed');assert.equal(rejected.analyses.find(a=>a.id===request.idempotencyKey).status,'unknown');await f.service.analyze(f.actor,explicitNew);assert.equal(calls,2,'Only the explicit new intent may issue another call');
  f.store.update('identity',identity=>{identity.memberships=identity.memberships.filter(m=>m.organizationId!==f.org.id);return identity;});await assert.rejects(f.service.read(f.actor,f.source.id),{status:403});
 });
+
+test('private provider detail stays in scoped storage and is absent from analysis and aggregate public DTOs',async t=>{
+ const f=await fixture(t);f.gateway.analyzeYouTubeVideo=async()=>{throw Object.assign(Error('rejected'),{status:502,providerOutcome:'failed',trace:{providerHttpStatus:400,googleErrorStatus:'INVALID_ARGUMENT'},privateDiagnostics:{googleErrorMessage:'Unsupported YouTube location; operator-only detail.'}});};
+ const request={sourceId:f.source.id,expectedSourceRevision:f.source.revision,idempotencyKey:randomUUID(),window:{startSeconds:0,endSeconds:60}},result=await f.service.analyze(f.actor,request),stored=f.store.get(f.strategy.key).inbox.analyses[0];
+ assert.match(stored.privateDiagnostics.googleErrorMessage,/operator-only detail/);assert.equal(result.analysis.trace.providerHttpStatus,400);
+ for(const dto of [result,await f.service.read(f.actor,f.source.id),await f.strategy.read(f.actor)]){assert.ok(!JSON.stringify(dto).includes('operator-only detail'));assert.ok(!JSON.stringify(dto).includes('privateDiagnostics'));}
+});

@@ -1,3 +1,4 @@
+import {publicAnalysis} from './defiant-video-analysis.js';
 import {clipKey} from './defiant-clips.js';
 import {readInbox,inboxPreview,importInbox,saveInboxMatch} from './defiant-inbox.js';
 import {resourceConfirmation} from './defiant-resource-confirmation.js';
@@ -34,6 +35,7 @@ export class DefiantStrategyService {
  }
  async read(actor){
   const {state,organization,membership}=await this.raw(actor),{receipts,...publicState}=clone(state),nodes=publicState.graph.nodes.map(n=>({...n,sourceId:n.seedRef||n.id})),edges=publicState.graph.edges.map(e=>({...e,sourceId:e.seedRef||e.id}));
+  if(publicState.inbox?.analyses)publicState.inbox.analyses=publicState.inbox.analyses.map(publicAnalysis);
   return {...publicState,items:[...nodes,...edges,...publicState.graph.clusters],regions:nodes.filter(n=>n.kind==='region'),artists:nodes.filter(n=>n.kind==='artist'),corridors:edges.filter(e=>e.kind==='route'),resources:publicState.resources.map(r=>({...nodes.find(n=>n.id===r.nodeId),...r})),destinations:organization.brands.filter(b=>membership.brandIds.includes(b.id)&&!['brand_default','brand_vedic'].includes(b.id)).map(({id,name})=>({id,name,socialConnectionVerified:false}))};
  }
 
