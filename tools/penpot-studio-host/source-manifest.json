@@ -7,7 +7,7 @@
     },
     "studio_host_test.cljs": {
       "destination": "frontend/test/frontend_tests/studio_host_test.cljs",
-      "sha256": "c140cea080d94c69ffd5e8c2aecba2fb0481b4132ff4e31c83c6dd84e8768cef"
+      "sha256": "f59dbf4233c979807342672636385c0ba3508b801245d84d7ac65a62b0a6eac5"
     },
     "studio_entry.cljs": {
       "destination": "frontend/src/app/main/ui/studio_entry.cljs",
@@ -15,7 +15,7 @@
     },
     "studio_panels.cljs": {
       "destination": "frontend/src/app/main/ui/studio_panels.cljs",
-      "sha256": "a017370f3b804b3a7a687c28fd0257e82c06fcb89744ceb831a0f4935c148e53"
+      "sha256": "2ea948aedb0a8067760b2e938652181dead23b29f43833c10677ed6e7dd05594"
     }
   },
   "files": {
