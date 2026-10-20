@@ -98,7 +98,7 @@ export class DefiantStrategyService {
   });return result;
  }
  async refreshReport(actor,reportId,input){
-  planningExact(input,['expectedRevision','idempotencyKey','expectedReportRevision','planIds','annotationIds','viewId','sourceRefs','matchRefs','clipRefs']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'refresh-report',reportId,input}),clipKeys=input.clipRefs?.length?[clipKey(this.organizationId)]:[];let result;
+  planningExact(input,['expectedRevision','idempotencyKey','expectedReportRevision','planIds','annotationIds','viewId','sourceRefs','matchRefs','clipRefs','momentRefs']);validatePlanningIntent(input);await this.authority(actor);const requestHash=hash({operation:'refresh-report',reportId,input}),clipKeys=input.clipRefs?.length?[clipKey(this.organizationId)]:[];let result;
   await this.store.transact(['identity',this.key,...clipKeys],([identity,state,clips])=>{
    planningMember(identity,actor,this.organizationId);const replay=planningReceipt(state,actor,input,requestHash,this.organizationId);if(replay){result=replay;return [identity,state,...(clipKeys.length?[clips]:[])];}
    const {expectedRevision,idempotencyKey,...selection}=input,record=reportRecord(state,selection,actor,this.now(),{refreshId:reportId,clips});state.reports=state.reports.filter(r=>r.id!==record.id);state.reports.push(record);result=planningAck(state,actor,input,requestHash,{report:record});return [identity,state,...(clipKeys.length?[clips]:[])];
