@@ -1434,13 +1434,14 @@
           <button class="secondary" onclick={loadScope}>Retry workspace</button>
         </div>
       {:else if tab === "backlog"}
-        <div class="section-line">
-          <div>
-            
-            <p id="backlog-results" class="muted" role="status" aria-live="polite" aria-atomic="true">Showing {workspaceState?.query.loaded ? workspaceState.query.filteredTotal : filteredStories.length} of {workspaceState?.query.loaded ? workspaceState.query.total : backlog.length} stories.{searchQuery ? ` Search: ${searchQuery}.` : ""}{statusFilter !== "All" ? ` Status: ${statusFilter}.` : ""}</p>
-          </div>
-          <div class="filters">
-            <input
+        <ResearchPage label="Story backlog workspace">
+        {#if workspaceClient}
+          <WorkspaceTable client={workspaceClient} scopeKey={workspaceClient.scopeKey} actorId={user.id} {canAdmin} {search} {statusFilter}
+            onQueryFilters={(filters) => { search = filters.search || ""; statusFilter = filters.statuses?.[0] || "All"; rememberBacklogView(); }}
+            onOpenStory={openStory}>
+            {#snippet filterControls()}
+              <div class="backlog-search">
+                <input
               bind:this={searchInput}
               aria-label="Search stories"
               aria-describedby="backlog-results"
@@ -1452,8 +1453,10 @@
                   >{status}</option
                 >{/each}</select
             >
-          </div>
-        </div>
+              </div>
+            {/snippet}
+            {#snippet querySummary()}
+            <p id="backlog-results" class="muted" role="status" aria-live="polite" aria-atomic="true">Showing {workspaceState?.query.loaded ? workspaceState.query.filteredTotal : filteredStories.length} of {workspaceState?.query.loaded ? workspaceState.query.total : backlog.length} stories.{searchQuery ? ` Search: ${searchQuery}.` : ""}{statusFilter !== "All" ? ` Status: ${statusFilter}.` : ""}</p>
         {#if filtersActive}
           <div class="active-filters" role="group" aria-label="Active filters">
             {#if searchQuery}<span class="status-tag">Search: {searchQuery}</span>{/if}
@@ -1461,11 +1464,10 @@
             <button class="secondary" onclick={clearFilters}>Clear filters</button>
           </div>
         {/if}
-        {#if workspaceClient}
-          <WorkspaceTable client={workspaceClient} scopeKey={workspaceClient.scopeKey} actorId={user.id} {canAdmin} {search} {statusFilter}
-            onQueryFilters={(filters) => { search = filters.search || ""; statusFilter = filters.statuses?.[0] || "All"; rememberBacklogView(); }}
-            onOpenStory={openStory} />
+            {/snippet}
+          </WorkspaceTable>
         {/if}
+        </ResearchPage>
         <details class="panel add-story">
           <summary>Add a story</summary>
           <form class="form-grid" onsubmit={addStory}>

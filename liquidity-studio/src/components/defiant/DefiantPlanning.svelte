@@ -13,7 +13,7 @@
  let sectionText=$state(normalizeSections()),baseSections=$state(normalizeSections());
  let handoffOpen=$state(false),wordingOpen=$state(true),handoffPanel=$state(null);
  let reportsOpen=$state(false),notesOpen=$state(false),reportForm,reportTitleInput;
- $effect(()=>{if(reportRequest){reportsOpen=true;void focusReportForm();}});
+ $effect(()=>{if(reportRequest)untrack(()=>newReport());});
  async function focusReportForm(){wordingOpen=true;await tick();if(reportForm?.isConnected){reportForm.scrollIntoView({behavior:'smooth',block:'start'});reportTitleInput?.focus({preventScroll:true});}}
  async function continueToDraft(){handoffOpen=true;await tick();handoffPanel?.scrollIntoView({behavior:'smooth',block:'start'});}
  function reportReturn(){return strategyReportReturn(location,report);}

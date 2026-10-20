@@ -1,4 +1,6 @@
 <script>
+  import ResearchPage from "./defiant/ResearchPage.svelte";
+  import ResearchToolbar from "./defiant/ResearchToolbar.svelte";
   import { onDestroy, untrack } from "svelte";
   let { request, scopeKey, onOpenStory = () => {} } = $props();
   let plan = $state(null),
@@ -10,6 +12,7 @@
     error = $state(""),
     notice = $state(""),
     retained = $state(null);
+  let newPlanOpen = $state(false);
   let loadSequence = 0,
     detailSequence = 0;
   let epoch = 0,
@@ -41,6 +44,7 @@
         notice =
           "Saved inputs changed. Review the current plan again before queueing.";
       }
+      if (!plan) newPlanOpen = list.jobs.length === 0;
       plan = nextPlan;
       jobs = list.jobs;
       if (activeId && active?.id === activeId && detail === detailSequence) {
@@ -88,6 +92,7 @@
       if (!current(captured)) return;
       detailSequence++;
       active = result.job;
+      newPlanOpen = false;
       retained = null;
       notice =
         result.dispatchError ||
@@ -130,6 +135,7 @@
     untrack(()=>{
     epoch++;
     plan = null;
+    newPlanOpen = false;
     jobs = [];
     active = null;
     selected = [];
@@ -151,23 +157,14 @@
   });
 </script>
 <section class="jobs-pane" aria-label="Durable operator jobs">
-  <header><div><h2>Campaign generation</h2><p>Select reviewed stories, then track their progress.</p></div><button onclick={load} disabled={pending}>Refresh jobs</button></header>
+  <ResearchPage label="Campaign jobs workspace"><ResearchToolbar label="Campaign jobs actions"><div class="jobs-heading"><h2>Campaign generation</h2><p>Track saved jobs or review a new plan.</p></div><button onclick={load} disabled={pending}>Refresh jobs</button></ResearchToolbar><div class="jobs-content">
   {#if error}<p role="alert">{error}</p>{/if}
   {#if notice}<p role="status">{notice}</p>{/if}
   {#if retained && pending}<p role="status">Saving job request…</p>
   {:else if retained}<aside role="alert">The response may have been lost. Retry the same request before changing this plan. <button disabled={pending} onclick={()=>submit(retained.path,retained.body)}>Retry same job request</button></aside>{/if}
   {#if !plan}{#if error}<p>Job configuration is unavailable. Refresh after the operator resolves it.</p>{:else}<p role="status">Loading campaign prerequisites…</p>{/if}
-  {:else}
-    <details open={!active}><summary>Review a new campaign plan</summary><section aria-label="Reviewed job plan"><h3>Plan · up to {plan.maxItems} campaigns</h3><p>{plan.dispatcher.message}</p><p>Each campaign produces four formats. Sources, access and limits are rechecked before generation. Retrying an interrupted provider call may incur another charge.</p>
-      <fieldset disabled={pending||!!retained}><legend>Select saved source-backed stories</legend>
-        {#each plan.stories as story (story.id)}<label class="plan-story"><input type="checkbox" aria-label={`Plan ${story.title}`} checked={selected.includes(story.id)} disabled={story.sourceReadiness!=='approved'||(!selected.includes(story.id)&&selected.length>=plan.maxItems)} onchange={event=>toggle(story.id,event.currentTarget.checked)}/><span>{story.title} · revision {story.revision} · {story.sourceReadiness==='approved'?'sources approved':'source review required'}</span></label>{/each}
-        {#if !plan.stories.length}<p>No stories in this brand. Add a story and review its sources first.</p>{/if}
-        <label class="review-confirmation"><input type="checkbox" bind:checked={reviewed}/>I reviewed these {selected.length} campaigns and their saved input revisions.</label>
-      </fieldset><button disabled={pending||!!retained||!reviewed||!selected.length||!plan.dispatcher.configured} onclick={queue}>Queue reviewed plan</button>
-    </section>
-    </details><section aria-label="Job history"><h3>Job history</h3>{#if !jobs.length}<p>No jobs yet. Queue a reviewed plan above.</p>{:else}<ul>{#each jobs as job (job.id)}<li><button data-job-id={job.id} disabled={pending} onclick={()=>openJob(job.id)}>{job.itemCount} campaigns · {job.state} · {new Date(job.createdAt).toLocaleString()}</button></li>{/each}</ul>{/if}</section>
   {/if}
-  {#if active}<section aria-label="Job details"><h3>Job details</h3><details><summary>Job identity</summary><p>Job {active.id} · Requested by {active.requestedBy || "a workspace member"}</p></details><p>State: {active.state} · saved {active.updatedAt}</p><p>Delivery: {active.outbox.state}. {active.outbox.state==='pending'?'A separate worker must pick up this persisted plan. Refreshing the page does not execute it.':''}</p>
+  {#if plan || active || jobs.length}<div class="jobs-layout"><section class="job-history" aria-label="Job history"><h3>Job history</h3>{#if !jobs.length}<p>No jobs yet. Review a new plan to get started.</p>{:else}<ul>{#each jobs as job (job.id)}<li><button class:job-selected={active?.id===job.id} aria-pressed={active?.id===job.id} data-job-id={job.id} disabled={pending} onclick={()=>openJob(job.id)}>{job.itemCount} campaigns · {job.state} · {new Date(job.createdAt).toLocaleString()}</button></li>{/each}</ul>{/if}</section><div class="job-workspace">  {#if active}<section class="job-detail" aria-label="Job details"><h3>Job details</h3><details><summary>Job identity</summary><p>Job {active.id} · Requested by {active.requestedBy || "a workspace member"}</p></details><p>State: {active.state} · saved {active.updatedAt}</p><details class="job-implementation"><summary>Delivery details · {active.outbox.state}</summary><p>{active.outbox.state==='pending'?'A separate worker must pick up this persisted plan. Refreshing the page does not execute it.':'Delivery state recorded by the worker.'}</p></details>
     {#if active.accountingWarning}<p role="alert">{active.accountingWarning}</p>{/if}
     <button disabled={active.canControl===false||pending||!!retained||active.state==='completed'||active.state==='cancelled'} onclick={()=>control('cancel')}>Cancel unfinished items</button>
     {#if active.items.some(item=>['cancelled','paused'].includes(item.state))}<button disabled={active.canControl===false||pending||!!retained} onclick={()=>control('resume')}>Resume paused or cancelled items</button>{/if}
@@ -177,85 +174,28 @@
       {#if item.attempts.some(attempt=>attempt.providerOutcome)}<details><summary>Attempt usage history</summary><ul>{#each item.attempts.filter(attempt=>attempt.providerOutcome) as attempt (attempt.id)}<li>{attempt.state} · output mode {attempt.providerOutcome.mode} · {attempt.providerOutcome.committed?'committed':'not committed'} · reported usage {attempt.providerOutcome.usage?JSON.stringify(attempt.providerOutcome.usage):'unknown or not reported'}</li>{/each}</ul></details>{/if}
       {#if ['failed','unknown','conflict'].includes(item.state)}<button disabled={active.canControl===false||pending||!!retained} onclick={()=>control('retry',[item.id])}>Retry this item with reviewed inputs</button><p>Changed input revisions require a new reviewed plan. An unknown provider attempt may be billed again.</p>{/if}
     </li>{/each}</ol>
-  </section>{/if}
+  </section>{:else}<section class="job-detail job-empty" aria-label="Job selection"><h3>{jobs.length ? "Select a saved job" : "No saved jobs yet"}</h3><p>{jobs.length ? "Choose a job from history to see its progress, results and available actions." : "Review a new campaign plan below. Queueing requires saved source review and configured delivery."}</p></section>{/if}
+  {#if plan}    <details class="new-plan" bind:open={newPlanOpen}><summary>Review a new campaign plan</summary><section aria-label="Reviewed job plan"><h3>Plan · up to {plan.maxItems} campaigns</h3><p class="dispatcher-state" role="status">{plan.dispatcher.configured ? "Delivery ready" : "Delivery unavailable"}</p><details class="job-implementation"><summary>Delivery configuration</summary><p>{plan.dispatcher.message}</p></details><p>Each campaign produces four formats. Sources, access and limits are rechecked before generation. Retrying an interrupted provider call may incur another charge.</p>
+      <fieldset disabled={pending||!!retained}><legend>Select saved source-backed stories</legend>
+        {#each plan.stories as story (story.id)}<label class="plan-story"><input type="checkbox" aria-label={`Plan ${story.title}`} checked={selected.includes(story.id)} disabled={story.sourceReadiness!=='approved'||(!selected.includes(story.id)&&selected.length>=plan.maxItems)} onchange={event=>toggle(story.id,event.currentTarget.checked)}/><span>{story.title} · revision {story.revision} · {story.sourceReadiness==='approved'?'sources approved':'source review required'}</span></label>{/each}
+        {#if !plan.stories.length}<p>No stories in this brand. Add a story and review its sources first.</p>{/if}
+        <label class="review-confirmation"><input type="checkbox" bind:checked={reviewed}/>I reviewed these {selected.length} campaigns and their saved input revisions.</label>
+      </fieldset><button disabled={pending||!!retained||!reviewed||!selected.length||!plan.dispatcher.configured} onclick={queue}>Queue reviewed plan</button>
+    </section>
+    </details>{/if}</div></div>{/if}
+  </div></ResearchPage>
 </section>
 <style>
-  .jobs-pane {
-    display: grid;
-    gap: 1.2rem;
-    color: var(--text, #17202a);
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    align-items: start;
-  }
-  section section,
-  aside {
-    border: 1px solid var(--border, #b8c3cf);
-    border-radius: 12px;
-    padding: 1rem;
-    background: var(--surface, #fff);
-  }
-  h2,
-  h3 {
-    margin: 0 0 0.6rem;
-  }
-  p {
-    line-height: 1.5;
-    overflow-wrap: anywhere;
-  }
-  button {
-    min-height: 40px;
-    padding: 0.5rem 0.8rem;
-    margin: 0.2rem;
-    border: 1px solid #64748b;
-    border-radius: 7px;
-    background: #f1f5f9;
-    color: #17202a;
-    cursor: pointer;
-  }
-  button:disabled {
-    opacity: 0.55;
-    cursor: default;
-  }
-  button:focus-visible,
-  input:focus-visible {
-    outline: 3px solid #2563eb;
-    outline-offset: 3px;
-  }
-  fieldset {
-    display: grid;
-    gap: 0.7rem;
-    margin-bottom: 1rem;
-  }
-  .plan-story, .review-confirmation {
-    display: flex;
-    flex-direction:row;
-    font-size:14px;
-    font-weight:400;
-    gap: 0.6rem;
-    align-items: start;
-  }
-  input[type="checkbox"] {
-    min-width: 20px;
-    min-height: 20px;
-  }
-  li {
-    margin-bottom: 0.8rem;
-    overflow-wrap: anywhere;
-  }
-  [role="alert"] {
-    border-left: 4px solid #b45309;
-    padding-left: 0.8rem;
-  }
-  @media (max-width: 650px) {
-    header {
-      display: block;
-    }
-    section section {
-      padding: 0.8rem;
-    }
-  }
+.jobs-pane{container-type:inline-size;min-width:0}
+.jobs-heading{flex:1;min-width:200px}.jobs-heading h2{margin:0;font-size:18px}.jobs-heading p{margin:4px 0 0;font-size:12px;color:var(--research-muted)}
+.jobs-content{padding:16px}.jobs-content>p,.jobs-content>aside{margin:0 0 12px;font-size:13px}
+.jobs-layout{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:16px;align-items:start}.job-workspace{min-width:0;display:grid;gap:16px}
+.job-history,.job-detail,.new-plan{min-width:0;border:1px solid var(--research-line);border-radius:8px;background:var(--research-surface);padding:14px}
+.job-history ul,.job-detail ol{list-style:none;margin:12px 0 0;padding:0}.job-history li{margin:0 0 6px}.job-history button{width:100%;text-align:left;justify-content:flex-start;white-space:normal}.job-history button.job-selected{background:var(--research-selected);border-color:var(--research-accent)}
+.job-detail li{padding:12px 0;border-top:1px solid var(--research-line);overflow-wrap:anywhere}.job-detail p,.new-plan p,.job-history p{font-size:13px;overflow-wrap:anywhere}.job-detail button{margin:4px 4px 4px 0}.job-implementation{margin:10px 0}.job-implementation p{color:var(--research-muted)}
+.new-plan>summary{padding:2px 0}.new-plan>section{padding-top:14px}.dispatcher-state{font-weight:600}
+fieldset{display:grid;gap:12px;margin:12px 0;padding:12px;border:1px solid var(--research-line);min-width:0}
+.plan-story,.review-confirmation{display:flex;flex-direction:row;gap:10px;align-items:start;font-size:13px;font-weight:400}.jobs-pane input[type="checkbox"]{min-width:20px;min-height:20px;flex:none}
+[role="alert"]{border-left:3px solid var(--accent,#e85d04);padding:8px 12px;background:var(--research-surface)}
+@container(max-width:740px){.jobs-layout{grid-template-columns:minmax(0,1fr)}.jobs-content{padding:12px}.job-history ul{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px}.job-history li{margin:0}}
 </style>
