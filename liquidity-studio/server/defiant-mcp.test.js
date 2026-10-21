@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registerDefiantTools } from './defiant-mcp.js';
 import { createDefiantUnifiedData } from './defiant-unified-data.js';
+import {generateDefiantSyntheticDataset} from './defiant-synthetic-dataset.js';
 const dataset = { dataset: { id: 'fictional', label: 'Fictional MCP contract', provenance: 'synthetic', asOf: null }, artists: [{ id: 'artist:a', name: 'Example Artist' }], tracks: [], sources: [], campaigns: [], opportunities: [] };
 function harness(options) {
   const tools = new Map(), resources = new Map();
@@ -52,4 +53,17 @@ test('only explicit static HTML registers an MCP Apps resource; errors never exp
   for (const { config } of host.tools.values()) assert.deepEqual(config.annotations, { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
   assert.throws(() => harness({}));
   assert.throws(() => harness({ resolveService: () => {}, uiHtml: '' }));
+});
+
+test('MCP manifest is compact authorized metadata while records stay paginated and internal guided data remains intact',async()=>{
+ let allowed=true;const service=createDefiantUnifiedData({dataset:generateDefiantSyntheticDataset(),organizationId:'org_a',authorize:actor=>actor==='person:a'&&allowed});
+ const host=harness({resolveService:async()=>({service,actor:'person:a'})});
+ const reply=await host.call('defiant_read_data',{organizationId:'org_a',resource:'manifest'}),data=reply.structuredContent;
+ assert.deepEqual(Object.keys(data).sort(),['capabilities','dataset','resources','schemaVersion','scope']);
+ assert.equal(data.dataset.counts.demand,2592);assert.equal(data.dataset.counts.royalties,432);assert.ok(Buffer.byteLength(JSON.stringify(reply))<16384);
+ assert.deepEqual(data.resources.find(row=>row.resource==='demand'),{resource:'demand',count:2592});
+ const page=await host.call('defiant_read_data',{organizationId:'org_a',resource:'demand',limit:25});assert.equal(page.structuredContent.items.length,25);assert.equal(page.structuredContent.nextCursor,'25');assert.equal(page.structuredContent.dataset.revision,data.dataset.revision);
+ const internal=await service.read('person:a',{resource:'manifest'});assert.equal(internal.demand.length,2592);assert.equal(internal.dataset.revision,data.dataset.revision);
+ const guided=await host.call('defiant_open_guided_view',{organizationId:'org_a',pathwayId:'catalog-to-campaign',selection:{artistId:'artist:fictional-1',trackId:'track:fictional-1-1'}});assert.equal(guided.isError,undefined);assert.equal(guided.structuredContent.selectedRecords.tracks.id,'track:fictional-1-1');
+ allowed=false;const denied=await host.call('defiant_read_data',{organizationId:'org_a',resource:'manifest'});assert.equal(denied.isError,true);assert.equal(denied.structuredContent,undefined);
 });

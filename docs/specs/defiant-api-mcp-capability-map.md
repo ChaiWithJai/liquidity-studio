@@ -48,3 +48,7 @@ Named read-only tools must answer artist overview,regional opportunity discovery
 5. Record actual tool consumption of this complete fixture, then compare the app view of the same result. A registered MCP config,protocol fixture or old campaign-only read is not completion. Native host availability and manual protocol consumption stay separately labelled.
 
 No new approval loop is needed: this correction implements the owner's stated standard. No local installs,builds,suites or model execution; hosted verification and independent review remain mandatory.
+
+### MCP manifest response bound
+
+`defiant_read_data` with `resource: 'manifest'` returns authorized dataset metadata, capabilities and resource counts, not collection rows. Use the named resources and their existing bounded pagination to inspect records. This is a protocol response projection after the same current-authority read. Internal service and REST manifests retain their existing full normalized shape so existing guided-view consumers remain compatible; this patch does not claim the REST manifest is compact.

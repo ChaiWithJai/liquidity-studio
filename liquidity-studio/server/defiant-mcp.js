@@ -33,10 +33,15 @@ export function registerDefiantTools(server, { resolveService, uiHtml, domainUiH
     }
   };
   registerAppTool(server, 'defiant_read_data', {
-    title: 'Read Defiant reference data', description: 'Read a bounded reference resource. Does not fetch sources, infer rights or execute campaigns.',
+    title: 'Read Defiant reference data', description: 'Read a bounded reference resource. Manifest returns dataset metadata and resource counts only; request each named resource for paginated records. Does not fetch sources, infer rights or execute campaigns.',
     inputSchema: z.object({ organizationId, resource: z.enum(['manifest', 'artists', 'tracks', 'sources', 'campaigns', 'demand', 'royalties', 'opportunities','regions','collaborators','rights','forecasts']), id: recordId.optional(), query: boundedText.optional(), cursor: z.string().regex(/^(0|[1-9]\d{0,5})$/).optional(), limit: z.number().int().min(1).max(100).optional() }).strict(),
     annotations, _meta: {},
-  }, execute(({ service, actor }, { organizationId: _organizationId, ...request }) => service.read(actor, request)));
+  }, execute(async ({ service, actor }, { organizationId: _organizationId, ...request }) => {
+    const data=await service.read(actor,request);
+    if(request.resource!=='manifest')return data;
+    // Protocol metadata projection only: internal/REST manifests and guided reads stay unchanged.
+    return {schemaVersion:data.schemaVersion,dataset:data.dataset,capabilities:data.capabilities,resources:Object.entries(data.dataset.counts).map(([resource,count])=>({resource,count}))};
+  }));
   registerAppTool(server, 'defiant_list_pathways', {
     title: 'List Defiant research pathways', description: 'List finite guided research pathways for the authorized reference dataset.',
     inputSchema: z.object({ organizationId }).strict(), annotations, _meta: {},
