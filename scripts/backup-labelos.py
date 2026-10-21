@@ -11,15 +11,17 @@ def main():
  keypath=Path(args.key_file);st=keypath.lstat()
  if not keypath.is_file() or keypath.is_symlink() or st.st_uid!=os.getuid() or st.st_mode&0o077:raise SystemExit('Credential must be an owner-only regular file')
  key=keypath.read_text().strip();out=Path(args.output);out.mkdir(mode=0o700,parents=True,exist_ok=True);os.chmod(out,0o700);rawdir=out/'raw';rawdir.mkdir(mode=0o700,exist_ok=True)
- mf=out/'manifest.private.json';manifest=json.loads(mf.read_text()) if mf.exists() else {'schemaVersion':1,'source':'labelos','environment':'sandbox','baseUrl':BASE,'startedAt':now(),'status':'in-progress','atomicSnapshot':False,'requests':[],'resources':{},'qualification':'API-visible data export, not a provider database backup. Captured over a time interval.'}
+ mf=out/'manifest.private.json';manifest=json.loads(mf.read_text()) if mf.exists() else {'schemaVersion':1,'source':'labelos','environment':'sandbox','baseUrl':BASE,'startedAt':now(),'status':'in-progress','atomicSnapshot':False,'requests':[],'resources':{},'qualification':'API-visible catalog, unfiltered period summaries/breakdowns and global daily-series export over a capture interval; not an atomic provider database backup. Filtered cross-dimensional fact combinations are not exhaustively exported.'}
  def save():write(mf,(json.dumps(manifest,indent=2)+'\n').encode())
- save();last=[0.];calls=[0]
+ manifest.setdefault('resumeHistory',[]).append({'at':now(),'previousStatus':manifest['status']});manifest['status']='in-progress';save();last=[0.];calls=[0]
  def request(path,params=None,refresh=False):
   params=params or {};url=BASE+path+('?' + urllib.parse.urlencode(params) if params else '')
   for entry in manifest['requests']:
-   if not refresh and entry['url']==url and entry['status']==200:
+   if not refresh and entry['url']==url and entry['status'] in [200,422]:
     data=(out/entry['file']).read_bytes()
     if hashlib.sha256(data).hexdigest()!=entry['sha256']:raise RuntimeError('Backup checksum mismatch')
+    if entry['status']==422:
+     error=RuntimeError('Provider request failed (422)');error.status=422;error.payload=json.loads(data);raise error
     return json.loads(data)
   if calls[0]>=args.max_requests:raise RuntimeError('Request budget reached; resume the export later')
   time.sleep(max(0,1.15-(time.monotonic()-last[0])));last[0]=time.monotonic();calls[0]+=1
@@ -48,10 +50,11 @@ def main():
    if not next_cursor or next_cursor in seen:raise RuntimeError('Missing or repeated pagination cursor')
    seen.add(next_cursor);cursor=next_cursor
  def metrics_for(name,path,params,paginated):
-  metrics=list(cap['metrics']);excluded=[]
+  if manifest['resources'].get(name,{}).get('complete'):return
+  metrics=list(cap['metrics']);excluded=[];sort_metric=None
   while metrics:
    try:
-    query={**params,'metrics':','.join(metrics),**({'limit':500} if paginated else {})}
+    query={**params,'metrics':','.join(metrics),**({'limit':500} if paginated else {}),**({'sort':sort_metric} if sort_metric else {})}
     if paginated:paged(name,path,query)
     else:
      d=request(path,query);manifest['resources'][name]={'path':path,'query':query,'rows':len(d['data']) if isinstance(d.get('data'),list) else 1,'complete':True};save()
@@ -60,7 +63,11 @@ def main():
     detail=getattr(e,'payload',{}).get('error',{}).get('details',{})
     metric=detail.get('metric')
     if getattr(e,'status',None)==422 and metric in metrics:
-     metrics.remove(metric);excluded.append(metric);continue
+     metrics.remove(metric);excluded.append(metric)
+     if sort_metric==metric:sort_metric=None
+     continue
+    if getattr(e,'status',None)==422 and detail.get('parameter')=='sort' and 'sort is required' in getattr(e,'payload',{}).get('error',{}).get('message','') and not sort_metric:
+     sort_metric='quantity' if 'quantity' in metrics else metrics[0];continue
     raise
   raise RuntimeError('No supported metrics')
  try:

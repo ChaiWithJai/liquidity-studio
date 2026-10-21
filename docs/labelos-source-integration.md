@@ -26,7 +26,7 @@ Observed coverage: 2025-01-02 through 2026-10-19. API capabilities report24metri
 
 `scripts/backup-labelos.py --key-file /absolute/private/key --output /absolute/private/backup`
 
-Creates an owner-only directory containing exact raw JSON, timestamped GET/query receipts, per-file SHA256, coverage/capabilities, paging counts and a completion ledger. Can resume using already captured successful URLs and checksums. Preserves unsupported-query error responses as evidence. Stops on unexpected errors or a request budget; incomplete exports are labelled incomplete. It is an API export over a capture interval, **not an atomic provider database backup**. It currently stops rather than truncates coverage that requires24-month window splitting. Credentials and source payloads stay outside the repository.
+Creates an owner-only directory containing exact raw JSON, timestamped GET/query receipts, per-file SHA256, coverage/capabilities, paging counts and a completion ledger. Can resume using already captured successful URLs and checksums. Preserves unsupported-query error responses as evidence. Stops on unexpected errors or a request budget; incomplete exports are labelled incomplete. It is an API export over a capture interval, **not an atomic provider database backup**. Scope is full catalog pagination, unfiltered period summaries/breakdowns for supported metric combinations, and the global daily series. It does not exhaustively export every filtered track × country × date combination from the underlying provider fact store. Some breakdowns require an explicit sort metric; validation errors are retained and used to choose a supported query, not treated as missing data. It currently stops rather than truncates coverage that requires24-month window splitting. Credentials and source payloads stay outside the repository.
 
 ## Verification and rollout
 
@@ -34,3 +34,7 @@ Creates an owner-only directory containing exact raw JSON, timestamped GET/query
 - `labelos-source.test.js` contains boundary, scope, secret-redaction and provider-error contracts for hosted CI.
 - Release requires exact-head hosted validation plus private secret/org configuration and authenticated API acceptance. No shared deployment is changed from the side conversation. The parent source branch/runtime is preserved.
 - Next domain-tool work: map provider catalog identifiers and capability-specific analytics into typed domain operations, preserving date/territory/platform grain. Country analytics must not be presented as US-state/New Jersey demand. Add rights and statement providers separately when available.
+
+## Catalog join audit
+
+The captured catalog contains2,566distinctartistIDs,2,233distinctreleaseIDs and8,001distincttrackIDs, with alltrack release references present. Only5,264track artist strings have an exact unique catalog-name candidate;2,737do not. Names are not authoritative IDs. Preserve native identifiers and source labels; do not silently turn these candidates into verified artist joins. Full catalog/analytics reconciliation remains separate from a successful transport connection.
