@@ -30050,7 +30050,7 @@ var recordId = external_exports.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Z
 var organizationId = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 function registerDefiantDomainTools(server, { execute }) {
   const definitions3 = [
-    ["defiant_artist_overview", "Artist portfolio overview", "Join an explicit artist to recordings, collaborators, regional demand and royalty totals. Synthetic observations are not actual performance.", "artist-overview", { artistId: recordId }],
+    ["defiant_artist_overview", "Artist portfolio overview", "Join an explicit artist to recordings, collaborators, regional demand and royalty totals.", "artist-overview", { artistId: recordId }],
     ["defiant_detect_regional_opportunities", "Detect regional opportunities", "Rank recording-region pairs using three recent versus three prior complete monthly observations. Return the explicit heuristic and evidence, never an execution recommendation.", "regional-opportunities", { artistId: recordId.optional(), regionId: recordId.optional(), limit: external_exports.number().int().min(1).max(25).optional() }],
     ["defiant_explain_opportunity", "Explain a regional opportunity", "Explain an explicit recording and region using the same evidence and score as detection, with simulated rights context and human review required.", "explain-opportunity", { trackId: recordId, regionId: recordId }],
     ["defiant_inspect_rights_and_royalties", "Inspect rights and royalties", "Inspect reconciled monthly streams, integer-cent royalty splits and simulated territory restrictions. Simulated-clear is not actual clearance; this tool cannot approve rights.", "rights-and-royalties", { trackId: recordId, territory: external_exports.string().min(1).max(12).optional() }],
@@ -30074,7 +30074,7 @@ var definitions2 = [
 ].map((pathway) => ({ ...pathway, requiredInputs: ["artistId", "budgets"], toolSequence }));
 var copy3 = (value) => structuredClone(value);
 var id3 = (value) => typeof value === "string" && value.length <= 160 && /^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(value);
-var DEFIANT_DOMAIN_INSTRUCTIONS = "Use the unified data layer to identify an artist and catalog, then the media-and-entertainment domain tools to inspect regional demand and linked royalties/rights, then the governed pathway to compare explicit illustrative scenarios and produce a human-review packet. Trace claims to returned evidence IDs and periods. All demonstration data is fictional; baseline/scenario math is deterministic and untrained, not measured real-world demand or a financial forecast. Simulated rights statuses never constitute actual approval. Do not invent missing records, execute campaigns, approve rights or imply Databricks/Foundry integration.";
+var DEFIANT_DOMAIN_INSTRUCTIONS = "Use the unified data layer to identify an artist and catalog, then the media-and-entertainment domain tools to inspect regional demand and linked royalties/rights, then the governed pathway to compare explicit illustrative scenarios and produce a human-review packet. Trace claims to returned evidence IDs and periods. The demo uses synthetic data. State that once when introducing the dataset; do not repeat the disclosure in every sentence or record label. Focus on the business question and returned evidence. The baseline/scenario math is deterministic and untrained, not measured real-world demand or a financial forecast. Simulated rights statuses never constitute actual approval. Do not invent missing records, execute campaigns, approve rights or imply Databricks/Foundry integration.";
 var listDefiantDomainPathways = () => copy3(definitions2);
 function getDefiantDomainPathway(pathwayId) {
   const found = definitions2.find((pathway) => pathway.id === pathwayId);
@@ -30118,7 +30118,7 @@ async function runDefiantDomainPathway(service, actor, input) {
   const explanation = await read({ operation: "explain-opportunity", trackId: candidate.trackId, regionId: candidate.regionId });
   const scenarioComparison = await read({ operation: "compare-scenarios", trackId: candidate.trackId, regionId: candidate.regionId, budgets: copy3(input.budgets), horizonMonths });
   if (rightsAndRoyalties.recording?.id !== candidate.trackId || explanation.recording?.id !== candidate.trackId || explanation.region?.id !== candidate.regionId || scenarioComparison.recording?.id !== candidate.trackId || scenarioComparison.region?.id !== candidate.regionId || scenarioComparison.trained !== false || rightsAndRoyalties.canApproveRights !== false || rightsAndRoyalties.reviewRequired !== true || scenarioComparison.reviewRequired !== true) throw Error("Joined domain results do not preserve the proposed context");
-  return { schemaVersion: 1, pathway, dataset: copy3(overview.dataset), status: "human-review-required", selection: { artistId: input.artistId, trackId: candidate.trackId, regionId: candidate.regionId, method: input.trackId && input.regionId ? "explicit-selection" : "first-matching-ranked-synthetic-proposal" }, overview, regional, rightsAndRoyalties, explanation, scenarioComparison, evidenceIds: [...new Set(results.flatMap((result2) => result2.evidenceIds || []))], review: { status: "pending", questions: pathway.reviewQuestions, unknowns: ["Fictional demand and royalty records are not observed results or earned revenue.", "Scenario projections are untrained assumptions, not financial forecasts.", "Simulated rights, collaborators and availability require separate real-world confirmation."], nextStep: "A person reviews the evidence, intended use and assumptions before any separate campaign action." }, capabilities: { readOnly: true, canApproveRights: false, canExecuteCampaign: false, canPublish: false } };
+  return { schemaVersion: 1, pathway, dataset: copy3(overview.dataset), status: "human-review-required", selection: { artistId: input.artistId, trackId: candidate.trackId, regionId: candidate.regionId, method: input.trackId && input.regionId ? "explicit-selection" : "first-matching-ranked-synthetic-proposal" }, overview, regional, rightsAndRoyalties, explanation, scenarioComparison, evidenceIds: [...new Set(results.flatMap((result2) => result2.evidenceIds || []))], review: { status: "pending", questions: pathway.reviewQuestions, unknowns: ["Demand and royalty records in this demo are synthetic.", "Scenario projections are untrained assumptions, not financial forecasts.", "Simulated rights, collaborators and availability require separate real-world confirmation."], nextStep: "A person reviews the evidence, intended use and assumptions before any separate campaign action." }, capabilities: { readOnly: true, canApproveRights: false, canExecuteCampaign: false, canPublish: false } };
 }
 
 // server/defiant-domain-prompts.js
@@ -30129,7 +30129,7 @@ var names = { "catalog-to-campaign": "defiant_catalog_activation_review", "talen
 function registerDefiantDomainPrompts(server) {
   for (const pathway of listDefiantDomainPathways()) server.registerPrompt(names[pathway.id], {
     title: pathway.title,
-    description: `${pathway.audience}: ${pathway.question} Fictional evidence only; finish at human review.`,
+    description: `${pathway.audience}: ${pathway.question} Use returned evidence; finish at human review.`,
     argsSchema: external_exports.object({ organizationId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/), artistId: record2, trackId: record2.optional(), regionId: record2.optional(), budgets: budgetText, horizonMonths: external_exports.string().regex(/^(?:[1-9]|1[0-2])$/).optional() }).strict()
   }, (args) => {
     const scope = { organizationId: args.organizationId }, artist = { ...scope, artistId: args.artistId }, budgets = budgetValues(args.budgets), horizonMonths = Number(args.horizonMonths || 3);
@@ -30300,7 +30300,7 @@ async function loadFixture() {
     }
     if (length !== stat.size) throw new Error("Build fixture changed");
     const input = JSON.parse(bytes.subarray(0, length).toString("utf8"));
-    if (input.organizationId !== ORGANIZATION || input.dataset?.dataset?.id !== "defiant-fictional-portfolio-v1" || input.dataset.dataset.provenance !== "synthetic" || Object.values(input.dataset).filter(Array.isArray).some((rows) => rows.some((row) => row.provenance !== "synthetic"))) throw new Error("Only the fictional build fixture is allowed");
+    if (input.organizationId !== ORGANIZATION || input.dataset?.dataset?.id !== "defiant-fictional-portfolio-v1" || input.dataset.dataset.provenance !== "synthetic" || Object.values(input.dataset).filter(Array.isArray).some((rows) => rows.some((row) => row.provenance !== "synthetic"))) throw new Error("Only the synthetic demo dataset is allowed");
     return input.dataset;
   } finally {
     await handle.close();
@@ -30382,10 +30382,10 @@ async function createDefiantSyntheticDemo({ enabled = false, publicOrigins = [] 
   let servicePromise;
   const service = () => servicePromise ??= (async () => createDefiantUnifiedData({ dataset: await loadFixture(), organizationId: ORGANIZATION, authorize: (candidate) => candidate === actor }))();
   const handler = createMcpHandler(() => {
-    const server = new McpServer({ name: "defiant-public-fictional-research", version: "1.0.0" }, { instructions: `Public fictional demonstration only. Use organizationId ${ORGANIZATION}. ${DEFIANT_DOMAIN_INSTRUCTIONS}` });
+    const server = new McpServer({ name: "defiant-public-research", version: "1.0.0" }, { instructions: `Synthetic data demo. Use organizationId ${ORGANIZATION}. ${DEFIANT_DOMAIN_INSTRUCTIONS}` });
     const registration = { registerTool: (name, config2, callback) => server.registerTool(name, { ...config2, _meta: { ...config2._meta, securitySchemes: [{ type: "noauth" }] } }, callback), registerResource: server.registerResource.bind(server), registerPrompt: server.registerPrompt.bind(server) };
     registerDefiantTools(registration, { uiHtml, domainUiHtml, resolveService: async ({ organizationId: organizationId3 }) => {
-      if (organizationId3 !== ORGANIZATION) throw reject(403, "Fictional scope only");
+      if (organizationId3 !== ORGANIZATION) throw reject(403, "Demo scope only");
       return { service: await service(), actor };
     } });
     return server;
