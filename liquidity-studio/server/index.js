@@ -1,3 +1,4 @@
+import {configuredLabelOSProvider,labelOSSourceRequest} from './labelos-source.js';
 import {createDefiantUnifiedData} from './defiant-unified-data.js';
 import {defiantUnifiedRequest} from './defiant-unified-http.js';
 import {DefiantStrategyService} from './defiant-strategy.js';
@@ -206,6 +207,7 @@ export function createHttpServer(
     platform = appContainer ? null : createPlatform(),
     trustedTestMode = false,
     defiantDatasetProvider = null,
+    defiantSourceProvider = configuredLabelOSProvider(),
     enableDefiantSyntheticDemo = false,
     defiantSyntheticDemoOrigins = [],
     portableBodyTimeoutMs = 15000,
@@ -223,6 +225,7 @@ export function createHttpServer(
       "true",
   } = {},
 ) {
+  if(defiantSourceProvider!==null&&typeof defiantSourceProvider!=='function')throw Error('Defiant source provider must be server-owned');
   if(defiantDatasetProvider!==null&&typeof defiantDatasetProvider!=="function")throw Error("Defiant dataset provider must be constructor-owned");
   if (appContainer && !trustedTestMode && !platform)
     throw new Error(
@@ -773,11 +776,20 @@ export function createHttpServer(
             )
           : {};
       if(route.startsWith("/api/studio/defiant-data/")) {
-        if(trustedTestMode||!defiantDatasetProvider)throw fail(404,"Defiant data is not configured");
+        if(trustedTestMode)throw fail(404,"Defiant data is not configured");
         const scope=/^\/api\/studio\/defiant-data\/([A-Za-z0-9_-]{1,128})\//.exec(route);
         if(!scope)throw fail(404,"Unknown Defiant data scope");
         const organizationId=scope[1],strategy=new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId});
         await strategy.raw(user);
+        if(route.startsWith(`/api/studio/defiant-data/${organizationId}/labelos/`)){
+          if(!defiantSourceProvider)throw fail(404,"LabelOS source is not configured");
+          const source=await defiantSourceProvider({organizationId,actor:user});
+          if(!source)throw fail(404,"LabelOS source is not configured for this organization");
+          const result=await labelOSSourceRequest({source,organizationId,method:req.method,url});
+          await strategy.raw(user);
+          return json(200,result);
+        }
+        if(!defiantDatasetProvider)throw fail(404,"Defiant data is not configured");
         const dataset=await defiantDatasetProvider({organizationId,actor:user});
         if(!dataset)throw fail(404,"Defiant dataset is unavailable for this organization");
         const service=createDefiantUnifiedData({dataset,organizationId,authorize:async actor=>{await strategy.raw(actor);return true;}});
