@@ -24,7 +24,7 @@ test('artist → regional demand → linked royalties/rights → opportunity →
  assert.equal(packet.scenarioComparison.trained,false);assert.equal(packet.scenarioComparison.scenarios[0].assumedIncrementalStreams,0);
  assert.equal(packet.scenarioComparison.scenarios[0].projectedStreams,packet.scenarioComparison.scenarios[0].baselineStreams);
  assert.equal(packet.review.status,'pending');assert.equal(packet.capabilities.canExecuteCampaign,false);assert.equal(packet.capabilities.canApproveRights,false);
- assert.match(packet.review.unknowns.join(' '),/Fictional/);assert.match(packet.review.unknowns.join(' '),/not financial forecasts/);
+ assert.match(packet.review.unknowns.join(' '),/synthetic/);assert.match(packet.review.unknowns.join(' '),/not financial forecasts/);
  assert.ok(packet.evidenceIds.length>0);assert.ok(packet.evidenceIds.some(id=>id.startsWith('demand:')));assert.ok(packet.evidenceIds.some(id=>id.startsWith('royalty:')));assert.ok(packet.evidenceIds.some(id=>id.startsWith('rights:')));
  assert.equal(dataset.dataset.provenance,'synthetic');assert.equal(packet.dataset.provenance,'synthetic');
 });

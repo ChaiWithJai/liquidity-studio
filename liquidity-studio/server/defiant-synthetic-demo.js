@@ -22,7 +22,7 @@ async function loadFixture() {
     while(length<bytes.length){const read=await handle.read(bytes,length,bytes.length-length,null);if(!read.bytesRead)break;length+=read.bytesRead;}
     if(length!==stat.size)throw new Error('Build fixture changed');
     const input=JSON.parse(bytes.subarray(0,length).toString('utf8'));
-    if(input.organizationId!==ORGANIZATION||input.dataset?.dataset?.id!=='defiant-fictional-portfolio-v1'||input.dataset.dataset.provenance!=='synthetic'||Object.values(input.dataset).filter(Array.isArray).some(rows=>rows.some(row=>row.provenance!=='synthetic')))throw new Error('Only the fictional build fixture is allowed');
+    if(input.organizationId!==ORGANIZATION||input.dataset?.dataset?.id!=='defiant-fictional-portfolio-v1'||input.dataset.dataset.provenance!=='synthetic'||Object.values(input.dataset).filter(Array.isArray).some(rows=>rows.some(row=>row.provenance!=='synthetic')))throw new Error('Only the synthetic demo dataset is allowed');
     return input.dataset;
   } finally { await handle.close(); }
 }
@@ -48,9 +48,9 @@ export async function createDefiantSyntheticDemo({ enabled=false, publicOrigins=
   const actor=Object.freeze({kind:'public-fictional-demo'});let servicePromise;
   const service=()=>servicePromise??=(async()=>createDefiantUnifiedData({dataset:await loadFixture(),organizationId:ORGANIZATION,authorize:candidate=>candidate===actor}))();
   const handler=createMcpHandler(()=>{
-    const server=new McpServer({name:'defiant-public-fictional-research',version:'1.0.0'},{instructions:`Public fictional demonstration only. Use organizationId ${ORGANIZATION}. ${DEFIANT_DOMAIN_INSTRUCTIONS}`});
+    const server=new McpServer({name:'defiant-public-research',version:'1.0.0'},{instructions:`Synthetic data demo. Use organizationId ${ORGANIZATION}. ${DEFIANT_DOMAIN_INSTRUCTIONS}`});
     const registration={registerTool:(name,config,callback)=>server.registerTool(name,{...config,_meta:{...config._meta,securitySchemes:[{type:'noauth'}]}},callback),registerResource:server.registerResource.bind(server),registerPrompt:server.registerPrompt.bind(server)};
-    registerDefiantTools(registration,{uiHtml,domainUiHtml,resolveService:async({organizationId})=>{if(organizationId!==ORGANIZATION)throw reject(403,'Fictional scope only');return {service:await service(),actor};}});
+    registerDefiantTools(registration,{uiHtml,domainUiHtml,resolveService:async({organizationId})=>{if(organizationId!==ORGANIZATION)throw reject(403,'Demo scope only');return {service:await service(),actor};}});
     return server;
   },{responseMode:'json'});
   const node=toNodeHandler(handler);
