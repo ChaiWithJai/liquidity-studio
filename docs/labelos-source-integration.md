@@ -38,3 +38,9 @@ Creates an owner-only directory containing exact raw JSON, timestamped GET/query
 ## Catalog join audit
 
 The captured catalog contains2,566distinctartistIDs,2,233distinctreleaseIDs and8,001distincttrackIDs, with alltrack release references present. Only5,264track artist strings have an exact unique catalog-name candidate;2,737do not. Names are not authoritative IDs. Preserve native identifiers and source labels; do not silently turn these candidates into verified artist joins. Full catalog/analytics reconciliation remains separate from a successful transport connection.
+
+## Observed time-series grain and export gap
+
+A full-coverage time-series call returned94points with `meta.interval=week`. A19-day October query returned19points with `interval=day`. The exporter now captures calendar-month windows and verifies daily grain for each, retaining the original long-range response too. Missing observations are not interpolated.
+
+Full-coverage playlist analytics timed out on two60-second attempts, and a streams-only attempt also timed out at40seconds. This establishes an unavailable export from this client, not a provider root cause or an empty dataset. `--skip-breakdown playlists` is an explicit operational opt-out to collect other resources; the manifest remains incomplete and names the gap. No timeout is turned into a successful empty response.

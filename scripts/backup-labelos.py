@@ -7,7 +7,7 @@ def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def write(path,data):
  path.write_bytes(data);os.chmod(path,0o600)
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--key-file',required=True);ap.add_argument('--output',required=True);ap.add_argument('--initial-dir');ap.add_argument('--max-requests',type=int,default=600);args=ap.parse_args()
+ ap=argparse.ArgumentParser();ap.add_argument('--key-file',required=True);ap.add_argument('--output',required=True);ap.add_argument('--initial-dir');ap.add_argument('--skip-breakdown',action='append',default=[]);ap.add_argument('--max-requests',type=int,default=600);args=ap.parse_args()
  keypath=Path(args.key_file);st=keypath.lstat()
  if not keypath.is_file() or keypath.is_symlink() or st.st_uid!=os.getuid() or st.st_mode&0o077:raise SystemExit('Credential must be an owner-only regular file')
  key=keypath.read_text().strip();out=Path(args.output);out.mkdir(mode=0o700,parents=True,exist_ok=True);os.chmod(out,0o700);rawdir=out/'raw';rawdir.mkdir(mode=0o700,exist_ok=True)
@@ -57,7 +57,7 @@ def main():
     query={**params,'metrics':','.join(metrics),**({'limit':500} if paginated else {}),**({'sort':sort_metric} if sort_metric else {})}
     if paginated:paged(name,path,query)
     else:
-     d=request(path,query);manifest['resources'][name]={'path':path,'query':query,'rows':len(d['data']) if isinstance(d.get('data'),list) else 1,'complete':True};save()
+     d=request(path,query);manifest['resources'][name]={'path':path,'query':query,'rows':len(d['data']) if isinstance(d.get('data'),list) else 1,'interval':d.get('meta',{}).get('interval'),'complete':True};save()
     manifest['resources'][name].update(metrics=metrics,unsupportedMetrics=excluded);save();return
    except RuntimeError as e:
     detail=getattr(e,'payload',{}).get('error',{}).get('details',{})
@@ -81,10 +81,25 @@ def main():
    d=request('/v1/catalog/'+name);manifest['resources']['catalog/'+name]={'path':'/v1/catalog/'+name,'query':{},'rows':len(d['data']),'complete':True};save()
   metrics_for('analytics/summary','/v1/analytics/summary',period,False)
   metrics_for('analytics/timeseries','/v1/analytics/timeseries',period,False)
-  for dimension in cap['dimensions']:metrics_for('analytics/'+dimension,'/v1/analytics/'+dimension,period,True)
-  manifest['endingCapabilities']=request('/v1/meta/capabilities',refresh=True)['data'];manifest['status']='complete';manifest['finishedAt']=now();save()
+  # Long ranges auto-aggregate to weeks. Capture explicit monthly windows and verify daily grain.
+  daily_metrics=','.join(manifest['resources']['analytics/timeseries']['metrics'])
+  start=first
+  while start<=end:
+   next_month=(start.replace(day=28)+datetime.timedelta(days=4)).replace(day=1)
+   stop=min(end,next_month-datetime.timedelta(days=1));name='analytics/daily/'+start.strftime('%Y-%m')
+   if not manifest['resources'].get(name,{}).get('complete'):
+    query={'from':start.isoformat(),'to':stop.isoformat(),'metrics':daily_metrics};d=request('/v1/analytics/timeseries',query)
+    if d.get('meta',{}).get('interval')!='day':raise RuntimeError('Provider did not return daily grain for the bounded window')
+    manifest['resources'][name]={'path':'/v1/analytics/timeseries','query':query,'interval':'day','rows':len(d['data']),'complete':True};save()
+    print(json.dumps({'resource':name,'rows':len(d['data']),'complete':True}),flush=True)
+   start=next_month
+  for dimension in cap['dimensions']:
+   if dimension in args.skip_breakdown:
+    manifest['resources']['analytics/'+dimension]={'complete':False,'status':'explicitly-skipped','reason':'Upstream export failed; existing responses preserved. This breakdown is not backed up.'};save();continue
+   metrics_for('analytics/'+dimension,'/v1/analytics/'+dimension,period,True)
+  manifest['endingCapabilities']=request('/v1/meta/capabilities',refresh=True)['data'];manifest['missingResources']=[k for k,v in manifest['resources'].items() if not v.get('complete')];manifest['status']='incomplete' if manifest['missingResources'] else 'complete';manifest['finishedAt']=now();save()
   files={p.relative_to(out).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(rawdir.glob('*.json'))};write(out/'SHA256SUMS',('\n'.join(f'{h}  {p}' for p,h in files.items())+'\n').encode())
-  print(json.dumps({'status':'complete','requests':len(manifest['requests']),'resources':manifest['resources']}),flush=True)
+  print(json.dumps({'status':manifest['status'],'missingResources':manifest['missingResources'],'requests':len(manifest['requests']),'resources':manifest['resources']}),flush=True)
  except Exception as e:
   manifest['status']='incomplete';manifest['stoppedAt']=now();manifest['stopReason']=str(e);save();print(json.dumps({'status':'incomplete','reason':str(e),'requests':len(manifest['requests'])}),flush=True);raise SystemExit(1)
 if __name__=='__main__':main()
