@@ -7,7 +7,7 @@ def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def write(path,data):
  path.write_bytes(data);os.chmod(path,0o600)
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--key-file',required=True);ap.add_argument('--output',required=True);ap.add_argument('--initial-dir');ap.add_argument('--skip-breakdown',action='append',default=[]);ap.add_argument('--max-requests',type=int,default=600);args=ap.parse_args()
+ ap=argparse.ArgumentParser();ap.add_argument('--key-file',required=True);ap.add_argument('--output',required=True);ap.add_argument('--initial-dir');ap.add_argument('--analytics-page-size',type=int,choices=range(1,501),default=500);ap.add_argument('--skip-breakdown',action='append',default=[]);ap.add_argument('--max-requests',type=int,default=600);args=ap.parse_args()
  keypath=Path(args.key_file);st=keypath.lstat()
  if not keypath.is_file() or keypath.is_symlink() or st.st_uid!=os.getuid() or st.st_mode&0o077:raise SystemExit('Credential must be an owner-only regular file')
  key=keypath.read_text().strip();out=Path(args.output);out.mkdir(mode=0o700,parents=True,exist_ok=True);os.chmod(out,0o700);rawdir=out/'raw';rawdir.mkdir(mode=0o700,exist_ok=True)
@@ -51,10 +51,17 @@ def main():
    seen.add(next_cursor);cursor=next_cursor
  def metrics_for(name,path,params,paginated):
   if manifest['resources'].get(name,{}).get('complete'):return
-  metrics=list(cap['metrics']);excluded=[];sort_metric=None
+  known_unsupported=set()
+  for entry in manifest['requests']:
+   if entry['status']==422 and urllib.parse.urlsplit(entry['url']).path==path:
+    saved=(out/entry['file']).read_bytes()
+    if hashlib.sha256(saved).hexdigest()!=entry['sha256']:raise RuntimeError('Backup checksum mismatch')
+    metric=json.loads(saved).get('error',{}).get('details',{}).get('metric')
+    if metric:known_unsupported.add(metric)
+  metrics=[metric for metric in cap['metrics'] if metric not in known_unsupported];excluded=[metric for metric in cap['metrics'] if metric in known_unsupported];sort_metric=None
   while metrics:
    try:
-    query={**params,'metrics':','.join(metrics),**({'limit':500} if paginated else {}),**({'sort':sort_metric} if sort_metric else {})}
+    query={**params,'metrics':','.join(metrics),**({'limit':args.analytics_page_size} if paginated else {}),**({'sort':sort_metric} if sort_metric else {})}
     if paginated:paged(name,path,query)
     else:
      d=request(path,query);manifest['resources'][name]={'path':path,'query':query,'rows':len(d['data']) if isinstance(d.get('data'),list) else 1,'interval':d.get('meta',{}).get('interval'),'complete':True};save()

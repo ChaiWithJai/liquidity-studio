@@ -34,10 +34,10 @@ export function createLabelOSSource({organizationId,apiKey,fetchImpl=fetch,now=(
   pending=true;lastRequest=Date.now();
   try{
    const url=new URL(request.path,ORIGIN);url.search=request.query.toString();
-   let response;try{response=await fetchImpl(url,{method:'GET',redirect:'error',headers:{Authorization:'Bearer '+apiKey,Accept:'application/json'},signal:AbortSignal.timeout(30000)});}catch{throw fail(502,'LabelOS source did not complete');}
+   let response;try{response=await fetchImpl(url,{method:'GET',redirect:'error',headers:{Authorization:'Bearer '+apiKey,Accept:'application/json'},signal:AbortSignal.timeout(30000)});}catch(error){throw fail(['TimeoutError','AbortError'].includes(error?.name)?504:502,'LabelOS source did not complete within the request deadline');}
    let size=0;const chunks=[];for await(const chunk of response.body??[]){size+=chunk.length;if(size>8*1024*1024)throw fail(502,'LabelOS response exceeds limit');chunks.push(chunk);}
    let payload;try{payload=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw fail(502,'Invalid LabelOS response');}
-   if(!response.ok){const status=response.status===422?422:response.status===429?429:502;throw fail(status,status===422?'Metric, filter or breakdown combination is unsupported by LabelOS':status===429?'LabelOS quota reached':'LabelOS source is unavailable');}
+   if(!response.ok){const messages={413:'LabelOS query exceeds the source scan limit; narrow the date range or filters',422:'Metric, filter or breakdown combination is unsupported by LabelOS',429:'LabelOS quota reached',504:'LabelOS analytics timed out; narrow the date range or page size'};const status=Object.hasOwn(messages,response.status)?response.status:502;throw fail(status,messages[status]??'LabelOS source is unavailable');}
    if(!payload||!Object.hasOwn(payload,'data'))throw fail(502,'LabelOS response is missing data');
    return {schemaVersion:1,source,scope:{organizationId},resource,retrievedAt:now(),data:payload.data,...(payload.page?{page:payload.page}:{}),...(payload.meta?{meta:payload.meta}:{}),capabilities:{readOnly:true,canApproveRights:false,canExecuteCampaign:false}};
   }finally{pending=false;}

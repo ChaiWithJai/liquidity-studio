@@ -21,7 +21,7 @@ test('LabelOS private provider is explicit, fixed-host, scoped and never include
  assert.throws(()=>createLabelOSSource({organizationId:'defiant_synthetic_demo',apiKey:key}));
 });
 test('LabelOS provider 422 and quota errors remain distinct, without raw provider messages or credentials',async()=>{
- for(const status of [422,429,401]){
+ for(const status of [413,422,429,504,401]){
   const source=createLabelOSSource({organizationId:'org_private',apiKey:key,fetchImpl:async()=>new Response(JSON.stringify({error:{message:key}}),{status})});
   await assert.rejects(source.read('analytics/songs',new URLSearchParams('metrics=streams')),e=>e.status===(status===401?502:status)&&!e.message.includes(key));
  }

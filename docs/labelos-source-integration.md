@@ -44,3 +44,9 @@ The captured catalog contains2,566distinctartistIDs,2,233distinctreleaseIDs and8
 A full-coverage time-series call returned94points with `meta.interval=week`. A19-day October query returned19points with `interval=day`. The exporter now captures calendar-month windows and verifies daily grain for each, retaining the original long-range response too. Missing observations are not interpolated.
 
 Full-coverage playlist analytics timed out on two60-second attempts, and a streams-only attempt also timed out at40seconds. This establishes an unavailable export from this client, not a provider root cause or an empty dataset. `--skip-breakdown playlists` is an explicit operational opt-out to collect other resources; the manifest remains incomplete and names the gap. No timeout is turned into a successful empty response.
+
+## Large-query recovery and observed source guards
+
+The provider returned HTTP413 / `query_too_large` with a10,000scan-row guard while paginating a full-period playlist query. Large multi-metric song queries also returned HTTP504. These are preserved as distinct413/504 responses by the private source API; they are not authentication failures or zero data.
+
+The exporter supports `--analytics-page-size 50` to reduce query work. It reuses explicit unsupported-metric responses from the same capture rather than repeating those probes. Smaller playlist pages and an October1–19/streams query returned data; this does not establish a complete playlist backfill. Narrower windows or a provider bulk extract may be required for complete analytics coverage.
