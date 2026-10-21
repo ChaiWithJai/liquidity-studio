@@ -17,9 +17,9 @@ test('built standalone stdio bundle serves the same scoped tools and rejects rev
  const list=await client.listTools();assert.deepEqual(list.tools.map(tool=>tool.name).sort(),['defiant_artist_overview', 'defiant_compare_campaign_scenarios', 'defiant_detect_regional_opportunities', 'defiant_explain_opportunity', 'defiant_inspect_rights_and_royalties', 'defiant_list_pathways', 'defiant_open_domain_review', 'defiant_open_guided_view', 'defiant_read_data']);
  const result=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'fictional_local',resource:'artists'}});assert.equal(result.structuredContent.items[0].name,'Fictional Artist');
  const wrong=await client.callTool({name:'defiant_read_data',arguments:{organizationId:'other',resource:'manifest'}});assert.equal(wrong.isError,true);
- const resources=await client.listResources();assert.deepEqual(resources.resources.map(x=>x.uri),['ui://defiant/domain-review-v1.html']);
+ const resources=await client.listResources();assert.deepEqual(resources.resources.map(x=>x.uri),['ui://defiant/domain-review-v2.html']);
  const html=await readFile(new URL('../dist/mcp/defiant-domain-review.html',import.meta.url),'utf8');
- const resource=await client.readResource({uri:'ui://defiant/domain-review-v1.html'});assert.equal(resource.contents[0].text,html);assert.equal(resource.contents[0].mimeType,'text/html;profile=mcp-app');
+ const resource=await client.readResource({uri:'ui://defiant/domain-review-v2.html'});assert.equal(resource.contents[0].text,html);assert.equal(resource.contents[0].mimeType,'text/html;profile=mcp-app');
  assert.ok(client.getServerCapabilities()?.prompts);
  const prompts=await client.listPrompts();assert.deepEqual(prompts.prompts.map(prompt=>prompt.name).sort(),['defiant_catalog_activation_review','defiant_opportunity_scenario_review','defiant_regional_talent_review']);
  const prompt=await client.getPrompt({name:'defiant_catalog_activation_review',arguments:{organizationId:'fictional_local',artistId:'artist_a',budgets:'0,500'}});assert.match(prompt.messages[0].content.text,/defiant_artist_overview/);assert.match(prompt.messages[0].content.text,/Mark review pending/);
