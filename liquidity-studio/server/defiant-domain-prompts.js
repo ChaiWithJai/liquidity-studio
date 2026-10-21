@@ -7,7 +7,7 @@ const names={'catalog-to-campaign':'defiant_catalog_activation_review','talent-t
 /** Prompts guide the same domain tools; retrieving one performs no reads or writes. */
 export function registerDefiantDomainPrompts(server){
  for(const pathway of listDefiantDomainPathways())server.registerPrompt(names[pathway.id],{
-  title:pathway.title,description:`${pathway.audience}: ${pathway.question} Fictional evidence only; finish at human review.`,
+  title:pathway.title,description:`${pathway.audience}: ${pathway.question} Use returned evidence; finish at human review.`,
   argsSchema:z.object({organizationId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/),artistId:record,trackId:record.optional(),regionId:record.optional(),budgets:budgetText,horizonMonths:z.string().regex(/^(?:[1-9]|1[0-2])$/).optional()}).strict(),
  },args=>{
   const scope={organizationId:args.organizationId},artist={...scope,artistId:args.artistId},budgets=budgetValues(args.budgets),horizonMonths=Number(args.horizonMonths||3);

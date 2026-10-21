@@ -30,7 +30,7 @@
 <main class="domain-review" aria-busy={loading}>
  <header>
   <p class="eyebrow">Defiant · Domain review</p>
-  <div class="title-row"><h1>{view?.pathway?.title??'Artist and regional opportunity review'}</h1><span class="badge">{view?.dataset?.provenance==='user-reported'?'User-reported data':'Fictional demonstration'}</span></div>
+  <div class="title-row"><h1>{view?.pathway?.title??'Artist and regional opportunity review'}</h1><span class="badge">{view?.dataset?.provenance==='user-reported'?'User-reported data':'Synthetic data'}</span></div>
   <p>Joined research for a human decision. This tool cannot approve rights, save a campaign or publish.</p>
   {#if view?.dataset}<p class="metadata">{view.dataset.label} · As of {view.dataset.asOf??'not supplied'} · {view.dataset.counts?.artists??'—'} artists · {view.dataset.counts?.tracks??'—'} recordings <span class="revision">Revision {view.dataset.revision}</span></p>{/if}
  </header>
@@ -78,7 +78,7 @@
   <div class="review-grid">
    <section aria-labelledby="demand-heading">
     <h2 id="demand-heading">Regional demand evidence</h2>
-    <p class="small">Synthetic monthly streams · {region.name} · {recording.title}</p>
+    <p class="small">Monthly streams · {region.name} · {recording.title}</p>
     {#if observations.length}
      <div class="chart" aria-label="Monthly regional demand chart">
       {#each observations as row(row.id)}<div class="chart-row"><span>{row.date.slice(0,7)}</span><span class="bar-track"><span class="bar" style:width={`${100*row.streams/maxStreams}%`}></span></span><strong>{number(row.streams)}</strong></div>{/each}
@@ -91,13 +91,13 @@
    </section>
    <section aria-labelledby="rights-heading">
     <h2 id="rights-heading">Linked rights &amp; royalties</h2>
-    <p>Rights approval: <strong>not granted</strong>. Simulated-clear is a fictional scenario, not clearance.</p>
+    <p>Rights approval: <strong>not granted</strong>. Confirm clearance with the rights owner before use.</p>
     <ul>{#each view.rightsAndRoyalties.rights??[] as row(row.id)}<li>{row.territory}: {row.status}</li>{/each}</ul>
     {#if !view.rightsAndRoyalties.rights?.length}<p>No matching rights records were supplied. Rights remain unknown.</p>{/if}
     <dl class="metrics"><div><dt>Ledger streams</dt><dd>{number(view.rightsAndRoyalties.royalties?.streams)}</dd></div><div><dt>Scenario royalties</dt><dd>{money(view.rightsAndRoyalties.royalties?.amountCents/100)}</dd></div></dl>
-    <div class="table-scroll"><table><caption>Linked royalty allocation · synthetic USD</caption><thead><tr><th>Party</th><th>Amount</th></tr></thead><tbody>{#each view.rightsAndRoyalties.royalties?.splits??[] as row(row.partyId)}<tr><th>{partyName(row.partyId)}</th><td>{money(row.amountCents/100)}</td></tr>{/each}</tbody></table></div>
+    <div class="table-scroll"><table><caption>Linked royalty allocation · USD</caption><thead><tr><th>Party</th><th>Amount</th></tr></thead><tbody>{#each view.rightsAndRoyalties.royalties?.splits??[] as row(row.partyId)}<tr><th>{partyName(row.partyId)}</th><td>{money(row.amountCents/100)}</td></tr>{/each}</tbody></table></div>
     <details><summary>Inspect monthly royalty ledger</summary><div class="table-scroll"><table><thead><tr><th>Month</th><th>Streams</th><th>USD</th></tr></thead><tbody>{#each view.rightsAndRoyalties.royalties?.rows??[] as row(row.id)}<tr><th>{row.date.slice(0,7)}</th><td>{number(row.streams)}</td><td>{money(row.royaltyCents/100)}</td></tr>{/each}</tbody></table></div></details>
-    <p class="small">These fictional ledger amounts are not earned revenue. Intended use, participants and rights need separate confirmation.</p>
+    <p class="small">Confirm statement totals, participants and intended use with the source owners.</p>
    </section>
   </div>
   <section aria-labelledby="scenario-heading">

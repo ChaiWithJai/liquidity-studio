@@ -55,8 +55,8 @@ test('actual joined fictional domain results render through SDK; explicit scenar
  await expect(app.getByLabel('Monthly regional demand chart').locator('.chart-row')).toHaveCount(12);
  await expect(app.getByRole('heading',{name:'Linked rights & royalties'})).toBeVisible();
  await expect(app.getByRole('listitem').filter({hasText:'US: simulated-clear'})).toBeVisible();
- await expect(app.getByRole('row',{name:/Fictional Producer 1/})).toBeVisible();
- await expect(app.getByLabel('Human review pending')).toContainText('Fictional demand and royalty records');
+ await expect(app.getByRole('row',{name:/Producer 1/})).toBeVisible();
+ await expect(app.getByLabel('Human review pending')).toContainText('Demand and royalty records in this demo are synthetic.');
  await app.getByText('How this review was produced',{exact:true}).click();
  const production=app.getByRole('region',{name:'Review production details',exact:true});
  await expect(production).toContainText('One MCP entry call: defiant_open_domain_review orchestrates five internal domain-service operations.');
