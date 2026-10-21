@@ -7,7 +7,7 @@ import {registerDefiantDomainPrompts} from './defiant-domain-prompts.js';
 import {runDefiantDomainPathway} from './defiant-domain-pathways.js';
 
 const RESOURCE_URI = 'ui://defiant/research-v1.html';
-const DOMAIN_RESOURCE_URI = 'ui://defiant/domain-review-v1.html';
+const DOMAIN_RESOURCE_URI = 'ui://defiant/domain-review-v2.html';
 const organizationId = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 const recordId = z.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/);
 const boundedText = z.string().trim().min(1).max(200).refine(value => !/[\u0000-\u001f\u007f]/.test(value));
