@@ -26,3 +26,8 @@ server/fixtures/
 !tools/penpot-token-plugin/plugin-tail.js
 !tools/penpot-token-plugin/style.css
 !tools/penpot-token-plugin/ui.js
+
+# Full pinned attribution texts are canonical build inputs.
+!licenses/
+!licenses/defiant-vendored/
+!licenses/defiant-vendored/**
