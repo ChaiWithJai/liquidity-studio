@@ -3043,24 +3043,24 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     }
     doc.write(`const newResult = {};`);
     for (const key of normalized.keys) {
-      const id3 = ids2[key];
+      const id4 = ids2[key];
       const k = esc(key);
-      doc.write(`const ${id3} = ${parseStr(key)};`);
+      doc.write(`const ${id4} = ${parseStr(key)};`);
       doc.write(`
-        if (${id3}.issues.length) {
-          payload.issues = payload.issues.concat(${id3}.issues.map(iss => ({
+        if (${id4}.issues.length) {
+          payload.issues = payload.issues.concat(${id4}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
         
-        if (${id3}.value === undefined) {
+        if (${id4}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id3}.value;
+          newResult[${k}] = ${id4}.value;
         }
         
       `);
@@ -10980,13 +10980,13 @@ function extractDefs(ctx, schema) {
     const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
     if (ctx.external) {
       const externalId = ctx.external.registry.get(entry[0])?.id;
-      const uriGenerator = ctx.external.uri ?? ((id4) => id4);
+      const uriGenerator = ctx.external.uri ?? ((id5) => id5);
       if (externalId) {
         return { ref: uriGenerator(externalId) };
       }
-      const id3 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-      entry[1].defId = id3;
-      return { defId: id3, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id3}` };
+      const id4 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+      entry[1].defId = id4;
+      return { defId: id4, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id4}` };
     }
     if (entry[1] === root) {
       return { ref: "#" };
@@ -11034,8 +11034,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         continue;
       }
     }
-    const id3 = ctx.metadataRegistry.get(entry[0])?.id;
-    if (id3) {
+    const id4 = ctx.metadataRegistry.get(entry[0])?.id;
+    if (id4) {
       extractToDef(entry);
       continue;
     }
@@ -11096,10 +11096,10 @@ function finalize(ctx, schema) {
   } else {
   }
   if (ctx.external?.uri) {
-    const id3 = ctx.external.registry.get(schema)?.id;
-    if (!id3)
+    const id4 = ctx.external.registry.get(schema)?.id;
+    if (!id4)
       throw new Error("Schema is missing an `id` property");
-    result2.$id = ctx.external.uri(id3);
+    result2.$id = ctx.external.uri(id4);
   }
   Object.assign(result2, root.def ?? root.schema);
   const defs = ctx.external?.defs ?? {};
@@ -15444,8 +15444,8 @@ var REF_REWRITE_NAME_MAP_KEYS = /* @__PURE__ */ new Set([
   "dependentSchemas",
   "dependencies"
 ]);
-function establishesNewBase(id3) {
-  return id3 !== void 0 && !(typeof id3 === "string" && id3.startsWith("#"));
+function establishesNewBase(id4) {
+  return id4 !== void 0 && !(typeof id4 === "string" && id4.startsWith("#"));
 }
 function wrapOutputSchemaForLegacy(natural) {
   const $schema = typeof natural["$schema"] === "string" ? natural["$schema"] : void 0;
@@ -17272,11 +17272,11 @@ var isJSONRPCNotification = (value) => JSONRPCNotificationSchema.safeParse(value
 var isJSONRPCResultResponse = (value) => JSONRPCResultResponseSchema.safeParse(value).success;
 var isJSONRPCErrorResponse = (value) => JSONRPCErrorResponseSchema.safeParse(value).success;
 var isInputRequiredResult = (value) => typeof value === "object" && value !== null && !Array.isArray(value) && value.resultType === "input_required";
-function assertCompleteRequestPrompt(request) {
-  if (request.params.ref.type !== "ref/prompt") throw new TypeError(`Expected CompleteRequestPrompt, but got ${request.params.ref.type}`);
+function assertCompleteRequestPrompt(request2) {
+  if (request2.params.ref.type !== "ref/prompt") throw new TypeError(`Expected CompleteRequestPrompt, but got ${request2.params.ref.type}`);
 }
-function assertCompleteRequestResourceTemplate(request) {
-  if (request.params.ref.type !== "ref/resource") throw new TypeError(`Expected CompleteRequestResourceTemplate, but got ${request.params.ref.type}`);
+function assertCompleteRequestResourceTemplate(request2) {
+  if (request2.params.ref.type !== "ref/resource") throw new TypeError(`Expected CompleteRequestResourceTemplate, but got ${request2.params.ref.type}`);
 }
 var X_MCP_HEADER_KEY = "x-mcp-header";
 var RFC9110_TOKEN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
@@ -18310,7 +18310,7 @@ var Protocol = class {
     Promise.resolve().then(() => handler === void 0 ? fallback(notification) : handler(notification, codec2)).catch((error46) => this._onerror(/* @__PURE__ */ new Error(`Uncaught error in notification handler: ${error46}`)));
   }
   _onrequest(rawRequest, extra) {
-    const { message: request, lifted } = liftWireOnlyMaterial(rawRequest, "request");
+    const { message: request2, lifted } = liftWireOnlyMaterial(rawRequest, "request");
     const codec2 = this._negotiatedWireCodec();
     if (extra?.classification === void 0 && this._shouldDropInbound(rawRequest) === "drop") {
       this._onerror(/* @__PURE__ */ new Error(`Dropped inbound request '${rawRequest.method}': not servable on this connection's protocol era`));
@@ -18320,7 +18320,7 @@ var Protocol = class {
     const sendErrorResponse = (code, message, data) => {
       const errorResponse = {
         jsonrpc: "2.0",
-        id: request.id,
+        id: request2.id,
         error: {
           code,
           message,
@@ -18332,7 +18332,7 @@ var Protocol = class {
     if (extra?.classification !== void 0) {
       const classified = classifiedWireEra(extra.classification);
       if (classified !== codec2.era) {
-        this._onerror(/* @__PURE__ */ new Error(`Era mismatch on inbound request '${request.method}': classified as ${classified} but this instance serves ${codec2.era}`));
+        this._onerror(/* @__PURE__ */ new Error(`Era mismatch on inbound request '${request2.method}': classified as ${classified} but this instance serves ${codec2.era}`));
         const requested = extra.classification.revision ?? classified;
         sendErrorResponse(ProtocolErrorCode.UnsupportedProtocolVersion, `Unsupported protocol version: ${requested}`, {
           supported: this._supportedProtocolVersions,
@@ -18341,11 +18341,11 @@ var Protocol = class {
         return;
       }
     }
-    if (isSpecRequestMethod(request.method) && !codec2.hasRequestMethod(request.method) && !(isExtensionReusedRequestMethod(request.method) && this._customSchemaRequestMethods.has(request.method))) {
+    if (isSpecRequestMethod(request2.method) && !codec2.hasRequestMethod(request2.method) && !(isExtensionReusedRequestMethod(request2.method) && this._customSchemaRequestMethods.has(request2.method))) {
       sendErrorResponse(ProtocolErrorCode.MethodNotFound, "Method not found");
       return;
     }
-    const handler = this._requestHandlers.get(request.method) ?? this.fallbackRequestHandler;
+    const handler = this._requestHandlers.get(request2.method) ?? this.fallbackRequestHandler;
     if (handler === void 0) {
       sendErrorResponse(ProtocolErrorCode.MethodNotFound, "Method not found");
       return;
@@ -18357,21 +18357,21 @@ var Protocol = class {
     }
     const sendNotification = (notification, options) => this._notificationViaCodec(this._resolveOutboundCodec(notification.method), notification, {
       ...options,
-      relatedRequestId: request.id
+      relatedRequestId: request2.id
     });
     const sendRequest = (r, resultSchema, options) => this._requestWithSchemaViaCodec(this._resolveOutboundCodec(r.method), r, resultSchema, {
       ...options,
-      relatedRequestId: request.id
+      relatedRequestId: request2.id
     });
     const abortController = new AbortController();
-    this._requestHandlerAbortControllers.set(request.id, abortController);
+    this._requestHandlerAbortControllers.set(request2.id, abortController);
     const partitionedInputResponses = lifted.inputResponses === void 0 ? void 0 : partitionInputResponses(lifted.inputResponses);
     const baseCtx = {
       sessionId: capturedTransport?.sessionId,
       mcpReq: {
-        id: request.id,
-        method: request.method,
-        _meta: request.params?._meta,
+        id: request2.id,
+        method: request2.method,
+        _meta: request2.params?._meta,
         ...lifted.envelope !== void 0 && { envelope: lifted.envelope },
         ...partitionedInputResponses !== void 0 && { inputResponses: partitionedInputResponses.accepted },
         ...partitionedInputResponses !== void 0 && partitionedInputResponses.droppedKeys.length > 0 && { droppedInputResponseKeys: partitionedInputResponses.droppedKeys },
@@ -18390,20 +18390,20 @@ var Protocol = class {
       http: extra?.authInfo ? { authInfo: extra.authInfo } : void 0
     };
     const ctx = this.buildContext(baseCtx, extra);
-    Promise.resolve().then(() => handler(request, ctx)).then(async (result2) => {
+    Promise.resolve().then(() => handler(request2, ctx)).then(async (result2) => {
       if (abortController.signal.aborted) return;
       let encoded;
       try {
-        encoded = codec2.encodeResult(request.method, result2, this._outboundServerInfo());
+        encoded = codec2.encodeResult(request2.method, result2, this._outboundServerInfo());
       } catch (error46) {
-        this._onerror(/* @__PURE__ */ new Error(`Failed to encode result for ${request.method}: ${error46}`));
+        this._onerror(/* @__PURE__ */ new Error(`Failed to encode result for ${request2.method}: ${error46}`));
         sendErrorResponse(ProtocolErrorCode.InternalError, "Internal error");
         return;
       }
       const response = {
         result: encoded,
         jsonrpc: "2.0",
-        id: request.id
+        id: request2.id
       };
       await capturedTransport?.send(response);
     }, async (error46) => {
@@ -18411,7 +18411,7 @@ var Protocol = class {
       const thrownCode = Number.isSafeInteger(error46["code"]) ? error46["code"] : ProtocolErrorCode.InternalError;
       const errorResponse = {
         jsonrpc: "2.0",
-        id: request.id,
+        id: request2.id,
         error: {
           code: codec2.encodeErrorCode(thrownCode),
           message: error46.message ?? "Internal error",
@@ -18420,7 +18420,7 @@ var Protocol = class {
       };
       await capturedTransport?.send(errorResponse);
     }).catch((error46) => this._onerror(/* @__PURE__ */ new Error(`Failed to send response: ${error46}`))).finally(() => {
-      if (this._requestHandlerAbortControllers.get(request.id) === abortController) this._requestHandlerAbortControllers.delete(request.id);
+      if (this._requestHandlerAbortControllers.get(request2.id) === abortController) this._requestHandlerAbortControllers.delete(request2.id);
     });
   }
   _onprogress(notification) {
@@ -18472,16 +18472,16 @@ var Protocol = class {
   async close() {
     await this._transport?.close();
   }
-  request(request, schemaOrOptions, maybeOptions) {
-    const codec2 = this._resolveOutboundCodec(request.method);
+  request(request2, schemaOrOptions, maybeOptions) {
+    const codec2 = this._resolveOutboundCodec(request2.method);
     if (isStandardSchema(schemaOrOptions)) {
-      if (!isExtensionReusedRequestMethod(request.method)) this._assertOutboundRequestInEra(codec2, request.method);
-      return this._requestWithSchemaViaCodec(codec2, request, schemaOrOptions, maybeOptions);
+      if (!isExtensionReusedRequestMethod(request2.method)) this._assertOutboundRequestInEra(codec2, request2.method);
+      return this._requestWithSchemaViaCodec(codec2, request2, schemaOrOptions, maybeOptions);
     }
-    this._assertOutboundRequestInEra(codec2, request.method);
-    const validate = codecResultValidator(codec2, request.method);
-    if (validate === void 0) throw new TypeError(`'${request.method}' is not a spec method; pass a result schema as the second argument to request().`);
-    return this._requestWithSchemaViaCodec(codec2, request, validate, schemaOrOptions);
+    this._assertOutboundRequestInEra(codec2, request2.method);
+    const validate = codecResultValidator(codec2, request2.method);
+    if (validate === void 0) throw new TypeError(`'${request2.method}' is not a spec method; pass a result schema as the second argument to request().`);
+    return this._requestWithSchemaViaCodec(codec2, request2, validate, schemaOrOptions);
   }
   /**
   * The wire codec for this instance's negotiated era — the phase-2 truth:
@@ -18540,17 +18540,17 @@ var Protocol = class {
   * explicit compatibility schemas. Spec methods are still era-gated here:
   * an explicit schema never smuggles a deleted method onto the wire.
   */
-  _requestWithSchema(request, resultSchema, options) {
-    const codec2 = this._resolveOutboundCodec(request.method);
-    this._assertOutboundRequestInEra(codec2, request.method);
-    return this._requestWithSchemaViaCodec(codec2, request, resultSchema, options);
+  _requestWithSchema(request2, resultSchema, options) {
+    const codec2 = this._resolveOutboundCodec(request2.method);
+    this._assertOutboundRequestInEra(codec2, request2.method);
+    return this._requestWithSchemaViaCodec(codec2, request2, resultSchema, options);
   }
   /**
   * The request funnel proper, keyed by the resolved era codec: the codec
   * owns result decoding (raw-first `resultType` discrimination — V-1 —
   * and the era's lift posture) before the schema validation step.
   */
-  _requestWithSchemaViaCodec(codec2, request, resultSchema, options) {
+  _requestWithSchemaViaCodec(codec2, request2, resultSchema, options) {
     const { relatedRequestId, resumptionToken, onresumptiontoken, headers } = options ?? {};
     const flowStartedAt = Date.now();
     let onAbort;
@@ -18564,7 +18564,7 @@ var Protocol = class {
         return;
       }
       if (this._options?.enforceStrictCapabilities === true) try {
-        this.assertCapabilityForMethod(request.method);
+        this.assertCapabilityForMethod(request2.method);
       } catch (error46) {
         earlyReject(error46);
         return;
@@ -18577,16 +18577,16 @@ var Protocol = class {
       const messageId = this._requestMessageId++;
       cleanupMessageId = messageId;
       const jsonrpcRequest = {
-        ...request,
+        ...request2,
         jsonrpc: "2.0",
         id: messageId
       };
       if (options?.onprogress) {
         this._progressHandlers.set(messageId, options.onprogress);
         jsonrpcRequest.params = {
-          ...request.params,
+          ...request2.params,
           _meta: {
-            ...request.params?._meta,
+            ...request2.params?._meta,
             progressToken: messageId
           }
         };
@@ -18597,7 +18597,7 @@ var Protocol = class {
         if (responseReceived) return;
         this._progressHandlers.delete(messageId);
         if (requestAbort === void 0) {
-          if (request.method !== "initialize") this._transport?.send(this._envelopeOutbound({
+          if (request2.method !== "initialize") this._transport?.send(this._envelopeOutbound({
             jsonrpc: "2.0",
             method: "notifications/cancelled",
             params: {
@@ -18618,7 +18618,7 @@ var Protocol = class {
         if (response instanceof Error) return reject(response);
         let decoded;
         try {
-          decoded = codec2.decodeResult(request.method, response.result);
+          decoded = codec2.decodeResult(request2.method, response.result);
         } catch (error46) {
           return reject(error46 instanceof Error ? error46 : new Error(String(error46)));
         }
@@ -18627,12 +18627,12 @@ var Protocol = class {
           if (options?.allowInputRequired === true) return resolve2(manualInputRequiredValue(decoded));
           const flow = {
             codec: codec2,
-            request,
+            request: request2,
             resultSchema,
             options,
             flowStartedAt,
-            retry: (params, legOptions) => this._requestWithSchemaViaCodec(codec2, params === void 0 ? { method: request.method } : {
-              method: request.method,
+            retry: (params, legOptions) => this._requestWithSchemaViaCodec(codec2, params === void 0 ? { method: request2.method } : {
+              method: request2.method,
               params
             }, resultSchema, legOptions)
           };
@@ -18641,7 +18641,7 @@ var Protocol = class {
         const result2 = decoded.result;
         validateStandardSchema(resultSchema, result2).then((parseResult) => {
           if (parseResult.success) resolve2(parseResult.data);
-          else reject(new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${request.method}: ${parseResult.error}`));
+          else reject(new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${request2.method}: ${parseResult.error}`));
         }, reject);
       });
       onAbort = () => cancel(options?.signal?.reason);
@@ -18706,18 +18706,18 @@ var Protocol = class {
     let stored;
     if (typeof schemasOrHandler === "function") {
       if (!isSpecRequestMethod(method)) throw new TypeError(`'${method}' is not a spec request method; pass schemas as the second argument to setRequestHandler().`);
-      stored = (request, ctx) => {
+      stored = (request2, ctx) => {
         const dispatchCodec = this._negotiatedWireCodec();
-        let outcome = dispatchCodec.validateRequest(method, request);
-        if (!outcome.ok && outcome.reason === "not-in-era") outcome = dispatchCodec.validateInputRequest(method, request);
+        let outcome = dispatchCodec.validateRequest(method, request2);
+        if (!outcome.ok && outcome.reason === "not-in-era") outcome = dispatchCodec.validateInputRequest(method, request2);
         if (!outcome.ok) {
           if (outcome.reason === "not-in-era") throw new ProtocolError(ProtocolErrorCode.InternalError, `No wire schema for ${method} in the resolved era`);
           throw new Error(outcome.message);
         }
         return Promise.resolve(schemasOrHandler(outcome.value, ctx));
       };
-    } else if (maybeHandler) stored = async (request, ctx) => {
-      const parsed = await validateStandardSchema(schemasOrHandler.params, { ...request.params });
+    } else if (maybeHandler) stored = async (request2, ctx) => {
+      const parsed = await validateStandardSchema(schemasOrHandler.params, { ...request2.params });
       if (!parsed.success) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Invalid params for ${method}: ${parsed.error}`);
       return maybeHandler(parsed.data, ctx);
     };
@@ -19364,9 +19364,9 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       const rhs = this.rhs === void 0 ? "" : ` = ${this.rhs}`;
       return `${varKind} ${this.name}${rhs};` + _n;
     }
-    optimizeNames(names2, constants2) {
+    optimizeNames(names2, constants3) {
       if (!names2[this.name.str]) return;
-      if (this.rhs) this.rhs = optimizeExpr(this.rhs, names2, constants2);
+      if (this.rhs) this.rhs = optimizeExpr(this.rhs, names2, constants3);
       return this;
     }
     get names() {
@@ -19383,9 +19383,9 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     render({ _n }) {
       return `${this.lhs} = ${this.rhs};` + _n;
     }
-    optimizeNames(names2, constants2) {
+    optimizeNames(names2, constants3) {
       if (this.lhs instanceof code_1.Name && !names2[this.lhs.str] && !this.sideEffects) return;
-      this.rhs = optimizeExpr(this.rhs, names2, constants2);
+      this.rhs = optimizeExpr(this.rhs, names2, constants3);
       return this;
     }
     get names() {
@@ -19444,8 +19444,8 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     optimizeNodes() {
       return `${this.code}` ? this : void 0;
     }
-    optimizeNames(names2, constants2) {
-      this.code = optimizeExpr(this.code, names2, constants2);
+    optimizeNames(names2, constants3) {
+      this.code = optimizeExpr(this.code, names2, constants3);
       return this;
     }
     get names() {
@@ -19471,12 +19471,12 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       }
       return nodes.length > 0 ? this : void 0;
     }
-    optimizeNames(names2, constants2) {
+    optimizeNames(names2, constants3) {
       const { nodes } = this;
       let i = nodes.length;
       while (i--) {
         const n = nodes[i];
-        if (n.optimizeNames(names2, constants2)) continue;
+        if (n.optimizeNames(names2, constants3)) continue;
         subtractNames(names2, n.names);
         nodes.splice(i, 1);
       }
@@ -19523,11 +19523,11 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       if (cond === false || !this.nodes.length) return void 0;
       return this;
     }
-    optimizeNames(names2, constants2) {
+    optimizeNames(names2, constants3) {
       var _a2;
-      this.else = (_a2 = this.else) === null || _a2 === void 0 ? void 0 : _a2.optimizeNames(names2, constants2);
-      if (!(super.optimizeNames(names2, constants2) || this.else)) return;
-      this.condition = optimizeExpr(this.condition, names2, constants2);
+      this.else = (_a2 = this.else) === null || _a2 === void 0 ? void 0 : _a2.optimizeNames(names2, constants3);
+      if (!(super.optimizeNames(names2, constants3) || this.else)) return;
+      this.condition = optimizeExpr(this.condition, names2, constants3);
       return this;
     }
     get names() {
@@ -19549,9 +19549,9 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     render(opts) {
       return `for(${this.iteration})` + super.render(opts);
     }
-    optimizeNames(names2, constants2) {
-      if (!super.optimizeNames(names2, constants2)) return;
-      this.iteration = optimizeExpr(this.iteration, names2, constants2);
+    optimizeNames(names2, constants3) {
+      if (!super.optimizeNames(names2, constants3)) return;
+      this.iteration = optimizeExpr(this.iteration, names2, constants3);
       return this;
     }
     get names() {
@@ -19586,9 +19586,9 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
     render(opts) {
       return `for(${this.varKind} ${this.name} ${this.loop} ${this.iterable})` + super.render(opts);
     }
-    optimizeNames(names2, constants2) {
-      if (!super.optimizeNames(names2, constants2)) return;
-      this.iterable = optimizeExpr(this.iterable, names2, constants2);
+    optimizeNames(names2, constants3) {
+      if (!super.optimizeNames(names2, constants3)) return;
+      this.iterable = optimizeExpr(this.iterable, names2, constants3);
       return this;
     }
     get names() {
@@ -19627,11 +19627,11 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       (_b = this.finally) === null || _b === void 0 || _b.optimizeNodes();
       return this;
     }
-    optimizeNames(names2, constants2) {
+    optimizeNames(names2, constants3) {
       var _a2, _b;
-      super.optimizeNames(names2, constants2);
-      (_a2 = this.catch) === null || _a2 === void 0 || _a2.optimizeNames(names2, constants2);
-      (_b = this.finally) === null || _b === void 0 || _b.optimizeNames(names2, constants2);
+      super.optimizeNames(names2, constants3);
+      (_a2 = this.catch) === null || _a2 === void 0 || _a2.optimizeNames(names2, constants3);
+      (_b = this.finally) === null || _b === void 0 || _b.optimizeNames(names2, constants3);
       return this;
     }
     get names() {
@@ -19880,7 +19880,7 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
   function addExprNames(names2, from) {
     return from instanceof code_1._CodeOrName ? addNames(names2, from.names) : names2;
   }
-  function optimizeExpr(expr, names2, constants2) {
+  function optimizeExpr(expr, names2, constants3) {
     if (expr instanceof code_1.Name) return replaceName(expr);
     if (!canOptimize(expr)) return expr;
     return new code_1._Code(expr._items.reduce((items, c) => {
@@ -19890,13 +19890,13 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
       return items;
     }, []));
     function replaceName(n) {
-      const c = constants2[n.str];
+      const c = constants3[n.str];
       if (c === void 0 || names2[n.str] !== 1) return n;
       delete names2[n.str];
       return c;
     }
     function canOptimize(e) {
-      return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names2[c.str] === 1 && constants2[c.str] !== void 0);
+      return e instanceof code_1._Code && e._items.some((c) => c instanceof code_1.Name && names2[c.str] === 1 && constants3[c.str] !== void 0);
     }
   }
   function subtractNames(names2, from) {
@@ -20931,9 +20931,9 @@ var require_resolve = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     return count;
   }
-  function getFullPath(resolver, id3 = "", normalize2) {
-    if (normalize2 !== false) id3 = normalizeId(id3);
-    return _getFullPath(resolver, resolver.parse(id3));
+  function getFullPath(resolver, id4 = "", normalize2) {
+    if (normalize2 !== false) id4 = normalizeId(id4);
+    return _getFullPath(resolver, resolver.parse(id4));
   }
   exports.getFullPath = getFullPath;
   function _getFullPath(resolver, p) {
@@ -20941,13 +20941,13 @@ var require_resolve = /* @__PURE__ */ __commonJSMin(((exports) => {
   }
   exports._getFullPath = _getFullPath;
   const TRAILING_SLASH_HASH = /#\/?$/;
-  function normalizeId(id3) {
-    return id3 ? id3.replace(TRAILING_SLASH_HASH, "") : "";
+  function normalizeId(id4) {
+    return id4 ? id4.replace(TRAILING_SLASH_HASH, "") : "";
   }
   exports.normalizeId = normalizeId;
-  function resolveUrl(resolver, baseId, id3) {
-    id3 = normalizeId(id3);
-    return resolver.resolve(baseId, id3);
+  function resolveUrl(resolver, baseId, id4) {
+    id4 = normalizeId(id4);
+    return resolver.resolve(baseId, id4);
   }
   exports.resolveUrl = resolveUrl;
   const ANCHOR = /^[a-z_][-a-z0-9._]*$/i;
@@ -21592,8 +21592,8 @@ var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
     const refPath = (0, resolve_1._getFullPath)(this.opts.uriResolver, p);
     let baseId = (0, resolve_1.getFullPath)(this.opts.uriResolver, root.baseId, void 0);
     if (Object.keys(root.schema).length > 0 && refPath === baseId) return getJsonPointer.call(this, p, root);
-    const id3 = (0, resolve_1.normalizeId)(refPath);
-    const schOrRef = this.refs[id3] || this.schemas[id3];
+    const id4 = (0, resolve_1.normalizeId)(refPath);
+    const schOrRef = this.refs[id4] || this.schemas[id4];
     if (typeof schOrRef == "string") {
       const sch = resolveSchema.call(this, root, schOrRef);
       if (typeof (sch === null || sch === void 0 ? void 0 : sch.schema) !== "object") return;
@@ -21601,7 +21601,7 @@ var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     if (typeof (schOrRef === null || schOrRef === void 0 ? void 0 : schOrRef.schema) !== "object") return;
     if (!schOrRef.validate) compileSchema.call(this, schOrRef);
-    if (id3 === (0, resolve_1.normalizeId)(ref)) {
+    if (id4 === (0, resolve_1.normalizeId)(ref)) {
       const { schema } = schOrRef;
       const { schemaId } = this.opts;
       const schId = schema[schemaId];
@@ -22469,13 +22469,13 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
         for (const sch of schema) this.addSchema(sch, void 0, _meta, _validateSchema);
         return this;
       }
-      let id3;
+      let id4;
       if (typeof schema === "object") {
         const { schemaId } = this.opts;
-        id3 = schema[schemaId];
-        if (id3 !== void 0 && typeof id3 != "string") throw new Error(`schema ${schemaId} must be string`);
+        id4 = schema[schemaId];
+        if (id4 !== void 0 && typeof id4 != "string") throw new Error(`schema ${schemaId} must be string`);
       }
-      key = (0, resolve_1.normalizeId)(key || id3);
+      key = (0, resolve_1.normalizeId)(key || id4);
       this._checkUnique(key);
       this.schemas[key] = this._addSchema(schema, _meta, key, _validateSchema, true);
       return this;
@@ -22540,11 +22540,11 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
         case "object": {
           const cacheKey = schemaKeyRef;
           this._cache.delete(cacheKey);
-          let id3 = schemaKeyRef[this.opts.schemaId];
-          if (id3) {
-            id3 = (0, resolve_1.normalizeId)(id3);
-            delete this.schemas[id3];
-            delete this.refs[id3];
+          let id4 = schemaKeyRef[this.opts.schemaId];
+          if (id4) {
+            id4 = (0, resolve_1.normalizeId)(id4);
+            delete this.schemas[id4];
+            delete this.refs[id4];
           }
           return this;
         }
@@ -22636,14 +22636,14 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
       }
     }
     _addSchema(schema, meta3, baseId, validateSchema = this.opts.validateSchema, addSchema = this.opts.addUsedSchema) {
-      let id3;
+      let id4;
       const { schemaId } = this.opts;
-      if (typeof schema == "object") id3 = schema[schemaId];
+      if (typeof schema == "object") id4 = schema[schemaId];
       else if (this.opts.jtd) throw new Error("schema must be object");
       else if (typeof schema != "boolean") throw new Error("schema must be object or boolean");
       let sch = this._cache.get(schema);
       if (sch !== void 0) return sch;
-      baseId = (0, resolve_1.normalizeId)(id3 || baseId);
+      baseId = (0, resolve_1.normalizeId)(id4 || baseId);
       const localRefs = resolve_1.getSchemaRefs.call(this, schema, baseId);
       sch = new compile_1.SchemaEnv({
         schema,
@@ -22660,8 +22660,8 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
       if (validateSchema) this.validateSchema(schema, true);
       return sch;
     }
-    _checkUnique(id3) {
-      if (this.schemas[id3] || this.refs[id3]) throw new Error(`schema with key or id "${id3}" already exists`);
+    _checkUnique(id4) {
+      if (this.schemas[id4] || this.refs[id4]) throw new Error(`schema with key or id "${id4}" already exists`);
     }
     _compileSchemaEnv(sch) {
       if (sch.meta) this._compileMetaSchema(sch);
@@ -26081,8 +26081,8 @@ var StdioListenRouter = class {
     if (serverInfo !== void 0) this._serverInfo = serverInfo;
   }
   /** Whether `id` is an active listen subscription on this connection. */
-  has(id3) {
-    return this._subs.has(id3);
+  has(id4) {
+    return this._subs.has(id4);
   }
   /**
   * Serve one inbound `subscriptions/listen` request: registers the
@@ -26126,8 +26126,8 @@ var StdioListenRouter = class {
   * `true` when a subscription was removed. After this call NOTHING further
   * is delivered for that subscription id (the post-cancel hardening).
   */
-  cancel(id3) {
-    return this._subs.delete(id3);
+  cancel(id4) {
+    return this._subs.delete(id4);
   }
   /**
   * Route an outbound notification through the active subscriptions.
@@ -26159,13 +26159,13 @@ var StdioListenRouter = class {
   */
   teardownAll() {
     const out = [];
-    for (const id3 of this._subs.keys()) out.push({
+    for (const id4 of this._subs.keys()) out.push({
       jsonrpc: "2.0",
-      id: id3,
+      id: id4,
       result: {
         resultType: "complete",
         _meta: {
-          [SUBSCRIPTION_ID_META_KEY]: id3,
+          [SUBSCRIPTION_ID_META_KEY]: id4,
           ...this._serverInfo !== void 0 && { [SERVER_INFO_META_KEY]: this._serverInfo }
         }
       }
@@ -26237,7 +26237,7 @@ var LegacyInputRequiredShim = class {
   constructor(_host) {
     this._host = _host;
   }
-  async fulfill(method, handler, request, ctx, firstResult) {
+  async fulfill(method, handler, request2, ctx, firstResult) {
     const { maxRounds, roundTimeoutMs } = this._host;
     const outerSignal = ctx.mcpReq.signal;
     let current = firstResult;
@@ -26298,7 +26298,7 @@ var LegacyInputRequiredShim = class {
         const decoded = await this._host.verifyRequestState(requestState, ctxNext, method);
         if (decoded !== void 0) ctxNext = withRequestStateValue(ctxNext, decoded);
       }
-      const next = await handler(request, ctxNext);
+      const next = await handler(request2, ctxNext);
       if (!isInputRequiredResult(next)) return next;
       current = next;
     }
@@ -26388,7 +26388,7 @@ var Server = class extends Protocol {
       for (const [operation, hint] of Object.entries(options.cacheHints)) if (hint !== void 0) assertValidCacheHint(hint, `cacheHints['${operation}']`);
       this._cacheHints = options.cacheHints;
     }
-    this.setRequestHandler("initialize", (request) => this._oninitialize(request));
+    this.setRequestHandler("initialize", (request2) => this._oninitialize(request2));
     this.setNotificationHandler("notifications/initialized", () => this.oninitialized?.());
     if (modernProtocolVersions(this._supportedProtocolVersions).length > 0) this.setRequestHandler("server/discover", () => this._ondiscover());
     if (this._capabilities.logging) this._registerLoggingHandler();
@@ -26406,9 +26406,9 @@ var Server = class extends Protocol {
   * Migrate to stderr logging (STDIO servers) or OpenTelemetry.
   */
   _registerLoggingHandler() {
-    this.setRequestHandler("logging/setLevel", async (request, ctx) => {
+    this.setRequestHandler("logging/setLevel", async (request2, ctx) => {
       const transportSessionId = ctx.sessionId || ctx.http?.req?.headers.get("mcp-session-id") || void 0;
-      const { level } = request.params;
+      const { level } = request2.params;
       const parseResult = parseSchema(LoggingLevelSchema, level);
       if (parseResult.success) this._loggingLevels.set(transportSessionId, parseResult.data);
       return {};
@@ -26482,13 +26482,13 @@ var Server = class extends Protocol {
     if (method !== "tools/call") {
       const cacheHint = this._cacheHints?.[method];
       const isInputRequiredCapable = INPUT_REQUIRED_CAPABLE_METHODS.has(method);
-      if (cacheHint === void 0 && !isInputRequiredCapable) return async (request, ctx) => {
-        const result2 = await handler(request, ctx);
+      if (cacheHint === void 0 && !isInputRequiredCapable) return async (request2, ctx) => {
+        const result2 = await handler(request2, ctx);
         if (isInputRequiredResult(result2)) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input-required result, but only tools/call, prompts/get and resources/read support input_required (protocol revision 2026-07-28)`);
         return result2;
       };
-      return async (request, ctx) => {
-        const result2 = isInputRequiredCapable ? await this._invokeInputRequiredCapableHandler(method, handler, request, ctx) : await handler(request, ctx);
+      return async (request2, ctx) => {
+        const result2 = isInputRequiredCapable ? await this._invokeInputRequiredCapableHandler(method, handler, request2, ctx) : await handler(request2, ctx);
         if (isInputRequiredResult(result2)) {
           if (!isInputRequiredCapable) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input-required result, but only tools/call, prompts/get and resources/read support input_required (protocol revision 2026-07-28)`);
           return result2;
@@ -26496,11 +26496,11 @@ var Server = class extends Protocol {
         return cacheHint === void 0 ? result2 : attachCacheHintFallback(result2, cacheHint);
       };
     }
-    return async (request, ctx) => {
+    return async (request2, ctx) => {
       const codec2 = codecForVersion(this._negotiatedProtocolVersion);
-      const validatedRequest = codec2.validateRequest("tools/call", request);
+      const validatedRequest = codec2.validateRequest("tools/call", request2);
       if (!validatedRequest.ok) throw new ProtocolError(validatedRequest.reason === "not-in-era" ? ProtocolErrorCode.InternalError : ProtocolErrorCode.InvalidParams, validatedRequest.reason === "not-in-era" ? "No wire schema for tools/call in the resolved era" : `Invalid tools/call request: ${validatedRequest.message}`);
-      const result2 = await this._invokeInputRequiredCapableHandler("tools/call", handler, request, ctx);
+      const result2 = await this._invokeInputRequiredCapableHandler("tools/call", handler, request2, ctx);
       if (isInputRequiredResult(result2)) return result2;
       const normalizedResult = normalizeContentlessToolResult(result2);
       const validationResult = codec2.validateResult("tools/call", normalizedResult);
@@ -26538,7 +26538,7 @@ var Server = class extends Protocol {
   *   violations per family; `inputRequired.legacyShim: false` restores
   *   the pre-shim loud failure.
   */
-  async _invokeInputRequiredCapableHandler(method, handler, request, ctx) {
+  async _invokeInputRequiredCapableHandler(method, handler, request2, ctx) {
     const servedModern = this._servedModernEra();
     const rawRequestState = ctx.mcpReq.requestState();
     if (rawRequestState !== void 0 && typeof rawRequestState !== "string") throw new ProtocolError(ProtocolErrorCode.InvalidParams, "Invalid or expired requestState", { reason: "invalid_request_state" });
@@ -26549,7 +26549,7 @@ var Server = class extends Protocol {
     }
     let result2;
     try {
-      result2 = await handler(request, ctxForHandler);
+      result2 = await handler(request2, ctxForHandler);
     } catch (error46) {
       if (error46 instanceof ProtocolError && error46.code === ProtocolErrorCode.UrlElicitationRequired) {
         if (!servedModern) throw error46;
@@ -26560,7 +26560,7 @@ var Server = class extends Protocol {
     if (!isInputRequiredResult(result2)) return result2;
     if (!servedModern) {
       if (!this._inputRequiredServing.legacyShim) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input-required result, but this request is served on protocol revision ${this._negotiatedProtocolVersion ?? LATEST_PROTOCOL_VERSION}, which has no input_required vocabulary`);
-      return await this._legacyInputRequiredShim().fulfill(method, handler, request, ctxForHandler, result2);
+      return await this._legacyInputRequiredShim().fulfill(method, handler, request2, ctxForHandler, result2);
     }
     const inputRequests = result2.inputRequests;
     const hasInputRequests = inputRequests != null && Object.keys(inputRequests).length > 0;
@@ -26679,10 +26679,10 @@ var Server = class extends Protocol {
         break;
     }
   }
-  async _oninitialize(request) {
-    const requestedVersion = request.params.protocolVersion;
-    this._clientCapabilities = request.params.capabilities;
-    this._clientVersion = request.params.clientInfo;
+  async _oninitialize(request2) {
+    const requestedVersion = request2.params.protocolVersion;
+    this._clientCapabilities = request2.params.capabilities;
+    this._clientVersion = request2.params.clientInfo;
     const legacyVersions = legacyProtocolVersions(this._supportedProtocolVersions);
     const protocolVersion = legacyVersions.includes(requestedVersion) ? requestedVersion : legacyVersions[0] ?? LATEST_PROTOCOL_VERSION;
     this._negotiatedProtocolVersion = protocolVersion;
@@ -26804,7 +26804,7 @@ var Server = class extends Protocol {
       if (hasPreviousToolUse) {
         const toolUseIds = new Set(previousContent.filter((c) => c.type === "tool_use").map((c) => c.id));
         const toolResultIds = new Set(lastContent.filter((c) => c.type === "tool_result").map((c) => c.toolUseId));
-        if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id3) => toolResultIds.has(id3))) throw new ProtocolError(ProtocolErrorCode.InvalidParams, "ids of tool_result blocks and tool_use blocks from previous message do not match");
+        if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id4) => toolResultIds.has(id4))) throw new ProtocolError(ProtocolErrorCode.InvalidParams, "ids of tool_result blocks and tool_use blocks from previous message do not match");
       }
     }
     const hasTools = Boolean(params.tools || params.toolChoice);
@@ -27092,14 +27092,14 @@ var McpServer = class {
       if (tool.outputSchema) toolDefinition.outputSchema = standardSchemaToJsonSchema(tool.outputSchema, "output");
       return toolDefinition;
     }) }));
-    this.server.setRequestHandler("tools/call", async (request, ctx) => {
-      const tool = this._registeredTools[request.params.name];
-      if (!tool) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Tool ${request.params.name} not found`);
-      if (!tool.enabled) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Tool ${request.params.name} disabled`);
+    this.server.setRequestHandler("tools/call", async (request2, ctx) => {
+      const tool = this._registeredTools[request2.params.name];
+      if (!tool) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Tool ${request2.params.name} not found`);
+      if (!tool.enabled) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Tool ${request2.params.name} disabled`);
       try {
-        const args = await this.validateToolInput(tool, request.params.arguments, request.params.name);
+        const args = await this.validateToolInput(tool, request2.params.arguments, request2.params.name);
         const result2 = await this.executeToolHandler(tool, args, ctx);
-        await this.validateToolOutput(tool, result2, request.params.name);
+        await this.validateToolOutput(tool, result2, request2.params.name);
         if (isInputRequiredResult(result2)) return result2;
         return this.server.projectCallToolResult(result2, tool.outputSchemaJson);
       } catch (error46) {
@@ -27156,40 +27156,40 @@ var McpServer = class {
     if (this._completionHandlerInitialized) return;
     this.server.assertCanSetRequestHandler("completion/complete");
     this.server.registerCapabilities({ completions: {} });
-    this.server.setRequestHandler("completion/complete", async (request) => {
-      switch (request.params.ref.type) {
+    this.server.setRequestHandler("completion/complete", async (request2) => {
+      switch (request2.params.ref.type) {
         case "ref/prompt":
-          assertCompleteRequestPrompt(request);
-          return this.handlePromptCompletion(request, request.params.ref);
+          assertCompleteRequestPrompt(request2);
+          return this.handlePromptCompletion(request2, request2.params.ref);
         case "ref/resource":
-          assertCompleteRequestResourceTemplate(request);
-          return this.handleResourceCompletion(request, request.params.ref);
+          assertCompleteRequestResourceTemplate(request2);
+          return this.handleResourceCompletion(request2, request2.params.ref);
         default:
-          throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Invalid completion reference: ${request.params.ref}`);
+          throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Invalid completion reference: ${request2.params.ref}`);
       }
     });
     this._completionHandlerInitialized = true;
   }
-  async handlePromptCompletion(request, ref) {
+  async handlePromptCompletion(request2, ref) {
     const prompt = this._registeredPrompts[ref.name];
     if (!prompt) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Prompt ${ref.name} not found`);
     if (!prompt.enabled) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Prompt ${ref.name} disabled`);
     if (!prompt.argsSchema) return EMPTY_COMPLETION_RESULT;
-    const field = unwrapOptionalSchema(getSchemaShape(prompt.argsSchema)?.[request.params.argument.name]);
+    const field = unwrapOptionalSchema(getSchemaShape(prompt.argsSchema)?.[request2.params.argument.name]);
     if (!isCompletable(field)) return EMPTY_COMPLETION_RESULT;
     const completer = getCompleter(field);
     if (!completer) return EMPTY_COMPLETION_RESULT;
-    return createCompletionResult(await completer(request.params.argument.value, request.params.context));
+    return createCompletionResult(await completer(request2.params.argument.value, request2.params.context));
   }
-  async handleResourceCompletion(request, ref) {
+  async handleResourceCompletion(request2, ref) {
     const template = Object.values(this._registeredResourceTemplates).find((t) => t.resourceTemplate.uriTemplate.toString() === ref.uri);
     if (!template) {
       if (this._registeredResources[ref.uri]) return EMPTY_COMPLETION_RESULT;
-      throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Resource template ${request.params.ref.uri} not found`);
+      throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Resource template ${request2.params.ref.uri} not found`);
     }
-    const completer = template.resourceTemplate.completeCallback(request.params.argument.name);
+    const completer = template.resourceTemplate.completeCallback(request2.params.argument.name);
     if (!completer) return EMPTY_COMPLETION_RESULT;
-    return createCompletionResult(await completer(request.params.argument.value, request.params.context));
+    return createCompletionResult(await completer(request2.params.argument.value, request2.params.context));
   }
   _resourceHandlersInitialized = false;
   setResourceRequestHandlers() {
@@ -27222,13 +27222,13 @@ var McpServer = class {
         ...template.metadata
       })) };
     });
-    this.server.setRequestHandler("resources/read", async (request, ctx) => {
+    this.server.setRequestHandler("resources/read", async (request2, ctx) => {
       let uri;
       try {
-        uri = new URL(request.params.uri);
+        uri = new URL(request2.params.uri);
       } catch {
-        throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Resource URI ${request.params.uri} is invalid`, {
-          uri: request.params.uri,
+        throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Resource URI ${request2.params.uri} is invalid`, {
+          uri: request2.params.uri,
           reason: "invalid_uri"
         });
       }
@@ -27244,7 +27244,7 @@ var McpServer = class {
           return attachCacheHintFallback(await template.readCallback(uri, variables, ctx), template.cacheHint);
         }
       }
-      throw new ResourceNotFoundError(request.params.uri);
+      throw new ResourceNotFoundError(request2.params.uri);
     });
     this._resourceHandlersInitialized = true;
   }
@@ -27264,11 +27264,11 @@ var McpServer = class {
         _meta: prompt._meta
       };
     }) }));
-    this.server.setRequestHandler("prompts/get", async (request, ctx) => {
-      const prompt = this._registeredPrompts[request.params.name];
-      if (!prompt) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Prompt ${request.params.name} not found`);
-      if (!prompt.enabled) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Prompt ${request.params.name} disabled`);
-      return prompt.handler(request.params.arguments, ctx);
+    this.server.setRequestHandler("prompts/get", async (request2, ctx) => {
+      const prompt = this._registeredPrompts[request2.params.name];
+      if (!prompt) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Prompt ${request2.params.name} not found`);
+      if (!prompt.enabled) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Prompt ${request2.params.name} disabled`);
+      return prompt.handler(request2.params.arguments, ctx);
     });
     this._promptHandlersInitialized = true;
   }
@@ -27716,8 +27716,8 @@ var StdioConnectionChannel = class {
   }
   async send(message, options) {
     if (isJSONRPCResultResponse(message) || isJSONRPCErrorResponse(message)) {
-      const { id: id3 } = message;
-      if (id3 !== void 0) this._settle(id3);
+      const { id: id4 } = message;
+      if (id4 !== void 0) this._settle(id4);
     }
     if (this._closed) return;
     if (this._outboundIntercept?.(message) === "handled") return;
@@ -27770,8 +27770,8 @@ var StdioConnectionChannel = class {
       this.onclose?.();
     }
   }
-  _settle(id3) {
-    this._pendingRequests.delete(id3);
+  _settle(id4) {
+    this._pendingRequests.delete(id4);
     if (this._pendingRequests.size === 0) this._releaseDrainWaiters();
   }
   _releaseDrainWaiters() {
@@ -27827,9 +27827,9 @@ function serveStdio(factory, options = {}) {
     } catch {
     }
   };
-  const writeErrorResponse = (id3, code, message, data) => wire.send({
+  const writeErrorResponse = (id4, code, message, data) => wire.send({
     jsonrpc: "2.0",
-    id: id3,
+    id: id4,
     error: {
       code,
       message,
@@ -27892,7 +27892,7 @@ function serveStdio(factory, options = {}) {
     }
     return false;
   };
-  const answerLegacyRejection = (request, reason, requestedVersion) => {
+  const answerLegacyRejection = (request2, reason, requestedVersion) => {
     const rejection2 = modernOnlyStrictRejection({
       kind: "legacy",
       reason,
@@ -27900,7 +27900,7 @@ function serveStdio(factory, options = {}) {
     }, SUPPORTED_MODERN_PROTOCOL_VERSIONS);
     if (rejection2 === void 0) return Promise.resolve();
     reportError(/* @__PURE__ */ new Error(`Rejected 2025-era request on a modern-only stdio connection (${rejection2.cell}): ${rejection2.message}`));
-    return writeErrorResponse(request.id, rejection2.code, rejection2.message, rejection2.data);
+    return writeErrorResponse(request2.id, rejection2.code, rejection2.message, rejection2.data);
   };
   const onInstanceClosed = (channel) => {
     if (closing || channel === discarding) return;
@@ -28151,8 +28151,8 @@ var copy = (value) => structuredClone(value);
 function listGoldenPathways() {
   return copy(definitions);
 }
-function getGoldenPathway(id3) {
-  const pathway = definitions.find((item) => item.id === id3);
+function getGoldenPathway(id4) {
+  const pathway = definitions.find((item) => item.id === id4);
   if (!pathway) throw new TypeError("Unknown Defiant pathway");
   return copy(pathway);
 }
@@ -28236,8 +28236,53 @@ var definitions2 = [
   { id: "opportunity-to-plan", title: "Opportunity and scenario review", audience: "Commercial decision maker", question: "How do linked demand, royalty and rights records constrain an illustrative plan?", reviewQuestions: ["Can every proposed opportunity be traced to the selected artist, recording and region?", "How sensitive is the scenario to budget, rate and untrained baseline assumptions?"] }
 ].map((pathway) => ({ ...pathway, requiredInputs: ["artistId", "budgets"], toolSequence }));
 var copy3 = (value) => structuredClone(value);
+var id = (value) => typeof value === "string" && value.length <= 160 && /^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(value);
 var DEFIANT_DOMAIN_INSTRUCTIONS = "Use the unified data layer to identify an artist and catalog, then the media-and-entertainment domain tools to inspect regional demand and linked royalties/rights, then the governed pathway to compare explicit illustrative scenarios and produce a human-review packet. Trace claims to returned evidence IDs and periods. All demonstration data is fictional; baseline/scenario math is deterministic and untrained, not measured real-world demand or a financial forecast. Simulated rights statuses never constitute actual approval. Do not invent missing records, execute campaigns, approve rights or imply Databricks/Foundry integration.";
 var listDefiantDomainPathways = () => copy3(definitions2);
+function getDefiantDomainPathway(pathwayId) {
+  const found = definitions2.find((pathway) => pathway.id === pathwayId);
+  if (!found) throw TypeError("Unknown domain pathway");
+  return copy3(found);
+}
+function request(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input) || Object.keys(input).some((key) => !["pathwayId", "artistId", "trackId", "regionId", "budgets", "horizonMonths"].includes(key))) throw TypeError("Unsupported domain pathway input");
+  const pathway = getDefiantDomainPathway(input.pathwayId), missingInputs = [];
+  if (input.artistId === void 0) missingInputs.push("artistId");
+  else if (!id(input.artistId)) throw TypeError("Choose a supplied artist");
+  for (const key of ["trackId", "regionId"]) if (input[key] !== void 0 && !id(input[key])) throw TypeError("Choose a supplied recording and region");
+  if (input.budgets === void 0) missingInputs.push("budgets");
+  else if (!Array.isArray(input.budgets) || input.budgets.length < 1 || input.budgets.length > 3 || input.budgets.some((value) => !Number.isFinite(value) || value < 0 || value > 1e5) || new Set(input.budgets).size !== input.budgets.length) throw TypeError("Supply one to three explicit illustrative budgets");
+  const horizonMonths = input.horizonMonths ?? 3;
+  if (!Number.isInteger(horizonMonths) || horizonMonths < 1 || horizonMonths > 12) throw TypeError("Choose a horizon of one to twelve months");
+  return { pathway, missingInputs, horizonMonths };
+}
+async function runDefiantDomainPathway(service, actor, input) {
+  const { pathway, missingInputs, horizonMonths } = request(input);
+  if (missingInputs.length) return { schemaVersion: 1, pathway, status: "needs-input", missingInputs, nextStep: "Supply the artist and explicit scenario budgets; no domain reads have run." };
+  if (typeof service?.domain !== "function") throw TypeError("A scoped Defiant domain service is required");
+  let snapshot = null;
+  const results = [];
+  async function read(command) {
+    const result2 = await service.domain(actor, command);
+    if (result2?.schemaVersion !== 1 || result2.operation !== command.operation || !result2.dataset?.revision || result2.capabilities?.readOnly !== true || result2.capabilities.canApproveRights !== false || result2.capabilities.canPublish !== false) throw Error("Invalid domain read");
+    const key = JSON.stringify([result2.dataset.id, result2.dataset.revision]);
+    if (snapshot !== null && snapshot !== key) throw Error("Dataset changed; restart the pathway against one snapshot");
+    snapshot = key;
+    results.push(result2);
+    return result2;
+  }
+  const overview = await read({ operation: "artist-overview", artistId: input.artistId });
+  if (overview.artist?.id !== input.artistId) throw Error("Artist context did not match");
+  const regional = await read({ operation: "regional-opportunities", artistId: input.artistId, ...input.regionId ? { regionId: input.regionId } : {}, limit: 25 });
+  const candidate = regional.items?.find((item) => (!input.trackId || item.trackId === input.trackId) && (!input.regionId || item.regionId === input.regionId));
+  if (!candidate) return { schemaVersion: 1, pathway, dataset: copy3(overview.dataset), status: "needs-input", missingInputs: ["trackId", "regionId"], overview, regional, nextStep: "No matching opportunity is in these bounded results. Choose a supplied recording and region; do not invent a signal." };
+  if (candidate.artistId !== input.artistId || !overview.recordings?.some((recording) => recording.id === candidate.trackId)) throw Error("Regional opportunity does not belong to the selected catalog");
+  const rightsAndRoyalties = await read({ operation: "rights-and-royalties", trackId: candidate.trackId });
+  const explanation = await read({ operation: "explain-opportunity", trackId: candidate.trackId, regionId: candidate.regionId });
+  const scenarioComparison = await read({ operation: "compare-scenarios", trackId: candidate.trackId, regionId: candidate.regionId, budgets: copy3(input.budgets), horizonMonths });
+  if (rightsAndRoyalties.recording?.id !== candidate.trackId || explanation.recording?.id !== candidate.trackId || explanation.region?.id !== candidate.regionId || scenarioComparison.recording?.id !== candidate.trackId || scenarioComparison.region?.id !== candidate.regionId || scenarioComparison.trained !== false || rightsAndRoyalties.canApproveRights !== false || rightsAndRoyalties.reviewRequired !== true || scenarioComparison.reviewRequired !== true) throw Error("Joined domain results do not preserve the proposed context");
+  return { schemaVersion: 1, pathway, dataset: copy3(overview.dataset), status: "human-review-required", selection: { artistId: input.artistId, trackId: candidate.trackId, regionId: candidate.regionId, method: input.trackId && input.regionId ? "explicit-selection" : "first-matching-ranked-synthetic-proposal" }, overview, regional, rightsAndRoyalties, explanation, scenarioComparison, evidenceIds: [...new Set(results.flatMap((result2) => result2.evidenceIds || []))], review: { status: "pending", questions: pathway.reviewQuestions, unknowns: ["Fictional demand and royalty records are not observed results or earned revenue.", "Scenario projections are untrained assumptions, not financial forecasts.", "Simulated rights, collaborators and availability require separate real-world confirmation."], nextStep: "A person reviews the evidence, intended use and assumptions before any separate campaign action." }, capabilities: { readOnly: true, canApproveRights: false, canExecuteCampaign: false, canPublish: false } };
+}
 
 // server/defiant-domain-prompts.js
 var record2 = external_exports.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/);
@@ -28267,16 +28312,19 @@ function registerDefiantDomainPrompts(server) {
 
 // server/defiant-mcp.js
 var RESOURCE_URI = "ui://defiant/research-v1.html";
+var DOMAIN_RESOURCE_URI = "ui://defiant/domain-review-v1.html";
 var organizationId2 = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 var recordId2 = external_exports.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/);
 var boundedText = external_exports.string().trim().min(1).max(200).refine((value) => !/[\u0000-\u001f\u007f]/.test(value));
 var selection = external_exports.object({ artistId: recordId2.optional(), trackId: recordId2.optional(), sourceId: recordId2.optional(), campaignId: recordId2.optional(), opportunityId: recordId2.optional() }).strict();
 var annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 var result = (structuredContent) => ({ content: [{ type: "text", text: "Read-only Defiant research. Supplied claims and rights remain unverified." }], structuredContent });
-function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
+function registerDefiantTools(server, { resolveService, uiHtml, domainUiHtml } = {}) {
   if (typeof resolveService !== "function") throw new TypeError("A server-owned service resolver is required");
   if (uiHtml !== void 0 && (typeof uiHtml !== "string" || !uiHtml.trim() || Buffer.byteLength(uiHtml, "utf8") > 512 * 1024)) throw new TypeError("A bounded, built static UI document is required");
+  if (domainUiHtml !== void 0 && (typeof domainUiHtml !== "string" || !domainUiHtml.trim() || Buffer.byteLength(domainUiHtml, "utf8") > 512 * 1024)) throw new TypeError("A bounded, built domain UI document is required");
   const resourceUri = uiHtml === void 0 ? null : RESOURCE_URI;
+  const domainResourceUri = domainUiHtml === void 0 ? null : DOMAIN_RESOURCE_URI;
   const execute = (operation) => async (input, context) => {
     try {
       const binding = await resolveService({ organizationId: input.organizationId, context });
@@ -28289,11 +28337,15 @@ function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
   };
   j(server, "defiant_read_data", {
     title: "Read Defiant reference data",
-    description: "Read a bounded reference resource. Does not fetch sources, infer rights or execute campaigns.",
+    description: "Read a bounded reference resource. Manifest returns dataset metadata and resource counts only; request each named resource for paginated records. Does not fetch sources, infer rights or execute campaigns.",
     inputSchema: external_exports.object({ organizationId: organizationId2, resource: external_exports.enum(["manifest", "artists", "tracks", "sources", "campaigns", "demand", "royalties", "opportunities", "regions", "collaborators", "rights", "forecasts"]), id: recordId2.optional(), query: boundedText.optional(), cursor: external_exports.string().regex(/^(0|[1-9]\d{0,5})$/).optional(), limit: external_exports.number().int().min(1).max(100).optional() }).strict(),
     annotations,
     _meta: {}
-  }, execute(({ service, actor }, { organizationId: _organizationId, ...request }) => service.read(actor, request)));
+  }, execute(async ({ service, actor }, { organizationId: _organizationId, ...request2 }) => {
+    const data = await service.read(actor, request2);
+    if (request2.resource !== "manifest") return data;
+    return { schemaVersion: data.schemaVersion, dataset: data.dataset, capabilities: data.capabilities, resources: Object.entries(data.dataset.counts).map(([resource, count]) => ({ resource, count })) };
+  }));
   j(server, "defiant_list_pathways", {
     title: "List Defiant research pathways",
     description: "List finite guided research pathways for the authorized reference dataset.",
@@ -28313,11 +28365,22 @@ function registerDefiantTools(server, { resolveService, uiHtml } = {}) {
   }, execute(async ({ service, actor }, input) => buildDefiantDemoView({ data: await service.read(actor, { resource: "manifest" }), pathwayId: input.pathwayId, selection: input.selection })));
   registerDefiantDomainTools(server, { execute });
   registerDefiantDomainPrompts(server);
+  j(server, "defiant_open_domain_review", {
+    title: "Open joined domain review",
+    description: "Trace an explicit artist and illustrative budgets through regional observations, royalties, simulated rights and scenarios into a human-review packet. No approval, publication or campaign execution.",
+    inputSchema: external_exports.object({ organizationId: organizationId2, pathwayId: external_exports.enum(["catalog-to-campaign", "talent-to-campaign", "opportunity-to-plan"]), artistId: recordId2, trackId: recordId2.optional(), regionId: recordId2.optional(), budgets: external_exports.array(external_exports.number().min(0).max(1e5)).min(1).max(3), horizonMonths: external_exports.number().int().min(1).max(12).optional() }).strict(),
+    annotations,
+    _meta: domainResourceUri ? { ui: { resourceUri: domainResourceUri } } : {}
+  }, execute(async ({ service, actor }, { organizationId: _organizationId, ...input }) => ({ ...await runDefiantDomainPathway(service, actor, input), view: "domain-review" })));
   if (resourceUri) {
     const meta3 = { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [] } } };
     G(server, "Defiant guided research", resourceUri, { mimeType: L, _meta: meta3 }, async () => ({ contents: [{ uri: resourceUri, mimeType: L, text: uiHtml, _meta: meta3 }] }));
   }
-  return { resourceUri };
+  if (domainResourceUri) {
+    const meta3 = { ui: { csp: { connectDomains: [], resourceDomains: [], frameDomains: [] } } };
+    G(server, "Defiant domain review", domainResourceUri, { mimeType: L, _meta: meta3 }, async () => ({ contents: [{ uri: domainResourceUri, mimeType: L, text: domainUiHtml, _meta: meta3 }] }));
+  }
+  return { resourceUri, domainResourceUri };
 }
 
 // server/defiant-unified-data.js
@@ -28330,7 +28393,7 @@ var text = (x, max = 500) => {
   if (typeof x !== "string" || !x.trim() || x.length > max || /[\u0000-\u001f\u007f]/.test(x)) throw fail("Invalid domain text");
   return x.trim();
 };
-var id = (x) => {
+var id2 = (x) => {
   const s = text(x, 160);
   if (!/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(s)) throw fail("Invalid domain identifier");
   return s;
@@ -28345,14 +28408,14 @@ var month = (x) => {
 };
 var refs = (x) => {
   if (!Array.isArray(x) || x.length > 100) throw fail("Invalid domain references");
-  return [...new Set(x.map(id))];
+  return [...new Set(x.map(id2))];
 };
 var DOMAIN_RESOURCES = ["regions", "collaborators", "demand", "royalties", "rights", "forecasts"];
 function normalizeDefiantDomain(input, base) {
   const out = {};
   const has = (kind, key) => base[kind]?.some((x) => x.id === key) || out[kind]?.some((x) => x.id === key);
   const linked = (kind, key) => {
-    const value = id(key);
+    const value = id2(key);
     if (!has(kind, value)) throw fail("Unknown domain reference");
     return value;
   };
@@ -28362,7 +28425,7 @@ function normalizeDefiantDomain(input, base) {
     const seen = /* @__PURE__ */ new Set(), natural = /* @__PURE__ */ new Set();
     out[kind] = input[kind].map((row) => {
       if (!object2(row)) throw fail("Invalid domain record");
-      const key = id(row.id);
+      const key = id2(row.id);
       if (seen.has(key)) throw fail("Duplicate domain identifier");
       seen.add(key);
       const r = { id: key, provenance: base.dataset.provenance };
@@ -28401,7 +28464,7 @@ function normalizeDefiantDomain(input, base) {
         if (Math.abs(r.rate - r.rateMicros / 1e6) > 1e-12 || r.amountMicros !== r.streams * r.rateMicros || r.royaltyCents !== Math.round(r.amountMicros / 1e4) || Math.abs(r.amount - r.royaltyCents / 100) > 1e-8) throw fail("Royalty units do not reconcile");
         if (!Array.isArray(row.splits) || !row.splits.length || row.splits.length > 8) throw fail("Royalty splits required");
         r.splits = row.splits.map((x) => {
-          const partyId = id(x.partyId);
+          const partyId = id2(x.partyId);
           if (!has("artists", partyId) && !has("collaborators", partyId)) throw fail("Unknown royalty party");
           return { partyId, shareBps: num(x.shareBps, 1e4, true), amountCents: num(x.amountCents, 1e12, true) };
         });
@@ -28440,7 +28503,7 @@ function normalizeDefiantDomain(input, base) {
 var total = (rows, key) => rows.reduce((s, x) => s + x[key], 0);
 var round = (n) => Math.round(n * 1e6) / 1e6;
 var requireRow = (rows, key) => {
-  const row = rows?.find((x) => x.id === id(key));
+  const row = rows?.find((x) => x.id === id2(key));
   if (!row) throw fail("Domain record not found", 404);
   return row;
 };
@@ -28457,44 +28520,45 @@ function opportunity(data, trackId, regionId) {
   const score = round(Math.min(100, Math.max(0, (growthRate ?? 0) * 50) + Math.min(50, recentStreams / 1e4)));
   return { id: `regional:${trackId}:${regionId}`, trackId, regionId, artistId: recording.artistId, baselineStreams, recentStreams, growthRate, absoluteGrowth: recentStreams - baselineStreams, score, method: "trailing-3-month-vs-prior-3-month", periods, evidenceIds: rows.filter((x) => [...periods.baseline, ...periods.recent].includes(x.date)).map((x) => x.id), assumptions: ["Score = min(100, max(0, growthRate \xD7 50) + min(50, recentStreams / 10000)); an explicit review heuristic, not a learned prediction.", "Zero baseline has unknown growth rate; no percentage is invented."] };
 }
-function queryDefiantDomain(data, request) {
-  if (!object2(request)) throw fail("Domain request required");
+function queryDefiantDomain(data, request2) {
+  if (!object2(request2)) throw fail("Domain request required");
   const fields = { "artist-overview": ["artistId"], "regional-opportunities": ["artistId", "regionId", "limit"], "explain-opportunity": ["trackId", "regionId"], "rights-and-royalties": ["trackId", "territory"], "compare-scenarios": ["trackId", "regionId", "budgets", "horizonMonths"] };
-  const keys = fields[request.operation];
-  if (!keys || Object.keys(request).some((x) => x !== "operation" && !keys.includes(x))) throw fail("Unsupported domain operation");
-  const envelope = { schemaVersion: 1, dataset: data.dataset, operation: request.operation, provenance: data.dataset.provenance, asOf: data.dataset.asOf, evidenceIds: [], assumptions: ["Synthetic observations and financial amounts are demonstration data, not observed performance or rights clearance."], capabilities: data.capabilities };
+  const keys = fields[request2.operation];
+  if (!keys || Object.keys(request2).some((x) => x !== "operation" && !keys.includes(x))) throw fail("Unsupported domain operation");
+  const envelope = { schemaVersion: 1, dataset: data.dataset, operation: request2.operation, provenance: data.dataset.provenance, asOf: data.dataset.asOf, evidenceIds: [], assumptions: ["Synthetic observations and financial amounts are demonstration data, not observed performance or rights clearance."], capabilities: data.capabilities };
   let result2;
-  if (request.operation === "artist-overview") {
-    const artist = requireRow(data.artists, request.artistId), recordings = data.tracks.filter((x) => x.artistId === artist.id), trackIds = new Set(recordings.map((x) => x.id)), demand = (data.demand ?? []).filter((x) => trackIds.has(x.trackId)), royalties = (data.royalties ?? []).filter((x) => trackIds.has(x.trackId));
+  if (request2.operation === "artist-overview") {
+    const artist = requireRow(data.artists, request2.artistId), recordings = data.tracks.filter((x) => x.artistId === artist.id), trackIds = new Set(recordings.map((x) => x.id)), demand = (data.demand ?? []).filter((x) => trackIds.has(x.trackId)), royalties = (data.royalties ?? []).filter((x) => trackIds.has(x.trackId));
     result2 = { artist, recordings, collaborators: (data.collaborators ?? []).filter((x) => x.artistIds.includes(artist.id)), regions: (data.regions ?? []).filter((x) => demand.some((y) => y.regionId === x.id)), demandSummary: { available: demand.length > 0, streams: total(demand, "streams"), period: "month", observationCount: demand.length }, royaltySummary: { available: royalties.length > 0, amountCents: total(royalties, "royaltyCents"), currency: "USD", observationCount: royalties.length }, evidenceIds: [...recordings, ...demand, ...royalties].map((x) => x.id) };
-  } else if (request.operation === "regional-opportunities") {
-    if (request.artistId) requireRow(data.artists, request.artistId);
-    if (request.regionId) requireRow(data.regions, request.regionId);
-    const limit = request.limit ?? 10;
+  } else if (request2.operation === "regional-opportunities") {
+    if (request2.artistId) requireRow(data.artists, request2.artistId);
+    if (request2.regionId) requireRow(data.regions, request2.regionId);
+    const limit = request2.limit ?? 10;
     num(limit, 25, true);
     if (!limit) throw fail("Positive domain limit required");
     const items = [];
-    for (const track of data.tracks.filter((x) => !request.artistId || x.artistId === request.artistId)) for (const region of (data.regions ?? []).filter((x) => !request.regionId || x.id === request.regionId)) {
+    for (const track of data.tracks.filter((x) => !request2.artistId || x.artistId === request2.artistId)) for (const region of (data.regions ?? []).filter((x) => !request2.regionId || x.id === request2.regionId)) {
       const item = opportunity(data, track.id, region.id);
       if (item) items.push(item);
     }
     items.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
     result2 = { available: items.length > 0, items: items.slice(0, limit), total: items.length, periods: windows(data), evidenceIds: items.slice(0, limit).flatMap((x) => x.evidenceIds) };
-  } else if (request.operation === "rights-and-royalties") {
-    const recording = requireRow(data.tracks, request.trackId), territory = request.territory === void 0 ? null : text(request.territory, 12), rights = (data.rights ?? []).filter((x) => x.trackId === recording.id && (!territory || x.territory === territory)), rows = (data.royalties ?? []).filter((x) => x.trackId === recording.id), splits = /* @__PURE__ */ new Map();
+  } else if (request2.operation === "rights-and-royalties") {
+    const recording = requireRow(data.tracks, request2.trackId), territory = request2.territory === void 0 ? null : text(request2.territory, 12), rights = (data.rights ?? []).filter((x) => x.trackId === recording.id && (!territory || x.territory === territory)), rows = (data.royalties ?? []).filter((x) => x.trackId === recording.id), splits = /* @__PURE__ */ new Map();
     for (const row of rows) for (const split of row.splits) splits.set(split.partyId, (splits.get(split.partyId) ?? 0) + split.amountCents);
     result2 = { recording, rights, rightsStatus: rights.length ? "simulation-only" : "unknown", royalties: { available: rows.length > 0, streams: total(rows, "streams"), amountCents: total(rows, "royaltyCents"), currency: "USD", rows, splits: [...splits].map(([partyId, amountCents]) => ({ partyId, amountCents })) }, canApproveRights: false, reviewRequired: true, evidenceIds: [...rights, ...rows].map((x) => x.id) };
-  } else if (request.operation === "explain-opportunity") {
-    const item = opportunity(data, request.trackId, request.regionId);
-    result2 = { available: Boolean(item), item, recording: requireRow(data.tracks, request.trackId), artist: requireRow(data.artists, requireRow(data.tracks, request.trackId).artistId), region: requireRow(data.regions, request.regionId), rightsSummary: (data.rights ?? []).filter((x) => x.trackId === request.trackId).map((x) => ({ id: x.id, status: x.status, territory: x.territory, actualApproval: false })), reviewRequired: true, evidenceIds: item?.evidenceIds ?? [] };
+  } else if (request2.operation === "explain-opportunity") {
+    const item = opportunity(data, request2.trackId, request2.regionId);
+    const observations = (data.demand ?? []).filter((x) => x.trackId === request2.trackId && x.regionId === request2.regionId).sort((a, b) => a.date.localeCompare(b.date)).slice(-24).map(({ id: id4, date: date5, streams, period, provenance }) => ({ id: id4, date: date5, streams, period, provenance }));
+    result2 = { available: Boolean(item), item, observations, recording: requireRow(data.tracks, request2.trackId), artist: requireRow(data.artists, requireRow(data.tracks, request2.trackId).artistId), region: requireRow(data.regions, request2.regionId), rightsSummary: (data.rights ?? []).filter((x) => x.trackId === request2.trackId).map((x) => ({ id: x.id, status: x.status, territory: x.territory, actualApproval: false })), reviewRequired: true, evidenceIds: [.../* @__PURE__ */ new Set([...item?.evidenceIds ?? [], ...observations.map((x) => x.id)])] };
   } else {
-    const recording = requireRow(data.tracks, request.trackId), region = requireRow(data.regions, request.regionId), item = opportunity(data, recording.id, region.id), horizonMonths = request.horizonMonths ?? 3;
+    const recording = requireRow(data.tracks, request2.trackId), region = requireRow(data.regions, request2.regionId), item = opportunity(data, recording.id, region.id), horizonMonths = request2.horizonMonths ?? 3;
     num(horizonMonths, 12, true);
-    if (!horizonMonths || !Array.isArray(request.budgets) || !request.budgets.length || request.budgets.length > 3) throw fail("One to three explicit scenario budgets required");
-    if (new Set(request.budgets).size !== request.budgets.length) throw fail("Distinct scenario budgets required");
+    if (!horizonMonths || !Array.isArray(request2.budgets) || !request2.budgets.length || request2.budgets.length > 3) throw fail("One to three explicit scenario budgets required");
+    if (new Set(request2.budgets).size !== request2.budgets.length) throw fail("Distinct scenario budgets required");
     const rows = (data.royalties ?? []).filter((x) => x.trackId === recording.id), streams = total(rows, "streams"), rate = streams ? total(rows, "royaltyCents") / 100 / streams : null, baselineMonthlyStreams = item ? item.recentStreams / 3 : null;
     const assumptions = ["Incremental streams = budget / assumed $0.05 acquisition cost per stream; this is a fixed explicit planning assumption, not measured campaign lift.", "Baseline uses the last three complete monthly observations; scenario output is not an ML forecast or a budget recommendation."];
-    result2 = { available: baselineMonthlyStreams !== null, recording, region, baselineMonthlyStreams, scenarios: request.budgets.map((budget) => {
+    result2 = { available: baselineMonthlyStreams !== null, recording, region, baselineMonthlyStreams, scenarios: request2.budgets.map((budget) => {
       num(budget, 1e5);
       const baselineStreams = baselineMonthlyStreams === null ? null : Math.round(baselineMonthlyStreams * horizonMonths), assumedIncrementalStreams = Math.round(budget / 0.05), projectedStreams = baselineStreams === null ? null : baselineStreams + assumedIncrementalStreams, projectedRoyaltyCents = projectedStreams === null || rate === null ? null : Math.round(projectedStreams * rate * 100);
       return { budget, currency: "USD", horizonMonths, baselineStreams, assumedIncrementalStreams, projectedStreams, assumedRatePerStream: rate, projectedRoyaltyCents, netAfterBudget: projectedRoyaltyCents === null ? null : round(projectedRoyaltyCents / 100 - budget), assumptions };
@@ -28510,14 +28574,14 @@ var text2 = (value, max = 300) => {
   if (typeof value !== "string" || !value.trim() || value.length > max || /[\u0000-\u001f\u007f]/.test(value)) throw fail2(400, "Invalid dataset text");
   return value.trim();
 };
-var id2 = (value) => {
+var id3 = (value) => {
   const result2 = text2(value, 160);
   if (!/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(result2)) throw fail2(400, "Invalid dataset identifier");
   return result2;
 };
 var ids = (value) => {
   if (!Array.isArray(value) || value.length > 100) throw fail2(400, "Invalid dataset references");
-  return [...new Set(value.map(id2))];
+  return [...new Set(value.map(id3))];
 };
 var CAPS = Object.freeze({ readOnly: true, canApproveRights: false, canPublish: false });
 function normalize(input) {
@@ -28525,7 +28589,7 @@ function normalize(input) {
   const metadata = input.dataset;
   if (!metadata || !["synthetic", "user-reported"].includes(metadata.provenance)) throw fail2(400, "Dataset provenance required");
   if (metadata.asOf != null && (typeof metadata.asOf !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(metadata.asOf) || !Number.isFinite(Date.parse(metadata.asOf)))) throw fail2(400, "Invalid dataset date");
-  const dataset = { id: id2(metadata.id), label: text2(metadata.label), provenance: metadata.provenance, asOf: metadata.asOf ?? null };
+  const dataset = { id: id3(metadata.id), label: text2(metadata.label), provenance: metadata.provenance, asOf: metadata.asOf ?? null };
   if (metadata.seed !== void 0) dataset.seed = text2(metadata.seed, 100);
   if (metadata.reason !== void 0) dataset.reason = text2(metadata.reason, 500);
   const output = {};
@@ -28535,12 +28599,12 @@ function normalize(input) {
     const seen = /* @__PURE__ */ new Set();
     output[resource] = rows.map((row) => {
       if (!row || typeof row !== "object" || Array.isArray(row)) throw fail2(400, "Invalid dataset record");
-      const key = id2(row.id);
+      const key = id3(row.id);
       if (seen.has(key)) throw fail2(400, "Duplicate dataset identifier");
       seen.add(key);
       const result2 = { id: key, [resource === "artists" ? "name" : "title"]: text2(resource === "artists" ? row.name : row.title), provenance: dataset.provenance, rightsStatus: "unknown" };
       if (resource === "tracks") {
-        result2.artistId = id2(row.artistId);
+        result2.artistId = id3(row.artistId);
         if (row.isrc != null) result2.isrc = text2(row.isrc, 40);
         if (row.genre !== void 0) result2.genre = text2(row.genre, 100);
         if (row.releaseDate !== void 0) {
@@ -28549,9 +28613,9 @@ function normalize(input) {
         }
       }
       if (["sources", "campaigns", "opportunities"].includes(resource)) {
-        if (row.trackId != null) result2.trackId = id2(row.trackId);
-        if (row.artistId != null) result2.artistId = id2(row.artistId);
-        if (row.regionId != null) result2.regionId = id2(row.regionId);
+        if (row.trackId != null) result2.trackId = id3(row.trackId);
+        if (row.artistId != null) result2.artistId = id3(row.artistId);
+        if (row.regionId != null) result2.regionId = id3(row.regionId);
         if (resource === "sources") result2.trackIds = ids(row.trackIds ?? []);
         else result2.sourceIds = ids(row.sourceIds ?? []);
       }
@@ -28569,7 +28633,7 @@ function normalize(input) {
       if (resource === "opportunities") {
         if (!Number.isFinite(row.score) || row.score < 0 || row.score > 100 || !Array.isArray(row.reasons) || !row.reasons.length || row.reasons.length > 8) throw fail2(400, "Invalid opportunity explanation");
         Object.assign(result2, { score: row.score, reasons: row.reasons.map((reason) => text2(reason, 500)), method: "scenario", status: "proposed" });
-        if (row.campaignId != null) result2.campaignId = id2(row.campaignId);
+        if (row.campaignId != null) result2.campaignId = id3(row.campaignId);
       }
       if (row.scenario != null) {
         if (typeof row.scenario !== "object" || Array.isArray(row.scenario)) throw fail2(400, "Invalid scenario");
@@ -28600,24 +28664,24 @@ function normalize(input) {
 }
 function createDefiantUnifiedData({ dataset, organizationId: organizationId3, authorize } = {}) {
   if (typeof authorize !== "function") throw fail2(500, "Current authority callback required");
-  const scope = Object.freeze({ organizationId: id2(organizationId3) });
+  const scope = Object.freeze({ organizationId: id3(organizationId3) });
   const projection = normalize(dataset);
   return Object.freeze({
-    async domain(actor, request) {
+    async domain(actor, request2) {
       if (!await authorize(actor, scope)) throw fail2(403, "Dataset access denied");
-      return queryDefiantDomain(projection, request);
+      return queryDefiantDomain(projection, request2);
     },
-    async read(actor, request = {}) {
+    async read(actor, request2 = {}) {
       if (!await authorize(actor, scope)) throw fail2(403, "Dataset access denied");
-      if (!request || typeof request !== "object" || Array.isArray(request) || Object.keys(request).some((key) => !["resource", "id", "query", "cursor", "limit"].includes(key))) throw fail2(400, "Invalid dataset read");
-      const { resource = "manifest", query, cursor, limit = 25 } = request;
+      if (!request2 || typeof request2 !== "object" || Array.isArray(request2) || Object.keys(request2).some((key) => !["resource", "id", "query", "cursor", "limit"].includes(key))) throw fail2(400, "Invalid dataset read");
+      const { resource = "manifest", query, cursor, limit = 25 } = request2;
       if (!["manifest", ...RESOURCES, ...DOMAIN_RESOURCES].includes(resource) || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail2(400, "Invalid dataset resource or limit");
       if (resource === "manifest") {
-        if (request.id != null || query != null || cursor != null) throw fail2(400, "Manifest does not accept filters");
+        if (request2.id != null || query != null || cursor != null) throw fail2(400, "Manifest does not accept filters");
         return structuredClone(projection);
       }
       const needle = query == null ? "" : text2(query, 200).toLowerCase();
-      const selectedId = request.id == null ? null : id2(request.id);
+      const selectedId = request2.id == null ? null : id3(request2.id);
       if (cursor != null && (typeof cursor !== "string" || !/^(0|[1-9]\d{0,5})$/.test(cursor))) throw fail2(400, "Invalid dataset cursor");
       const offset = cursor == null ? 0 : Number(cursor);
       if (!projection[resource]) return structuredClone({ schemaVersion: 1, dataset: projection.dataset, resource, available: false, reason: "No history or ledger supplied for this resource", items: [], total: 0, nextCursor: null, capabilities: CAPS });
@@ -28667,14 +28731,31 @@ async function loadDefiantPrivateDataset(filePath) {
 }
 
 // server/defiant-stdio.js
+import { open as open2 } from "node:fs/promises";
+import { constants as constants2 } from "node:fs";
+async function adjacentDomainUi() {
+  let file2;
+  try {
+    file2 = await open2(new URL("./defiant-domain-review.html", import.meta.url), constants2.O_RDONLY | constants2.O_NOFOLLOW);
+    const stat = await file2.stat();
+    if (!stat.isFile() || stat.size < 1 || stat.size > 512 * 1024) throw Error("Invalid adjacent domain UI");
+    return await file2.readFile("utf8");
+  } catch (error46) {
+    if (error46.code === "ENOENT") return void 0;
+    throw error46;
+  } finally {
+    await file2?.close();
+  }
+}
 async function start() {
   if (process.argv.length !== 3) throw new Error("Private input required");
   const { organizationId: organizationId3, dataset, isCurrent } = await loadDefiantPrivateDataset(process.argv[2]);
+  const domainUiHtml = await adjacentDomainUi();
   const actor = Object.freeze({ kind: "private-local-owner-process" });
   const service = createDefiantUnifiedData({ dataset, organizationId: organizationId3, authorize: (candidate) => candidate === actor ? isCurrent() : false });
   const handle = serveStdio(() => {
     const server = new McpServer({ name: "defiant-private-research", version: "1.0.0" }, { instructions: `This private process is bound to organizationId ${organizationId3}. Use that exact scope for all tools. ${DEFIANT_DOMAIN_INSTRUCTIONS}` });
-    registerDefiantTools(server, { resolveService: async (input) => {
+    registerDefiantTools(server, { domainUiHtml, resolveService: async (input) => {
       if (input.organizationId !== organizationId3) throw Object.assign(new Error("Private scope denied"), { status: 403 });
       return { service, actor };
     } });
