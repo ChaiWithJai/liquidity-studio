@@ -28312,7 +28312,7 @@ function registerDefiantDomainPrompts(server) {
 
 // server/defiant-mcp.js
 var RESOURCE_URI = "ui://defiant/research-v1.html";
-var DOMAIN_RESOURCE_URI = "ui://defiant/domain-review-v1.html";
+var DOMAIN_RESOURCE_URI = "ui://defiant/domain-review-v2.html";
 var organizationId2 = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 var recordId2 = external_exports.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/);
 var boundedText = external_exports.string().trim().min(1).max(200).refine((value) => !/[\u0000-\u001f\u007f]/.test(value));
