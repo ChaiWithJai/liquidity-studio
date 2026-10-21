@@ -61,3 +61,9 @@ test('a static missing-input outcome can populate bounded choices without invent
  await f.bridge.select({artistId:'artist:fictional-1'});assert.match(f.state.error,/supply one to three/);assert.equal(f.calls.length,3);
  await f.bridge.dispose();
 });
+test('returned operation names must match their joined domain result before the UI describes them',async()=>{
+ const f=fixture();await f.bridge.start();f.app.ontoolinput({arguments:input});
+ const wrong=await reply(input);wrong.structuredContent.regional.operation='compare-scenarios';f.app.ontoolresult(wrong);
+ assert.equal(f.state.view,null);assert.match(f.state.error,/could not refresh/);assert.equal(f.calls.length,0);
+ await f.bridge.dispose();
+});

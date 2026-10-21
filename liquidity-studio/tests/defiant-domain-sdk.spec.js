@@ -9,11 +9,12 @@ import {fileURLToPath} from 'node:url';
 import {generateDefiantSyntheticDataset} from '../server/defiant-synthetic-dataset.js';
 import {createDefiantUnifiedData} from '../server/defiant-unified-data.js';
 import {runDefiantDomainPathway} from '../server/defiant-domain-pathways.js';
-let server,vite,dir,base,requests,denyNext;
+let server,vite,dir,base,requests,denyNext,datasetRevision;
 test.beforeAll(async()=>{
  dir=await mkdtemp(join(tmpdir(),'defiant-domain-browser-'));requests=[];denyNext=false;
  const actor={id:'fictional-browser-reviewer'},organizationId='fictional_domain_browser';
  const service=createDefiantUnifiedData({dataset:generateDefiantSyntheticDataset(),organizationId,authorize:async current=>current===actor});
+ datasetRevision=(await service.read(actor,{resource:'manifest'})).dataset.revision;
  vite=await createVite({root:fileURLToPath(new URL('..',import.meta.url)),configFile:false,cacheDir:join(dir,'vite'),plugins:[svelte()],server:{middlewareMode:true,hmr:false},appType:'custom',logLevel:'error'});
  server=createServer(async(req,res)=>{
   if(req.url==='/fixture-domain-tool'&&req.method==='POST'){
@@ -56,6 +57,19 @@ test('actual joined fictional domain results render through SDK; explicit scenar
  await expect(app.getByRole('listitem').filter({hasText:'US: simulated-clear'})).toBeVisible();
  await expect(app.getByRole('row',{name:/Fictional Producer 1/})).toBeVisible();
  await expect(app.getByLabel('Human review pending')).toContainText('Fictional demand and royalty records');
+ await app.getByText('How this review was produced',{exact:true}).click();
+ const production=app.getByRole('region',{name:'Review production details',exact:true});
+ await expect(production).toContainText('One MCP entry call: defiant_open_domain_review orchestrates five internal domain-service operations.');
+ await expect(production).toContainText('were not called separately by this request');
+ await expect(production).toContainText('do not run a model or an agent job');
+ const operations=production.getByRole('list',{name:'Returned domain service operations',exact:true}).getByRole('listitem');
+ await expect(operations).toHaveCount(5);
+ for(const [index,[operation,tool]]of [['artist-overview','defiant_artist_overview'],['regional-opportunities','defiant_detect_regional_opportunities'],['rights-and-royalties','defiant_inspect_rights_and_royalties'],['explain-opportunity','defiant_explain_opportunity'],['compare-scenarios','defiant_compare_campaign_scenarios']].entries()){
+  await expect(operations.nth(index).getByText(operation,{exact:true})).toBeVisible();
+  await expect(operations.nth(index).getByText(tool,{exact:true})).toBeVisible();
+  await expect(operations.nth(index)).toContainText(datasetRevision);
+ }
+ await app.getByText('How this review was produced',{exact:true}).click();
  const initial=requests.filter(row=>row.name==='defiant_open_domain_review').length;
  await app.getByLabel('Illustrative budgets (USD)',{exact:true}).fill('0, 1000');
  expect(requests.filter(row=>row.name==='defiant_open_domain_review')).toHaveLength(initial);

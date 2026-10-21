@@ -1,6 +1,13 @@
 const pathways=new Set(['catalog-to-campaign','talent-to-campaign','opportunity-to-plan']);
 const fields=['organizationId','pathwayId','artistId','trackId','regionId','budgets','horizonMonths'];
 const resources=['artists','tracks','regions'];
+export const DEFIANT_DOMAIN_OPERATIONS=Object.freeze([
+ Object.freeze({key:'overview',operation:'artist-overview',tool:'defiant_artist_overview',label:'Artist and catalog'}),
+ Object.freeze({key:'regional',operation:'regional-opportunities',tool:'defiant_detect_regional_opportunities',label:'Regional demand'}),
+ Object.freeze({key:'rightsAndRoyalties',operation:'rights-and-royalties',tool:'defiant_inspect_rights_and_royalties',label:'Linked rights and royalties'}),
+ Object.freeze({key:'explanation',operation:'explain-opportunity',tool:'defiant_explain_opportunity',label:'Opportunity explanation'}),
+ Object.freeze({key:'scenarioComparison',operation:'compare-scenarios',tool:'defiant_compare_campaign_scenarios',label:'Explicit budget scenarios'}),
+]);
 const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
 const id=value=>typeof value==='string'&&value.length>0&&value.length<=160&&/^[A-Za-z0-9][A-Za-z0-9:_ .-]*$/.test(value);
 const copy=value=>structuredClone(value);
@@ -23,6 +30,7 @@ function result(reply,binding){
  if(data.status!=='human-review-required'||!dataset(data.dataset)||data.selection?.artistId!==binding.artistId||(binding.trackId&&data.selection.trackId!==binding.trackId)||(binding.regionId&&data.selection.regionId!==binding.regionId)||data.review?.status!=='pending'||data.capabilities?.readOnly!==true||data.capabilities.canApproveRights!==false||data.capabilities.canExecuteCampaign!==false||data.capabilities.canPublish!==false)throw Error('Invalid review state');
  const {overview,regional,rightsAndRoyalties:rights,explanation,scenarioComparison:comparison}=data;
  if(![overview,regional,rights,explanation,comparison].every(row=>object(row)&&sameDataset(row.dataset,data.dataset)&&row.capabilities?.readOnly===true&&row.capabilities.canApproveRights===false&&row.capabilities.canPublish===false)||overview.artist?.id!==binding.artistId||!Array.isArray(overview.recordings)||!overview.recordings.some(row=>row.id===data.selection.trackId)||!Array.isArray(regional.items)||rights.recording?.id!==data.selection.trackId||explanation.recording?.id!==data.selection.trackId||explanation.region?.id!==data.selection.regionId||comparison.recording?.id!==data.selection.trackId||comparison.region?.id!==data.selection.regionId||rights.canApproveRights!==false||rights.reviewRequired!==true||comparison.trained!==false||comparison.reviewRequired!==true||!Array.isArray(comparison.scenarios)||comparison.scenarios.length!==binding.budgets?.length||!comparison.scenarios.every((row,index)=>row.budget===binding.budgets[index]&&row.horizonMonths===(binding.horizonMonths??3))||!Array.isArray(data.evidenceIds)||!Array.isArray(data.review.questions)||!Array.isArray(data.review.unknowns))throw Error('Inconsistent joined review');
+ if(!DEFIANT_DOMAIN_OPERATIONS.every(step=>data[step.key].operation===step.operation))throw Error('Invalid returned domain operation');
  if(explanation.observations!==undefined&&(!Array.isArray(explanation.observations)||explanation.observations.length>24||!explanation.observations.every((row,index,rows)=>object(row)&&id(row.id)&&/^\d{4}-\d{2}-01$/.test(row.date)&&Number.isSafeInteger(row.streams)&&row.streams>=0&&row.period==='month'&&row.provenance===data.dataset.provenance&&data.evidenceIds.includes(row.id)&&(!index||rows[index-1].date<row.date))))throw Error('Invalid monthly evidence');
  return data;
 }

@@ -1,5 +1,6 @@
 <script>
  import {untrack} from 'svelte';
+ import {DEFIANT_DOMAIN_OPERATIONS} from '../../lib/defiant-domain-bridge.js';
  let {view=null,input=null,choices={},loading=false,error='',onSelection=()=>{},onRetry=()=>{}}=$props();
  let artistId=$state(untrack(()=>input?.artistId??''));
  let trackId=$state(untrack(()=>input?.trackId??''));
@@ -56,6 +57,24 @@
    <div><p class="eyebrow">Selected catalog</p><h2>{view.overview.artist.name}</h2><p>{recording.title}</p><p class="small">{recording.id}</p></div>
    <div><p class="eyebrow">Regional proposal</p><h2>{region.name}</h2><p>{view.selection.method==='explicit-selection'?'Explicit recording and region':'First matching ranked proposal; review the evidence below.'}</p><p>Heuristic signal score: {number(view.explanation.item?.score)} / 100 · not a trained ranking</p><p class="small">{view.overview.collaborators?.length??0} linked collaborators · availability unverified</p></div>
   </section>
+  <details class="production-details">
+   <summary>How this review was produced</summary>
+   <section aria-label="Review production details">
+    <p><strong>One MCP entry call:</strong> <code>defiant_open_domain_review</code> orchestrates five internal domain-service operations. The corresponding domain MCP tools below were not called separately by this request.</p>
+    <p>The chat host or agent supplies the context and explicit budgets. The server checks scope and joins read-only results; the agent can explain their evidence and assumptions. These deterministic calculations do not run a model or an agent job, and they do not execute a campaign.</p>
+    <p>Returned review status: <code>{view.status}</code>. Human review remains pending. These are returned result records, not a timing or execution trace.</p>
+    <ol aria-label="Returned domain service operations">
+     {#each DEFIANT_DOMAIN_OPERATIONS as step(step.key)}
+      <li><h3>{step.label}</h3><dl>
+       <dt>Returned operation</dt><dd><code>{view[step.key].operation}</code></dd>
+       <dt>Corresponding MCP interface</dt><dd><code>{step.tool}</code></dd>
+       <dt>Result state</dt><dd>Returned in this review{view[step.key].available===false?' · data unavailable':''}</dd>
+       <dt>Dataset revision</dt><dd class="identifier">{view[step.key].dataset.revision}</dd>
+      </dl></li>
+     {/each}
+    </ol>
+   </section>
+  </details>
   <div class="review-grid">
    <section aria-labelledby="demand-heading">
     <h2 id="demand-heading">Regional demand evidence</h2>
@@ -92,5 +111,6 @@
 </main>
 
 <style>
+ .production-details h3{font-size:13px;margin:12px 0 4px}.production-details dl{display:grid;grid-template-columns:140px minmax(0,1fr);gap:4px 12px;margin:0}.production-details dt{font-size:11px;color:var(--app-muted,#59665d)}.production-details dd{margin:0;font-size:12px}.production-details code{font-size:11px}@media(max-width:680px){.production-details dl{grid-template-columns:1fr;gap:2px}.production-details dd{margin-bottom:6px}}
  .domain-review{font-family:var(--app-font,Inter,system-ui,sans-serif);color:var(--app-ink,#19251c);background:var(--app-surface,#fff);padding:clamp(14px,3vw,28px);max-width:1120px;margin:auto;line-height:1.5;overflow-wrap:anywhere}header p{margin:6px 0}.title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}h1{font-size:clamp(22px,3vw,30px);line-height:1.2;margin:0}h2{font-size:18px;line-height:1.3;margin:0 0 10px}.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--app-muted,#59665d)}.badge{background:#eef1e8;border:1px solid #d5ddcf;border-radius:20px;padding:4px 9px;font-size:12px;font-weight:650}.metadata,.small{font-size:12px;color:var(--app-muted,#59665d)}.revision{display:block;font-family:monospace;font-size:10px}nav ol{display:flex;gap:6px 20px;flex-wrap:wrap;padding-left:22px;font-size:12px;font-weight:650}form,section{border:1px solid var(--app-line,#dedfd5);border-radius:12px;padding:16px;margin-top:14px;min-width:0}.inputs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:650}input,select,button{box-sizing:border-box;width:100%;min-width:0;font:inherit;padding:9px;border:1px solid #b6c1b3;border-radius:7px;background:#fff;color:inherit}button{background:#263a2d;color:#fff;cursor:pointer;font-weight:650}button:disabled{opacity:.6;cursor:wait}:focus-visible{outline:3px solid #2e754d;outline-offset:3px}.context,.review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.context p{margin:5px 0}.review-grid section{margin-top:14px}.chart{display:grid;gap:6px;margin:14px 0}.chart-row{display:grid;grid-template-columns:54px minmax(0,1fr) 62px;gap:8px;align-items:center;font-size:11px}.chart-row strong{text-align:right;font-variant-numeric:tabular-nums}.bar-track{background:#edf1e8;border-radius:3px;height:12px}.bar{display:block;height:12px;background:#527a57;border-radius:3px}.metrics{display:flex;gap:18px;flex-wrap:wrap;margin:16px 0}.metrics div{min-width:90px}.metrics dt{font-size:11px;color:var(--app-muted,#59665d)}.metrics dd{margin:0;font-size:18px;font-weight:650;font-variant-numeric:tabular-nums}.table-scroll{max-width:100%;overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:12px}caption{text-align:left;font-size:11px;color:var(--app-muted,#59665d);padding:8px 0}th,td{padding:9px 8px;border-bottom:1px solid #e3e8de;text-align:left;vertical-align:top;font-variant-numeric:tabular-nums}th{font-weight:650}details{font-size:12px;margin-top:12px}summary{cursor:pointer;font-weight:650}.identifier,.evidence{font-family:monospace;font-size:10px}.evidence{max-height:240px;overflow:auto;padding-left:20px}.human-review{border-left:4px solid #68845c;background:#f5f7f1}.error{border-left:4px solid #9b3d30;padding:10px 14px;margin-top:12px}.error button{width:auto}li{margin-bottom:5px}@media(max-width:680px){.inputs,.context,.review-grid{grid-template-columns:1fr}.inputs{gap:10px}nav ol{gap:6px 18px}.domain-review{padding:14px}section,form{padding:12px}.metrics{gap:12px}th,td{padding:8px 6px}}
 </style>
