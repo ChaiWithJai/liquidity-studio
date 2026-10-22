@@ -58,6 +58,7 @@
     { id: "reel", name: "Reel", ratio: "30s script" },
   ];
   let authMode = $state("unavailable");
+  let remoteEvidenceEnabled=$state(false);
   let googleAuth;
   let authSequence = 0;
   let requestSessionEpoch = 0;
@@ -65,6 +66,7 @@
   let googleLoginTimer;
   let user = $state(null);
   let organizations = $state([]);
+  import RemoteEvidenceClients from './components/defiant/RemoteEvidenceClients.svelte';
   import LocalEvidenceClients from './components/defiant/LocalEvidenceClients.svelte';
   let organizationId = $state("");
   let brandId = $state("");
@@ -82,11 +84,18 @@
   let workflowHistoryIndex = 0, acceptedWorkflowHref = "", restoringHistory = false;
   let strategyLocation=$state({view:'map',focus:'',selected:'',savedViewId:'',reportId:'',destinationBrandId:''});
   let strategyDirty=$state(false);
+  const remoteEvidenceValues=new URL(window.location.href).searchParams.getAll('remoteEvidenceTransaction');
+  const remoteEvidenceTransaction=remoteEvidenceValues.length===1?remoteEvidenceValues[0]:remoteEvidenceValues.length?'invalid':'';
   const strategyHost=$derived.by(()=>{
     if(!user||!organizationId)return null;
     const org=organizationId,actor=user.id,epoch=requestSessionEpoch,auth=googleAuth,google=authMode==='google';
     const key=`${epoch}:${actor}:${org}`;
-    return {key,localEvidenceRequest:(operation,body,options={})=>{
+    return {key,remoteEvidenceRequest:(operation,body,options={})=>{
+      if(!google||!['inspect','approve','deny','list','revoke'].includes(operation)||body.organizationId!==org)throw Error('Invalid remote client request');
+      return scopedRequest({path:`/api/studio/remote-evidence/${operation}`,options:{method:'POST',body:JSON.stringify(body),signal:options.signal},scoped:false,
+        context:{sessionEpoch:key},getContext:()=>({sessionEpoch:`${requestSessionEpoch}:${user?.id}:${organizationId}`}),
+        authorize:async()=>({Authorization:`Bearer ${await auth.getToken()}`}),onUnauthorized:clearWorkspace});
+    },localEvidenceRequest:(operation,body,options={})=>{
       if(!['inspect','approve','list','revoke'].includes(operation)||body.organizationId!==org)throw Error('Invalid local client request');
       return scopedRequest({path:`/api/studio/local-evidence/${operation}`,options:{method:'POST',body:JSON.stringify(body),signal:options.signal},scoped:false,
         context:{sessionEpoch:key},getContext:()=>({sessionEpoch:`${requestSessionEpoch}:${user?.id}:${organizationId}`}),
@@ -613,6 +622,7 @@
         if (disposed) return;
         if (!["google", "password"].includes(config.mode)) throw new Error("Unsupported sign-in configuration.");
         authMode = config.mode;
+        remoteEvidenceEnabled=config.remoteEvidenceEnabled===true;
         penpotEmbedding = config.penpotEmbedding || null;
         if (authMode === "google") {
           googleAuth = createGoogleAuth(config);
@@ -1432,6 +1442,11 @@
             onclick={() => (notice = "")}>×</button
           >
         </div>{/if}
+      {#if authMode==='google'&&strategyHost&&currentOrganization&&remoteEvidenceEnabled}
+        {#key strategyHost.key+':'+remoteEvidenceTransaction}<details open={Boolean(remoteEvidenceTransaction)}><summary>Remote evidence access</summary><RemoteEvidenceClients {organizationId} userId={user.id} transactionId={remoteEvidenceTransaction} request={strategyHost.remoteEvidenceRequest} onComplete={target=>window.location.assign(target)}/></details>{/key}
+      {:else if authMode==='google'&&/^[A-Za-z0-9_-]{43}$/.test(remoteEvidenceTransaction)&&!remoteEvidenceEnabled}
+        <p role="status">Remote evidence connections are not enabled here. No access has been granted.</p>
+      {/if}
       {#if tab==='strategy'&&strategyHost&&(currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable)}
         {#key strategyHost.key}<LocalEvidenceClients {organizationId} request={strategyHost.localEvidenceRequest}/><DefiantWorkspace evidenceRequest={strategyHost.evidenceRequest} request={strategyHost.request} location={strategyLocation} onNavigate={strategyNavigation} onDirtyChange={value=>strategyDirty=value} canEnable={currentOrganization.strategy.canEnable} onEnabled={refreshStrategyOrganizations}/>{/key}
       {:else if penpotRecord && selectedStory}
