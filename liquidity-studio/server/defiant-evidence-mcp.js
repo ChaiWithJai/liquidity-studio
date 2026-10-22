@@ -52,6 +52,12 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
  register('defiant_inspect_audience_definition', 'Inspect one source-attributed segment rule and worksheet cell references at a pinned revision. Proposed offers remain unapproved.', {
   revision, audienceId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'audience-definition');
+ register('defiant_read_comparison_examples', 'Read original cells for one producer-selected comparison reference. Examples are not the full group aggregate; no caller paths or hashes.', {
+  revision, comparisonId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), groupId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), referenceIndex:z.number().int().min(0).max(47)
+ }, 'comparison-examples');
+ register('defiant_read_audience_cells', 'Read source worksheet cells behind one supplied audience definition. Analyst evidence assessments are separate; no formula execution or activation.', {
+  revision, audienceId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
+ }, 'audience-cells');
  register('defiant_show_receipt', 'Return exact source cells and a logical CSV record locator at the requested revision. One example record does not establish an entire aggregate.', {
   revision, receiptId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'receipt');

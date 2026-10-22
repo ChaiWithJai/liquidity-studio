@@ -786,7 +786,7 @@ export function createHttpServer(
         let binding;
         try{binding=await defiantEvidenceProvider({organizationId,actor:user});}catch{throw fail(503,"Evidence provider unavailable");}
         if(!binding||typeof binding.loadSnapshot!=='function')throw fail(404,"Evidence unavailable for this organization");
-        const service=createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,loadSourceRecords:binding.loadSourceRecords,authorize:async actor=>{await strategy.raw(actor);return true;}});
+        const service=createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,loadSourceRecords:binding.loadSourceRecords,loadWorksheetCells:binding.loadWorksheetCells,authorize:async actor=>{await strategy.raw(actor);return true;}});
         return json(200,await defiantEvidenceRequest({service,user,route,method:req.method,url}));
       }
       if(route.startsWith("/api/studio/defiant-data/")) {
