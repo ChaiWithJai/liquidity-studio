@@ -35,7 +35,20 @@ function normalize(input, organizationId) {
     const receipt = receipts.find(value => value.id === receiptId);
     if (!receipt || receipt.sourceHash !== row.sourceHash) throw fail(503, 'Receipt source mismatch');
   }
-  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts};
+  const selectionIds = new Set(); let recordCount = 0;
+  if (input.selections !== undefined && (!Array.isArray(input.selections) || input.selections.length > 2000)) throw fail(503, 'Invalid aggregate selections');
+  const selections = (input.selections || []).map(row => {
+    if (!plain(row) || !identifier(row.id) || selectionIds.has(row.id) || !bounded(row.label, 500) || !hash(row.sourceHash) || !decimal(row.amount) || typeof row.currency !== 'string' || !/^[A-Z]{3}$/.test(row.currency) || !Array.isArray(row.sourceRecords) || !row.sourceRecords.length) throw fail(503, 'Invalid aggregate selection');
+    selectionIds.add(row.id); recordCount += row.sourceRecords.length;
+    if (recordCount > 500000) throw fail(503, 'Aggregate selections exceed bounds');
+    let previous = 1;
+    for (const record of row.sourceRecords) {
+      if (!Number.isSafeInteger(record) || record <= previous) throw fail(503, 'Invalid selection record order');
+      previous = record;
+    }
+    return {id: row.id, label: row.label, sourceHash: row.sourceHash, amount: row.amount, currency: row.currency, sourceRecords: [...row.sourceRecords]};
+  });
+  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections};
   const revision = createHash('sha256').update(JSON.stringify(data)).digest('hex');
   return {...data, revision};
 }
@@ -47,10 +60,12 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
   return Object.freeze({
     async read(actor, request = {}) {
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
-      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'offset', 'limit'].includes(key))) throw fail(400, 'Invalid evidence request');
-      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, offset = 0, limit = 25} = request;
-      if (!['manifest', 'earnings', 'receipt'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 1200 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
-      if (resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined || request.offset !== undefined || request.limit !== undefined)) throw fail(400, 'Filters require earnings');
+      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'offset', 'limit'].includes(key))) throw fail(400, 'Invalid evidence request');
+      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, offset = 0, limit = 25} = request;
+      if (!['manifest', 'earnings', 'receipt', 'selections', 'selection'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
+      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['earnings', 'selections', 'selection'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
+      if ((resource !== 'selection' && selectionId !== undefined) || (resource === 'selection' && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
+      if ((resource === 'earnings' && offset > 1200) || (resource === 'selections' && offset > 2000)) throw fail(400, 'Invalid page offset');
       if (resource !== 'receipt' && receiptId !== undefined) throw fail(400, 'Receipt ID requires receipt');
       if ((selectedMonth !== undefined && !month(selectedMonth)) || (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency))) || (resource === 'receipt' && (!identifier(receiptId) || revision === undefined))) throw fail(400, 'Invalid evidence selection');
       let data;
@@ -60,7 +75,15 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
       if (revision !== undefined && revision !== data.revision) throw fail(409, 'Evidence revision changed');
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
-      if (resource === 'manifest') return structuredClone({...base, counts: {months: data.months.length, receipts: data.receipts.length}, metric: METRIC});
+      if (resource === 'manifest') return structuredClone({...base, counts: {months: data.months.length, receipts: data.receipts.length, selections: data.selections.length}, metric: METRIC});
+      if (resource === 'selections' || resource === 'selection') {
+        const summary = ({sourceRecords, ...row}) => ({...row, rowCount: sourceRecords.length});
+        const limitation = 'Complete producer-supplied record selection; declared aggregate is not recomputed by this read. Exact source cells require the pinned source partition.';
+        if (resource === 'selections') return structuredClone({...base, items: data.selections.slice(offset, offset + limit).map(summary), total: data.selections.length, nextOffset: offset + limit < data.selections.length ? offset + limit : null, limitation});
+        const selected = data.selections.find(row => row.id === selectionId);
+        if (!selected) throw fail(404, 'Selection unavailable');
+        return structuredClone({...base, selection: summary(selected), sourceRecords: selected.sourceRecords.slice(offset, offset + limit), total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, rowConvention: '1-based logical CSV record including header', limitation});
+      }
       if (resource === 'receipt') {
         const receipt = data.receipts.find(row => row.id === receiptId);
         if (!receipt) throw fail(404, 'Receipt unavailable');

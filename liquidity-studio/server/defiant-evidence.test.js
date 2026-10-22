@@ -103,3 +103,24 @@ test('GCS opener destroys a stalled media stream at its deadline', async () => {
  await assert.rejects(async () => {for await (const chunk of opened.stream) void chunk;}, /deadline exceeded/);
  assert.equal(stream.destroyed, true);
 });
+
+test('aggregate selections page all locators at one revision and expose only bounded summaries', async () => {
+ const data = fixture(); data.selections = [{id: 'group_a', label: 'Invented group', sourceHash, amount: '1.25', currency: 'USD', sourceRecords: [2, 4, 8]}];
+ const service = make({loadSnapshot: async () => data});
+ const manifest = await service.read('allowed');
+ const listed = await service.read('allowed', {resource: 'selections', revision: manifest.revision});
+ assert.equal(listed.items[0].rowCount, 3); assert.equal(listed.items[0].sourceRecords, undefined);
+ const first = await service.read('allowed', {resource: 'selection', selectionId: 'group_a', revision: manifest.revision, limit: 2});
+ assert.deepEqual(first.sourceRecords, [2, 4]); assert.equal(first.nextOffset, 2);
+ const last = await service.read('allowed', {resource: 'selection', selectionId: 'group_a', revision: manifest.revision, offset: first.nextOffset, limit: 2});
+ assert.deepEqual(last.sourceRecords, [8]); assert.equal(last.nextOffset, null);
+ await assert.rejects(service.read('allowed', {resource: 'selection', selectionId: 'group_a'}), {status: 400});
+ data.selections[0].sourceRecords.push(9);
+ await assert.rejects(service.read('allowed', {resource: 'selection', selectionId: 'group_a', revision: manifest.revision}), {status: 409});
+});
+test('aggregate selections reject duplicate, unordered, nonintegral and header record locators', async () => {
+ for (const sourceRecords of [[2,2], [3,2], [2,2.5], [1,2]]) {
+  const data = fixture(); data.selections = [{id:'group_a',label:'Invented group',sourceHash,amount:'1',currency:'USD',sourceRecords}];
+  await assert.rejects(make({loadSnapshot: async () => data}).read('allowed'), {status: 503});
+ }
+});

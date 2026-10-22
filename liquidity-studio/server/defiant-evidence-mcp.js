@@ -25,6 +25,12 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
  register('defiant_catalog_earnings', 'Read reported earnings by month and currency with source receipt references. These are not profit, catalog valuation or causal attribution.', {
   revision: revision.optional(), month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(), currency: z.string().regex(/^[A-Z]{3}$/).optional(), offset: z.number().int().min(0).max(1200).optional(), limit: z.number().int().min(1).max(100).optional()
  }, 'earnings');
+ register('defiant_list_evidence_selections', 'List source-local aggregates with complete producer-supplied record selections. Does not recompute totals or establish external completeness.', {
+  revision: revision.optional(), offset: z.number().int().min(0).max(2000).optional(), limit: z.number().int().min(1).max(100).optional()
+ }, 'selections');
+ register('defiant_inspect_evidence_selection', 'Page through every logical source-record locator behind a selected aggregate at one pinned revision. Locators are not the source cells themselves.', {
+  revision, selectionId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset: z.number().int().min(0).max(500000).optional(), limit: z.number().int().min(1).max(100).optional()
+ }, 'selection');
  register('defiant_show_receipt', 'Return exact source cells and a logical CSV record locator at the requested revision. One example record does not establish an entire aggregate.', {
   revision, receiptId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'receipt');
