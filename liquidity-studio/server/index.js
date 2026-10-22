@@ -1,4 +1,5 @@
 import {createAnswerObservations} from './defiant-answer-observations.js';
+import {oauthClientConfiguration,oauthHostConfiguration} from './defiant-evidence-oauth.js';
 import {createLocalEvidenceHttp} from './defiant-local-evidence-http.js';
 import {configuredDefiantEvidenceProvider} from './defiant-evidence-runtime.js';
 import {createDefiantEvidenceService} from './defiant-evidence.js';
@@ -213,6 +214,9 @@ export function createHttpServer(
     defiantDatasetProvider = null,
     defiantEvidenceProvider = null,
     enableLocalEvidenceGrants = process.env.STUDIO_LOCAL_EVIDENCE_GRANTS_ENABLED === "true",
+    enableRemoteEvidence = process.env.STUDIO_DEFIANT_REMOTE_MCP_ENABLED === "true",
+    remoteEvidenceClients,
+    remoteEvidenceHosts,
     enableDefiantSyntheticDemo = false,
     defiantSyntheticDemoOrigins = [],
     portableBodyTimeoutMs = 15000,
@@ -255,6 +259,12 @@ export function createHttpServer(
   if(typeof enableLocalEvidenceGrants!=='boolean')throw Error('Local evidence feature must be boolean');
   if(enableLocalEvidenceGrants&&(trustedTestMode||!defiantEvidenceProvider||platform?.identity?.mode!=='google'))throw Error('Local evidence grants require private evidence and managed Google identity');
   const localEvidence=enableLocalEvidenceGrants?createLocalEvidenceHttp({platform}):null;
+  if(typeof enableRemoteEvidence!=='boolean')throw Error('Remote evidence feature must be boolean');
+  if(enableRemoteEvidence&&(trustedTestMode||!defiantEvidenceProvider||platform?.identity?.mode!=='google'))throw Error('Remote evidence requires private evidence and managed Google identity');
+  const remoteClients=enableRemoteEvidence?oauthClientConfiguration(remoteEvidenceClients??JSON.parse((()=>{const raw=process.env.STUDIO_DEFIANT_REMOTE_MCP_CLIENTS||'[]';if(raw.length>8192)throw Error('Invalid remote evidence client configuration');return raw;})())):[];
+  const remoteHosts=enableRemoteEvidence?oauthHostConfiguration(remoteEvidenceHosts??process.env.STUDIO_DEFIANT_REMOTE_MCP_HOSTS):[];
+  let remoteEvidence;
+  const loadRemoteEvidence=()=>remoteEvidence??=import(new URL('../dist/mcp/defiant-evidence-remote.mjs',import.meta.url).href).then(module=>module.createRemoteEvidence({platform,provider:defiantEvidenceProvider,authorizeEvidence:async(actor,organizationId)=>{await new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId}).raw(actor);},clients:remoteClients,allowedHosts:remoteHosts}));
   let syntheticDemo;
   const loadSyntheticDemo=()=>syntheticDemo??=import(new URL('../dist/mcp/defiant-demo-server.mjs',import.meta.url).href).then(module=>module.createDefiantSyntheticDemo({enabled:true,publicOrigins:defiantSyntheticDemoOrigins}));
   // One bounded portable operation per server, including response serialization/backpressure.
@@ -276,6 +286,12 @@ export function createHttpServer(
     if((req.url||'').split('?')[0].startsWith('/mcp/defiant-synthetic')||(req.url||'').split('?')[0].startsWith('/api/defiant-synthetic')){
       if(!enableDefiantSyntheticDemo)return json(404,{error:'Not found'});
       try{await(await loadSyntheticDemo()).handle(req,res);}catch{return json(503,{error:'Synthetic demo unavailable'});}
+      return;
+    }
+    const remotePath=(req.url||'').split('?')[0];
+    if(remotePath.startsWith('/mcp/defiant-evidence')||remotePath.startsWith('/oauth/defiant-evidence')||remotePath.startsWith('/api/studio/remote-evidence/')||remotePath.startsWith('/.well-known/oauth-protected-resource/mcp/defiant-evidence')||remotePath.startsWith('/.well-known/oauth-authorization-server/oauth/defiant-evidence')){
+      if(!enableRemoteEvidence)return json(404,{error:'Not found'});
+      try{await(await loadRemoteEvidence()).handle(req,res);}catch{if(!res.headersSent)return json(503,{error:'Remote evidence unavailable'});}
       return;
     }
     try {
@@ -647,7 +663,7 @@ export function createHttpServer(
       if (route === "/api/auth/config" && req.method === "GET")
         return json(
           200,
-          {...(identity?.publicConfiguration?.() || { mode: "password" }), ...(storyDesigns?.penpotEmbedding ? {penpotEmbedding:storyDesigns.penpotEmbedding} : {})},
+          {...(identity?.publicConfiguration?.() || { mode: "password" }), remoteEvidenceEnabled:enableRemoteEvidence, ...(storyDesigns?.penpotEmbedding ? {penpotEmbedding:storyDesigns.penpotEmbedding} : {})},
         );
       const bearer=token(req,identity?.mode);
       if(route.startsWith('/api/studio/local-evidence/')){
