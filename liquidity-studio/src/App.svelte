@@ -87,6 +87,8 @@
     const key=`${epoch}:${actor}:${org}`;
     return {key,request:(suffix='',options={})=>scopedRequest({path:`/api/studio/strategy/${encodeURIComponent(org)}${suffix}`,options,scoped:false,
       context:{sessionEpoch:key},getContext:()=>({sessionEpoch:`${requestSessionEpoch}:${user?.id}:${organizationId}`}),
+      authorize:async()=>google?{Authorization:`Bearer ${await auth.getToken()}`}:{},onUnauthorized:clearWorkspace}),evidenceRequest:(suffix='',options={})=>scopedRequest({path:`/api/studio/defiant-evidence/${encodeURIComponent(org)}${suffix}`,options,scoped:false,
+      context:{sessionEpoch:key},getContext:()=>({sessionEpoch:`${requestSessionEpoch}:${user?.id}:${organizationId}`}),
       authorize:async()=>google?{Authorization:`Bearer ${await auth.getToken()}`}:{},onUnauthorized:clearWorkspace})};
   });
   function strategyNavigation(next){strategyLocation=next;}
@@ -1425,7 +1427,7 @@
           >
         </div>{/if}
       {#if tab==='strategy'&&strategyHost&&(currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable)}
-        {#key strategyHost.key}<DefiantWorkspace request={strategyHost.request} location={strategyLocation} onNavigate={strategyNavigation} onDirtyChange={value=>strategyDirty=value} canEnable={currentOrganization.strategy.canEnable} onEnabled={refreshStrategyOrganizations}/>{/key}
+        {#key strategyHost.key}<DefiantWorkspace evidenceRequest={strategyHost.evidenceRequest} request={strategyHost.request} location={strategyLocation} onNavigate={strategyNavigation} onDirtyChange={value=>strategyDirty=value} canEnable={currentOrganization.strategy.canEnable} onEnabled={refreshStrategyOrganizations}/>{/key}
       {:else if penpotRecord && selectedStory}
         <PenpotWorkspace design={penpotRecord} storyTitle={selectedStory.title} brandName={currentBrand?.name || ""} formatName={formats.find(item=>item.id===format)?.name || format} onReturn={()=>leaveNativeEditor()} onSaveStateChange={value=>penpotSaveState=value} />
       {:else if scopeLoading}
