@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,writeFile,chmod,rm,rename} from 'node:fs/promises';
+import {mkdtemp,writeFile,chmod,rm,rename,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createPrivateEvidenceBridge} from './defiant-evidence-bridge.js';
@@ -55,4 +55,20 @@ test('deadline aborts a stalled HTTP request without retry',async t=>{
  t.mock.timers.enable({apis:['setTimeout']});let ready;const started=new Promise(resolve=>ready=resolve);let calls=0;
  const f=await fixture(t,async(_url,{signal})=>{calls++;ready();return new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('private transport detail')),{once:true}));});
  const pending=assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}),{message:'Private evidence unavailable'});await started;t.mock.timers.tick(30000);await pending;assert.equal(calls,1);
+});
+
+
+test('expired and excessive lifetime credentials fail before dispatch; invalidation during response blocks return',async t=>{
+ let calls=0;const f=await fixture(t,async()=>{calls++;return response();});
+ for(const expiresAt of [1000000,1000000+3660001]){await writeFile(f.credential,JSON.stringify({version:1,token:'a.b.c',expiresAt}));await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}),{status:401});}assert.equal(calls,0);
+ let g;g=await fixture(t,async()=>{await writeFile(g.credential,JSON.stringify({version:1,token:'a.b.c',expiresAt:999999}));return response();});await assert.rejects(g.bridge.service.read(g.bridge.actor,{resource:'manifest'}),{status:401});
+});
+test('file and immediate parent symlinks are rejected without network',async t=>{
+ let calls=0;const f=await fixture(t,async()=>{calls++;return response();});
+ const actual=join(f.dir,'actual');await rename(f.credential,actual);await symlink(actual,f.credential);await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}));
+ const parent=join(f.dir,'alias');await symlink(f.dir,parent);await assert.rejects(createPrivateEvidenceBridge({configurationPath:join(parent,'config'),fetchImpl:async()=>{calls++;return response();}}));assert.equal(calls,0);
+});
+test('excess empty response chunks are bounded and consumption is canceled',async t=>{
+ let canceled=false;const f=await fixture(t,async()=>({ok:true,headers:new Headers({'content-type':'application/json'}),body:{getReader:()=>({read:async()=>({done:false,value:new Uint8Array(0)}),cancel:async()=>{canceled=true;}})}}));
+ await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}));assert.equal(canceled,true);
 });
