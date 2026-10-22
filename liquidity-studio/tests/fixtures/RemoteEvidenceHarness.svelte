@@ -16,3 +16,8 @@
 <button onclick={()=>org=org==='invented_org'?'other_org':'invented_org'}>Switch fixture organization</button><button onclick={()=>user=user==='invented_user'?'other_user':'invented_user'}>Switch fixture account</button>
 <output aria-label="Request log">{JSON.stringify(calls)}</output><output aria-label="Completion">{completion}</output>
 {#key org+user}<RemoteEvidenceClients organizationId={org} userId={user} transactionId={tx} {request} onComplete={value=>completion=value}/>{/key}
+
+<style>
+ /* Diagnostic JSON and completion URLs remain visible without widening the fixture. */
+ output { display:block; max-width:100%; overflow-wrap:anywhere; }
+</style>
