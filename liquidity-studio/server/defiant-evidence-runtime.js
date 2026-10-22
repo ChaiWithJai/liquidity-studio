@@ -49,10 +49,10 @@ async function loadPinnedConfiguration(bucket, object){
  const stream=bucket.file(object.key,{generation:object.generation}).createReadStream({validation:'crc32c',decompress:false});
  const timer=setTimeout(()=>stream.destroy(invalid()),15000);
  try{
-  const digest=createHash('sha256'),parts=[];let size=0;
-  for await(const chunk of stream){const bytes=Buffer.from(chunk);size+=bytes.length;if(size>object.bytes||size>MAX_BYTES)throw invalid();digest.update(bytes);parts.push(bytes);}
+  const digest=createHash('sha256'),buffer=Buffer.alloc(object.bytes);let size=0,chunks=0;
+  for await(const chunk of stream){if(!(chunk instanceof Uint8Array)||++chunks>65536||chunk.byteLength>object.bytes-size)throw invalid();buffer.set(chunk,size);size+=chunk.byteLength;digest.update(chunk);}
   if(size!==object.bytes||digest.digest('hex')!==object.sha256)throw invalid();
-  return validateDefiantEvidenceRuntimeConfiguration(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts,size))));
+  return validateDefiantEvidenceRuntimeConfiguration(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(buffer)));
  }finally{clearTimeout(timer);stream.destroy();}
 }
 /** No config means no filesystem, SDK import, ADC or bucket access. */

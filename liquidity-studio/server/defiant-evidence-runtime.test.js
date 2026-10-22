@@ -70,3 +70,12 @@ test('GCS config deadline destroys a stalled stream and returns only the finite 
  const pending=assert.rejects(configuredDefiantEvidenceProvider(f),{message:'Invalid private evidence runtime configuration'});
  await ready;t.mock.timers.tick(15000);await pending;assert.equal(f.stream.destroyed,true);assert.equal(f.creations,1);
 });
+
+test('GCS config accepts bounded fragmented bytes but rejects excess empty chunks and nonbyte chunks',async()=>{
+ const bytes=Buffer.from(JSON.stringify(fixture()));
+ const fragmented=configStorage(bytes,{streamFactory:()=>Readable.from([...bytes].map(value=>new Uint8Array([value])))});
+ assert.ok(await configuredDefiantEvidenceProvider(fragmented));assert.equal(fragmented.stream.destroyed,true);
+ for(const streamFactory of [()=>Readable.from((function*(){for(let i=0;i<65537;i++)yield new Uint8Array(0);yield bytes;})()),()=>Readable.from(['private text chunk'])]){
+  const f=configStorage(bytes,{streamFactory});await assert.rejects(configuredDefiantEvidenceProvider(f),{message:'Invalid private evidence runtime configuration'});assert.equal(f.stream.destroyed,true);
+ }
+});
