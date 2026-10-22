@@ -50,3 +50,8 @@ test('service selection reads cells through pinned partition integrity loaders',
  const result=await service.read('allowed',{resource:'selection-receipts',selectionId:'group_a',revision:manifest.revision});
  assert.deepEqual(result.receipts.map(r=>r.record),[3,4]);assert.equal(result.receipts[0].cells.Amount,'1');
 });
+test('overall source deadline destroys the active stalled partition stream',async()=>{
+ const stream=new Readable({read(){}});
+ const resolve=createDefiantSourceRecordResolver({organizationId,timeoutMs:10,partitions:[{sourceHash,firstRecord:2,lastRecord:2,object:{key:'sample',generation:'1',bytes:1,sha256:'c'.repeat(64)}}],openObject:async()=>({generation:'1',stream})});
+ await assert.rejects(resolve({organizationId,sourceHash,revision,sourceRecords:[2]}),{status:503});assert.equal(stream.destroyed,true);
+});

@@ -2,8 +2,9 @@ import {createDefiantEvidenceLoader} from './defiant-evidence-loader.js';
 const unavailable = () => Object.assign(new Error('Source records unavailable'), {status:503});
 const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 /** Server-owned source ranges and object pins only; no caller object paths. */
-export function createDefiantSourceRecordResolver({organizationId, partitions, openObject} = {}) {
+export function createDefiantSourceRecordResolver({organizationId, partitions, openObject, timeoutMs = 30000} = {}) {
  if (typeof organizationId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(organizationId) || typeof openObject !== 'function') throw new TypeError('Source scope and opener required');
+ if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 30000) throw new TypeError('Bounded source deadline required');
  if (!Array.isArray(partitions) || partitions.length > 2000) throw new TypeError('Bounded source partitions required');
  const ranges = partitions.map(part => {
   if (!part || !hash(part.sourceHash) || !Number.isSafeInteger(part.firstRecord) || part.firstRecord < 2 || !Number.isSafeInteger(part.lastRecord) || part.lastRecord < part.firstRecord || part.lastRecord - part.firstRecord >= 1000) throw new TypeError('Invalid source range');
@@ -23,10 +24,12 @@ export function createDefiantSourceRecordResolver({organizationId, partitions, o
   }
   // Bound cumulative work even for sparse selections across many partitions.
   if([...selected.keys()].reduce((sum,p)=>sum+p.bytes,0)>32*1024*1024)throw unavailable();
-  const found=new Map();
+  const found=new Map();const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
   try {
    for(const [part,wanted] of selected){
-    const data=await part.load({organizationId});
+    if(controller.signal.aborted)throw unavailable();
+    const data=await part.load({organizationId},{signal:controller.signal});
     if(data.sourceHash!==part.sourceHash || !Array.isArray(data.receipts) || data.receipts.length!==part.lastRecord-part.firstRecord+1)throw unavailable();
     for(let i=0;i<data.receipts.length;i++){
      const row=data.receipts[i];if(row?.record!==part.firstRecord+i||row.sourceHash!==part.sourceHash)throw unavailable();
@@ -34,6 +37,6 @@ export function createDefiantSourceRecordResolver({organizationId, partitions, o
     for(const record of wanted)found.set(record,data.receipts[record-part.firstRecord]);
    }
    return records.map(record=>structuredClone(found.get(record)));
-  }catch{throw unavailable();}
+  }catch{throw unavailable();}finally{clearTimeout(timer);}
  };
 }
