@@ -35,7 +35,7 @@ test('repeated root load retries and unexpected errors are redacted',async()=>{
  await h.controller.load();await h.controller.load();assert.equal(calls,2);assert.ok(!h.states.at(-1).error.includes('secret'));
 });
 test('location rejects arbitrary identifiers and unbounded offsets',()=>{
- assert.deepEqual(evidenceLocation({evidenceMode:'unknown',evidenceGroupId:'../secret',evidenceRevision:'bad',evidenceOffset:500001}),{mode:'earnings',revision:'',groupId:'',selectionId:'',receiptId:'',offset:0});
+ assert.deepEqual(evidenceLocation({evidenceMode:'unknown',evidenceGroupId:'../secret',evidenceRevision:'bad',evidenceOffset:500001}),{mode:'earnings',revision:'',groupId:'',selectionId:'',receiptId:'',comparisonId:'',comparisonGroupId:'',audienceId:'',referenceIndex:null,showAudienceCells:false,offset:0});
 });
 import {readStrategyLocation,writeStrategyLocation} from '../src/lib/defiant-location.js';
 test('evidence URL round trips identifiers and revision without retaining source cells',()=>{
@@ -43,4 +43,19 @@ test('evidence URL round trips identifiers and revision without retaining source
  writeStrategyLocation(params,{view:'evidence',evidenceMode:'selections',evidenceRevision:rev,evidenceSelectionId:'sel',evidenceOffset:25,cells:{private:'not-a-route'}});
  const restored=readStrategyLocation(params);assert.equal(restored.evidenceSelectionId,'sel');assert.equal(restored.evidenceOffset,25);assert.equal(restored.evidenceRevision,rev);assert.equal(params.has('cells'),false);
  writeStrategyLocation(params,{view:'inbox'});assert.equal(params.has('evidenceRevision'),false);assert.equal(params.has('evidenceSelection'),false);
+});
+
+test('product trails round trip without paths and reject conflicting or orphan parent state before reads',async()=>{
+ const params=new URLSearchParams();writeStrategyLocation(params,{view:'evidence',evidenceMode:'changes',evidenceRevision:rev,evidenceComparisonId:'comparison',evidenceComparisonGroupId:'group',evidenceReferenceIndex:0});const restored=readStrategyLocation(params);assert.equal(restored.evidenceComparisonId,'comparison');assert.equal(restored.evidenceReferenceIndex,0);
+ let calls=0;const h=harness(async()=>{calls++;return manifest;});
+ for(const input of [{evidenceMode:'audience',evidenceComparisonId:'comparison'},{evidenceMode:'changes',evidenceComparisonGroupId:'group',evidenceReferenceIndex:0},{evidenceMode:'changes',evidenceComparisonId:'comparison',evidenceSelectionId:'selection'},{evidenceMode:'audience',evidenceAudienceCells:true}]){await h.controller.load({evidenceRevision:rev,...input});assert.equal(h.states.at(-1).status,400);}assert.equal(calls,0);
+});
+test('comparison examples and audience cells remain pinned and revocation clears both',async()=>{
+ const calls=[];let denied=false;const h=harness(async path=>{calls.push(path);if(path.startsWith('/manifest'))return manifest;if(denied)throw Object.assign(new Error('private'),{status:403});if(path.startsWith('/comparison-examples'))return {...list,comparisonId:'comparison',groupId:'group',referenceIndex:0,receipts:[],limitation:'Examples only'};return {...list,audienceId:'audience',definition:{id:'audience'},worksheet:{cells:[]}};});
+ await h.controller.load({evidenceMode:'changes',evidenceRevision:rev,evidenceComparisonId:'comparison',evidenceComparisonGroupId:'group',evidenceReferenceIndex:0});assert.equal(calls[1],`/comparison-examples?revision=${rev}&comparisonId=comparison&groupId=group&referenceIndex=0`);assert.equal(h.states.at(-1).cellLimitation,'Examples only');
+ await h.controller.load({evidenceMode:'audience',evidenceRevision:rev,evidenceAudienceId:'audience',evidenceAudienceCells:true});assert.ok(h.states.at(-1).worksheet);denied=true;await h.controller.load({evidenceMode:'audience',evidenceRevision:rev,evidenceAudienceId:'audience',evidenceAudienceCells:true});assert.equal(h.states.at(-1).audience,null);assert.equal(h.states.at(-1).worksheet,null);
+});
+
+test('wrong comparison parent echo clears source cells instead of attaching unrelated evidence',async()=>{
+ const h=harness(async path=>path.startsWith('/manifest')?manifest:{...list,comparisonId:'other',groupId:'group',referenceIndex:0,receipts:[{id:'unrelated'}]});await h.controller.load({evidenceMode:'changes',evidenceRevision:rev,evidenceComparisonId:'comparison',evidenceComparisonGroupId:'group',evidenceReferenceIndex:0});assert.equal(h.states.at(-1).status,409);assert.deepEqual(h.states.at(-1).receipts,[]);
 });
