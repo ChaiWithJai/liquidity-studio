@@ -17,8 +17,9 @@ export function createLocalEvidenceHttp({platform}){
   matches:route=>route.startsWith(prefix),
   async request({route,method,body,bearer}){
    const window=Math.floor(Date.now()/60000);if(window!==rateWindow){rateWindow=window;rateCount=0;}if(++rateCount>180)throw fail(429,'Local evidence pairing rate exceeded');
-   const operation=route.slice(prefix.length),expected=keys[operation];
-   if(!expected)throw fail(404,'Local evidence route unavailable');if(method!=='POST')throw fail(405,'Local evidence pairing requires POST');
+   const operation=route.slice(prefix.length);
+   if(!Object.hasOwn(keys,operation))throw fail(404,'Local evidence route unavailable');
+   const expected=keys[operation];if(method!=='POST')throw fail(405,'Local evidence pairing requires POST');
    if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).sort().join(',')!==[...expected].sort().join(','))throw fail(400,'Invalid local evidence request');
    try{
     if(operation==='begin')return await grants.begin(body);

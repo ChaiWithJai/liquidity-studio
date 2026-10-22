@@ -17,6 +17,7 @@ test('real HTTP pairing keeps Firebase inside approval and restricts renewable c
  const server=createHttpServer(null,{platform,defiantEvidenceProvider:provider,enableLocalEvidenceGrants:true});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(async()=>{await new Promise(r=>server.close(r));store.close();});const base=`http://127.0.0.1:${server.address().port}`;
  const post=(operation,body,bearer)=>fetch(base+'/api/studio/local-evidence/'+operation,{method:'POST',headers:{'content-type':'application/json',...(bearer?{Authorization:'Bearer '+bearer}:{})},body:JSON.stringify(body)});
  const read=(path,bearer)=>fetch(base+path,{headers:{Authorization:'Bearer '+bearer}});
+ const beforePrototype=await store.get('defiant-local-evidence-grants:v1');for(const operation of ['constructor','__proto__','toString','hasOwnProperty'])assert.equal((await post(operation,{})).status,404);assert.deepEqual(await store.get('defiant-local-evidence-grants:v1'),beforePrototype);
  const verifier='x'.repeat(43),verifierHash=createHash('sha256').update(verifier).digest('hex');
  const pair=await (await post('begin',{organizationId:org.id,verifierHash,clientName:'Invented client'})).json();
  assert.equal((await post('inspect',{organizationId:org.id,pairingId:pair.pairingId})).status,403);
