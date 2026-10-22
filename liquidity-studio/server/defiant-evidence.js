@@ -1,3 +1,4 @@
+import {normalizeIdentityGroups, identityRankingBasis} from './defiant-evidence-identity.js';
 import {createHash} from 'node:crypto';
 
 const fail = (status, message) => Object.assign(new Error(message), {status});
@@ -48,7 +49,8 @@ function normalize(input, organizationId) {
     }
     return {id: row.id, label: row.label, sourceHash: row.sourceHash, amount: row.amount, currency: row.currency, sourceRecords: [...row.sourceRecords]};
   });
-  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections};
+  const identityGroups = normalizeIdentityGroups(input.identityGroups, selections);
+  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(input.identityGroups === undefined ? {} : {identityGroups})};
   const revision = createHash('sha256').update(JSON.stringify(data)).digest('hex');
   return {...data, revision};
 }
@@ -61,11 +63,13 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
   return Object.freeze({
     async read(actor, request = {}) {
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
-      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'offset', 'limit'].includes(key))) throw fail(400, 'Invalid evidence request');
-      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, offset = 0, limit = 25} = request;
-      if (!['manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
-      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['earnings', 'selections', 'selection', 'selection-receipts'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
+      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'offset', 'limit'].includes(key))) throw fail(400, 'Invalid evidence request');
+      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, offset = 0, limit = 25} = request;
+      if (!['manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
+      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
       if ((!['selection', 'selection-receipts'].includes(resource) && selectionId !== undefined) || (['selection', 'selection-receipts'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
+      if ((resource !== 'identity-group' && identityGroupId !== undefined) || (resource === 'identity-group' && (!identifier(identityGroupId) || revision === undefined))) throw fail(400, 'Invalid identity group request');
+      if (['catalog-identity-review', 'identity-group'].includes(resource) && offset > 2000) throw fail(400, 'Invalid identity page');
       if ((resource === 'earnings' && offset > 1200) || (resource === 'selections' && offset > 2000)) throw fail(400, 'Invalid page offset');
       if (resource !== 'receipt' && receiptId !== undefined) throw fail(400, 'Receipt ID requires receipt');
       if ((selectedMonth !== undefined && !month(selectedMonth)) || (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency))) || (resource === 'receipt' && (!identifier(receiptId) || revision === undefined))) throw fail(400, 'Invalid evidence selection');
@@ -76,7 +80,16 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
       if (revision !== undefined && revision !== data.revision) throw fail(409, 'Evidence revision changed');
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
-      if (resource === 'manifest') return structuredClone({...base, counts: {months: data.months.length, receipts: data.receipts.length, selections: data.selections.length}, metric: METRIC});
+      if (resource === 'manifest') return structuredClone({...base, counts: {months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
+      if (resource === 'catalog-identity-review' || resource === 'identity-group') {
+        const groups = data.identityGroups || [];
+        const summary = ({members, ...row}) => ({...row, memberCount: members.length, missingSourceIds: members.filter(member => member.sourceId === null).length});
+        const limitation = 'Source identities and referenced selection amounts only; recording equivalence is unreviewed. Amounts sum unique selection references, not independently recomputed source cells. Overlapping source-record memberships are rejected across the identity queue. Ranking is review priority within currency, not an opportunity score or action approval.';
+        if (resource === 'catalog-identity-review') return structuredClone({...base, items: groups.slice(offset, offset + limit).map(summary), total: groups.length, nextOffset: offset + limit < groups.length ? offset + limit : null, rankingBasis: identityRankingBasis, limitation});
+        const group = groups.find(row => row.id === identityGroupId);
+        if (!group) throw fail(404, 'Identity group unavailable');
+        return structuredClone({...base, group: summary(group), members: group.members.slice(offset, offset + limit), total: group.members.length, nextOffset: offset + limit < group.members.length ? offset + limit : null, limitation});
+      }
       if (resource === 'selections' || resource === 'selection' || resource === 'selection-receipts') {
         const summary = ({sourceRecords, ...row}) => ({...row, rowCount: sourceRecords.length});
         const limitation = 'Complete producer-supplied record selection; declared aggregate is not recomputed by this read. Exact source cells require the pinned source partition.';
