@@ -193,6 +193,21 @@ export class GoogleIdentityService extends IdentityService {
     return phase.pending.get(key);
   }
   async authorizeJobActor(id, approvedAt) {
+    return (await this.authorizeManagedActor(id, approvedAt)).user;
+  }
+  async authorizeLocalEvidenceActor(id, uid, approvedAt) {
+    const result=await this.authorizeManagedActor(id, approvedAt);
+    if(typeof uid!=="string"||!uid||result.managed.uid!==uid)throw fail(403,"Local evidence account changed");
+    return result.user;
+  }
+  async authenticateLocalEvidenceApproval(token) {
+    const user=await this.authenticate(token);if(!user)throw fail(403,"Local evidence approval requires Google sign-in");
+    const claims=await (await this.getVerifier())(token,true);
+    if(typeof claims.sub!=="string"||!claims.sub||claims.sub.length>128)throw fail(403,"Invalid managed subject");
+    await this.authorizeLocalEvidenceActor(user.id,claims.sub,new Date().toISOString());
+    return {...user,uid:claims.sub};
+  }
+  async authorizeManagedActor(id, approvedAt) {
     await this.ready;
     const user = (await this.store.get("identity")).users.find(
       (user) => user.id === id,
@@ -226,12 +241,12 @@ export class GoogleIdentityService extends IdentityService {
         403,
         "Managed Google account is disabled or its job authorization was revoked",
       );
-    return {
+    return {managed,user:{
       id: user.id,
       username: user.username,
       role: user.role,
       email: user.email,
-    };
+    }};
   }
   async authenticate(token) {
     await this.ready;
