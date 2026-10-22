@@ -1,8 +1,11 @@
 import {defiantVendoredNotices} from './defiant-vendored-notices.js';
 import {readFile,readdir,writeFile} from 'node:fs/promises';
 import {dirname,resolve,join} from 'node:path';
-/** Retain complete installed license texts with the compiled fictional-demo dependency closure. */
+let retainedInputs={};
+/** Retain installed license texts for the union of hosted MCP bundle closures. */
 export async function writeDefiantBundleNotices(root,metafile){
+ retainedInputs={...retainedInputs,...metafile.inputs};
+ metafile={...metafile,inputs:retainedInputs};
  const packages=new Map();
  async function add(directory){
   let current=directory;
@@ -13,8 +16,10 @@ export async function writeDefiantBundleNotices(root,metafile){
   throw Error('Bundled dependency has no package identity');
  }
  for(const input of Object.keys(metafile.inputs))if(input.includes('node_modules/'))await add(dirname(resolve(root,input)));
+ // Conservative retention of all nine newly locked OAuth closure entries, including nested safe-buffer.
+ if(Object.keys(retainedInputs).some(input=>input.includes('@node-oauth/oauth2-server')))for(const name of ['@node-oauth/oauth2-server','@node-oauth/formats','basic-auth','basic-auth/node_modules/safe-buffer','content-type','media-typer','mime-db','mime-types','type-is'])await add(resolve(root,'node_modules',name));
  for(const name of ['@modelcontextprotocol/server','@modelcontextprotocol/client','@modelcontextprotocol/core','@modelcontextprotocol/node','@modelcontextprotocol/ext-apps','zod','svelte','esm-env','clsx'])await add(resolve(root,'node_modules',name));
- const sections=['Third-party notices for the Defiant fictional demo bundles. No project or commercial license is granted by this file.'];
+ const sections=['Third-party notices for the Defiant MCP bundles. No project or commercial license is granted by this file.'];
  for(const [name,{directory,info}] of [...packages].sort(([a],[b])=>a.localeCompare(b))){
   const files=(await readdir(directory,{withFileTypes:true})).filter(file=>file.isFile()&&/^(licen[sc]e|copying|notice)([-.].*)?$/i.test(file.name)).map(file=>file.name).sort();
   if(!files.length)throw Error(`Installed bundled dependency is missing license text: ${name}`);

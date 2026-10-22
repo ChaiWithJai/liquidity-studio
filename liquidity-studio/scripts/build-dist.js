@@ -18,3 +18,6 @@ await buildDefiantDemoServer();
 
 import {buildDefiantEvidenceStdio} from './build-defiant-stdio.js';
 await buildDefiantEvidenceStdio();
+
+import {buildDefiantEvidenceRemote} from './build-defiant-evidence-remote.js';
+await buildDefiantEvidenceRemote();
