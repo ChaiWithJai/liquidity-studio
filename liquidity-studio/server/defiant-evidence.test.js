@@ -124,3 +124,25 @@ test('aggregate selections reject duplicate, unordered, nonintegral and header r
   await assert.rejects(make({loadSnapshot: async () => data}).read('allowed'), {status: 503});
  }
 });
+
+test('source-cell pages bind to exact selection, hash and current authority', async () => {
+ const data = fixture(); data.selections = [{id:'group_a',label:'Invented group',sourceHash,amount:'1',currency:'USD',sourceRecords:[2,4]}];
+ const requests = []; let allowed = true;
+ const service = make({authorize: () => allowed, loadSnapshot: async () => data, loadSourceRecords: async request => {
+  requests.push(request); return request.sourceRecords.map(record => ({id:'r_'+record,sourceHash,member:'sample.csv',record,cells:{Amount:'0.5'}}));
+ }});
+ const {revision} = await service.read('allowed');
+ const result = await service.read('allowed',{resource:'selection-receipts',selectionId:'group_a',revision,limit:1});
+ assert.deepEqual(requests[0],{organizationId:'sample_org',sourceHash,sourceRecords:[2],revision});
+ assert.equal(result.receipts[0].record,2);assert.equal(result.nextOffset,1);
+ const revoked = make({authorize: () => allowed,loadSnapshot:async()=>data,loadSourceRecords:async()=>{allowed=false;return [{id:'r_2',sourceHash,member:'sample.csv',record:2,cells:{Amount:'0.5'}}];}});
+ await assert.rejects(revoked.read('allowed',{resource:'selection-receipts',selectionId:'group_a',revision,limit:1}),{status:403});
+});
+test('source-cell pages reject wrong source, missing and reordered records', async () => {
+ const data=fixture();data.selections=[{id:'group_a',label:'Invented group',sourceHash,amount:'1',currency:'USD',sourceRecords:[2,4]}];
+ const receipt=record=>({id:'r_'+record,sourceHash,member:'sample.csv',record,cells:{Amount:'0.5'}});
+ for(const rows of [[],[receipt(4),receipt(2)],[{...receipt(2),sourceHash:'b'.repeat(64)},receipt(4)]]) {
+  const service=make({loadSnapshot:async()=>data,loadSourceRecords:async()=>rows});const {revision}=await service.read('allowed');
+  await assert.rejects(service.read('allowed',{resource:'selection-receipts',selectionId:'group_a',revision}),{status:503});
+ }
+});

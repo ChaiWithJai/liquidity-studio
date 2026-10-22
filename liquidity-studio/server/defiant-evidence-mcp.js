@@ -31,6 +31,9 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
  register('defiant_inspect_evidence_selection', 'Page through every logical source-record locator behind a selected aggregate at one pinned revision. Locators are not the source cells themselves.', {
   revision, selectionId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset: z.number().int().min(0).max(500000).optional(), limit: z.number().int().min(1).max(100).optional()
  }, 'selection');
+ register('defiant_read_selection_receipts', 'Read original cells for a bounded page of an aggregate selection. Requires the current revision and a configured integrity-checked private source resolver.', {
+  revision, selectionId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset: z.number().int().min(0).max(500000).optional(), limit: z.number().int().min(1).max(100).optional()
+ }, 'selection-receipts');
  register('defiant_show_receipt', 'Return exact source cells and a logical CSV record locator at the requested revision. One example record does not establish an entire aggregate.', {
   revision, receiptId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'receipt');

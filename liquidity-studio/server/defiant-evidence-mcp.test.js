@@ -6,7 +6,7 @@ import {createDefiantEvidenceService} from './defiant-evidence.js';
 test('SDK journey reads earnings and exact receipt; stale, revoked and cross-scope reads disclose no data', async t => {
  let allowed = true; let loads = 0;
  const sourceHash = 'a'.repeat(64);
- const service = createDefiantEvidenceService({organizationId: 'sample_org', authorize: actor => allowed && actor === 'actor', loadSnapshot: async () => {
+ const service = createDefiantEvidenceService({organizationId: 'sample_org', authorize: actor => allowed && actor === 'actor', loadSourceRecords: async ({sourceHash,sourceRecords}) => sourceRecords.map(record => ({id: 'r_'+record, sourceHash, member:'sample.csv', record, cells:{Amount:'-0.000001'}})), loadSnapshot: async () => {
   loads++;
   return {schemaVersion: 1, organizationId: 'sample_org', coverage: 'Invented protocol contract only', selections: [{id: 'group_a', label: 'Invented group', sourceHash, amount: '-0.000001', currency: 'USD', sourceRecords: [2,4,8]}], months: [{month: '2025-01', currency: 'USD', amount: '-0.000001', metric: 'source-total-earned', sourceHash, receiptIds: ['row_2']}], receipts: [{id: 'row_2', sourceHash, member: 'sample.csv', record: 2, cells: {Amount: '-0.000001'}}]};
  }});
@@ -18,7 +18,7 @@ test('SDK journey reads earnings and exact receipt; stale, revoked and cross-sco
  const client = new Client({name: 'evidence-contract', version: '1.0.0'}, {versionNegotiation: {mode: 'auto'}});
  t.after(async () => {await client.close(); await handler.close();});
  await client.connect(transport);
- assert.deepEqual((await client.listTools()).tools.map(x => x.name).sort(), ['defiant_catalog_earnings','defiant_evidence_manifest','defiant_inspect_evidence_selection','defiant_list_evidence_selections','defiant_show_receipt']);
+ assert.deepEqual((await client.listTools()).tools.map(x => x.name).sort(), ['defiant_catalog_earnings','defiant_evidence_manifest','defiant_inspect_evidence_selection','defiant_list_evidence_selections','defiant_read_selection_receipts','defiant_show_receipt']);
  const call = (name, args = {}) => client.callTool({name, arguments: {organizationId: 'sample_org', ...args}});
  const manifest = (await call('defiant_evidence_manifest')).structuredContent;
  assert.deepEqual(manifest.counts, {months: 1, receipts: 1, selections: 1});
@@ -37,6 +37,8 @@ test('SDK journey reads earnings and exact receipt; stale, revoked and cross-sco
  const last = (await call('defiant_inspect_evidence_selection', {revision: manifest.revision, selectionId: listed.items[0].id, limit: 2, offset: first.nextOffset})).structuredContent;
  assert.deepEqual(last.sourceRecords, [8]); assert.equal(last.nextOffset, null);
  assert.equal((await call('defiant_inspect_evidence_selection', {revision: 'b'.repeat(64), selectionId: 'group_a'})).isError, true);
+ const cells = (await call('defiant_read_selection_receipts', {revision: manifest.revision, selectionId: 'group_a', limit: 1})).structuredContent;
+ assert.equal(cells.receipts[0].record, 2); assert.equal(cells.receipts[0].cells.Amount, '-0.000001');
  const before = loads; allowed = false;
  assert.equal((await call('defiant_catalog_earnings')).isError, true);
  assert.equal(loads, before);

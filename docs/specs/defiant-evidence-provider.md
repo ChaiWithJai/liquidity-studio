@@ -39,3 +39,9 @@ The SDK client contract uses an invented dataset and explicit fixture identity. 
 Optional `selections` contain source-local ID/label/hash, declared decimal amount/currency and strictly increasing logical CSV record numbers. At most 2,000 selections and 500,000 total locators are accepted. `defiant_list_evidence_selections` returns bounded summaries; `defiant_inspect_evidence_selection` requires the current revision and returns at most 100 locators per page. These endpoints neither fetch arbitrary source paths nor claim to recompute totals. Full cells remain a separate pinned-partition integration.
 
 Revision migration: normalizing absent selections to an empty array changes the content revision of older products. Clients must refresh the manifest; previously issued revisions correctly conflict rather than silently binding to a changed product. SDK contracts exercise discovery, summary minimization, locator pagination and stale revision rejection with invented fixtures.
+
+## Source-cell page boundary
+
+`defiant_read_selection_receipts` reads a bounded page from a revision-pinned selection through an optional server-owned `loadSourceRecords` resolver. That resolver receives only the constructor scope, selected source hash, known record numbers and revision. The service requires the returned receipts to match the exact source hash, order and count, validates bounded cells, and rechecks authority after the asynchronous read. Missing resolver or mismatched evidence returns unavailable.
+
+This interface does not establish live source integrity by itself. The host must resolve each hash to a configured immutable partition, validate its bytes, and preserve original cells. Source-partition packaging/mounting and actual readback remain outstanding. Hosted fixtures exercise the protocol and rejection paths; they are not private-data runtime acceptance.
