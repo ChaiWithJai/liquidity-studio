@@ -21,6 +21,7 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
    return {isError: true, content: [{type: 'text', text: `Evidence request unavailable (${status}).`}]};
   }
  });
+ register('defiant_discover_served_evidence','Discover metadata for sources referenced by served evidence. Deterministic text/earnings-period filters only; not a complete bronze inventory or semantic ranking.', {revision:revision.optional(),query:z.string().max(200).refine(v=>!/[\u0000-\u001f\u007f]/.test(v)).optional(),fromMonth:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),toMonth:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),offset:z.number().int().min(0).max(5000).optional(),limit:z.number().int().min(1).max(100).optional()},'coverage');
  register('defiant_evidence_manifest', 'Inspect authorized real-evidence coverage and revision. Counts are not a claim of complete source intake.', {}, 'manifest');
  register('defiant_catalog_earnings', 'Read reported earnings by month and currency with source receipt references. These are not profit, catalog valuation or causal attribution.', {
   revision: revision.optional(), month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(), currency: z.string().regex(/^[A-Z]{3}$/).optional(), offset: z.number().int().min(0).max(1200).optional(), limit: z.number().int().min(1).max(100).optional()
@@ -58,6 +59,9 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
  register('defiant_read_audience_cells', 'Read source worksheet cells behind one supplied audience definition. Analyst evidence assessments are separate; no formula execution or activation.', {
   revision, audienceId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'audience-cells');
+ register('defiant_june_factual_review', 'Inspect a qualified June2025 factual review packet for one source-local selection, with exact lineage and purpose-specific missing evidence. No commercial recommendation or model inference.', {
+  revision, selectionId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset:z.number().int().min(0).max(500000).optional(), limit:z.number().int().min(1).max(100).optional()
+ }, 'june-review');
  register('defiant_show_receipt', 'Return exact source cells and a logical CSV record locator at the requested revision. One example record does not establish an entire aggregate.', {
   revision, receiptId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'receipt');

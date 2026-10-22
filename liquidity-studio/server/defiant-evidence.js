@@ -1,3 +1,4 @@
+import {discoverServedEvidenceCoverage,validateServedEvidenceDiscoveryRequest} from './defiant-evidence-discovery.js';
 import {normalizeWorksheetCell} from './defiant-worksheet-cells.js';
 import {normalizeComparisons, normalizeAudienceDefinitions} from './defiant-evidence-products.js';
 import {normalizeIdentityGroups, identityRankingBasis} from './defiant-evidence-identity.js';
@@ -68,11 +69,11 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
   return Object.freeze({
     async read(actor, request = {}) {
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
-      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit'].includes(key))) throw fail(400, 'Invalid evidence request');
-      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, offset = 0, limit = 25} = request;
-      if (!['manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
-      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
-      if ((!['selection', 'selection-receipts'].includes(resource) && selectionId !== undefined) || (['selection', 'selection-receipts'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
+      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth'].includes(key))) throw fail(400, 'Invalid evidence request');
+      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, offset = 0, limit = 25} = request;
+      if (!['coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
+      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['coverage', 'earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'june-review'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
+      if ((!['selection', 'selection-receipts', 'june-review'].includes(resource) && selectionId !== undefined) || (['selection', 'selection-receipts', 'june-review'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
       if ((resource !== 'identity-group' && identityGroupId !== undefined) || (resource === 'identity-group' && (!identifier(identityGroupId) || revision === undefined))) throw fail(400, 'Invalid identity group request');
       if (['catalog-identity-review', 'identity-group'].includes(resource) && offset > 2000) throw fail(400, 'Invalid identity page');
       if ((resource === 'earnings' && offset > 1200) || (resource === 'selections' && offset > 2000)) throw fail(400, 'Invalid page offset');
@@ -83,6 +84,8 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (resource === 'explain-change' && offset > 10000) throw fail(400, 'Invalid comparison page');
       if (resource !== 'receipt' && receiptId !== undefined) throw fail(400, 'Receipt ID requires receipt');
       if ((selectedMonth !== undefined && !month(selectedMonth)) || (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency))) || (resource === 'receipt' && (!identifier(receiptId) || revision === undefined))) throw fail(400, 'Invalid evidence selection');
+      if(resource!=='coverage'&&(query!==undefined||fromMonth!==undefined||toMonth!==undefined))throw fail(400,'Coverage filters require coverage');
+      if(resource==='coverage')validateServedEvidenceDiscoveryRequest({query,fromMonth,toMonth,offset,limit});
       let data;
       try { data = normalize(await loadSnapshot(scope), organizationId); }
       catch (error) { throw fail(503, 'Evidence snapshot unavailable'); }
@@ -90,7 +93,27 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
       if (revision !== undefined && revision !== data.revision) throw fail(409, 'Evidence revision changed');
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
+      if(resource==='coverage')return discoverServedEvidenceCoverage(data,{query,fromMonth,toMonth,offset,limit});
       if (resource === 'manifest') return structuredClone({...base, counts: {...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
+      if (resource === 'june-review') {
+        if (selectedMonth !== undefined || currency !== undefined || receiptId !== undefined) throw fail(400, 'Invalid June review request');
+        const selected = data.selections.find(row => row.id === selectionId);
+        if (!selected) throw fail(404, 'Selection unavailable');
+        const periods = data.months.filter(row => row.sourceHash === selected.sourceHash && row.currency === selected.currency);
+        if (periods.length !== 1 || periods[0].month !== '2025-06') throw fail(409, 'June source period unavailable');
+        const period = periods[0];
+        const {sourceRecords, ...selection} = selected;
+        return structuredClone({...base,
+          purpose:'factual-period-brief', readiness:'qualified', month:'2025-06',
+          question:'What do the supplied June statements report for this selection, and which records support it?',
+          facts:{selection:{...selection,rowCount:sourceRecords.length},period:{month:period.month,currency:period.currency,amount:period.amount,metric:period.metric,sourceHash:period.sourceHash}},
+          lineage:{sourceHash:selected.sourceHash,sourceRecords:sourceRecords.slice(offset,offset+limit),rowConvention:'1-based logical CSV record including header',total:sourceRecords.length,nextOffset:offset+limit<sourceRecords.length?offset+limit:null},
+          followUp:{resource:'selection-receipts',selectionId,revision:data.revision,offset,limit,available:typeof loadSourceRecords==='function'},
+          missingEvidence:['External delivery completeness','Comparable settlement maturity','Verified cross-provider recording identity'],
+          commercialReadiness:{purpose:'current-commercial-recommendation',readiness:'not-ready',missingEvidence:['Current comparable demand or dated buyer transactions','Validated relevant identity joins','Offer economics','Current action authority']},
+          nextWork:'Inspect original selection cells and resolve the documented evidence gaps before making a broader performance or commercial claim.',
+          limitation:'Deterministic supplied-statement facts, not model inference. Source hash and currency bind the selection to its declared June period. Amounts are supplied curated aggregates, not recomputed by this read; the selection is not necessarily the entire period. This page contains bounded locators, not original cells or proof of complete provider delivery. No causal attribution, valuation or action approval.'});
+      }
       if (resource === 'comparison-examples') {
         const comparison=(data.comparisons || []).find(row=>row.id===comparisonId);
         const group=comparison?.groups.find(row=>row.id===groupId);

@@ -15,3 +15,6 @@ import {buildDefiantDomain} from './build-defiant-domain.js';
 await buildDefiantDomain();
 import {buildDefiantDemoServer} from './build-defiant-demo-server.js';
 await buildDefiantDemoServer();
+
+import {buildDefiantEvidenceStdio} from './build-defiant-stdio.js';
+await buildDefiantEvidenceStdio();
