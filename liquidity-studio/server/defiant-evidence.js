@@ -1,3 +1,4 @@
+import {normalizeComparisons, normalizeAudienceDefinitions} from './defiant-evidence-products.js';
 import {normalizeIdentityGroups, identityRankingBasis} from './defiant-evidence-identity.js';
 import {createHash} from 'node:crypto';
 
@@ -50,7 +51,9 @@ function normalize(input, organizationId) {
     return {id: row.id, label: row.label, sourceHash: row.sourceHash, amount: row.amount, currency: row.currency, sourceRecords: [...row.sourceRecords]};
   });
   const identityGroups = normalizeIdentityGroups(input.identityGroups, selections);
-  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(input.identityGroups === undefined ? {} : {identityGroups})};
+  const comparisons = normalizeComparisons(input.comparisons, months);
+  const audienceDefinitions = normalizeAudienceDefinitions(input.audienceDefinitions);
+  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
   const revision = createHash('sha256').update(JSON.stringify(data)).digest('hex');
   return {...data, revision};
 }
@@ -63,14 +66,18 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
   return Object.freeze({
     async read(actor, request = {}) {
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
-      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'offset', 'limit'].includes(key))) throw fail(400, 'Invalid evidence request');
-      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, offset = 0, limit = 25} = request;
-      if (!['manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
-      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
+      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'offset', 'limit'].includes(key))) throw fail(400, 'Invalid evidence request');
+      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, offset = 0, limit = 25} = request;
+      if (!['manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
+      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
       if ((!['selection', 'selection-receipts'].includes(resource) && selectionId !== undefined) || (['selection', 'selection-receipts'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
       if ((resource !== 'identity-group' && identityGroupId !== undefined) || (resource === 'identity-group' && (!identifier(identityGroupId) || revision === undefined))) throw fail(400, 'Invalid identity group request');
       if (['catalog-identity-review', 'identity-group'].includes(resource) && offset > 2000) throw fail(400, 'Invalid identity page');
       if ((resource === 'earnings' && offset > 1200) || (resource === 'selections' && offset > 2000)) throw fail(400, 'Invalid page offset');
+      if ((resource !== 'explain-change' && comparisonId !== undefined) || (resource === 'explain-change' && (!identifier(comparisonId) || revision === undefined))) throw fail(400, 'Invalid comparison request');
+      if ((resource !== 'audience-definition' && audienceId !== undefined) || (resource === 'audience-definition' && (!identifier(audienceId) || revision === undefined))) throw fail(400, 'Invalid audience request');
+      if ((resource === 'comparisons' && offset > 100) || (['audience-readiness', 'audience-definition'].includes(resource) && offset > 200)) throw fail(400, 'Invalid product page');
+      if (resource === 'explain-change' && offset > 10000) throw fail(400, 'Invalid comparison page');
       if (resource !== 'receipt' && receiptId !== undefined) throw fail(400, 'Receipt ID requires receipt');
       if ((selectedMonth !== undefined && !month(selectedMonth)) || (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency))) || (resource === 'receipt' && (!identifier(receiptId) || revision === undefined))) throw fail(400, 'Invalid evidence selection');
       let data;
@@ -80,7 +87,24 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
       if (revision !== undefined && revision !== data.revision) throw fail(409, 'Evidence revision changed');
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
-      if (resource === 'manifest') return structuredClone({...base, counts: {months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
+      if (resource === 'manifest') return structuredClone({...base, counts: {...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
+      if (resource === 'comparisons' || resource === 'explain-change') {
+        const rows = data.comparisons || [];
+        const summary = ({groups, ...row}) => ({...row, groupCount:groups.length});
+        const limitation = 'Arithmetic contribution only, not causal attribution or opportunity scoring. grossDecrease is a positive magnitude; delta = offsetIncrease - grossDecrease. Period verification is a producer assertion. Example logical record references are not complete selections or loaded source cells; full group receipt drilldown is unavailable.';
+        if (resource === 'comparisons') return structuredClone({...base, items:rows.slice(offset,offset+limit).map(summary), total:rows.length, nextOffset:offset+limit<rows.length?offset+limit:null, limitation});
+        const row = rows.find(v=>v.id===comparisonId);
+        if (!row) throw fail(404, 'Comparison unavailable');
+        return structuredClone({...base, comparison:summary(row), groups:row.groups.slice(offset,offset+limit), total:row.groups.length, nextOffset:offset+limit<row.groups.length?offset+limit:null, limitation});
+      }
+      if (resource === 'audience-readiness' || resource === 'audience-definition') {
+        const rows=data.audienceDefinitions || [];
+        const limitation='Supplied segment definitions and evidence availability only. Membership, consent, customer/listener identity and activation eligibility are not computed or verified. Offer text is a proposal, not approval.';
+        if(resource==='audience-readiness') return structuredClone({...base,items:rows.slice(offset,offset+limit),total:rows.length,nextOffset:offset+limit<rows.length?offset+limit:null,limitation});
+        const definition=rows.find(v=>v.id===audienceId);
+        if(!definition) throw fail(404,'Audience definition unavailable');
+        return structuredClone({...base,definition,limitation});
+      }
       if (resource === 'catalog-identity-review' || resource === 'identity-group') {
         const groups = data.identityGroups || [];
         const summary = ({members, ...row}) => ({...row, memberCount: members.length, missingSourceIds: members.filter(member => member.sourceId === null).length});
