@@ -10943,11 +10943,11 @@ function process2(schema, ctx, _params = { path: [], schemaPath: [] }) {
       schemaPath: [..._params.schemaPath, schema],
       path: _params.path
     };
-    const parent = schema._zod.parent;
-    if (parent) {
-      result.ref = parent;
-      process2(parent, ctx, params);
-      ctx.seen.get(parent).isParent = true;
+    const parent2 = schema._zod.parent;
+    if (parent2) {
+      result.ref = parent2;
+      process2(parent2, ctx, params);
+      ctx.seen.get(parent2).isParent = true;
     } else if (schema._zod.processJSONSchema) {
       schema._zod.processJSONSchema(ctx, result.schema, params);
     } else {
@@ -18381,9 +18381,9 @@ var Protocol = class {
           const sendCodec = this._resolveOutboundCodec(r.method);
           this._assertOutboundRequestInEra(sendCodec, r.method);
           if (isStandardSchema(schemaOrOptions)) return sendRequest(r, schemaOrOptions, maybeOptions);
-          const validate = codecResultValidator(sendCodec, r.method);
-          if (validate === void 0) throw new TypeError(`'${r.method}' is not a spec method; pass a result schema as the second argument to ctx.mcpReq.send().`);
-          return sendRequest(r, validate, schemaOrOptions);
+          const validate2 = codecResultValidator(sendCodec, r.method);
+          if (validate2 === void 0) throw new TypeError(`'${r.method}' is not a spec method; pass a result schema as the second argument to ctx.mcpReq.send().`);
+          return sendRequest(r, validate2, schemaOrOptions);
         }),
         notify: sendNotification
       },
@@ -18479,9 +18479,9 @@ var Protocol = class {
       return this._requestWithSchemaViaCodec(codec2, request, schemaOrOptions, maybeOptions);
     }
     this._assertOutboundRequestInEra(codec2, request.method);
-    const validate = codecResultValidator(codec2, request.method);
-    if (validate === void 0) throw new TypeError(`'${request.method}' is not a spec method; pass a result schema as the second argument to request().`);
-    return this._requestWithSchemaViaCodec(codec2, request, validate, schemaOrOptions);
+    const validate2 = codecResultValidator(codec2, request.method);
+    if (validate2 === void 0) throw new TypeError(`'${request.method}' is not a spec method; pass a result schema as the second argument to request().`);
+    return this._requestWithSchemaViaCodec(codec2, request, validate2, schemaOrOptions);
   }
   /**
   * The wire codec for this instance's negotiated era — the phase-2 truth:
@@ -19139,10 +19139,10 @@ var require_scope = /* @__PURE__ */ __commonJSMin(((exports) => {
     var: new code_1.Name("var")
   };
   var Scope = class {
-    constructor({ prefixes, parent } = {}) {
+    constructor({ prefixes, parent: parent2 } = {}) {
       this._names = {};
       this._prefixes = prefixes;
-      this._parent = parent;
+      this._parent = parent2;
     }
     toName(nameOrPrefix) {
       return nameOrPrefix instanceof code_1.Name ? nameOrPrefix : this.name(nameOrPrefix);
@@ -20807,9 +20807,9 @@ var require_json_schema_traverse = /* @__PURE__ */ __commonJSMin(((exports, modu
     cb = opts.cb || cb;
     var pre = typeof cb == "function" ? cb : cb.pre || function() {
     };
-    var post = cb.post || function() {
+    var post2 = cb.post || function() {
     };
-    _traverse(opts, pre, post, schema, "", schema);
+    _traverse(opts, pre, post2, schema, "", schema);
   };
   traverse.keywords = {
     additionalItems: true,
@@ -20855,18 +20855,18 @@ var require_json_schema_traverse = /* @__PURE__ */ __commonJSMin(((exports, modu
     maxProperties: true,
     minProperties: true
   };
-  function _traverse(opts, pre, post, schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex) {
+  function _traverse(opts, pre, post2, schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex) {
     if (schema && typeof schema == "object" && !Array.isArray(schema)) {
       pre(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
       for (var key in schema) {
         var sch = schema[key];
         if (Array.isArray(sch)) {
-          if (key in traverse.arrayKeywords) for (var i = 0; i < sch.length; i++) _traverse(opts, pre, post, sch[i], jsonPtr + "/" + key + "/" + i, rootSchema, jsonPtr, key, schema, i);
+          if (key in traverse.arrayKeywords) for (var i = 0; i < sch.length; i++) _traverse(opts, pre, post2, sch[i], jsonPtr + "/" + key + "/" + i, rootSchema, jsonPtr, key, schema, i);
         } else if (key in traverse.propsKeywords) {
-          if (sch && typeof sch == "object") for (var prop in sch) _traverse(opts, pre, post, sch[prop], jsonPtr + "/" + key + "/" + escapeJsonPtr(prop), rootSchema, jsonPtr, key, schema, prop);
-        } else if (key in traverse.keywords || opts.allKeys && !(key in traverse.skipKeywords)) _traverse(opts, pre, post, sch, jsonPtr + "/" + key, rootSchema, jsonPtr, key, schema);
+          if (sch && typeof sch == "object") for (var prop in sch) _traverse(opts, pre, post2, sch[prop], jsonPtr + "/" + key + "/" + escapeJsonPtr(prop), rootSchema, jsonPtr, key, schema, prop);
+        } else if (key in traverse.keywords || opts.allKeys && !(key in traverse.skipKeywords)) _traverse(opts, pre, post2, sch, jsonPtr + "/" + key, rootSchema, jsonPtr, key, schema);
       }
-      post(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
+      post2(schema, jsonPtr, rootSchema, parentJsonPtr, parentKeyword, parentSchema, keyIndex);
     }
   }
   function escapeJsonPtr(str) {
@@ -21518,28 +21518,28 @@ var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
       const validateCode = gen.toString();
       sourceCode = `${gen.scopeRefs(names_1.default.scope)}return ${validateCode}`;
       if (this.opts.code.process) sourceCode = this.opts.code.process(sourceCode, sch);
-      const validate = new Function(`${names_1.default.self}`, `${names_1.default.scope}`, sourceCode)(this, this.scope.get());
-      this.scope.value(validateName, { ref: validate });
-      validate.errors = null;
-      validate.schema = sch.schema;
-      validate.schemaEnv = sch;
-      if (sch.$async) validate.$async = true;
-      if (this.opts.code.source === true) validate.source = {
+      const validate2 = new Function(`${names_1.default.self}`, `${names_1.default.scope}`, sourceCode)(this, this.scope.get());
+      this.scope.value(validateName, { ref: validate2 });
+      validate2.errors = null;
+      validate2.schema = sch.schema;
+      validate2.schemaEnv = sch;
+      if (sch.$async) validate2.$async = true;
+      if (this.opts.code.source === true) validate2.source = {
         validateName,
         validateCode,
         scopeValues: gen._values
       };
       if (this.opts.unevaluated) {
         const { props, items } = schemaCxt;
-        validate.evaluated = {
+        validate2.evaluated = {
           props: props instanceof codegen_1.Name ? void 0 : props,
           items: items instanceof codegen_1.Name ? void 0 : items,
           dynamicProps: props instanceof codegen_1.Name,
           dynamicItems: items instanceof codegen_1.Name
         };
-        if (validate.source) validate.source.evaluated = (0, codegen_1.stringify)(validate.evaluated);
+        if (validate2.source) validate2.source.evaluated = (0, codegen_1.stringify)(validate2.evaluated);
       }
-      sch.validate = validate;
+      sch.validate = validate2;
       return sch;
     } catch (e) {
       delete sch.validate;
@@ -22747,10 +22747,10 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
   }
   function addRule(keyword, definition, dataType) {
     var _a2;
-    const post = definition === null || definition === void 0 ? void 0 : definition.post;
-    if (dataType && post) throw new Error('keyword with "post" flag cannot have "type"');
+    const post2 = definition === null || definition === void 0 ? void 0 : definition.post;
+    if (dataType && post2) throw new Error('keyword with "post" flag cannot have "type"');
     const { RULES } = this;
-    let ruleGroup = post ? RULES.post : RULES.rules.find(({ type: t }) => t === dataType);
+    let ruleGroup = post2 ? RULES.post : RULES.rules.find(({ type: t }) => t === dataType);
     if (!ruleGroup) {
       ruleGroup = {
         type: dataType,
@@ -24535,8 +24535,8 @@ var require_dynamicAnchor = /* @__PURE__ */ __commonJSMin(((exports) => {
     const { gen, it } = cxt;
     it.schemaEnv.root.dynamicAnchors[anchor] = true;
     const v = (0, codegen_1._)`${names_1.default.dynamicAnchors}${(0, codegen_1.getProperty)(anchor)}`;
-    const validate = it.errSchemaPath === "#" ? it.validateName : _getValidate(cxt);
-    gen.if((0, codegen_1._)`!${v}`, () => gen.assign(v, validate));
+    const validate2 = it.errSchemaPath === "#" ? it.validateName : _getValidate(cxt);
+    gen.if((0, codegen_1._)`!${v}`, () => gen.assign(v, validate2));
   }
   exports.dynamicAnchor = dynamicAnchor;
   function _getValidate(cxt) {
@@ -24583,11 +24583,11 @@ var require_dynamicRef = /* @__PURE__ */ __commonJSMin(((exports) => {
         gen.if(v, _callRef(v, valid), _callRef(it.validateName, valid));
       } else _callRef(it.validateName, valid)();
     }
-    function _callRef(validate, valid) {
+    function _callRef(validate2, valid) {
       return valid ? () => gen.block(() => {
-        (0, ref_1.callRef)(cxt, validate);
+        (0, ref_1.callRef)(cxt, validate2);
         gen.let(valid, true);
-      }) : () => (0, ref_1.callRef)(cxt, validate);
+      }) : () => (0, ref_1.callRef)(cxt, validate2);
     }
   }
   exports.dynamicRef = dynamicRef;
@@ -25628,9 +25628,9 @@ var require__2020 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 var require_formats = /* @__PURE__ */ __commonJSMin(((exports) => {
   Object.defineProperty(exports, "__esModule", { value: true });
   exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
-  function fmtDef(validate, compare) {
+  function fmtDef(validate2, compare) {
     return {
-      validate,
+      validate: validate2,
       compare
     };
   }
@@ -28092,11 +28092,210 @@ function toError(value) {
   return value instanceof Error ? value : new Error(String(value));
 }
 
-// server/defiant-evidence-bridge.js
-import { open, lstat } from "node:fs/promises";
+// server/defiant-evidence-client-auth.js
+import { open, lstat, rename, unlink, link } from "node:fs/promises";
 import { constants } from "node:fs";
-import { dirname, isAbsolute } from "node:path";
-import { createHash } from "node:crypto";
+import { dirname, isAbsolute, join } from "node:path";
+import { createHash, randomBytes } from "node:crypto";
+var EVIDENCE_ORIGIN = "https://studio.chaiwithjai.com";
+var fail = (status = 503) => Object.assign(new Error("Private evidence authorization unavailable"), { status });
+var exact = (v, keys) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys].sort().join(",");
+var pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function parent(path) {
+  if (typeof process.getuid !== "function" || typeof path !== "string" || !isAbsolute(path) || path.includes("\0")) throw fail();
+  const p = await lstat(dirname(path));
+  if (!p.isDirectory() || p.isSymbolicLink() || p.uid !== process.getuid() || (p.mode & 511) !== 448) throw fail();
+  return `${p.dev}:${p.ino}`;
+}
+async function privateFile(path, max) {
+  let fd;
+  try {
+    const directory = await parent(path);
+    fd = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    const stat = await fd.stat();
+    if (!stat.isFile() || stat.uid !== process.getuid() || (stat.mode & 511) !== 384 || stat.size < 1 || stat.size > max) throw fail();
+    const data = Buffer.alloc(max + 1);
+    let n = 0;
+    while (n < data.length) {
+      const { bytesRead } = await fd.read(data, n, data.length - n, null);
+      if (!bytesRead) break;
+      n += bytesRead;
+    }
+    if (n !== stat.size || n > max || await parent(path) !== directory) throw fail();
+    const bytes = data.subarray(0, n);
+    return { value: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)), stamp: `${directory}:${stat.dev}:${stat.ino}:${createHash("sha256").update(bytes).digest("hex")}` };
+  } catch {
+    throw fail();
+  } finally {
+    await fd?.close();
+  }
+}
+function validate(v, org, now, response = false) {
+  const keys = ["organizationId", "accessToken", "renewalToken", "accessExpiresAt", "expiresAt"];
+  if (!response) keys.push("version");
+  if (!exact(v, keys) || !response && v.version !== 2 || v.organizationId !== org || !Number.isSafeInteger(v.expiresAt) || v.expiresAt <= now || v.expiresAt > now + 2886e4 || !Number.isSafeInteger(v.accessExpiresAt) || v.accessExpiresAt > v.expiresAt || v.accessExpiresAt > now + 36e4 || v.accessExpiresAt <= 0) throw fail(401);
+  const access = /^ea\.([a-f0-9]{32})\.([A-Za-z0-9_-]{43})$/.exec(v.accessToken), renewal = /^er\.([a-f0-9]{32})\.([A-Za-z0-9_-]{43})$/.exec(v.renewalToken);
+  if (!access || !renewal || access[1] !== renewal[1] || response && v.accessExpiresAt <= now) throw fail(401);
+  return { version: 2, organizationId: v.organizationId, accessToken: v.accessToken, renewalToken: v.renewalToken, accessExpiresAt: v.accessExpiresAt, expiresAt: v.expiresAt };
+}
+async function post(operation, body, fetchImpl, timeout = 3e4) {
+  if (!["begin", "exchange", "renew"].includes(operation)) throw fail();
+  const controller = new AbortController(), timer = setTimeout(() => controller.abort(), Math.max(1, Math.min(timeout, 3e4)));
+  let reader;
+  try {
+    const response = await fetchImpl(`${EVIDENCE_ORIGIN}/api/studio/local-evidence/${operation}`, { method: "POST", redirect: "error", cache: "no-store", credentials: "omit", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify(body), signal: controller.signal });
+    if (!response.ok) throw fail(response.status === 403 ? 403 : 503);
+    if (!/^application\/json(?:;|$)/i.test(response.headers.get("content-type") || "")) throw fail();
+    reader = response.body?.getReader();
+    if (!reader) throw fail();
+    const bytes = Buffer.alloc(65536);
+    let size = 0, chunks = 0;
+    for (; ; ) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!(value instanceof Uint8Array) || ++chunks > 65536 || value.byteLength > bytes.length - size) throw fail();
+      bytes.set(value, size);
+      size += value.byteLength;
+    }
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, size)));
+  } catch (error46) {
+    throw fail(error46?.status === 403 ? 403 : 503);
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+    await reader?.cancel().catch(() => {
+    });
+  }
+}
+async function createEvidenceClientAuth({ configurationPath, fetchImpl = fetch, now = () => Date.now(), sleep: sleep2 = pause } = {}) {
+  const initial = await privateFile(configurationPath, 16384), c = initial.value;
+  if (!exact(c, ["version", "organizationId", "origin", "credentialFile"]) || c.version !== 1 || c.origin !== EVIDENCE_ORIGIN || typeof c.organizationId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(c.organizationId) || c.organizationId === "defiant_evidence_poc" || typeof c.credentialFile !== "string" || !isAbsolute(c.credentialFile) || c.credentialFile === configurationPath) throw fail();
+  const config2 = Object.freeze({ ...c });
+  const directory = await parent(config2.credentialFile);
+  let pending;
+  const current = async () => {
+    if ((await privateFile(configurationPath, 16384)).stamp !== initial.stamp || await parent(config2.credentialFile) !== directory) throw fail();
+  };
+  const read = async () => {
+    await current();
+    const file2 = await privateFile(config2.credentialFile, 20480);
+    return { ...file2, value: validate(file2.value, config2.organizationId, now()) };
+  };
+  async function write(value, previous) {
+    await current();
+    const temp = join(dirname(config2.credentialFile), `.evidence-${randomBytes(16).toString("hex")}.tmp`);
+    let fd;
+    try {
+      fd = await open(temp, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 384);
+      await fd.writeFile(JSON.stringify(value) + "\n");
+      await fd.sync();
+      await fd.close();
+      fd = null;
+      await current();
+      if (previous) {
+        if ((await read()).stamp !== previous) throw fail();
+        await rename(temp, config2.credentialFile);
+      } else {
+        await link(temp, config2.credentialFile);
+        await unlink(temp);
+      }
+    } finally {
+      await fd?.close();
+      await unlink(temp).catch(() => {
+      });
+    }
+  }
+  async function rotate() {
+    let before = await read();
+    if (before.value.accessExpiresAt > now() + 3e4) return before.value;
+    if (before.value.expiresAt <= now() + 3e4) throw fail(401);
+    const lockPath = config2.credentialFile + ".lock";
+    let lock;
+    try {
+      lock = await open(lockPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 384);
+    } catch (error46) {
+      if (error46.code !== "EEXIST") throw fail();
+      const existing = await lstat(lockPath);
+      if (!existing.isFile() || existing.isSymbolicLink() || existing.uid !== process.getuid() || (existing.mode & 511) !== 384) throw fail();
+      for (let n = 0; n < 20; n++) {
+        await sleep2(100);
+        const latest = await read();
+        if (latest.stamp !== before.stamp && latest.value.accessExpiresAt > now() + 3e4) return latest.value;
+      }
+      throw fail();
+    }
+    let attempted = false, committed = false;
+    try {
+      await current();
+      before = await read();
+      if (before.value.accessExpiresAt > now() + 3e4) return before.value;
+      attempted = true;
+      const next = validate(await post("renew", { organizationId: config2.organizationId, renewalToken: before.value.renewalToken }, fetchImpl), config2.organizationId, now(), true);
+      if (next.expiresAt !== before.value.expiresAt || next.accessToken.split(".")[1] !== before.value.accessToken.split(".")[1] || next.accessToken === before.value.accessToken || next.renewalToken === before.value.renewalToken) throw fail();
+      await write(next, before.stamp);
+      committed = true;
+      return next;
+    } finally {
+      await lock.close();
+      if (!attempted || committed) await unlink(lockPath);
+    }
+  }
+  return { config: config2, current, async credential({ renew = true } = {}) {
+    const entry = await read();
+    if (entry.value.accessExpiresAt > now() + 3e4 || !renew) {
+      if (entry.value.accessExpiresAt <= now()) throw fail(401);
+      return entry.value;
+    }
+    if (!pending) pending = rotate().finally(() => {
+      pending = void 0;
+    });
+    return pending;
+  }, async pair({ report = () => {
+  } } = {}) {
+    await current();
+    try {
+      await lstat(config2.credentialFile);
+      throw fail();
+    } catch (error46) {
+      if (error46.code !== "ENOENT") throw fail();
+    }
+    const lockPath = config2.credentialFile + ".lock";
+    let lock;
+    try {
+      lock = await open(lockPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 384);
+    } catch {
+      throw fail();
+    }
+    let uncertain = false, committed = false;
+    try {
+      const verifier = randomBytes(32).toString("base64url"), deadline = now() + 3e5, clientName = "Studio local evidence client";
+      const begun = await post("begin", { organizationId: config2.organizationId, verifierHash: createHash("sha256").update(verifier).digest("hex"), clientName }, fetchImpl);
+      if (!exact(begun, ["pairingId", "expiresAt", "organizationId", "clientName"]) || begun.organizationId !== config2.organizationId || begun.clientName !== clientName || typeof begun.pairingId !== "string" || !/^[a-f0-9]{32}$/.test(begun.pairingId) || !Number.isSafeInteger(begun.expiresAt) || begun.expiresAt <= now() || begun.expiresAt > deadline + 6e4) throw fail();
+      report({ pairingId: begun.pairingId, url: `${EVIDENCE_ORIGIN}/?org=${encodeURIComponent(config2.organizationId)}&tab=strategy`, expiresAt: begun.expiresAt });
+      for (let n = 0; n < 60 && now() < Math.min(deadline, begun.expiresAt); n++) {
+        await current();
+        let value;
+        try {
+          uncertain = true;
+          value = await post("exchange", { pairingId: begun.pairingId, verifier }, fetchImpl, Math.min(deadline, begun.expiresAt) - now());
+        } catch (error46) {
+          if (error46.status !== 403) throw error46;
+          uncertain = false;
+          await sleep2(Math.min(5e3, Math.max(0, Math.min(deadline, begun.expiresAt) - now())));
+          continue;
+        }
+        const credentials = validate(value, config2.organizationId, now(), true);
+        await write(credentials);
+        committed = true;
+        return { organizationId: config2.organizationId, expiresAt: credentials.expiresAt };
+      }
+      throw fail(401);
+    } finally {
+      await lock.close();
+      if (!uncertain || committed) await unlink(lockPath);
+    }
+  } };
+}
 
 // node_modules/@modelcontextprotocol/server/dist/index.mjs
 var DEFAULT_MAX_REQUEST_BODY_SIZE = 4 * 1024 * 1024;
@@ -28204,84 +28403,49 @@ function registerDefiantEvidenceTools(server, { resolveEvidence } = {}) {
 }
 
 // server/defiant-evidence-bridge.js
-var origin = "https://studio.chaiwithjai.com";
-var fail = (status = 503) => Object.assign(new Error("Private evidence unavailable"), { status });
-var exact = (v, keys) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys].sort().join(",");
+var origin = EVIDENCE_ORIGIN;
+var fail2 = (status = 503) => Object.assign(new Error("Private evidence unavailable"), { status });
 var resources = /* @__PURE__ */ new Set(["coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"]);
 var fields = /* @__PURE__ */ new Set(["revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth"]);
-async function privateFile(path, max) {
-  let fd;
-  try {
-    if (typeof process.getuid !== "function" || typeof path !== "string" || !isAbsolute(path) || path.includes("\0")) throw fail();
-    const parent = await lstat(dirname(path));
-    if (!parent.isDirectory() || parent.isSymbolicLink() || parent.uid !== process.getuid() || (parent.mode & 511) !== 448) throw fail();
-    fd = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
-    const stat = await fd.stat();
-    if (!stat.isFile() || stat.uid !== process.getuid() || (stat.mode & 511) !== 384 || stat.size < 1 || stat.size > max) throw fail();
-    const data = Buffer.alloc(max + 1);
-    let n = 0;
-    while (n < data.length) {
-      const { bytesRead } = await fd.read(data, n, data.length - n, null);
-      if (!bytesRead) break;
-      n += bytesRead;
-    }
-    if (n !== stat.size || n > max) throw fail();
-    const bytes = data.subarray(0, n);
-    return { value: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)), stamp: `${parent.dev}:${parent.ino}:${stat.dev}:${stat.ino}:${createHash("sha256").update(bytes).digest("hex")}` };
-  } catch {
-    throw fail();
-  } finally {
-    await fd?.close();
-  }
-}
 async function createPrivateEvidenceBridge({ configurationPath, fetchImpl = fetch, now = () => Date.now() } = {}) {
-  const initial = await privateFile(configurationPath, 16384), c = initial.value;
-  if (!exact(c, ["version", "organizationId", "origin", "credentialFile"]) || c.version !== 1 || c.origin !== origin || typeof c.organizationId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(c.organizationId) || c.organizationId === "defiant_evidence_poc" || typeof c.credentialFile !== "string" || !isAbsolute(c.credentialFile) || c.credentialFile === configurationPath) throw fail();
-  const config2 = Object.freeze({ ...c }), actor = Object.freeze({ kind: "http-bridge-interface" });
-  const current = async () => {
-    if ((await privateFile(configurationPath, 16384)).stamp !== initial.stamp) throw fail();
-  };
-  const credential = async () => {
-    const { value: v } = await privateFile(config2.credentialFile, 20480);
-    if (!exact(v, ["version", "token", "expiresAt"]) || v.version !== 1 || typeof v.token !== "string" || v.token.length > 16384 || !/^[-A-Za-z0-9_]+\.[-A-Za-z0-9_]+\.[-A-Za-z0-9_]+$/.test(v.token) || !Number.isSafeInteger(v.expiresAt) || v.expiresAt <= now() || v.expiresAt > now() + 366e4) throw fail(401);
-    return v;
-  };
+  const authClient = await createEvidenceClientAuth({ configurationPath, fetchImpl, now });
+  const { config: config2, current } = authClient, credential = (options) => authClient.credential(options), actor = Object.freeze({ kind: "http-bridge-interface" });
   const service = { read: async (user, input) => {
-    if (user !== actor || !input || !resources.has(input.resource)) throw fail(403);
+    if (user !== actor || !input || !resources.has(input.resource)) throw fail2(403);
     const url2 = new URL(`/api/studio/defiant-evidence/${config2.organizationId}/${input.resource}`, origin);
     for (const [key, value] of Object.entries(input)) {
       if (key === "resource") continue;
-      if (!fields.has(key) || typeof value !== "string" && typeof value !== "number" || String(value).length > (key === "query" ? 200 : 128) || key !== "query" && !String(value).length) throw fail(400);
-      if (["offset", "limit", "referenceIndex"].includes(key) && (!Number.isSafeInteger(value) || value < 0 || value > 999999)) throw fail(400);
+      if (!fields.has(key) || typeof value !== "string" && typeof value !== "number" || String(value).length > (key === "query" ? 200 : 128) || key !== "query" && !String(value).length) throw fail2(400);
+      if (["offset", "limit", "referenceIndex"].includes(key) && (!Number.isSafeInteger(value) || value < 0 || value > 999999)) throw fail2(400);
       url2.searchParams.set(key, String(value));
     }
-    if (input.revision !== void 0 && !/^[a-f0-9]{64}$/.test(input.revision)) throw fail(400);
+    if (input.revision !== void 0 && !/^[a-f0-9]{64}$/.test(input.revision)) throw fail2(400);
     await current();
     const auth = await credential();
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 3e4);
     let reader;
     try {
-      const response = await fetchImpl(url2, { method: "GET", redirect: "error", credentials: "omit", cache: "no-store", headers: { Accept: "application/json", Authorization: `Bearer ${auth.token}` }, signal: controller.signal });
-      if (!response.ok) throw fail([400, 401, 403, 404, 409, 503].includes(response.status) ? response.status : 503);
-      if (!/^application\/json(?:;|$)/i.test(response.headers.get("content-type") || "")) throw fail();
+      const response = await fetchImpl(url2, { method: "GET", redirect: "error", credentials: "omit", cache: "no-store", headers: { Accept: "application/json", Authorization: `Bearer ${auth.accessToken}` }, signal: controller.signal });
+      if (!response.ok) throw fail2([400, 401, 403, 404, 409, 503].includes(response.status) ? response.status : 503);
+      if (!/^application\/json(?:;|$)/i.test(response.headers.get("content-type") || "")) throw fail2();
       reader = response.body?.getReader();
-      if (!reader) throw fail();
+      if (!reader) throw fail2();
       const buffer = Buffer.alloc(4 * 1024 * 1024);
       let size = 0, chunks = 0;
       for (; ; ) {
         const { done, value } = await reader.read();
         if (done) break;
-        if (!(value instanceof Uint8Array) || ++chunks > 65536 || value.byteLength > buffer.length - size) throw fail();
+        if (!(value instanceof Uint8Array) || ++chunks > 65536 || value.byteLength > buffer.length - size) throw fail2();
         buffer.set(value, size);
         size += value.byteLength;
       }
       const result = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer.subarray(0, size)));
-      if (result?.scope?.organizationId !== config2.organizationId || typeof result.revision !== "string" || !/^[a-f0-9]{64}$/.test(result.revision) || input.revision && result.revision !== input.revision) throw fail(409);
+      if (result?.scope?.organizationId !== config2.organizationId || typeof result.revision !== "string" || !/^[a-f0-9]{64}$/.test(result.revision) || input.revision && result.revision !== input.revision) throw fail2(409);
       await current();
-      await credential();
+      await credential({ renew: false });
       return result;
     } catch (error46) {
-      throw fail([400, 401, 403, 404, 409, 503].includes(error46?.status) ? error46.status : 503);
+      throw fail2([400, 401, 403, 404, 409, 503].includes(error46?.status) ? error46.status : 503);
     } finally {
       clearTimeout(timer);
       controller.abort();
@@ -28292,7 +28456,7 @@ async function createPrivateEvidenceBridge({ configurationPath, fetchImpl = fetc
   return { organizationId: config2.organizationId, createServer() {
     const server = new McpServer({ name: "defiant-private-evidence", version: "1.0.0" });
     registerDefiantEvidenceTools(server, { resolveEvidence: async ({ organizationId: organizationId2 }) => {
-      if (organizationId2 !== config2.organizationId) throw fail(403);
+      if (organizationId2 !== config2.organizationId) throw fail2(403);
       return { organizationId: organizationId2, actor, service };
     } });
     return server;
@@ -28301,6 +28465,12 @@ async function createPrivateEvidenceBridge({ configurationPath, fetchImpl = fetc
 
 // server/defiant-evidence-stdio.js
 async function start() {
+  if (process.argv.length === 4 && process.argv[2] === "--pair") {
+    const auth = await createEvidenceClientAuth({ configurationPath: process.argv[3] });
+    await auth.pair({ report: ({ pairingId, url: url2 }) => console.error(`Open ${url2} and expand Local evidence clients. Enter pairing code ${pairingId}, inspect the exact organization and approve read-only access. No sign-in credentials are exported.`) });
+    console.error("Local evidence client connected. Start the configured MCP server.");
+    return;
+  }
   if (process.argv.length !== 3) throw Error("Configuration required");
   const bridge = await createPrivateEvidenceBridge({ configurationPath: process.argv[2] });
   const handle = serveStdio(() => bridge.createServer());
