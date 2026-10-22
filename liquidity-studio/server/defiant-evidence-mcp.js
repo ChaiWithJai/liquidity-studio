@@ -34,6 +34,12 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
  register('defiant_read_selection_receipts', 'Read original cells for a bounded page of an aggregate selection. Requires the current revision and a configured integrity-checked private source resolver.', {
   revision, selectionId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset: z.number().int().min(0).max(500000).optional(), limit: z.number().int().min(1).max(100).optional()
  }, 'selection-receipts');
+ register('defiant_catalog_identity_review', 'List source-identity groups for human review, ranked by absolute net reported amount within each currency. Does not merge recordings or score opportunities.', {
+  revision: revision.optional(), offset: z.number().int().min(0).max(2000).optional(), limit: z.number().int().min(1).max(100).optional()
+ }, 'catalog-identity-review');
+ register('defiant_inspect_identity_group', 'Inspect source-system/account identities, observed releases and receipt-selection references at one revision. Missing IDs remain explicit; equivalence is unreviewed.', {
+  revision, identityGroupId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset: z.number().int().min(0).max(2000).optional(), limit: z.number().int().min(1).max(100).optional()
+ }, 'identity-group');
  register('defiant_show_receipt', 'Return exact source cells and a logical CSV record locator at the requested revision. One example record does not establish an entire aggregate.', {
   revision, receiptId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'receipt');
