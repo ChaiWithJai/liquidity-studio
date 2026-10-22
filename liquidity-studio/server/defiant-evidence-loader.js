@@ -11,15 +11,15 @@ export function createDefiantEvidenceLoader({organizationId, object, openObject}
       const opened = await openObject(pinned);
       stream = opened?.stream;
       if (opened?.generation !== pinned.generation || !stream?.[Symbol.asyncIterator]) throw unavailable();
-      const chunks = []; const digest = createHash('sha256'); let size = 0;
+      const bytes = Buffer.alloc(pinned.bytes); const digest = createHash('sha256'); let size = 0; let chunks = 0;
       for await (const chunk of stream) {
-        if (!(chunk instanceof Uint8Array)) throw unavailable();
+        if (++chunks > 65536 || !(chunk instanceof Uint8Array)) throw unavailable();
         size += chunk.byteLength;
         if (size > pinned.bytes) throw unavailable();
-        const copy = Buffer.from(chunk); chunks.push(copy); digest.update(copy);
+        bytes.set(chunk, size - chunk.byteLength); digest.update(bytes.subarray(size - chunk.byteLength, size));
       }
       if (size !== pinned.bytes || digest.digest('hex') !== pinned.sha256) throw unavailable();
-      const text = new TextDecoder('utf-8', {fatal: true}).decode(Buffer.concat(chunks, size));
+      const text = new TextDecoder('utf-8', {fatal: true}).decode(bytes);
       const snapshot = JSON.parse(text);
       if (!snapshot || snapshot.organizationId !== organizationId) throw unavailable();
       return snapshot;

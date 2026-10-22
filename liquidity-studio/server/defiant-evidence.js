@@ -16,7 +16,7 @@ function normalize(input, organizationId) {
   if (!Array.isArray(input.months) || input.months.length > 1200 || !Array.isArray(input.receipts) || input.receipts.length > 1000) throw fail(503, 'Evidence snapshot exceeds bounds');
   const keys = new Set();
   const months = input.months.map(row => {
-    if (!plain(row) || !month(row.month) || !/^[A-Z]{3}$/.test(row.currency ?? '') || !decimal(row.amount) || !hash(row.sourceHash) || row.metric !== METRIC) throw fail(503, 'Invalid earnings product');
+    if (!plain(row) || !month(row.month) || typeof row.currency !== 'string' || !/^[A-Z]{3}$/.test(row.currency) || !decimal(row.amount) || !hash(row.sourceHash) || row.metric !== METRIC) throw fail(503, 'Invalid earnings product');
     const key = `${row.month}:${row.currency}`;
     if (keys.has(key)) throw fail(503, 'Duplicate earnings period');
     keys.add(key);
@@ -52,7 +52,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (!['manifest', 'earnings', 'receipt'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 1200 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
       if (resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined || request.offset !== undefined || request.limit !== undefined)) throw fail(400, 'Filters require earnings');
       if (resource !== 'receipt' && receiptId !== undefined) throw fail(400, 'Receipt ID requires receipt');
-      if ((selectedMonth !== undefined && !month(selectedMonth)) || (currency !== undefined && !/^[A-Z]{3}$/.test(currency)) || (resource === 'receipt' && (!identifier(receiptId) || revision === undefined))) throw fail(400, 'Invalid evidence selection');
+      if ((selectedMonth !== undefined && !month(selectedMonth)) || (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency))) || (resource === 'receipt' && (!identifier(receiptId) || revision === undefined))) throw fail(400, 'Invalid evidence selection');
       let data;
       try { data = normalize(await loadSnapshot(scope), organizationId); }
       catch (error) { throw fail(503, 'Evidence snapshot unavailable'); }

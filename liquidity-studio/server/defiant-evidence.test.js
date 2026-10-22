@@ -59,3 +59,14 @@ test('pinned loader validates exact generation, bytes and hash before parsing', 
  await assert.rejects(makeLoader(async () => {opened = true;})({organizationId: 'other'}), {status: 503});
  assert.equal(opened, false);
 });
+test('currency must be a string in both product and request', async () => {
+ const data = fixture(); data.months[0].currency = ['USD'];
+ await assert.rejects(make({loadSnapshot: async () => data}).read('allowed'), {status: 503});
+ await assert.rejects(make().read('allowed', {resource: 'earnings', currency: ['USD']}), {status: 400});
+});
+test('loader bounds stream chunk count independently of byte count', async () => {
+ const bytes = Buffer.from(JSON.stringify(fixture()));
+ async function* chunks() {for (let i = 0; i < 65537; i++) yield Buffer.alloc(0); yield bytes;}
+ const loader = createDefiantEvidenceLoader({organizationId: 'sample_org', object: {key: 'sample.json', generation: '1', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex')}, openObject: async () => ({generation: '1', stream: chunks()})});
+ await assert.rejects(loader({organizationId: 'sample_org'}), {status: 503});
+});
