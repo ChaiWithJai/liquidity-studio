@@ -1,4 +1,5 @@
 import {open} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {constants} from 'node:fs';
 import {isAbsolute} from 'node:path';
 import {createDefiantEvidenceProvider} from './defiant-evidence-provider.js';
@@ -43,13 +44,32 @@ export async function loadDefiantEvidenceRuntimeConfiguration(filename){
   return validateDefiantEvidenceRuntimeConfiguration(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(buffer.subarray(0,size))));
  }catch{throw invalid();}finally{await file?.close();}
 }
+/** Read one immutable config object using the same runtime Storage authority as its evidence. */
+async function loadPinnedConfiguration(bucket, object){
+ const stream=bucket.file(object.key,{generation:object.generation}).createReadStream({validation:'crc32c',decompress:false});
+ const timer=setTimeout(()=>stream.destroy(invalid()),15000);
+ try{
+  const digest=createHash('sha256'),parts=[];let size=0;
+  for await(const chunk of stream){const bytes=Buffer.from(chunk);size+=bytes.length;if(size>object.bytes||size>MAX_BYTES)throw invalid();digest.update(bytes);parts.push(bytes);}
+  if(size!==object.bytes||digest.digest('hex')!==object.sha256)throw invalid();
+  return validateDefiantEvidenceRuntimeConfiguration(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts,size))));
+ }finally{clearTimeout(timer);stream.destroy();}
+}
 /** No config means no filesystem, SDK import, ADC or bucket access. */
 export async function configuredDefiantEvidenceProvider({environment=process.env,loadConfiguration=loadDefiantEvidenceRuntimeConfiguration,createStorage=async options=>{const {Storage}=await import('@google-cloud/storage');return new Storage(options);}}={}){
- const filename=environment.STUDIO_DEFIANT_EVIDENCE_CONFIG;
- if(filename===undefined||filename==='')return null;
+ const filename=environment.STUDIO_DEFIANT_EVIDENCE_CONFIG,encoded=environment.STUDIO_DEFIANT_EVIDENCE_CONFIG_GCS;
+ const fileMode=filename!==undefined&&filename!=='',gcsMode=encoded!==undefined&&encoded!=='';
+ if(!fileMode&&!gcsMode)return null;
  try{
-  const config=validateDefiantEvidenceRuntimeConfiguration(await loadConfiguration(filename));
-  const storage=await createStorage({projectId:config.projectId});
-  return createDefiantEvidenceProvider({organizationId:config.organizationId,bucket:storage.bucket(config.bucket),snapshotObject:config.snapshotObject,sourcePartitions:config.sourcePartitions,worksheetPartitions:config.worksheetPartitions});
+  if(fileMode&&gcsMode)throw invalid();
+  let config,storage;
+  if(gcsMode){
+   if(typeof encoded!=='string'||Buffer.byteLength(encoded)>2048)throw invalid();
+   const object=pin(JSON.parse(encoded));if(object.bytes>MAX_BYTES)throw invalid();
+   storage=await createStorage({projectId});
+   config=await loadPinnedConfiguration(storage.bucket(bucketName),object);
+  }else config=validateDefiantEvidenceRuntimeConfiguration(await loadConfiguration(filename));
+  storage??=await createStorage({projectId});
+  return createDefiantEvidenceProvider({organizationId:config.organizationId,bucket:storage.bucket(bucketName),snapshotObject:config.snapshotObject,sourcePartitions:config.sourcePartitions,worksheetPartitions:config.worksheetPartitions});
  }catch{throw invalid();}
 }
