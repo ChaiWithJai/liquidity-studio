@@ -1,0 +1,15 @@
+# Private evidence MCP bridge
+
+Approved implementation slice of the private HTTP bridge proposal. The local MCP process exposes the sixteen real-evidence registrations, including served-source discovery and the June factual review through the existing authenticated Studio HTTP routes. It does not load GCS, create user identity, export credentials, refresh credentials, or satisfy remote-host OAuth.
+
+The operator supplies a 0600 config in a 0700 owner directory: version1, exact organizationId, origin https://studio.chaiwithjai.com, absolute credentialFile. Configuration inode/content/parent identity is pinned for the process lifetime. Each request rereads a separate 0600 credential envelope in a 0700 owner directory: version1, short-lived Firebase ID token, expiresAt in epoch milliseconds. Declared expiry only rejects locally; Studio verifies credentials and current membership. No refresh token, browser storage extraction, ADC, token logging or token acquisition is provided.
+
+Finite resource/query mapping, scope equality, revision equality, no redirects/cache/retry, 4MiB response, 30-second deadline, fatal UTF-8 and bounded chunks apply. Wrong actor/scope fails before credential/network access. File modes and configuration identity are checked before dispatch and after response. Default absence/malformed credentials fails closed.
+
+Source entry: server/defiant-evidence-stdio.js; constructor-owned fetch injection exists solely for authored contracts, never CLI configuration. Reuse the actual SDK registrations. Hosted build integration proposal: extend build-defiant-stdio.js to emit a separate defiant-evidence-stdio.mjs using its existing esbuild dependency-closure check, size cap and notices; add it as output22 to canonical inventory and regenerate only through hosted CI. Owner-directed synthetic archival is independent of private client acceptance; preserve retained artifacts and do not use a synthetic fallback.
+
+Contracts cover private file policy/replacement, credential reread, URL/query/response scope/revision, HTTP errors/redaction, bounded body/deadline, and actual SDK tool discovery and receipt journey. No actual credential handoff or runtime MCP acceptance is claimed. Deployment requires separately authorized renewable credential handoff and live authenticated HTTP acceptance.
+
+## Hosted build implementation
+
+The existing build entry now adds output22 `dist/mcp/defiant-evidence-stdio.mjs`. The previous21 outputs and their builders are unchanged. The new builder checks complete builtin-only external imports, 10MiB bound, no cloud/provider modules, and a finite SDK package set covered by existing retained notices. Canonical artifact workflow recursively inventories all dist files; Verify rejects both changed and untracked outputs. The hosted canonical receipt must therefore contain22 outputs before acceptance. The normal server/*.test.js suite includes the SDK bridge contracts and a compiled-entry fail-closed contract. No local canonical generation is permitted.
