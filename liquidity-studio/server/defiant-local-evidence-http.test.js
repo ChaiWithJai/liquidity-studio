@@ -27,6 +27,7 @@ test('real HTTP pairing keeps Firebase inside approval and restricts renewable c
  assert.equal((await read('/api/auth/session',credentials.accessToken)).status,401);
  assert.equal((await read('/api/studio/defiant-evidence/other/manifest',credentials.accessToken)).status,403);assert.equal(loads,1);
  assert.equal((await post('approve',{organizationId:org.id,pairingId:pair.pairingId},credentials.accessToken)).status,403);
+ const listed=await (await post('list',{organizationId:org.id},'fixture-google-token')).json();assert.equal(listed.grants.length,1);assert.equal(listed.grants[0].clientName,'Invented client');assert.equal(listed.grants[0].readOnly,true);assert.equal(listed.grants[0].renewalHash,undefined);assert.equal((await post('list',{organizationId:org.id},credentials.accessToken)).status,403);
  const rotated=await (await post('renew',{organizationId:org.id,renewalToken:credentials.renewalToken})).json();assert.equal(rotated.expiresAt,credentials.expiresAt);assert.equal((await read(path,credentials.accessToken)).status,403);
  managedUid='replacement-account';assert.equal((await read(path,rotated.accessToken)).status,403);managedUid='google-user';disabled=true;assert.equal((await read(path,rotated.accessToken)).status,403);disabled=false;
  revokeDuringLoad=true;const revoked=await read(path,rotated.accessToken);assert.equal(revoked.status,403);assert.equal((await revoked.text()).includes('Invented private HTTP fixture'),false);

@@ -12,14 +12,16 @@ Hosted contracts cover possession, scope, one-time exchange, concurrent renewal/
 
 ## Runtime and UI contract
 
-Explicit feature switch `STUDIO_LOCAL_EVIDENCE_GRANTS_ENABLED=true` requires configured private evidence and managed Google identity; otherwise routes404. No default activation. POST-only finite `/api/studio/local-evidence/{begin,inspect,approve,exchange,renew,revoke}`, no query parameters, strict exact JSON keys,4KiB body and5s read deadline. Errors never echo bodies or credentials. Begin/exchange/renew use verifier/renewal possession, with no Firebase export. Inspect/approve/revoke require the ordinary signed-in Firebase Bearer and maintained membership. The approval page must display exact clientName, organizationId, scope and expiry from inspect and require an explicit click; no automatic approval on link load.
+Explicit feature switch `STUDIO_LOCAL_EVIDENCE_GRANTS_ENABLED=true` requires configured private evidence and managed Google identity; otherwise routes404. No default activation. POST-only finite `/api/studio/local-evidence/{begin,inspect,approve,exchange,renew,list,revoke}`, no query parameters, strict exact JSON keys,4KiB body and5s read deadline. Errors never echo bodies or credentials. Begin/exchange/renew use verifier/renewal possession, with no Firebase export. Inspect/approve/revoke require the ordinary signed-in Firebase Bearer and maintained membership. The approval page must display exact clientName, organizationId, scope and expiry from inspect and require an explicit click; no automatic approval on link load.
 
 Requests/responses:
 - begin `{organizationId,verifierHash,clientName}` → `{pairingId,expiresAt,organizationId,clientName}`.
-- inspect `{organizationId,pairingId}` → `{pairingId,organizationId,clientName,expiresAt,approved,scope:"evidence:read",maximumGrantLifetimeMs}`.
+- inspect `{organizationId,pairingId}` → `{pairingId,organizationId,clientName,expiresAt,approved,scope:"evidence:read",readOnly:true,maximumGrantLifetimeMs}`.
 - approve `{organizationId,pairingId}` → `{approved:true,organizationId}`.
 - exchange `{pairingId,verifier}` → `{organizationId,accessToken,renewalToken,accessExpiresAt,expiresAt}`.
 - renew `{organizationId,renewalToken}` → rotated same credential shape.
 - revoke `{organizationId,grantId}` → `{revoked:true}`.
 
 Only exact evidence GET routes recognize `Bearer ea.…`; general Studio authentication is unchanged and these credentials cannot authorize pairing approval or general routes. Existing service pre/post-load authorization repeats local-grant and maintained-principal/membership validation. Google job authorization factors its existing behavior into a shared helper without changing return/denial semantics; local delegation additionally pins the exact Firebase UID. UI and local-client renewal implementation remain future integration work.
+
+- list `{organizationId}` with ordinary Google Bearer → `{organizationId,grants:[{grantId,clientName,organizationId,approvedAt,expiresAt,accessExpiresAt,scope:"evidence:read",readOnly:true}]}`. Returns only current owner/UID grants for this org that are unexpired and not explicitly revoked; no credentials or hashes.

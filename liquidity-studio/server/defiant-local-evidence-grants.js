@@ -27,7 +27,12 @@ export function createLocalEvidenceGrants({store,approveActor,authorizeDelegate,
    let subject;try{subject=await approveActor(actor,organizationId);}catch{throw denied();}
    if(!scope(subject?.userId)||typeof subject.uid!=='string'||!subject.uid)throw denied();
    const p=state(await store.get(KEY)).pairs.find(p=>p.id===pairingId);if(!p||p.organizationId!==organizationId||p.attempts>=5)throw denied();
-   return {pairingId:p.id,organizationId:p.organizationId,clientName:p.clientName,expiresAt:p.expiresAt,approved:Boolean(p.subject),scope:'evidence:read',maximumGrantLifetimeMs:28800000};
+   return {pairingId:p.id,organizationId:p.organizationId,clientName:p.clientName,expiresAt:p.expiresAt,approved:Boolean(p.subject),scope:'evidence:read',readOnly:true,maximumGrantLifetimeMs:28800000};
+  },
+  async list(actor,organizationId){
+   if(!scope(organizationId))throw denied();let subject;try{subject=await approveActor(actor,organizationId);}catch{throw denied();}
+   if(!scope(subject?.userId)||typeof subject.uid!=='string'||!subject.uid)throw denied();
+   return {organizationId,grants:state(await store.get(KEY)).grants.filter(g=>!g.revoked&&g.organizationId===organizationId&&g.userId===subject.userId&&g.uid===subject.uid).map(g=>({grantId:g.id,clientName:g.clientName,organizationId:g.organizationId,approvedAt:g.approvedAt,expiresAt:g.expiresAt,accessExpiresAt:g.accessExpiresAt,scope:'evidence:read',readOnly:true}))};
   },
   async approve(actor,pairingId,organizationId){
    if(!scope(organizationId)||typeof pairingId!=='string'||!/^[a-f0-9]{32}$/.test(pairingId))throw denied();
@@ -44,7 +49,7 @@ export function createLocalEvidenceGrants({store,approveActor,authorizeDelegate,
    const grantId=id(),access=secret(),renewal=secret();let accepted=false,result;
    await store.update(KEY,old=>{accepted=false;const s=state(old),pair=s.pairs.find(p=>p.id===pairingId);if(!pair?.subject||pair.attempts>=5||s.grants.length>=64)throw denied();if(!match(pair.verifierHash,digest(verifier)))return {...s,pairs:s.pairs.map(p=>p.id===pairingId?{...p,attempts:p.attempts+1}:p)};
     if(pair.subject.userId!==p.subject.userId||pair.subject.uid!==p.subject.uid||pair.organizationId!==p.organizationId||pair.approvedAt!==p.approvedAt)throw denied();
-    const grant={id:grantId,...pair.subject,organizationId:pair.organizationId,approvedAt:pair.approvedAt,expiresAt:pair.grantExpiresAt,accessExpiresAt:Math.min(now()+300000,pair.grantExpiresAt),accessHash:digest(access),renewalHash:digest(renewal),revoked:false};accepted=true;result=grant;return {...s,pairs:s.pairs.filter(p=>p.id!==pairingId),grants:[...s.grants,grant]};});
+    const grant={id:grantId,...pair.subject,clientName:pair.clientName,organizationId:pair.organizationId,approvedAt:pair.approvedAt,expiresAt:pair.grantExpiresAt,accessExpiresAt:Math.min(now()+300000,pair.grantExpiresAt),accessHash:digest(access),renewalHash:digest(renewal),revoked:false};accepted=true;result=grant;return {...s,pairs:s.pairs.filter(p=>p.id!==pairingId),grants:[...s.grants,grant]};});
    if(!accepted)throw denied();return {organizationId:result.organizationId,accessToken:token('ea',grantId,access),renewalToken:token('er',grantId,renewal),accessExpiresAt:result.accessExpiresAt,expiresAt:result.expiresAt};
   },
   async renew(renewalToken,organizationId){

@@ -2,7 +2,7 @@ import {createLocalEvidenceGrants} from './defiant-local-evidence-grants.js';
 import {DefiantStrategyService} from './defiant-strategy.js';
 import {fail} from './auth.js';
 const prefix='/api/studio/local-evidence/';
-const keys={begin:['organizationId','verifierHash','clientName'],inspect:['organizationId','pairingId'],approve:['organizationId','pairingId'],exchange:['pairingId','verifier'],renew:['organizationId','renewalToken'],revoke:['organizationId','grantId']};
+const keys={list:['organizationId'],begin:['organizationId','verifierHash','clientName'],inspect:['organizationId','pairingId'],approve:['organizationId','pairingId'],exchange:['pairingId','verifier'],renew:['organizationId','renewalToken'],revoke:['organizationId','grantId']};
 /** Separate scoped authority; never a fallback for general Studio authentication. */
 export function createLocalEvidenceHttp({platform}){
  const identity=platform.identity;
@@ -25,6 +25,7 @@ export function createLocalEvidenceHttp({platform}){
     if(operation==='exchange')return await grants.exchange(body.pairingId,body.verifier);
     if(operation==='renew')return await grants.renew(body.renewalToken,body.organizationId);
     if(!bearer||bearer.startsWith('ea.')||bearer.startsWith('er.'))throw fail(403,'Denied');
+    if(operation==='list')return await grants.list({token:bearer},body.organizationId);
     if(operation==='inspect')return await grants.inspect({token:bearer},body.pairingId,body.organizationId);
     if(operation==='approve')return await grants.approve({token:bearer},body.pairingId,body.organizationId);
     return await grants.revoke({token:bearer},body.grantId,body.organizationId);
