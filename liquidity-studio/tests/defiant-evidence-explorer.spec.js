@@ -20,7 +20,7 @@ test('evidence explorer follows real scoped selections to escaped original cells
   const explorer=page.getByRole('region',{name:'Earnings and receipts'});
   await expect(explorer).toContainText('26.000026 USD');await expect(explorer).toContainText('they do not prove a monthly total');
   await explorer.getByRole('button',{name:'Show example receipt r2',exact:true}).click();await expect(explorer.getByRole('heading',{name:'Original source cells',exact:true})).toBeVisible();
-  await expect(explorer.getByText(hostile,{exact:true})).toBeVisible();await expect(explorer.locator('img')).toHaveCount(0);await explorer.getByLabel('Highlight source field',{exact:true}).selectOption('Title');await expect(explorer.locator('mark')).toHaveText(hostile);
+  await expect(explorer.getByText(hostile,{exact:true})).toBeVisible();await expect(explorer.locator('img')).toHaveCount(0);await explorer.getByRole('combobox',{name:'Highlight source field',exact:true}).selectOption('Title');await expect(explorer.locator('mark')).toHaveText(hostile);
   await explorer.getByRole('button',{name:'Identity review',exact:true}).click();await explorer.getByRole('button',{name:'Review Example title',exact:true}).click();await expect(explorer).toContainText('Missing source ID');
   await explorer.getByRole('button',{name:'Inspect selection all_rows',exact:true}).click();await expect(page).not.toHaveURL(/evidenceGroup=/);await expect(explorer).toContainText('1–25 of 26');
   await explorer.getByRole('button',{name:'Next page',exact:true}).click();await expect(explorer).toContainText('26–26 of 26');const saved=page.url();await page.reload();await expect(page).toHaveURL(saved);await expect(explorer).toContainText('example.csv · record 27');
