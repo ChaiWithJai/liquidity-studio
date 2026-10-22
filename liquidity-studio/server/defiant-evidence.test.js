@@ -70,3 +70,36 @@ test('loader bounds stream chunk count independently of byte count', async () =>
  const loader = createDefiantEvidenceLoader({organizationId: 'sample_org', object: {key: 'sample.json', generation: '1', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex')}, openObject: async () => ({generation: '1', stream: chunks()})});
  await assert.rejects(loader({organizationId: 'sample_org'}), {status: 503});
 });
+test('pinned loader rejects malformed encodings and closes every opened stream', async () => {
+ for (const bytes of [Buffer.from([0xff]), Buffer.from('{broken'), Buffer.from(JSON.stringify({organizationId: 'other'}))]) {
+  const stream = Readable.from([bytes]);
+  const loader = createDefiantEvidenceLoader({organizationId: 'sample_org', object: {key: 'sample.json', generation: '1', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex')}, openObject: async () => ({generation: '1', stream})});
+  await assert.rejects(loader({organizationId: 'sample_org'}), {status: 503});
+  assert.equal(stream.destroyed, true);
+ }
+});
+test('pinned loader accepts fragmented bytes without changing multibyte receipt cells', async () => {
+ const data = fixture(); data.receipts[0].cells = {Title: 'Café 🎵'};
+ const bytes = Buffer.from(JSON.stringify(data));
+ const stream = Readable.from(Array.from(bytes, value => Buffer.from([value])));
+ const loader = createDefiantEvidenceLoader({organizationId: 'sample_org', object: {key: 'sample.json', generation: '1', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex')}, openObject: async () => ({generation: '1', stream})});
+ assert.deepEqual(await loader({organizationId: 'sample_org'}), data);
+ assert.equal(stream.destroyed, true);
+});
+
+import {createDefiantGcsOpener} from './defiant-evidence-gcs.js';
+test('GCS opener pins media generation and preserves original bytes', async () => {
+ const stream = Readable.from([Buffer.from('sample')]); const calls = [];
+ const open = createDefiantGcsOpener({bucket: {file: (key, options) => {calls.push({key, options}); return {createReadStream: options => {calls.push(options); return stream;}};}}});
+ const opened = await open({key: 'evidence/sample.json', generation: '123'});
+ assert.equal(opened.generation, '123');
+ assert.deepEqual(calls, [{key: 'evidence/sample.json', options: {generation: '123'}}, {validation: 'crc32c', decompress: false}]);
+ for await (const chunk of opened.stream) assert.equal(chunk.toString(), 'sample');
+});
+test('GCS opener destroys a stalled media stream at its deadline', async () => {
+ const stream = new Readable({read() {}});
+ const open = createDefiantGcsOpener({bucket: {file: () => ({createReadStream: () => stream})}, timeoutMs: 10});
+ const opened = await open({key: 'evidence/sample.json', generation: '123'});
+ await assert.rejects(async () => {for await (const chunk of opened.stream) void chunk;}, /deadline exceeded/);
+ assert.equal(stream.destroyed, true);
+});
