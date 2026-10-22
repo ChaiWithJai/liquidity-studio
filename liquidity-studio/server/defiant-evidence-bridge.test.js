@@ -10,15 +10,15 @@ async function fixture(t,fetchImpl){
  const config=join(dir,'config'),credential=join(dir,'credential');
  const c={version:1,organizationId:'example_org',origin:'https://studio.chaiwithjai.com',credentialFile:credential};
  await writeFile(config,JSON.stringify(c),{mode:0o600});
- const token=async(value='a.b.c')=>writeFile(credential,JSON.stringify({version:1,token:value,expiresAt:1000000+3600000}),{mode:0o600});await token();
+ const token=async(value='a')=>writeFile(credential,JSON.stringify({version:2,organizationId:'example_org',accessToken:'ea.'+'1'.repeat(32)+'.'+value.repeat(43),renewalToken:'er.'+'1'.repeat(32)+'.'+'z'.repeat(43),accessExpiresAt:1000000+300000,expiresAt:1000000+28800000}),{mode:0o600});await token();
  return {dir,config,credential,c,token,bridge:await createPrivateEvidenceBridge({configurationPath:config,fetchImpl,now:()=>1000000})};
 }
 const response=(more={})=>Response.json({scope:{organizationId:'example_org'},revision,...more});
 test('bridge rereads credentials and preserves exact origin, route and pinned revision',async t=>{
  const calls=[];const f=await fixture(t,async(url,init)=>{calls.push({url:String(url),init});return response({receipt:{cells:{Amount:'-0.000001'}}});});
- await f.bridge.service.read(f.bridge.actor,{resource:'receipt',receiptId:'row_2',revision});await f.token('d.e.f');
+ await f.bridge.service.read(f.bridge.actor,{resource:'receipt',receiptId:'row_2',revision});await f.token('d');
  const result=await f.bridge.service.read(f.bridge.actor,{resource:'receipt',receiptId:'row_2',revision});
- assert.equal(result.receipt.cells.Amount,'-0.000001');assert.equal(calls[0].init.headers.Authorization,'Bearer a.b.c');assert.equal(calls[1].init.headers.Authorization,'Bearer d.e.f');assert.equal(calls[0].init.redirect,'error');assert.equal(calls[0].init.cache,'no-store');assert.equal(new URL(calls[0].url).pathname,'/api/studio/defiant-evidence/example_org/receipt');
+ assert.equal(result.receipt.cells.Amount,'-0.000001');assert.equal(calls[0].init.headers.Authorization,'Bearer ea.'+'1'.repeat(32)+'.'+'a'.repeat(43));assert.equal(calls[1].init.headers.Authorization,'Bearer ea.'+'1'.repeat(32)+'.'+'d'.repeat(43));assert.equal(calls[0].init.redirect,'error');assert.equal(calls[0].init.cache,'no-store');assert.equal(new URL(calls[0].url).pathname,'/api/studio/defiant-evidence/example_org/receipt');
  await assert.rejects(f.bridge.service.read({}, {resource:'manifest'}),{status:403});await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest',url:'https://other.invalid'}),{status:400});assert.equal(calls.length,2);
 });
 test('configuration replacement and unsafe credential permissions fail before network',async t=>{
@@ -39,7 +39,7 @@ test('response size ceiling and post-response configuration mutation fail closed
 test('actual SDK discovers sixteen real-evidence tools and carries receipt plus denial through HTTP bridge',async t=>{
  const {Client,StreamableHTTPClientTransport}=await import('@modelcontextprotocol/client');
  const {createMcpHandler}=await import('@modelcontextprotocol/server');let calls=0,denied=false;
- const f=await fixture(t,async(url,init)=>{calls++;assert.equal(init.headers.Authorization,'Bearer a.b.c');if(denied)return new Response('private denied detail',{status:403});const parsed=new URL(url);if(parsed.pathname.endsWith('/june-review')){assert.equal(parsed.pathname,'/api/studio/defiant-evidence/example_org/june-review');assert.equal(parsed.searchParams.get('selectionId'),'selection_a');assert.equal(parsed.searchParams.get('revision'),revision);assert.equal(parsed.searchParams.get('offset'),'1');assert.equal(parsed.searchParams.get('limit'),'1');return response({purpose:'factual-period-brief',readiness:'qualified',lineage:{sourceRecords:[5]},followUp:{resource:'selection-receipts',selectionId:'selection_a',revision,offset:1,limit:1},commercialReadiness:{readiness:'not-ready'}});}return response(parsed.pathname.endsWith('/receipt')?{receipt:{record:2,cells:{Amount:'-0.000001'}}}:{counts:{months:1}});});
+ const f=await fixture(t,async(url,init)=>{calls++;assert.equal(init.headers.Authorization,'Bearer ea.'+'1'.repeat(32)+'.'+'a'.repeat(43));if(denied)return new Response('private denied detail',{status:403});const parsed=new URL(url);if(parsed.pathname.endsWith('/june-review')){assert.equal(parsed.pathname,'/api/studio/defiant-evidence/example_org/june-review');assert.equal(parsed.searchParams.get('selectionId'),'selection_a');assert.equal(parsed.searchParams.get('revision'),revision);assert.equal(parsed.searchParams.get('offset'),'1');assert.equal(parsed.searchParams.get('limit'),'1');return response({purpose:'factual-period-brief',readiness:'qualified',lineage:{sourceRecords:[5]},followUp:{resource:'selection-receipts',selectionId:'selection_a',revision,offset:1,limit:1},commercialReadiness:{readiness:'not-ready'}});}return response(parsed.pathname.endsWith('/receipt')?{receipt:{record:2,cells:{Amount:'-0.000001'}}}:{counts:{months:1}});});
  const handler=createMcpHandler(()=>f.bridge.createServer(),{responseMode:'json'});
  const client=new Client({name:'bridge-contract',version:'1.0.0'},{versionNegotiation:{mode:'auto'}});
  t.after(async()=>{await client.close();await handler.close();});
@@ -61,8 +61,8 @@ test('deadline aborts a stalled HTTP request without retry',async t=>{
 
 test('expired and excessive lifetime credentials fail before dispatch; invalidation during response blocks return',async t=>{
  let calls=0;const f=await fixture(t,async()=>{calls++;return response();});
- for(const expiresAt of [1000000,1000000+3660001]){await writeFile(f.credential,JSON.stringify({version:1,token:'a.b.c',expiresAt}));await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}),{status:401});}assert.equal(calls,0);
- let g;g=await fixture(t,async()=>{await writeFile(g.credential,JSON.stringify({version:1,token:'a.b.c',expiresAt:999999}));return response();});await assert.rejects(g.bridge.service.read(g.bridge.actor,{resource:'manifest'}),{status:401});
+ for(const expiresAt of [1000000,1000000+28860001]){await writeFile(f.credential,JSON.stringify({version:2,organizationId:'example_org',accessToken:'ea.'+'1'.repeat(32)+'.'+'a'.repeat(43),renewalToken:'er.'+'1'.repeat(32)+'.'+'z'.repeat(43),accessExpiresAt:1300000,expiresAt}));await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}),{status:401});}assert.equal(calls,0);
+ let g;g=await fixture(t,async()=>{await writeFile(g.credential,JSON.stringify({version:2,organizationId:'example_org',accessToken:'ea.'+'1'.repeat(32)+'.'+'a'.repeat(43),renewalToken:'er.'+'1'.repeat(32)+'.'+'z'.repeat(43),accessExpiresAt:999999,expiresAt:999999}));return response();});await assert.rejects(g.bridge.service.read(g.bridge.actor,{resource:'manifest'}),{status:401});
 });
 test('file and immediate parent symlinks are rejected without network',async t=>{
  let calls=0;const f=await fixture(t,async()=>{calls++;return response();});
