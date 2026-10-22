@@ -84,3 +84,5 @@ After reviewed exact-head CI and root-only candidate COPY/stage, actual root-own
 - SDK exact2.3.1: https://github.com/modelcontextprotocol/typescript-sdk/blob/v2.3.1/docs/serving/authorization.md (web-standard bearer gate/AuthInfo/expectedResource; SDK resource server does not issue tokens; frozen legacy AS helper warning).
 - OAuth engine5.3.0 release: https://github.com/node-oauth/node-oauth2-server/releases/tag/v5.3.0 and https://github.com/node-oauth/node-oauth2-server/security/advisories/GHSA-jhm7-29pj-4xvf (patched verifier ABNF, failed-PKCE code revocation, timing-safe comparison).
 - Engine PKCE guidance: https://node-oauth.github.io/node-oauth2-server/guide/pkce.html (application must require PKCE, defaults are not sufficient).
+
+Remote MCP tool organization IDs are optional and default only to the verified OAuth grant organization. Explicit different organizations are rejected before provider loading. Local stdio schemas retain required organization IDs; no discovery tool or public organization metadata is added. Hosted contracts exercise the enabled index lazy bundle metadata path with an empty client allowlist and zero evidence-provider reads.

@@ -24,7 +24,7 @@ async function fixture(t,clients=[publicClient]){
   const completed=await request('/oauth/defiant-evidence/complete?transaction='+transactionId,{headers:{cookie}});assert.equal(completed.status,302);const callback=new URL(completed.headers.get('location'));assert.equal(callback.searchParams.get('iss'),EVIDENCE_ISSUER);
   const response=await request('/oauth/defiant-evidence/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'authorization_code',client_id:publicClient.clientId,resource:EVIDENCE_RESOURCE,code:callback.searchParams.get('code'),redirect_uri:publicClient.redirectUri,code_verifier:verifier})});assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'no-store');return response.json();
  };
- return {remote,request,jsonPost,token,organization,loads:()=>loads,revokeDuringLoad:()=>revokeDuringLoad=true};
+ return {platform,remote,request,jsonPost,token,organization,loads:()=>loads,revokeDuringLoad:()=>revokeDuringLoad=true};
 }
 test('empty client bootstrap discovery follows exact issuer path and scope without provider reads',async t=>{
  const f=await fixture(t,[]);const resource=await f.request('/.well-known/oauth-protected-resource/mcp/defiant-evidence');assert.equal(resource.status,200);const metadata=await resource.json();assert.equal(metadata.resource,EVIDENCE_RESOURCE);assert.deepEqual(metadata.scopes_supported,['evidence:read']);assert.deepEqual(metadata.authorization_servers,[EVIDENCE_ISSUER]);
@@ -34,7 +34,7 @@ test('empty client bootstrap discovery follows exact issuer path and scope witho
 test('real engine HTTP consent and actual SDK discover17tools/read pinned evidence, wrongscope and revoked membership deny',async t=>{
  const f=await fixture(t),token=await f.token();const client=new Client({name:'remote-evidence-contract',version:'1'},{versionNegotiation:{mode:'auto'}});t.after(()=>client.close());
  await client.connect(new StreamableHTTPClientTransport(new URL(EVIDENCE_RESOURCE),{fetch:(url,options)=>f.remote.fetch(new Request(url,{...options,headers:{...Object.fromEntries(new Headers(options?.headers)),Authorization:'Bearer '+token.access_token}}))}));
- const tools=(await client.listTools()).tools;assert.equal(tools.length,17);const result=await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:f.organization.id}});assert.equal(result.isError,undefined);assert.equal(result.structuredContent.scope.organizationId,f.organization.id);assert.equal(f.loads(),1);
+ const tools=(await client.listTools()).tools;assert.equal(tools.length,17);const result=await client.callTool({name:'defiant_evidence_manifest',arguments:{}});assert.equal(result.isError,undefined);assert.equal(result.structuredContent.scope.organizationId,f.organization.id);assert.equal(f.loads(),1);
  const wrong=await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:'other'}});assert.equal(wrong.isError,true);assert.equal(wrong.structuredContent,undefined);assert.equal(f.loads(),1);
  f.revokeDuringLoad();const denied=await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:f.organization.id}});assert.equal(denied.isError,true);assert.equal(denied.structuredContent,undefined);assert.equal(JSON.stringify(denied).includes('Invented authenticated evidence'),false);
 });
@@ -62,4 +62,9 @@ test('OAuth engine dependencies and UI consent never make general Studio bearer 
  const f=await fixture(t);assert.equal((await f.request('/api/studio/remote-evidence/list',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organizationId:f.organization.id})})).status,403);assert.equal(f.loads(),0);
  const duplicate=new URLSearchParams([['grant_type','authorization_code'],['grant_type','refresh_token']]);assert.equal((await f.request('/oauth/defiant-evidence/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:duplicate})).status,400);
  for(const suffix of ['/authorize/extra','/token/extra','/complete/extra'])assert.equal((await f.request('/oauth/defiant-evidence'+suffix)).status,404);
+});
+
+test('enabled index imports built remote closure and discovers empty-client OAuth without evidence reads',async t=>{
+ const {createHttpServer}=await import('./index.js');const f=await fixture(t,[]);let reads=0;const enabled=createHttpServer(null,{platform:f.platform,enableRemoteEvidence:true,remoteEvidenceClients:[],remoteEvidenceHosts:['studio.chaiwithjai.com'],defiantEvidenceProvider:async()=>{reads++;throw Error('No evidence read for metadata');}});await new Promise(r=>enabled.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>enabled.close(r)));const base='http://127.0.0.1:'+enabled.address().port;const get=path=>fetch(base+path,{headers:{Host:'studio.chaiwithjai.com'}});
+ assert.equal((await(await get('/api/auth/config')).json()).remoteEvidenceEnabled,true);const metadata=await(await get('/.well-known/oauth-protected-resource/mcp/defiant-evidence')).json();assert.deepEqual(metadata.scopes_supported,['evidence:read']);assert.deepEqual(metadata.authorization_servers,[EVIDENCE_ISSUER]);const discovery=await get('/.well-known/oauth-authorization-server/oauth/defiant-evidence');assert.equal(discovery.status,200);assert.equal((await discovery.json()).issuer,EVIDENCE_ISSUER);assert.equal((await get('/oauth/defiant-evidence/authorize?client_id='+encodeURIComponent(publicClient.clientId))).status,400);assert.equal(reads,0);assert.equal(f.loads(),0);
 });
