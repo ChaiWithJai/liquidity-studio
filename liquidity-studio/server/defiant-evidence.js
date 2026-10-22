@@ -1,3 +1,4 @@
+import {composeEvidenceDecision} from './defiant-evidence-decision.js';
 import {normalizeStorePeriodCoverage} from './defiant-store-period-coverage.js';
 import {discoverServedEvidenceCoverage,validateServedEvidenceDiscoveryRequest} from './defiant-evidence-discovery.js';
 import {normalizeWorksheetCell} from './defiant-worksheet-cells.js';
@@ -113,6 +114,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
         const {sourceRecords, ...selection} = selected;
         return structuredClone({...base,
           storeCoverage:(data.storePeriodCoverage||[]).filter(p=>p.currency===selected.currency&&p.observations.some(o=>o.month==='2025-06'&&o.sourceHash===selected.sourceHash)).map(p=>({id:p.id,storeKey:p.storeKey,qualificationScope:'source-period context, not proof this selection has store-specific activity',observation:p.observations.find(o=>o.month==='2025-06'),expectedDelivery:p.expectedDelivery,limitation:p.limitation,followUp:{resource:'store-coverage',storeCoverageId:p.id,revision:data.revision}})),
+          ...composeEvidenceDecision({selection,month:'2025-06',revision:data.revision,products:data.storePeriodCoverage||[],receiptsAvailable:typeof loadSourceRecords==='function'}),
           purpose:'factual-period-brief', readiness:'qualified', month:'2025-06',
           question:'What do the supplied June statements report for this selection, and which records support it?',
           facts:{selection:{...selection,rowCount:sourceRecords.length},period:{month:period.month,currency:period.currency,amount:period.amount,metric:period.metric,sourceHash:period.sourceHash}},
@@ -199,7 +201,9 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
           if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
           return structuredClone({...base, selection: summary(selected), receipts, total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, limitation: 'Exact source cells supplied by the host integrity-checked partition resolver; this page is not the entire aggregate unless it contains every contributing record.'});
         }
-        return structuredClone({...base, selection: summary(selected), sourceRecords: selected.sourceRecords.slice(offset, offset + limit), total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, rowConvention: '1-based logical CSV record including header', limitation});
+        const matchingPeriods=data.months.filter(p=>p.sourceHash===selected.sourceHash&&p.currency===selected.currency);
+        const juneReviewAvailable=matchingPeriods.length===1&&matchingPeriods[0].month==='2025-06';
+        return structuredClone({...base, juneReviewAvailable, selection: summary(selected), sourceRecords: selected.sourceRecords.slice(offset, offset + limit), total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, rowConvention: '1-based logical CSV record including header', limitation});
       }
       if (resource === 'receipt') {
         const receipt = data.receipts.find(row => row.id === receiptId);

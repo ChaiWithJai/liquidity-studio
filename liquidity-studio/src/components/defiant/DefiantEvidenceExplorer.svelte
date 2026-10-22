@@ -1,11 +1,12 @@
 <script>
  import {onDestroy,untrack} from 'svelte';
+ import EvidenceDecisionCard from './EvidenceDecisionCard.svelte';
  import ResearchToolbar from './ResearchToolbar.svelte';
  import ResearchInspector from './ResearchInspector.svelte';
  import {createEvidenceExplorer,emptyEvidenceView,evidenceLocation} from '../../lib/defiant-evidence-explorer.js';
  let {request,location,onNavigate=()=>{}}=$props();
  let view=$state(emptyEvidenceView()),field=$state('Total Earned'),refreshEpoch=$state(0);
- const cleared={evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
+ const cleared={evidenceJuneReview:false,evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
  const active=$derived(evidenceLocation(location));
  const controller=createEvidenceExplorer({request:(...args)=>request(...args),onState:value=>view=value});
  $effect(()=>{const input=location;refreshEpoch;untrack(()=>{field='Total Earned';void controller.load(input);});});
@@ -30,9 +31,9 @@
  </ResearchToolbar>
  {#if view.loading}<p class="message" role="status">Opening evidence…</p>
  {:else if view.error}<p class="message" role="alert">{view.error}</p>
- {:else if view.manifest}
+ {:else if view.manifest&&view.mode===active.mode}
   <div class="coverage"><h3>Evidence coverage</h3><p>{view.manifest.coverage}</p><p class="research-meta">{view.manifest.counts.months} reported periods · {view.manifest.counts.selections} source selections{#if view.manifest.counts.identityGroups !== undefined} · {view.manifest.counts.identityGroups} identity review groups{/if}</p><details><summary>Snapshot details</summary><p>Organization: <code>{view.manifest.scope.organizationId}</code></p><p>Revision: <code>{view.revision}</code></p></details></div>
-  {#if active.groupId||active.selectionId||active.receiptId||active.comparisonId||active.audienceId}<nav class="breadcrumbs" aria-label="Evidence trail"><button onclick={()=>root()}>Back to {modeLabel}</button>{#if active.comparisonGroupId}<button onclick={()=>navigate({evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceOffset:active.offset})}>Back to comparison</button>{/if}</nav>{/if}
+  {#if active.groupId||active.selectionId||active.receiptId||active.comparisonId||active.audienceId}<nav class="breadcrumbs" aria-label="Evidence trail"><button onclick={()=>navigate({...cleared,evidenceMode:active.mode,evidenceOffset:active.receiptId&&active.mode==='earnings'?active.offset:0})}>Back to {modeLabel}</button>{#if active.comparisonGroupId}<button onclick={()=>navigate({evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceOffset:active.offset})}>Back to comparison</button>{/if}</nav>{/if}
   {#if view.list&&['changes','audience'].includes(active.mode)}
    <div class="members">{#each view.list.items as row(row.id)}<article>{#if active.mode==='changes'}<h3>{row.dimension} change</h3><p>{row.beforeMonths.join(', ')} → {row.afterMonths.join(', ')}</p><p>Reported change: {row.summary.delta} {row.currency}</p><p>Period basis: {row.periodBasis} (producer assertion)</p><button onclick={()=>navigate({evidenceComparisonId:row.id})}>Inspect comparison {row.id}</button>{:else}<h3>{row.name}</h3><p>{row.criteria}</p><p>Supplied scale: {row.scaleText} — not recomputed</p><button onclick={()=>navigate({evidenceAudienceId:row.id})}>Inspect definition {row.name}</button>{/if}</article>{:else}<p>No {modeLabel} supplied in this evidence page.</p>{/each}</div><p class="message">{view.list.limitation}</p>
   {/if}
@@ -40,7 +41,7 @@
    {#if !view.list.items.length}<p class="message">No {active.mode==='identity'?'identity review groups':active.mode==='selections'?'source selections':'earnings'} in this evidence page.</p>
    {:else}<!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable table needs keyboard access) -->
    <div class="table-scroll" tabindex="0" role="region" aria-label={active.mode==='identity'?'Identity review table':active.mode==='selections'?'Source selection table':'Reported earnings table'}><table><thead><tr><th scope="col">{active.mode==='identity'?'Source identity group':active.mode==='selections'?'Source selection':'Period'}</th><th scope="col">Reported amount</th><th scope="col">Evidence</th></tr></thead><tbody>
-    {#each view.list.items as row (active.mode!=='earnings'?row.id:row.month+row.currency)}<tr><th scope="row">{#if active.mode==='identity'}{row.artist} — {row.title}<small>{row.memberCount} observations · {row.missingSourceIds} missing IDs</small>{:else if active.mode==='selections'}{row.label}<small>{row.rowCount} contributing locators</small>{:else}{row.month}{/if}</th><td>{row.amount} {row.currency}</td><td>{#if active.mode==='identity'}<button onclick={()=>navigate({evidenceGroupId:row.id,evidenceSelectionId:'',evidenceReceiptId:''})}>Review {row.title}</button>{:else if active.mode==='selections'}<button onclick={()=>navigate({evidenceSelectionId:row.id,evidenceGroupId:'',evidenceReceiptId:''})}>Inspect selection {row.id}</button>{:else}{#each row.receiptIds as receiptId(receiptId)}<button onclick={()=>navigate({evidenceReceiptId:receiptId,evidenceGroupId:'',evidenceSelectionId:''})}>Show example receipt {receiptId}</button>{/each}{#if !row.receiptIds.length}No example receipt supplied{/if}{/if}</td></tr>{/each}
+    {#each view.list.items as row (active.mode!=='earnings'?row.id:row.month+row.currency)}<tr><th scope="row">{#if active.mode==='identity'}{row.artist} — {row.title}<small>{row.memberCount} observations · {row.missingSourceIds} missing IDs</small>{:else if active.mode==='selections'}{row.label}<small>{row.rowCount} contributing locators</small>{:else}{row.month}{/if}</th><td>{row.amount} {row.currency}</td><td>{#if active.mode==='identity'}<button onclick={()=>navigate({evidenceGroupId:row.id,evidenceSelectionId:'',evidenceReceiptId:''})}>Review {row.title}</button>{:else if active.mode==='selections'}<button onclick={()=>navigate({evidenceSelectionId:row.id,evidenceGroupId:'',evidenceReceiptId:''})}>Inspect selection {row.id}</button>{:else}{#each row.receiptIds as receiptId(receiptId)}<button onclick={()=>navigate({evidenceReceiptId:receiptId,evidenceGroupId:'',evidenceSelectionId:'',evidenceOffset:active.offset})}>Show example receipt {receiptId}</button>{/each}{#if !row.receiptIds.length}No example receipt supplied{/if}{/if}</td></tr>{/each}
    </tbody></table></div>{/if}
    {#if active.mode==='earnings'}<p class="message">Example receipts show individual source records; they do not prove a monthly total. Open Source selections to inspect complete supplied selections, including unresolved identities.</p>{/if}
    {#if active.mode==='identity'}<p class="message">Review priority uses absolute net reported amount within each currency. Similar titles do not establish equivalent recordings.</p>{/if}
@@ -61,6 +62,8 @@
    <div class="members">{#each view.group.members as member(member.id)}<article><h4>{member.releaseTitle||'Release title unavailable'}</h4><dl><dt>Source system / account</dt><dd>{member.sourceSystem} / {member.accountScope}</dd><dt>Source ID</dt><dd>{member.sourceId===null?'Missing source ID':member.sourceId}</dd><dt>UPC</dt><dd>{member.upc||'Not supplied'}</dd><dt>Reported amount</dt><dd>{member.amount} {member.currency}</dd></dl>{#each member.selectionIds as selectionId(selectionId)}<button onclick={()=>navigate({evidenceSelectionId:selectionId,evidenceGroupId:'',evidenceMode:'selections',evidenceReceiptId:''})}>Inspect selection {selectionId}</button>{/each}</article>{/each}</div>
   {/if}
   {#if view.selection}<div class="coverage"><h3>{view.selection.selection.label}</h3><p>{view.selection.selection.amount} {view.selection.selection.currency} · {view.selection.total} contributing record locators</p></div>{/if}
+  {#if view.selection?.juneReviewAvailable}<div class="breadcrumbs"><button onclick={()=>navigate({evidenceJuneReview:!active.showJuneReview,evidenceOffset:active.offset})}>{active.showJuneReview?'Back to original selection cells':'Open June evidence review'}</button></div>{/if}
+  {#if view.juneReview}<EvidenceDecisionCard packet={view.juneReview} coverage={view.storeCoverage?.product} onReceipts={()=>navigate({evidenceJuneReview:false,evidenceOffset:active.offset})}/>{/if}
   {#if view.receipts.length}
    <ResearchInspector label="Original source cells" selected={true}>
     <h3>Original source cells</h3><p>{view.cellLimitation}</p><p class="research-meta">Text from the supplied source records, not an image of the original worksheet.</p>

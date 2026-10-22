@@ -35,7 +35,7 @@ test('repeated root load retries and unexpected errors are redacted',async()=>{
  await h.controller.load();await h.controller.load();assert.equal(calls,2);assert.ok(!h.states.at(-1).error.includes('secret'));
 });
 test('location rejects arbitrary identifiers and unbounded offsets',()=>{
- assert.deepEqual(evidenceLocation({evidenceMode:'unknown',evidenceGroupId:'../secret',evidenceRevision:'bad',evidenceOffset:500001}),{mode:'earnings',revision:'',groupId:'',selectionId:'',receiptId:'',comparisonId:'',comparisonGroupId:'',audienceId:'',referenceIndex:null,showAudienceCells:false,offset:0});
+ assert.deepEqual(evidenceLocation({evidenceMode:'unknown',evidenceGroupId:'../secret',evidenceRevision:'bad',evidenceOffset:500001}),{showJuneReview:false,mode:'earnings',revision:'',groupId:'',selectionId:'',receiptId:'',comparisonId:'',comparisonGroupId:'',audienceId:'',referenceIndex:null,showAudienceCells:false,offset:0});
 });
 import {readStrategyLocation,writeStrategyLocation} from '../src/lib/defiant-location.js';
 test('evidence URL round trips identifiers and revision without retaining source cells',()=>{
@@ -58,4 +58,12 @@ test('comparison examples and audience cells remain pinned and revocation clears
 
 test('wrong comparison parent echo clears source cells instead of attaching unrelated evidence',async()=>{
  const h=harness(async path=>path.startsWith('/manifest')?manifest:{...list,comparisonId:'other',groupId:'group',referenceIndex:0,receipts:[{id:'unrelated'}]});await h.controller.load({evidenceMode:'changes',evidenceRevision:rev,evidenceComparisonId:'comparison',evidenceComparisonGroupId:'group',evidenceReferenceIndex:0});assert.equal(h.states.at(-1).status,409);assert.deepEqual(h.states.at(-1).receipts,[]);
+});
+
+test('completed evidence views retain their resource mode while navigation clears the prior view',async()=>{
+ let release,block=false;const pending=new Promise(resolve=>release=resolve);
+ const h=harness(async path=>{if(block&&path.startsWith('/manifest'))return pending;return path.startsWith('/manifest')?manifest:list;});
+ await h.controller.load({evidenceMode:'earnings'});const previous=h.states.at(-1);assert.equal(previous.mode,'earnings');assert.equal(previous.list,list);
+ block=true;const next=h.controller.load({evidenceMode:'selections'});assert.equal(previous.mode,'earnings');assert.equal(h.states.at(-1).list,null);assert.equal(h.states.at(-1).mode,null);
+ release(manifest);await next;assert.equal(h.states.at(-1).mode,'selections');assert.equal(h.states.at(-1).list,list);
 });
