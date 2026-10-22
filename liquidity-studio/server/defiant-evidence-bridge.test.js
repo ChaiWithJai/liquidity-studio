@@ -1,0 +1,58 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,writeFile,chmod,rm,rename} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createPrivateEvidenceBridge} from './defiant-evidence-bridge.js';
+const revision='a'.repeat(64);
+async function fixture(t,fetchImpl){
+ const dir=await mkdtemp(join(tmpdir(),'evidence-bridge-'));await chmod(dir,0o700);t.after(()=>rm(dir,{recursive:true,force:true}));
+ const config=join(dir,'config'),credential=join(dir,'credential');
+ const c={version:1,organizationId:'example_org',origin:'https://studio.chaiwithjai.com',credentialFile:credential};
+ await writeFile(config,JSON.stringify(c),{mode:0o600});
+ const token=async(value='a.b.c')=>writeFile(credential,JSON.stringify({version:1,token:value,expiresAt:1000000+3600000}),{mode:0o600});await token();
+ return {dir,config,credential,c,token,bridge:await createPrivateEvidenceBridge({configurationPath:config,fetchImpl,now:()=>1000000})};
+}
+const response=(more={})=>Response.json({scope:{organizationId:'example_org'},revision,...more});
+test('bridge rereads credentials and preserves exact origin, route and pinned revision',async t=>{
+ const calls=[];const f=await fixture(t,async(url,init)=>{calls.push({url:String(url),init});return response({receipt:{cells:{Amount:'-0.000001'}}});});
+ await f.bridge.service.read(f.bridge.actor,{resource:'receipt',receiptId:'row_2',revision});await f.token('d.e.f');
+ const result=await f.bridge.service.read(f.bridge.actor,{resource:'receipt',receiptId:'row_2',revision});
+ assert.equal(result.receipt.cells.Amount,'-0.000001');assert.equal(calls[0].init.headers.Authorization,'Bearer a.b.c');assert.equal(calls[1].init.headers.Authorization,'Bearer d.e.f');assert.equal(calls[0].init.redirect,'error');assert.equal(calls[0].init.cache,'no-store');assert.equal(new URL(calls[0].url).pathname,'/api/studio/defiant-evidence/example_org/receipt');
+ await assert.rejects(f.bridge.service.read({}, {resource:'manifest'}),{status:403});await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest',url:'https://other.invalid'}),{status:400});assert.equal(calls.length,2);
+});
+test('configuration replacement and unsafe credential permissions fail before network',async t=>{
+ let calls=0;const f=await fixture(t,async()=>{calls++;return response();});
+ await chmod(f.credential,0o644);await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}));assert.equal(calls,0);await chmod(f.credential,0o600);
+ const next=join(f.dir,'next');await writeFile(next,JSON.stringify(f.c),{mode:0o600});await rename(next,f.config);await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}));assert.equal(calls,0);
+});
+test('scope, revision, invalid encoding and upstream error bodies never leak',async t=>{
+ for(const make of [()=>response({scope:{organizationId:'other'}}),()=>response({revision:'b'.repeat(64)}),()=>new Response(new Uint8Array([255]),{headers:{'content-type':'application/json'}}),()=>new Response('private detail',{status:403})]){
+  const f=await fixture(t,async()=>make());await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest',revision}),e=>e.message==='Private evidence unavailable'&&!e.message.includes('private detail'));
+ }
+});
+test('response size ceiling and post-response configuration mutation fail closed',async t=>{
+ const large=await fixture(t,async()=>new Response(new Uint8Array(4*1024*1024+1),{headers:{'content-type':'application/json'}}));await assert.rejects(large.bridge.service.read(large.bridge.actor,{resource:'manifest'}));
+ let f;f=await fixture(t,async()=>{await chmod(f.config,0o644);return response();});await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}));
+});
+
+test('actual SDK discovers fourteen real-evidence tools and carries receipt plus denial through HTTP bridge',async t=>{
+ const {Client,StreamableHTTPClientTransport}=await import('@modelcontextprotocol/client');
+ const {createMcpHandler}=await import('@modelcontextprotocol/server');let calls=0,denied=false;
+ const f=await fixture(t,async(url,init)=>{calls++;assert.equal(init.headers.Authorization,'Bearer a.b.c');if(denied)return new Response('private denied detail',{status:403});return response(new URL(url).pathname.endsWith('/receipt')?{receipt:{record:2,cells:{Amount:'-0.000001'}}}:{counts:{months:1}});});
+ const handler=createMcpHandler(()=>f.bridge.createServer(),{responseMode:'json'});
+ const client=new Client({name:'bridge-contract',version:'1.0.0'},{versionNegotiation:{mode:'auto'}});
+ t.after(async()=>{await client.close();await handler.close();});
+ await client.connect(new StreamableHTTPClientTransport(new URL('https://fixture.invalid/mcp'),{fetch:(url,init)=>handler.fetch(new Request(url,init))}));
+ const tools=(await client.listTools()).tools;assert.equal(tools.length,14);assert.ok(tools.some(x=>x.name==='defiant_read_audience_cells'));
+ const manifest=await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:'example_org'}});assert.equal(manifest.structuredContent.revision,revision);
+ const receipt=await client.callTool({name:'defiant_show_receipt',arguments:{organizationId:'example_org',revision,receiptId:'row_2'}});assert.equal(receipt.structuredContent.receipt.cells.Amount,'-0.000001');
+ const before=calls;assert.equal((await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:'other'}})).isError,true);assert.equal(calls,before);
+ denied=true;const result=await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:'example_org'}});assert.equal(result.isError,true);assert.equal(result.structuredContent,undefined);assert.equal(JSON.stringify(result).includes('private denied detail'),false);
+});
+
+test('deadline aborts a stalled HTTP request without retry',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});let ready;const started=new Promise(resolve=>ready=resolve);let calls=0;
+ const f=await fixture(t,async(_url,{signal})=>{calls++;ready();return new Promise((_resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('private transport detail')),{once:true}));});
+ const pending=assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}),{message:'Private evidence unavailable'});await started;t.mock.timers.tick(30000);await pending;assert.equal(calls,1);
+});
