@@ -1,3 +1,4 @@
+import {configuredDefiantEvidenceProvider} from './defiant-evidence-runtime.js';
 import {createDefiantEvidenceService} from './defiant-evidence.js';
 import {defiantEvidenceRequest} from './defiant-evidence-http.js';
 import {createDefiantUnifiedData} from './defiant-unified-data.js';
@@ -2180,14 +2181,15 @@ export function defiantSyntheticDemoConfiguration(environment=process.env){
 }
 export async function startConfiguredStudio(options = {}) {
   const syntheticDemoConfiguration=defiantSyntheticDemoConfiguration();
+  const evidenceConfiguration={defiantEvidenceProvider:await configuredDefiantEvidenceProvider()};
   if(process.env.STUDIO_PENPOT_MANAGED_CONFIG){
     const platform=createPlatform();await platform.ready;
     const {createManagedPenpot}=await import('./penpot-managed.js');
     const managed=await createManagedPenpot({store:platform.store,identity:platform.identity,configurationPath:process.env.STUDIO_PENPOT_MANAGED_CONFIG});
-    return startServer(createHttpServer(null,{platform,penpotEnabled:false,managedPenpotStoryDesigns:managed.storyDesigns,nativePairing:managed.nativePairing,nativeAccess:managed.nativeAccess,...syntheticDemoConfiguration}),options);
+    return startServer(createHttpServer(null,{platform,penpotEnabled:false,managedPenpotStoryDesigns:managed.storyDesigns,nativePairing:managed.nativePairing,nativeAccess:managed.nativeAccess,...syntheticDemoConfiguration,...evidenceConfiguration}),options);
   }
   if (process.env.STUDIO_PENPOT_ENABLED !== "true")
-    return startServer(createHttpServer(null,syntheticDemoConfiguration), options);
+    return startServer(createHttpServer(null,{...syntheticDemoConfiguration,...evidenceConfiguration}), options);
   if (process.env.K_SERVICE)
     throw new Error("Local Penpot startup is unavailable in Cloud Run");
   const platform = createPlatform();
@@ -2206,7 +2208,7 @@ export async function startConfiguredStudio(options = {}) {
       resolve,
     );
   });
-  const server = createHttpServer(null, { platform, penpotEnabled: true, ...syntheticDemoConfiguration });
+  const server = createHttpServer(null, { platform, penpotEnabled: true, ...syntheticDemoConfiguration,...evidenceConfiguration });
   server.once("close", () => plugin.close());
   return startServer(server, options);
 }
