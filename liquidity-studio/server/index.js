@@ -1,3 +1,4 @@
+import {createAnswerObservations} from './defiant-answer-observations.js';
 import {createLocalEvidenceHttp} from './defiant-local-evidence-http.js';
 import {configuredDefiantEvidenceProvider} from './defiant-evidence-runtime.js';
 import {createDefiantEvidenceService} from './defiant-evidence.js';
@@ -766,11 +767,12 @@ export function createHttpServer(
         }
       }
       if(route.startsWith("/api/studio/strategy/")&&!trustedTestMode&&await clipBinaryRequest({platform,user,route,req,res}))return;
+      const observationBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/observations(?:\/[a-f0-9]{64}\/correction)?$/.test(route);
       const body =
         req.method === "POST"
           ? await readBody(
               req,
-              ["/api/admin/import", "/api/admin/editor-pack/install"].includes(
+              observationBody?65536:["/api/admin/import", "/api/admin/editor-pack/install"].includes(
                 route,
               )
                 ? (route === "/api/admin/editor-pack/install" ? 49 : 32) *
@@ -789,7 +791,7 @@ export function createHttpServer(
                         route.startsWith("/api/studio/native-editor/")
                       ? 768 * 1024
                       : 262144,
-              portableBody ? portableBodyTimeoutMs : 0,
+              observationBody?5000:portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
       if(route.startsWith("/api/studio/defiant-evidence/")) {
@@ -798,6 +800,32 @@ export function createHttpServer(
         if(!scope)throw fail(404,"Unknown evidence scope");
         const organizationId=scope[1],strategy=new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId});
         await strategy.raw(user);
+        const observationRoute=route.slice(scope[0].length);
+        if(observationRoute==='observations'||observationRoute.startsWith('observations/')){
+          if(delegated||identity.mode!=='google'||url.search)throw fail(403,'Observations require current Studio Google identity');
+          const owner=await identity.authenticateLocalEvidenceApproval(bearer);
+          const controller=new AbortController();const aborted=()=>controller.abort();req.once('aborted',aborted);
+          let loaded;
+          const evidence={read:async(actor,input)=>{
+            loaded??=(async()=>{let binding;try{binding=await defiantEvidenceProvider({organizationId,actor});}catch{throw fail(503,'Evidence provider unavailable');}
+              if(!binding||typeof binding.loadSnapshot!=='function')throw fail(404,'Evidence unavailable for this organization');
+              return createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,authorize:async current=>{await strategy.raw(current);return true;}});})();
+            return (await loaded).read(actor,input);
+          }};
+          const observations=createAnswerObservations({store:platform.store,strategy,evidence,signal:controller.signal,authorizeCurrent:async()=>identity.authenticateLocalEvidenceApproval(bearer)});
+          const timer=setTimeout(()=>controller.abort(),30000);let stop;
+          const interrupted=new Promise((_,reject)=>{stop=()=>reject(fail(408,'Observation request expired'));controller.signal.addEventListener('abort',stop,{once:true});});
+          const execute=async()=>{
+            if(observationRoute==='observations'&&req.method==='GET')return observations.list(owner);
+            if(observationRoute==='observations'&&req.method==='POST')return observations.capture(owner,body);
+            const detail=/^observations\/([a-f0-9]{64})(\/correction)?$/.exec(observationRoute);
+            if(detail&&!detail[2]&&req.method==='GET')return observations.detail(owner,detail[1]);
+            if(detail&&detail[2]&&req.method==='POST')return observations.correct(owner,detail[1],body);
+            throw fail(405,'Unsupported observation operation');
+          };
+          try{return json(200,await Promise.race([execute(),interrupted]));}
+          finally{clearTimeout(timer);controller.signal.removeEventListener('abort',stop);req.removeListener('aborted',aborted);controller.abort();}
+        }
         if(req.method!=='GET')throw fail(405,"Evidence is read-only");
         let binding;
         try{binding=await defiantEvidenceProvider({organizationId,actor:user});}catch{throw fail(503,"Evidence provider unavailable");}

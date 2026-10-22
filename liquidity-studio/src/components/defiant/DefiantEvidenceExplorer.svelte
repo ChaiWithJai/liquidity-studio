@@ -1,5 +1,6 @@
 <script>
  import {onDestroy,untrack} from 'svelte';
+ import AnswerObservations from './AnswerObservations.svelte';
  import EvidenceDecisionCard from './EvidenceDecisionCard.svelte';
  import ResearchToolbar from './ResearchToolbar.svelte';
  import ResearchInspector from './ResearchInspector.svelte';
@@ -32,6 +33,7 @@
  {#if view.loading}<p class="message" role="status">Opening evidence…</p>
  {:else if view.error}<p class="message" role="alert">{view.error}</p>
  {:else if view.manifest&&view.mode===active.mode}
+  {#key view.revision}<AnswerObservations {request} revision={view.revision}/>{/key}
   <div class="coverage"><h3>Evidence coverage</h3><p>{view.manifest.coverage}</p><p class="research-meta">{view.manifest.counts.months} reported periods · {view.manifest.counts.selections} source selections{#if view.manifest.counts.identityGroups !== undefined} · {view.manifest.counts.identityGroups} identity review groups{/if}</p><details><summary>Snapshot details</summary><p>Organization: <code>{view.manifest.scope.organizationId}</code></p><p>Revision: <code>{view.revision}</code></p></details></div>
   {#if active.groupId||active.selectionId||active.receiptId||active.comparisonId||active.audienceId}<nav class="breadcrumbs" aria-label="Evidence trail"><button onclick={()=>navigate({...cleared,evidenceMode:active.mode,evidenceOffset:active.receiptId&&active.mode==='earnings'?active.offset:0})}>Back to {modeLabel}</button>{#if active.comparisonGroupId}<button onclick={()=>navigate({evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceOffset:active.offset})}>Back to comparison</button>{/if}</nav>{/if}
   {#if view.list&&['changes','audience'].includes(active.mode)}
