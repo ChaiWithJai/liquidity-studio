@@ -28323,6 +28323,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence } = {}) {
       return { isError: true, content: [{ type: "text", text: `Evidence request unavailable (${status}).` }] };
     }
   });
+  register2("defiant_store_period_coverage", "Inspect supplied store-period observations and exact all-period versus mutually observed amount comparisons. Missing observations do not imply zero activity or missing delivery.", { revision, storeCoverageId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/).optional(), offset: external_exports.number().int().min(0).max(100).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "store-coverage");
   register2("defiant_discover_served_evidence", "Discover metadata for sources referenced by served evidence. Deterministic text/earnings-period filters only; not a complete bronze inventory or semantic ranking.", { revision: revision.optional(), query: external_exports.string().max(200).refine((v) => !/[\u0000-\u001f\u007f]/.test(v)).optional(), fromMonth: external_exports.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(), toMonth: external_exports.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(), offset: external_exports.number().int().min(0).max(5e3).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "coverage");
   register2("defiant_evidence_manifest", "Inspect authorized real-evidence coverage and revision. Counts are not a claim of complete source intake.", {}, "manifest");
   register2("defiant_catalog_earnings", "Read reported earnings by month and currency with source receipt references. These are not profit, catalog valuation or causal attribution.", {
@@ -28405,8 +28406,8 @@ function registerDefiantEvidenceTools(server, { resolveEvidence } = {}) {
 // server/defiant-evidence-bridge.js
 var origin = EVIDENCE_ORIGIN;
 var fail2 = (status = 503) => Object.assign(new Error("Private evidence unavailable"), { status });
-var resources = /* @__PURE__ */ new Set(["coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"]);
-var fields = /* @__PURE__ */ new Set(["revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth"]);
+var resources = /* @__PURE__ */ new Set(["store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"]);
+var fields = /* @__PURE__ */ new Set(["revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId"]);
 async function createPrivateEvidenceBridge({ configurationPath, fetchImpl = fetch, now = () => Date.now() } = {}) {
   const authClient = await createEvidenceClientAuth({ configurationPath, fetchImpl, now });
   const { config: config2, current } = authClient, credential = (options) => authClient.credential(options), actor = Object.freeze({ kind: "http-bridge-interface" });

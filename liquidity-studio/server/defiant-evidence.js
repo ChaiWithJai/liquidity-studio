@@ -1,3 +1,4 @@
+import {normalizeStorePeriodCoverage} from './defiant-store-period-coverage.js';
 import {discoverServedEvidenceCoverage,validateServedEvidenceDiscoveryRequest} from './defiant-evidence-discovery.js';
 import {normalizeWorksheetCell} from './defiant-worksheet-cells.js';
 import {normalizeComparisons, normalizeAudienceDefinitions} from './defiant-evidence-products.js';
@@ -55,7 +56,8 @@ function normalize(input, organizationId) {
   const identityGroups = normalizeIdentityGroups(input.identityGroups, selections);
   const comparisons = normalizeComparisons(input.comparisons, months);
   const audienceDefinitions = normalizeAudienceDefinitions(input.audienceDefinitions);
-  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
+  const storePeriodCoverage = normalizeStorePeriodCoverage(input.storePeriodCoverage, comparisons);
+  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(storePeriodCoverage === undefined ? {} : {storePeriodCoverage}), ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
   const revision = createHash('sha256').update(JSON.stringify(data)).digest('hex');
   return {...data, revision};
 }
@@ -69,11 +71,12 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
   return Object.freeze({
     async read(actor, request = {}) {
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
-      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth'].includes(key))) throw fail(400, 'Invalid evidence request');
-      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, offset = 0, limit = 25} = request;
-      if (!['coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
-      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['coverage', 'earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'june-review'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
+      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth', 'storeCoverageId'].includes(key))) throw fail(400, 'Invalid evidence request');
+      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, offset = 0, limit = 25} = request;
+      if (!['store-coverage', 'coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
+      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['store-coverage', 'coverage', 'earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'june-review'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
       if ((!['selection', 'selection-receipts', 'june-review'].includes(resource) && selectionId !== undefined) || (['selection', 'selection-receipts', 'june-review'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
+      if ((resource !== 'store-coverage' && storeCoverageId !== undefined) || (resource === 'store-coverage' && (revision === undefined || (storeCoverageId !== undefined && !identifier(storeCoverageId)) || offset > 100))) throw fail(400, 'Invalid store coverage request');
       if ((resource !== 'identity-group' && identityGroupId !== undefined) || (resource === 'identity-group' && (!identifier(identityGroupId) || revision === undefined))) throw fail(400, 'Invalid identity group request');
       if (['catalog-identity-review', 'identity-group'].includes(resource) && offset > 2000) throw fail(400, 'Invalid identity page');
       if ((resource === 'earnings' && offset > 1200) || (resource === 'selections' && offset > 2000)) throw fail(400, 'Invalid page offset');
@@ -95,6 +98,11 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
       if(resource==='coverage')return discoverServedEvidenceCoverage(data,{query,fromMonth,toMonth,offset,limit});
       if (resource === 'manifest') return structuredClone({...base, counts: {...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
+      if (resource === 'store-coverage') {
+        const products=data.storePeriodCoverage||[];
+        if(storeCoverageId!==undefined){const product=products.find(p=>p.id===storeCoverageId);if(!product)throw fail(404,'Store coverage unavailable');return structuredClone({...base,product});}
+        return structuredClone({...base,items:products.slice(offset,offset+limit),total:products.length,nextOffset:offset+limit<products.length?offset+limit:null});
+      }
       if (resource === 'june-review') {
         if (selectedMonth !== undefined || currency !== undefined || receiptId !== undefined) throw fail(400, 'Invalid June review request');
         const selected = data.selections.find(row => row.id === selectionId);
@@ -104,6 +112,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
         const period = periods[0];
         const {sourceRecords, ...selection} = selected;
         return structuredClone({...base,
+          storeCoverage:(data.storePeriodCoverage||[]).filter(p=>p.currency===selected.currency&&p.observations.some(o=>o.month==='2025-06'&&o.sourceHash===selected.sourceHash)).map(p=>({id:p.id,storeKey:p.storeKey,qualificationScope:'source-period context, not proof this selection has store-specific activity',observation:p.observations.find(o=>o.month==='2025-06'),expectedDelivery:p.expectedDelivery,limitation:p.limitation,followUp:{resource:'store-coverage',storeCoverageId:p.id,revision:data.revision}})),
           purpose:'factual-period-brief', readiness:'qualified', month:'2025-06',
           question:'What do the supplied June statements report for this selection, and which records support it?',
           facts:{selection:{...selection,rowCount:sourceRecords.length},period:{month:period.month,currency:period.currency,amount:period.amount,metric:period.metric,sourceHash:period.sourceHash}},
