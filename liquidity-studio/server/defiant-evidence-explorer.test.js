@@ -59,3 +59,11 @@ test('comparison examples and audience cells remain pinned and revocation clears
 test('wrong comparison parent echo clears source cells instead of attaching unrelated evidence',async()=>{
  const h=harness(async path=>path.startsWith('/manifest')?manifest:{...list,comparisonId:'other',groupId:'group',referenceIndex:0,receipts:[{id:'unrelated'}]});await h.controller.load({evidenceMode:'changes',evidenceRevision:rev,evidenceComparisonId:'comparison',evidenceComparisonGroupId:'group',evidenceReferenceIndex:0});assert.equal(h.states.at(-1).status,409);assert.deepEqual(h.states.at(-1).receipts,[]);
 });
+
+test('completed evidence views retain their resource mode while navigation clears the prior view',async()=>{
+ let release,block=false;const pending=new Promise(resolve=>release=resolve);
+ const h=harness(async path=>{if(block&&path.startsWith('/manifest'))return pending;return path.startsWith('/manifest')?manifest:list;});
+ await h.controller.load({evidenceMode:'earnings'});const previous=h.states.at(-1);assert.equal(previous.mode,'earnings');assert.equal(previous.list,list);
+ block=true;const next=h.controller.load({evidenceMode:'selections'});assert.equal(previous.mode,'earnings');assert.equal(h.states.at(-1).list,null);assert.equal(h.states.at(-1).mode,null);
+ release(manifest);await next;assert.equal(h.states.at(-1).mode,'selections');assert.equal(h.states.at(-1).list,list);
+});

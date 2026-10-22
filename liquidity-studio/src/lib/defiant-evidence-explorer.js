@@ -3,7 +3,7 @@ const revision = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(val
 export function evidenceLocation(location = {}) {
  return {showJuneReview:location.evidenceJuneReview===true,mode:['identity','selections','changes','audience'].includes(location.evidenceMode)?location.evidenceMode:'earnings',revision:revision(location.evidenceRevision),groupId:id(location.evidenceGroupId),selectionId:id(location.evidenceSelectionId),receiptId:id(location.evidenceReceiptId),comparisonId:id(location.evidenceComparisonId),comparisonGroupId:id(location.evidenceComparisonGroupId),audienceId:id(location.evidenceAudienceId),referenceIndex:Number.isInteger(location.evidenceReferenceIndex)&&location.evidenceReferenceIndex>=0&&location.evidenceReferenceIndex<48?location.evidenceReferenceIndex:null,showAudienceCells:location.evidenceAudienceCells===true,offset:Number.isInteger(location.evidenceOffset)&&location.evidenceOffset>=0&&location.evidenceOffset<=500000?location.evidenceOffset:0};
 }
-export const emptyEvidenceView = () => ({loading:false,error:'',status:0,manifest:null,list:null,group:null,selection:null,receipts:[],comparison:null,comparisonExamples:null,audience:null,worksheet:null,juneReview:null,storeCoverage:null,revision:''});
+export const emptyEvidenceView = () => ({mode:null,loading:false,error:'',status:0,manifest:null,list:null,group:null,selection:null,receipts:[],comparison:null,comparisonExamples:null,audience:null,worksheet:null,juneReview:null,storeCoverage:null,revision:''});
 /** Existing host owns organization and authentication. Each navigation is an atomic view. */
 export function createEvidenceExplorer({request,onState}) {
  let epoch=0,controller;
@@ -11,7 +11,7 @@ export function createEvidenceExplorer({request,onState}) {
  return {cancel,async load(location={}){
   cancel();const ticket=epoch;controller=new AbortController();const signal=controller.signal;
   const current=()=>ticket===epoch;const state=emptyEvidenceView();onState({...state,loading:true});
-  const input=evidenceLocation(location);
+  const input=evidenceLocation(location);state.mode=input.mode;
   try {
    if((input.groupId||input.selectionId||input.receiptId||input.comparisonId||input.audienceId)&&!input.revision)throw Object.assign(new Error('Refresh evidence before opening this saved selection.'),{status:409});
    if((input.groupId&&input.selectionId)||(input.receiptId&&(input.selectionId||input.groupId)))throw Object.assign(new Error('Choose one evidence selection.'),{status:400});
