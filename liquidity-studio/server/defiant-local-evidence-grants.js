@@ -28,7 +28,7 @@ export function createLocalEvidenceGrants({store,approveActor,authorizeDelegate,
    if(!scope(subject?.userId)||typeof subject.uid!=='string'||!subject.uid||subject.uid.length>128)throw denied();
    const approvedAt=new Date(now()).toISOString();
    await authority({...subject,organizationId,approvedAt});
-   await store.update(KEY,old=>{const s=state(old),p=s.pairs.find(p=>p.id===pairingId);if(!p||p.organizationId!==organizationId||p.subject||p.attempts>=5)throw denied();return {...s,pairs:s.pairs.map(p=>p.id===pairingId?{...p,subject:{userId:subject.userId,uid:subject.uid},approvedAt,grantExpiresAt:now()+28800000}:p)};});
+   await store.update(KEY,old=>{const s=state(old),p=s.pairs.find(p=>p.id===pairingId);if(!p||p.organizationId!==organizationId||p.subject||p.attempts>=5)throw denied();return {...s,pairs:s.pairs.map(p=>p.id===pairingId?{...p,subject:{userId:subject.userId,uid:subject.uid},approvedAt,grantExpiresAt:Date.parse(approvedAt)+28800000}:p)};});
    return {approved:true,organizationId};
   },
   async exchange(pairingId,verifier){
