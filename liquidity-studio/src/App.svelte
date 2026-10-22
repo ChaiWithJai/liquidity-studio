@@ -65,6 +65,7 @@
   let googleLoginTimer;
   let user = $state(null);
   let organizations = $state([]);
+  import LocalEvidenceClients from './components/defiant/LocalEvidenceClients.svelte';
   let organizationId = $state("");
   let brandId = $state("");
   let permissions = $state({});
@@ -85,7 +86,12 @@
     if(!user||!organizationId)return null;
     const org=organizationId,actor=user.id,epoch=requestSessionEpoch,auth=googleAuth,google=authMode==='google';
     const key=`${epoch}:${actor}:${org}`;
-    return {key,request:(suffix='',options={})=>scopedRequest({path:`/api/studio/strategy/${encodeURIComponent(org)}${suffix}`,options,scoped:false,
+    return {key,localEvidenceRequest:(operation,body,options={})=>{
+      if(!['inspect','approve','list','revoke'].includes(operation)||body.organizationId!==org)throw Error('Invalid local client request');
+      return scopedRequest({path:`/api/studio/local-evidence/${operation}`,options:{method:'POST',body:JSON.stringify(body),signal:options.signal},scoped:false,
+        context:{sessionEpoch:key},getContext:()=>({sessionEpoch:`${requestSessionEpoch}:${user?.id}:${organizationId}`}),
+        authorize:async()=>google?{Authorization:`Bearer ${await auth.getToken()}`}:{},onUnauthorized:clearWorkspace});
+    },request:(suffix='',options={})=>scopedRequest({path:`/api/studio/strategy/${encodeURIComponent(org)}${suffix}`,options,scoped:false,
       context:{sessionEpoch:key},getContext:()=>({sessionEpoch:`${requestSessionEpoch}:${user?.id}:${organizationId}`}),
       authorize:async()=>google?{Authorization:`Bearer ${await auth.getToken()}`}:{},onUnauthorized:clearWorkspace}),evidenceRequest:(suffix='',options={})=>scopedRequest({path:`/api/studio/defiant-evidence/${encodeURIComponent(org)}${suffix}`,options,scoped:false,
       context:{sessionEpoch:key},getContext:()=>({sessionEpoch:`${requestSessionEpoch}:${user?.id}:${organizationId}`}),
@@ -1427,7 +1433,7 @@
           >
         </div>{/if}
       {#if tab==='strategy'&&strategyHost&&(currentOrganization?.strategy?.enabled||currentOrganization?.strategy?.canEnable)}
-        {#key strategyHost.key}<DefiantWorkspace evidenceRequest={strategyHost.evidenceRequest} request={strategyHost.request} location={strategyLocation} onNavigate={strategyNavigation} onDirtyChange={value=>strategyDirty=value} canEnable={currentOrganization.strategy.canEnable} onEnabled={refreshStrategyOrganizations}/>{/key}
+        {#key strategyHost.key}<LocalEvidenceClients {organizationId} request={strategyHost.localEvidenceRequest}/><DefiantWorkspace evidenceRequest={strategyHost.evidenceRequest} request={strategyHost.request} location={strategyLocation} onNavigate={strategyNavigation} onDirtyChange={value=>strategyDirty=value} canEnable={currentOrganization.strategy.canEnable} onEnabled={refreshStrategyOrganizations}/>{/key}
       {:else if penpotRecord && selectedStory}
         <PenpotWorkspace design={penpotRecord} storyTitle={selectedStory.title} brandName={currentBrand?.name || ""} formatName={formats.find(item=>item.id===format)?.name || format} onReturn={()=>leaveNativeEditor()} onSaveStateChange={value=>penpotSaveState=value} />
       {:else if scopeLoading}
