@@ -5,6 +5,7 @@ import {createDefiantEvidenceService} from './defiant-evidence.js';
 import {defiantEvidenceRequest} from './defiant-evidence-http.js';
 import {registerDefiantEvidenceTools} from './defiant-evidence-mcp.js';
 const hash='a'.repeat(64),other='b'.repeat(64);
+const cell=(cellRef,value)=>({cellRef,type:'s',rawValue:value,value,formula:null,formulaExecuted:false});
 const fixture=()=>({schemaVersion:1,organizationId:'org',coverage:'Invented contracts',receipts:[],months:[{month:'2024-01',amount:'10',currency:'USD',metric:'source-total-earned',sourceHash:hash,receiptIds:[]},{month:'2025-01',amount:'8.000000000001',currency:'USD',metric:'source-total-earned',sourceHash:other,receiptIds:[]}],comparisons:[{id:'annual',dimension:'store',sourceSystem:'invented',accountScope:'account',currency:'USD',periodBasis:'filename-declared',beforeMonths:['2024-01'],afterMonths:['2025-01'],sourceReferences:[{month:'2024-01',sourceHash:hash},{month:'2025-01',sourceHash:other}],groups:[{id:'down',key:'one',label:'Store one',beforeAmount:'12',afterAmount:'7',sourceReferences:[{side:'before',month:'2024-01',sourceHash:hash,exampleRecords:[2,4]}]},{id:'up',key:null,label:'Unresolved',beforeAmount:'-2',afterAmount:'1.000000000001',sourceReferences:[]}]}],audienceDefinitions:[{id:'returning',name:'Returning buyers',criteria:'Supplied repeat purchase rule',scaleText:'Not recomputed',proposedOffer:'Proposed catalog bundle',sourceHash:hash,sheet:'Rules',cellRefs:['A2','B2'],requiredEvidence:['orders','channel-consent'],observedEvidence:['orders'],activationAuthorized:true,populationComputed:true,consentVerified:true}]});
 const service=(data,options={})=>createDefiantEvidenceService({organizationId:'org',authorize:()=>true,loadSnapshot:async()=>data,...options});
 test('exact signed change reconciles and paged references are honestly examples',async()=>{
@@ -66,7 +67,7 @@ test('actual SDK discovers and consumes comparison and audience detail with revi
  const {Client,StreamableHTTPClientTransport}=await import('@modelcontextprotocol/client');
  const {createDefiantEvidenceMcpHandler}=await import('./defiant-evidence-mcp.js');
  let allowed=true;let loads=0;
- const svc=service(fixture(),{authorize:actor=>allowed&&actor==='verified-actor',loadSnapshot:async()=>{loads++;return fixture();}});
+ const svc=service(fixture(),{authorize:actor=>allowed&&actor==='verified-actor',loadSnapshot:async()=>{loads++;return fixture();},loadSourceRecords:async request=>request.sourceRecords.map(record=>({id:`r_${record}`,sourceHash:request.sourceHash,member:'invented.csv',record,cells:{Amount:'0.01'}})),loadWorksheetCells:async request=>({sourceHash:request.sourceHash,sheet:request.sheet,cells:request.cellRefs.map(cellRef=>cell(cellRef,'Supplied text'))})});
  const handler=createDefiantEvidenceMcpHandler({resolveEvidence:async({organizationId,requestContext})=>{
   if(organizationId!=='org'||requestContext.authInfo?.clientId!=='fixture-client')throw Object.assign(new Error('Denied'),{status:403});
   return {organizationId,actor:'verified-actor',service:svc};
@@ -87,6 +88,10 @@ test('actual SDK discovers and consumes comparison and audience detail with revi
  assert.deepEqual(first.groups[0].sourceReferences[0],{side:'before',month:'2024-01',sourceHash:hash,exampleRecords:[2,4]});
  const last=(await call('defiant_explain_change',{comparisonId:comparisons.items[0].id,revision:manifest.revision,offset:first.nextOffset,limit:1})).structuredContent;
  assert.equal(last.groups[0].id,'up');assert.equal(last.nextOffset,null);assert.equal(last.revision,first.revision);
+ const examples=(await call('defiant_read_comparison_examples',{comparisonId:'annual',groupId:first.groups[0].id,referenceIndex:0,revision:manifest.revision})).structuredContent;
+ assert.deepEqual(examples.receipts.map(row=>row.record),[2,4]);assert.equal(examples.fullSelectionAvailable,false);
+ const worksheet=(await call('defiant_read_audience_cells',{audienceId:'returning',revision:manifest.revision})).structuredContent;
+ assert.deepEqual(worksheet.worksheet.cells,[cell('A2','Supplied text'),cell('B2','Supplied text')]);
  const audiences=(await call('defiant_audience_readiness',{revision:manifest.revision})).structuredContent;
  const audience=(await call('defiant_inspect_audience_definition',{audienceId:audiences.items[0].id,revision:manifest.revision})).structuredContent;
  assert.deepEqual(audience.definition.missingEvidence,['channel-consent']);assert.deepEqual(audience.definition.cellRefs,['A2','B2']);assert.equal(audience.definition.activationAuthorized,false);assert.equal(audience.revision,first.revision);
@@ -95,4 +100,35 @@ test('actual SDK discovers and consumes comparison and audience detail with revi
  }
  const before=loads;allowed=false;
  const revoked=await call('defiant_inspect_audience_definition',{audienceId:'returning',revision:manifest.revision});assert.equal(revoked.isError,true);assert.equal(revoked.structuredContent,undefined);assert.equal(loads,before);
+});
+test('comparison and worksheet source examples resolve only normalized server references',async()=>{
+ const calls=[];const svc=service(fixture(),{loadSourceRecords:async request=>{calls.push(request);return request.sourceRecords.map(record=>({id:`r_${record}`,sourceHash:request.sourceHash,member:'invented.csv',record,cells:{Amount:'0.01'}}));},loadWorksheetCells:async request=>{calls.push(request);return {...request,cells:request.cellRefs.map(cellRef=>({...cell(cellRef,'3'),formula:'SUM(A1:A2)'}))};}});
+ const {revision}=await svc.read('actor');
+ const result=await svc.read('actor',{resource:'comparison-examples',comparisonId:'annual',groupId:'down',referenceIndex:0,revision});
+ assert.deepEqual(calls[0],{organizationId:'org',sourceHash:hash,sourceRecords:[2,4],revision});assert.equal(result.receipts.length,2);assert.equal(result.fullSelectionAvailable,false);
+ const cells=await svc.read('actor',{resource:'audience-cells',audienceId:'returning',revision});assert.deepEqual(calls[1],{organizationId:'org',sourceHash:hash,sheet:'Rules',cellRefs:['A2','B2'],revision});assert.equal(cells.worksheet.cells[0].formula,'SUM(A1:A2)');assert.equal(cells.worksheet.cells[0].formulaExecuted,false);assert.equal(cells.worksheet.organizationId,undefined);
+ const definition=await svc.read('actor',{resource:'audience-definition',audienceId:'returning',revision});assert.equal(definition.definition.evidenceAssessmentOrigin,'analyst-assessment');
+});
+test('source examples reject mismatches, unavailable readers and revocation during each read',async()=>{
+ for(const change of [rows=>rows.reverse(),rows=>{rows[0].sourceHash=other;return rows;},rows=>rows.slice(1)]){
+  const svc=service(fixture(),{loadSourceRecords:async()=>change([2,4].map(record=>({id:`r_${record}`,sourceHash:hash,member:'invented.csv',record,cells:{Amount:'0.01'}})))});const {revision}=await svc.read('actor');await assert.rejects(svc.read('actor',{resource:'comparison-examples',comparisonId:'annual',groupId:'down',referenceIndex:0,revision}),{status:503});
+ }
+ for(const change of [x=>({...x,sourceHash:other}),x=>({...x,sheet:'Other'}),x=>({...x,cells:[...x.cells].reverse()}),x=>({...x,cells:[{cellRef:'A2',value:'x'.repeat(4001)},x.cells[1]]})]){
+  const svc=service(fixture(),{loadWorksheetCells:async()=>change({sourceHash:hash,sheet:'Rules',cells:[cell('A2','rule'),cell('B2','offer')]})});const {revision}=await svc.read('actor');await assert.rejects(svc.read('actor',{resource:'audience-cells',audienceId:'returning',revision}),{status:503});
+ }
+ for(const [resource,extra,reader] of [['comparison-examples',{comparisonId:'annual',groupId:'down',referenceIndex:0},'loadSourceRecords'],['audience-cells',{audienceId:'returning'},'loadWorksheetCells']]){
+  const unavailable=service(fixture());const {revision}=await unavailable.read('actor');await assert.rejects(unavailable.read('actor',{resource,...extra,revision}),{status:503});
+  let allowed=true;const svc=service(fixture(),{authorize:()=>allowed,[reader]:async request=>{allowed=false;return reader==='loadSourceRecords'?request.sourceRecords.map(record=>({id:`r_${record}`,sourceHash:hash,member:'invented.csv',record,cells:{Amount:'0.01'}})):{sourceHash:hash,sheet:'Rules',cells:request.cellRefs.map(cellRef=>cell(cellRef,'rule'))};}});
+  await assert.rejects(svc.read('actor',{resource,...extra,revision}),{status:403});
+  await assert.rejects(unavailable.read('actor',{resource,...extra,revision:other}),{status:409});
+ }
+});
+test('HTTP example routes parse only bounded server identifiers and protect scope',async()=>{
+ const svc=service(fixture(),{loadSourceRecords:async request=>request.sourceRecords.map(record=>({id:`r_${record}`,sourceHash:request.sourceHash,member:'invented.csv',record,cells:{Amount:'0.01'}})),loadWorksheetCells:async request=>({sourceHash:request.sourceHash,sheet:request.sheet,cells:request.cellRefs.map(ref=>cell(ref,'Supplied rule'))})});
+ const {revision}=await svc.read('actor');
+ const read=(resource,query,scope='org')=>defiantEvidenceRequest({service:svc,user:'actor',route:`/api/studio/defiant-evidence/${scope}/${resource}`,method:'GET',url:new URL(`https://fixture.invalid/?revision=${revision}&${query}`)});
+ assert.equal((await read('comparison-examples','comparisonId=annual&groupId=down&referenceIndex=0')).receipts.length,2);
+ assert.equal((await read('audience-cells','audienceId=returning')).worksheet.cells.length,2);
+ for(const query of ['comparisonId=annual&groupId=down&referenceIndex=-1','comparisonId=annual&groupId=down&referenceIndex=48','comparisonId=annual&groupId=down&referenceIndex=0&sourceHash=untrusted','comparisonId=annual&groupId=down&referenceIndex=0&offset=1'])await assert.rejects(read('comparison-examples',query),{status:400});
+ await assert.rejects(read('audience-cells','audienceId=returning','other'),{status:403});
 });

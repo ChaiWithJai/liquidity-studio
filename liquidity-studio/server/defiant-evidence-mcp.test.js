@@ -18,7 +18,7 @@ test('SDK journey reads earnings and exact receipt; stale, revoked and cross-sco
  const client = new Client({name: 'evidence-contract', version: '1.0.0'}, {versionNegotiation: {mode: 'auto'}});
  t.after(async () => {await client.close(); await handler.close();});
  await client.connect(transport);
- assert.deepEqual((await client.listTools()).tools.map(x => x.name).sort(), ['defiant_audience_readiness','defiant_catalog_earnings','defiant_catalog_identity_review','defiant_evidence_manifest','defiant_explain_change','defiant_inspect_audience_definition','defiant_inspect_evidence_selection','defiant_inspect_identity_group','defiant_list_change_comparisons','defiant_list_evidence_selections','defiant_read_selection_receipts','defiant_show_receipt']);
+ assert.deepEqual((await client.listTools()).tools.map(x => x.name).sort(), ['defiant_audience_readiness','defiant_catalog_earnings','defiant_catalog_identity_review','defiant_evidence_manifest','defiant_explain_change','defiant_inspect_audience_definition','defiant_inspect_evidence_selection','defiant_inspect_identity_group','defiant_list_change_comparisons','defiant_list_evidence_selections','defiant_read_audience_cells','defiant_read_comparison_examples','defiant_read_selection_receipts','defiant_show_receipt']);
  const call = (name, args = {}) => client.callTool({name, arguments: {organizationId: 'sample_org', ...args}});
  const manifest = (await call('defiant_evidence_manifest')).structuredContent;
  assert.deepEqual(manifest.counts, {months: 1, receipts: 1, selections: 1, identityGroups: 1});
