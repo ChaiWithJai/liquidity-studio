@@ -44,3 +44,39 @@ test('maximum bounded store coverage list serializes below the bridge four MiB c
  const response={schemaVersion:1,scope:{organizationId:'o'.repeat(128)},revision:'b'.repeat(64),coverage:'界'.repeat(2000),items:products,total:100,nextOffset:null};
  assert.ok(Buffer.byteLength(JSON.stringify(response),'utf8')<=4*1024*1024);
 });
+
+
+test('June decision card binds evidence and explicit unknowns without enabling commercial action',async()=>{
+ const service=make(),{revision}=await service.read('owner');
+ const result=await service.read('owner',{resource:'june-review',revision,selectionId:'june'}),card=result.decisionCard;
+ assert.equal(card.purpose,'reporting-coverage-review');assert.equal(card.datasetRevision,revision);assert.equal(card.context.selectedSourceHash,hashes[3]);
+ assert.deepEqual(card.cost,{status:'unknown',kind:'analyst-effort',amount:null,currency:null});assert.deepEqual(card.reviewDate,{status:'unset',value:null});
+ assert.equal(card.hypothesis.status,'untested');assert.equal(card.action.execution,'not-executed');assert.equal(card.successMeasure.status,'not-assessed');assert.equal(result.commercialReadiness.readiness,'not-ready');
+ assert.equal(card.context.absentObservations[0].amount,null);assert.equal(card.evidence[2].available,false);
+ for(const ref of card.evidence.filter(x=>x.available!==false)){const resolved=await service.read('owner',ref.followUp);assert.equal(resolved.revision,revision);}
+ await assert.rejects(service.read('owner',{resource:'june-review',revision:'f'.repeat(64),selectionId:'june'}),{status:409});
+ await assert.rejects(service.read('other',{resource:'june-review',revision,selectionId:'june'}),{status:403});
+ let allowed=true;await assert.rejects(make(()=>{allowed=false;},{authorize:()=>allowed}).read('owner',{resource:'june-review',revision,selectionId:'june'}),{status:403});
+});
+test('observed zero and unavailable coverage preserve factual review without manufacturing an action',async()=>{
+ for(const [change,reason] of [[d=>{d.storePeriodCoverage[0].observations[3].rowCount=1;d.storePeriodCoverage[0].observations[3].amount='0';},'no-absent-observation-in-selected-period'],[d=>delete d.storePeriodCoverage,'matching-store-coverage-unavailable']]){
+  const service=make(change),{revision}=await service.read('owner');const result=await service.read('owner',{resource:'june-review',revision,selectionId:'june'});
+  assert.equal(result.decisionCard,null);assert.equal(result.decisionCardUnavailableReason,reason);assert.equal(result.purpose,'factual-period-brief');assert.equal(result.facts.period.month,'2025-06');
+ }
+});
+test('actual MCP SDK and HTTP expose equal June decision cards and finite evidence',async t=>{
+ const service=make(),{revision}=await service.read('owner');const url=new URL(`https://fixture.invalid/api/studio/defiant-evidence/org/june-review?revision=${revision}&selectionId=june`);
+ const http=await defiantEvidenceRequest({service,user:'owner',route:url.pathname,method:'GET',url});
+ const handler=createDefiantEvidenceMcpHandler({resolveEvidence:async({organizationId})=>{if(organizationId!=='org')throw Object.assign(Error('denied'),{status:403});return {organizationId,actor:'owner',service};}});
+ const client=new Client({name:'decision-card-contract',version:'1.0.0'},{versionNegotiation:{mode:'auto'}});t.after(async()=>{await client.close();await handler.close();});await client.connect(new StreamableHTTPClientTransport(new URL('https://fixture.invalid/mcp'),{fetch:(url,init)=>handler.fetch(new Request(url,init))}));
+ const result=await client.callTool({name:'defiant_june_factual_review',arguments:{organizationId:'org',revision,selectionId:'june'}});assert.deepEqual(result.structuredContent.decisionCard,http.decisionCard);
+ assert.equal((await client.callTool({name:'defiant_june_factual_review',arguments:{organizationId:'other',revision,selectionId:'june'}})).isError,true);
+});
+
+test('decision receipt follow-up separates availability from callable request with a real loader',async()=>{
+ const calls=[];const service=make(()=>{},{loadSourceRecords:request=>{calls.push(request);return request.sourceRecords.map(record=>({id:'row_'+record,sourceHash:request.sourceHash,member:'invented.csv',record,cells:{Amount:'0',Currency:'USD'}}));}});
+ const {revision}=await service.read('owner');const packet=await service.read('owner',{resource:'june-review',revision,selectionId:'june'});
+ const evidence=packet.decisionCard.evidence.find(e=>e.followUp.resource==='selection-receipts');assert.equal(evidence.available,true);assert.equal('available' in evidence.followUp,false);
+ const receipts=await service.read('owner',evidence.followUp);assert.equal(receipts.receipts[0].record,2);assert.equal(receipts.receipts[0].sourceHash,hashes[3]);assert.deepEqual(calls[0].sourceRecords,[2]);assert.equal(calls[0].revision,revision);
+ const without=make(),withoutRevision=(await without.read('owner')).revision;const unavailable=(await without.read('owner',{resource:'june-review',revision:withoutRevision,selectionId:'june'})).decisionCard.evidence.find(e=>e.followUp.resource==='selection-receipts');assert.equal(unavailable.available,false);await assert.rejects(without.read('owner',unavailable.followUp),{status:503});
+});
