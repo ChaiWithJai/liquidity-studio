@@ -1,3 +1,5 @@
+import {createDefiantEvidenceService} from './defiant-evidence.js';
+import {defiantEvidenceRequest} from './defiant-evidence-http.js';
 import {createDefiantUnifiedData} from './defiant-unified-data.js';
 import {defiantUnifiedRequest} from './defiant-unified-http.js';
 import {DefiantStrategyService} from './defiant-strategy.js';
@@ -206,6 +208,7 @@ export function createHttpServer(
     platform = appContainer ? null : createPlatform(),
     trustedTestMode = false,
     defiantDatasetProvider = null,
+    defiantEvidenceProvider = null,
     enableDefiantSyntheticDemo = false,
     defiantSyntheticDemoOrigins = [],
     portableBodyTimeoutMs = 15000,
@@ -223,6 +226,7 @@ export function createHttpServer(
       "true",
   } = {},
 ) {
+  if(defiantEvidenceProvider!==null&&typeof defiantEvidenceProvider!=="function")throw Error("Evidence provider must be constructor-owned");
   if(defiantDatasetProvider!==null&&typeof defiantDatasetProvider!=="function")throw Error("Defiant dataset provider must be constructor-owned");
   if (appContainer && !trustedTestMode && !platform)
     throw new Error(
@@ -772,6 +776,19 @@ export function createHttpServer(
               portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
+      if(route.startsWith("/api/studio/defiant-evidence/")) {
+        if(trustedTestMode||!defiantEvidenceProvider)throw fail(404,"Evidence is not configured");
+        const scope=/^\/api\/studio\/defiant-evidence\/([A-Za-z0-9_-]{1,128})\//.exec(route);
+        if(!scope)throw fail(404,"Unknown evidence scope");
+        const organizationId=scope[1],strategy=new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId});
+        await strategy.raw(user);
+        if(req.method!=='GET')throw fail(405,"Evidence is read-only");
+        let binding;
+        try{binding=await defiantEvidenceProvider({organizationId,actor:user});}catch{throw fail(503,"Evidence provider unavailable");}
+        if(!binding||typeof binding.loadSnapshot!=='function')throw fail(404,"Evidence unavailable for this organization");
+        const service=createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,loadSourceRecords:binding.loadSourceRecords,authorize:async actor=>{await strategy.raw(actor);return true;}});
+        return json(200,await defiantEvidenceRequest({service,user,route,method:req.method,url}));
+      }
       if(route.startsWith("/api/studio/defiant-data/")) {
         if(trustedTestMode||!defiantDatasetProvider)throw fail(404,"Defiant data is not configured");
         const scope=/^\/api\/studio\/defiant-data\/([A-Za-z0-9_-]{1,128})\//.exec(route);
