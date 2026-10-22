@@ -91,7 +91,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (resource === 'comparisons' || resource === 'explain-change') {
         const rows = data.comparisons || [];
         const summary = ({groups, ...row}) => ({...row, groupCount:groups.length});
-        const limitation = 'Arithmetic contribution only, not causal attribution or opportunity scoring. Period verification is a producer assertion. Example logical record references are not complete selections or loaded source cells; full group receipt drilldown is unavailable.';
+        const limitation = 'Arithmetic contribution only, not causal attribution or opportunity scoring. grossDecrease is a positive magnitude; delta = offsetIncrease - grossDecrease. Period verification is a producer assertion. Example logical record references are not complete selections or loaded source cells; full group receipt drilldown is unavailable.';
         if (resource === 'comparisons') return structuredClone({...base, items:rows.slice(offset,offset+limit).map(summary), total:rows.length, nextOffset:offset+limit<rows.length?offset+limit:null, limitation});
         const row = rows.find(v=>v.id===comparisonId);
         if (!row) throw fail(404, 'Comparison unavailable');

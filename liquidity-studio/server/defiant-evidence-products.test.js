@@ -58,3 +58,7 @@ test('derived deltas may exceed input decimal magnitude without overflow',async(
  const d=fixture();d.months[0].amount='-99999999999999999999999999';d.months[1].amount='99999999999999999999999999';d.comparisons[0].groups=[{id:'swing',key:'swing',label:'Invented signed swing',beforeAmount:d.months[0].amount,afterAmount:d.months[1].amount,sourceReferences:[]}];
  const svc=service(d),m=await svc.read('actor');const result=await svc.read('actor',{resource:'explain-change',comparisonId:'annual',revision:m.revision});assert.equal(result.groups[0].delta,'199999999999999999999999998');
 });
+test('before periods must precede after periods, not merely be disjoint',async()=>{
+ const reversed=fixture();reversed.comparisons[0].beforeMonths=['2025-01'];reversed.comparisons[0].afterMonths=['2024-01'];await assert.rejects(service(reversed).read('actor'),{status:503});
+ const interleaved=fixture();interleaved.comparisons[0].beforeMonths=['2024-01','2025-01'];interleaved.comparisons[0].afterMonths=['2024-02','2025-02'];await assert.rejects(service(interleaved).read('actor'),{status:503});
+});

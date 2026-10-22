@@ -19,7 +19,7 @@ export function normalizeComparisons(input,months){
  return rows.map(row=>{
   if(!id(row.id)||ids.has(row.id)||!['sourceSongId','store','country','salesType'].includes(row.dimension)||!text(row.sourceSystem,128)||!text(row.accountScope,128)||!['filename-declared','content-verified'].includes(row.periodBasis)||typeof row.currency!=='string'||!/^[A-Z]{3}$/.test(row.currency))throw invalid();ids.add(row.id);
   const beforeMonths=periods(row.beforeMonths),afterMonths=periods(row.afterMonths);
-  if(beforeMonths.length!==afterMonths.length||beforeMonths.some(m=>afterMonths.includes(m)))throw invalid();
+  if(beforeMonths.length!==afterMonths.length||beforeMonths.some(m=>afterMonths.includes(m))||beforeMonths.at(-1)>=afterMonths[0])throw invalid();
   const allMonths=[...beforeMonths,...afterMonths];
   const sourceReferences=list(row.sourceReferences,48,v=>object(v)&&allMonths.includes(v.month)&&hash(v.sourceHash));
   unique(sourceReferences.map(v=>v.month));
