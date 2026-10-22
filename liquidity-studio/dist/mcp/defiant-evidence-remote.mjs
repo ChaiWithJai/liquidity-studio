@@ -43465,6 +43465,10 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
     configuredClients: configured,
     async begin(input) {
       const keys = ["client_id", "redirect_uri", "resource", "scope", "response_type", "state", "code_challenge", "code_challenge_method"];
+      if (input && typeof input === "object" && !Array.isArray(input) && Object.hasOwn(input, "ui_locales")) {
+        if (typeof input.ui_locales !== "string" || input.ui_locales.length > 128 || /[\u0000-\u001f\u007f]/.test(input.ui_locales) || !/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*(?: [A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*){0,3}(?![\s\S])/.test(input.ui_locales)) reject();
+        keys.push("ui_locales");
+      }
       if (!exact(input, keys) || input.resource !== EVIDENCE_RESOURCE || input.scope !== EVIDENCE_SCOPE || input.response_type !== "code" || input.code_challenge_method !== "S256" || !secret(input.code_challenge) || typeof input.state !== "string" || !input.state || input.state.length > 512 || /[^\x20-\x7e]/.test(input.state)) reject();
       await write((s) => rate(s, "authorize"));
       const c = await client(input.client_id);
