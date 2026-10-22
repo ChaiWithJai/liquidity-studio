@@ -21,6 +21,7 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
    return {isError: true, content: [{type: 'text', text: `Evidence request unavailable (${status}).`}]};
   }
  });
+ register('defiant_store_period_coverage','Inspect supplied store-period observations and exact all-period versus mutually observed amount comparisons. Missing observations do not imply zero activity or missing delivery.',{revision,storeCoverageId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/).optional(),offset:z.number().int().min(0).max(100).optional(),limit:z.number().int().min(1).max(100).optional()},'store-coverage');
  register('defiant_discover_served_evidence','Discover metadata for sources referenced by served evidence. Deterministic text/earnings-period filters only; not a complete bronze inventory or semantic ranking.', {revision:revision.optional(),query:z.string().max(200).refine(v=>!/[\u0000-\u001f\u007f]/.test(v)).optional(),fromMonth:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),toMonth:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),offset:z.number().int().min(0).max(5000).optional(),limit:z.number().int().min(1).max(100).optional()},'coverage');
  register('defiant_evidence_manifest', 'Inspect authorized real-evidence coverage and revision. Counts are not a claim of complete source intake.', {}, 'manifest');
  register('defiant_catalog_earnings', 'Read reported earnings by month and currency with source receipt references. These are not profit, catalog valuation or causal attribution.', {

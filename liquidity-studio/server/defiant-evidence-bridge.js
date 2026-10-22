@@ -7,8 +7,8 @@ import {registerDefiantEvidenceTools} from './defiant-evidence-mcp.js';
 const origin='https://studio.chaiwithjai.com';
 const fail=(status=503)=>Object.assign(new Error('Private evidence unavailable'),{status});
 const exact=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join(',')===[...keys].sort().join(',');
-const resources=new Set(['coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
-const fields=new Set(['revision','month','currency','receiptId','selectionId','identityGroupId','comparisonId','audienceId','groupId','referenceIndex','offset','limit','query','fromMonth','toMonth']);
+const resources=new Set(['store-coverage','coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
+const fields=new Set(['revision','month','currency','receiptId','selectionId','identityGroupId','comparisonId','audienceId','groupId','referenceIndex','offset','limit','query','fromMonth','toMonth','storeCoverageId']);
 async function privateFile(path,max){
  let fd;
  try{
