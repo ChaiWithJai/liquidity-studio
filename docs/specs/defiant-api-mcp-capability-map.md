@@ -1,3 +1,5 @@
+> Current direction: the owner has reprioritized Defiant OS around actual bronze/silver/gold evidence and safe archival of the synthetic offering. Follow [the real-evidence capability map](defiant-medallion-capability-map.md) and [decision specification](defiant-medallion-decision.md). The synthetic requirements below remain historical scope/evidence; they do not authorize synthetic fallback for real-data requests. Other unresolved product obligations remain open.
+
 ## Outcome
 Deliver a unified Defiant data API and MCP app that Jai can actually consume in ChatGPT and connect to Hermes for a demo to Steve-O/Dave. Serve the data, suggest audience-specific golden pathways, and render a polished contextual UI inside supported chat hosts. This is a parallel stream; it does not close unresolved YouTube preprocessing or human acceptance in #281/#310/#311/#58.
 

@@ -36,17 +36,18 @@ test('response size ceiling and post-response configuration mutation fail closed
  let f;f=await fixture(t,async()=>{await chmod(f.config,0o644);return response();});await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}));
 });
 
-test('actual SDK discovers fourteen real-evidence tools and carries receipt plus denial through HTTP bridge',async t=>{
+test('actual SDK discovers sixteen real-evidence tools and carries receipt plus denial through HTTP bridge',async t=>{
  const {Client,StreamableHTTPClientTransport}=await import('@modelcontextprotocol/client');
  const {createMcpHandler}=await import('@modelcontextprotocol/server');let calls=0,denied=false;
- const f=await fixture(t,async(url,init)=>{calls++;assert.equal(init.headers.Authorization,'Bearer a.b.c');if(denied)return new Response('private denied detail',{status:403});return response(new URL(url).pathname.endsWith('/receipt')?{receipt:{record:2,cells:{Amount:'-0.000001'}}}:{counts:{months:1}});});
+ const f=await fixture(t,async(url,init)=>{calls++;assert.equal(init.headers.Authorization,'Bearer a.b.c');if(denied)return new Response('private denied detail',{status:403});const parsed=new URL(url);if(parsed.pathname.endsWith('/june-review')){assert.equal(parsed.pathname,'/api/studio/defiant-evidence/example_org/june-review');assert.equal(parsed.searchParams.get('selectionId'),'selection_a');assert.equal(parsed.searchParams.get('revision'),revision);assert.equal(parsed.searchParams.get('offset'),'1');assert.equal(parsed.searchParams.get('limit'),'1');return response({purpose:'factual-period-brief',readiness:'qualified',lineage:{sourceRecords:[5]},followUp:{resource:'selection-receipts',selectionId:'selection_a',revision,offset:1,limit:1},commercialReadiness:{readiness:'not-ready'}});}return response(parsed.pathname.endsWith('/receipt')?{receipt:{record:2,cells:{Amount:'-0.000001'}}}:{counts:{months:1}});});
  const handler=createMcpHandler(()=>f.bridge.createServer(),{responseMode:'json'});
  const client=new Client({name:'bridge-contract',version:'1.0.0'},{versionNegotiation:{mode:'auto'}});
  t.after(async()=>{await client.close();await handler.close();});
  await client.connect(new StreamableHTTPClientTransport(new URL('https://fixture.invalid/mcp'),{fetch:(url,init)=>handler.fetch(new Request(url,init))}));
- const tools=(await client.listTools()).tools;assert.equal(tools.length,14);assert.ok(tools.some(x=>x.name==='defiant_read_audience_cells'));
+ const tools=(await client.listTools()).tools;assert.equal(tools.length,16);assert.ok(tools.some(x=>x.name==='defiant_discover_served_evidence'));assert.ok(tools.some(x=>x.name==='defiant_june_factual_review'));assert.ok(tools.some(x=>x.name==='defiant_read_audience_cells'));
  const manifest=await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:'example_org'}});assert.equal(manifest.structuredContent.revision,revision);
  const receipt=await client.callTool({name:'defiant_show_receipt',arguments:{organizationId:'example_org',revision,receiptId:'row_2'}});assert.equal(receipt.structuredContent.receipt.cells.Amount,'-0.000001');
+ const june=await client.callTool({name:'defiant_june_factual_review',arguments:{organizationId:'example_org',revision,selectionId:'selection_a',offset:1,limit:1}});assert.equal(june.isError,undefined);assert.equal(june.structuredContent.purpose,'factual-period-brief');assert.deepEqual(june.structuredContent.lineage.sourceRecords,[5]);assert.equal(june.structuredContent.followUp.revision,revision);assert.equal(june.structuredContent.commercialReadiness.readiness,'not-ready');
  const before=calls;assert.equal((await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:'other'}})).isError,true);assert.equal(calls,before);
  denied=true;const result=await client.callTool({name:'defiant_evidence_manifest',arguments:{organizationId:'example_org'}});assert.equal(result.isError,true);assert.equal(result.structuredContent,undefined);assert.equal(JSON.stringify(result).includes('private denied detail'),false);
 });
@@ -71,4 +72,26 @@ test('file and immediate parent symlinks are rejected without network',async t=>
 test('excess empty response chunks are bounded and consumption is canceled',async t=>{
  let canceled=false;const f=await fixture(t,async()=>({ok:true,headers:new Headers({'content-type':'application/json'}),body:{getReader:()=>({read:async()=>({done:false,value:new Uint8Array(0)}),cancel:async()=>{canceled=true;}})}}));
  await assert.rejects(f.bridge.service.read(f.bridge.actor,{resource:'manifest'}));assert.equal(canceled,true);
+});
+
+test('actual SDK forwards bounded coverage query and period filters without truncation or scope escape',async t=>{
+ const {Client,StreamableHTTPClientTransport}=await import('@modelcontextprotocol/client');
+ const {createMcpHandler}=await import('@modelcontextprotocol/server');
+ const seen=[];const prefix='June & source / café? ';const query=prefix+'x'.repeat(200-prefix.length);
+ assert.equal(query.length,200);
+ const f=await fixture(t,async(url)=>{const parsed=new URL(url);seen.push(parsed);assert.equal(parsed.origin,'https://studio.chaiwithjai.com');assert.equal(parsed.pathname,'/api/studio/defiant-evidence/example_org/coverage');return response({coverageKind:'served-evidence-coverage',inventoryComplete:false,filters:{query:parsed.searchParams.get('query'),fromMonth:parsed.searchParams.get('fromMonth'),toMonth:parsed.searchParams.get('toMonth')},items:[]});});
+ const handler=createMcpHandler(()=>f.bridge.createServer(),{responseMode:'json'});
+ const client=new Client({name:'coverage-bridge-contract',version:'1.0.0'},{versionNegotiation:{mode:'auto'}});
+ t.after(async()=>{await client.close();await handler.close();});
+ await client.connect(new StreamableHTTPClientTransport(new URL('https://fixture.invalid/mcp'),{fetch:(url,init)=>handler.fetch(new Request(url,init))}));
+ const args={organizationId:'example_org',revision,query,fromMonth:'2025-06',toMonth:'2025-06',offset:1,limit:2};
+ const result=await client.callTool({name:'defiant_discover_served_evidence',arguments:args});
+ assert.equal(result.isError,undefined);assert.equal(result.structuredContent.filters.query,query);assert.equal(result.structuredContent.inventoryComplete,false);
+ assert.deepEqual(Object.fromEntries(seen[0].searchParams),{revision,query,fromMonth:'2025-06',toMonth:'2025-06',offset:'1',limit:'2'});
+ const empty=await client.callTool({name:'defiant_discover_served_evidence',arguments:{organizationId:'example_org',query:''}});assert.equal(empty.isError,undefined);assert.equal(seen[1].searchParams.get('query'),'');
+ const before=seen.length;
+ for(const extra of [{query:'x'.repeat(201)},{query:'bad\nquery'},{organizationId:'other'}]){
+  const denied=await client.callTool({name:'defiant_discover_served_evidence',arguments:{...args,...extra}});assert.equal(denied.isError,true);
+ }
+ assert.equal(seen.length,before);
 });

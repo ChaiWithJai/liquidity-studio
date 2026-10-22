@@ -7,8 +7,8 @@ import {registerDefiantEvidenceTools} from './defiant-evidence-mcp.js';
 const origin='https://studio.chaiwithjai.com';
 const fail=(status=503)=>Object.assign(new Error('Private evidence unavailable'),{status});
 const exact=(v,keys)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join(',')===[...keys].sort().join(',');
-const resources=new Set(['manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells']);
-const fields=new Set(['revision','month','currency','receiptId','selectionId','identityGroupId','comparisonId','audienceId','groupId','referenceIndex','offset','limit']);
+const resources=new Set(['coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
+const fields=new Set(['revision','month','currency','receiptId','selectionId','identityGroupId','comparisonId','audienceId','groupId','referenceIndex','offset','limit','query','fromMonth','toMonth']);
 async function privateFile(path,max){
  let fd;
  try{
@@ -38,7 +38,7 @@ export async function createPrivateEvidenceBridge({configurationPath,fetchImpl=f
   const url=new URL(`/api/studio/defiant-evidence/${config.organizationId}/${input.resource}`,origin);
   for(const [key,value] of Object.entries(input)){
    if(key==='resource')continue;
-   if(!fields.has(key)||typeof value!=='string'&&typeof value!=='number'||String(value).length>128||!String(value).length)throw fail(400);
+   if(!fields.has(key)||typeof value!=='string'&&typeof value!=='number'||String(value).length>(key==='query'?200:128)||(key!=='query'&&!String(value).length))throw fail(400);
    if(['offset','limit','referenceIndex'].includes(key)&&(!Number.isSafeInteger(value)||value<0||value>999999))throw fail(400);
    url.searchParams.set(key,String(value));
   }
