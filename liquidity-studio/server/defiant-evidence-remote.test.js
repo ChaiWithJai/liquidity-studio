@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash,randomBytes} from 'node:crypto';
-import {createServer} from 'node:http';
+import {createServer,request as nodeRequest} from 'node:http';
 import {Client,StreamableHTTPClientTransport} from '@modelcontextprotocol/client';
 import {createPlatform} from './platform.js';
 import {DurableStore} from './storage.js';
@@ -9,6 +9,8 @@ import {googleAuthConfiguration} from './google-auth.js';
 import {DefiantStrategyService} from './defiant-strategy.js';
 import {createRemoteEvidence} from './defiant-evidence-remote.js';
 import {EVIDENCE_RESOURCE,EVIDENCE_ISSUER} from './defiant-evidence-oauth.js';
+// node:http preserves the actual Host header; Undici fetch may replace it.
+function wireFetch(url,options={}){return new Promise((resolve,reject)=>{const req=nodeRequest(url,{method:options.method||'GET',headers:options.headers},res=>{const parts=[];res.on('data',chunk=>parts.push(chunk));res.on('error',reject);res.on('end',()=>resolve(new Response(Buffer.concat(parts),{status:res.statusCode,headers:res.headers})));});req.on('error',reject);if(options.body)req.write(String(options.body));req.end();});}
 const publicClient={clientId:'https://chatgpt.com/oauth/client.json',redirectUri:'https://chatgpt.com/connector_platform_oauth_redirect',clientName:'ChatGPT evidence'};
 const configuration=googleAuthConfiguration({STUDIO_FIREBASE_PROJECT_ID:'test-studio-project',STUDIO_FIREBASE_API_KEY:'public-key',STUDIO_FIREBASE_AUTH_DOMAIN:'test-studio-project.firebaseapp.com',STUDIO_FIREBASE_APP_ID:'public-app',STUDIO_GOOGLE_FOUNDER_EMAIL:'founder@example.com',STUDIO_GOOGLE_MARKETER_EMAIL:'marketer@example.com'});
 async function fixture(t,clients=[publicClient]){
@@ -41,9 +43,9 @@ test('real engine HTTP consent and actual SDK discover17tools/read pinned eviden
 });
 test('normal Node HTTP adapter enforces host, origin, body ceiling and OAuth challenge before data',async t=>{
  const f=await fixture(t);const server=createServer((req,res)=>{void f.remote.handle(req,res);});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));const base='http://127.0.0.1:'+server.address().port;
- const denied=await fetch(base+'/mcp/defiant-evidence',{headers:{Host:'studio.chaiwithjai.com'}});assert.equal(denied.status,401);assert.match(denied.headers.get('www-authenticate'),/oauth-protected-resource/);assert.equal(f.loads(),0);
- assert.equal((await fetch(base+'/.well-known/oauth-authorization-server/oauth/defiant-evidence',{headers:{Host:'wrong.invalid'}})).status,403);
- assert.equal((await fetch(base+'/oauth/defiant-evidence/token',{method:'POST',headers:{Host:'studio.chaiwithjai.com','content-type':'application/x-www-form-urlencoded'},body:'a'.repeat(65537)})).status,413);
+ const denied=await wireFetch(base+'/mcp/defiant-evidence',{headers:{Host:'studio.chaiwithjai.com'}});assert.equal(denied.status,401);assert.match(denied.headers.get('www-authenticate'),/oauth-protected-resource/);assert.equal(f.loads(),0);
+ assert.equal((await wireFetch(base+'/.well-known/oauth-authorization-server/oauth/defiant-evidence',{headers:{Host:'wrong.invalid'}})).status,403);
+ assert.equal((await wireFetch(base+'/oauth/defiant-evidence/token',{method:'POST',headers:{Host:'studio.chaiwithjai.com','content-type':'application/x-www-form-urlencoded'},body:'a'.repeat(65537)})).status,413);
  assert.equal((await f.request('/api/studio/remote-evidence/constructor',{method:'POST',headers:{'content-type':'application/json'},body:'{}'})).status,404);
 });
 
@@ -55,7 +57,7 @@ test('slow response body deadline cancels its reader and never returns partial e
 test('built lazy remote module is defaultOFF and metadata bootstrap needs no fake registered client',async t=>{
  const {createHttpServer}=await import('./index.js');const store=new DurableStore(':memory:');const platform=createPlatform({store,authMode:'password'});await platform.ready;let reads=0;
  const server=createHttpServer(null,{platform,enableRemoteEvidence:false,defiantEvidenceProvider:async()=>{reads++;throw Error('Provider must not run');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(async()=>{await new Promise(r=>server.close(r));store.close();});const base='http://127.0.0.1:'+server.address().port;
- assert.equal((await(await fetch(base+'/api/auth/config')).json()).remoteEvidenceEnabled,false);assert.equal((await fetch(base+'/.well-known/oauth-protected-resource/mcp/defiant-evidence')).status,404);assert.equal((await fetch(base+'/mcp/defiant-evidence')).status,404);assert.equal(reads,0);
+ assert.equal((await(await wireFetch(base+'/api/auth/config')).json()).remoteEvidenceEnabled,false);assert.equal((await wireFetch(base+'/.well-known/oauth-protected-resource/mcp/defiant-evidence')).status,404);assert.equal((await wireFetch(base+'/mcp/defiant-evidence')).status,404);assert.equal(reads,0);
  assert.throws(()=>createHttpServer(null,{platform,enableRemoteEvidence:true,defiantEvidenceProvider:async()=>{reads++;}}),/managed Google/);
 });
 
@@ -66,6 +68,6 @@ test('OAuth engine dependencies and UI consent never make general Studio bearer 
 });
 
 test('enabled index imports built remote closure and discovers empty-client OAuth without evidence reads',async t=>{
- const {createHttpServer}=await import('./index.js');const f=await fixture(t,[]);let reads=0;const enabled=createHttpServer(null,{platform:f.platform,enableRemoteEvidence:true,remoteEvidenceClients:[],remoteEvidenceHosts:['studio.chaiwithjai.com'],defiantEvidenceProvider:async()=>{reads++;throw Error('No evidence read for metadata');}});await new Promise(r=>enabled.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>enabled.close(r)));const base='http://127.0.0.1:'+enabled.address().port;const get=path=>fetch(base+path,{headers:{Host:'studio.chaiwithjai.com'}});
+ const {createHttpServer}=await import('./index.js');const f=await fixture(t,[]);let reads=0;const enabled=createHttpServer(null,{platform:f.platform,enableRemoteEvidence:true,remoteEvidenceClients:[],remoteEvidenceHosts:['studio.chaiwithjai.com'],defiantEvidenceProvider:async()=>{reads++;throw Error('No evidence read for metadata');}});await new Promise(r=>enabled.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>enabled.close(r)));const base='http://127.0.0.1:'+enabled.address().port;const get=path=>wireFetch(base+path,{headers:{Host:'studio.chaiwithjai.com'}});
  assert.equal((await(await get('/api/auth/config')).json()).remoteEvidenceEnabled,true);const metadata=await(await get('/.well-known/oauth-protected-resource/mcp/defiant-evidence')).json();assert.deepEqual(metadata.scopes_supported,['evidence:read']);assert.deepEqual(metadata.authorization_servers,[EVIDENCE_ISSUER]);const discovery=await get('/.well-known/oauth-authorization-server/oauth/defiant-evidence');assert.equal(discovery.status,200);assert.equal((await discovery.json()).issuer,EVIDENCE_ISSUER);assert.equal((await get('/oauth/defiant-evidence/authorize?client_id='+encodeURIComponent(publicClient.clientId))).status,400);assert.equal(reads,0);assert.equal(f.loads(),0);
 });
