@@ -1,6 +1,6 @@
 # Shared evidence-review decision card — next implementation delta
 
-Status: authorized next slice under the existing medallion decision spec and owner gold requirements. Planning only; no source change, new PR, CI, publication or adoption. Keep PR349 and its combined release frozen. Parallel source preparation in a separate worktree is authorized. No push, CI or new release until that release is accepted; no additional planning approval is required.
+Status: implemented in PR350 under the existing medallion decision spec and owner gold requirements, based on accepted PR349. Hosted verification is pending. Runtime and native-host acceptance of this decision card remain pending; implementation does not establish commercial readiness.
 
 ## Problem and outcome
 

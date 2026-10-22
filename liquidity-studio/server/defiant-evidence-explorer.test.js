@@ -35,7 +35,7 @@ test('repeated root load retries and unexpected errors are redacted',async()=>{
  await h.controller.load();await h.controller.load();assert.equal(calls,2);assert.ok(!h.states.at(-1).error.includes('secret'));
 });
 test('location rejects arbitrary identifiers and unbounded offsets',()=>{
- assert.deepEqual(evidenceLocation({evidenceMode:'unknown',evidenceGroupId:'../secret',evidenceRevision:'bad',evidenceOffset:500001}),{mode:'earnings',revision:'',groupId:'',selectionId:'',receiptId:'',comparisonId:'',comparisonGroupId:'',audienceId:'',referenceIndex:null,showAudienceCells:false,offset:0});
+ assert.deepEqual(evidenceLocation({evidenceMode:'unknown',evidenceGroupId:'../secret',evidenceRevision:'bad',evidenceOffset:500001}),{showJuneReview:false,mode:'earnings',revision:'',groupId:'',selectionId:'',receiptId:'',comparisonId:'',comparisonGroupId:'',audienceId:'',referenceIndex:null,showAudienceCells:false,offset:0});
 });
 import {readStrategyLocation,writeStrategyLocation} from '../src/lib/defiant-location.js';
 test('evidence URL round trips identifiers and revision without retaining source cells',()=>{
