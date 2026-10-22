@@ -1,3 +1,4 @@
+import {createLocalEvidenceHttp} from './defiant-local-evidence-http.js';
 import {configuredDefiantEvidenceProvider} from './defiant-evidence-runtime.js';
 import {createDefiantEvidenceService} from './defiant-evidence.js';
 import {defiantEvidenceRequest} from './defiant-evidence-http.js';
@@ -210,6 +211,7 @@ export function createHttpServer(
     trustedTestMode = false,
     defiantDatasetProvider = null,
     defiantEvidenceProvider = null,
+    enableLocalEvidenceGrants = process.env.STUDIO_LOCAL_EVIDENCE_GRANTS_ENABLED === "true",
     enableDefiantSyntheticDemo = false,
     defiantSyntheticDemoOrigins = [],
     portableBodyTimeoutMs = 15000,
@@ -249,6 +251,9 @@ export function createHttpServer(
   const storyDesigns=managedPenpotStoryDesigns||developmentPenpotStoryDesigns;
   if(typeof enableDefiantSyntheticDemo!=='boolean'||!Array.isArray(defiantSyntheticDemoOrigins)||defiantSyntheticDemoOrigins.length>4||(enableDefiantSyntheticDemo&&!defiantSyntheticDemoOrigins.length))throw new TypeError('Invalid public fictional demo configuration');
   for(const origin of defiantSyntheticDemoOrigins){const url=new URL(origin);if(url.origin!==origin||url.protocol!=='https:'||url.username||url.password)throw new TypeError('Exact HTTPS fictional demo origins required');}
+  if(typeof enableLocalEvidenceGrants!=='boolean')throw Error('Local evidence feature must be boolean');
+  if(enableLocalEvidenceGrants&&(trustedTestMode||!defiantEvidenceProvider||platform?.identity?.mode!=='google'))throw Error('Local evidence grants require private evidence and managed Google identity');
+  const localEvidence=enableLocalEvidenceGrants?createLocalEvidenceHttp({platform}):null;
   let syntheticDemo;
   const loadSyntheticDemo=()=>syntheticDemo??=import(new URL('../dist/mcp/defiant-demo-server.mjs',import.meta.url).href).then(module=>module.createDefiantSyntheticDemo({enabled:true,publicOrigins:defiantSyntheticDemoOrigins}));
   // One bounded portable operation per server, including response serialization/backpressure.
@@ -643,9 +648,19 @@ export function createHttpServer(
           200,
           {...(identity?.publicConfiguration?.() || { mode: "password" }), ...(storyDesigns?.penpotEmbedding ? {penpotEmbedding:storyDesigns.penpotEmbedding} : {})},
         );
+      const bearer=token(req,identity.mode);
+      if(route.startsWith('/api/studio/local-evidence/')){
+        if(!localEvidence)throw fail(404,'Local evidence authorization unavailable');
+        if(req.method!=='POST')throw fail(405,'Local evidence pairing requires POST');
+        if(url.search)throw fail(400,'Invalid local evidence request');
+        const body=await readBody(req,4096,5000);
+        return json(200,await localEvidence.request({route,method:req.method,body,bearer}));
+      }
+      const evidenceScope=/^\/api\/studio\/defiant-evidence\/([A-Za-z0-9_-]{1,128})\/[a-z-]+$/.exec(route)?.[1];
+      const delegated=Boolean(localEvidence&&evidenceScope&&req.method==='GET'&&bearer?.startsWith('ea.'));
       let user = trustedTestMode
         ? { id: "test", username: "test", role: "founder" }
-        : await identity.authenticate(token(req, identity.mode));
+        : delegated ? await localEvidence.authorize(bearer,evidenceScope) : await identity.authenticate(token(req, identity.mode));
       const session = async () => {
         const organizations = await strategyOrganizations({store:platform.store,identity,actor:user,organizations:await identity.organizations(user)});
         return {
@@ -787,7 +802,7 @@ export function createHttpServer(
         let binding;
         try{binding=await defiantEvidenceProvider({organizationId,actor:user});}catch{throw fail(503,"Evidence provider unavailable");}
         if(!binding||typeof binding.loadSnapshot!=='function')throw fail(404,"Evidence unavailable for this organization");
-        const service=createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,loadSourceRecords:binding.loadSourceRecords,loadWorksheetCells:binding.loadWorksheetCells,authorize:async actor=>{await strategy.raw(actor);return true;}});
+        const service=createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,loadSourceRecords:binding.loadSourceRecords,loadWorksheetCells:binding.loadWorksheetCells,authorize:async actor=>{if(delegated)await localEvidence.authorize(bearer,organizationId);await strategy.raw(actor);return true;}});
         return json(200,await defiantEvidenceRequest({service,user,route,method:req.method,url}));
       }
       if(route.startsWith("/api/studio/defiant-data/")) {

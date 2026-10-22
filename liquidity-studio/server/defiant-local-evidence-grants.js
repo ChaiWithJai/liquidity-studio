@@ -22,6 +22,13 @@ export function createLocalEvidenceGrants({store,approveActor,authorizeDelegate,
    await store.update(KEY,old=>{const s=state(old),window=Math.floor(now()/60000),starts=s.window===window?s.starts:0;if(s.pairs.length>=128||starts>=30)throw denied();return {...s,window,starts:starts+1,pairs:[...s.pairs,{id:pairingId,organizationId,verifierHash,clientName,expiresAt,attempts:0}]};});
    return {pairingId,expiresAt,organizationId,clientName};
   },
+  async inspect(actor,pairingId,organizationId){
+   if(!scope(organizationId)||typeof pairingId!=='string'||!/^[a-f0-9]{32}$/.test(pairingId))throw denied();
+   let subject;try{subject=await approveActor(actor,organizationId);}catch{throw denied();}
+   if(!scope(subject?.userId)||typeof subject.uid!=='string'||!subject.uid)throw denied();
+   const p=state(await store.get(KEY)).pairs.find(p=>p.id===pairingId);if(!p||p.organizationId!==organizationId||p.attempts>=5)throw denied();
+   return {pairingId:p.id,organizationId:p.organizationId,clientName:p.clientName,expiresAt:p.expiresAt,approved:Boolean(p.subject),scope:'evidence:read',maximumGrantLifetimeMs:28800000};
+  },
   async approve(actor,pairingId,organizationId){
    if(!scope(organizationId)||typeof pairingId!=='string'||!/^[a-f0-9]{32}$/.test(pairingId))throw denied();
    let subject;try{subject=await approveActor(actor,organizationId);}catch{throw denied();}
