@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash,randomBytes} from 'node:crypto';
 import {DurableStore} from './storage.js';
-import {createEvidenceOAuth,EVIDENCE_RESOURCE,EVIDENCE_ISSUER,authorizationCookie,selectCimdAuthentication} from './defiant-evidence-oauth.js';
+import {createEvidenceOAuth,EVIDENCE_RESOURCE,EVIDENCE_ISSUER,authorizationCookie,selectCimdAuthentication,oauthHostConfiguration} from './defiant-evidence-oauth.js';
 import {createEvidenceOAuthEngine} from './defiant-evidence-oauth-engine.js';
 import {createCimdInspector} from './defiant-evidence-oauth-client.js';
 const client={clientId:'https://chatgpt.com/oauth/client.json',redirectUri:'https://chatgpt.com/connector_platform_oauth_redirect',clientName:'ChatGPT evidence'};
@@ -76,4 +76,9 @@ test('CIMD slow response deadline aborts its finite fetch',async t=>{
 
 test('invalid short PKCE verifier is consumed by actual patched engine, not retried against same code',async t=>{
  const f=await fixture(t),p=await f.code();await assert.rejects(f.oauth.token({grant_type:'authorization_code',client_id:client.clientId,resource:EVIDENCE_RESOURCE,code:p.authorizationCode,redirect_uri:client.redirectUri,code_verifier:'x'}));await assert.rejects(f.exchange(p));
+});
+
+test('deployment host configuration is bounded exact existing-service metadata, never forwarded authority',()=>{
+ const tag='evidence-oauth-candidate---liquidity-studio-x4fdad2sga-uk.a.run.app';assert.deepEqual(oauthHostConfiguration(JSON.stringify(['studio.chaiwithjai.com',tag])),['studio.chaiwithjai.com','liquidity-studio-x4fdad2sga-uk.a.run.app',tag]);
+ for(const value of [[tag],['studio.chaiwithjai.com',tag,tag],['studio.chaiwithjai.com','evil.example'],['studio.chaiwithjai.com',tag+':443'],['studio.chaiwithjai.com',tag+'/'],['studio.chaiwithjai.com','*.a.run.app'],['studio.chaiwithjai.com','x---another-service.a.run.app'],'x'.repeat(1025)])assert.throws(()=>oauthHostConfiguration(value));
 });

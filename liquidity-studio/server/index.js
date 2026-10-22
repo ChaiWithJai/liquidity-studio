@@ -1,4 +1,4 @@
-import {oauthClientConfiguration} from './defiant-evidence-oauth.js';
+import {oauthClientConfiguration,oauthHostConfiguration} from './defiant-evidence-oauth.js';
 import {createLocalEvidenceHttp} from './defiant-local-evidence-http.js';
 import {configuredDefiantEvidenceProvider} from './defiant-evidence-runtime.js';
 import {createDefiantEvidenceService} from './defiant-evidence.js';
@@ -261,8 +261,7 @@ export function createHttpServer(
   if(typeof enableRemoteEvidence!=='boolean')throw Error('Remote evidence feature must be boolean');
   if(enableRemoteEvidence&&(trustedTestMode||!defiantEvidenceProvider||platform?.identity?.mode!=='google'))throw Error('Remote evidence requires private evidence and managed Google identity');
   const remoteClients=enableRemoteEvidence?oauthClientConfiguration(remoteEvidenceClients??JSON.parse((()=>{const raw=process.env.STUDIO_DEFIANT_REMOTE_MCP_CLIENTS||'[]';if(raw.length>8192)throw Error('Invalid remote evidence client configuration');return raw;})())):[];
-  const remoteHosts=remoteEvidenceHosts??['studio.chaiwithjai.com','liquidity-studio-x4fdad2sga-uk.a.run.app'];
-  if(enableRemoteEvidence&&(!Array.isArray(remoteHosts)||remoteHosts.length<1||remoteHosts.length>4||remoteHosts.some(h=>typeof h!=='string'||!h||/[\s/:]/.test(h))))throw Error('Invalid remote evidence hosts');
+  const remoteHosts=enableRemoteEvidence?oauthHostConfiguration(remoteEvidenceHosts??process.env.STUDIO_DEFIANT_REMOTE_MCP_HOSTS):[];
   let remoteEvidence;
   const loadRemoteEvidence=()=>remoteEvidence??=import(new URL('../dist/mcp/defiant-evidence-remote.mjs',import.meta.url).href).then(module=>module.createRemoteEvidence({platform,provider:defiantEvidenceProvider,authorizeEvidence:async(actor,organizationId)=>{await new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId}).raw(actor);},clients:remoteClients,allowedHosts:remoteHosts}));
   let syntheticDemo;

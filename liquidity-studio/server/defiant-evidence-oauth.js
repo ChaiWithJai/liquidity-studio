@@ -11,6 +11,12 @@ const error=(status,code)=>Object.assign(new Error(code),{status,oauthCode:code}
 const equal=(a,b)=>typeof a==='string'&&typeof b==='string'&&a.length===64&&b.length===64&&timingSafeEqual(Buffer.from(a),Buffer.from(b));
 const exact=(o,keys)=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).sort().join(',')===[...keys].sort().join(',');
 const reject=()=>{throw error(400,'invalid_request');};
+export function oauthHostConfiguration(input=['studio.chaiwithjai.com','liquidity-studio-x4fdad2sga-uk.a.run.app']){
+ if(typeof input==='string'){if(input.length>1024)throw TypeError('Invalid remote evidence hosts');try{input=JSON.parse(input);}catch{throw TypeError('Invalid remote evidence hosts');}}
+ const canonical='studio.chaiwithjai.com',run='liquidity-studio-x4fdad2sga-uk.a.run.app';
+ if(!Array.isArray(input)||input.length<1||input.length>4||!input.includes(canonical)||new Set(input).size!==input.length||input.some(h=>typeof h!=='string'||!(h===canonical||h===run||/^[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?---liquidity-studio-x4fdad2sga-uk\.a\.run\.app$/.test(h))))throw TypeError('Invalid remote evidence hosts');
+ const hosts=[...new Set([canonical,run,...input])];if(hosts.length>4)throw TypeError('Invalid remote evidence hosts');return Object.freeze(hosts);
+}
 export function oauthClientConfiguration(input=[]){
  if(!Array.isArray(input)||input.length>2)throw TypeError('Invalid configured OAuth clients');
  const seen=new Set();return input.map(c=>{
