@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {normalizeStorePeriodCoverage} from './defiant-store-period-coverage.js';
 import {createDefiantEvidenceService} from './defiant-evidence.js';
 import {defiantEvidenceRequest} from './defiant-evidence-http.js';
 import {createDefiantEvidenceMcpHandler} from './defiant-evidence-mcp.js';
@@ -32,4 +33,14 @@ test('HTTP and actual SDK return the same pinned product and deny alternate scop
  const client=new Client({name:'store-coverage-contract',version:'1.0.0'},{versionNegotiation:{mode:'auto'}});t.after(async()=>{await client.close();await handler.close();});await client.connect(new StreamableHTTPClientTransport(new URL('https://fixture.invalid/mcp'),{fetch:(url,init)=>handler.fetch(new Request(url,init))}));
  const result=await client.callTool({name:'defiant_store_period_coverage',arguments:{organizationId:'org',revision,storeCoverageId:'coverage_one'}});assert.deepEqual(result.structuredContent.product,http.product);
  assert.equal((await client.callTool({name:'defiant_store_period_coverage',arguments:{organizationId:'other',revision}})).isError,true);
+});
+
+test('maximum bounded store coverage list serializes below the bridge four MiB ceiling',()=>{
+ const before=Array.from({length:24},(_,i)=>`${2020+Math.floor(i/12)}-${String(i%12+1).padStart(2,'0')}`),after=Array.from({length:24},(_,i)=>`${2022+Math.floor(i/12)}-${String(i%12+1).padStart(2,'0')}`);
+ const months=[...before,...after],sourceHash='a'.repeat(64),storeKey='界'.repeat(500);
+ const comparisons=Array.from({length:100},(_,i)=>({id:'comparison_'+i,dimension:'store',sourceSystem:'界'.repeat(128),accountScope:'界'.repeat(128),currency:'USD',periodBasis:'filename-declared',beforeMonths:before,afterMonths:after,sourceReferences:months.map(month=>({month,sourceHash})),groups:[{id:'group_'+i,key:storeKey,beforeAmount:'24',afterAmount:'24'}]}));
+ const input=comparisons.map(c=>({schemaVersion:1,id:'coverage_'+c.id,comparisonId:c.id,storeKey,observations:months.map(month=>({month,sourceHash,rowCount:1,amount:'1',postingWindow:{first:'2025-07-01',last:'2025-07-31'}}))}));
+ const products=normalizeStorePeriodCoverage(input,comparisons);assert.equal(products.length,100);assert.equal(products[0].observations.length,48);assert.equal(products[0].mutuallyObserved.pairingBasis,'positional-in-declared-comparison-lists');
+ const response={schemaVersion:1,scope:{organizationId:'o'.repeat(128)},revision:'b'.repeat(64),coverage:'界'.repeat(2000),items:products,total:100,nextOffset:null};
+ assert.ok(Buffer.byteLength(JSON.stringify(response),'utf8')<=4*1024*1024);
 });

@@ -27,7 +27,7 @@ export function normalizeStorePeriodCoverage(input,comparisons=[]){
   const matchedBefore=sum(pairs.map(p=>p.beforeMonth)),matchedAfter=sum(pairs.map(p=>p.afterMonth));
   return {schemaVersion:1,id:row.id,comparisonId:comparison.id,groupId:group.id,storeKey:row.storeKey,sourceSystem:comparison.sourceSystem,accountScope:comparison.accountScope,currency:comparison.currency,periodBasis:comparison.periodBasis,observations,
    allPeriod:{beforeMonths:comparison.beforeMonths,afterMonths:comparison.afterMonths,beforeAmount:amount(before),afterAmount:amount(after),delta:amount(after-before),basis:'sum-of-observed-supplied-amounts-not-zero-activity-imputation'},
-   mutuallyObserved:{pairs,beforeAmount:pairs.length?amount(matchedBefore):null,afterAmount:pairs.length?amount(matchedAfter):null,delta:pairs.length?amount(matchedAfter-matchedBefore):null},
+   mutuallyObserved:{pairingBasis:'positional-in-declared-comparison-lists',pairs,beforeAmount:pairs.length?amount(matchedBefore):null,afterAmount:pairs.length?amount(matchedAfter):null,delta:pairs.length?amount(matchedAfter-matchedBefore):null},
    citation:{comparisonId:comparison.id,groupId:group.id},expectedDelivery:'unknown',settlementMaturityComparable:false,
    limitation:'Absence means no observation in the supplied grouping, not zero listening or missing provider delivery. Posting windows describe the whole source file, not this store, including when the store observation is absent. Mutually observed periods can still differ in posting and settlement maturity. Exact supplied-amount arithmetic, not causal demand analysis.',
    missingCommercialInputs:['Current comparable demand or buyer transactions','Verified relevant identities','Offer economics','Current action authority']};
