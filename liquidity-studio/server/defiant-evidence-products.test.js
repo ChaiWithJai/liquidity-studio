@@ -62,3 +62,37 @@ test('before periods must precede after periods, not merely be disjoint',async()
  const reversed=fixture();reversed.comparisons[0].beforeMonths=['2025-01'];reversed.comparisons[0].afterMonths=['2024-01'];await assert.rejects(service(reversed).read('actor'),{status:503});
  const interleaved=fixture();interleaved.comparisons[0].beforeMonths=['2024-01','2025-01'];interleaved.comparisons[0].afterMonths=['2024-02','2025-02'];await assert.rejects(service(interleaved).read('actor'),{status:503});
 });
+test('actual SDK discovers and consumes comparison and audience detail with revision and scope denials',async t=>{
+ const {Client,StreamableHTTPClientTransport}=await import('@modelcontextprotocol/client');
+ const {createDefiantEvidenceMcpHandler}=await import('./defiant-evidence-mcp.js');
+ let allowed=true;let loads=0;
+ const svc=service(fixture(),{authorize:actor=>allowed&&actor==='verified-actor',loadSnapshot:async()=>{loads++;return fixture();}});
+ const handler=createDefiantEvidenceMcpHandler({resolveEvidence:async({organizationId,requestContext})=>{
+  if(organizationId!=='org'||requestContext.authInfo?.clientId!=='fixture-client')throw Object.assign(new Error('Denied'),{status:403});
+  return {organizationId,actor:'verified-actor',service:svc};
+ }});
+ const client=new Client({name:'evidence-products-contract',version:'1.0.0'},{versionNegotiation:{mode:'auto'}});
+ const transport=new StreamableHTTPClientTransport(new URL('https://fixture.invalid/mcp'),{fetch:(url,init)=>handler.fetch(new Request(url,init),{authInfo:{token:'invented-only',clientId:'fixture-client',scopes:['evidence:read']}})});
+ t.after(async()=>{await client.close();await handler.close();});
+ await client.connect(transport);
+ const tools=(await client.listTools()).tools;
+ for(const name of ['defiant_explain_change','defiant_inspect_audience_definition']){
+  const tool=tools.find(row=>row.name===name);assert.ok(tool);assert.equal(tool.annotations.readOnlyHint,true);
+ }
+ const call=(name,args={})=>client.callTool({name,arguments:{organizationId:'org',...args}});
+ const manifest=(await call('defiant_evidence_manifest')).structuredContent;
+ const comparisons=(await call('defiant_list_change_comparisons',{revision:manifest.revision})).structuredContent;
+ const first=(await call('defiant_explain_change',{comparisonId:comparisons.items[0].id,revision:manifest.revision,limit:1})).structuredContent;
+ assert.equal(first.comparison.summary.delta,'-1.999999999999');assert.equal(first.groups[0].id,'down');assert.equal(first.nextOffset,1);
+ assert.deepEqual(first.groups[0].sourceReferences[0],{side:'before',month:'2024-01',sourceHash:hash,exampleRecords:[2,4]});
+ const last=(await call('defiant_explain_change',{comparisonId:comparisons.items[0].id,revision:manifest.revision,offset:first.nextOffset,limit:1})).structuredContent;
+ assert.equal(last.groups[0].id,'up');assert.equal(last.nextOffset,null);assert.equal(last.revision,first.revision);
+ const audiences=(await call('defiant_audience_readiness',{revision:manifest.revision})).structuredContent;
+ const audience=(await call('defiant_inspect_audience_definition',{audienceId:audiences.items[0].id,revision:manifest.revision})).structuredContent;
+ assert.deepEqual(audience.definition.missingEvidence,['channel-consent']);assert.deepEqual(audience.definition.cellRefs,['A2','B2']);assert.equal(audience.definition.activationAuthorized,false);assert.equal(audience.revision,first.revision);
+ for(const args of [{comparisonId:'annual',revision:other},{comparisonId:'annual',revision:manifest.revision,organizationId:'different'}]){
+  const denied=await call('defiant_explain_change',args);assert.equal(denied.isError,true);assert.equal(denied.structuredContent,undefined);
+ }
+ const before=loads;allowed=false;
+ const revoked=await call('defiant_inspect_audience_definition',{audienceId:'returning',revision:manifest.revision});assert.equal(revoked.isError,true);assert.equal(revoked.structuredContent,undefined);assert.equal(loads,before);
+});
