@@ -58,6 +58,9 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
  register('defiant_read_audience_cells', 'Read source worksheet cells behind one supplied audience definition. Analyst evidence assessments are separate; no formula execution or activation.', {
   revision, audienceId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'audience-cells');
+ register('defiant_june_factual_review', 'Inspect a qualified June2025 factual review packet for one source-local selection, with exact lineage and purpose-specific missing evidence. No commercial recommendation or model inference.', {
+  revision, selectionId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset:z.number().int().min(0).max(500000).optional(), limit:z.number().int().min(1).max(100).optional()
+ }, 'june-review');
  register('defiant_show_receipt', 'Return exact source cells and a logical CSV record locator at the requested revision. One example record does not establish an entire aggregate.', {
   revision, receiptId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'receipt');
