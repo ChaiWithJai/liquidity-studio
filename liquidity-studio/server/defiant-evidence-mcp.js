@@ -40,6 +40,18 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
  register('defiant_inspect_identity_group', 'Inspect source-system/account identities, observed releases and receipt-selection references at one revision. Missing IDs remain explicit; equivalence is unreviewed.', {
   revision, identityGroupId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset: z.number().int().min(0).max(2000).optional(), limit: z.number().int().min(1).max(100).optional()
  }, 'identity-group');
+ register('defiant_list_change_comparisons', 'List curated equal-period earnings comparisons with declared source scope and hashes. Arithmetic only; no causal attribution.', {
+  revision:revision.optional(), offset:z.number().int().min(0).max(100).optional(), limit:z.number().int().min(1).max(100).optional()
+ }, 'comparisons');
+ register('defiant_explain_change', 'Page exact signed contributions for one comparison at a pinned revision. Example record references are not complete receipts or causal evidence.', {
+  revision, comparisonId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/), offset:z.number().int().min(0).max(10000).optional(), limit:z.number().int().min(1).max(100).optional()
+ }, 'explain-change');
+ register('defiant_audience_readiness', 'Read supplied audience definitions and missing evidence. Does not compute populations, verify consent or authorize activation.', {
+  revision:revision.optional(), offset:z.number().int().min(0).max(200).optional(), limit:z.number().int().min(1).max(100).optional()
+ }, 'audience-readiness');
+ register('defiant_inspect_audience_definition', 'Inspect one source-attributed segment rule and worksheet cell references at a pinned revision. Proposed offers remain unapproved.', {
+  revision, audienceId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
+ }, 'audience-definition');
  register('defiant_show_receipt', 'Return exact source cells and a logical CSV record locator at the requested revision. One example record does not establish an entire aggregate.', {
   revision, receiptId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/)
  }, 'receipt');

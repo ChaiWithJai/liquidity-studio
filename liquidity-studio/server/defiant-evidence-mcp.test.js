@@ -18,7 +18,7 @@ test('SDK journey reads earnings and exact receipt; stale, revoked and cross-sco
  const client = new Client({name: 'evidence-contract', version: '1.0.0'}, {versionNegotiation: {mode: 'auto'}});
  t.after(async () => {await client.close(); await handler.close();});
  await client.connect(transport);
- assert.deepEqual((await client.listTools()).tools.map(x => x.name).sort(), ['defiant_catalog_earnings','defiant_catalog_identity_review','defiant_evidence_manifest','defiant_inspect_evidence_selection','defiant_inspect_identity_group','defiant_list_evidence_selections','defiant_read_selection_receipts','defiant_show_receipt']);
+ assert.deepEqual((await client.listTools()).tools.map(x => x.name).sort(), ['defiant_audience_readiness','defiant_catalog_earnings','defiant_catalog_identity_review','defiant_evidence_manifest','defiant_explain_change','defiant_inspect_audience_definition','defiant_inspect_evidence_selection','defiant_inspect_identity_group','defiant_list_change_comparisons','defiant_list_evidence_selections','defiant_read_selection_receipts','defiant_show_receipt']);
  const call = (name, args = {}) => client.callTool({name, arguments: {organizationId: 'sample_org', ...args}});
  const manifest = (await call('defiant_evidence_manifest')).structuredContent;
  assert.deepEqual(manifest.counts, {months: 1, receipts: 1, selections: 1, identityGroups: 1});
@@ -44,6 +44,14 @@ test('SDK journey reads earnings and exact receipt; stale, revoked and cross-sco
  const identity = (await call('defiant_inspect_identity_group', {identityGroupId: identities.items[0].id, revision: manifest.revision})).structuredContent;
  assert.equal(identity.members[0].sourceId, '001'); assert.deepEqual(identity.members[0].selectionIds, ['group_a']); assert.equal(identity.revision, cells.revision);
  assert.equal((await call('defiant_inspect_identity_group', {identityGroupId: 'identity_a', revision:'b'.repeat(64)})).isError, true);
+ const comparisons = (await call('defiant_list_change_comparisons', {revision:manifest.revision})).structuredContent;
+ assert.equal(comparisons.total, 0);
+ const audiences = (await call('defiant_audience_readiness', {revision:manifest.revision})).structuredContent;
+ assert.equal(audiences.total, 0);
+ for (const [name,args] of [['defiant_explain_change',{comparisonId:'missing'}],['defiant_inspect_audience_definition',{audienceId:'missing'}]]) {
+  const unavailable=await call(name,{...args,revision:manifest.revision});
+  assert.equal(unavailable.isError,true); assert.match(unavailable.content[0].text,/404/);
+ }
  const before = loads; allowed = false;
  assert.equal((await call('defiant_catalog_earnings')).isError, true);
  assert.equal(loads, before);
