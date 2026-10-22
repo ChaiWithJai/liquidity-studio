@@ -28304,21 +28304,26 @@ var DEFAULT_MAX_REQUEST_BODY_SIZE = 4 * 1024 * 1024;
 var organizationId = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 var revision = external_exports.string().regex(/^[a-f0-9]{64}$/);
 var annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
-function registerDefiantEvidenceTools(server, { resolveEvidence } = {}) {
+function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedChallenge, boundOrganizationId } = {}) {
   if (typeof resolveEvidence !== "function") throw new TypeError("Verified evidence resolver required");
+  if (unauthorizedChallenge !== void 0 && (typeof unauthorizedChallenge !== "string" || unauthorizedChallenge.length > 1024 || /[\r\n]/.test(unauthorizedChallenge))) throw new TypeError("Invalid evidence auth challenge");
+  if (boundOrganizationId !== void 0 && !/^[A-Za-z0-9_-]{1,128}$/.test(boundOrganizationId)) throw new TypeError("Invalid bound evidence organization");
   const register2 = (name, description, shape, resource) => server.registerTool(name, {
     description,
     annotations,
-    inputSchema: external_exports.object({ organizationId, ...shape }).strict()
+    inputSchema: external_exports.object({ organizationId: boundOrganizationId === void 0 ? organizationId : organizationId.optional(), ...shape }).strict()
   }, async (input, context) => {
     try {
-      const { organizationId: requestedScope, ...request } = input;
+      const { organizationId: suppliedScope, ...request } = input;
+      const requestedScope = suppliedScope ?? boundOrganizationId;
+      if (boundOrganizationId !== void 0 && requestedScope !== boundOrganizationId) throw Object.assign(new Error("Denied"), { status: 403 });
       const binding = await resolveEvidence({ organizationId: requestedScope, context });
       if (!binding?.actor || binding.organizationId !== requestedScope || typeof binding.service?.read !== "function") throw Object.assign(new Error("Denied"), { status: 403 });
       const data = await binding.service.read(binding.actor, { ...request, resource });
       if (data?.scope?.organizationId !== requestedScope) throw Object.assign(new Error("Denied"), { status: 403 });
       return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: data };
     } catch (error46) {
+      if (error46?.status === 401 && unauthorizedChallenge) return { isError: true, content: [{ type: "text", text: "Evidence authorization required." }], _meta: { "mcp/www_authenticate": [unauthorizedChallenge] } };
       const status = [400, 401, 403, 404, 409, 503].includes(error46?.status) ? error46.status : 503;
       return { isError: true, content: [{ type: "text", text: `Evidence request unavailable (${status}).` }] };
     }

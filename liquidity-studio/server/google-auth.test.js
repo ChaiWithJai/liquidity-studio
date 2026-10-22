@@ -149,6 +149,7 @@ test("Google HTTP is bearer only, config is public, password login disabled and 
   const headers = { Authorization: "Bearer test-accepted-token" };
   assert.deepEqual(await (await fetch(base + "/api/auth/config")).json(), {
     mode: "google",
+    remoteEvidenceEnabled: false,
     firebase: configuration.firebase,
   });
   assert.equal(calls, 0);

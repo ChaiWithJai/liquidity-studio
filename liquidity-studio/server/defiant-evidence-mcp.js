@@ -4,19 +4,24 @@ const organizationId = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 const revision = z.string().regex(/^[a-f0-9]{64}$/);
 const annotations = {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false};
 /** Private evidence protocol only. The host verifies credentials and current membership. */
-export function registerDefiantEvidenceTools(server, {resolveEvidence} = {}) {
+export function registerDefiantEvidenceTools(server, {resolveEvidence, unauthorizedChallenge, boundOrganizationId} = {}) {
  if (typeof resolveEvidence !== 'function') throw new TypeError('Verified evidence resolver required');
+ if(unauthorizedChallenge!==undefined&&(typeof unauthorizedChallenge!=='string'||unauthorizedChallenge.length>1024||/[\r\n]/.test(unauthorizedChallenge)))throw new TypeError('Invalid evidence auth challenge');
+ if(boundOrganizationId!==undefined&&!/^[A-Za-z0-9_-]{1,128}$/.test(boundOrganizationId))throw new TypeError('Invalid bound evidence organization');
  const register = (name, description, shape, resource) => server.registerTool(name, {
-  description, annotations, inputSchema: z.object({organizationId, ...shape}).strict()
+  description, annotations, inputSchema: z.object({organizationId:boundOrganizationId===undefined?organizationId:organizationId.optional(), ...shape}).strict()
  }, async (input, context) => {
   try {
-   const {organizationId: requestedScope, ...request} = input;
+   const {organizationId: suppliedScope, ...request} = input;
+   const requestedScope=suppliedScope??boundOrganizationId;
+   if(boundOrganizationId!==undefined&&requestedScope!==boundOrganizationId)throw Object.assign(new Error('Denied'),{status:403});
    const binding = await resolveEvidence({organizationId: requestedScope, context});
    if (!binding?.actor || binding.organizationId !== requestedScope || typeof binding.service?.read !== 'function') throw Object.assign(new Error('Denied'), {status: 403});
    const data = await binding.service.read(binding.actor, {...request, resource});
    if (data?.scope?.organizationId !== requestedScope) throw Object.assign(new Error('Denied'), {status: 403});
    return {content: [{type: 'text', text: JSON.stringify(data)}], structuredContent: data};
   } catch (error) {
+   if(error?.status===401&&unauthorizedChallenge)return {isError:true,content:[{type:'text',text:'Evidence authorization required.'}],_meta:{'mcp/www_authenticate':[unauthorizedChallenge]}};
    const status = [400,401,403,404,409,503].includes(error?.status) ? error.status : 503;
    return {isError: true, content: [{type: 'text', text: `Evidence request unavailable (${status}).`}]};
   }
