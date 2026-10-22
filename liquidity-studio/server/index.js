@@ -648,7 +648,7 @@ export function createHttpServer(
           200,
           {...(identity?.publicConfiguration?.() || { mode: "password" }), ...(storyDesigns?.penpotEmbedding ? {penpotEmbedding:storyDesigns.penpotEmbedding} : {})},
         );
-      const bearer=token(req,identity.mode);
+      const bearer=token(req,identity?.mode);
       if(route.startsWith('/api/studio/local-evidence/')){
         if(!localEvidence)throw fail(404,'Local evidence authorization unavailable');
         if(req.method!=='POST')throw fail(405,'Local evidence pairing requires POST');
