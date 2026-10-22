@@ -41,3 +41,41 @@ test('actual startup rejects malformed evidence configuration before every platf
   }
  }finally{for(const key of keys)if(prior[key]===undefined)delete process.env[key];else process.env[key]=prior[key];}
 });
+
+test('GCS config pin rejects ambiguous, malformed, oversized and non-derived input before ADC',async()=>{
+ let calls=0;
+ for(const environment of [
+  {STUDIO_DEFIANT_EVIDENCE_CONFIG:'/invented',STUDIO_DEFIANT_EVIDENCE_CONFIG_GCS:JSON.stringify(pin())},
+  ...['{}','x'.repeat(2049),JSON.stringify({...pin(),bytes:2097153}),JSON.stringify({...pin(),generation:'latest'}),JSON.stringify({...pin(),key:'https://private.invalid'})].map(value=>({STUDIO_DEFIANT_EVIDENCE_CONFIG_GCS:value}))
+ ])await assert.rejects(configuredDefiantEvidenceProvider({environment,createStorage:async()=>{calls++;}}),{message:'Invalid private evidence runtime configuration'});
+ assert.equal(calls,0);
+});
+function configStorage(bytes,{declaredBytes=bytes.length,digest=createHash('sha256').update(bytes).digest('hex'),streamFactory=()=>Readable.from([bytes])}={}){
+ const object={...pin('runtime-config'),bytes:declaredBytes,sha256:digest};let creations=0,reads=0,stream;
+ return {environment:{STUDIO_DEFIANT_EVIDENCE_CONFIG_GCS:JSON.stringify(object)},get creations(){return creations;},get reads(){return reads;},get stream(){return stream;},createStorage:async options=>{creations++;assert.deepEqual(options,{projectId:'liquidity-studio-pilot-261017'});return {bucket:name=>{assert.equal(name,'liquidity-studio-pilot-261017-liquidity-assets');return {file:(key,options)=>{assert.equal(key,object.key);assert.deepEqual(options,{generation:'12'});return {createReadStream:options=>{reads++;assert.deepEqual(options,{validation:'crc32c',decompress:false});return stream=streamFactory();}};}};}};}};
+}
+test('GCS config reads exact generation and reuses Storage; returned binding stays organization-scoped',async()=>{
+ const f=configStorage(Buffer.from(JSON.stringify(fixture())));const provider=await configuredDefiantEvidenceProvider(f);
+ assert.equal(f.creations,1);assert.equal(f.reads,1);assert.equal(f.stream.destroyed,true);assert.equal(provider({organizationId:'other'}),null);assert.ok(provider({organizationId:'verified_fixture_org'}));assert.equal(f.reads,1);
+});
+test('GCS config corruption, UTF8, schema, oversize and transport failures are redacted and closed',async()=>{
+ const good=Buffer.from(JSON.stringify(fixture()));
+ for(const f of [configStorage(good,{digest:'0'.repeat(64)}),configStorage(good,{declaredBytes:good.length-1}),configStorage(good,{declaredBytes:good.length+1}),configStorage(Buffer.from([255])),configStorage(Buffer.from('{}')),configStorage(good,{streamFactory:()=>new Readable({read(){this.destroy(Error('private object details'));}})})]){
+  await assert.rejects(configuredDefiantEvidenceProvider(f),{message:'Invalid private evidence runtime configuration'});assert.equal(f.stream.destroyed,true);
+ }
+});
+test('GCS config deadline destroys a stalled stream and returns only the finite configuration error',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});let started;const ready=new Promise(resolve=>{started=resolve;});
+ const f=configStorage(Buffer.from('{}'),{streamFactory:()=>{const stream=new Readable({read(){}});started();return stream;}});
+ const pending=assert.rejects(configuredDefiantEvidenceProvider(f),{message:'Invalid private evidence runtime configuration'});
+ await ready;t.mock.timers.tick(15000);await pending;assert.equal(f.stream.destroyed,true);assert.equal(f.creations,1);
+});
+
+test('GCS config accepts bounded fragmented bytes but rejects excess empty chunks and nonbyte chunks',async()=>{
+ const bytes=Buffer.from(JSON.stringify(fixture()));
+ const fragmented=configStorage(bytes,{streamFactory:()=>Readable.from([...bytes].map(value=>new Uint8Array([value])))});
+ assert.ok(await configuredDefiantEvidenceProvider(fragmented));assert.equal(fragmented.stream.destroyed,true);
+ for(const streamFactory of [()=>Readable.from((function*(){for(let i=0;i<65537;i++)yield new Uint8Array(0);yield bytes;})()),()=>Readable.from(['private text chunk'])]){
+  const f=configStorage(bytes,{streamFactory});await assert.rejects(configuredDefiantEvidenceProvider(f),{message:'Invalid private evidence runtime configuration'});assert.equal(f.stream.destroyed,true);
+ }
+});
