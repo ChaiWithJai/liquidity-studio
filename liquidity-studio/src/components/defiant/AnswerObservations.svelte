@@ -1,6 +1,7 @@
 <script>
  import {onDestroy} from 'svelte';
  let {request,revision}=$props();
+ let revisionQuotes=$state([]);
  let observedAt=$state(''),hostLabel=$state(''),modelId=$state('');
  let open=$state(false),question=$state(''),answer=$state(''),rows=$state([{kind:'selection',reference:'',value:'',currency:'USD',quote:'',receiptId:'',cell:''}]),items=$state([]),detail=$state(null),comment=$state(''),error=$state(''),busy=$state(false),key=$state('');
  let alive=true,sequence=0;// Request controllers are non-rendered lifecycle handles, not reactive view state.
@@ -11,7 +12,8 @@
  async function show(id){const result=await run('/observations/'+id);if(result){detail=result;comment='';}}
  async function capture(){
   try{const assertions=rows.map(row=>{if(!row.quote||answer.indexOf(row.quote)!==answer.lastIndexOf(row.quote)||!answer.includes(row.quote))throw Error('Each quoted answer span must occur exactly once.');const start=Array.from(answer.slice(0,answer.indexOf(row.quote))).length;return {kind:row.kind,value:row.value,currency:row.currency,span:{start,end:start+Array.from(row.quote).length,text:row.quote},reference:row.kind==='selection'?{selectionId:row.reference}:{month:row.reference},receipt:row.receiptId?{receiptId:row.receiptId,cell:row.cell}:null};});
-   if(!key)key=crypto.randomUUID();const result=await run('/observations',{idempotencyKey:key,question,answer,revision,assertions,observedAt:observedAt||null,hostLabel:hostLabel||null,modelId:modelId||null});if(result){detail=result;key='';}
+   const revisionAssertions=revisionQuotes.map(quote=>{if(!quote||Array.from(quote).length>128||!answer.includes(quote)||answer.indexOf(quote)!==answer.lastIndexOf(quote))throw Error('Each revision quote must occur exactly once and contain at most 128 characters.');const start=Array.from(answer.slice(0,answer.indexOf(quote))).length;return {span:{start,end:start+Array.from(quote).length,text:quote}};});
+   if(!key)key=crypto.randomUUID();const result=await run('/observations',{idempotencyKey:key,question,answer,revision,assertions,...(revisionAssertions.length?{revisionAssertions}:{}),observedAt:observedAt||null,hostLabel:hostLabel||null,modelId:modelId||null});if(result){detail=result;key='';}
   }catch(e){error=e.message;}
  }
  async function correct(){const result=await run('/observations/'+detail.observation.observationId+'/correction',{comment});if(result)detail=result;}
@@ -36,6 +38,11 @@
  </fieldset>
  {/each}
  <button disabled={busy||rows.length>=5} onclick={()=>{rows=[...rows,{kind:'selection',reference:'',value:'',currency:'USD',quote:'',receiptId:'',cell:''}];edited();}}>Add assertion</button>
+ <p>Optional revision checks compare only your selected exact quotes with this captured evidence revision. Other answer citations and meaning remain unchecked.</p>
+ {#each revisionQuotes as quote,index (index)}
+ <fieldset disabled={busy}><legend>Revision assertion {index+1}</legend><label>Exact revision quote {index+1}<input bind:value={revisionQuotes[index]} oninput={edited}/></label><button onclick={()=>{revisionQuotes=revisionQuotes.filter((_,i)=>i!==index);edited();}}>Remove revision assertion {index+1}</button></fieldset>
+ {/each}
+ <button disabled={busy||revisionQuotes.length>=5} onclick={()=>{revisionQuotes=[...revisionQuotes,''];edited();}}>Add revision assertion</button>
  <button disabled={busy||!revision} onclick={capture}>Check and save observed answer</button>
  <button disabled={busy} onclick={list}>Refresh saved observations</button>
  <ul>{#each items as item (item.observationId)}<li><button disabled={busy} onclick={()=>show(item.observationId)}>{item.question} · {item.createdAt}</button></li>{/each}</ul>
@@ -43,6 +50,7 @@
  <article><h3>Saved observation</h3><p>{detail.observation.question}</p><pre>{detail.observation.answer}</pre><p>Revision <code>{detail.observation.evidenceRevision}</code> · User-supplied observation · Model execution unverified</p>
  <p>Attributed observed time: {detail.observation.attributedMetadata?.observedAt||'Unknown'} · Host: {detail.observation.attributedMetadata?.hostLabel||'Unknown'} · Model: {detail.observation.attributedMetadata?.modelId||'Unknown'}. These supplied values are not verified execution evidence.</p>
  {#each detail.observation.results as result,index (index)}<section><h4>{result.assertion.span.text}</h4><p>Amount: {result.amountCheck} · Currency: {result.currencyCheck} · Semantic support: unknown</p>{#if result.fact}<p>Source amount: {result.fact.amount} {result.fact.currency} · <code>{result.fact.sourceHash}</code></p>{/if}<p>Metric: {result.fact?.metric||'Unknown'}</p><p>{result.fact?.qualification||'No matching source fact'}</p><p>Period: {result.period||'Unknown'}</p>{#if result.receipt}<p>Curated receipt cell exists: {String(result.receipt.exists)} · Source matches fact: {String(result.receipt.sourceMatchesFact)}</p><p>{result.receipt.member} · record {result.receipt.record} · {result.receipt.cell}</p><p>{result.receipt.qualification}</p>{/if}<p>{result.limitation}</p></section>{/each}
+ {#each detail.observation.revisionResults||[] as result,index (index)}<section aria-label={'Saved revision assertion '+(index+1)}><h4>Revision text: {result.revisionCheck}</h4><p>Observed: <code>{result.span.text}</code></p><p>Expected captured revision: <code>{result.expectedRevision}</code></p><p>Only this exact selected text was checked. Other citations and semantic support remain unknown.</p></section>{/each}
  {#if detail.correction}<h4>Submitted reviewer correction</h4><p>{detail.correction.comment}</p><p>{detail.correction.actorId} · {detail.correction.createdAt}</p><p>{detail.correction.qualification}</p>{:else}<label>One attributed correction<textarea bind:value={comment} maxlength="2048" disabled={busy}></textarea></label><button disabled={busy||!comment} onclick={correct}>Save reviewer correction</button>{/if}</article>
  {/if}
  {/if}

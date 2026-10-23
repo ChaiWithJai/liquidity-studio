@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {DurableStore} from './storage.js';
 import {createPlatform} from './platform.js';
@@ -50,4 +51,27 @@ test('abort after persistence cannot promise rollback; same-key retry retrieves 
  const f=await fixture(t),controller=new AbortController(),transact=f.store.transact.bind(f.store);
  const delayed={get:key=>f.store.get(key),transact:async(keys,callback)=>{const committed=transact(keys,callback);controller.abort();await Promise.resolve();return committed;}};
  const service=createAnswerObservations({store:delayed,strategy:f.strategy,evidence:f.evidence,signal:controller.signal,authorizeCurrent:async a=>a});const original=await service.capture(f.actor,f.input);assert.deepEqual(await f.service.capture(f.actor,f.input),original);assert.equal((await f.service.list(f.actor)).items.length,1);
+});
+
+test('selected revision text checks malformed text without changing numeric results or original correction',async t=>{
+ const f=await fixture(t),input=structuredClone(f.input),wrong=input.revision+'ab';input.answer+=' 🧭 '+wrong+' | '+input.revision;
+ const span=text=>{const start=Array.from(input.answer.slice(0,input.answer.indexOf(text))).length;return {span:{start,end:start+Array.from(text).length,text}};};
+ input.revisionAssertions=[span(wrong),{span:{start:Array.from(input.answer).length-64,end:Array.from(input.answer).length,text:input.revision}}];
+ const saved=await f.service.capture(f.actor,input);assert.equal(saved.observation.results.length,1);assert.equal(saved.observation.results[0].amountCheck,'match');assert.deepEqual(saved.observation.revisionResults.map(x=>x.revisionCheck),['mismatch','match']);assert.equal(saved.observation.revisionResults[0].span.text.length,66);assert.equal(saved.observation.revisionResults[0].expectedRevision,input.revision);assert.equal(saved.observation.semanticSupport,'unknown');
+ const corrected=await f.service.correct(f.actor,saved.observation.observationId,{comment:'The first selected revision has extra characters.'});assert.deepEqual(corrected.observation,saved.observation);assert.deepEqual((await f.service.detail(f.actor,saved.observation.observationId)).observation,saved.observation);
+ const changed=structuredClone(input);changed.revisionAssertions.pop();await assert.rejects(f.service.capture(f.actor,changed),{status:409});
+});
+test('legacy omitted revision assertions preserve stored shape and immutable replay without current evidence',async t=>{
+ const f=await fixture(t),saved=await f.service.capture(f.actor,f.input);assert.equal(Object.hasOwn(saved.observation,'revisionResults'),false);assert.equal(saved.payloadHash,createHash('sha256').update(JSON.stringify(f.input)).digest('hex'));
+ const replay=createAnswerObservations({store:f.store,strategy:f.strategy,evidence:{read:async()=>{throw Error('Evidence must not be reread');}},authorizeCurrent:async a=>a});assert.deepEqual(await replay.capture(f.actor,f.input),saved);
+ const input=structuredClone(f.input);input.idempotencyKey='revision-replay';input.answer+=' '+input.revision;const start=Array.from(input.answer).length-64;input.revisionAssertions=[{span:{start,end:start+64,text:input.revision}}];const newer=await f.service.capture(f.actor,input);assert.deepEqual(await replay.capture(f.actor,input),newer);
+});
+test('revision spans are bounded exact Unicode slices; no trim/case coercion or caller expected revision',async t=>{
+ const f=await fixture(t);
+ for(const [i,quote] of [f.input.revision.toUpperCase(),' '+f.input.revision,'x'.repeat(128)].entries()){
+  const input=structuredClone(f.input);input.idempotencyKey='quote-'+i;input.answer+=' 🧭'+quote;const start=Array.from(input.answer).length-Array.from(quote).length;input.revisionAssertions=[{span:{start,end:Array.from(input.answer).length,text:quote}}];assert.equal((await f.service.capture(f.actor,input)).observation.revisionResults[0].revisionCheck,'mismatch');
+ }
+ const valid=structuredClone(f.input);valid.answer+=' '+valid.revision;const start=Array.from(valid.answer).length-64;valid.revisionAssertions=[{span:{start,end:start+64,text:valid.revision}}];
+ for(const change of [x=>x.revisionAssertions=[],x=>x.revisionAssertions=Array(6).fill(x.revisionAssertions[0]),x=>x.revisionAssertions[0].expectedRevision=x.revision,x=>x.revisionAssertions[0].span.start--,x=>x.revisionAssertions[0].span.text='invented',x=>{x.answer+='x'.repeat(129);x.revisionAssertions=[{span:{start:Array.from(x.answer).length-129,end:Array.from(x.answer).length,text:'x'.repeat(129)}}];}]){const input=structuredClone(valid);change(input);await assert.rejects(f.service.capture(f.actor,input),{status:400});}
+ await assert.rejects(f.service.capture(f.actor,{...valid,revision:'b'.repeat(64)}),{status:409});f.disable();await assert.rejects(f.service.capture(f.actor,valid),{status:403});
 });
