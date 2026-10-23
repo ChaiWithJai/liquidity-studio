@@ -43722,6 +43722,15 @@ function createCimdInspector({ fetchImpl = fetch, now = () => Date.now() } = {})
 var AUTH = "/oauth/defiant-evidence";
 var API = "/api/studio/remote-evidence/";
 var fail2 = (status, code) => Object.assign(new Error(code), { status, oauthCode: code });
+var oauthErrorCodes = ["invalid_request", "invalid_client", "invalid_grant", "invalid_scope", "invalid_token", "insufficient_scope", "access_denied", "temporarily_unavailable"];
+function observeOutcome(sink, event) {
+  try {
+    const result = sink(event);
+    if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {
+    });
+  } catch {
+  }
+}
 var plain2 = (v) => v && typeof v === "object" && !Array.isArray(v);
 var exact2 = (v, keys) => plain2(v) && Object.keys(v).sort().join(",") === [...keys].sort().join(",");
 var json2 = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Pragma": "no-cache", "Referrer-Policy": "no-referrer", ...headers } });
@@ -43763,9 +43772,9 @@ function remoteEvidenceConfiguration(raw = "[]") {
   if (typeof raw !== "string" || raw.length > 8192) throw TypeError("Invalid remote evidence clients");
   return oauthClientConfiguration(JSON.parse(raw));
 }
-function createRemoteEvidence({ platform, provider, authorizeEvidence, clients = [], allowedHosts = ["studio.chaiwithjai.com"], fetchImpl = fetch, onToolOutcome = (event) => console.info(JSON.stringify(event)) } = {}) {
+function createRemoteEvidence({ platform, provider, authorizeEvidence, clients = [], allowedHosts = ["studio.chaiwithjai.com"], fetchImpl = fetch, onToolOutcome = (event) => console.info(JSON.stringify(event)), onOAuthOutcome = (event) => console.info(JSON.stringify(event)) } = {}) {
   if (platform?.identity?.mode !== "google" || typeof provider !== "function" || typeof authorizeEvidence !== "function" || !Array.isArray(allowedHosts) || !allowedHosts.length || allowedHosts.length > 4 || allowedHosts.some((h) => typeof h !== "string" || !h || /[\s/:]/.test(h))) throw TypeError("Managed private remote evidence wiring required");
-  if (typeof onToolOutcome !== "function") throw TypeError("Evidence outcome sink required");
+  if (typeof onToolOutcome !== "function" || typeof onOAuthOutcome !== "function") throw TypeError("Evidence outcome sink required");
   const identity = platform.identity, strategy = (organizationId2) => ({ raw: (actor) => authorizeEvidence(actor, organizationId2) });
   const oauth = createEvidenceOAuth({
     store: platform.store,
@@ -43805,6 +43814,7 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, clients =
     }
     const metadata = oauthMetadataResponse(request, { oauthMetadata, resourceServerUrl: new URL(EVIDENCE_RESOURCE), scopesSupported: [EVIDENCE_SCOPE] });
     if (metadata) return metadata;
+    let tokenOutcome;
     try {
       if (path === AUTH + "/authorize") {
         if (request.method !== "GET") return json2({ error: "invalid_request" }, 405);
@@ -43825,7 +43835,9 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, clients =
           if (!exact2(input, ["token", "client_id"])) throw fail2(400, "invalid_request");
           return json2(await oauth.revokePublic(input));
         }
-        return json2(await oauth.token(input));
+        const response = json2(await oauth.token(input));
+        tokenOutcome = { status: 200, errorCode: null };
+        return response;
       }
       if (path.startsWith(API)) {
         const operation = path.slice(API.length), keys = { inspect: ["organizationId", "transactionId"], approve: ["organizationId", "transactionId", "inspectionToken"], deny: ["organizationId", "transactionId", "inspectionToken"], list: ["organizationId"], revoke: ["organizationId", "grantId"] };
@@ -43895,7 +43907,12 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, clients =
       return json2({ error: "not_found" }, 404);
     } catch (error47) {
       const status = [400, 401, 403, 429, 503].includes(error47.status) ? error47.status : 400;
-      return json2({ error: ["invalid_request", "invalid_client", "invalid_grant", "invalid_scope", "invalid_token", "insufficient_scope", "access_denied", "temporarily_unavailable"].includes(error47.oauthCode) ? error47.oauthCode : "invalid_request" }, status, status === 401 ? { "WWW-Authenticate": challenge() } : {});
+      const errorCode = oauthErrorCodes.includes(error47.oauthCode) ? error47.oauthCode : "invalid_request";
+      const response = json2({ error: errorCode }, status, status === 401 ? { "WWW-Authenticate": challenge() } : {});
+      if (path === AUTH + "/token") tokenOutcome = { status, errorCode };
+      return response;
+    } finally {
+      if (tokenOutcome) observeOutcome(onOAuthOutcome, Object.freeze({ event: "defiant_evidence_oauth_outcome", operation: "token", ...tokenOutcome }));
     }
   }
   async function serve(request) {
