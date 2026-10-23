@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {historicalFixture} from './historical-jev-fixture.js';
 import {HISTORICAL_COMPARABILITY_VERSION} from './defiant-jev-historical-case-pack.js';
-import {jevEvaluationConfigurationSha256} from './defiant-jev-evaluation.js';
+import {jevEvaluationConfigurationSha256,JEV_RESPONSE_PARSER_VERSION} from './defiant-jev-evaluation.js';
 import {createDurableClaimEvaluations} from './defiant-jev-durable.js';
 import {transactionValues} from './storage-transaction.js';
 const revision='a'.repeat(64),config='f'.repeat(64),actor={id:'owner',uid:'uid'};
@@ -51,3 +51,13 @@ test('list capacity follows configured account experiment, preserving prior resu
 test('list exposes consumed cross-organization reservation and fails closed on malformed budget or revoked authority',async()=>{const f=fixture();await f.make({org:'other'}).evaluate(actor,request);const list=await f.make().list(actor);assert.deepEqual(list.items,[]);assert.equal(list.attemptConsumed,true);f.data.set('defiant-evaluations:v1:account:account-experiment',{schemaVersion:1,accountExperimentId:'wrong',maximumAttempts:1,attempts:[]});await assert.rejects(f.make().list(actor),{status:409});f.revoke();await assert.rejects(f.make().list(actor),{status:403});assert.equal(f.counts().calls,1);});
 
 test('new support predicate and legacy support stages remain saved and reopened without redispatch',async()=>{for(const stage of ['support-object','support-type','support-choice','support-labels','support-probability','support-sum','support']){const f=fixture();let calls=0;const service=f.make({adapter:{decide:async()=>{calls++;return {status:'failed',reason:'provider-response',responseValidation:{schemaVersion:1,stage},latencyMs:1};}}});const first=await service.evaluate(actor,request);assert.equal(first.status,'completed');assert.deepEqual(first.evaluation.outcome.responseValidation,{schemaVersion:1,stage});const reopened=await service.detail(actor,first.recordId);assert.deepEqual(reopened,first);assert.deepEqual(await service.evaluate(actor,request),first);assert.equal((await service.list(actor)).attemptConsumed,true);assert.equal(calls,1);assert.equal(first.evaluation.humanLabel,null);}});
+
+
+test('new parser fingerprint never rewrites legacy records or refunds consumed experiment',async()=>{
+ const f=fixture(),legacyHash='d04b52d95918f1336698db5f2020380ca2cc329b02cbae0cef10a90f3fe17d7c',old=f.make({evaluatorConfigSha256:legacyHash});
+ const first=await old.evaluate(actor,request),legacy=structuredClone(first);delete legacy.evaluation.responseParserVersion;f.data.set('defiant-evaluations:v1:org:'+first.recordId,structuredClone(legacy));
+ const limits={timeoutMs:15000,maxRequests:1,maxInputBytes:16384,maxResponseBytes:65536},newHash=jevEvaluationConfigurationSha256(limits),changed=f.make({evaluatorConfigSha256:newHash});assert.notEqual(newHash,legacyHash);
+ assert.deepEqual(await changed.detail(actor,first.recordId),legacy);assert.equal((await changed.list(actor)).attemptConsumed,true);assert.equal(Object.hasOwn((await changed.detail(actor,first.recordId)).evaluation,'responseParserVersion'),false);
+ await assert.rejects(changed.evaluate(actor,request),{status:409});await assert.rejects(changed.evaluate(actor,{...request,idempotencyKey:'new-key'}),{status:409});assert.equal(f.counts().calls,1);assert.equal(f.data.get('defiant-evaluations:v1:account:account-experiment').attempts.length,1);assert.deepEqual(await old.detail(actor,first.recordId),legacy);
+ const fresh=f.make({accountExperimentId:'invented-separate-experiment',evaluatorConfigSha256:newHash}),saved=await fresh.evaluate(actor,{...request,idempotencyKey:'new-experiment'});assert.equal(saved.evaluation.responseParserVersion,JEV_RESPONSE_PARSER_VERSION);assert.equal(saved.evaluatorConfigSha256,newHash);assert.deepEqual(await fresh.evaluate(actor,{...request,idempotencyKey:'new-experiment'}),saved);assert.equal(f.counts().calls,2);assert.equal((await old.list(actor)).attemptConsumed,true);
+});

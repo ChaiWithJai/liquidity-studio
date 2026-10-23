@@ -28,12 +28,15 @@ function stateInput(input) {
 const responseStages = Object.freeze(['content-type', 'length', 'body', 'chunk', 'utf8', 'json', 'model', 'answers', 'support', 'support-object', 'support-type', 'support-choice', 'support-labels', 'support-probability', 'support-sum', 'booleans', 'usage', 'routing', 'cost']);
 const responseError = stage => Object.assign(new Error('response'), { responseValidationStage: stage });
 const invalidResponse = stage => ({ status: 'failed', reason: 'provider-response', responseValidation: { schemaVersion: 1, stage } });
+export const JEV_RESPONSE_PARSER_VERSION='choice-confidence-optional-v1';
 const probability = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
-function responseResult(data) {
+function responseResult(data, {wire=false}={}) {
   if (!object(data) || data.model !== MODEL) throw responseError('model');
   if (!exact(data.answers, ['support', ...booleanKeys])) throw responseError('answers');
   const support = data.answers.support;
-  if (!exact(support, ['type', 'choice', 'probabilities'])) throw responseError('support-object');
+  const supportKeys=['type','choice','probabilities'];
+  const wireConfidence=wire&&object(support)&&Object.hasOwn(support,'confidence');
+  if (!exact(support,wireConfidence?[...supportKeys,'confidence']:supportKeys) || (wireConfidence&&support.confidence!==null&&!probability(support.confidence))) throw responseError('support-object');
   if (support.type !== 'choice') throw responseError('support-type');
   if (!classes.includes(support.choice)) throw responseError('support-choice');
   if (!exact(support.probabilities, classes)) throw responseError('support-labels');
@@ -52,14 +55,16 @@ function responseResult(data) {
       cost = gateway.cost;
     }
   }
-  return { model: MODEL, answers: clone(data.answers), usage: clone(data.usage), reportedCostUsd: cost, modelVersion: null, modelVersionQualification: 'provider-model-alias; immutable checkpoint not supplied' };
+  const answers=clone(data.answers);
+  if(wire)answers.support={type:support.type,choice:support.choice,probabilities:clone(support.probabilities)};
+  return { model: MODEL, answers, usage: clone(data.usage), reportedCostUsd: cost, modelVersion: null, modelVersionQualification: 'provider-model-alias; immutable checkpoint not supplied' };
 }
 
 export function jevEvaluationConfigurationSha256(limits, deterministicVersion = 'earnings-claim-exact-v1', trustedBindingSha256 = null) {
   requireValue(['earnings-claim-exact-v1', 'historical-store-period-comparability-v1'].includes(deterministicVersion));
   requireValue(deterministicVersion === 'earnings-claim-exact-v1' ? trustedBindingSha256 === null : hash(trustedBindingSha256));
   requireValue(exact(limits,['timeoutMs','maxRequests','maxInputBytes','maxResponseBytes']));
-  return sha(JSON.stringify({endpoint:ENDPOINT,model:MODEL,questions,providerOptions:{gateway:{only:['typesafe-ai'],zeroDataRetention:true}},limits,evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion,...(trustedBindingSha256===null?{}:{trustedBindingSha256})}));
+  return sha(JSON.stringify({endpoint:ENDPOINT,model:MODEL,questions,providerOptions:{gateway:{only:['typesafe-ai'],zeroDataRetention:true}},limits,evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion,...(trustedBindingSha256===null?{}:{trustedBindingSha256}),responseParserVersion:JEV_RESPONSE_PARSER_VERSION}));
 }
 
 export function createJevDecisionAdapter({ enabled = false, getCredential = () => null, fetch: fetchImpl = globalThis.fetch, timeoutMs = 15000, maxRequests = 1, maxInputBytes = 16384, maxResponseBytes = 65536 } = {}) {
@@ -91,7 +96,7 @@ export function createJevDecisionAdapter({ enabled = false, getCredential = () =
       for (;;) { const { done, value } = await reader.read(); if (controller.signal.aborted) throw new Error('deadline'); if (done) break; if (!(value instanceof Uint8Array) || value.length > 65536) return invalidResponse('chunk'); if (used + value.length > maxResponseBytes) return invalidResponse('body'); buffer.set(value, used); used += value.length; }
       let text; try { text = new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, used)); } catch { return invalidResponse('utf8'); }
       let data; try { data = JSON.parse(text); } catch { return invalidResponse('json'); }
-      try { return { status: 'observed', ...responseResult(data) }; } catch (error) { return responseStages.includes(error?.responseValidationStage) ? invalidResponse(error.responseValidationStage) : { status: 'failed', reason: 'provider-response' }; }
+      try { return { status: 'observed', ...responseResult(data,{wire:true}) }; } catch (error) { return responseStages.includes(error?.responseValidationStage) ? invalidResponse(error.responseValidationStage) : { status: 'failed', reason: 'provider-response' }; }
     };
     try { return freeze({ ...await Promise.race([request(), deadline]), latencyMs: Math.max(0, Math.round(performance.now() - start)) }); }
     catch { return freeze({ status: 'failed', reason: controller.signal.aborted ? 'deadline' : 'transport', latencyMs: Math.max(0, Math.round(performance.now() - start)) }); }
@@ -148,7 +153,7 @@ export function createClaimEvaluation({ manifest, authorize, resolveCase, determ
     await current();
     const recordedAt = now(); requireValue(typeof recordedAt === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z(?![\s\S])/.test(recordedAt) && new Date(recordedAt).toISOString() === recordedAt);
     const recordId = createId(); requireValue(id(recordId));
-    const record = freeze({ schemaVersion: 1, evaluatorVersion: 'defiant-claim-decisions-v1', questionsSha256: sha(JSON.stringify(questions)), deterministicVersion, recordId, organizationId, actorId, recordedAt, case: clone(ref), claimSha256: sha(state.claim), evidenceSha256: sha(state.evidence), deterministic, outcome: finiteOutcome(outcome), assessmentOrigin: 'automated-evaluation', humanLabel: null, qualification: 'Typed model observation only; no whole-answer accuracy, independent human label or causal validation.' });
+    const record = freeze({ schemaVersion: 1, evaluatorVersion: 'defiant-claim-decisions-v1', responseParserVersion:JEV_RESPONSE_PARSER_VERSION, questionsSha256: sha(JSON.stringify(questions)), deterministicVersion, recordId, organizationId, actorId, recordedAt, case: clone(ref), claimSha256: sha(state.claim), evidenceSha256: sha(state.evidence), deterministic, outcome: finiteOutcome(outcome), assessmentOrigin: 'automated-evaluation', humanLabel: null, qualification: 'Typed model observation only; no whole-answer accuracy, independent human label or causal validation.' });
     await persistRecord(record, operationContext);
     await current();
     return record;

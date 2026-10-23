@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createJevDecisionAdapter, createClaimEvaluation } from './defiant-jev-evaluation.js';
+import {createHash} from 'node:crypto';
+import { createJevDecisionAdapter, createClaimEvaluation, jevEvaluationConfigurationSha256, JEV_RESPONSE_PARSER_VERSION } from './defiant-jev-evaluation.js';
 const hash = 'a'.repeat(64);
 const fixture = () => ({ model: 'typesafe-ai/jev', answers: { support: { type: 'choice', choice: 'supported', probabilities: { supported: 0.7, contradicted: 0.1, unsupported: 0.1, 'insufficient-context': 0.1 } }, causalOverreach: { type: 'boolean', probability: 0.1 }, temporalComparability: { type: 'boolean', probability: 0.5 }, identityOverreach: { type: 'boolean', probability: 0.2 }, citationSufficiency: { type: 'boolean', probability: 0.9 } }, usage: { inputTokens: 100, outputTokens: 20 }, providerMetadata: { gateway: { routing: { originalModelId: 'typesafe-ai/jev', canonicalSlug: 'typesafe-ai/jev', finalProvider: 'typesafe-ai', resolvedProvider: 'typesafe-ai' }, cost: '0.00001', generationId: 'NEVER_RECORD_PROVIDER_ID' } } });
 const input = { claim: 'Invented amount matches.', evidence: 'Invented source says amount 2 USD.' };
@@ -149,4 +150,30 @@ test('support predicates retain exact acceptance and expose only first static fa
  const both=fixture();both.answers.support.type='PRIVATE_TYPE';both.answers.support.choice='PRIVATE_CHOICE';assert.equal((await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(both)})).decide(input)).responseValidation.stage,'support-type');
  for(const delta of [0,0.0000005]){const data=fixture();data.answers.support.probabilities.supported+=delta;assert.equal((await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(data)})).decide(input)).status,'observed');}
  const outside=fixture();outside.answers.support.probabilities.supported+=0.000002;assert.equal((await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(outside)})).decide(input)).responseValidation.stage,'support-sum');
+});
+
+test('documented optional wire confidence normalizes to canonical support without changing request or semantic guards',async()=>{
+ for(const confidence of [undefined,null,0,0.5,1]){
+  const data=fixture();if(confidence!==undefined)data.answers.support.confidence=confidence;let calls=0;
+  const adapter=createJevDecisionAdapter(options({fetch:async(url,init)=>{calls++;const body=JSON.parse(init.body);assert.deepEqual(body.state,input);assert.deepEqual(body.providerOptions,{gateway:{only:['typesafe-ai'],zeroDataRetention:true}});assert.equal(body.model,'typesafe-ai/jev');return jsonResponse(data);}}));
+  const result=await adapter.decide(input);assert.equal(result.status,'observed');assert.deepEqual(result.answers,fixture().answers);assert.deepEqual(Object.keys(result.answers.support),['type','choice','probabilities']);assert.equal(Object.hasOwn(result.answers.support,'confidence'),false);assert.equal((await adapter.decide(input)).reason,'request-cap');assert.equal(calls,1);
+ }
+});
+test('wire confidence accepts no arbitrary extension, malformed metadata or weakened required semantics',async()=>{
+ for(const confidence of [-0.01,1.01,'PRIVATE_CONFIDENCE',{},[],true]){const data=fixture();data.answers.support.confidence=confidence;const result=await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(data)})).decide(input);assert.equal(result.responseValidation.stage,'support-object');assert.ok(!JSON.stringify(result).includes('PRIVATE'));}
+ for(const token of ['1e999','-1e999']){const data=fixture();data.answers.support.confidence=null;const raw=JSON.stringify(data).replace('"confidence":null','"confidence":'+token);const result=await createJevDecisionAdapter(options({fetch:async()=>new Response(raw,{headers:{'content-type':'application/json'}})})).decide(input);assert.equal(result.responseValidation.stage,'support-object');}
+ for(const change of [s=>{s.extra='PRIVATE_EXTENSION';},s=>{s.confidence=0.5;s.extra='PRIVATE_EXTENSION';}]){const data=fixture();change(data.answers.support);const result=await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(data)})).decide(input);assert.equal(result.responseValidation.stage,'support-object');assert.ok(!JSON.stringify(result).includes('PRIVATE'));}
+ for(const [stage,change]of [['support-type',s=>{s.type='score';}],['support-choice',s=>{s.choice='other';}],['support-labels',s=>{delete s.probabilities.supported;}],['support-probability',s=>{s.probabilities.supported=-1;}],['support-sum',s=>{s.probabilities.supported=0.5;}]]){const data=fixture();data.answers.support.confidence=0.5;change(data.answers.support);const result=await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(data)})).decide(input);assert.equal(result.responseValidation.stage,stage);}
+});
+test('canonical observed outcome validation stays strict and new records distinguish wire parser provenance',async()=>{
+ const observed=await createJevDecisionAdapter(options()).decide(input);
+ for(const confidence of [null,0.5]){const injected=structuredClone(observed);injected.answers.support.confidence=confidence;const e=evaluation({adapter:{decide:async()=>injected}});await assert.rejects(e.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'}));assert.equal(e.records.length,0);}
+ const e=evaluation({adapter:{decide:async()=>observed}}),record=await e.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'});assert.equal(record.responseParserVersion,JEV_RESPONSE_PARSER_VERSION);assert.equal(record.evaluatorVersion,'defiant-claim-decisions-v1');assert.deepEqual(record.outcome.answers.support,fixture().answers.support);
+});
+test('configuration fingerprint includes parser version independently from unchanged rubric and historical binding',async()=>{
+ let body;await createJevDecisionAdapter(options({fetch:async(url,init)=>{body=JSON.parse(init.body);return jsonResponse(fixture());}})).decide(input);
+ const limits={timeoutMs:15000,maxRequests:1,maxInputBytes:16384,maxResponseBytes:65536};
+ const prior={endpoint:'https://ai-gateway.vercel.sh/v1/evaluate',model:'typesafe-ai/jev',questions:body.questions,providerOptions:body.providerOptions,limits,evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion:'earnings-claim-exact-v1'};
+ const digest=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');assert.equal(digest(prior),'d04b52d95918f1336698db5f2020380ca2cc329b02cbae0cef10a90f3fe17d7c');assert.equal(jevEvaluationConfigurationSha256(limits),digest({...prior,responseParserVersion:JEV_RESPONSE_PARSER_VERSION}));assert.notEqual(jevEvaluationConfigurationSha256(limits),digest(prior));
+ assert.notEqual(jevEvaluationConfigurationSha256(limits,'historical-store-period-comparability-v1','a'.repeat(64)),jevEvaluationConfigurationSha256(limits,'historical-store-period-comparability-v1','b'.repeat(64)));
 });
