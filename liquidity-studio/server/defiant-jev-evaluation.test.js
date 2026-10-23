@@ -103,3 +103,42 @@ test('record pins rubric and deterministic implementation identity', async () =>
   const e = evaluation(); const record = await e.service.evaluate({ organizationId: 'org', actorId: 'operator' }, { caseId: 'authored_1' });
   assert.equal(record.evaluatorVersion, 'defiant-claim-decisions-v1'); assert.match(record.questionsSha256, /^[a-f0-9]{64}$/); assert.equal(record.deterministicVersion, 'invented-deterministic-v1'); assert.equal(record.actorId, 'operator');
 });
+
+test('thirteen finite validation stages preserve failed reason, caps, privacy and one-call reservation',async()=>{
+ const mutate=fn=>()=>{const data=fixture();fn(data);return jsonResponse(data);};
+ const samples=[
+  ['content-type',()=>new Response('PRIVATE_BODY',{headers:{'content-type':'text/plain'}})],
+  ['length',()=>new Response('PRIVATE_BODY',{headers:{'content-type':'application/json','content-length':'PRIVATE_LENGTH'}})],
+  ['body',()=>new Response(null,{headers:{'content-type':'application/json'}})],
+  ['chunk',()=>new Response(new Uint8Array(65537),{headers:{'content-type':'application/json'}})],
+  ['utf8',()=>new Response(Uint8Array.of(255),{headers:{'content-type':'application/json'}})],
+  ['json',()=>new Response('{PRIVATE_JSON',{headers:{'content-type':'application/json'}})],
+  ['model',mutate(d=>d.model='PRIVATE_MODEL')],
+  ['answers',mutate(d=>d.answers.PRIVATE_KEY={})],
+  ['support',mutate(d=>d.answers.support.choice='PRIVATE_CHOICE')],
+  ['booleans',mutate(d=>d.answers.identityOverreach.probability='PRIVATE_PROBABILITY')],
+  ['usage',mutate(d=>d.usage.inputTokens=-1)],
+  ['routing',mutate(d=>d.providerMetadata.gateway.routing.finalProvider='PRIVATE_PROVIDER')],
+  ['cost',mutate(d=>d.providerMetadata.gateway.cost='PRIVATE_COST')],
+ ];
+ const seen=new Set();
+ for(const [stage,response]of samples){let calls=0;const adapter=createJevDecisionAdapter(options({fetch:async()=>{calls++;return response();}}));const result=await adapter.decide(input);assert.equal(result.status,'failed');assert.equal(result.reason,'provider-response');assert.deepEqual(result.responseValidation,{schemaVersion:1,stage});assert.ok(Object.isFrozen(result.responseValidation));assert.equal(result.answers,undefined);assert.ok(!JSON.stringify(result).includes('PRIVATE'));assert.ok(!JSON.stringify(result).includes('sentinel-key'));assert.ok(!JSON.stringify(result).includes('NEVER_RECORD'));assert.equal((await adapter.decide(input)).reason,'request-cap');assert.equal(calls,1);seen.add(stage);}
+ assert.equal(seen.size,13);
+ const body=new ReadableStream({start(c){c.enqueue(new Uint8Array(128));c.enqueue(Uint8Array.of(1));c.close();}});const overflow=await createJevDecisionAdapter(options({maxResponseBytes:128,fetch:async()=>new Response(body,{headers:{'content-type':'application/json'}})})).decide(input);assert.deepEqual(overflow.responseValidation,{schemaVersion:1,stage:'body'});
+ const invalidChunk={redirected:false,status:200,headers:new Headers({'content-type':'application/json'}),body:{getReader:()=>({read:async()=>({done:false,value:'PRIVATE_CHUNK'}),cancel:async()=>{}})}};const chunk=await createJevDecisionAdapter(options({fetch:async()=>invalidChunk})).decide(input);assert.deepEqual(chunk.responseValidation,{schemaVersion:1,stage:'chunk'});assert.ok(!JSON.stringify(chunk).includes('PRIVATE'));
+});
+
+test('existing accepted response predicates and request identity remain unchanged by diagnostics',async()=>{
+ const data=fixture();data.providerMetadata.gateway.routing.unrecognizedMetadata='PRIVATE_UNUSED';
+ const result=await createJevDecisionAdapter(options({fetch:async()=>new Response(JSON.stringify(data),{headers:{'content-type':'application/json; charset=utf-8','content-length':'0'}})})).decide(input);
+ assert.equal(result.status,'observed');assert.equal(result.responseValidation,undefined);assert.ok(!JSON.stringify(result).includes('PRIVATE'));assert.deepEqual(result.answers,data.answers);assert.deepEqual(result.usage,data.usage);
+ for(const response of [new Response('',{status:403}),new Response('',{status:302})]){const failed=await createJevDecisionAdapter(options({fetch:async()=>response})).decide(input);assert.equal(failed.reason,'provider-http');assert.equal(failed.responseValidation,undefined);}
+});
+
+test('finite diagnostic persistence is optional for legacy failures and rejects all unknown fields/stages and other outcome reasons',async()=>{
+ const valid={status:'failed',reason:'provider-response',responseValidation:{schemaVersion:1,stage:'support'},latencyMs:1};
+ const e=evaluation({adapter:{decide:async()=>valid}});const record=await e.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'});assert.deepEqual(record.outcome,valid);assert.equal(record.humanLabel,null);assert.equal(e.records.length,1);
+ const legacy=evaluation({adapter:{decide:async()=>({status:'failed',reason:'provider-response'})}});assert.deepEqual((await legacy.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'})).outcome,{status:'failed',reason:'provider-response'});
+ for(const diagnostic of [{schemaVersion:2,stage:'support'},{schemaVersion:1,stage:'PRIVATE_STAGE'},{schemaVersion:1,stage:'support',raw:'PRIVATE_RESPONSE'},null,['support']]){const invalid=evaluation({adapter:{decide:async()=>({...valid,responseValidation:diagnostic})}});await assert.rejects(invalid.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'}));assert.equal(invalid.records.length,0);}
+ const misplaced=evaluation({adapter:{decide:async()=>({...valid,reason:'transport'})}});await assert.rejects(misplaced.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'}));assert.equal(misplaced.records.length,0);
+});
