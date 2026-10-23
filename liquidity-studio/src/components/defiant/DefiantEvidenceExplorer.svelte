@@ -7,18 +7,19 @@
  import ResearchInspector from './ResearchInspector.svelte';
  import {createEvidenceExplorer,emptyEvidenceView,evidenceLocation} from '../../lib/defiant-evidence-explorer.js';
  let {request,location,onNavigate=()=>{}}=$props();
+ let retainedDraft=$state({query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:''});
  let view=$state(emptyEvidenceView()),field=$state('Total Earned'),refreshEpoch=$state(0);
  const cleared={evidenceJuneReview:false,evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
  const active=$derived(evidenceLocation(location));
  const controller=createEvidenceExplorer({request:(...args)=>request(...args),onState:value=>view=value});
- $effect(()=>{const input=location;refreshEpoch;untrack(()=>{field='Total Earned';void controller.load(input);});});
+ $effect(()=>{const input=location;refreshEpoch;untrack(()=>{retainedDraft={query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:'',...evidenceLocation(input).retainedFilters};field='Total Earned';void controller.load(input);});});
  onDestroy(()=>controller.cancel());
  function navigate(next){onNavigate({...location,view:'evidence',sample:'',evidenceRevision:view.revision||active.revision,evidenceOffset:0,...next});}
  function root(mode=active.mode){navigate({...cleared,evidenceMode:mode});}
  function refresh(){const next={...location,view:'evidence',evidenceRevision:'',...cleared,evidenceOffset:0};onNavigate(next);refreshEpoch++;}
- const page=$derived(view.comparison||view.selection||view.group||view.list);
+ const page=$derived(active.mode==='retained'&&view.list?.availability===false?null:view.comparison||view.selection||view.group||view.list);
  const fields=$derived([...new Set(view.receipts.flatMap(receipt=>Object.keys(receipt.cells)))]);
- const modeLabel=$derived(active.mode==='changes'?'changes':active.mode==='audience'?'audience definitions':active.mode==='identity'?'identity review':active.mode==='selections'?'source selections':'earnings');
+ const modeLabel=$derived(active.mode==='retained'?'retained sources':active.mode==='changes'?'changes':active.mode==='audience'?'audience definitions':active.mode==='identity'?'identity review':active.mode==='selections'?'source selections':'earnings');
  const highlight=$derived(fields.includes(field)?field:fields.find(name=>/earned|amount/i.test(name))||fields[0]||'');
 </script>
 <section aria-label="Earnings and receipts" aria-busy={view.loading}>
@@ -28,20 +29,45 @@
   <button disabled={view.loading} onclick={()=>root('identity')} aria-pressed={active.mode==='identity'}>Identity review</button>
   <button disabled={view.loading} onclick={()=>root('selections')} aria-pressed={active.mode==='selections'}>Source selections</button>
   <button disabled={view.loading} onclick={()=>root('changes')} aria-pressed={active.mode==='changes'}>Changes</button>
+  <button disabled={view.loading} onclick={()=>root('retained')} aria-pressed={active.mode==='retained'}>Retained sources</button>
   <button disabled={view.loading} onclick={()=>root('audience')} aria-pressed={active.mode==='audience'}>Audience definitions</button>
   <button disabled={view.loading} onclick={refresh}>Refresh evidence</button>
  </ResearchToolbar>
  <HypothesisReview {request} revision={view.revision||active.revision} onEvidence={next=>navigate({...cleared,evidenceOffset:0,...next})}/>
+ {#if active.mode==='retained'}
+   <form class="retained-filters" onsubmit={event=>{event.preventDefault();navigate({...cleared,evidenceMode:'retained',retainedFilters:{...retainedDraft}});}}>
+    <fieldset disabled={view.loading}><legend>Find retained source metadata</legend>
+     <label>Filename, member path or hash<input maxlength="200" bind:value={retainedDraft.query}/></label>
+     <label>Source identifier<input maxlength="128" bind:value={retainedDraft.sourceId}/></label>
+     <label>File format<select bind:value={retainedDraft.format}><option value="">All formats</option>{#each ['csv','xlsx','xls','pdf','png','jpg','zip','tar.gz','json','other'] as format (format)}<option value={format}>{format}</option>{/each}</select></label>
+     <label>Record kind<select bind:value={retainedDraft.kind}><option value="">Roots and members</option><option value="root">Root objects</option><option value="member">Archive members</option></select></label>
+     <label>Exact source hash<input maxlength="64" bind:value={retainedDraft.sourceHash}/></label>
+     <label>Declared period from<input type="month" bind:value={retainedDraft.fromMonth}/></label><label>Declared period to<input type="month" bind:value={retainedDraft.toMonth}/></label>
+     <button type="submit">Search retained sources</button><button type="button" onclick={()=>navigate({...cleared,evidenceMode:'retained',retainedFilters:{}})}>Clear source filters</button>
+    </fieldset>
+   </form>
+ {/if}
  {#if view.loading}<p class="message" role="status">Opening evidence…</p>
  {:else if view.error}<p class="message" role="alert">{view.error}</p>
  {:else if view.manifest&&view.mode===active.mode}
   {#key view.revision}<AnswerObservations {request} revision={view.revision}/>{/key}
   <div class="coverage"><h3>Evidence coverage</h3><p>{view.manifest.coverage}</p><p class="research-meta">{view.manifest.counts.months} reported periods · {view.manifest.counts.selections} source selections{#if view.manifest.counts.identityGroups !== undefined} · {view.manifest.counts.identityGroups} identity review groups{/if}</p><details><summary>Snapshot details</summary><p>Organization: <code>{view.manifest.scope.organizationId}</code></p><p>Revision: <code>{view.revision}</code></p></details></div>
   {#if active.groupId||active.selectionId||active.receiptId||active.comparisonId||active.audienceId}<nav class="breadcrumbs" aria-label="Evidence trail"><button onclick={()=>navigate({...cleared,evidenceMode:active.mode,evidenceOffset:active.receiptId&&active.mode==='earnings'?active.offset:0})}>Back to {modeLabel}</button>{#if active.comparisonGroupId}<button onclick={()=>navigate({evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceOffset:active.offset})}>Back to comparison</button>{/if}</nav>{/if}
+  {#if active.mode==='retained'}
+
+   {#if view.list}
+    {#if !view.list.availability}<p role="status" class="message">Retained intake register unavailable. This does not mean no files were retained.</p>
+    {:else}
+     <div class="coverage"><h3>Retained intake metadata</h3><p>{view.list.scopeDescription}</p><p>Captured: {view.list.capturedAt}</p><p>Matching filters: {view.list.matchingCounts.rootObjects} root objects · {view.list.matchingCounts.memberOccurrences} archive member occurrences · {view.list.matchingCounts.undatedRecords} undated records</p><h4>Whole retained register</h4><p>{view.list.globalCounts.rootObjects} root objects · {view.list.globalCounts.memberOccurrences} archive member occurrences · {view.list.globalCounts.leafOccurrences} member leaves · {view.list.globalCounts.uniqueLeafHashes} unique member leaf hashes · {view.list.globalCounts.duplicateLeafHashGroups} repeated member leaf hash groups</p><p>{view.list.globalCounts.undatedRecords} undated records in this register. Period filters exclude undated records. No complete provider or Downloads inventory is claimed; repeated content hashes are not deduplicated sales.</p></div>
+     <div class="members">{#each view.list.items as row(row.id)}<article><h3>{row.kind==='root'?row.filename:row.chain.at(-1)}</h3><p>{row.kind==='root'?'Root object':row.container?'Archive container member':'Archive member'} · {row.format} · {row.bytes} bytes</p><dl><dt>Source</dt><dd>{row.sourceId}</dd><dt>Source hash</dt><dd><code>{row.sha256}</code></dd><dt>Occurrence</dt><dd><code>{row.id}</code></dd>{#if row.kind==='member'}<dt>Root reference</dt><dd><code>{row.rootId}</code></dd><dt>Member chain</dt><dd>{row.chain.join(' → ')}</dd>{:else}<dt>Original generation</dt><dd>{row.generation}</dd><dt>Member inventory</dt><dd>{row.memberInventory.status}: {row.memberInventory.scope}</dd><dt>Supplied transfer checks</dt><dd>Size: {String(row.retentionVerification.size)} · CRC32C: {String(row.retentionVerification.crc32c)} · MD5: {String(row.retentionVerification.md5)} (null means unknown)</dd>{/if}<dt>Declared periods</dt><dd>{#each row.periods as period (period.month+period.periodKind+period.sourceText)}<p>{period.month} · {period.periodKind} · {period.basis}<br/>{period.sourceText}</p>{:else}No explicit filename period registered{/each}</dd><dt>Served association</dt><dd>{row.servedAssociation}</dd></dl></article>{:else}<p role="status">No retained metadata matches these filters or this page. This is not evidence of missing provider delivery.</p>{/each}</div>
+     <div class="coverage">{#each view.list.limitations as limitation (limitation)}<p>{limitation}</p>{/each}</div>
+    {/if}
+   {/if}
+  {/if}
   {#if view.list&&['changes','audience'].includes(active.mode)}
    <div class="members">{#each view.list.items as row(row.id)}<article>{#if active.mode==='changes'}<h3>{row.dimension} change</h3><p>{row.beforeMonths.join(', ')} → {row.afterMonths.join(', ')}</p><p>Reported change: {row.summary.delta} {row.currency}</p><p>Period basis: {row.periodBasis} (producer assertion)</p><button onclick={()=>navigate({evidenceComparisonId:row.id})}>Inspect comparison {row.id}</button>{:else}<h3>{row.name}</h3><p>{row.criteria}</p><p>Supplied scale: {row.scaleText} — not recomputed</p><button onclick={()=>navigate({evidenceAudienceId:row.id})}>Inspect definition {row.name}</button>{/if}</article>{:else}<p>No {modeLabel} supplied in this evidence page.</p>{/each}</div><p class="message">{view.list.limitation}</p>
   {/if}
-  {#if view.list&&!['changes','audience'].includes(active.mode)}
+  {#if view.list&&!['changes','audience','retained'].includes(active.mode)}
    {#if !view.list.items.length}<p class="message">No {active.mode==='identity'?'identity review groups':active.mode==='selections'?'source selections':'earnings'} in this evidence page.</p>
    {:else}<!-- svelte-ignore a11y_no_noninteractive_tabindex (Scrollable table needs keyboard access) -->
    <div class="table-scroll" tabindex="0" role="region" aria-label={active.mode==='identity'?'Identity review table':active.mode==='selections'?'Source selection table':'Reported earnings table'}><table><thead><tr><th scope="col">{active.mode==='identity'?'Source identity group':active.mode==='selections'?'Source selection':'Period'}</th><th scope="col">Reported amount</th><th scope="col">Evidence</th></tr></thead><tbody>
@@ -79,5 +105,5 @@
  {/if}
 </section>
 <style>
-.heading{margin-right:auto}.coverage,.message,.members,.breadcrumbs,.pagination{padding:12px var(--research-space,16px);margin:0}.coverage p{margin:8px 0}.breadcrumbs,.pagination{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.table-scroll{overflow:auto;margin:0 var(--research-space,16px);max-width:100%}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--research-line)}td{font-variant-numeric:tabular-nums}small{display:block;font-weight:400;margin-top:4px}.members{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}.members article,.receipt{padding:12px;border:1px solid var(--research-line);border-radius:6px;min-width:0}.receipt{margin-top:12px}dl{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,2fr);gap:8px;margin:12px 0}dt{font-weight:600}dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.cell-value{white-space:pre-wrap;overflow-wrap:anywhere}code{overflow-wrap:anywhere;white-space:normal}mark{background:#fff0ad;color:#292315;padding:2px 4px;box-decoration-break:clone}button,select{max-width:100%}.table-scroll:focus-visible{outline:2px solid var(--research-accent);outline-offset:2px}@media(max-width:700px){.heading{width:100%}dl{grid-template-columns:1fr}dd{margin-bottom:5px}th,td{padding:8px}table{min-width:460px}}
+.retained-filters{padding:12px var(--research-space,16px)}.retained-filters fieldset{display:flex;flex-wrap:wrap;gap:12px;min-width:0}.retained-filters label{display:grid;gap:4px;min-width:0;max-width:100%}.retained-filters input,.retained-filters select{max-width:100%;box-sizing:border-box}.members h3{overflow-wrap:anywhere}.heading{margin-right:auto}.coverage,.message,.members,.breadcrumbs,.pagination{padding:12px var(--research-space,16px);margin:0}.coverage p{margin:8px 0}.breadcrumbs,.pagination{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.table-scroll{overflow:auto;margin:0 var(--research-space,16px);max-width:100%}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--research-line)}td{font-variant-numeric:tabular-nums}small{display:block;font-weight:400;margin-top:4px}.members{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}.members article,.receipt{padding:12px;border:1px solid var(--research-line);border-radius:6px;min-width:0}.receipt{margin-top:12px}dl{display:grid;grid-template-columns:minmax(100px,1fr) minmax(0,2fr);gap:8px;margin:12px 0}dt{font-weight:600}dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.cell-value{white-space:pre-wrap;overflow-wrap:anywhere}code{overflow-wrap:anywhere;white-space:normal}mark{background:#fff0ad;color:#292315;padding:2px 4px;box-decoration-break:clone}button,select{max-width:100%}.table-scroll:focus-visible{outline:2px solid var(--research-accent);outline-offset:2px}@media(max-width:700px){.heading{width:100%}dl{grid-template-columns:1fr}dd{margin-bottom:5px}th,td{padding:8px}table{min-width:460px}}
 </style>

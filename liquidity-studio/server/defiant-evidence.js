@@ -1,3 +1,4 @@
+import {normalizeRetainedSourceRegister,searchRetainedSources,validateRetainedSourceRequest} from './defiant-retained-sources.js';
 import {composeEvidenceDecision} from './defiant-evidence-decision.js';
 import {normalizeStorePeriodCoverage} from './defiant-store-period-coverage.js';
 import {discoverServedEvidenceCoverage,validateServedEvidenceDiscoveryRequest} from './defiant-evidence-discovery.js';
@@ -58,7 +59,8 @@ function normalize(input, organizationId) {
   const comparisons = normalizeComparisons(input.comparisons, months);
   const audienceDefinitions = normalizeAudienceDefinitions(input.audienceDefinitions);
   const storePeriodCoverage = normalizeStorePeriodCoverage(input.storePeriodCoverage, comparisons);
-  const data = {schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(storePeriodCoverage === undefined ? {} : {storePeriodCoverage}), ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
+  const retainedSourceRegister = normalizeRetainedSourceRegister(input.retainedSourceRegister);
+  const data = {...(retainedSourceRegister === undefined ? {} : {retainedSourceRegister}), schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(storePeriodCoverage === undefined ? {} : {storePeriodCoverage}), ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
   const revision = createHash('sha256').update(JSON.stringify(data)).digest('hex');
   return {...data, revision};
 }
@@ -75,10 +77,10 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       mark('authority_before_snapshot');
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
       mark('request_validation');
-      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth', 'storeCoverageId'].includes(key))) throw fail(400, 'Invalid evidence request');
-      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, offset = 0, limit = 25} = request;
-      if (!['store-coverage', 'coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
-      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['store-coverage', 'coverage', 'earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'june-review'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
+      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth', 'storeCoverageId', 'sourceId', 'format', 'kind', 'sourceHash'].includes(key))) throw fail(400, 'Invalid evidence request');
+      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, sourceId, format, kind, sourceHash, offset = 0, limit = 25} = request;
+      if (!['retained-sources', 'store-coverage', 'coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
+      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['retained-sources', 'store-coverage', 'coverage', 'earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'june-review'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
       if ((!['selection', 'selection-receipts', 'june-review'].includes(resource) && selectionId !== undefined) || (['selection', 'selection-receipts', 'june-review'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
       if ((resource !== 'store-coverage' && storeCoverageId !== undefined) || (resource === 'store-coverage' && (revision === undefined || (storeCoverageId !== undefined && !identifier(storeCoverageId)) || offset > 100))) throw fail(400, 'Invalid store coverage request');
       if ((resource !== 'identity-group' && identityGroupId !== undefined) || (resource === 'identity-group' && (!identifier(identityGroupId) || revision === undefined))) throw fail(400, 'Invalid identity group request');
@@ -91,7 +93,9 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (resource === 'explain-change' && offset > 10000) throw fail(400, 'Invalid comparison page');
       if (resource !== 'receipt' && receiptId !== undefined) throw fail(400, 'Receipt ID requires receipt');
       if ((selectedMonth !== undefined && !month(selectedMonth)) || (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency))) || (resource === 'receipt' && (!identifier(receiptId) || revision === undefined))) throw fail(400, 'Invalid evidence selection');
-      if(resource!=='coverage'&&(query!==undefined||fromMonth!==undefined||toMonth!==undefined))throw fail(400,'Coverage filters require coverage');
+      if(!['coverage','retained-sources'].includes(resource)&&(query!==undefined||fromMonth!==undefined||toMonth!==undefined))throw fail(400,'Coverage filters require coverage');
+      if(resource!=='retained-sources'&&[sourceId,format,kind,sourceHash].some(v=>v!==undefined))throw fail(400,'Retained source filters require retained sources');
+      if(resource==='retained-sources')validateRetainedSourceRequest({query,sourceId,format,kind,sourceHash,fromMonth,toMonth,offset,limit});
       if(resource==='coverage')validateServedEvidenceDiscoveryRequest({query,fromMonth,toMonth,offset,limit});
       let data;
       try { mark('snapshot_load');const snapshot=await loadSnapshot(scope);mark('snapshot_normalize');data = normalize(snapshot, organizationId); }
@@ -103,6 +107,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (revision !== undefined && revision !== data.revision) throw fail(409, 'Evidence revision changed');
       mark('resource_read');
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
+      if(resource==='retained-sources')return searchRetainedSources(data,{query,sourceId,format,kind,sourceHash,fromMonth,toMonth,offset,limit});
       if(resource==='coverage')return discoverServedEvidenceCoverage(data,{query,fromMonth,toMonth,offset,limit});
       if (resource === 'manifest') return structuredClone({...base, counts: {...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
       if (resource === 'store-coverage') {

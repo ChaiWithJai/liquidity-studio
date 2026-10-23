@@ -96,3 +96,9 @@ test('backlog URL filters roundtrip within current query bounds and never follow
  bad.searchParams.set('backlogSearch','bad\u0000query');assert.equal(readWorkflowLocation(bad.href).backlog.search,'');
  assert.equal(readWorkflowLocation(href).brandId,'brand_a');assert.equal(readWorkflowLocation(href).organizationId,'org_a');
 });
+
+test('retained source filters survive addressable reload and clear when leaving evidence mode',()=>{
+ const strategy={view:'evidence',evidenceMode:'retained',evidenceRevision:'a'.repeat(64),evidenceOffset:25,retainedFilters:{query:'archive + sales',sourceId:'source_one',format:'csv',kind:'member',sourceHash:'b'.repeat(64),fromMonth:'2025-01',toMonth:'2025-06'}};
+ const url=workflowHref('https://fixture/?org=org&tab=strategy',{organizationId:'org',tab:'strategy',strategy});const parsed=readWorkflowLocation(url);assert.deepEqual(parsed.strategy.retainedFilters,strategy.retainedFilters);assert.equal(parsed.strategy.evidenceOffset,25);assert.equal(parsed.strategy.evidenceMode,'retained');
+ const next=workflowHref(url,{organizationId:'org',tab:'strategy',strategy:{...parsed.strategy,evidenceMode:'earnings'}});assert.equal(new URL(next).searchParams.has('retainedQuery'),false);assert.equal(readWorkflowLocation(next).strategy.retainedFilters,undefined);
+});
