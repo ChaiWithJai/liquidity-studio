@@ -28303,9 +28303,19 @@ var DEFAULT_MAX_REQUEST_BODY_SIZE = 4 * 1024 * 1024;
 // server/defiant-evidence-mcp.js
 var organizationId = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 var revision = external_exports.string().regex(/^[a-f0-9]{64}$/);
+var stages = /* @__PURE__ */ new Set(["scope_check", "resolve_binding", "service_read", "authority_before_snapshot", "request_validation", "snapshot_load", "snapshot_normalize", "authority_after_snapshot", "revision_check", "resource_read", "receipt_lookup", "source_records_load", "source_records_normalize", "authority_after_records", "worksheet_load", "worksheet_normalize", "authority_after_worksheet", "response_scope", "response_serialize"]);
+function observe(sink, value) {
+  try {
+    const result = sink?.(value);
+    if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {
+    });
+  } catch {
+  }
+}
 var annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
-function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedChallenge, boundOrganizationId } = {}) {
+function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedChallenge, boundOrganizationId, onOutcome } = {}) {
   if (typeof resolveEvidence !== "function") throw new TypeError("Verified evidence resolver required");
+  if (onOutcome !== void 0 && typeof onOutcome !== "function") throw new TypeError("Evidence outcome sink required");
   if (unauthorizedChallenge !== void 0 && (typeof unauthorizedChallenge !== "string" || unauthorizedChallenge.length > 1024 || /[\r\n]/.test(unauthorizedChallenge))) throw new TypeError("Invalid evidence auth challenge");
   if (boundOrganizationId !== void 0 && !/^[A-Za-z0-9_-]{1,128}$/.test(boundOrganizationId)) throw new TypeError("Invalid bound evidence organization");
   const register2 = (name, description, shape, resource) => server.registerTool(name, {
@@ -28313,19 +28323,32 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
     annotations,
     inputSchema: external_exports.object({ organizationId: boundOrganizationId === void 0 ? organizationId : organizationId.optional(), ...shape }).strict()
   }, async (input, context) => {
+    let stage = "scope_check", outcome = "error", status = 503;
+    const onStage = (value) => {
+      if (stages.has(value)) stage = value;
+    };
     try {
       const { organizationId: suppliedScope, ...request } = input;
       const requestedScope = suppliedScope ?? boundOrganizationId;
       if (boundOrganizationId !== void 0 && requestedScope !== boundOrganizationId) throw Object.assign(new Error("Denied"), { status: 403 });
+      stage = "resolve_binding";
       const binding = await resolveEvidence({ organizationId: requestedScope, context });
       if (!binding?.actor || binding.organizationId !== requestedScope || typeof binding.service?.read !== "function") throw Object.assign(new Error("Denied"), { status: 403 });
-      const data = await binding.service.read(binding.actor, { ...request, resource });
+      stage = "service_read";
+      const data = await binding.service.read(binding.actor, { ...request, resource }, { onStage });
+      stage = "response_scope";
       if (data?.scope?.organizationId !== requestedScope) throw Object.assign(new Error("Denied"), { status: 403 });
-      return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: data };
+      stage = "response_serialize";
+      const result = { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: data };
+      outcome = "success";
+      status = 200;
+      return result;
     } catch (error46) {
+      status = [400, 401, 403, 404, 409, 503].includes(error46?.status) ? error46.status : 503;
       if (error46?.status === 401 && unauthorizedChallenge) return { isError: true, content: [{ type: "text", text: "Evidence authorization required." }], _meta: { "mcp/www_authenticate": [unauthorizedChallenge] } };
-      const status = [400, 401, 403, 404, 409, 503].includes(error46?.status) ? error46.status : 503;
       return { isError: true, content: [{ type: "text", text: `Evidence request unavailable (${status}).` }] };
+    } finally {
+      observe(onOutcome, Object.freeze({ event: "defiant_evidence_tool_outcome", tool: name, outcome, status, stage }));
     }
   });
   register2("defiant_store_period_coverage", "Inspect supplied store-period observations and exact all-period versus mutually observed amount comparisons. Missing observations do not imply zero activity or missing delivery.", { revision, storeCoverageId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/).optional(), offset: external_exports.number().int().min(0).max(100).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "store-coverage");

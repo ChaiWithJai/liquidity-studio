@@ -42564,9 +42564,19 @@ function internalServerErrorResponse2(id4) {
 // server/defiant-evidence-mcp.js
 var organizationId = external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 var revision = external_exports.string().regex(/^[a-f0-9]{64}$/);
+var stages = /* @__PURE__ */ new Set(["scope_check", "resolve_binding", "service_read", "authority_before_snapshot", "request_validation", "snapshot_load", "snapshot_normalize", "authority_after_snapshot", "revision_check", "resource_read", "receipt_lookup", "source_records_load", "source_records_normalize", "authority_after_records", "worksheet_load", "worksheet_normalize", "authority_after_worksheet", "response_scope", "response_serialize"]);
+function observe(sink, value) {
+  try {
+    const result = sink?.(value);
+    if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {
+    });
+  } catch {
+  }
+}
 var annotations = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
-function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedChallenge, boundOrganizationId } = {}) {
+function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedChallenge, boundOrganizationId, onOutcome } = {}) {
   if (typeof resolveEvidence !== "function") throw new TypeError("Verified evidence resolver required");
+  if (onOutcome !== void 0 && typeof onOutcome !== "function") throw new TypeError("Evidence outcome sink required");
   if (unauthorizedChallenge !== void 0 && (typeof unauthorizedChallenge !== "string" || unauthorizedChallenge.length > 1024 || /[\r\n]/.test(unauthorizedChallenge))) throw new TypeError("Invalid evidence auth challenge");
   if (boundOrganizationId !== void 0 && !/^[A-Za-z0-9_-]{1,128}$/.test(boundOrganizationId)) throw new TypeError("Invalid bound evidence organization");
   const register2 = (name, description, shape, resource) => server.registerTool(name, {
@@ -42574,19 +42584,32 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
     annotations,
     inputSchema: external_exports.object({ organizationId: boundOrganizationId === void 0 ? organizationId : organizationId.optional(), ...shape }).strict()
   }, async (input, context) => {
+    let stage = "scope_check", outcome = "error", status = 503;
+    const onStage = (value) => {
+      if (stages.has(value)) stage = value;
+    };
     try {
       const { organizationId: suppliedScope, ...request } = input;
       const requestedScope = suppliedScope ?? boundOrganizationId;
       if (boundOrganizationId !== void 0 && requestedScope !== boundOrganizationId) throw Object.assign(new Error("Denied"), { status: 403 });
+      stage = "resolve_binding";
       const binding = await resolveEvidence({ organizationId: requestedScope, context });
       if (!binding?.actor || binding.organizationId !== requestedScope || typeof binding.service?.read !== "function") throw Object.assign(new Error("Denied"), { status: 403 });
-      const data = await binding.service.read(binding.actor, { ...request, resource });
+      stage = "service_read";
+      const data = await binding.service.read(binding.actor, { ...request, resource }, { onStage });
+      stage = "response_scope";
       if (data?.scope?.organizationId !== requestedScope) throw Object.assign(new Error("Denied"), { status: 403 });
-      return { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: data };
+      stage = "response_serialize";
+      const result = { content: [{ type: "text", text: JSON.stringify(data) }], structuredContent: data };
+      outcome = "success";
+      status = 200;
+      return result;
     } catch (error47) {
+      status = [400, 401, 403, 404, 409, 503].includes(error47?.status) ? error47.status : 503;
       if (error47?.status === 401 && unauthorizedChallenge) return { isError: true, content: [{ type: "text", text: "Evidence authorization required." }], _meta: { "mcp/www_authenticate": [unauthorizedChallenge] } };
-      const status = [400, 401, 403, 404, 409, 503].includes(error47?.status) ? error47.status : 503;
       return { isError: true, content: [{ type: "text", text: `Evidence request unavailable (${status}).` }] };
+    } finally {
+      observe(onOutcome, Object.freeze({ event: "defiant_evidence_tool_outcome", tool: name, outcome, status, stage }));
     }
   });
   register2("defiant_store_period_coverage", "Inspect supplied store-period observations and exact all-period versus mutually observed amount comparisons. Missing observations do not imply zero activity or missing delivery.", { revision, storeCoverageId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$/).optional(), offset: external_exports.number().int().min(0).max(100).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "store-coverage");
@@ -43111,8 +43134,18 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
   if (loadWorksheetCells !== void 0 && typeof loadWorksheetCells !== "function") throw new TypeError("Server-owned worksheet resolver required");
   const scope = Object.freeze({ organizationId: organizationId2 });
   return Object.freeze({
-    async read(actor, request = {}) {
+    async read(actor, request = {}, { onStage } = {}) {
+      const mark = (stage) => {
+        try {
+          const result = onStage?.(stage);
+          if (result && typeof result.then === "function") Promise.resolve(result).catch(() => {
+          });
+        } catch {
+        }
+      };
+      mark("authority_before_snapshot");
       if (!await authorize(actor, scope)) throw fail(403, "Evidence access denied");
+      mark("request_validation");
       if (!plain(request) || Object.keys(request).some((key) => !["resource", "revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId"].includes(key))) throw fail(400, "Invalid evidence request");
       const { resource = "manifest", revision: revision2, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, offset = 0, limit = 25 } = request;
       if (!["store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"].includes(resource) || revision2 !== void 0 && !hash5(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 5e5 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, "Invalid evidence request");
@@ -43133,12 +43166,18 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
       if (resource === "coverage") validateServedEvidenceDiscoveryRequest({ query, fromMonth, toMonth, offset, limit });
       let data;
       try {
-        data = normalize(await loadSnapshot(scope), organizationId2);
+        mark("snapshot_load");
+        const snapshot = await loadSnapshot(scope);
+        mark("snapshot_normalize");
+        data = normalize(snapshot, organizationId2);
       } catch (error47) {
         throw fail(503, "Evidence snapshot unavailable");
       }
+      mark("authority_after_snapshot");
       if (!await authorize(actor, scope)) throw fail(403, "Evidence access denied");
+      mark("revision_check");
       if (revision2 !== void 0 && revision2 !== data.revision) throw fail(409, "Evidence revision changed");
+      mark("resource_read");
       const base = { schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps };
       if (resource === "coverage") return discoverServedEvidenceCoverage(data, { query, fromMonth, toMonth, offset, limit });
       if (resource === "manifest") return structuredClone({ ...base, counts: { ...data.comparisons === void 0 ? {} : { comparisons: data.comparisons.length }, ...data.audienceDefinitions === void 0 ? {} : { audienceDefinitions: data.audienceDefinitions.length }, months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...data.identityGroups === void 0 ? {} : { identityGroups: data.identityGroups.length } }, metric: METRIC });
@@ -43181,25 +43220,30 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const group = comparison?.groups.find((row) => row.id === groupId);
         const reference = group?.sourceReferences[referenceIndex];
         if (!reference) throw fail(404, "Comparison reference unavailable");
+        mark("source_records_load");
         if (!loadSourceRecords) throw fail(503, "Source cells unavailable");
         let receipts;
         try {
           const loaded = reference.exampleRecords.length ? await loadSourceRecords({ ...scope, sourceHash: reference.sourceHash, sourceRecords: [...reference.exampleRecords], revision: data.revision }) : [];
+          mark("source_records_normalize");
           receipts = normalize({ schemaVersion: 1, organizationId: organizationId2, coverage: data.coverage, months: [], receipts: loaded }, organizationId2).receipts;
           if (receipts.length !== reference.exampleRecords.length || receipts.some((row, i) => row.sourceHash !== reference.sourceHash || row.record !== reference.exampleRecords[i])) throw fail(503, "Source examples mismatch");
         } catch {
           throw fail(503, "Source cells unavailable");
         }
+        mark("authority_after_records");
         if (!await authorize(actor, scope)) throw fail(403, "Evidence access denied");
         return structuredClone({ ...base, comparisonId, groupId, referenceIndex, reference, receipts, fullSelectionAvailable: false, limitation: "Original cells for producer-selected examples only; these examples do not reconcile or represent the full group aggregate." });
       }
       if (resource === "audience-cells") {
         const definition = (data.audienceDefinitions || []).find((row) => row.id === audienceId);
         if (!definition) throw fail(404, "Audience definition unavailable");
+        mark("worksheet_load");
         if (!loadWorksheetCells) throw fail(503, "Worksheet cells unavailable");
         let worksheet;
         try {
           const loaded = await loadWorksheetCells({ ...scope, sourceHash: definition.sourceHash, sheet: definition.sheet, cellRefs: [...definition.cellRefs], revision: data.revision });
+          mark("worksheet_normalize");
           if (!plain(loaded) || loaded.sourceHash !== definition.sourceHash || loaded.sheet !== definition.sheet || !Array.isArray(loaded.cells) || loaded.cells.length !== definition.cellRefs.length) throw fail(503, "Worksheet mismatch");
           const cells = loaded.cells.map((cell, i) => {
             if (!plain(cell) || cell.cellRef !== definition.cellRefs[i]) throw fail(503, "Worksheet mismatch");
@@ -43209,6 +43253,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         } catch {
           throw fail(503, "Worksheet cells unavailable");
         }
+        mark("authority_after_worksheet");
         if (!await authorize(actor, scope)) throw fail(403, "Evidence access denied");
         return structuredClone({ ...base, audienceId, worksheet, limitation: "Source cell strings from the host integrity-checked worksheet resolver; no formula execution. Supplied definitions do not verify populations or consent. Required, observed and missing evidence are analyst assessments, not workbook claims." });
       }
@@ -43245,16 +43290,19 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const selected = data.selections.find((row) => row.id === selectionId);
         if (!selected) throw fail(404, "Selection unavailable");
         if (resource === "selection-receipts") {
+          mark("source_records_load");
           if (!loadSourceRecords) throw fail(503, "Source cells unavailable");
           const records = selected.sourceRecords.slice(offset, offset + limit);
           let receipts;
           try {
             const loaded = await loadSourceRecords({ ...scope, sourceHash: selected.sourceHash, sourceRecords: [...records], revision: data.revision });
+            mark("source_records_normalize");
             receipts = normalize({ schemaVersion: 1, organizationId: organizationId2, coverage: data.coverage, months: [], receipts: loaded }, organizationId2).receipts;
             if (receipts.length !== records.length || receipts.some((row, i) => row.sourceHash !== selected.sourceHash || row.record !== records[i])) throw fail(503, "Source selection mismatch");
           } catch {
             throw fail(503, "Source cells unavailable");
           }
+          mark("authority_after_records");
           if (!await authorize(actor, scope)) throw fail(403, "Evidence access denied");
           return structuredClone({ ...base, selection: summary(selected), receipts, total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, limitation: "Exact source cells supplied by the host integrity-checked partition resolver; this page is not the entire aggregate unless it contains every contributing record." });
         }
@@ -43263,6 +43311,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         return structuredClone({ ...base, juneReviewAvailable, selection: summary(selected), sourceRecords: selected.sourceRecords.slice(offset, offset + limit), total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, rowConvention: "1-based logical CSV record including header", limitation });
       }
       if (resource === "receipt") {
+        mark("receipt_lookup");
         const receipt = data.receipts.find((row) => row.id === receiptId);
         if (!receipt) throw fail(404, "Receipt unavailable");
         return structuredClone({ ...base, receipt, rowConvention: "1-based logical CSV record including header", limitation: "A receipt is one source record; an aggregate requires its full contributing selection." });
@@ -43714,8 +43763,9 @@ function remoteEvidenceConfiguration(raw = "[]") {
   if (typeof raw !== "string" || raw.length > 8192) throw TypeError("Invalid remote evidence clients");
   return oauthClientConfiguration(JSON.parse(raw));
 }
-function createRemoteEvidence({ platform, provider, authorizeEvidence, clients = [], allowedHosts = ["studio.chaiwithjai.com"], fetchImpl = fetch } = {}) {
+function createRemoteEvidence({ platform, provider, authorizeEvidence, clients = [], allowedHosts = ["studio.chaiwithjai.com"], fetchImpl = fetch, onToolOutcome = (event) => console.info(JSON.stringify(event)) } = {}) {
   if (platform?.identity?.mode !== "google" || typeof provider !== "function" || typeof authorizeEvidence !== "function" || !Array.isArray(allowedHosts) || !allowedHosts.length || allowedHosts.length > 4 || allowedHosts.some((h) => typeof h !== "string" || !h || /[\s/:]/.test(h))) throw TypeError("Managed private remote evidence wiring required");
+  if (typeof onToolOutcome !== "function") throw TypeError("Evidence outcome sink required");
   const identity = platform.identity, strategy = (organizationId2) => ({ raw: (actor) => authorizeEvidence(actor, organizationId2) });
   const oauth = createEvidenceOAuth({
     store: platform.store,
@@ -43812,7 +43862,7 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, clients =
             securitySchemes: [{ type: "oauth2", scopes: [EVIDENCE_SCOPE] }],
             _meta: { ...config2._meta, securitySchemes: [{ type: "oauth2", scopes: [EVIDENCE_SCOPE] }] }
           }, callback) };
-          registerDefiantEvidenceTools(registration, { boundOrganizationId: verified.organizationId, unauthorizedChallenge: challenge() + ', error="invalid_token", error_description="Evidence authorization required"', resolveEvidence: async ({ organizationId: organizationId2 }) => {
+          registerDefiantEvidenceTools(registration, { onOutcome: onToolOutcome, boundOrganizationId: verified.organizationId, unauthorizedChallenge: challenge() + ', error="invalid_token", error_description="Evidence authorization required"', resolveEvidence: async ({ organizationId: organizationId2 }) => {
             const grant = await oauth.verifyAccessToken(auth.token);
             if (grant.organizationId !== organizationId2) throw fail2(403, "access_denied");
             const user = await identity.authorizeLocalEvidenceActor(grant.userId, grant.uid, grant.approvedAt);
