@@ -32,6 +32,6 @@ export function createLocalEvidenceHttp({platform}){
     return await grants.revoke({token:bearer},body.grantId,body.organizationId);
    }catch{throw fail(403,'Local evidence authorization unavailable');}
   },
-  async authorize(bearer,organizationId){const grant=await grants.authorize(bearer,organizationId);return identity.authorizeLocalEvidenceActor(grant.userId,grant.uid);}
+  async authorize(bearer,organizationId){const grant=await grants.authorize(bearer,organizationId);const user=await identity.authorizeLocalEvidenceActor(grant.userId,grant.uid);return {...user,uid:grant.uid};}
  };
 }

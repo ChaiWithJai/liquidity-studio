@@ -28352,7 +28352,11 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
     }
   });
   register2("defiant_selection_reconciliation", "Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/) }, "selection-reconciliation");
-  register2("defiant_search_retained_sources", "Search retained source and archive-member metadata within the registered intake scope. Explicit filename sales/reporting periods only; no semantic ranking or provider completeness claim.", {
+  register2("defiant_search_retained_sources", "Search retained source and archive-member metadata within the registered intake scope. Keyword search by default. Explicit semantic mode invokes one capped metadata query embedding; semantic-page reuses its session. Suggestions never prove facts, identity or provider completeness.", {
+    mode: external_exports.enum(["keyword", "semantic", "semantic-page"]).optional(),
+    sessionId: external_exports.string().length(64).regex(/^[a-f0-9]+$/).optional(),
+    idempotencyKey: external_exports.string().max(128).regex(/^[A-Za-z0-9_-]+$(?![\s\S])/).optional(),
+    periodPresence: external_exports.enum(["dated", "undated"]).optional(),
     revision: revision.optional(),
     query: external_exports.string().max(200).refine((v) => !/[\u0000-\u001f\u007f]/.test(v)).optional(),
     sourceId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/).optional(),
@@ -28448,7 +28452,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
 var origin = EVIDENCE_ORIGIN;
 var fail2 = (status = 503) => Object.assign(new Error("Private evidence unavailable"), { status });
 var resources = /* @__PURE__ */ new Set(["selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"]);
-var fields = /* @__PURE__ */ new Set(["revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash"]);
+var fields = /* @__PURE__ */ new Set(["revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash", "mode", "sessionId", "idempotencyKey", "periodPresence"]);
 async function createPrivateEvidenceBridge({ configurationPath, fetchImpl = fetch, now = () => Date.now() } = {}) {
   const authClient = await createEvidenceClientAuth({ configurationPath, fetchImpl, now });
   const { config: config2, current } = authClient, credential = (options) => authClient.credential(options), actor = Object.freeze({ kind: "http-bridge-interface" });
@@ -28462,12 +28466,14 @@ async function createPrivateEvidenceBridge({ configurationPath, fetchImpl = fetc
       url2.searchParams.set(key, String(value));
     }
     if (input.revision !== void 0 && !/^[a-f0-9]{64}$/.test(input.revision)) throw fail2(400);
+    const semantic = input.resource === "retained-sources" && input.mode === "semantic";
+    if (semantic) url2.search = "";
     await current();
     const auth = await credential();
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 3e4);
     let reader;
     try {
-      const response = await fetchImpl(url2, { method: "GET", redirect: "error", credentials: "omit", cache: "no-store", headers: { Accept: "application/json", Authorization: `Bearer ${auth.accessToken}` }, signal: controller.signal });
+      const response = await fetchImpl(url2, { method: semantic ? "POST" : "GET", ...semantic ? { body: JSON.stringify(Object.fromEntries(Object.entries(input).filter(([key]) => key !== "resource"))) } : {}, redirect: "error", credentials: "omit", cache: "no-store", headers: { Accept: "application/json", ...semantic ? { "Content-Type": "application/json" } : {}, Authorization: `Bearer ${auth.accessToken}` }, signal: controller.signal });
       if (!response.ok) throw fail2([400, 401, 403, 404, 409, 503].includes(response.status) ? response.status : 503);
       if (!/^application\/json(?:;|$)/i.test(response.headers.get("content-type") || "")) throw fail2();
       reader = response.body?.getReader();

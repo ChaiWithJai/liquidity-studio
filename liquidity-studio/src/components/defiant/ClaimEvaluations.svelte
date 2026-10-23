@@ -3,7 +3,7 @@
  let {request}=$props();
  let open=$state(false),busy=$state(false),error=$state(''),cases=$state([]),items=$state([]),selected=$state(''),available=$state(false),attemptConsumed=$state(null),detail=$state(null),pending=$state(null);
  let alive=true,sequence=0,controller=null;
- const validationStages=['content-type','length','body','chunk','utf8','json','model','answers','support','booleans','usage','routing','cost'];
+ const validationStages=['content-type','length','body','chunk','utf8','json','model','answers','support','support-object', 'support-type', 'support-choice', 'support-labels', 'support-probability', 'support-sum','booleans','usage','routing','cost'];
  function validationStage(outcome){const value=outcome?.responseValidation;return value&&Object.keys(value).length===2&&value.schemaVersion===1&&validationStages.includes(value.stage)?value.stage:null;}
  const selectedCase=$derived(cases.find(item=>item.caseId===selected));
  onDestroy(()=>{alive=false;sequence++;controller?.abort();});
