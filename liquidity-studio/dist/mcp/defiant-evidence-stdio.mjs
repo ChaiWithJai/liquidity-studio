@@ -28351,6 +28351,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
       observe(onOutcome, Object.freeze({ event: "defiant_evidence_tool_outcome", tool: name, outcome, status, stage }));
     }
   });
+  register2("defiant_source_evidence", "Find existing served evidence references for an exact registered source hash. Follow typed links to original financial records or worksheet cells; these navigation references do not prove complete source coverage.", { revision, sourceHash: external_exports.string().regex(/^[a-f0-9]{64}(?![\s\S])/), offset: external_exports.number().int().min(0).max(24400).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "source-evidence");
   register2("defiant_selection_reconciliation", "Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/) }, "selection-reconciliation");
   register2("defiant_search_retained_sources", "Search retained source and archive-member metadata within the registered intake scope. Keyword search by default. Explicit semantic mode invokes one capped metadata query embedding; semantic-page reuses its session. Suggestions never prove facts, identity or provider completeness.", {
     mode: external_exports.enum(["keyword", "semantic", "semantic-page"]).optional(),
@@ -28451,7 +28452,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
 // server/defiant-evidence-bridge.js
 var origin = EVIDENCE_ORIGIN;
 var fail2 = (status = 503) => Object.assign(new Error("Private evidence unavailable"), { status });
-var resources = /* @__PURE__ */ new Set(["selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"]);
+var resources = /* @__PURE__ */ new Set(["source-evidence", "selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"]);
 var fields = /* @__PURE__ */ new Set(["revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash", "mode", "sessionId", "idempotencyKey", "periodPresence"]);
 async function createPrivateEvidenceBridge({ configurationPath, fetchImpl = fetch, now = () => Date.now() } = {}) {
   const authClient = await createEvidenceClientAuth({ configurationPath, fetchImpl, now });
