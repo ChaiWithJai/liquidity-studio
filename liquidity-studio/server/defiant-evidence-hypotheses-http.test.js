@@ -28,8 +28,8 @@ test('Studio Google hypothesis register/link/correction persists and scoped read
  const delegatedHeaders={...headers,Authorization:'Bearer '+credentials.accessToken};
  const manifest=await fetch(base+'/manifest',{headers:delegatedHeaders});assert.equal(manifest.status,200);assert.equal((await manifest.json()).revision,revision);
  const beforeDenied=reads;
- for(const path of ['/hypotheses','/hypotheses/'+id])assert.equal((await fetch(base+path,{headers:delegatedHeaders})).status,403);
- assert.equal((await post('/hypotheses',{...input,idempotencyKey:'forbidden'},delegatedHeaders)).status,403);assert.equal(reads,beforeDenied);
+ for(const [path,status] of [['/hypotheses',403],['/hypotheses/'+id,401]])assert.equal((await fetch(base+path,{headers:delegatedHeaders})).status,status);
+ assert.equal((await post('/hypotheses',{...input,idempotencyKey:'forbidden'},delegatedHeaders)).status,401);assert.equal(reads,beforeDenied);
  const remoteClient={clientId:'https://chatgpt.com/oauth/client.json',redirectUri:'https://chatgpt.com/connector_platform_oauth_redirect',clientName:'Invented hypothesis read client'};let remoteReads=0;
  const remote=createRemoteEvidence({platform,clients:[remoteClient],onToolOutcome:()=>{},onOAuthOutcome:()=>{},authorizeEvidence:async(user,organizationId)=>new DefiantStrategyService({store,identity:platform.identity,organizationId}).raw(user),fetchImpl:async()=>Response.json({client_id:remoteClient.clientId,redirect_uris:[remoteClient.redirectUri],token_endpoint_auth_methods_supported:['none']}),provider:async({organizationId})=>({loadSnapshot:async()=>{remoteReads++;return {schemaVersion:1,organizationId,coverage:'Invented remote proof',months:[],receipts:[]};}})});
  const request=(path,options={})=>remote.fetch(new Request('https://studio.chaiwithjai.com'+path,options)),remotePost=async(operation,body,cookie)=>request('/api/studio/remote-evidence/'+operation,{method:'POST',headers:{...headers,cookie},body:JSON.stringify(body)});
