@@ -25,21 +25,25 @@ function stateInput(input) {
   requireValue(typeof input.evidence === 'string' && input.evidence.length > 0 && Buffer.byteLength(input.evidence) <= 12000);
   return { claim: input.claim, evidence: input.evidence };
 }
+const responseStages = Object.freeze(['content-type', 'length', 'body', 'chunk', 'utf8', 'json', 'model', 'answers', 'support', 'booleans', 'usage', 'routing', 'cost']);
+const responseError = stage => Object.assign(new Error('response'), { responseValidationStage: stage });
+const invalidResponse = stage => ({ status: 'failed', reason: 'provider-response', responseValidation: { schemaVersion: 1, stage } });
 const probability = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
 function responseResult(data) {
-  if (!object(data) || data.model !== MODEL || !exact(data.answers, ['support', ...booleanKeys])) throw new Error('response');
+  if (!object(data) || data.model !== MODEL) throw responseError('model');
+  if (!exact(data.answers, ['support', ...booleanKeys])) throw responseError('answers');
   const support = data.answers.support;
-  if (!exact(support, ['type', 'choice', 'probabilities']) || support.type !== 'choice' || !classes.includes(support.choice) || !exact(support.probabilities, classes) || !Object.values(support.probabilities).every(probability) || Math.abs(Object.values(support.probabilities).reduce((a, b) => a + b, 0) - 1) > 0.000001) throw new Error('response');
-  for (const key of booleanKeys) { const answer = data.answers[key]; if (!exact(answer, ['type', 'probability']) || answer.type !== 'boolean' || !probability(answer.probability)) throw new Error('response'); }
-  if (!exact(data.usage, ['inputTokens', 'outputTokens']) || !Object.values(data.usage).every(n => Number.isSafeInteger(n) && n >= 0 && n <= 1000000)) throw new Error('response');
+  if (!exact(support, ['type', 'choice', 'probabilities']) || support.type !== 'choice' || !classes.includes(support.choice) || !exact(support.probabilities, classes) || !Object.values(support.probabilities).every(probability) || Math.abs(Object.values(support.probabilities).reduce((a, b) => a + b, 0) - 1) > 0.000001) throw responseError('support');
+  for (const key of booleanKeys) { const answer = data.answers[key]; if (!exact(answer, ['type', 'probability']) || answer.type !== 'boolean' || !probability(answer.probability)) throw responseError('booleans'); }
+  if (!exact(data.usage, ['inputTokens', 'outputTokens']) || !Object.values(data.usage).every(n => Number.isSafeInteger(n) && n >= 0 && n <= 1000000)) throw responseError('usage');
   const gateway = data.providerMetadata?.gateway;
   let cost = null;
   if (gateway !== undefined) {
-    if (!object(gateway)) throw new Error('response');
+    if (!object(gateway)) throw responseError('routing');
     const routing = gateway.routing;
-    if (routing !== undefined && (!object(routing) || Object.entries(routing).some(([k, v]) => ['originalModelId', 'canonicalSlug'].includes(k) ? v !== MODEL : ['resolvedProvider', 'finalProvider'].includes(k) && v !== 'typesafe-ai'))) throw new Error('response');
+    if (routing !== undefined && (!object(routing) || Object.entries(routing).some(([k, v]) => ['originalModelId', 'canonicalSlug'].includes(k) ? v !== MODEL : ['resolvedProvider', 'finalProvider'].includes(k) && v !== 'typesafe-ai'))) throw responseError('routing');
     if (gateway.cost !== undefined) {
-      if (typeof gateway.cost !== 'string' || !/^(?:0|[1-9][0-9]{0,5})(?:\.[0-9]{1,12})?(?![\s\S])/.test(gateway.cost)) throw new Error('response');
+      if (typeof gateway.cost !== 'string' || !/^(?:0|[1-9][0-9]{0,5})(?:\.[0-9]{1,12})?(?![\s\S])/.test(gateway.cost)) throw responseError('cost');
       cost = gateway.cost;
     }
   }
@@ -74,13 +78,15 @@ export function createJevDecisionAdapter({ enabled = false, getCredential = () =
       const response = await fetchImpl(ENDPOINT, { method: 'POST', redirect: 'error', signal: controller.signal, headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body });
       if (controller.signal.aborted) throw new Error('deadline');
       if (!response || response.redirected || response.status !== 200) return { status: 'failed', reason: 'provider-http' };
-      if (!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type') || '')) return { status: 'failed', reason: 'provider-response' };
+      if (!/^application\/json(?:\s*;|$)/i.test(response.headers.get('content-type') || '')) return invalidResponse('content-type');
       const length = response.headers.get('content-length');
-      if (length !== null && (!/^[0-9]+$/.test(length) || Number(length) > maxResponseBytes)) return { status: 'failed', reason: 'provider-response' };
-      if (!response.body || typeof response.body.getReader !== 'function') return { status: 'failed', reason: 'provider-response' };
+      if (length !== null && (!/^[0-9]+$/.test(length) || Number(length) > maxResponseBytes)) return invalidResponse('length');
+      if (!response.body || typeof response.body.getReader !== 'function') return invalidResponse('body');
       reader = response.body.getReader(); const buffer = new Uint8Array(maxResponseBytes); let used = 0;
-      for (;;) { const { done, value } = await reader.read(); if (controller.signal.aborted) throw new Error('deadline'); if (done) break; if (!(value instanceof Uint8Array) || value.length > 65536 || used + value.length > maxResponseBytes) return { status: 'failed', reason: 'provider-response' }; buffer.set(value, used); used += value.length; }
-      try { return { status: 'observed', ...responseResult(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, used)))) }; } catch { return { status: 'failed', reason: 'provider-response' }; }
+      for (;;) { const { done, value } = await reader.read(); if (controller.signal.aborted) throw new Error('deadline'); if (done) break; if (!(value instanceof Uint8Array) || value.length > 65536) return invalidResponse('chunk'); if (used + value.length > maxResponseBytes) return invalidResponse('body'); buffer.set(value, used); used += value.length; }
+      let text; try { text = new TextDecoder('utf-8', { fatal: true }).decode(buffer.subarray(0, used)); } catch { return invalidResponse('utf8'); }
+      let data; try { data = JSON.parse(text); } catch { return invalidResponse('json'); }
+      try { return { status: 'observed', ...responseResult(data) }; } catch (error) { return responseStages.includes(error?.responseValidationStage) ? invalidResponse(error.responseValidationStage) : { status: 'failed', reason: 'provider-response' }; }
     };
     try { return freeze({ ...await Promise.race([request(), deadline]), latencyMs: Math.max(0, Math.round(performance.now() - start)) }); }
     catch { return freeze({ status: 'failed', reason: controller.signal.aborted ? 'deadline' : 'transport', latencyMs: Math.max(0, Math.round(performance.now() - start)) }); }
@@ -99,7 +105,12 @@ function finiteOutcome(value) {
     return { status: 'observed', ...parsed, latencyMs: latency };
   }
   const allowed = { unavailable: ['disabled', 'credential-unavailable', 'request-cap'], failed: ['provider-http', 'provider-response', 'deadline', 'transport'], skipped: ['deterministic-failure', 'insufficient-context'] };
-  requireValue(Object.hasOwn(allowed, value.status) && allowed[value.status].includes(value.reason) && exact(value, latency === undefined ? ['status', 'reason'] : ['status', 'reason', 'latencyMs']));
+  const keys = latency === undefined ? ['status', 'reason'] : ['status', 'reason', 'latencyMs'];
+  if (Object.hasOwn(value, 'responseValidation')) {
+    requireValue(value.status === 'failed' && value.reason === 'provider-response' && exact(value.responseValidation, ['schemaVersion', 'stage']) && value.responseValidation.schemaVersion === 1 && responseStages.includes(value.responseValidation.stage));
+    keys.push('responseValidation');
+  }
+  requireValue(Object.hasOwn(allowed, value.status) && allowed[value.status].includes(value.reason) && exact(value, keys));
   return clone(value);
 }
 

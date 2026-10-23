@@ -3,6 +3,8 @@
  let {request}=$props();
  let open=$state(false),busy=$state(false),error=$state(''),cases=$state([]),items=$state([]),selected=$state(''),available=$state(false),detail=$state(null),pending=$state(null);
  let alive=true,sequence=0,controller=null;
+ const validationStages=['content-type','length','body','chunk','utf8','json','model','answers','support','booleans','usage','routing','cost'];
+ function validationStage(outcome){const value=outcome?.responseValidation;return value&&Object.keys(value).length===2&&value.schemaVersion===1&&validationStages.includes(value.stage)?value.stage:null;}
  const selectedCase=$derived(cases.find(item=>item.caseId===selected));
  onDestroy(()=>{alive=false;sequence++;controller?.abort();});
  async function perform(task,execution=false){
@@ -37,6 +39,10 @@
      <p>Deterministic checks: {value.deterministic.status} {value.deterministic.reasons.join(', ')}</p>
      <p>Evidence revision <code>{value.case.evidenceRevision}</code></p><p>Evaluator {value.evaluatorVersion} · Checks {value.deterministicVersion}</p>
      <p>Outcome: {value.outcome.status}{value.outcome.reason?' · '+value.outcome.reason:''}</p>
+     {#if value.outcome.status==='failed'&&value.outcome.reason==='provider-response'}
+      <p>Response validation stage: {validationStage(value.outcome)??'not retained'}.</p>
+      <p>This identifies a response check, not a semantic evaluation result. No automatic retry was made.</p>
+     {/if}
      {#if value.outcome.status==='observed'}
       <p>Model {value.outcome.model} · Immutable checkpoint: unknown</p><p>Support decision: {value.outcome.answers.support.choice}</p>
       <dl>{#each Object.entries(value.outcome.answers.support.probabilities) as [label,probability] (label)}<dt>{label}</dt><dd>{probability}</dd>{/each}</dl>

@@ -38,3 +38,11 @@ test('historical wrong version or arbitrary provenance consumes reservation with
  const record=await f.make({pack,deterministicVersion:HISTORICAL_COMPARABILITY_VERSION,accountExperimentId:'historical-separate'}).evaluate(actor,{caseId:'observed',idempotencyKey:'once'});assert.equal(record.status,'indeterminate');assert.equal(record.evaluation,null);assert.equal(f.counts().calls,0);assert.ok(!JSON.stringify(record).includes('PRIVATE_LABEL'));assert.equal(f.data.get('defiant-evaluations:v1:account:historical-separate').attempts.length,1);
  }
 });
+
+test('finite response validation is durably saved and same-key/detail recovery never dispatches again',async()=>{
+ const f=fixture();let calls=0;const service=f.make({adapter:{decide:async()=>{calls++;return {status:'failed',reason:'provider-response',responseValidation:{schemaVersion:1,stage:'usage'},latencyMs:1};}}});const first=await service.evaluate(actor,request);assert.equal(first.status,'completed');assert.deepEqual(first.evaluation.outcome.responseValidation,{schemaVersion:1,stage:'usage'});assert.equal(first.evaluation.outcome.reason,'provider-response');assert.equal(first.evaluation.humanLabel,null);assert.deepEqual(await service.detail(actor,first.recordId),first);assert.deepEqual(await service.evaluate(actor,request),first);assert.equal(calls,1);assert.equal(f.data.get('defiant-evaluations:v1:account:account-experiment').attempts.length,1);f.revoke();await assert.rejects(service.detail(actor,first.recordId),{status:403});await assert.rejects(service.evaluate(actor,request),{status:403});assert.equal(calls,1);
+});
+
+test('late authority revocation prevents persistence of diagnostic outcome without refunding attempt',async()=>{
+ const f=fixture(),gate=deferred();let calls=0;const service=f.make({adapter:{decide:async()=>{calls++;await gate.promise;return {status:'failed',reason:'provider-response',responseValidation:{schemaVersion:1,stage:'json'},latencyMs:1};}}});const pending=service.evaluate(actor,request);try{while(!calls)await new Promise(r=>setImmediate(r));f.revoke();}finally{gate.resolve();}await assert.rejects(pending,{status:403});const record=[...f.data.values()].find(v=>v?.status==='reserved');assert.equal(record.evaluation,null);assert.equal(f.data.get('defiant-evaluations:v1:account:account-experiment').attempts.length,1);assert.equal(calls,1);
+});
