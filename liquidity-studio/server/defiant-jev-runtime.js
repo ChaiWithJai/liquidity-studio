@@ -1,3 +1,4 @@
+import {configuredHistoricalJevProvider} from './defiant-jev-historical-runtime.js';
 import {constants} from 'node:fs';
 import {open} from 'node:fs/promises';
 import {isAbsolute} from 'node:path';
@@ -38,7 +39,9 @@ async function readCasePack(bucket,pin){
 export async function configuredJevEvaluationProvider({environment=process.env,loadCredential=loadJevManagedCredential,createStorage=async options=>{const {Storage}=await import('@google-cloud/storage');return new Storage(options);},fetch:fetchImpl=globalThis.fetch}={}){
  const raw=environment.STUDIO_DEFIANT_JEV_CONFIGURATION;if(raw===undefined||raw==='')return null;
  try{
-  if(typeof raw!=='string'||Buffer.byteLength(raw)>4096)throw invalid();const config=validateJevRuntimeConfiguration(JSON.parse(raw));
+  if(typeof raw!=='string'||Buffer.byteLength(raw)>4096)throw invalid();const parsed=JSON.parse(raw);
+  if(parsed?.schemaVersion===2)return await configuredHistoricalJevProvider({configuration:parsed,environment,loadCredential,createStorage,fetch:fetchImpl,readPinnedObject:readCasePack});
+  const config=validateJevRuntimeConfiguration(parsed);
   const key=await loadCredential(environment.STUDIO_PENPOT_MANAGED_CONFIG);
   const storage=await createStorage({projectId:PROJECT}),bytes=await readCasePack(storage.bucket(BUCKET),config.casePack);
   const metadata=createPinnedEarningsCasePack({bytes,sha256:config.casePack.sha256,evidence:{read:async()=>{throw invalid();}},authorize:async()=>{}});
