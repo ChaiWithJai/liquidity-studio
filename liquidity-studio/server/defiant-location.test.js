@@ -98,7 +98,7 @@ test('backlog URL filters roundtrip within current query bounds and never follow
 });
 
 test('retained source filters survive addressable reload and clear when leaving evidence mode',()=>{
- const strategy={view:'evidence',evidenceMode:'retained',evidenceRevision:'a'.repeat(64),evidenceOffset:25,retainedFilters:{query:'archive + sales',sourceId:'source_one',format:'csv',kind:'member',sourceHash:'b'.repeat(64),fromMonth:'2025-01',toMonth:'2025-06'}};
+ const strategy={view:'evidence',evidenceMode:'retained',evidenceRevision:'a'.repeat(64),evidenceOffset:25,retainedFilters:{query:'archive + sales',sourceId:'source_one',format:'csv',kind:'member',sourceHash:'b'.repeat(64),fromMonth:'2025-01',toMonth:'2025-06',periodPresence:'dated'}};
  const url=workflowHref('https://fixture/?org=org&tab=strategy',{organizationId:'org',tab:'strategy',strategy});const parsed=readWorkflowLocation(url);assert.deepEqual(parsed.strategy.retainedFilters,strategy.retainedFilters);assert.equal(parsed.strategy.evidenceOffset,25);assert.equal(parsed.strategy.evidenceMode,'retained');
  const next=workflowHref(url,{organizationId:'org',tab:'strategy',strategy:{...parsed.strategy,evidenceMode:'earnings'}});assert.equal(new URL(next).searchParams.has('retainedQuery'),false);assert.equal(readWorkflowLocation(next).strategy.retainedFilters,undefined);
 });
@@ -107,3 +107,9 @@ test('selection reconciliation subview reload preserves selection revision and p
  const state={view:'evidence',evidenceMode:'selections',evidenceSelectionId:'sample',evidenceRevision:'a'.repeat(64),evidenceOffset:25,evidenceReconciliation:true};const href=workflowHref('https://fixture/?org=org&tab=strategy',{organizationId:'org',tab:'strategy',strategy:state});const parsed=readWorkflowLocation(href);assert.equal(parsed.strategy.evidenceReconciliation,true);assert.equal(parsed.strategy.evidenceSelectionId,'sample');assert.equal(parsed.strategy.evidenceOffset,25);assert.equal(parsed.strategy.evidenceRevision,state.evidenceRevision);
  const back=workflowHref(href,{organizationId:'org',tab:'strategy',strategy:{...parsed.strategy,evidenceReconciliation:false}});assert.equal(new URL(back).searchParams.has('evidenceReconciliation'),false);assert.equal(readWorkflowLocation(back).strategy.evidenceOffset,25);assert.equal(readWorkflowLocation(back).strategy.evidenceSelectionId,'sample');
 });
+
+ test('semantic session address preserves only finite identifiers and offset, never natural query text',()=>{
+ const strategy={view:'evidence',evidenceMode:'retained',evidenceRevision:'a'.repeat(64),retainedSessionId:'b'.repeat(64),retainedSessionOffset:25,retainedFilters:{periodPresence:'undated'}};
+ const url=workflowHref('https://fixture/?org=org&tab=strategy',{organizationId:'org',tab:'strategy',strategy}),parsed=readWorkflowLocation(url);assert.equal(parsed.strategy.retainedSessionId,strategy.retainedSessionId);assert.equal(parsed.strategy.retainedSessionOffset,25);assert.equal(parsed.strategy.retainedFilters.periodPresence,'undated');assert.equal(new URL(url).searchParams.has('query'),false);
+ const next=workflowHref(url,{organizationId:'org',tab:'strategy',strategy:{...strategy,evidenceMode:'earnings'}});assert.equal(new URL(next).searchParams.has('retainedSession'),false);
+ });

@@ -3,8 +3,8 @@ import {McpServer} from '@modelcontextprotocol/server';
 import {registerDefiantEvidenceTools} from './defiant-evidence-mcp.js';
 const origin=EVIDENCE_ORIGIN;
 const fail=(status=503)=>Object.assign(new Error('Private evidence unavailable'),{status});
-const resources=new Set(['selection-reconciliation','retained-sources','store-coverage','coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
-const fields=new Set(['revision','month','currency','receiptId','selectionId','identityGroupId','comparisonId','audienceId','groupId','referenceIndex','offset','limit','query','fromMonth','toMonth','storeCoverageId','sourceId','format','kind','sourceHash']);
+const resources=new Set(['source-evidence','selection-reconciliation','retained-sources','store-coverage','coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
+const fields=new Set(['revision','month','currency','receiptId','selectionId','identityGroupId','comparisonId','audienceId','groupId','referenceIndex','offset','limit','query','fromMonth','toMonth','storeCoverageId','sourceId','format','kind','sourceHash','mode','sessionId','idempotencyKey','periodPresence']);
 /** Scoped local grant only: no Firebase bearer or ADC fallback. */
 export async function createPrivateEvidenceBridge({configurationPath,fetchImpl=fetch,now=()=>Date.now()}={}){
  const authClient=await createEvidenceClientAuth({configurationPath,fetchImpl,now});
@@ -19,10 +19,12 @@ export async function createPrivateEvidenceBridge({configurationPath,fetchImpl=f
    url.searchParams.set(key,String(value));
   }
   if(input.revision!==undefined&&!/^[a-f0-9]{64}$/.test(input.revision))throw fail(400);
+  const semantic=input.resource==='retained-sources'&&input.mode==='semantic';
+  if(semantic)url.search='';
   await current();const auth=await credential();
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);let reader;
   try{
-   const response=await fetchImpl(url,{method:'GET',redirect:'error',credentials:'omit',cache:'no-store',headers:{Accept:'application/json',Authorization:`Bearer ${auth.accessToken}`},signal:controller.signal});
+   const response=await fetchImpl(url,{method:semantic?'POST':'GET',...(semantic?{body:JSON.stringify(Object.fromEntries(Object.entries(input).filter(([key])=>key!=='resource')))}:{}),redirect:'error',credentials:'omit',cache:'no-store',headers:{Accept:'application/json',...(semantic?{'Content-Type':'application/json'}:{}),Authorization:`Bearer ${auth.accessToken}`},signal:controller.signal});
    if(!response.ok)throw fail([400,401,403,404,409,503].includes(response.status)?response.status:503);
    if(!/^application\/json(?:;|$)/i.test(response.headers.get('content-type')||''))throw fail();
    reader=response.body?.getReader();if(!reader)throw fail();

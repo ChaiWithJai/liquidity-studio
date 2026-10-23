@@ -1,3 +1,6 @@
+import {sourceEvidenceView,validateSourceEvidenceRequest} from './defiant-source-evidence.js';
+import {createSemanticSessions} from './defiant-semantic-sessions.js';
+import {normalizeSemanticIndex} from './defiant-semantic-index.js';
 import {normalizeSelectionReconciliations,selectionReconciliationView} from './defiant-selection-reconciliation.js';
 import {normalizeRetainedSourceRegister,searchRetainedSources,validateRetainedSourceRequest} from './defiant-retained-sources.js';
 import {composeEvidenceDecision} from './defiant-evidence-decision.js';
@@ -68,21 +71,28 @@ function normalize(input, organizationId) {
 }
 
 /** The host owns authenticated actors and a bounded, integrity-checked snapshot loader. */
-export function createDefiantEvidenceService({organizationId, authorize, loadSnapshot, loadSourceRecords, loadWorksheetCells} = {}) {
+export function createDefiantEvidenceService({organizationId, authorize, loadSnapshot, loadSourceRecords, loadWorksheetCells, loadSemanticIndex, semanticDependencies} = {}) {
   if (!identifier(organizationId) || typeof authorize !== 'function' || typeof loadSnapshot !== 'function') throw new TypeError('Evidence scope, authority and loader required');
   if (loadSourceRecords !== undefined && typeof loadSourceRecords !== 'function') throw new TypeError('Server-owned source resolver required');
   if (loadWorksheetCells !== undefined && typeof loadWorksheetCells !== 'function') throw new TypeError('Server-owned worksheet resolver required');
   const scope = Object.freeze({organizationId});
+  const semantic=typeof loadSemanticIndex==='function'&&semanticDependencies?createSemanticSessions({...semanticDependencies,readContext:async actor=>{
+    if(!await authorize(actor,scope))throw fail(403,'Evidence access denied');
+    const snapshot=normalize(await loadSnapshot(scope),organizationId);
+    const index=normalizeSemanticIndex(await loadSemanticIndex(scope),{organizationId,register:snapshot.retainedSourceRegister});
+    if(!await authorize(actor,scope))throw fail(403,'Evidence access denied');
+    return {actor,snapshot,index};
+  }}):null;
   return Object.freeze({
     async read(actor, request = {}, {onStage} = {}) {
       const mark=stage=>{try { const result=onStage?.(stage);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{}); } catch {}};
       mark('authority_before_snapshot');
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
       mark('request_validation');
-      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth', 'storeCoverageId', 'sourceId', 'format', 'kind', 'sourceHash'].includes(key))) throw fail(400, 'Invalid evidence request');
-      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, sourceId, format, kind, sourceHash, offset = 0, limit = 25} = request;
-      if (!['selection-reconciliation', 'retained-sources', 'store-coverage', 'coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
-      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['retained-sources', 'store-coverage', 'coverage', 'earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'june-review'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
+      if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth', 'storeCoverageId', 'sourceId', 'format', 'kind', 'sourceHash','periodPresence','mode','sessionId','idempotencyKey'].includes(key))) throw fail(400, 'Invalid evidence request');
+      const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, sourceId, format, kind, sourceHash, periodPresence, mode, sessionId, idempotencyKey, offset = 0, limit = 25} = request;
+      if (!['source-evidence', 'selection-reconciliation', 'retained-sources', 'store-coverage', 'coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
+      if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['source-evidence', 'retained-sources', 'store-coverage', 'coverage', 'earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'june-review'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
       if ((!['selection-reconciliation', 'selection', 'selection-receipts', 'june-review'].includes(resource) && selectionId !== undefined) || (['selection-reconciliation', 'selection', 'selection-receipts', 'june-review'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
       if ((resource !== 'store-coverage' && storeCoverageId !== undefined) || (resource === 'store-coverage' && (revision === undefined || (storeCoverageId !== undefined && !identifier(storeCoverageId)) || offset > 100))) throw fail(400, 'Invalid store coverage request');
       if ((resource !== 'identity-group' && identityGroupId !== undefined) || (resource === 'identity-group' && (!identifier(identityGroupId) || revision === undefined))) throw fail(400, 'Invalid identity group request');
@@ -96,8 +106,10 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (resource !== 'receipt' && receiptId !== undefined) throw fail(400, 'Receipt ID requires receipt');
       if ((selectedMonth !== undefined && !month(selectedMonth)) || (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency))) || (resource === 'receipt' && (!identifier(receiptId) || revision === undefined))) throw fail(400, 'Invalid evidence selection');
       if(!['coverage','retained-sources'].includes(resource)&&(query!==undefined||fromMonth!==undefined||toMonth!==undefined))throw fail(400,'Coverage filters require coverage');
-      if(resource!=='retained-sources'&&[sourceId,format,kind,sourceHash].some(v=>v!==undefined))throw fail(400,'Retained source filters require retained sources');
-      if(resource==='retained-sources')validateRetainedSourceRequest({query,sourceId,format,kind,sourceHash,fromMonth,toMonth,offset,limit});
+      if(resource!=='retained-sources'&&[sourceId,format,kind,periodPresence,mode,sessionId,idempotencyKey].some(v=>v!==undefined))throw fail(400,'Retained source filters require retained sources');
+      if(!['source-evidence','retained-sources'].includes(resource)&&sourceHash!==undefined)throw fail(400,'Source hash requires a source resource');
+      if(resource==='source-evidence'){const {resource:_,...fields}=request;validateSourceEvidenceRequest(fields);}
+      if(resource==='retained-sources')validateRetainedSourceRequest({query,sourceId,format,kind,sourceHash,fromMonth,toMonth,periodPresence,offset,limit});
       if(resource==='coverage')validateServedEvidenceDiscoveryRequest({query,fromMonth,toMonth,offset,limit});
       let data;
       try { mark('snapshot_load');const snapshot=await loadSnapshot(scope);mark('snapshot_normalize');data = normalize(snapshot, organizationId); }
@@ -109,7 +121,21 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if (revision !== undefined && revision !== data.revision) throw fail(409, 'Evidence revision changed');
       mark('resource_read');
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
-      if(resource==='retained-sources')return searchRetainedSources(data,{query,sourceId,format,kind,sourceHash,fromMonth,toMonth,offset,limit});
+      if(resource==='retained-sources'&&mode!==undefined&&mode!=='keyword'){
+        if(!semantic)throw fail(503,'Semantic metadata index unavailable');
+        if(mode==='semantic'){
+          if(sessionId!==undefined||request.offset!==undefined||request.limit!==undefined)throw fail(400,'Invalid explicit semantic request');
+          return semantic.start(actor,{revision,query,idempotencyKey,filters:Object.fromEntries(Object.entries({sourceId,format,kind,sourceHash,fromMonth,toMonth,periodPresence}).filter(([,v])=>v!==undefined))});
+        }
+        if(mode==='semantic-page'){
+          if([query,idempotencyKey,sourceId,format,kind,sourceHash,fromMonth,toMonth,periodPresence].some(v=>v!==undefined))throw fail(400,'Invalid semantic page request');
+          return semantic.page(actor,{revision,sessionId,offset,limit});
+        }
+        throw fail(400,'Invalid retained search mode');
+      }
+      if(resource==='retained-sources'&&(sessionId!==undefined||idempotencyKey!==undefined))throw fail(400,'Session fields require explicit semantic search');
+      if(resource==='retained-sources'){const result=searchRetainedSources(data,{query,sourceId,format,kind,sourceHash,fromMonth,toMonth,periodPresence,offset,limit});return semantic?{...result,semanticSearch:{configured:true,requiresExplicitInvocation:true,indexVerified:false}}:result;}
+      if(resource==='source-evidence'){const result={scope,...sourceEvidenceView(data,{sourceHash,revision,offset,limit})};if(Buffer.byteLength(JSON.stringify(result),'utf8')>262144)throw fail(503,'Source reference response exceeds bounds');return result;}
       if(resource==='coverage')return discoverServedEvidenceCoverage(data,{query,fromMonth,toMonth,offset,limit});
       if (resource === 'selection-reconciliation') return structuredClone({...base,...selectionReconciliationView(data,selectionId)});
       if (resource === 'manifest') return structuredClone({...base, counts: {...(data.selectionReconciliations === undefined ? {} : {selectionReconciliations:data.selectionReconciliations.length}), ...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
