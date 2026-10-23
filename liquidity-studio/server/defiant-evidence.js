@@ -70,8 +70,11 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
   if (loadWorksheetCells !== undefined && typeof loadWorksheetCells !== 'function') throw new TypeError('Server-owned worksheet resolver required');
   const scope = Object.freeze({organizationId});
   return Object.freeze({
-    async read(actor, request = {}) {
+    async read(actor, request = {}, {onStage} = {}) {
+      const mark=stage=>{try { const result=onStage?.(stage);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{}); } catch {}};
+      mark('authority_before_snapshot');
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
+      mark('request_validation');
       if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth', 'storeCoverageId'].includes(key))) throw fail(400, 'Invalid evidence request');
       const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, offset = 0, limit = 25} = request;
       if (!['store-coverage', 'coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
@@ -91,11 +94,14 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if(resource!=='coverage'&&(query!==undefined||fromMonth!==undefined||toMonth!==undefined))throw fail(400,'Coverage filters require coverage');
       if(resource==='coverage')validateServedEvidenceDiscoveryRequest({query,fromMonth,toMonth,offset,limit});
       let data;
-      try { data = normalize(await loadSnapshot(scope), organizationId); }
+      try { mark('snapshot_load');const snapshot=await loadSnapshot(scope);mark('snapshot_normalize');data = normalize(snapshot, organizationId); }
       catch (error) { throw fail(503, 'Evidence snapshot unavailable'); }
+      mark('authority_after_snapshot');
       // Recheck after asynchronous loading so revocation cannot expose loaded evidence.
       if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
+      mark('revision_check');
       if (revision !== undefined && revision !== data.revision) throw fail(409, 'Evidence revision changed');
+      mark('resource_read');
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
       if(resource==='coverage')return discoverServedEvidenceCoverage(data,{query,fromMonth,toMonth,offset,limit});
       if (resource === 'manifest') return structuredClone({...base, counts: {...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
@@ -130,23 +136,28 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
         const group=comparison?.groups.find(row=>row.id===groupId);
         const reference=group?.sourceReferences[referenceIndex];
         if(!reference) throw fail(404,'Comparison reference unavailable');
+        mark('source_records_load');
         if(!loadSourceRecords) throw fail(503,'Source cells unavailable');
         let receipts;
         try {
           const loaded=reference.exampleRecords.length ? await loadSourceRecords({...scope,sourceHash:reference.sourceHash,sourceRecords:[...reference.exampleRecords],revision:data.revision}) : [];
+          mark('source_records_normalize');
           receipts=normalize({schemaVersion:1,organizationId,coverage:data.coverage,months:[],receipts:loaded},organizationId).receipts;
           if(receipts.length!==reference.exampleRecords.length || receipts.some((row,i)=>row.sourceHash!==reference.sourceHash || row.record!==reference.exampleRecords[i])) throw fail(503,'Source examples mismatch');
         } catch {throw fail(503,'Source cells unavailable');}
+        mark('authority_after_records');
         if(!await authorize(actor,scope)) throw fail(403,'Evidence access denied');
         return structuredClone({...base,comparisonId,groupId,referenceIndex,reference,receipts,fullSelectionAvailable:false,limitation:'Original cells for producer-selected examples only; these examples do not reconcile or represent the full group aggregate.'});
       }
       if (resource === 'audience-cells') {
         const definition=(data.audienceDefinitions || []).find(row=>row.id===audienceId);
         if(!definition) throw fail(404,'Audience definition unavailable');
+        mark('worksheet_load');
         if(!loadWorksheetCells) throw fail(503,'Worksheet cells unavailable');
         let worksheet;
         try {
           const loaded=await loadWorksheetCells({...scope,sourceHash:definition.sourceHash,sheet:definition.sheet,cellRefs:[...definition.cellRefs],revision:data.revision});
+          mark('worksheet_normalize');
           if(!plain(loaded)||loaded.sourceHash!==definition.sourceHash||loaded.sheet!==definition.sheet||!Array.isArray(loaded.cells)||loaded.cells.length!==definition.cellRefs.length)throw fail(503,'Worksheet mismatch');
           const cells=loaded.cells.map((cell,i)=>{
             if(!plain(cell)||cell.cellRef!==definition.cellRefs[i])throw fail(503,'Worksheet mismatch');
@@ -154,6 +165,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
           });
           worksheet={sourceHash:loaded.sourceHash,sheet:loaded.sheet,cells};
         }catch{throw fail(503,'Worksheet cells unavailable');}
+        mark('authority_after_worksheet');
         if(!await authorize(actor,scope))throw fail(403,'Evidence access denied');
         return structuredClone({...base,audienceId,worksheet,limitation:'Source cell strings from the host integrity-checked worksheet resolver; no formula execution. Supplied definitions do not verify populations or consent. Required, observed and missing evidence are analyst assessments, not workbook claims.'});
       }
@@ -190,14 +202,17 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
         const selected = data.selections.find(row => row.id === selectionId);
         if (!selected) throw fail(404, 'Selection unavailable');
         if (resource === 'selection-receipts') {
+          mark('source_records_load');
           if (!loadSourceRecords) throw fail(503, 'Source cells unavailable');
           const records = selected.sourceRecords.slice(offset, offset + limit);
           let receipts;
           try {
             const loaded = await loadSourceRecords({...scope, sourceHash: selected.sourceHash, sourceRecords: [...records], revision: data.revision});
+            mark('source_records_normalize');
             receipts = normalize({schemaVersion: 1, organizationId, coverage: data.coverage, months: [], receipts: loaded}, organizationId).receipts;
             if (receipts.length !== records.length || receipts.some((row, i) => row.sourceHash !== selected.sourceHash || row.record !== records[i])) throw fail(503, 'Source selection mismatch');
           } catch { throw fail(503, 'Source cells unavailable'); }
+          mark('authority_after_records');
           if (!await authorize(actor, scope)) throw fail(403, 'Evidence access denied');
           return structuredClone({...base, selection: summary(selected), receipts, total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, limitation: 'Exact source cells supplied by the host integrity-checked partition resolver; this page is not the entire aggregate unless it contains every contributing record.'});
         }
@@ -206,6 +221,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
         return structuredClone({...base, juneReviewAvailable, selection: summary(selected), sourceRecords: selected.sourceRecords.slice(offset, offset + limit), total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, rowConvention: '1-based logical CSV record including header', limitation});
       }
       if (resource === 'receipt') {
+        mark('receipt_lookup');
         const receipt = data.receipts.find(row => row.id === receiptId);
         if (!receipt) throw fail(404, 'Receipt unavailable');
         return structuredClone({...base, receipt, rowConvention: '1-based logical CSV record including header', limitation: 'A receipt is one source record; an aggregate requires its full contributing selection.'});
