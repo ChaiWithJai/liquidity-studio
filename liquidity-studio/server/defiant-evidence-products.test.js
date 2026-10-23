@@ -10,8 +10,9 @@ const fixture=()=>({schemaVersion:1,organizationId:'org',coverage:'Invented cont
 const service=(data,options={})=>createDefiantEvidenceService({organizationId:'org',authorize:()=>true,loadSnapshot:async()=>data,...options});
 test('exact signed change reconciles and paged references are honestly examples',async()=>{
  const svc=service(fixture());const m=await svc.read('actor');
- const list=await svc.read('actor',{resource:'comparisons'});assert.equal(list.items[0].groups,undefined);
+ const list=await svc.read('actor',{resource:'comparisons'});assert.equal(list.items[0].groups,undefined);assert.deepEqual(list.items[0].arithmeticReconciliation,{status:'checked',basis:'curated-group-sums-equal-supplied-period-totals',exclusions:['complete-source-cell-recomputation','usage-rate-adjustment-explanation','provider-completeness','settlement-maturity-comparability','causal-attribution']});
  const page=await svc.read('actor',{resource:'explain-change',comparisonId:'annual',revision:m.revision,limit:1});
+ assert.deepEqual(page.comparison.arithmeticReconciliation,list.items[0].arithmeticReconciliation);assert.equal(page.revision,m.revision);
  assert.deepEqual(page.comparison.summary,{beforeAmount:'10',afterAmount:'8.000000000001',delta:'-1.999999999999',grossDecrease:'5',offsetIncrease:'3.000000000001'});
  assert.equal(page.groups[0].id,'down');assert.equal(page.nextOffset,1);assert.equal(page.groups[0].fullSelectionAvailable,false);assert.deepEqual(page.groups[0].sourceReferences[0].exampleRecords,[2,4]);
  const last=await svc.read('actor',{resource:'explain-change',comparisonId:'annual',revision:m.revision,offset:1});assert.equal(last.groups[0].key,null);assert.equal(last.nextOffset,null);assert.match(last.limitation,/not causal/);
@@ -22,7 +23,7 @@ test('audience supplied availability never grants approval or population claims'
  assert.deepEqual(result.definition.cellRefs,['A2','B2']);assert.match(result.definition.evidenceStatus,/not-independent/);
 });
 test('invalid comparison periods, sums, hashes, keys and source locators are refused',async()=>{
- const mutations=[d=>d.comparisons[0].beforeMonths.push('2024-01'),d=>d.comparisons[0].afterMonths=['2024-01'],d=>d.comparisons[0].beforeMonths=['2023-01','2024-01'],d=>d.comparisons[0].currency='EUR',d=>d.comparisons[0].groups[0].beforeAmount='11',d=>d.comparisons[0].groups[0].beforeAmount='1e1',d=>d.comparisons[0].sourceReferences[0].sourceHash=other,d=>d.comparisons[0].groups[1].key='one',d=>d.comparisons[0].groups[0].sourceReferences[0].side='after',d=>d.comparisons[0].groups[0].sourceReferences[0].exampleRecords=[2,2],d=>d.comparisons[0].groups[0].sourceReferences[0].exampleRecords=[1],d=>d.comparisons[0].dimension='listener',d=>d.comparisons[0].periodBasis='verified',d=>d.audienceDefinitions[0].observedEvidence=['invented'],d=>d.audienceDefinitions[0].cellRefs=['arbitrary/path']];
+ const mutations=[d=>d.comparisons[0].beforeMonths.push('2024-01'),d=>d.comparisons[0].afterMonths=['2024-01'],d=>d.comparisons[0].beforeMonths=['2023-01','2024-01'],d=>d.comparisons[0].currency='EUR',d=>d.comparisons[0].groups[0].beforeAmount='11',d=>d.comparisons[0].groups[1].afterAmount='1.000000000002',d=>d.comparisons[0].groups[0].beforeAmount='1e1',d=>d.comparisons[0].sourceReferences[0].sourceHash=other,d=>d.comparisons[0].groups[1].key='one',d=>d.comparisons[0].groups[0].sourceReferences[0].side='after',d=>d.comparisons[0].groups[0].sourceReferences[0].exampleRecords=[2,2],d=>d.comparisons[0].groups[0].sourceReferences[0].exampleRecords=[1],d=>d.comparisons[0].dimension='listener',d=>d.comparisons[0].periodBasis='verified',d=>d.audienceDefinitions[0].observedEvidence=['invented'],d=>d.audienceDefinitions[0].cellRefs=['arbitrary/path']];
  for(const mutate of mutations){const d=fixture();mutate(d);await assert.rejects(service(d).read('actor'),{status:503});}
 });
 test('old absent products preserve exact normalized revision',async()=>{
