@@ -46,6 +46,11 @@ function responseResult(data) {
   return { model: MODEL, answers: clone(data.answers), usage: clone(data.usage), reportedCostUsd: cost, modelVersion: null, modelVersionQualification: 'provider-model-alias; immutable checkpoint not supplied' };
 }
 
+export function jevEvaluationConfigurationSha256(limits) {
+  requireValue(exact(limits,['timeoutMs','maxRequests','maxInputBytes','maxResponseBytes']));
+  return sha(JSON.stringify({endpoint:ENDPOINT,model:MODEL,questions,providerOptions:{gateway:{only:['typesafe-ai'],zeroDataRetention:true}},limits,evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion:'earnings-claim-exact-v1'}));
+}
+
 export function createJevDecisionAdapter({ enabled = false, getCredential = () => null, fetch: fetchImpl = globalThis.fetch, timeoutMs = 15000, maxRequests = 1, maxInputBytes = 16384, maxResponseBytes = 65536 } = {}) {
   requireValue(typeof enabled === 'boolean' && typeof getCredential === 'function' && typeof fetchImpl === 'function');
   requireValue(Number.isInteger(timeoutMs) && timeoutMs >= 1 && timeoutMs <= 15000 && Number.isInteger(maxRequests) && maxRequests >= 1 && maxRequests <= 32 && Number.isInteger(maxInputBytes) && maxInputBytes >= 128 && maxInputBytes <= 16384 && Number.isInteger(maxResponseBytes) && maxResponseBytes >= 128 && maxResponseBytes <= 65536);

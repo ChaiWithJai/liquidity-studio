@@ -1,3 +1,4 @@
+import {configuredJevEvaluationProvider} from './defiant-jev-runtime.js';
 import {createEvidenceHypotheses} from './defiant-evidence-hypotheses.js';
 import {createAnswerObservations} from './defiant-answer-observations.js';
 import {oauthClientConfiguration,oauthHostConfiguration} from './defiant-evidence-oauth.js';
@@ -214,6 +215,7 @@ export function createHttpServer(
     trustedTestMode = false,
     defiantDatasetProvider = null,
     defiantEvidenceProvider = null,
+    defiantEvaluationProvider = null,
     enableLocalEvidenceGrants = process.env.STUDIO_LOCAL_EVIDENCE_GRANTS_ENABLED === "true",
     enableRemoteEvidence = process.env.STUDIO_DEFIANT_REMOTE_MCP_ENABLED === "true",
     remoteEvidenceClients,
@@ -235,6 +237,7 @@ export function createHttpServer(
       "true",
   } = {},
 ) {
+  if(defiantEvaluationProvider!==null&&typeof defiantEvaluationProvider!=="function")throw Error("Evaluation provider must be constructor-owned");
   if(defiantEvidenceProvider!==null&&typeof defiantEvidenceProvider!=="function")throw Error("Evidence provider must be constructor-owned");
   if(defiantDatasetProvider!==null&&typeof defiantDatasetProvider!=="function")throw Error("Defiant dataset provider must be constructor-owned");
   if (appContainer && !trustedTestMode && !platform)
@@ -784,13 +787,14 @@ export function createHttpServer(
         }
       }
       if(route.startsWith("/api/studio/strategy/")&&!trustedTestMode&&await clipBinaryRequest({platform,user,route,req,res}))return;
+      const evaluationBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/evaluations$/.test(route);
       const hypothesisBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/hypotheses(?:\/[a-f0-9]{64}\/(?:outcome|correction))?$/.test(route);
       const observationBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/observations(?:\/[a-f0-9]{64}\/correction)?$/.test(route);
       const body =
         req.method === "POST"
           ? await readBody(
               req,
-              hypothesisBody?16384:observationBody?65536:["/api/admin/import", "/api/admin/editor-pack/install"].includes(
+              evaluationBody?2048:hypothesisBody?16384:observationBody?65536:["/api/admin/import", "/api/admin/editor-pack/install"].includes(
                 route,
               )
                 ? (route === "/api/admin/editor-pack/install" ? 49 : 32) *
@@ -809,7 +813,7 @@ export function createHttpServer(
                         route.startsWith("/api/studio/native-editor/")
                       ? 768 * 1024
                       : 262144,
-              (observationBody||hypothesisBody)?5000:portableBody ? portableBodyTimeoutMs : 0,
+              (observationBody||hypothesisBody||evaluationBody)?5000:portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
       if(route.startsWith("/api/studio/defiant-evidence/")) {
@@ -819,7 +823,7 @@ export function createHttpServer(
         const organizationId=scope[1],strategy=new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId});
         await strategy.raw(user);
         const observationRoute=route.slice(scope[0].length);
-        if(observationRoute==='observations'||observationRoute.startsWith('observations/')||observationRoute==='hypotheses'||observationRoute.startsWith('hypotheses/')){
+        if(observationRoute==='evaluations'||observationRoute.startsWith('evaluations/')||observationRoute==='observations'||observationRoute.startsWith('observations/')||observationRoute==='hypotheses'||observationRoute.startsWith('hypotheses/')){
           if(delegated||identity.mode!=='google'||url.search)throw fail(403,'Observations require current Studio Google identity');
           const owner=await identity.authenticateLocalEvidenceApproval(bearer);
           const controller=new AbortController();const aborted=()=>controller.abort();req.once('aborted',aborted);
@@ -834,6 +838,18 @@ export function createHttpServer(
           const timer=setTimeout(()=>controller.abort(),30000);let stop;
           const interrupted=new Promise((_,reject)=>{stop=()=>reject(fail(408,'Observation request expired'));controller.signal.addEventListener('abort',stop,{once:true});});
           const execute=async()=>{
+            if(observationRoute==='evaluations'||observationRoute.startsWith('evaluations/')){
+              if(!defiantEvaluationProvider)throw fail(404,'Evaluation is not configured');
+              const authorizeCurrent=async()=>{if(controller.signal.aborted)throw fail(408,'Evaluation request expired');const next=await identity.authenticateLocalEvidenceApproval(bearer);if(next.id!==owner.id||next.uid!==owner.uid)throw fail(403,'Evaluation account changed');return next;};
+              const binding=await defiantEvaluationProvider({organizationId,store:platform.store,strategy,evidence,authorizeCurrent});
+              if(!binding?.service||!Array.isArray(binding.cases))throw fail(503,'Evaluation unavailable');
+              if(observationRoute==='evaluations/cases'&&req.method==='GET'){const current=await authorizeCurrent();await strategy.raw(current);return {organizationId,executionAvailable:binding.executionAvailable===true,maximumAttempts:1,cases:binding.cases};}
+              if(observationRoute==='evaluations'&&req.method==='GET')return binding.service.list(owner);
+              if(observationRoute==='evaluations'&&req.method==='POST'){if(binding.executionAvailable!==true)throw fail(503,'Evaluation credential unavailable');return binding.service.evaluate(owner,body);}
+              const selected=/^evaluations\/([a-f0-9]{64})$/.exec(observationRoute);
+              if(selected&&req.method==='GET')return binding.service.detail(owner,selected[1]);
+              throw fail(404,'Unknown evaluation operation');
+            }
             if(observationRoute==='hypotheses'||observationRoute.startsWith('hypotheses/')){
               const hypotheses=createEvidenceHypotheses({store:platform.store,strategy,evidence,signal:controller.signal,authorizeCurrent:async()=>identity.authenticateLocalEvidenceApproval(bearer)});
               if(observationRoute==='hypotheses'&&req.method==='GET')return hypotheses.list(owner);
@@ -2252,7 +2268,7 @@ export function defiantSyntheticDemoConfiguration(environment=process.env){
 }
 export async function startConfiguredStudio(options = {}) {
   const syntheticDemoConfiguration=defiantSyntheticDemoConfiguration();
-  const evidenceConfiguration={defiantEvidenceProvider:await configuredDefiantEvidenceProvider()};
+  const evidenceConfiguration={defiantEvidenceProvider:await configuredDefiantEvidenceProvider(),defiantEvaluationProvider:await configuredJevEvaluationProvider()};
   if(process.env.STUDIO_PENPOT_MANAGED_CONFIG){
     const platform=createPlatform();await platform.ready;
     const {createManagedPenpot}=await import('./penpot-managed.js');

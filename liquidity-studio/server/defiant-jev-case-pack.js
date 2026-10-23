@@ -25,7 +25,7 @@ export function createPinnedEarningsCasePack({bytes,sha256,evidence,authorize}={
  }
  const organizationId=data.organizationId;
  const get=caseId=>{if(!id(caseId)||!entries.has(caseId))throw fail(404,'Evaluation case unavailable');return copy(entries.get(caseId));};
- return Object.freeze({organizationId,sha256,get,async resolve(actor,caseId){
+ return Object.freeze({organizationId,sha256,get,list:()=>[...entries.values()].map(r=>({caseId:r.caseId,origin:r.origin,evidenceRevision:r.evidenceRevision,claim:r.claim})),async resolve(actor,caseId){
   await authorize(actor);const row=get(caseId),a=row.assertion;
   const response=await evidence.read(actor,{resource:'earnings',month:a.month,currency:a.currency,limit:1,revision:row.evidenceRevision});
   await authorize(actor);
