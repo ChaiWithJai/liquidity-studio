@@ -2,28 +2,43 @@ import {z} from 'zod/v4';
 import {createMcpHandler, McpServer} from '@modelcontextprotocol/server';
 const organizationId = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 const revision = z.string().regex(/^[a-f0-9]{64}$/);
+const stages = new Set(['scope_check','resolve_binding','service_read','authority_before_snapshot','request_validation','snapshot_load','snapshot_normalize','authority_after_snapshot','revision_check','resource_read','receipt_lookup','source_records_load','source_records_normalize','authority_after_records','worksheet_load','worksheet_normalize','authority_after_worksheet','response_scope','response_serialize']);
+// Constructor-owned diagnostics only. Never await a sink or let it change tool behavior.
+function observe(sink, value) {
+ try { const result = sink?.(value); if (result && typeof result.then === 'function') Promise.resolve(result).catch(() => {}); } catch {}
+}
 const annotations = {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false};
 /** Private evidence protocol only. The host verifies credentials and current membership. */
-export function registerDefiantEvidenceTools(server, {resolveEvidence, unauthorizedChallenge, boundOrganizationId} = {}) {
+export function registerDefiantEvidenceTools(server, {resolveEvidence, unauthorizedChallenge, boundOrganizationId, onOutcome} = {}) {
  if (typeof resolveEvidence !== 'function') throw new TypeError('Verified evidence resolver required');
+ if (onOutcome !== undefined && typeof onOutcome !== 'function') throw new TypeError('Evidence outcome sink required');
  if(unauthorizedChallenge!==undefined&&(typeof unauthorizedChallenge!=='string'||unauthorizedChallenge.length>1024||/[\r\n]/.test(unauthorizedChallenge)))throw new TypeError('Invalid evidence auth challenge');
  if(boundOrganizationId!==undefined&&!/^[A-Za-z0-9_-]{1,128}$/.test(boundOrganizationId))throw new TypeError('Invalid bound evidence organization');
  const register = (name, description, shape, resource) => server.registerTool(name, {
   description, annotations, inputSchema: z.object({organizationId:boundOrganizationId===undefined?organizationId:organizationId.optional(), ...shape}).strict()
  }, async (input, context) => {
+  let stage='scope_check', outcome='error', status=503;
+  const onStage=value=>{if(stages.has(value))stage=value;};
   try {
    const {organizationId: suppliedScope, ...request} = input;
    const requestedScope=suppliedScope??boundOrganizationId;
    if(boundOrganizationId!==undefined&&requestedScope!==boundOrganizationId)throw Object.assign(new Error('Denied'),{status:403});
+   stage='resolve_binding';
    const binding = await resolveEvidence({organizationId: requestedScope, context});
    if (!binding?.actor || binding.organizationId !== requestedScope || typeof binding.service?.read !== 'function') throw Object.assign(new Error('Denied'), {status: 403});
-   const data = await binding.service.read(binding.actor, {...request, resource});
+   stage='service_read';
+   const data = await binding.service.read(binding.actor, {...request, resource}, {onStage});
+   stage='response_scope';
    if (data?.scope?.organizationId !== requestedScope) throw Object.assign(new Error('Denied'), {status: 403});
-   return {content: [{type: 'text', text: JSON.stringify(data)}], structuredContent: data};
+   stage='response_serialize';
+   const result={content: [{type: 'text', text: JSON.stringify(data)}], structuredContent: data};
+   outcome='success';status=200;return result;
   } catch (error) {
+   status = [400,401,403,404,409,503].includes(error?.status) ? error.status : 503;
    if(error?.status===401&&unauthorizedChallenge)return {isError:true,content:[{type:'text',text:'Evidence authorization required.'}],_meta:{'mcp/www_authenticate':[unauthorizedChallenge]}};
-   const status = [400,401,403,404,409,503].includes(error?.status) ? error.status : 503;
    return {isError: true, content: [{type: 'text', text: `Evidence request unavailable (${status}).`}]};
+  } finally {
+   observe(onOutcome,Object.freeze({event:'defiant_evidence_tool_outcome',tool:name,outcome,status,stage}));
   }
  });
  register('defiant_store_period_coverage','Inspect supplied store-period observations and exact all-period versus mutually observed amount comparisons. Missing observations do not imply zero activity or missing delivery.',{revision,storeCoverageId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$/).optional(),offset:z.number().int().min(0).max(100).optional(),limit:z.number().int().min(1).max(100).optional()},'store-coverage');
@@ -73,11 +88,12 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence, unauthori
  }, 'receipt');
 }
 /** Not mounted on the public synthetic endpoint. This creates no listening socket. */
-export function createDefiantEvidenceMcpHandler({resolveEvidence} = {}) {
+export function createDefiantEvidenceMcpHandler({resolveEvidence, onOutcome} = {}) {
  if (typeof resolveEvidence !== 'function') throw new TypeError('Verified evidence resolver required');
+ if (onOutcome !== undefined && typeof onOutcome !== 'function') throw new TypeError('Evidence outcome sink required');
  return createMcpHandler(requestContext => {
   const server = new McpServer({name: 'defiant-private-evidence', version: '1.0.0'});
-  registerDefiantEvidenceTools(server, {resolveEvidence: input => resolveEvidence({...input, requestContext})});
+  registerDefiantEvidenceTools(server, {onOutcome, resolveEvidence: input => resolveEvidence({...input, requestContext})});
   return server;
  }, {responseMode: 'json'});
 }
