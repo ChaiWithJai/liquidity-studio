@@ -25,7 +25,7 @@ function stateInput(input) {
   requireValue(typeof input.evidence === 'string' && input.evidence.length > 0 && Buffer.byteLength(input.evidence) <= 12000);
   return { claim: input.claim, evidence: input.evidence };
 }
-const responseStages = Object.freeze(['content-type', 'length', 'body', 'chunk', 'utf8', 'json', 'model', 'answers', 'support', 'booleans', 'usage', 'routing', 'cost']);
+const responseStages = Object.freeze(['content-type', 'length', 'body', 'chunk', 'utf8', 'json', 'model', 'answers', 'support', 'support-object', 'support-type', 'support-choice', 'support-labels', 'support-probability', 'support-sum', 'booleans', 'usage', 'routing', 'cost']);
 const responseError = stage => Object.assign(new Error('response'), { responseValidationStage: stage });
 const invalidResponse = stage => ({ status: 'failed', reason: 'provider-response', responseValidation: { schemaVersion: 1, stage } });
 const probability = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
@@ -33,7 +33,12 @@ function responseResult(data) {
   if (!object(data) || data.model !== MODEL) throw responseError('model');
   if (!exact(data.answers, ['support', ...booleanKeys])) throw responseError('answers');
   const support = data.answers.support;
-  if (!exact(support, ['type', 'choice', 'probabilities']) || support.type !== 'choice' || !classes.includes(support.choice) || !exact(support.probabilities, classes) || !Object.values(support.probabilities).every(probability) || Math.abs(Object.values(support.probabilities).reduce((a, b) => a + b, 0) - 1) > 0.000001) throw responseError('support');
+  if (!exact(support, ['type', 'choice', 'probabilities'])) throw responseError('support-object');
+  if (support.type !== 'choice') throw responseError('support-type');
+  if (!classes.includes(support.choice)) throw responseError('support-choice');
+  if (!exact(support.probabilities, classes)) throw responseError('support-labels');
+  if (!Object.values(support.probabilities).every(probability)) throw responseError('support-probability');
+  if (Math.abs(Object.values(support.probabilities).reduce((a, b) => a + b, 0) - 1) > 0.000001) throw responseError('support-sum');
   for (const key of booleanKeys) { const answer = data.answers[key]; if (!exact(answer, ['type', 'probability']) || answer.type !== 'boolean' || !probability(answer.probability)) throw responseError('booleans'); }
   if (!exact(data.usage, ['inputTokens', 'outputTokens']) || !Object.values(data.usage).every(n => Number.isSafeInteger(n) && n >= 0 && n <= 1000000)) throw responseError('usage');
   const gateway = data.providerMetadata?.gateway;

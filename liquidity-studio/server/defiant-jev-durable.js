@@ -78,7 +78,7 @@ export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,p
  },async list(inputActor){
   if(!id(inputActor?.id)||typeof inputActor.uid!=='string'||!inputActor.uid)throw fail(400,'Invalid evaluation actor');
   const actor=Object.freeze({...inputActor});await current(actor);
-  const values=await store.transact(['identity',strategy.key,indexKey],([identity,state,index])=>{checked(identity,state,actor);index=checkedIndex(index);return [identity,state,index];});await current(actor);return {organizationId:org,items:copy(values[2].entries)};
+  const values=await store.transact(['identity',strategy.key,indexKey,accountKey],([identity,state,index,budget])=>{checked(identity,state,actor);index=checkedIndex(index);if(budget!==null&&budget!==undefined&&(!exact(budget,['schemaVersion','accountExperimentId','maximumAttempts','attempts'])||budget.schemaVersion!==1||budget.accountExperimentId!==accountExperimentId||budget.maximumAttempts!==1||!Array.isArray(budget.attempts)||budget.attempts.length>1))throw fail(409,'Evaluation budget unavailable');return [identity,state,index,budget];});await current(actor);return {organizationId:org,items:copy(values[2].entries),attemptConsumed:values[3]?.attempts.length===1};
  },async detail(inputActor,recordId){
   if(!hash(recordId)||!id(inputActor?.id)||typeof inputActor.uid!=='string'||!inputActor.uid)throw fail(400,'Invalid evaluation reference');
   const actor=Object.freeze({...inputActor});await current(actor);

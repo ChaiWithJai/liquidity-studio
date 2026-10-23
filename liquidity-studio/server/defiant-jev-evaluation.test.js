@@ -115,7 +115,7 @@ test('thirteen finite validation stages preserve failed reason, caps, privacy an
   ['json',()=>new Response('{PRIVATE_JSON',{headers:{'content-type':'application/json'}})],
   ['model',mutate(d=>d.model='PRIVATE_MODEL')],
   ['answers',mutate(d=>d.answers.PRIVATE_KEY={})],
-  ['support',mutate(d=>d.answers.support.choice='PRIVATE_CHOICE')],
+  ['support-choice',mutate(d=>d.answers.support.choice='PRIVATE_CHOICE')],
   ['booleans',mutate(d=>d.answers.identityOverreach.probability='PRIVATE_PROBABILITY')],
   ['usage',mutate(d=>d.usage.inputTokens=-1)],
   ['routing',mutate(d=>d.providerMetadata.gateway.routing.finalProvider='PRIVATE_PROVIDER')],
@@ -141,4 +141,12 @@ test('finite diagnostic persistence is optional for legacy failures and rejects 
  const legacy=evaluation({adapter:{decide:async()=>({status:'failed',reason:'provider-response'})}});assert.deepEqual((await legacy.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'})).outcome,{status:'failed',reason:'provider-response'});
  for(const diagnostic of [{schemaVersion:2,stage:'support'},{schemaVersion:1,stage:'PRIVATE_STAGE'},{schemaVersion:1,stage:'support',raw:'PRIVATE_RESPONSE'},null,['support']]){const invalid=evaluation({adapter:{decide:async()=>({...valid,responseValidation:diagnostic})}});await assert.rejects(invalid.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'}));assert.equal(invalid.records.length,0);}
  const misplaced=evaluation({adapter:{decide:async()=>({...valid,reason:'transport'})}});await assert.rejects(misplaced.service.evaluate({organizationId:'org',actorId:'operator'},{caseId:'authored_1'}));assert.equal(misplaced.records.length,0);
+});
+
+test('support predicates retain exact acceptance and expose only first static failure',async()=>{
+ const cases=[['support-object',s=>{s.extra='PRIVATE_PAYLOAD';}],['support-type',s=>{s.type='PRIVATE_TYPE';}],['support-choice',s=>{s.choice='PRIVATE_CHOICE';}],['support-labels',s=>{s.probabilities.PRIVATE_LABEL=0;}],['support-probability',s=>{s.probabilities.supported='PRIVATE_VALUE';}],['support-sum',s=>{s.probabilities.supported=0.6;}]];
+ for(const [stage,change] of cases){let calls=0;const data=fixture();change(data.answers.support);const adapter=createJevDecisionAdapter(options({fetch:async()=>{calls++;return jsonResponse(data);}}));const result=await adapter.decide(input);assert.equal(result.status,'failed');assert.equal(result.reason,'provider-response');assert.deepEqual(result.responseValidation,{schemaVersion:1,stage});assert.ok(!JSON.stringify(result).includes('PRIVATE'));assert.equal(calls,1);assert.equal((await adapter.decide(input)).reason,'request-cap');assert.equal(calls,1);}
+ const both=fixture();both.answers.support.type='PRIVATE_TYPE';both.answers.support.choice='PRIVATE_CHOICE';assert.equal((await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(both)})).decide(input)).responseValidation.stage,'support-type');
+ for(const delta of [0,0.0000005]){const data=fixture();data.answers.support.probabilities.supported+=delta;assert.equal((await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(data)})).decide(input)).status,'observed');}
+ const outside=fixture();outside.answers.support.probabilities.supported+=0.000002;assert.equal((await createJevDecisionAdapter(options({fetch:async()=>jsonResponse(outside)})).decide(input)).responseValidation.stage,'support-sum');
 });
