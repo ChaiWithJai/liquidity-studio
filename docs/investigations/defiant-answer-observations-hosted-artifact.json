@@ -1,0 +1,140 @@
+{
+  "sourceCommit": "8c68dbad50605568df3b026de72e3ced02eaaaf5",
+  "ciCommit": "df527712d99f59c4bd78bf1873910f8a3023a0e2",
+  "tree": "76011f6ba1aff4f1dc2fe7196e34a255b5bbdb49",
+  "gitEntries": 1391,
+  "lockSha256": "2521f2a87536e7d65ad84e151c1c8574992566c820bd128391be492cdc21c67e",
+  "artifactId": 12453474419,
+  "zipSha256": "6b96bda96d31bc8e6b51fa0004f52fb22f4ae7874e31bb60713abcd47877efb0",
+  "outputs": [
+    {
+      "path": "assets/index-BN7tmfB4.css",
+      "size": 101351,
+      "sha256": "6081a7b41d7ea084759fa8a86b1d8a66924e8f05c8a011365620877274f31f31"
+    },
+    {
+      "path": "assets/index-Do9zjzCh.js",
+      "size": 760754,
+      "sha256": "bca04291547bde7b6dd4424de4320efaac9811285499da9d78f3d98f4d88f573"
+    },
+    {
+      "path": "fonts/DejaVuSans-Bold.ttf",
+      "size": 708920,
+      "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
+    },
+    {
+      "path": "fonts/DejaVuSans.ttf",
+      "size": 759720,
+      "sha256": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322"
+    },
+    {
+      "path": "fonts/InstrumentSerif-OFL.txt",
+      "size": 4405,
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "path": "fonts/InstrumentSerif-Regular.ttf",
+      "size": 70012,
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "path": "fonts/Inter-LICENSE.txt",
+      "size": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "fonts/InterVariable.ttf",
+      "size": 879708,
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf"
+    },
+    {
+      "path": "fonts/LICENSE.txt",
+      "size": 3859,
+      "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9"
+    },
+    {
+      "path": "fonts/MonaSans-Bold.otf",
+      "size": 116248,
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641"
+    },
+    {
+      "path": "fonts/MonaSans-OFL.txt",
+      "size": 4419,
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+    },
+    {
+      "path": "fonts/MonaSans-Regular.otf",
+      "size": 113784,
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari-OFL.txt",
+      "size": 4386,
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331"
+    },
+    {
+      "path": "fonts/NotoSansDevanagari.ttf",
+      "size": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "path": "index.html",
+      "size": 455,
+      "sha256": "7da0789c6ca6d9e2b8b0e75d8d9bdc3dc7f6220e69ce71e72a74db4b521c8de0"
+    },
+    {
+      "path": "mcp/defiant-demo-server.mjs",
+      "size": 1223066,
+      "sha256": "36c781d678a0caa2b988f4b5a7d0c2410043ce686b5ca0ad8e98d63d9b2809e0"
+    },
+    {
+      "path": "mcp/defiant-domain-review.html",
+      "size": 288696,
+      "sha256": "21c01ad6763d12e38e1215aa247ecac225e83a6f157d47ad8f0aeb10d74252d8"
+    },
+    {
+      "path": "mcp/defiant-evidence-remote.mjs",
+      "size": 1641469,
+      "sha256": "575f233e0236eee29c6f6424aba8451a26c8a918a6956b8ca84fcbc954af26ee"
+    },
+    {
+      "path": "mcp/defiant-evidence-stdio.mjs",
+      "size": 1117290,
+      "sha256": "e9e2dfd0646f2d116d1085f0cc929b1b22aa19f97e3aa54df516bbf9c81b6531"
+    },
+    {
+      "path": "mcp/defiant-research.html",
+      "size": 276716,
+      "sha256": "9951b1eaf65437b096c5e8b56aa16c4e778164bd71e750a2b797dfa99a21bbda"
+    },
+    {
+      "path": "mcp/defiant-stdio.mjs",
+      "size": 1149942,
+      "sha256": "58473976528ae974ad3ce4f68e22971aede86273338a0c05f02348ce7a693d31"
+    },
+    {
+      "path": "mcp/defiant-synthetic-portfolio.json",
+      "size": 999502,
+      "sha256": "9f5525862ee613cf71be8639320cfba28458828478e7046b6e4355f056e6ad4e"
+    },
+    {
+      "path": "mcp/defiant-third-party-notices.txt",
+      "size": 91111,
+      "sha256": "0dc8b6cc6875f9eaf04892a960b71c0c297c02d07bab7ef4e0cb268a0dce9f7d"
+    }
+  ],
+  "workflowRunId": 39843477256,
+  "sourceValidation": {
+    "node": {
+      "passed": 872,
+      "skipped": 10
+    },
+    "auxiliaryPassed": 40,
+    "browser": {
+      "passed": 131,
+      "skipped": 20
+    },
+    "contractsFailure": "canonical-output-mismatch-only"
+  },
+  "qualification": "Hosted source and artifact verification only; final exact-head CI and runtime acceptance remain required."
+}

@@ -28,8 +28,13 @@ test('on-demand renewal singleflight rotates once and preserves absolute expiry'
  await f.auth.credential();assert.equal(calls,1);
 });
 test('independent clients coordinate through exclusive lock and reread rotated credential',async t=>{
- let calls=0;const f=await fixture(t,async()=>{calls++;await new Promise(r=>setTimeout(r,20));return Response.json(credentials('b'));},credentials('a',start+1000));
- const opts={...f.options,sleep:ms=>new Promise(r=>setTimeout(r,Math.min(ms,10)))};const a=await createEvidenceClientAuth(opts),b=await createEvidenceClientAuth(opts);const results=await Promise.all([a.credential(),b.credential()]);assert.equal(calls,1);assert.equal(results[0].accessToken,results[1].accessToken);
+ let calls=0,waits=0,entered,release;
+ const renewalEntered=new Promise(resolve=>{entered=resolve;}),renewalReleased=new Promise(resolve=>{release=resolve;});
+ const f=await fixture(t,async()=>{calls++;if(calls===1){entered();await renewalReleased;}return Response.json(credentials('b'));},credentials('a',start+1000));
+ let first;const opts={...f.options,sleep:async ms=>{assert.equal(ms,100);waits++;release();await first;}};
+ const a=await createEvidenceClientAuth(opts),b=await createEvidenceClientAuth(opts);first=a.credential();await renewalEntered;
+ const results=await Promise.all([first,b.credential()]);assert.equal(waits,1);assert.equal(calls,1);assert.equal(results[0].accessToken,results[1].accessToken);
+ assert.equal(JSON.parse(await readFile(f.credentialFile)).accessToken,results[0].accessToken);
 });
 test('lost renewal response retains lock and never replays consumed credential on later call',async t=>{
  let calls=0;const f=await fixture(t,async()=>{calls++;throw Error('private bearer detail');},credentials('a',start+1000));await assert.rejects(f.auth.credential(),{message:'Private evidence authorization unavailable'});await assert.rejects(f.auth.credential());assert.equal(calls,1);assert.equal((await lstat(f.credentialFile+'.lock')).mode&0o777,0o600);
