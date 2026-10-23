@@ -67,3 +67,17 @@ test('completed evidence views retain their resource mode while navigation clear
  block=true;const next=h.controller.load({evidenceMode:'selections'});assert.equal(previous.mode,'earnings');assert.equal(h.states.at(-1).list,null);assert.equal(h.states.at(-1).mode,null);
  release(manifest);await next;assert.equal(h.states.at(-1).mode,'selections');assert.equal(h.states.at(-1).list,list);
 });
+
+test('retained source filters and pagination pin to manifest; unavailable remains distinct from zero matches',async()=>{
+ const calls=[];const unavailable={revision:rev,scope,availability:false,globalCounts:null,matchingCounts:null,items:[],nextOffset:null};
+ const h=harness(async path=>{calls.push(path);return path.startsWith('/manifest')?manifest:unavailable;});
+ await h.controller.load({evidenceMode:'retained',retainedFilters:{query:'sales period',sourceId:'source_one',format:'csv',kind:'member',sourceHash:'b'.repeat(64),fromMonth:'2025-01',toMonth:'2025-06'},evidenceOffset:25});
+ const query=new URL('https://fixture'+calls[1]);assert.equal(query.pathname,'/retained-sources');assert.equal(query.searchParams.get('revision'),rev);assert.equal(query.searchParams.get('query'),'sales period');assert.equal(query.searchParams.get('offset'),'25');assert.equal(query.searchParams.get('sourceHash'),'b'.repeat(64));assert.equal(h.states.at(-1).list.availability,false);assert.equal(h.states.at(-1).list.total,null);
+});
+test('retained source trail rejects detail collisions and clears revoked or changed responses',async()=>{
+ let calls=0;const h=harness(async path=>{calls++;return path.startsWith('/manifest')?manifest:{...list,scope:{organizationId:'other'},availability:true};});
+ await h.controller.load({evidenceMode:'retained',evidenceSelectionId:'selection',evidenceRevision:rev});assert.equal(calls,0);assert.equal(h.states.at(-1).status,400);
+ await h.controller.load({evidenceMode:'retained',evidenceOffset:5001});assert.equal(calls,0);
+ await h.controller.load({evidenceMode:'retained'});assert.equal(h.states.at(-1).status,409);assert.equal(h.states.at(-1).list,null);
+ const denied=harness(async path=>{if(path.startsWith('/manifest'))return manifest;throw Object.assign(Error('private object'),{status:403});});await denied.controller.load({evidenceMode:'retained'});assert.equal(denied.states.at(-1).status,403);assert.equal(denied.states.at(-1).manifest,null);
+});
