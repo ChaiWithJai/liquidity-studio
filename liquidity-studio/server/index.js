@@ -1,3 +1,4 @@
+import {createEvidenceHypotheses} from './defiant-evidence-hypotheses.js';
 import {createAnswerObservations} from './defiant-answer-observations.js';
 import {oauthClientConfiguration,oauthHostConfiguration} from './defiant-evidence-oauth.js';
 import {createLocalEvidenceHttp} from './defiant-local-evidence-http.js';
@@ -783,12 +784,13 @@ export function createHttpServer(
         }
       }
       if(route.startsWith("/api/studio/strategy/")&&!trustedTestMode&&await clipBinaryRequest({platform,user,route,req,res}))return;
+      const hypothesisBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/hypotheses(?:\/[a-f0-9]{64}\/(?:outcome|correction))?$/.test(route);
       const observationBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/observations(?:\/[a-f0-9]{64}\/correction)?$/.test(route);
       const body =
         req.method === "POST"
           ? await readBody(
               req,
-              observationBody?65536:["/api/admin/import", "/api/admin/editor-pack/install"].includes(
+              hypothesisBody?16384:observationBody?65536:["/api/admin/import", "/api/admin/editor-pack/install"].includes(
                 route,
               )
                 ? (route === "/api/admin/editor-pack/install" ? 49 : 32) *
@@ -807,7 +809,7 @@ export function createHttpServer(
                         route.startsWith("/api/studio/native-editor/")
                       ? 768 * 1024
                       : 262144,
-              observationBody?5000:portableBody ? portableBodyTimeoutMs : 0,
+              (observationBody||hypothesisBody)?5000:portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
       if(route.startsWith("/api/studio/defiant-evidence/")) {
@@ -817,7 +819,7 @@ export function createHttpServer(
         const organizationId=scope[1],strategy=new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId});
         await strategy.raw(user);
         const observationRoute=route.slice(scope[0].length);
-        if(observationRoute==='observations'||observationRoute.startsWith('observations/')){
+        if(observationRoute==='observations'||observationRoute.startsWith('observations/')||observationRoute==='hypotheses'||observationRoute.startsWith('hypotheses/')){
           if(delegated||identity.mode!=='google'||url.search)throw fail(403,'Observations require current Studio Google identity');
           const owner=await identity.authenticateLocalEvidenceApproval(bearer);
           const controller=new AbortController();const aborted=()=>controller.abort();req.once('aborted',aborted);
@@ -832,6 +834,16 @@ export function createHttpServer(
           const timer=setTimeout(()=>controller.abort(),30000);let stop;
           const interrupted=new Promise((_,reject)=>{stop=()=>reject(fail(408,'Observation request expired'));controller.signal.addEventListener('abort',stop,{once:true});});
           const execute=async()=>{
+            if(observationRoute==='hypotheses'||observationRoute.startsWith('hypotheses/')){
+              const hypotheses=createEvidenceHypotheses({store:platform.store,strategy,evidence,signal:controller.signal,authorizeCurrent:async()=>identity.authenticateLocalEvidenceApproval(bearer)});
+              if(observationRoute==='hypotheses'&&req.method==='GET')return hypotheses.list(owner);
+              if(observationRoute==='hypotheses'&&req.method==='POST')return hypotheses.register(owner,body);
+              const match=/^hypotheses\/([a-f0-9]{64})(\/(outcome|correction))?$/.exec(observationRoute);
+              if(match&&!match[2]&&req.method==='GET')return hypotheses.detail(owner,match[1]);
+              if(match&&match[3]==='outcome'&&req.method==='POST')return hypotheses.link(owner,match[1],body);
+              if(match&&match[3]==='correction'&&req.method==='POST')return hypotheses.correct(owner,match[1],body);
+              throw fail(405,'Unsupported hypothesis operation');
+            }
             if(observationRoute==='observations'&&req.method==='GET')return observations.list(owner);
             if(observationRoute==='observations'&&req.method==='POST')return observations.capture(owner,body);
             const detail=/^observations\/([a-f0-9]{64})(\/correction)?$/.exec(observationRoute);

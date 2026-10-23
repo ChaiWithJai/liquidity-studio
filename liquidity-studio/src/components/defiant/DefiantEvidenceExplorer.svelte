@@ -1,5 +1,6 @@
 <script>
  import {onDestroy,untrack} from 'svelte';
+ import HypothesisReview from './HypothesisReview.svelte';
  import AnswerObservations from './AnswerObservations.svelte';
  import EvidenceDecisionCard from './EvidenceDecisionCard.svelte';
  import ResearchToolbar from './ResearchToolbar.svelte';
@@ -30,6 +31,7 @@
   <button disabled={view.loading} onclick={()=>root('audience')} aria-pressed={active.mode==='audience'}>Audience definitions</button>
   <button disabled={view.loading} onclick={refresh}>Refresh evidence</button>
  </ResearchToolbar>
+ <HypothesisReview {request} revision={view.revision||active.revision} onEvidence={next=>navigate({...cleared,evidenceOffset:0,...next})}/>
  {#if view.loading}<p class="message" role="status">Opening evidence…</p>
  {:else if view.error}<p class="message" role="alert">{view.error}</p>
  {:else if view.manifest&&view.mode===active.mode}

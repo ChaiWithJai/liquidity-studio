@@ -9,6 +9,7 @@ const decimal=v=>typeof v==='string'&&/^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(
 const digest=v=>createHash('sha256').update(v).digest('hex');
 const integer=v=>{const negative=v.startsWith('-');const [a,b='']=v.replace(/^-/,'').split('.');return BigInt(a+b.padEnd(12,'0'))*(negative?-1n:1n);};
 const size=v=>Buffer.byteLength(JSON.stringify(v));
+export function answerObservationRecordKey(organizationId,observationId){if(!id(organizationId)||!hash(observationId))throw fail(400,'Invalid observation key');return `defiant-answer-observations:v1:${organizationId}:${observationId}`;}
 function validate(input){
  if(!exact(input,['idempotencyKey','question','answer','revision','assertions','observedAt','hostLabel','modelId'])||!id(input.idempotencyKey)||!text(input.question,2048)||!text(input.answer,16384)||!hash(input.revision)||!Array.isArray(input.assertions)||input.assertions.length<1||input.assertions.length>5||size(input)>65536)throw fail(400,'Invalid answer observation');
  if(input.observedAt!==null&&(typeof input.observedAt!=='string'||!/^\d{4}-\d{2}-\d{2}T/.test(input.observedAt)||!Number.isFinite(Date.parse(input.observedAt))||new Date(input.observedAt).toISOString()!==input.observedAt))throw fail(400,'Invalid attributed observation time');
@@ -24,7 +25,7 @@ function validate(input){
 /** No model invocation. Caller text remains attributed, not an attested model execution. */
 export function createAnswerObservations({store,strategy,evidence,authorizeCurrent,signal,now=()=>new Date().toISOString()}={}){
  if(!store?.transact||!strategy?.assertCurrent||!evidence?.read||typeof authorizeCurrent!=='function')throw TypeError('Current scoped observation dependencies required');
- const org=strategy.organizationId,indexKey=`defiant-answer-observations:v1:${org}:index`,recordKey=id=>`defiant-answer-observations:v1:${org}:${id}`;
+ const org=strategy.organizationId,indexKey=`defiant-answer-observations:v1:${org}:index`,recordKey=id=>answerObservationRecordKey(org,id);
  const deadline=Date.now()+30000;
  const active=()=>{if(signal?.aborted||Date.now()>deadline)throw fail(408,'Observation request expired');};
  async function current(actor){active();const next=await authorizeCurrent(actor);if(!next||next.id!==actor.id||!next.uid||next.uid!==actor.uid)throw fail(403,'Observation account changed');await strategy.raw(next);return next;}

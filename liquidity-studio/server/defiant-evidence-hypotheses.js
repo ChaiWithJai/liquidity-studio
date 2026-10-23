@@ -1,0 +1,76 @@
+import {createHash} from 'node:crypto';
+import {answerObservationRecordKey} from './defiant-answer-observations.js';
+const fail=(status,message)=>Object.assign(new Error(message),{status});
+const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
+const exact=(v,keys)=>plain(v)&&Object.keys(v).sort().join(',')===[...keys].sort().join(',');
+const id=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,128}(?![\s\S])/.test(v);
+const hash=v=>typeof v==='string'&&/^[a-f0-9]{64}(?![\s\S])/.test(v);
+const text=v=>typeof v==='string'&&v.length>0&&Buffer.byteLength(v)<=2048&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(v);
+const decimal=v=>typeof v==='string'&&/^-?(0|[1-9]\d{0,25})(\.\d{1,12})?(?![\s\S])/.test(v);
+const currency=v=>typeof v==='string'&&/^[A-Z]{3}(?![\s\S])/.test(v);
+const canonical=v=>Array.isArray(v)?v.map(canonical):plain(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+const digest=v=>createHash('sha256').update(JSON.stringify(canonical(v))).digest('hex');
+const size=v=>Buffer.byteLength(JSON.stringify(v));
+const integer=v=>{const [a,b='']=v.replace(/^-/,'').split('.');return BigInt(a+b.padEnd(12,'0'))*(v.startsWith('-')?-1n:1n);};
+const iso=v=>typeof v==='string'&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString()===v;
+const metric='source-total-earned',evaluatorVersion='absolute-source-total-earned-v1';
+function window(month){if(typeof month!=='string'||!/^(19\d{2}|[2-9]\d{3})-(0[1-9]|1[0-2])(?![\s\S])/.test(month))throw fail(400,'Invalid target month');const start=month+'-01T00:00:00.000Z',date=new Date(start);date.setUTCMonth(date.getUTCMonth()+1);const end=date.toISOString();if(end.startsWith('+'))throw fail(400,'Invalid target end');return {start,end};}
+const publicRecord=r=>structuredClone({hypothesis:r.hypothesis,outcome:r.outcome,correction:r.correction});
+function registration(input){
+ if(!exact(input,['idempotencyKey','mode','question','expectation','priorKnowledge','baseline','target','criterion','supersedesHypothesisId'])||!id(input.idempotencyKey)||!['analysis-expectation','future-period-outcome'].includes(input.mode)||![input.question,input.expectation,input.priorKnowledge].every(text)||size(input)>16384)throw fail(400,'Invalid hypothesis');
+ const {baseline:b,target:t,criterion:c}=input;
+ if(!exact(b,['revision','month','currency'])||!hash(b.revision)||!currency(b.currency)||!exact(t,['month','currency','metric'])||t.currency!==b.currency||t.metric!==metric||!exact(c,['metric','currency','operator','threshold'])||c.metric!==metric||c.currency!==b.currency||!['lt','lte','eq','gte','gt'].includes(c.operator)||!decimal(c.threshold)||(input.supersedesHypothesisId!==null&&!hash(input.supersedesHypothesisId)))throw fail(400,'Invalid hypothesis criterion');
+ window(b.month);window(t.month);
+}
+/** Server-owned maintained authority; no model inference or arbitrary source selector. */
+export function createEvidenceHypotheses({store,strategy,evidence,authorizeCurrent,signal,now=()=>new Date().toISOString()}={}){
+ if(typeof store?.transact!=='function'||typeof strategy?.assertCurrent!=='function'||typeof evidence?.read!=='function'||typeof authorizeCurrent!=='function')throw TypeError('Hypothesis dependencies required');
+ const org=strategy.organizationId,indexKey=`defiant-evidence-hypotheses:v1:${org}:index`,key=id=>`defiant-evidence-hypotheses:v1:${org}:${id}`,deadline=Date.now()+30000;
+ const active=()=>{if(signal?.aborted||Date.now()>deadline)throw fail(408,'Hypothesis request expired');};
+ const current=async actor=>{active();const next=await authorizeCurrent(actor);if(!next||next.id!==actor.id||!next.uid||next.uid!==actor.uid)throw fail(403,'Hypothesis account changed');await strategy.raw(next);return next;};
+ const check=(identity,state,actor)=>{active();strategy.assertCurrent(identity,state,actor);};
+ const record=r=>{if(!r||r.hypothesis?.organizationId!==org)throw fail(404,'Hypothesis unavailable');return r;};
+ const bounded=r=>{if(size(r)>65536)throw fail(413,'Hypothesis too large');return r;};
+ async function readFact(actor,reference){
+  const response=await evidence.read(actor,{resource:'earnings',month:reference.month,currency:reference.currency,limit:1,revision:reference.revision});
+  if(response.scope?.organizationId!==org||response.revision!==reference.revision)throw fail(409,'Evidence context changed');
+  if(response.schemaVersion!==1||!Number.isSafeInteger(response.total)||response.total<0||!Array.isArray(response.items))throw fail(503,'Evidence response unavailable');
+  if(response.items.length!==Math.min(response.total,1))throw fail(503,'Evidence page shape unavailable');if(response.total!==1)return {fact:null,reason:response.total===0?'evidence-missing':'evidence-ambiguous'};
+  const row=response.items[0];if(!row||!decimal(row.amount)||!currency(row.currency)||!hash(row.sourceHash)||typeof row.month!=='string')throw fail(503,'Evidence fact unavailable');
+  return {fact:{amount:row.amount,currency:row.currency,metric:row.metric??null,month:row.month,sourceHash:row.sourceHash,qualification:response.limitation||'Supplied source-total-earned; not profit or final settlement.'},reason:null};
+ }
+ async function load(actor,hypothesisId){if(!hash(hypothesisId))throw fail(400,'Invalid hypothesis identifier');actor=await current(actor);const rows=await store.transact(['identity',strategy.key,key(hypothesisId)],([identity,state,r])=>{check(identity,state,actor);record(r);return [identity,state,r];});return {actor,r:rows[2]};}
+ const ownerKey=(actor,input)=>digest([actor.id,actor.uid,input.idempotencyKey]);
+ const replay=(r,slot,actor,input)=>{if(!r[slot])return false;if(r[slot+'Replay']?.key!==ownerKey(actor,input)||r[slot+'Replay']?.payloadHash!==digest(input))throw fail(409,'Immutable '+slot+' already recorded');return true;};
+ return {
+ async register(actor,input){
+  registration(input);actor=await current(actor);const payload=structuredClone(input),payloadHash=digest(payload),hypothesisId=digest([org,actor.id,actor.uid,payload.idempotencyKey]);
+  if(payload.supersedesHypothesisId===hypothesisId)throw fail(400,'Hypothesis cannot supersede itself');
+  if(await store.get(key(hypothesisId))){const {r}=await load(actor,hypothesisId);if(r.payloadHash!==payloadHash)throw fail(409,'Idempotency key already used');return publicRecord(r);}
+  const target={...payload.target,...window(payload.target.month)};
+  const resolved=await readFact(actor,payload.baseline);if(resolved.reason)throw fail(resolved.reason==='evidence-missing'?404:409,resolved.reason==='evidence-missing'?'baseline-missing':'baseline-ambiguous');
+  if(resolved.fact.metric!==metric)throw fail(409,'baseline-metric-unsupported');if(resolved.fact.month!==payload.baseline.month||resolved.fact.currency!==payload.baseline.currency)throw fail(409,'Baseline context changed');
+  actor=await current(actor);const registeredAt=now();if(!iso(registeredAt))throw fail(503,'Registration clock unavailable');const guardWindow=()=>{if(payload.mode==='future-period-outcome'){const checkedAt=now();if(!iso(checkedAt)||checkedAt<registeredAt)throw fail(503,'Registration clock unavailable');if(target.start<=checkedAt||payload.baseline.month>=target.month)throw fail(400,'Business outcome window must be future');}};guardWindow();
+  const baseline={...resolved.fact,revision:payload.baseline.revision,schemaVersion:1,adapter:'createDefiantEvidenceService'};
+  const hypothesis={schemaVersion:1,evaluatorVersion,hypothesisId,organizationId:org,registeredAt,actorId:actor.id,actorUid:actor.uid,mode:payload.mode,question:payload.question,questionHash:digest(payload.question),expectation:payload.expectation,expectationHash:digest(payload.expectation),priorKnowledge:payload.priorKnowledge,baseline,baselineHash:digest(baseline),target,criterion:payload.criterion,criterionHash:digest({target,criterion:payload.criterion}),supersedesHypothesisId:payload.supersedesHypothesisId,temporalQualification:payload.mode==='analysis-expectation'?'registered-analysis-expectation; prior-knowledge-attributed; source-availability-unverified':'registered-before-declared-window; business-series-and-source-availability-unverified'};
+  const candidate=bounded({hypothesis,payloadHash,outcome:null,correction:null});actor=await current(actor);const keys=['identity',strategy.key,indexKey,key(hypothesisId),...(payload.supersedesHypothesisId?[key(payload.supersedesHypothesisId)]:[])];
+  const rows=await store.transact(keys,([identity,state,index,r,prior])=>{check(identity,state,actor);if(payload.supersedesHypothesisId)record(prior);index=index||{schemaVersion:1,organizationId:org,entries:[]};if(index.organizationId!==org||!Array.isArray(index.entries)||index.entries.length>100)throw fail(409,'Hypothesis index unavailable');if(r){record(r);if(r.payloadHash!==payloadHash)throw fail(409,'Idempotency key already used');return [identity,state,index,r,...(payload.supersedesHypothesisId?[prior]:[])];}guardWindow();if(index.entries.length>=100)throw fail(409,'Hypothesis capacity reached');return [identity,state,{...index,entries:[...index.entries,{hypothesisId,registeredAt,question:payload.question.slice(0,160),mode:payload.mode}]},candidate,...(payload.supersedesHypothesisId?[prior]:[])];});return publicRecord(rows[3]);
+ },
+ async list(actor){actor=await current(actor);const rows=await store.transact(['identity',strategy.key,indexKey],([identity,state,index])=>{check(identity,state,actor);index=index||{schemaVersion:1,organizationId:org,entries:[]};if(index.organizationId!==org||!Array.isArray(index.entries)||index.entries.length>100)throw fail(409,'Hypothesis index unavailable');return [identity,state,index];});return {organizationId:org,items:rows[2].entries};},
+ async detail(actor,hypothesisId){return publicRecord((await load(actor,hypothesisId)).r);},
+ async link(actor,hypothesisId,input){
+  if(!exact(input,['idempotencyKey','kind','reference','observedAt'])||!id(input.idempotencyKey)||!['evidence-fact','answer-assertion'].includes(input.kind)||size(input)>16384||(input.observedAt!==null&&!iso(input.observedAt)))throw fail(400,'Invalid hypothesis outcome');
+  input=structuredClone(input);const ref=input.reference;if(input.kind==='evidence-fact'?(!exact(ref,['revision'])||!hash(ref.revision)):(!exact(ref,['observationId','assertionIndex'])||!hash(ref.observationId)||!Number.isInteger(ref.assertionIndex)||ref.assertionIndex<0||ref.assertionIndex>4))throw fail(400,'Invalid outcome reference');
+  const loaded=await load(actor,hypothesisId);actor=loaded.actor;const original=loaded.r;if(replay(original,'outcome',actor,input))return publicRecord(original);const h=original.hypothesis,recordedAt=now();if(!iso(recordedAt)||recordedAt<h.registeredAt)throw fail(503,'Outcome clock unavailable');let fact,reason,revision,observation=null,observationDigest=null;
+  if(input.kind==='evidence-fact'){revision=ref.revision;({fact,reason}=await readFact(actor,{...h.target,revision}));}
+  else{const saved=await store.get(answerObservationRecordKey(org,ref.observationId)),o=saved?.observation,result=o?.results?.[ref.assertionIndex];if(o?.organizationId!==org||o.observationId!==ref.observationId||!result)throw fail(404,'Observation assertion unavailable');if(!iso(o.createdAt)||!hash(o.answerHash)||!hash(o.evidenceRevision))throw fail(503,'Observation provenance unavailable');if(result.assertion?.kind!=='earnings')throw fail(400,'Selection period is unknown');observationDigest=digest(saved);revision=o.evidenceRevision;fact=result.fact?{...result.fact,month:result.period}:null;reason=fact?null:'evidence-missing';observation={observationId:ref.observationId,assertionIndex:ref.assertionIndex,answerHash:o.answerHash,createdAt:o.createdAt,attributedMetadata:o.attributedMetadata,assertion:result.assertion,selectedResult:structuredClone(result),selectedResultHash:digest(result)};}
+  if(fact&&(!decimal(fact.amount)||!currency(fact.currency)||!hash(fact.sourceHash)))throw fail(503,'Outcome fact unavailable');
+  reason=reason||(fact.metric!==h.target.metric?'metric-incompatible':fact.currency!==h.target.currency?'currency-incompatible':fact.month!==h.target.month?'period-incompatible':null);
+  if(!reason&&h.mode==='future-period-outcome')reason=recordedAt<h.target.end?'period-not-elapsed':'business-series-unverified';
+  let result='unavailable';if(!reason){const a=integer(fact.amount),b=integer(h.criterion.threshold);result=({lt:a<b,lte:a<=b,eq:a===b,gte:a>=b,gt:a>b})[h.criterion.operator]?'criterion-met':'criterion-not-met';}
+  const outcome={recordedAt,actorId:actor.id,actorUid:actor.uid,kind:input.kind,reference:structuredClone(ref),observedAt:input.observedAt,observedAtVerified:false,fact,revision,observation,evaluation:{result,reason,meaning:h.mode==='future-period-outcome'?'future-business-evaluation-unavailable':input.kind==='answer-assertion'?'answer-assertion-evidence':'declared-analysis-numeric-rule'},temporalQualification:observation&&observation.createdAt<=h.registeredAt?'retrospective-observation; not-prospective':'registration-before-capture-only; analysis-execution-and-source-availability-unverified',revisionChanged:revision!==h.baseline.revision,sourceHashChanged:fact?fact.sourceHash!==h.baseline.sourceHash:null,evidenceReuse:fact?.sourceHash===h.baseline.sourceHash&&fact?.month===h.baseline.month&&fact?.currency===h.baseline.currency&&fact?.amount===h.baseline.amount?'reused-known-evidence':'changed-reference; independent-evidence-unverified'};
+  actor=await current(actor);const keys=['identity',strategy.key,key(hypothesisId),...(observation?[answerObservationRecordKey(org,ref.observationId)]:[])];const rows=await store.transact(keys,([identity,state,r,saved])=>{check(identity,state,actor);record(r);if(replay(r,'outcome',actor,input))return [identity,state,r,...(observation?[saved]:[])];if(digest(r.hypothesis)!==digest(h))throw fail(409,'Hypothesis changed');if(observation&&(!saved||digest(saved)!==observationDigest))throw fail(409,'Observation changed');return [identity,state,bounded({...r,outcome,outcomeReplay:{key:ownerKey(actor,input),payloadHash:digest(input)}}),...(observation?[saved]:[])];});return publicRecord(rows[2]);
+ },
+ async correct(actor,hypothesisId,input){if(!exact(input,['idempotencyKey','comment'])||!id(input.idempotencyKey)||!text(input.comment))throw fail(400,'Invalid hypothesis correction');input=structuredClone(input);const loaded=await load(actor,hypothesisId);actor=loaded.actor;if(replay(loaded.r,'correction',actor,input))return publicRecord(loaded.r);if(!loaded.r.outcome)throw fail(409,'Outcome required before correction');const createdAt=now();if(!iso(createdAt)||createdAt<loaded.r.outcome.recordedAt)throw fail(503,'Correction clock unavailable');const correction={comment:input.comment,actorId:actor.id,actorUid:actor.uid,createdAt,qualification:'Attributed reviewer comment; not independent ground truth.'};actor=await current(actor);const rows=await store.transact(['identity',strategy.key,key(hypothesisId)],([identity,state,r])=>{check(identity,state,actor);record(r);if(replay(r,'correction',actor,input))return [identity,state,r];if(!r.outcome)throw fail(409,'Outcome required before correction');return [identity,state,bounded({...r,correction,correctionReplay:{key:ownerKey(actor,input),payloadHash:digest(input)}})];});return publicRecord(rows[2]);}
+ };
+}
