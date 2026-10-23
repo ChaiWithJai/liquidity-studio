@@ -1,3 +1,4 @@
+import {normalizeSelectionReconciliations,selectionReconciliationView} from './defiant-selection-reconciliation.js';
 import {normalizeRetainedSourceRegister,searchRetainedSources,validateRetainedSourceRequest} from './defiant-retained-sources.js';
 import {composeEvidenceDecision} from './defiant-evidence-decision.js';
 import {normalizeStorePeriodCoverage} from './defiant-store-period-coverage.js';
@@ -55,12 +56,13 @@ function normalize(input, organizationId) {
     }
     return {id: row.id, label: row.label, sourceHash: row.sourceHash, amount: row.amount, currency: row.currency, sourceRecords: [...row.sourceRecords]};
   });
+  const selectionReconciliations = normalizeSelectionReconciliations(input.selectionReconciliations, selections);
   const identityGroups = normalizeIdentityGroups(input.identityGroups, selections);
   const comparisons = normalizeComparisons(input.comparisons, months);
   const audienceDefinitions = normalizeAudienceDefinitions(input.audienceDefinitions);
   const storePeriodCoverage = normalizeStorePeriodCoverage(input.storePeriodCoverage, comparisons);
   const retainedSourceRegister = normalizeRetainedSourceRegister(input.retainedSourceRegister);
-  const data = {...(retainedSourceRegister === undefined ? {} : {retainedSourceRegister}), schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(storePeriodCoverage === undefined ? {} : {storePeriodCoverage}), ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
+  const data = {...(selectionReconciliations === undefined ? {} : {selectionReconciliations}), ...(retainedSourceRegister === undefined ? {} : {retainedSourceRegister}), schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(storePeriodCoverage === undefined ? {} : {storePeriodCoverage}), ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
   const revision = createHash('sha256').update(JSON.stringify(data)).digest('hex');
   return {...data, revision};
 }
@@ -79,9 +81,9 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       mark('request_validation');
       if (!plain(request) || Object.keys(request).some(key => !['resource', 'revision', 'month', 'currency', 'receiptId', 'selectionId', 'identityGroupId', 'comparisonId', 'audienceId', 'groupId', 'referenceIndex', 'offset', 'limit', 'query', 'fromMonth', 'toMonth', 'storeCoverageId', 'sourceId', 'format', 'kind', 'sourceHash'].includes(key))) throw fail(400, 'Invalid evidence request');
       const {resource = 'manifest', revision, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, sourceId, format, kind, sourceHash, offset = 0, limit = 25} = request;
-      if (!['retained-sources', 'store-coverage', 'coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
+      if (!['selection-reconciliation', 'retained-sources', 'store-coverage', 'coverage', 'manifest', 'earnings', 'receipt', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'audience-definition', 'comparison-examples', 'audience-cells', 'june-review'].includes(resource) || (revision !== undefined && !hash(revision)) || !Number.isInteger(offset) || offset < 0 || offset > 500000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, 'Invalid evidence request');
       if ((resource !== 'earnings' && (selectedMonth !== undefined || currency !== undefined)) || (!['retained-sources', 'store-coverage', 'coverage', 'earnings', 'selections', 'selection', 'selection-receipts', 'catalog-identity-review', 'identity-group', 'comparisons', 'explain-change', 'audience-readiness', 'june-review'].includes(resource) && (request.offset !== undefined || request.limit !== undefined))) throw fail(400, 'Filters require earnings');
-      if ((!['selection', 'selection-receipts', 'june-review'].includes(resource) && selectionId !== undefined) || (['selection', 'selection-receipts', 'june-review'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
+      if ((!['selection-reconciliation', 'selection', 'selection-receipts', 'june-review'].includes(resource) && selectionId !== undefined) || (['selection-reconciliation', 'selection', 'selection-receipts', 'june-review'].includes(resource) && (!identifier(selectionId) || revision === undefined))) throw fail(400, 'Invalid selection request');
       if ((resource !== 'store-coverage' && storeCoverageId !== undefined) || (resource === 'store-coverage' && (revision === undefined || (storeCoverageId !== undefined && !identifier(storeCoverageId)) || offset > 100))) throw fail(400, 'Invalid store coverage request');
       if ((resource !== 'identity-group' && identityGroupId !== undefined) || (resource === 'identity-group' && (!identifier(identityGroupId) || revision === undefined))) throw fail(400, 'Invalid identity group request');
       if (['catalog-identity-review', 'identity-group'].includes(resource) && offset > 2000) throw fail(400, 'Invalid identity page');
@@ -109,7 +111,8 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       const base = {schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps};
       if(resource==='retained-sources')return searchRetainedSources(data,{query,sourceId,format,kind,sourceHash,fromMonth,toMonth,offset,limit});
       if(resource==='coverage')return discoverServedEvidenceCoverage(data,{query,fromMonth,toMonth,offset,limit});
-      if (resource === 'manifest') return structuredClone({...base, counts: {...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
+      if (resource === 'selection-reconciliation') return structuredClone({...base,...selectionReconciliationView(data,selectionId)});
+      if (resource === 'manifest') return structuredClone({...base, counts: {...(data.selectionReconciliations === undefined ? {} : {selectionReconciliations:data.selectionReconciliations.length}), ...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
       if (resource === 'store-coverage') {
         const products=(data.storePeriodCoverage||[]).map(product=>({...product,settlementMaturityComparability:'not-established',limitation:product.limitation+' Settlement maturity comparability has not been established; legacy settlementMaturityComparable:false does not demonstrate unequal maturity.'}));
         if(storeCoverageId!==undefined){const product=products.find(p=>p.id===storeCoverageId);if(!product)throw fail(404,'Store coverage unavailable');return structuredClone({...base,product});}

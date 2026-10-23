@@ -2,6 +2,7 @@
  import {onDestroy,untrack} from 'svelte';
  import HypothesisReview from './HypothesisReview.svelte';
  import AnswerObservations from './AnswerObservations.svelte';
+ import SelectionReconciliation from './SelectionReconciliation.svelte';
  import EvidenceDecisionCard from './EvidenceDecisionCard.svelte';
  import ResearchToolbar from './ResearchToolbar.svelte';
  import ResearchInspector from './ResearchInspector.svelte';
@@ -9,7 +10,7 @@
  let {request,location,onNavigate=()=>{}}=$props();
  let retainedDraft=$state({query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:''});
  let view=$state(emptyEvidenceView()),field=$state('Total Earned'),refreshEpoch=$state(0);
- const cleared={evidenceJuneReview:false,evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
+ const cleared={evidenceReconciliation:false,evidenceJuneReview:false,evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
  const active=$derived(evidenceLocation(location));
  const controller=createEvidenceExplorer({request:(...args)=>request(...args),onState:value=>view=value});
  $effect(()=>{const input=location;refreshEpoch;untrack(()=>{retainedDraft={query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:'',...evidenceLocation(input).retainedFilters};field='Total Earned';void controller.load(input);});});
@@ -92,7 +93,9 @@
    <div class="members">{#each view.group.members as member(member.id)}<article><h4>{member.releaseTitle||'Release title unavailable'}</h4><dl><dt>Source system / account</dt><dd>{member.sourceSystem} / {member.accountScope}</dd><dt>Source ID</dt><dd>{member.sourceId===null?'Missing source ID':member.sourceId}</dd><dt>UPC</dt><dd>{member.upc||'Not supplied'}</dd><dt>Reported amount</dt><dd>{member.amount} {member.currency}</dd></dl>{#each member.selectionIds as selectionId(selectionId)}<button onclick={()=>navigate({evidenceSelectionId:selectionId,evidenceGroupId:'',evidenceMode:'selections',evidenceReceiptId:''})}>Inspect selection {selectionId}</button>{/each}</article>{/each}</div>
   {/if}
   {#if view.selection}<div class="coverage"><h3>{view.selection.selection.label}</h3><p>{view.selection.selection.amount} {view.selection.selection.currency} · {view.selection.total} contributing record locators</p></div>{/if}
-  {#if view.selection?.juneReviewAvailable}<div class="breadcrumbs"><button onclick={()=>navigate({evidenceJuneReview:!active.showJuneReview,evidenceOffset:active.offset})}>{active.showJuneReview?'Back to original selection cells':'Open June evidence review'}</button></div>{/if}
+  {#if view.selection}<div class="breadcrumbs"><button onclick={()=>navigate({evidenceReconciliation:!active.showReconciliation,evidenceJuneReview:false,evidenceOffset:active.offset})}>{active.showReconciliation?'Back to original selection cells':'Review selection reconciliation'}</button></div>{/if}
+  {#if view.reconciliation}<SelectionReconciliation packet={view.reconciliation}/>{/if}
+  {#if view.selection?.juneReviewAvailable&&!active.showReconciliation}<div class="breadcrumbs"><button onclick={()=>navigate({evidenceJuneReview:!active.showJuneReview,evidenceOffset:active.offset})}>{active.showJuneReview?'Back to original selection cells':'Open June evidence review'}</button></div>{/if}
   {#if view.juneReview}<EvidenceDecisionCard packet={view.juneReview} coverage={view.storeCoverage?.product} onReceipts={()=>navigate({evidenceJuneReview:false,evidenceOffset:active.offset})}/>{/if}
   {#if view.receipts.length}
    <ResearchInspector label="Original source cells" selected={true}>

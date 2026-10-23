@@ -41,6 +41,7 @@ export function registerDefiantEvidenceTools(server, {resolveEvidence, unauthori
    observe(onOutcome,Object.freeze({event:'defiant_evidence_tool_outcome',tool:name,outcome,status,stage}));
   }
  });
+ register('defiant_selection_reconciliation','Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.', {revision,selectionId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/ )},'selection-reconciliation');
  register('defiant_search_retained_sources','Search retained source and archive-member metadata within the registered intake scope. Explicit filename sales/reporting periods only; no semantic ranking or provider completeness claim.', {
   revision:revision.optional(),query:z.string().max(200).refine(v=>!/[\u0000-\u001f\u007f]/.test(v)).optional(),sourceId:z.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/).optional(),format:z.enum(['csv','xlsx','xls','pdf','png','jpg','zip','tar.gz','json','other']).optional(),kind:z.enum(['root','member']).optional(),sourceHash:z.string().length(64).regex(/^[a-f0-9]{64}$/).optional(),fromMonth:z.string().length(7).regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),toMonth:z.string().length(7).regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),offset:z.number().int().min(0).max(5000).optional(),limit:z.number().int().min(1).max(100).optional()
  },'retained-sources');

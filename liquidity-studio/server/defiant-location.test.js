@@ -102,3 +102,8 @@ test('retained source filters survive addressable reload and clear when leaving 
  const url=workflowHref('https://fixture/?org=org&tab=strategy',{organizationId:'org',tab:'strategy',strategy});const parsed=readWorkflowLocation(url);assert.deepEqual(parsed.strategy.retainedFilters,strategy.retainedFilters);assert.equal(parsed.strategy.evidenceOffset,25);assert.equal(parsed.strategy.evidenceMode,'retained');
  const next=workflowHref(url,{organizationId:'org',tab:'strategy',strategy:{...parsed.strategy,evidenceMode:'earnings'}});assert.equal(new URL(next).searchParams.has('retainedQuery'),false);assert.equal(readWorkflowLocation(next).strategy.retainedFilters,undefined);
 });
+
+test('selection reconciliation subview reload preserves selection revision and page and explicit receipt return clears only flag',()=>{
+ const state={view:'evidence',evidenceMode:'selections',evidenceSelectionId:'sample',evidenceRevision:'a'.repeat(64),evidenceOffset:25,evidenceReconciliation:true};const href=workflowHref('https://fixture/?org=org&tab=strategy',{organizationId:'org',tab:'strategy',strategy:state});const parsed=readWorkflowLocation(href);assert.equal(parsed.strategy.evidenceReconciliation,true);assert.equal(parsed.strategy.evidenceSelectionId,'sample');assert.equal(parsed.strategy.evidenceOffset,25);assert.equal(parsed.strategy.evidenceRevision,state.evidenceRevision);
+ const back=workflowHref(href,{organizationId:'org',tab:'strategy',strategy:{...parsed.strategy,evidenceReconciliation:false}});assert.equal(new URL(back).searchParams.has('evidenceReconciliation'),false);assert.equal(readWorkflowLocation(back).strategy.evidenceOffset,25);assert.equal(readWorkflowLocation(back).strategy.evidenceSelectionId,'sample');
+});

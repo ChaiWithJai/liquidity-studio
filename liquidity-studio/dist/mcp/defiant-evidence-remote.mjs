@@ -9943,11 +9943,11 @@ var require_request = __commonJS({
          * @param otherOptions {...object} any other properties that should be assigned to the request by your webserver
          * @throws {InvalidArgumentError} if one of headers, method or query are missing.
          */
-      constructor({ headers, method, query, body, ...otherOptions } = {}) {
+      constructor({ headers, method: method2, query, body, ...otherOptions } = {}) {
         if (!headers) {
           throw new InvalidArgumentError("Missing parameter: `headers`");
         }
-        if (!method) {
+        if (!method2) {
           throw new InvalidArgumentError("Missing parameter: `method`");
         }
         if (!query) {
@@ -9955,7 +9955,7 @@ var require_request = __commonJS({
         }
         this.body = body || {};
         this.headers = {};
-        this.method = method;
+        this.method = method2;
         this.query = query;
         Object.entries(headers).forEach(([header, value]) => {
           this.headers[header.toLowerCase()] = value;
@@ -10548,10 +10548,10 @@ var require_crypto_util = __commonJS({
   "node_modules/@node-oauth/oauth2-server/lib/utils/crypto-util.js"(exports, module) {
     "use strict";
     var crypto3 = __require("crypto");
-    var createHash4 = function({ algorithm = "sha256", data, output, encoding }) {
+    var createHash5 = function({ algorithm = "sha256", data, output, encoding }) {
       return crypto3.createHash(algorithm).update(data, encoding).digest(output);
     };
-    module.exports = { createHash: createHash4 };
+    module.exports = { createHash: createHash5 };
   }
 });
 
@@ -10560,16 +10560,16 @@ var require_pkce = __commonJS({
   "node_modules/@node-oauth/oauth2-server/lib/pkce/pkce.js"(exports, module) {
     "use strict";
     var { base64URLEncode } = require_string_util();
-    var { createHash: createHash4 } = require_crypto_util();
+    var { createHash: createHash5 } = require_crypto_util();
     var codeChallengeAndVerifierRegexp = /^([\u0041-\u005a\u0061-\u007A0-9.\-_~]){43,128}$/;
-    function getHashForCodeChallenge({ method, verifier }) {
-      if (isValidMethod(method) && typeof verifier === "string" && verifier.length > 0) {
-        if (method === "plain") {
+    function getHashForCodeChallenge({ method: method2, verifier }) {
+      if (isValidMethod(method2) && typeof verifier === "string" && verifier.length > 0) {
+        if (method2 === "plain") {
           return verifier;
         }
-        if (method === "S256") {
-          const hash8 = createHash4({ data: verifier });
-          return base64URLEncode(hash8);
+        if (method2 === "S256") {
+          const hash9 = createHash5({ data: verifier });
+          return base64URLEncode(hash9);
         }
       }
     }
@@ -10579,8 +10579,8 @@ var require_pkce = __commonJS({
     function isPKCERequest({ grantType, codeVerifier }) {
       return grantType === "authorization_code" && !!codeVerifier;
     }
-    function isValidMethod(method) {
-      return method === "S256" || method === "plain";
+    function isValidMethod(method2) {
+      return method2 === "S256" || method2 === "plain";
     }
     module.exports = {
       getHashForCodeChallenge,
@@ -11431,8 +11431,8 @@ var require_authorization_code_grant_type = __commonJS({
        */
       verifyPKCE(request, code) {
         if (code.codeChallenge) {
-          const method = this.getCodeChallengeMethod(code.codeChallengeMethod);
-          if (!this.enablePlainPKCE && method === "plain") {
+          const method2 = this.getCodeChallengeMethod(code.codeChallengeMethod);
+          if (!this.enablePlainPKCE && method2 === "plain") {
             throw new InvalidRequestError('Invalid request: `code_challenge_method` "plain" is not allowed; use "S256"');
           }
           if (!request.body.code_verifier) {
@@ -11441,14 +11441,14 @@ var require_authorization_code_grant_type = __commonJS({
           if (!pkce.codeChallengeMatchesABNF(request.body.code_verifier)) {
             throw new InvalidRequestError("Invalid parameter: `code_verifier`");
           }
-          const hash8 = pkce.getHashForCodeChallenge({
+          const hash9 = pkce.getHashForCodeChallenge({
             verifier: request.body.code_verifier,
-            method
+            method: method2
           });
-          if (!hash8) {
+          if (!hash9) {
             throw new ServerError("Server error: no valid hash algorithm available to verify `code_verifier`");
           }
-          if (!this.hashesAreEqual(hash8, code.codeChallenge)) {
+          if (!this.hashesAreEqual(hash9, code.codeChallenge)) {
             throw new InvalidGrantError("Invalid grant: code verifier is invalid");
           }
         } else {
@@ -11463,9 +11463,9 @@ var require_authorization_code_grant_type = __commonJS({
         const equalLength = trustedBuf.byteLength === untrustedBuf.byteLength;
         return crypto3.timingSafeEqual(trustedBuf, equalLength ? untrustedBuf : trustedBuf) && equalLength;
       }
-      getCodeChallengeMethod(method) {
-        if (method) {
-          return method;
+      getCodeChallengeMethod(method2) {
+        if (method2) {
+          return method2;
         }
         return this.enablePlainPKCE ? "plain" : "S256";
       }
@@ -12871,8 +12871,8 @@ var __exportAll = (all, symbols) => {
 };
 var __copyProps2 = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
-    for (var keys = __getOwnPropNames2(from), i = 0, n = keys.length, key; i < n; i++) {
-      key = keys[i];
+    for (var keys2 = __getOwnPropNames2(from), i = 0, n = keys2.length, key; i < n; i++) {
+      key = keys2[i];
       if (!__hasOwnProp2.call(to, key) && key !== except) {
         __defProp2(to, key, {
           get: ((k) => from[k]).bind(null, key),
@@ -13405,7 +13405,7 @@ __export(core_exports2, {
   parse: () => parse,
   parseAsync: () => parseAsync,
   prettifyError: () => prettifyError,
-  process: () => process,
+  process: () => process2,
   regexes: () => regexes_exports,
   registry: () => registry,
   safeDecode: () => safeDecode,
@@ -13444,9 +13444,9 @@ function $constructor(name, initializer3, params) {
     inst._zod.traits.add(name);
     initializer3(inst, def);
     const proto = _.prototype;
-    const keys = Object.keys(proto);
-    for (let i = 0; i < keys.length; i++) {
-      const k = keys[i];
+    const keys2 = Object.keys(proto);
+    for (let i = 0; i < keys2.length; i++) {
+      const k = keys2[i];
       if (!(k in inst)) {
         inst[k] = proto[k].bind(inst);
       }
@@ -13674,12 +13674,12 @@ function getElementAtPath(obj, path) {
   return path.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
-  const keys = Object.keys(promisesObj);
-  const promises = keys.map((key) => promisesObj[key]);
+  const keys2 = Object.keys(promisesObj);
+  const promises = keys2.map((key) => promisesObj[key]);
   return Promise.all(promises).then((results) => {
     const resolvedObj = {};
-    for (let i = 0; i < keys.length; i++) {
-      resolvedObj[keys[i]] = results[i];
+    for (let i = 0; i < keys2.length; i++) {
+      resolvedObj[keys2[i]] = results[i];
     }
     return resolvedObj;
   });
@@ -15757,8 +15757,8 @@ function handlePropertyResult(result, final, key, input) {
   }
 }
 function normalizeDef(def) {
-  const keys = Object.keys(def.shape);
-  for (const k of keys) {
+  const keys2 = Object.keys(def.shape);
+  for (const k of keys2) {
     if (!def.shape?.[k]?._zod?.traits?.has("$ZodType")) {
       throw new Error(`Invalid element at key "${k}": expected a Zod schema`);
     }
@@ -15766,9 +15766,9 @@ function normalizeDef(def) {
   const okeys = optionalKeys(def.shape);
   return {
     ...def,
-    keys,
-    keySet: new Set(keys),
-    numKeys: keys.length,
+    keys: keys2,
+    keySet: new Set(keys2),
+    numKeys: keys2.length,
     optionalKeys: new Set(okeys)
   };
 }
@@ -20169,8 +20169,8 @@ var parsedTypeFromType = (t, data = void 0) => {
   }
   return t;
 };
-var capitalizeFirstCharacter = (text6) => {
-  return text6.charAt(0).toUpperCase() + text6.slice(1);
+var capitalizeFirstCharacter = (text7) => {
+  return text7.charAt(0).toUpperCase() + text7.slice(1);
 };
 function getUnitTypeFromNumber(number4) {
   const abs2 = Math.abs(number4);
@@ -23763,7 +23763,7 @@ function initializeContext(params) {
     external: params?.external ?? void 0
   };
 }
-function process(schema, ctx, _params = { path: [], schemaPath: [] }) {
+function process2(schema, ctx, _params = { path: [], schemaPath: [] }) {
   var _a2;
   const def = schema._zod.def;
   const seen = ctx.seen.get(schema);
@@ -23789,7 +23789,7 @@ function process(schema, ctx, _params = { path: [], schemaPath: [] }) {
     const parent = schema._zod.parent;
     if (parent) {
       result.ref = parent;
-      process(parent, ctx, params);
+      process2(parent, ctx, params);
       ctx.seen.get(parent).isParent = true;
     } else if (schema._zod.processJSONSchema) {
       schema._zod.processJSONSchema(ctx, result.schema, params);
@@ -24033,14 +24033,14 @@ function isTransforming(_schema, _ctx) {
 }
 var createToJSONSchemaMethod = (schema, processors = {}) => (params) => {
   const ctx = initializeContext({ ...params, processors });
-  process(schema, ctx);
+  process2(schema, ctx);
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
 };
 var createStandardJSONSchemaMethod = (schema, io) => (params) => {
   const { libraryOptions, target } = params ?? {};
   const ctx = initializeContext({ ...libraryOptions ?? {}, target, io, processors: {} });
-  process(schema, ctx);
+  process2(schema, ctx);
   extractDefs(ctx, schema);
   return finalize(ctx, schema);
 };
@@ -24296,7 +24296,7 @@ var arrayProcessor = (schema, ctx, _json, params) => {
   if (typeof maximum === "number")
     json3.maxItems = maximum;
   json3.type = "array";
-  json3.items = process(def.element, ctx, { ...params, path: [...params.path, "items"] });
+  json3.items = process2(def.element, ctx, { ...params, path: [...params.path, "items"] });
 };
 var objectProcessor = (schema, ctx, _json, params) => {
   const json3 = _json;
@@ -24305,7 +24305,7 @@ var objectProcessor = (schema, ctx, _json, params) => {
   json3.properties = {};
   const shape = def.shape;
   for (const key in shape) {
-    json3.properties[key] = process(shape[key], ctx, {
+    json3.properties[key] = process2(shape[key], ctx, {
       ...params,
       path: [...params.path, "properties", key]
     });
@@ -24328,7 +24328,7 @@ var objectProcessor = (schema, ctx, _json, params) => {
     if (ctx.io === "output")
       json3.additionalProperties = false;
   } else if (def.catchall) {
-    json3.additionalProperties = process(def.catchall, ctx, {
+    json3.additionalProperties = process2(def.catchall, ctx, {
       ...params,
       path: [...params.path, "additionalProperties"]
     });
@@ -24337,7 +24337,7 @@ var objectProcessor = (schema, ctx, _json, params) => {
 var unionProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
   const isExclusive = def.inclusive === false;
-  const options = def.options.map((x, i) => process(x, ctx, {
+  const options = def.options.map((x, i) => process2(x, ctx, {
     ...params,
     path: [...params.path, isExclusive ? "oneOf" : "anyOf", i]
   }));
@@ -24349,11 +24349,11 @@ var unionProcessor = (schema, ctx, json3, params) => {
 };
 var intersectionProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
-  const a = process(def.left, ctx, {
+  const a = process2(def.left, ctx, {
     ...params,
     path: [...params.path, "allOf", 0]
   });
-  const b = process(def.right, ctx, {
+  const b = process2(def.right, ctx, {
     ...params,
     path: [...params.path, "allOf", 1]
   });
@@ -24370,11 +24370,11 @@ var tupleProcessor = (schema, ctx, _json, params) => {
   json3.type = "array";
   const prefixPath = ctx.target === "draft-2020-12" ? "prefixItems" : "items";
   const restPath = ctx.target === "draft-2020-12" ? "items" : ctx.target === "openapi-3.0" ? "items" : "additionalItems";
-  const prefixItems = def.items.map((x, i) => process(x, ctx, {
+  const prefixItems = def.items.map((x, i) => process2(x, ctx, {
     ...params,
     path: [...params.path, prefixPath, i]
   }));
-  const rest = def.rest ? process(def.rest, ctx, {
+  const rest = def.rest ? process2(def.rest, ctx, {
     ...params,
     path: [...params.path, restPath, ...ctx.target === "openapi-3.0" ? [def.items.length] : []]
   }) : null;
@@ -24411,19 +24411,19 @@ var recordProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
   json3.type = "object";
   if (ctx.target === "draft-07" || ctx.target === "draft-2020-12") {
-    json3.propertyNames = process(def.keyType, ctx, {
+    json3.propertyNames = process2(def.keyType, ctx, {
       ...params,
       path: [...params.path, "propertyNames"]
     });
   }
-  json3.additionalProperties = process(def.valueType, ctx, {
+  json3.additionalProperties = process2(def.valueType, ctx, {
     ...params,
     path: [...params.path, "additionalProperties"]
   });
 };
 var nullableProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
-  const inner = process(def.innerType, ctx, params);
+  const inner = process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   if (ctx.target === "openapi-3.0") {
     seen.ref = def.innerType;
@@ -24434,20 +24434,20 @@ var nullableProcessor = (schema, ctx, json3, params) => {
 };
 var nonoptionalProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
 var defaultProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   json3.default = JSON.parse(JSON.stringify(def.defaultValue));
 };
 var prefaultProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   if (ctx.io === "input")
@@ -24455,7 +24455,7 @@ var prefaultProcessor = (schema, ctx, json3, params) => {
 };
 var catchProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   let catchValue;
@@ -24469,32 +24469,32 @@ var catchProcessor = (schema, ctx, json3, params) => {
 var pipeProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
   const innerType = ctx.io === "input" ? def.in._zod.def.type === "transform" ? def.out : def.in : def.out;
-  process(innerType, ctx, params);
+  process2(innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = innerType;
 };
 var readonlyProcessor = (schema, ctx, json3, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
   json3.readOnly = true;
 };
 var promiseProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
 var optionalProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
-  process(def.innerType, ctx, params);
+  process2(def.innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = def.innerType;
 };
 var lazyProcessor = (schema, ctx, _json, params) => {
   const innerType = schema._zod.innerType;
-  process(innerType, ctx, params);
+  process2(innerType, ctx, params);
   const seen = ctx.seen.get(schema);
   seen.ref = innerType;
 };
@@ -24546,7 +24546,7 @@ function toJSONSchema(input, params) {
     const defs = {};
     for (const entry of registry2._idmap.entries()) {
       const [_, schema] = entry;
-      process(schema, ctx2);
+      process2(schema, ctx2);
     }
     const schemas = {};
     const external = {
@@ -24569,7 +24569,7 @@ function toJSONSchema(input, params) {
     return { schemas };
   }
   const ctx = initializeContext({ ...params, processors: allProcessors });
-  process(input, ctx);
+  process2(input, ctx);
   extractDefs(ctx, input);
   return finalize(ctx, input);
 }
@@ -24627,7 +24627,7 @@ var JSONSchemaGenerator = class {
    * This must be called before emit().
    */
   process(schema, _params = { path: [], schemaPath: [] }) {
-    return process(schema, this.ctx, _params);
+    return process2(schema, this.ctx, _params);
   }
   /**
    * Emit the final JSON Schema after processing.
@@ -25434,11 +25434,11 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   inst._zod.processJSONSchema = (ctx, json3, params) => enumProcessor(inst, ctx, json3, params);
   inst.enum = def.entries;
   inst.options = Object.values(def.entries);
-  const keys = new Set(Object.keys(def.entries));
+  const keys2 = new Set(Object.keys(def.entries));
   inst.extract = (values, params) => {
     const newEntries = {};
     for (const value of values) {
-      if (keys.has(value)) {
+      if (keys2.has(value)) {
         newEntries[value] = def.entries[value];
       } else
         throw new Error(`Key ${value} not found in enum`);
@@ -25453,7 +25453,7 @@ var ZodEnum = /* @__PURE__ */ $constructor("ZodEnum", (inst, def) => {
   inst.exclude = (values, params) => {
     const newEntries = { ...def.entries };
     for (const value of values) {
-      if (keys.has(value)) {
+      if (keys2.has(value)) {
         delete newEntries[value];
       } else
         throw new Error(`Key ${value} not found in enum`);
@@ -27342,8 +27342,8 @@ var SdkHttpError = class extends SdkError {
   }
 };
 var REQUIRED_CLIENT_CAPABILITIES_BY_METHOD = {};
-function requiredClientCapabilitiesForRequest(method) {
-  return Object.hasOwn(REQUIRED_CLIENT_CAPABILITIES_BY_METHOD, method) ? REQUIRED_CLIENT_CAPABILITIES_BY_METHOD[method] : void 0;
+function requiredClientCapabilitiesForRequest(method2) {
+  return Object.hasOwn(REQUIRED_CLIENT_CAPABILITIES_BY_METHOD, method2) ? REQUIRED_CLIENT_CAPABILITIES_BY_METHOD[method2] : void 0;
 }
 function isPlainObject$7(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -28464,23 +28464,23 @@ function registryMaps() {
   };
   return maps$1;
 }
-function hasRequestMethod2025(method) {
-  return Object.prototype.hasOwnProperty.call(requestMethodKeys$1, method);
+function hasRequestMethod2025(method2) {
+  return Object.prototype.hasOwnProperty.call(requestMethodKeys$1, method2);
 }
-function hasNotificationMethod2025(method) {
-  return Object.prototype.hasOwnProperty.call(notificationMethodKeys$1, method);
+function hasNotificationMethod2025(method2) {
+  return Object.prototype.hasOwnProperty.call(notificationMethodKeys$1, method2);
 }
-function hasResultMethod(method) {
-  return Object.prototype.hasOwnProperty.call(resultMethodKeys, method);
+function hasResultMethod(method2) {
+  return Object.prototype.hasOwnProperty.call(resultMethodKeys, method2);
 }
-function getResultSchema(method) {
-  return hasResultMethod(method) ? registryMaps().resultSchemas[method] : void 0;
+function getResultSchema(method2) {
+  return hasResultMethod(method2) ? registryMaps().resultSchemas[method2] : void 0;
 }
-function getRequestSchema(method) {
-  return hasRequestMethod2025(method) ? registryMaps().requestSchemas[method] : void 0;
+function getRequestSchema(method2) {
+  return hasRequestMethod2025(method2) ? registryMaps().requestSchemas[method2] : void 0;
 }
-function getNotificationSchema(method) {
-  return hasNotificationMethod2025(method) ? registryMaps().notificationSchemas[method] : void 0;
+function getNotificationSchema(method2) {
+  return hasNotificationMethod2025(method2) ? registryMaps().notificationSchemas[method2] : void 0;
 }
 var rev2025RequestMethods = Object.keys(requestMethodKeys$1);
 var rev2025NotificationMethods = Object.keys(notificationMethodKeys$1);
@@ -28516,9 +28516,9 @@ var rev2025Codec = {
   era: "2025-11-25",
   hasRequestMethod: hasRequestMethod2025,
   hasNotificationMethod: hasNotificationMethod2025,
-  validateRequest: (method, raw) => triState$1(getRequestSchema(method), raw),
-  validateResult: (method, raw) => triState$1(getResultSchema(method), raw),
-  validateNotification: (method, raw) => triState$1(getNotificationSchema(method), raw),
+  validateRequest: (method2, raw) => triState$1(getRequestSchema(method2), raw),
+  validateResult: (method2, raw) => triState$1(getResultSchema(method2), raw),
+  validateNotification: (method2, raw) => triState$1(getNotificationSchema(method2), raw),
   hasInputRequestMethod: () => false,
   validateInputRequest: () => NOT_IN_ERA$1,
   validateInputResponse: () => NOT_IN_ERA$1,
@@ -28554,8 +28554,8 @@ var rev2025Codec = {
       result: toNeutralResult(raw)
     };
   },
-  encodeResult(method, result) {
-    if (method !== "tools/list") return result;
+  encodeResult(method2, result) {
+    if (method2 !== "tools/list") return result;
     const tools = result.tools;
     if (!Array.isArray(tools) || !tools.some((t) => toolNeedsLegacyWrap(t))) return result;
     return {
@@ -29137,18 +29137,18 @@ function build() {
     ...retryParamsShape
   });
   const DispatchRequestMetaSchema = looseObject({ progressToken: ProgressTokenSchema$1.optional() });
-  function wireRequest(method, paramsShape) {
+  function wireRequest(method2, paramsShape) {
     return object({
-      method: literal(method),
+      method: literal(method2),
       params: object({
         _meta: RequestMetaEnvelopeSchema,
         ...paramsShape
       })
     });
   }
-  function dispatchRequest(method, paramsShape) {
+  function dispatchRequest(method2, paramsShape) {
     return object({
-      method: literal(method),
+      method: literal(method2),
       params: object({
         _meta: DispatchRequestMetaSchema.optional(),
         ...paramsShape
@@ -29454,8 +29454,8 @@ var CACHEABLE_RESULT_METHODS = [
   "resources/read",
   "server/discover"
 ];
-function isCacheableResultMethod(method) {
-  return CACHEABLE_RESULT_METHODS.includes(method);
+function isCacheableResultMethod(method2) {
+  return CACHEABLE_RESULT_METHODS.includes(method2);
 }
 var RESULT_CACHE_HINT_FALLBACK = Symbol("modelcontextprotocol.resultCacheHintFallback");
 function attachCacheHintFallback(result, hint) {
@@ -29618,19 +29618,19 @@ var EXTENDED_RESULT_TYPE_METHODS = [
   "prompts/get",
   "resources/read"
 ];
-function stampResultType(method, result) {
+function stampResultType(method2, result) {
   const provided = result["resultType"];
   if (provided === void 0) return {
     ...result,
     resultType: "complete"
   };
   if (provided === "complete") return result;
-  if (EXTENDED_RESULT_TYPE_METHODS.includes(method)) return result;
-  throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned resultType '${String(provided)}', but results of ${method} only support 'complete' on protocol revision 2026-07-28`);
+  if (EXTENDED_RESULT_TYPE_METHODS.includes(method2)) return result;
+  throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned resultType '${String(provided)}', but results of ${method2} only support 'complete' on protocol revision 2026-07-28`);
 }
-function fillCacheFields(method, result) {
+function fillCacheFields(method2, result) {
   const fallback = cacheHintFallbackOf(result);
-  if (result["resultType"] !== "complete" || !isCacheableResultMethod(method)) return fallback === void 0 ? result : stripCacheHintFallback(result);
+  if (result["resultType"] !== "complete" || !isCacheableResultMethod(method2)) return fallback === void 0 ? result : stripCacheHintFallback(result);
   const provided = result;
   const ttlMs = isValidCacheTtlMs(provided["ttlMs"]) ? provided["ttlMs"] : resolveTtlMs(fallback);
   const cacheScope = isValidCacheScope(provided["cacheScope"]) ? provided["cacheScope"] : resolveCacheScope(fallback);
@@ -29705,14 +29705,14 @@ function inputSchemaMaps() {
   };
   return maps;
 }
-function isInputRequestMethod2026(method) {
-  return INPUT_REQUEST_METHODS_2026.includes(method);
+function isInputRequestMethod2026(method2) {
+  return INPUT_REQUEST_METHODS_2026.includes(method2);
 }
-function getInputRequestSchema2026(method) {
-  return isInputRequestMethod2026(method) ? inputSchemaMaps().request[method] : void 0;
+function getInputRequestSchema2026(method2) {
+  return isInputRequestMethod2026(method2) ? inputSchemaMaps().request[method2] : void 0;
 }
-function getInputResponseSchema2026(method) {
-  return isInputRequestMethod2026(method) ? inputSchemaMaps().response[method] : void 0;
+function getInputResponseSchema2026(method2) {
+  return isInputRequestMethod2026(method2) ? inputSchemaMaps().response[method2] : void 0;
 }
 var requestMethodKeys = {
   "tools/call": null,
@@ -29736,23 +29736,23 @@ var notificationMethodKeys = {
   "notifications/prompts/list_changed": null,
   "notifications/subscriptions/acknowledged": null
 };
-function hasRequestMethod2026(method) {
-  return Object.prototype.hasOwnProperty.call(requestMethodKeys, method);
+function hasRequestMethod2026(method2) {
+  return Object.prototype.hasOwnProperty.call(requestMethodKeys, method2);
 }
-function hasNotificationMethod2026(method) {
-  return Object.prototype.hasOwnProperty.call(notificationMethodKeys, method);
+function hasNotificationMethod2026(method2) {
+  return Object.prototype.hasOwnProperty.call(notificationMethodKeys, method2);
 }
-function hasResultMethod2026(method) {
-  return Object.prototype.hasOwnProperty.call(requestMethodKeys, method);
+function hasResultMethod2026(method2) {
+  return Object.prototype.hasOwnProperty.call(requestMethodKeys, method2);
 }
-function getRequestSchema2026(method) {
-  return hasRequestMethod2026(method) ? buildSchemas2026().dispatchRequestSchemas[method] : void 0;
+function getRequestSchema2026(method2) {
+  return hasRequestMethod2026(method2) ? buildSchemas2026().dispatchRequestSchemas[method2] : void 0;
 }
-function getResultSchema2026(method) {
-  return hasResultMethod2026(method) ? buildSchemas2026().dispatchResultSchemas[method] : void 0;
+function getResultSchema2026(method2) {
+  return hasResultMethod2026(method2) ? buildSchemas2026().dispatchResultSchemas[method2] : void 0;
 }
-function getNotificationSchema2026(method) {
-  return hasNotificationMethod2026(method) ? buildSchemas2026().notificationSchemas2026[method] : void 0;
+function getNotificationSchema2026(method2) {
+  return hasNotificationMethod2026(method2) ? buildSchemas2026().notificationSchemas2026[method2] : void 0;
 }
 var rev2026RequestMethods = Object.keys(requestMethodKeys);
 var rev2026NotificationMethods = Object.keys(notificationMethodKeys);
@@ -29779,7 +29779,7 @@ var NOT_IN_ERA = {
   reason: "not-in-era"
 };
 var REQUIRED_ENVELOPE_KEYS = [PROTOCOL_VERSION_META_KEY, CLIENT_CAPABILITIES_META_KEY];
-function enforceDeletedFields(method, result) {
+function enforceDeletedFields(method2, result) {
   let next = result;
   let copied = false;
   const copy = () => {
@@ -29790,7 +29790,7 @@ function enforceDeletedFields(method, result) {
     return next;
   };
   const tools = result.tools;
-  if (method === "tools/list" && Array.isArray(tools) && tools.some((tool) => isPlainObject$4(tool) && "execution" in tool)) copy().tools = tools.map((tool) => {
+  if (method2 === "tools/list" && Array.isArray(tools) && tools.some((tool) => isPlainObject$4(tool) && "execution" in tool)) copy().tools = tools.map((tool) => {
     if (!isPlainObject$4(tool) || !("execution" in tool)) return tool;
     const rest = { ...tool };
     delete rest["execution"];
@@ -29808,12 +29808,12 @@ var rev2026Codec = {
   era: "2026-07-28",
   hasRequestMethod: hasRequestMethod2026,
   hasNotificationMethod: hasNotificationMethod2026,
-  hasInputRequestMethod: (method) => getInputRequestSchema2026(method) !== void 0,
-  validateRequest: (method, raw) => triState(getRequestSchema2026(method), raw),
-  validateResult: (method, raw) => triState(getResultSchema2026(method), raw),
-  validateNotification: (method, raw) => triState(getNotificationSchema2026(method), raw),
-  validateInputRequest: (method, raw) => triState(getInputRequestSchema2026(method), raw),
-  validateInputResponse: (method, raw) => triState(getInputResponseSchema2026(method), raw),
+  hasInputRequestMethod: (method2) => getInputRequestSchema2026(method2) !== void 0,
+  validateRequest: (method2, raw) => triState(getRequestSchema2026(method2), raw),
+  validateResult: (method2, raw) => triState(getResultSchema2026(method2), raw),
+  validateNotification: (method2, raw) => triState(getNotificationSchema2026(method2), raw),
+  validateInputRequest: (method2, raw) => triState(getInputRequestSchema2026(method2), raw),
+  validateInputResponse: (method2, raw) => triState(getInputResponseSchema2026(method2), raw),
   samplingResultVariant: () => NOT_IN_ERA,
   outboundEnvelope(material) {
     return {
@@ -29843,23 +29843,23 @@ var rev2026Codec = {
   },
   projectCallToolResult: (result) => appendTextFallbackForNonObject(result),
   inputRequestSchema: getInputRequestSchema2026,
-  decodeResult(method, raw) {
+  decodeResult(method2, raw) {
     if (!isPlainObject$4(raw)) return {
       kind: "invalid",
-      error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method}: not an object`, { method })
+      error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method2}: not an object`, { method: method2 })
     };
     const rawResultType = raw["resultType"];
     if (rawResultType === void 0) return {
       kind: "invalid",
-      error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method}: missing required resultType \u2014 servers implementing protocol revision 2026-07-28 MUST include it (the absent-means-complete bridge applies only to earlier-revision servers)`, {
-        method,
+      error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method2}: missing required resultType \u2014 servers implementing protocol revision 2026-07-28 MUST include it (the absent-means-complete bridge applies only to earlier-revision servers)`, {
+        method: method2,
         violation: "missing-resultType"
       })
     };
     if (typeof rawResultType !== "string") return {
       kind: "invalid",
-      error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method}: non-string resultType`, {
-        method,
+      error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method2}: non-string resultType`, {
+        method: method2,
         resultType: rawResultType
       })
     };
@@ -29871,8 +29871,8 @@ var rev2026Codec = {
       const meta3 = metaParse?.success ? metaParse.data : void 0;
       if (Object.keys(inputRequests).length === 0 && typeof requestState !== "string") return {
         kind: "invalid",
-        error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method}: input_required carries neither inputRequests nor requestState (every input_required result must include at least one of the two)`, {
-          method,
+        error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method2}: input_required carries neither inputRequests nor requestState (every input_required result must include at least one of the two)`, {
+          method: method2,
           violation: "input-required-missing-both"
         })
       };
@@ -29885,18 +29885,18 @@ var rev2026Codec = {
     }
     if (rawResultType !== "complete") return {
       kind: "invalid",
-      error: new SdkError(SdkErrorCode.UnsupportedResultType, `Unsupported result type '${rawResultType}' for ${method}`, {
+      error: new SdkError(SdkErrorCode.UnsupportedResultType, `Unsupported result type '${rawResultType}' for ${method2}`, {
         resultType: rawResultType,
-        method
+        method: method2
       })
     };
     const wireResultSchemas = getWireResultSchemas();
-    const wireSchema = Object.hasOwn(wireResultSchemas, method) ? wireResultSchemas[method] : void 0;
+    const wireSchema = Object.hasOwn(wireResultSchemas, method2) ? wireResultSchemas[method2] : void 0;
     if (wireSchema !== void 0) {
       const parsed = wireSchema.safeParse(raw);
       if (!parsed.success) return {
         kind: "invalid",
-        error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method}: ${parsed.error}`, { method })
+        error: new SdkError(SdkErrorCode.InvalidResult, `Invalid result for ${method2}: ${parsed.error}`, { method: method2 })
       };
     }
     const lifted = { ...raw };
@@ -29906,8 +29906,8 @@ var rev2026Codec = {
       result: lifted
     };
   },
-  encodeResult(method, result, serverInfo) {
-    return stampServerInfoMeta(fillCacheFields(method, stampResultType(method, enforceDeletedFields(method, result))), serverInfo);
+  encodeResult(method2, result, serverInfo) {
+    return stampServerInfoMeta(fillCacheFields(method2, stampResultType(method2, enforceDeletedFields(method2, result))), serverInfo);
   },
   encodeErrorCode: (code) => code === -32002 ? -32602 : code,
   checkInboundEnvelope(material) {
@@ -29941,14 +29941,14 @@ function classifiedWireEra(classification) {
   if (classification.revision !== void 0) return codecForVersion(classification.revision).era;
   return classification.era === "modern" ? rev2026Codec.era : rev2025Codec.era;
 }
-function isSpecRequestMethod(method) {
-  return ALL_CODECS.some((codec2) => codec2.hasRequestMethod(method));
+function isSpecRequestMethod(method2) {
+  return ALL_CODECS.some((codec2) => codec2.hasRequestMethod(method2));
 }
-function isSpecNotificationMethod(method) {
-  return ALL_CODECS.some((codec2) => codec2.hasNotificationMethod(method));
+function isSpecNotificationMethod(method2) {
+  return ALL_CODECS.some((codec2) => codec2.hasNotificationMethod(method2));
 }
-function isExtensionReusedRequestMethod(method) {
-  return method === "tasks/get" || method === "tasks/cancel";
+function isExtensionReusedRequestMethod(method2) {
+  return method2 === "tasks/get" || method2 === "tasks/cancel";
 }
 var ALL_CODECS = [rev2025Codec, rev2026Codec];
 function isPlainObject$3(value) {
@@ -30418,8 +30418,8 @@ var MCP_NAME_HEADER_SOURCE = {
   "tasks/update": "taskId",
   "tasks/cancel": "taskId"
 };
-function mcpNameSource(method, params) {
-  const field = Object.hasOwn(MCP_NAME_HEADER_SOURCE, method) ? MCP_NAME_HEADER_SOURCE[method] : void 0;
+function mcpNameSource(method2, params) {
+  const field = Object.hasOwn(MCP_NAME_HEADER_SOURCE, method2) ? MCP_NAME_HEADER_SOURCE[method2] : void 0;
   if (field === void 0) return;
   const raw = isPlainObject$2(params) ? params[field] : void 0;
   return {
@@ -30444,13 +30444,13 @@ function stripHttpOws(value) {
 }
 function validateStandardRequestHeaders(request, route) {
   if (route.messageKind !== "request") return;
-  const method = route.message.method;
+  const method2 = route.message.method;
   if (request.protocolVersionHeader === void 0) {
     const claimed = route.classification.revision;
     return crossCheckMismatch("version-header-missing", "(missing)", claimed === void 0 ? "the body carries a modern per-request envelope but the required MCP-Protocol-Version header is absent" : `the body envelope names protocol version ${claimed} but the required MCP-Protocol-Version header is absent`, "standard-header-validation");
   }
-  if (request.mcpMethodHeader === void 0) return crossCheckMismatch("method-header-missing", "(missing)", `the body names method ${method} but the required Mcp-Method header is absent`, "standard-header-validation");
-  const source = mcpNameSource(method, route.message.params);
+  if (request.mcpMethodHeader === void 0) return crossCheckMismatch("method-header-missing", "(missing)", `the body names method ${method2} but the required Mcp-Method header is absent`, "standard-header-validation");
+  const source = mcpNameSource(method2, route.message.params);
   if (source === void 0) return;
   const { field: sourceField, value: bodyValue } = source;
   if (request.mcpNameHeader === void 0) {
@@ -30492,10 +30492,10 @@ function classifyBatch(body) {
 }
 function classifyRequestBody(request, body) {
   const params = body.params;
-  const method = body.method;
+  const method2 = body.method;
   const headerVersion = request.protocolVersionHeader;
   const headerNamesModern = headerVersion !== void 0 && isModernProtocolVersion(headerVersion);
-  if (method === "initialize" && !carriesValidModernEnvelopeClaim(params)) {
+  if (method2 === "initialize" && !carriesValidModernEnvelopeClaim(params)) {
     if (headerNamesModern) return crossCheckMismatch("initialize-with-modern-header", headerVersion, "an initialize request (legacy handshake) was sent with a modern MCP-Protocol-Version header");
     const requestedVersion = isPlainObject$2(params) && typeof params["protocolVersion"] === "string" ? params["protocolVersion"] : void 0;
     return {
@@ -30510,7 +30510,7 @@ function classifyRequestBody(request, body) {
     if (firstIssue !== void 0) return rejection("envelope", "envelope-invalid", 400, new ProtocolError(ProtocolErrorCode.InvalidParams, `Invalid _meta envelope for protocol revision 2026-07-28: ${firstIssue.key}: ${firstIssue.problem}`, { envelope: firstIssue }), true);
     const claimedVersion = envelopeClaimVersion(params);
     if (headerVersion !== void 0 && claimedVersion !== void 0 && headerVersion !== claimedVersion) return crossCheckMismatch("header-body-version-mismatch", headerVersion, `the body envelope names protocol version ${claimedVersion} but the MCP-Protocol-Version header names ${headerVersion}`);
-    if (request.mcpMethodHeader !== void 0 && request.mcpMethodHeader !== method) return crossCheckMismatch("method-header-mismatch", request.mcpMethodHeader, `the body names method ${method} but the Mcp-Method header names ${request.mcpMethodHeader}`);
+    if (request.mcpMethodHeader !== void 0 && request.mcpMethodHeader !== method2) return crossCheckMismatch("method-header-mismatch", request.mcpMethodHeader, `the body names method ${method2} but the Mcp-Method header names ${request.mcpMethodHeader}`);
     return {
       kind: "modern",
       messageKind: "request",
@@ -30532,7 +30532,7 @@ function classifyRequestBody(request, body) {
 }
 function classifyNotificationBody(request, body) {
   const params = body.params;
-  const method = body.method;
+  const method2 = body.method;
   const headerVersion = request.protocolVersionHeader;
   const headerNamesModern = headerVersion !== void 0 && isModernProtocolVersion(headerVersion);
   if (hasEnvelopeClaim(params)) {
@@ -30547,7 +30547,7 @@ function classifyNotificationBody(request, body) {
     }
     if (headerVersion !== void 0 && headerVersion !== claimedVersion) return crossCheckMismatch("notification-header-body-version-mismatch", headerVersion, `the notification envelope names protocol version ${claimedVersion} but the MCP-Protocol-Version header names ${headerVersion}`);
     const classification = classificationForClaim(claimedVersion);
-    if (classification.era === "modern" && request.mcpMethodHeader !== void 0 && request.mcpMethodHeader !== method) return crossCheckMismatch("notification-method-header-mismatch", request.mcpMethodHeader, `the notification body names method ${method} but the Mcp-Method header names ${request.mcpMethodHeader}`);
+    if (classification.era === "modern" && request.mcpMethodHeader !== void 0 && request.mcpMethodHeader !== method2) return crossCheckMismatch("notification-method-header-mismatch", request.mcpMethodHeader, `the notification body names method ${method2} but the Mcp-Method header names ${request.mcpMethodHeader}`);
     return {
       kind: "modern",
       messageKind: "notification",
@@ -30556,7 +30556,7 @@ function classifyNotificationBody(request, body) {
     };
   }
   if (headerNamesModern) {
-    if (request.mcpMethodHeader !== void 0 && request.mcpMethodHeader !== method) return crossCheckMismatch("notification-method-header-mismatch", request.mcpMethodHeader, `the notification body names method ${method} but the Mcp-Method header names ${request.mcpMethodHeader}`);
+    if (request.mcpMethodHeader !== void 0 && request.mcpMethodHeader !== method2) return crossCheckMismatch("notification-method-header-mismatch", request.mcpMethodHeader, `the notification body names method ${method2} but the Mcp-Method header names ${request.mcpMethodHeader}`);
     return {
       kind: "modern",
       messageKind: "notification",
@@ -30871,8 +30871,8 @@ var inputRequired = Object.assign(buildInputRequired, {
   }
 });
 var REQUEST_STATE_ONLY_LEG_PACING_MS = 250;
-function inputRequiredRoundsExceededMessage(method, maxRounds) {
-  return `Multi-round-trip request '${method}' still required input after ${maxRounds} rounds (inputRequired.maxRounds)`;
+function inputRequiredRoundsExceededMessage(method2, maxRounds) {
+  return `Multi-round-trip request '${method2}' still required input after ${maxRounds} rounds (inputRequired.maxRounds)`;
 }
 function sleep(ms, signal) {
   return new Promise((resolve, reject2) => {
@@ -31090,8 +31090,8 @@ for (const key of SPEC_SCHEMA_KEYS) register(key, schemas_exports3[key]);
 for (const [key, schema] of Object.entries(authSchemas)) register(key, schema);
 var specTypeSchemas = Object.freeze(_specTypeSchemas);
 var isSpecType = Object.freeze(_isSpecType);
-function bootstrapOutboundCodec(method) {
-  switch (method) {
+function bootstrapOutboundCodec(method2) {
+  switch (method2) {
     case "initialize":
     case "notifications/initialized":
       return codecForVersion(void 0);
@@ -31148,16 +31148,16 @@ function liftWireOnlyMaterial(message, kind) {
     lifted
   };
 }
-function codecResultValidator(codec2, method) {
-  const probe = codec2.validateResult(method, void 0);
+function codecResultValidator(codec2, method2) {
+  const probe = codec2.validateResult(method2, void 0);
   if (!probe.ok && probe.reason === "not-in-era") return void 0;
   return { "~standard": {
     version: 1,
     vendor: "mcp-wire-codec",
     validate(value) {
-      const outcome = codec2.validateResult(method, value);
+      const outcome = codec2.validateResult(method2, value);
       if (outcome.ok) return { value: outcome.value };
-      return { issues: [{ message: outcome.reason === "invalid" ? outcome.message : `not-in-era: ${method}` }] };
+      return { issues: [{ message: outcome.reason === "invalid" ? outcome.message : `not-in-era: ${method2}` }] };
     }
   } };
 }
@@ -31316,8 +31316,8 @@ var Protocol = class {
   * handler chain (e.g. the `Client` fulfilling an embedded multi-round-trip
   * input request).
   */
-  _getRequestHandler(method) {
-    return this._requestHandlers.get(method);
+  _getRequestHandler(method2) {
+    return this._requestHandlers.get(method2);
   }
   async _oncancel(notification) {
     if (notification.params.requestId === void 0) return;
@@ -31635,9 +31635,9 @@ var Protocol = class {
   * been negotiated, the instance era is authoritative for everything — a
   * negotiated session never re-routes a method onto the other era.
   */
-  _resolveOutboundCodec(method) {
+  _resolveOutboundCodec(method2) {
     if (this._negotiatedProtocolVersion === void 0) {
-      const pinned = bootstrapOutboundCodec(method);
+      const pinned = bootstrapOutboundCodec(method2);
       if (pinned) return pinned;
     }
     return this._negotiatedWireCodec();
@@ -31649,9 +31649,9 @@ var Protocol = class {
   * Methods outside the spec universe are consumer-owned extension methods
   * and stay era-blind.
   */
-  _assertOutboundRequestInEra(codec2, method) {
-    if (isSpecRequestMethod(method) && !codec2.hasRequestMethod(method)) throw new SdkError(SdkErrorCode.MethodNotSupportedByProtocolVersion, `Method '${method}' is not supported by the negotiated protocol version (wire era ${codec2.era})`, {
-      method,
+  _assertOutboundRequestInEra(codec2, method2) {
+    if (isSpecRequestMethod(method2) && !codec2.hasRequestMethod(method2)) throw new SdkError(SdkErrorCode.MethodNotSupportedByProtocolVersion, `Method '${method2}' is not supported by the negotiated protocol version (wire era ${codec2.era})`, {
+      method: method2,
       era: codec2.era
     });
   }
@@ -31827,30 +31827,30 @@ var Protocol = class {
     }
     await this._transport.send(jsonrpcNotification, options);
   }
-  setRequestHandler(method, schemasOrHandler, maybeHandler) {
-    this.assertRequestHandlerCapability(method);
+  setRequestHandler(method2, schemasOrHandler, maybeHandler) {
+    this.assertRequestHandlerCapability(method2);
     let stored;
     if (typeof schemasOrHandler === "function") {
-      if (!isSpecRequestMethod(method)) throw new TypeError(`'${method}' is not a spec request method; pass schemas as the second argument to setRequestHandler().`);
+      if (!isSpecRequestMethod(method2)) throw new TypeError(`'${method2}' is not a spec request method; pass schemas as the second argument to setRequestHandler().`);
       stored = (request, ctx) => {
         const dispatchCodec = this._negotiatedWireCodec();
-        let outcome = dispatchCodec.validateRequest(method, request);
-        if (!outcome.ok && outcome.reason === "not-in-era") outcome = dispatchCodec.validateInputRequest(method, request);
+        let outcome = dispatchCodec.validateRequest(method2, request);
+        if (!outcome.ok && outcome.reason === "not-in-era") outcome = dispatchCodec.validateInputRequest(method2, request);
         if (!outcome.ok) {
-          if (outcome.reason === "not-in-era") throw new ProtocolError(ProtocolErrorCode.InternalError, `No wire schema for ${method} in the resolved era`);
+          if (outcome.reason === "not-in-era") throw new ProtocolError(ProtocolErrorCode.InternalError, `No wire schema for ${method2} in the resolved era`);
           throw new Error(outcome.message);
         }
         return Promise.resolve(schemasOrHandler(outcome.value, ctx));
       };
     } else if (maybeHandler) stored = async (request, ctx) => {
       const parsed = await validateStandardSchema(schemasOrHandler.params, { ...request.params });
-      if (!parsed.success) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Invalid params for ${method}: ${parsed.error}`);
+      if (!parsed.success) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Invalid params for ${method2}: ${parsed.error}`);
       return maybeHandler(parsed.data, ctx);
     };
     else throw new TypeError("setRequestHandler: handler is required");
-    if (typeof schemasOrHandler === "function") this._customSchemaRequestMethods.delete(method);
-    else this._customSchemaRequestMethods.add(method);
-    this._requestHandlers.set(method, this._wrapHandler(method, stored));
+    if (typeof schemasOrHandler === "function") this._customSchemaRequestMethods.delete(method2);
+    else this._customSchemaRequestMethods.add(method2);
+    this._requestHandlers.set(method2, this._wrapHandler(method2, stored));
   }
   /**
   * Hook for subclasses to wrap a registered request handler with role-specific
@@ -31877,23 +31877,23 @@ var Protocol = class {
   /**
   * Removes the request handler for the given method.
   */
-  removeRequestHandler(method) {
-    this._requestHandlers.delete(method);
-    this._customSchemaRequestMethods.delete(method);
+  removeRequestHandler(method2) {
+    this._requestHandlers.delete(method2);
+    this._customSchemaRequestMethods.delete(method2);
   }
   /**
   * Asserts that a request handler has not already been set for the given method, in preparation for a new one being automatically installed.
   */
-  assertCanSetRequestHandler(method) {
-    if (this._requestHandlers.has(method)) throw new Error(`A request handler for ${method} already exists, which would be overridden`);
+  assertCanSetRequestHandler(method2) {
+    if (this._requestHandlers.has(method2)) throw new Error(`A request handler for ${method2} already exists, which would be overridden`);
   }
-  setNotificationHandler(method, schemasOrHandler, maybeHandler) {
+  setNotificationHandler(method2, schemasOrHandler, maybeHandler) {
     if (typeof schemasOrHandler === "function") {
-      if (!isSpecNotificationMethod(method)) throw new TypeError(`'${method}' is not a spec notification method; pass schemas as the second argument to setNotificationHandler().`);
-      this._notificationHandlers.set(method, (notification, codec2) => {
-        const outcome = codec2.validateNotification(method, notification);
+      if (!isSpecNotificationMethod(method2)) throw new TypeError(`'${method2}' is not a spec notification method; pass schemas as the second argument to setNotificationHandler().`);
+      this._notificationHandlers.set(method2, (notification, codec2) => {
+        const outcome = codec2.validateNotification(method2, notification);
         if (!outcome.ok) {
-          if (outcome.reason === "not-in-era") throw new ProtocolError(ProtocolErrorCode.InternalError, `No wire schema for ${method} in the resolved era`);
+          if (outcome.reason === "not-in-era") throw new ProtocolError(ProtocolErrorCode.InternalError, `No wire schema for ${method2} in the resolved era`);
           throw new Error(outcome.message);
         }
         return Promise.resolve(schemasOrHandler(outcome.value));
@@ -31901,17 +31901,17 @@ var Protocol = class {
       return;
     }
     if (!maybeHandler) throw new TypeError("setNotificationHandler: handler is required");
-    this._notificationHandlers.set(method, async (notification) => {
+    this._notificationHandlers.set(method2, async (notification) => {
       const parsed = await validateStandardSchema(schemasOrHandler.params, { ...notification.params });
-      if (!parsed.success) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Invalid params for notification ${method}: ${parsed.error}`);
+      if (!parsed.success) throw new ProtocolError(ProtocolErrorCode.InvalidParams, `Invalid params for notification ${method2}: ${parsed.error}`);
       await maybeHandler(parsed.data, notification);
     });
   }
   /**
   * Removes the notification handler for the given method.
   */
-  removeNotificationHandler(method) {
-    this._notificationHandlers.delete(method);
+  removeNotificationHandler(method2) {
+    this._notificationHandlers.delete(method2);
   }
 };
 function isPlainObject$1(value) {
@@ -33031,9 +33031,9 @@ var require_util = /* @__PURE__ */ __commonJSMin(((exports) => {
   const codegen_1 = require_codegen();
   const code_1 = require_code$1();
   function toHash(arr) {
-    const hash8 = {};
-    for (const item of arr) hash8[item] = true;
-    return hash8;
+    const hash9 = {};
+    for (const item of arr) hash9[item] = true;
+    return hash9;
   }
   exports.toHash = toHash;
   function alwaysValidSchema(it, schema) {
@@ -33877,7 +33877,7 @@ var require_fast_deep_equal = /* @__PURE__ */ __commonJSMin(((exports, module) =
     if (a === b) return true;
     if (a && b && typeof a == "object" && typeof b == "object") {
       if (a.constructor !== b.constructor) return false;
-      var length, i, keys;
+      var length, i, keys2;
       if (Array.isArray(a)) {
         length = a.length;
         if (length != b.length) return false;
@@ -33887,12 +33887,12 @@ var require_fast_deep_equal = /* @__PURE__ */ __commonJSMin(((exports, module) =
       if (a.constructor === RegExp) return a.source === b.source && a.flags === b.flags;
       if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b.valueOf();
       if (a.toString !== Object.prototype.toString) return a.toString() === b.toString();
-      keys = Object.keys(a);
-      length = keys.length;
+      keys2 = Object.keys(a);
+      length = keys2.length;
       if (length !== Object.keys(b).length) return false;
-      for (i = length; i-- !== 0; ) if (!Object.prototype.hasOwnProperty.call(b, keys[i])) return false;
+      for (i = length; i-- !== 0; ) if (!Object.prototype.hasOwnProperty.call(b, keys2[i])) return false;
       for (i = length; i-- !== 0; ) {
-        var key = keys[i];
+        var key = keys2[i];
         if (!equal2(a[key], b[key])) return false;
       }
       return true;
@@ -35706,7 +35706,7 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     errorsText(errors = this.errors, { separator = ", ", dataVar = "data" } = {}) {
       if (!errors || errors.length === 0) return "No errors";
-      return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text6, msg) => text6 + separator + msg);
+      return errors.map((e) => `${dataVar}${e.instancePath} ${e.message}`).reduce((text7, msg) => text7 + separator + msg);
     }
     $dataMetaSchema(metaSchema, keywordsJsonPointers) {
       const rules = this.RULES.all;
@@ -39243,11 +39243,11 @@ function createListenRouter(options) {
         onerror?.(error47 instanceof Error ? error47 : new Error(String(error47)));
       }
     };
-    const writeNotification = (method, params) => {
+    const writeNotification = (method2, params) => {
       writeFrame(`event: message
 data: ${JSON.stringify({
         jsonrpc: "2.0",
-        method,
+        method: method2,
         params
       })}
 
@@ -39334,9 +39334,9 @@ data: ${JSON.stringify({
   };
 }
 function comparableResource(value) {
-  const text6 = String(value);
-  const hash8 = text6.indexOf("#");
-  return (hash8 === -1 ? text6 : text6.slice(0, hash8)).replace(/\/$/, "");
+  const text7 = String(value);
+  const hash9 = text7.indexOf("#");
+  return (hash9 === -1 ? text7 : text7.slice(0, hash9)).replace(/\/$/, "");
 }
 function sameResource(reported, expected) {
   if (!reported) return false;
@@ -39524,11 +39524,11 @@ function resolveLegacyShimOptions(options) {
     legacyShim: options?.legacyShim ?? true
   };
 }
-function coerceEmbeddedInputRequest(method, key, entry) {
-  if (entry === null || typeof entry !== "object" || typeof entry.method !== "string") throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an invalid input request '${key}': each inputRequests entry must be an embedded elicitation/create, sampling/createMessage, or roots/list request`);
+function coerceEmbeddedInputRequest(method2, key, entry) {
+  if (entry === null || typeof entry !== "object" || typeof entry.method !== "string") throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned an invalid input request '${key}': each inputRequests entry must be an embedded elicitation/create, sampling/createMessage, or roots/list request`);
   const embedded = entry;
   const required2 = requiredClientCapabilitiesForInputRequest(embedded);
-  if (required2 === void 0) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input request '${key}' of kind '${embedded.method}', which is not an embedded request the 2026-07-28 revision defines`);
+  if (required2 === void 0) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned an input request '${key}' of kind '${embedded.method}', which is not an embedded request the 2026-07-28 revision defines`);
   return {
     embedded,
     required: required2
@@ -39544,8 +39544,8 @@ function syntheticElicitationId() {
   const hex3 = [...bytes2].map((byte) => byte.toString(16).padStart(2, "0")).join("");
   return `${hex3.slice(0, 8)}-${hex3.slice(8, 12)}-${hex3.slice(12, 16)}-${hex3.slice(16, 20)}-${hex3.slice(20)}`;
 }
-function legacyShimFailure(method, message) {
-  if (method === "tools/call") return {
+function legacyShimFailure(method2, message) {
+  if (method2 === "tools/call") return {
     content: [{
       type: "text",
       text: message
@@ -39558,26 +39558,26 @@ var LegacyInputRequiredShim = class {
   constructor(_host) {
     this._host = _host;
   }
-  async fulfill(method, handler, request, ctx, firstResult) {
+  async fulfill(method2, handler, request, ctx, firstResult) {
     const { maxRounds, roundTimeoutMs } = this._host;
     const outerSignal = ctx.mcpReq.signal;
     let current = firstResult;
     let round = 0;
     while (true) {
       round += 1;
-      if (round > maxRounds) return legacyShimFailure(method, inputRequiredRoundsExceededMessage(method, maxRounds));
+      if (round > maxRounds) return legacyShimFailure(method2, inputRequiredRoundsExceededMessage(method2, maxRounds));
       const inputRequests = current.inputRequests;
       const hasInputRequests = inputRequests != null && Object.keys(inputRequests).length > 0;
       const requestState = typeof current.requestState === "string" ? current.requestState : void 0;
-      if (!hasInputRequests && requestState === void 0) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input-required result with neither inputRequests nor requestState (every InputRequiredResult must include at least one of the two)`);
+      if (!hasInputRequests && requestState === void 0) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned an input-required result with neither inputRequests nor requestState (every InputRequiredResult must include at least one of the two)`);
       let responses;
       if (hasInputRequests) {
         const declared = this._host.resolvedClientCapabilities(ctx);
         const coerced = [];
         for (const [key, entry] of Object.entries(inputRequests)) {
-          const { embedded, required: required2 } = coerceEmbeddedInputRequest(method, key, entry);
-          if (embedded.method !== "roots/list" && embedded.params === void 0) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input request '${key}' of kind '${embedded.method}' without params`);
-          if (missingClientCapabilities(required2, declared) !== void 0) return legacyShimFailure(method, `Cannot request input '${key}' (${embedded.method}): the client on this 2025-era connection did not declare the required capability${declared === void 0 ? " (no client capabilities are available on this connection \u2014 per-request legacy serving cannot receive server-to-client requests)" : ""}`);
+          const { embedded, required: required2 } = coerceEmbeddedInputRequest(method2, key, entry);
+          if (embedded.method !== "roots/list" && embedded.params === void 0) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned an input request '${key}' of kind '${embedded.method}' without params`);
+          if (missingClientCapabilities(required2, declared) !== void 0) return legacyShimFailure(method2, `Cannot request input '${key}' (${embedded.method}): the client on this 2025-era connection did not declare the required capability${declared === void 0 ? " (no client capabilities are available on this connection \u2014 per-request legacy serving cannot receive server-to-client requests)" : ""}`);
           coerced.push([key, embedded]);
         }
         const roundAbort = linkedRoundAbort(outerSignal);
@@ -39601,7 +39601,7 @@ var LegacyInputRequiredShim = class {
           responses = Object.fromEntries(fulfilled);
         } catch (error47) {
           if (outerSignal.aborted) throw error47;
-          return legacyShimFailure(method, `Fulfilling input required by '${method}' failed: ${error47 instanceof Error ? error47.message : String(error47)}`);
+          return legacyShimFailure(method2, `Fulfilling input required by '${method2}' failed: ${error47 instanceof Error ? error47.message : String(error47)}`);
         } finally {
           roundAbort.dispose();
         }
@@ -39616,7 +39616,7 @@ var LegacyInputRequiredShim = class {
         }
       };
       if (requestState !== void 0) {
-        const decoded = await this._host.verifyRequestState(requestState, ctxNext, method);
+        const decoded = await this._host.verifyRequestState(requestState, ctxNext, method2);
         if (decoded !== void 0) ctxNext = withRequestStateValue(ctxNext, decoded);
       }
       const next = await handler(request, ctxNext);
@@ -39687,7 +39687,7 @@ var Server = class extends Protocol {
       maxRounds: this._inputRequiredServing.maxRounds,
       roundTimeoutMs: this._inputRequiredServing.roundTimeoutMs,
       resolvedClientCapabilities: (ctx) => this._inputRequestCapabilityView(ctx),
-      verifyRequestState: (state, ctx, method) => this._verifyRequestState(state, ctx, method),
+      verifyRequestState: (state, ctx, method2) => this._verifyRequestState(state, ctx, method2),
       sendElicitation: (params, options) => this._sendElicitationLeg(params, options, { validateAcceptedContent: false }),
       sendSampling: (params, options) => this.createMessage(params, options),
       listRoots: (params, options) => this.listRoots(params, options)
@@ -39802,19 +39802,19 @@ var Server = class extends Protocol {
   * return is a server bug and fails loudly. The hint rides a symbol-keyed
   * property that is never serialized, so 2025-era responses are unaffected.
   */
-  _wrapHandler(method, handler) {
-    if (method !== "tools/call") {
-      const cacheHint = this._cacheHints?.[method];
-      const isInputRequiredCapable = INPUT_REQUIRED_CAPABLE_METHODS.has(method);
+  _wrapHandler(method2, handler) {
+    if (method2 !== "tools/call") {
+      const cacheHint = this._cacheHints?.[method2];
+      const isInputRequiredCapable = INPUT_REQUIRED_CAPABLE_METHODS.has(method2);
       if (cacheHint === void 0 && !isInputRequiredCapable) return async (request, ctx) => {
         const result = await handler(request, ctx);
-        if (isInputRequiredResult(result)) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input-required result, but only tools/call, prompts/get and resources/read support input_required (protocol revision 2026-07-28)`);
+        if (isInputRequiredResult(result)) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned an input-required result, but only tools/call, prompts/get and resources/read support input_required (protocol revision 2026-07-28)`);
         return result;
       };
       return async (request, ctx) => {
-        const result = isInputRequiredCapable ? await this._invokeInputRequiredCapableHandler(method, handler, request, ctx) : await handler(request, ctx);
+        const result = isInputRequiredCapable ? await this._invokeInputRequiredCapableHandler(method2, handler, request, ctx) : await handler(request, ctx);
         if (isInputRequiredResult(result)) {
-          if (!isInputRequiredCapable) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input-required result, but only tools/call, prompts/get and resources/read support input_required (protocol revision 2026-07-28)`);
+          if (!isInputRequiredCapable) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned an input-required result, but only tools/call, prompts/get and resources/read support input_required (protocol revision 2026-07-28)`);
           return result;
         }
         return cacheHint === void 0 ? result : attachCacheHintFallback(result, cacheHint);
@@ -39862,13 +39862,13 @@ var Server = class extends Protocol {
   *   violations per family; `inputRequired.legacyShim: false` restores
   *   the pre-shim loud failure.
   */
-  async _invokeInputRequiredCapableHandler(method, handler, request, ctx) {
+  async _invokeInputRequiredCapableHandler(method2, handler, request, ctx) {
     const servedModern = this._servedModernEra();
     const rawRequestState = ctx.mcpReq.requestState();
     if (rawRequestState !== void 0 && typeof rawRequestState !== "string") throw new ProtocolError(ProtocolErrorCode.InvalidParams, "Invalid or expired requestState", { reason: "invalid_request_state" });
     let ctxForHandler = ctx;
     if (typeof rawRequestState === "string") {
-      const decoded = await this._verifyRequestState(rawRequestState, ctx, method);
+      const decoded = await this._verifyRequestState(rawRequestState, ctx, method2);
       if (decoded !== void 0) ctxForHandler = withRequestStateValue(ctx, decoded);
     }
     let result;
@@ -39883,17 +39883,17 @@ var Server = class extends Protocol {
     }
     if (!isInputRequiredResult(result)) return result;
     if (!servedModern) {
-      if (!this._inputRequiredServing.legacyShim) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input-required result, but this request is served on protocol revision ${this._negotiatedProtocolVersion ?? LATEST_PROTOCOL_VERSION}, which has no input_required vocabulary`);
-      return await this._legacyInputRequiredShim().fulfill(method, handler, request, ctxForHandler, result);
+      if (!this._inputRequiredServing.legacyShim) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned an input-required result, but this request is served on protocol revision ${this._negotiatedProtocolVersion ?? LATEST_PROTOCOL_VERSION}, which has no input_required vocabulary`);
+      return await this._legacyInputRequiredShim().fulfill(method2, handler, request, ctxForHandler, result);
     }
     const inputRequests = result.inputRequests;
     const hasInputRequests = inputRequests != null && Object.keys(inputRequests).length > 0;
     const hasRequestState = typeof result.requestState === "string";
-    if (!hasInputRequests && !hasRequestState) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method} returned an input-required result with neither inputRequests nor requestState (every InputRequiredResult must include at least one of the two)`);
+    if (!hasInputRequests && !hasRequestState) throw new ProtocolError(ProtocolErrorCode.InternalError, `Handler for ${method2} returned an input-required result with neither inputRequests nor requestState (every InputRequiredResult must include at least one of the two)`);
     if (hasInputRequests) {
       const declared = this._inputRequestCapabilityView(ctx);
       for (const [key, entry] of Object.entries(inputRequests)) {
-        const { embedded, required: required2 } = coerceEmbeddedInputRequest(method, key, entry);
+        const { embedded, required: required2 } = coerceEmbeddedInputRequest(method2, key, entry);
         const missing2 = missingClientCapabilities(required2, declared);
         if (missing2 !== void 0) throw new MissingRequiredClientCapabilityError({ requiredCapabilities: missing2 }, `Cannot request input '${key}' (${embedded.method}): the request's client capabilities do not declare the required capability`);
       }
@@ -39906,12 +39906,12 @@ var Server = class extends Protocol {
   * nothing). Deny-on-error: any hook failure answers the frozen `-32602`;
   * the reason goes to `onerror` only.
   */
-  async _verifyRequestState(state, ctx, method) {
+  async _verifyRequestState(state, ctx, method2) {
     if (this._requestStateVerify === void 0) return;
     try {
       return await this._requestStateVerify(state, ctx);
     } catch (error47) {
-      this.onerror?.(/* @__PURE__ */ new Error(`requestState verification rejected ${method}: ${error47 instanceof Error ? error47.message : String(error47)}`));
+      this.onerror?.(/* @__PURE__ */ new Error(`requestState verification rejected ${method2}: ${error47 instanceof Error ? error47.message : String(error47)}`));
       throw new ProtocolError(ProtocolErrorCode.InvalidParams, "Invalid or expired requestState", { reason: "invalid_request_state" });
     }
   }
@@ -39932,44 +39932,44 @@ var Server = class extends Protocol {
   * whose message steers to `inputRequired(...)`. The base era gate would
   * also reject it; this guard runs first to carry the steer.
   */
-  _assertPushApiInServedEra(method) {
-    if (this._servedModernEra()) throw new SdkError(SdkErrorCode.MethodNotSupportedByProtocolVersion, `Server-to-client requests are not available on protocol revision ${this._negotiatedProtocolVersion}: '${method}' cannot be sent while serving a request on that revision. Return inputRequired({ ... }) from the handler instead \u2014 the client fulfils the embedded requests and retries the original request (multi round-trip requests).`, {
-      method,
+  _assertPushApiInServedEra(method2) {
+    if (this._servedModernEra()) throw new SdkError(SdkErrorCode.MethodNotSupportedByProtocolVersion, `Server-to-client requests are not available on protocol revision ${this._negotiatedProtocolVersion}: '${method2}' cannot be sent while serving a request on that revision. Return inputRequired({ ... }) from the handler instead \u2014 the client fulfils the embedded requests and retries the original request (multi round-trip requests).`, {
+      method: method2,
       era: "2026-07-28"
     });
   }
-  assertCapabilityForMethod(method) {
-    switch (method) {
+  assertCapabilityForMethod(method2) {
+    switch (method2) {
       case "sampling/createMessage":
-        if (!this._clientCapabilities?.sampling) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Client does not support sampling (required for ${method})`);
+        if (!this._clientCapabilities?.sampling) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Client does not support sampling (required for ${method2})`);
         break;
       case "elicitation/create":
-        if (!this._clientCapabilities?.elicitation) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Client does not support elicitation (required for ${method})`);
+        if (!this._clientCapabilities?.elicitation) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Client does not support elicitation (required for ${method2})`);
         break;
       case "roots/list":
-        if (!this._clientCapabilities?.roots) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Client does not support listing roots (required for ${method})`);
+        if (!this._clientCapabilities?.roots) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Client does not support listing roots (required for ${method2})`);
         break;
       case "ping":
         break;
     }
   }
-  assertNotificationCapability(method) {
-    switch (method) {
+  assertNotificationCapability(method2) {
+    switch (method2) {
       case "notifications/message":
-        if (!this._capabilities.logging) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support logging (required for ${method})`);
+        if (!this._capabilities.logging) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support logging (required for ${method2})`);
         break;
       case "notifications/resources/updated":
       case "notifications/resources/list_changed":
-        if (!this._capabilities.resources) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support notifying about resources (required for ${method})`);
+        if (!this._capabilities.resources) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support notifying about resources (required for ${method2})`);
         break;
       case "notifications/tools/list_changed":
-        if (!this._capabilities.tools) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support notifying of tool list changes (required for ${method})`);
+        if (!this._capabilities.tools) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support notifying of tool list changes (required for ${method2})`);
         break;
       case "notifications/prompts/list_changed":
-        if (!this._capabilities.prompts) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support notifying of prompt list changes (required for ${method})`);
+        if (!this._capabilities.prompts) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support notifying of prompt list changes (required for ${method2})`);
         break;
       case "notifications/elicitation/complete":
-        if (!this._clientCapabilities?.elicitation?.url) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Client does not support URL elicitation (required for ${method})`);
+        if (!this._clientCapabilities?.elicitation?.url) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Client does not support URL elicitation (required for ${method2})`);
         break;
       case "notifications/cancelled":
         break;
@@ -39977,26 +39977,26 @@ var Server = class extends Protocol {
         break;
     }
   }
-  assertRequestHandlerCapability(method) {
-    switch (method) {
+  assertRequestHandlerCapability(method2) {
+    switch (method2) {
       case "completion/complete":
-        if (!this._capabilities.completions) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support completions (required for ${method})`);
+        if (!this._capabilities.completions) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support completions (required for ${method2})`);
         break;
       case "logging/setLevel":
-        if (!this._capabilities.logging) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support logging (required for ${method})`);
+        if (!this._capabilities.logging) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support logging (required for ${method2})`);
         break;
       case "prompts/get":
       case "prompts/list":
-        if (!this._capabilities.prompts) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support prompts (required for ${method})`);
+        if (!this._capabilities.prompts) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support prompts (required for ${method2})`);
         break;
       case "resources/list":
       case "resources/templates/list":
       case "resources/read":
-        if (!this._capabilities.resources) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support resources (required for ${method})`);
+        if (!this._capabilities.resources) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support resources (required for ${method2})`);
         break;
       case "tools/call":
       case "tools/list":
-        if (!this._capabilities.tools) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support tools (required for ${method})`);
+        if (!this._capabilities.tools) throw new SdkError(SdkErrorCode.CapabilityNotSupported, `Server does not support tools (required for ${method2})`);
         break;
       case "ping":
       case "initialize":
@@ -41165,21 +41165,21 @@ async function readRequestBody(request, maxBytes = DEFAULT_MAX_REQUEST_BODY_SIZE
   const reader = request.body.getReader();
   const decoder = new TextDecoder();
   let received = 0;
-  let text6 = "";
+  let text7 = "";
   try {
     for (; ; ) {
       const { done, value } = await reader.read();
       if (done) break;
       received += value.byteLength;
       if (received > maxBytes) return { tooLarge: true };
-      text6 += decoder.decode(value, { stream: true });
+      text7 += decoder.decode(value, { stream: true });
     }
   } finally {
     reader.releaseLock();
   }
   return {
     tooLarge: false,
-    text: text6 + decoder.decode()
+    text: text7 + decoder.decode()
   };
 }
 var WebStandardStreamableHTTPServerTransport = class {
@@ -41846,8 +41846,8 @@ data:
 };
 function echoableRequestId(body) {
   if (body === null || typeof body !== "object" || Array.isArray(body)) return null;
-  const { method, id: id5 } = body;
-  if (typeof method !== "string") return null;
+  const { method: method2, id: id5 } = body;
+  if (typeof method2 !== "string") return null;
   return typeof id5 === "string" || typeof id5 === "number" ? id5 : null;
 }
 function jsonRpcErrorResponse(httpStatus, code, message, data, id5 = null) {
@@ -42214,13 +42214,13 @@ var newHeadersFromIncoming = (incoming) => {
   return new Headers(headerRecord);
 };
 var wrapBodyStream = Symbol("wrapBodyStream");
-var newRequestFromIncoming = (method, url2, headers, incoming, abortController) => {
+var newRequestFromIncoming = (method2, url2, headers, incoming, abortController) => {
   const init = {
-    method,
+    method: method2,
     headers,
     signal: abortController.signal
   };
-  if (method === "TRACE") {
+  if (method2 === "TRACE") {
     init.method = "GET";
     const req = new Request2(url2, init);
     Object.defineProperty(req, "method", {
@@ -42230,7 +42230,7 @@ var newRequestFromIncoming = (method, url2, headers, incoming, abortController) 
     });
     return req;
   }
-  if (!(method === "GET" || method === "HEAD")) {
+  if (!(method2 === "GET" || method2 === "HEAD")) {
     if ("rawBody" in incoming && incoming.rawBody instanceof Buffer) {
       init.body = new ReadableStream({
         start(controller) {
@@ -42506,7 +42506,7 @@ function singleHeaderValue(value) {
 }
 async function toWebRequest(req, parsedBody, options) {
   const maxRequestBodySize = resolveMaxRequestBodySize2(options?.maxRequestBodySize);
-  const method = (req.method ?? "GET").toUpperCase();
+  const method2 = (req.method ?? "GET").toUpperCase();
   const url2 = `http://${singleHeaderValue(req.headers["host"]) ?? singleHeaderValue(req.headers[":authority"]) ?? "localhost"}${req.url ?? "/"}`;
   const headers = new Headers();
   for (const [name, value] of Object.entries(req.headers)) {
@@ -42515,7 +42515,7 @@ async function toWebRequest(req, parsedBody, options) {
     else headers.set(name, value);
   }
   let body;
-  if (method !== "GET" && method !== "HEAD") if (parsedBody === void 0) {
+  if (method2 !== "GET" && method2 !== "HEAD") if (parsedBody === void 0) {
     if (Number(singleHeaderValue(req.headers["content-length"])) > maxRequestBodySize) throw new RequestBodyTooLargeError(maxRequestBodySize);
     const decoder = new TextDecoder();
     let collected = "";
@@ -42538,7 +42538,7 @@ async function toWebRequest(req, parsedBody, options) {
     }
   }
   return new Request(url2, {
-    method,
+    method: method2,
     headers,
     ...options?.signal !== void 0 && { signal: options.signal },
     ...body !== void 0 && { body }
@@ -42546,8 +42546,8 @@ async function toWebRequest(req, parsedBody, options) {
 }
 function echoableRequestId2(body) {
   if (body === null || typeof body !== "object" || Array.isArray(body)) return null;
-  const { method, id: id5 } = body;
-  if (typeof method !== "string") return null;
+  const { method: method2, id: id5 } = body;
+  if (typeof method2 !== "string") return null;
   return typeof id5 === "string" || typeof id5 === "number" ? id5 : null;
 }
 function internalServerErrorResponse2(id5) {
@@ -42612,6 +42612,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
       observe(onOutcome, Object.freeze({ event: "defiant_evidence_tool_outcome", tool: name, outcome, status, stage }));
     }
   });
+  register2("defiant_selection_reconciliation", "Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/) }, "selection-reconciliation");
   register2("defiant_search_retained_sources", "Search retained source and archive-member metadata within the registered intake scope. Explicit filename sales/reporting periods only; no semantic ranking or provider completeness claim.", {
     revision: revision.optional(),
     query: external_exports.string().max(200).refine((v) => !/[\u0000-\u001f\u007f]/.test(v)).optional(),
@@ -42704,28 +42705,76 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
   }, "receipt");
 }
 
-// server/defiant-retained-sources.js
+// server/defiant-selection-reconciliation.js
 import { createHash } from "node:crypto";
-var fail = (status, message) => Object.assign(new Error(message), { status });
-var invalid = () => fail(503, "Retained source register unavailable");
-var plain = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
-var exact = (v, keys) => plain(v) && Object.keys(v).length === keys.length && keys.every((k) => Object.hasOwn(v, k));
-var text = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
-var id = (v) => text(v, 128) && /^[A-Za-z0-9_-]+$(?![\s\S])/.test(v);
-var hash2 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]{64}$/.test(v);
+
+// server/auth.js
+function fail(status, message) {
+  return Object.assign(new Error(message), { status });
+}
+
+// server/defiant-selection-reconciliation.js
+var method = "selected-derived-cells-signed-decimal-v1";
+var metric = "source-total-earned";
+var plain = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
+var exact = (v, keys2) => plain(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
+var hash2 = (v) => typeof v === "string" && /^[a-f0-9]{64}$(?![\s\S])/.test(v);
+var decimal = (v) => typeof v === "string" && /^-?(0|[1-9][0-9]{0,25})(\.[0-9]{1,12})?$(?![\s\S])/.test(v);
+var text = (v) => typeof v === "string" && v.length > 0 && Buffer.byteLength(v, "utf8") <= 500 && !/[\u0000-\u001f\u007f]/.test(v);
+var units = (v) => {
+  const negative = v.startsWith("-");
+  const [whole, fraction = ""] = (negative ? v.slice(1) : v).split(".");
+  const n = BigInt(whole) * 10n ** 12n + BigInt(fraction.padEnd(12, "0"));
+  return negative ? -n : n;
+};
+var keys = ["schemaVersion", "method", "selectionId", "sourceHash", "currency", "metric", "month", "selectedRecordCount", "selectionRecordSetSha256", "declaredAmount", "recomputedAmount", "positiveAmount", "negativeAmount", "zeroRows", "predicates", "provenance"];
+var provenanceKeys = ["crossTabSha256", "selectedReceiptsSha256", "producerReceiptSha256", "independentReviewSha256"];
+function normalizeSelectionReconciliations(input, selections) {
+  if (input === void 0) return void 0;
+  if (!Array.isArray(input) || input.length > 2e3 || Buffer.byteLength(JSON.stringify(input), "utf8") > 1024 * 1024) throw fail(503, "Invalid selection reconciliation");
+  const byId = new Map(selections.map((s) => [s.id, s]));
+  const seen = /* @__PURE__ */ new Set();
+  return input.map((row) => {
+    if (!exact(row, keys) || row.schemaVersion !== 1 || row.method !== method || row.metric !== metric || (typeof row.selectionId !== "string" || !/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/.test(row.selectionId)) || seen.has(row.selectionId) || !hash2(row.sourceHash) || !hash2(row.selectionRecordSetSha256) || typeof row.currency !== "string" || !/^[A-Z]{3}$(?![\s\S])/.test(row.currency) || typeof row.month !== "string" || !/^[0-9]{4}-(0[1-9]|1[0-2])$(?![\s\S])/.test(row.month) || !Number.isSafeInteger(row.selectedRecordCount) || row.selectedRecordCount < 1 || !Number.isSafeInteger(row.zeroRows) || row.zeroRows < 0 || row.zeroRows > row.selectedRecordCount || !exact(row.predicates, ["sourceSongId", "store"]) || !text(row.predicates.sourceSongId) || !text(row.predicates.store) || !exact(row.provenance, provenanceKeys) || !provenanceKeys.every((k) => hash2(row.provenance[k])) || !["declaredAmount", "recomputedAmount", "positiveAmount", "negativeAmount"].every((k) => decimal(row[k]))) throw fail(503, "Invalid selection reconciliation");
+    const selected = byId.get(row.selectionId);
+    if (!selected || selected.sourceHash !== row.sourceHash || selected.currency !== row.currency || selected.sourceRecords.length !== row.selectedRecordCount || createHash("sha256").update(JSON.stringify(selected.sourceRecords)).digest("hex") !== row.selectionRecordSetSha256 || units(selected.amount) !== units(row.declaredAmount) || units(row.declaredAmount) !== units(row.recomputedAmount) || units(row.positiveAmount) < 0n || units(row.negativeAmount) > 0n || units(row.positiveAmount) + units(row.negativeAmount) !== units(row.recomputedAmount)) throw fail(503, "Selection reconciliation binding mismatch");
+    const nonzero = row.selectedRecordCount - row.zeroRows;
+    const buckets = Number(units(row.positiveAmount) > 0n) + Number(units(row.negativeAmount) < 0n);
+    if (nonzero < buckets || buckets === 0 && nonzero !== 0) throw fail(503, "Selection reconciliation sign counts infeasible");
+    seen.add(row.selectionId);
+    return structuredClone(row);
+  });
+}
+function selectionReconciliationView(data, selectionId) {
+  const selection = data.selections.find((row) => row.id === selectionId);
+  if (!selection) throw fail(404, "Evidence selection unavailable");
+  const proof = data.selectionReconciliations?.find((row) => row.selectionId === selectionId);
+  if (!proof) return { available: false, selectionId, reason: "not-prepared", limitation: "No retained reconciliation proof is prepared for this selection; absence does not establish incorrect arithmetic." };
+  return { available: true, selectionId, rowConvention: "1-based-logical-csv-record-including-header", proof: structuredClone(proof), runtimeBinding: { status: "checked", scope: "selection-metadata-and-arithmetic" }, retainedDerivedReview: { status: "reported-pass", scope: "selected-derived-records", basis: "supplied-retained-review" }, periodQualification: "producer-declared-group-month; not independently established by this read", predicateColumns: { sourceSongId: "TC Song ID", store: "Store Name" }, followUp: { resource: "selection-receipts", selectionId, revision: data.revision }, limitation: "Runtime checked proof metadata against the current selection and signed totals, not source cells or predicate truth. Retained review reports selected derived-cell recomputation; it is not a second whole-source scan, complete provider intake, settlement maturity, causal finding, identity equivalence, rights or economic correctness." };
+}
+
+// server/defiant-retained-sources.js
+import { createHash as createHash2 } from "node:crypto";
+var fail2 = (status, message) => Object.assign(new Error(message), { status });
+var invalid = () => fail2(503, "Retained source register unavailable");
+var plain2 = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+var exact2 = (v, keys2) => plain2(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
+var text2 = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
+var id = (v) => text2(v, 128) && /^[A-Za-z0-9_-]+$(?![\s\S])/.test(v);
+var hash3 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]{64}$/.test(v);
 var month = (v) => typeof v === "string" && v.length === 7 && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 var bytes = (v) => Number.isSafeInteger(v) && v >= 0;
 var formats = /* @__PURE__ */ new Set(["csv", "xlsx", "xls", "pdf", "png", "jpg", "zip", "tar.gz", "json", "other"]);
 var compare = (a, b) => a < b ? -1 : a > b ? 1 : 0;
-var relative = (v) => text(v, 500) && !v.startsWith("/") && !v.includes("\\") && !/^[A-Za-z]:/.test(v) && v.split("/").every((p) => p && p !== "." && p !== "..");
+var relative = (v) => text2(v, 500) && !v.startsWith("/") && !v.includes("\\") && !/^[A-Za-z]:/.test(v) && v.split("/").every((p) => p && p !== "." && p !== "..");
 var utcTimestamp = (v) => {
-  if (!text(v, 32) || /[\u2028\u2029]/.test(v)) return false;
+  if (!text2(v, 32) || /[\u2028\u2029]/.test(v)) return false;
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?Z$/.exec(v);
   if (!m) return false;
   const d = new Date(v);
   return Number.isFinite(d.getTime()) && [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()].every((n, i) => n === Number(m[i + 1]));
 };
-var digest = (v) => createHash("sha256").update(JSON.stringify(v)).digest("hex");
+var digest = (v) => createHash2("sha256").update(JSON.stringify(v)).digest("hex");
 function declaredFilenamePeriod(value) {
   if (typeof value !== "string") return null;
   const filename = value.split("/").at(-1), match = /(?:^|[-_ ])(sales_period|sales-period|reporting_period)-(0[1-9]|1[0-2])-(\d{4})\.csv$(?![\s\S])/i.exec(filename);
@@ -42735,7 +42784,7 @@ function periods(values, texts) {
   if (!Array.isArray(values) || values.length > 24) throw invalid();
   const seen = /* @__PURE__ */ new Set();
   return values.map((p) => {
-    if (!exact(p, ["month", "periodKind", "basis", "sourceText"]) || !month(p.month) || p.basis !== "filename-declared" || !texts.includes(p.sourceText) || declaredFilenamePeriod(p.sourceText)?.month !== p.month || declaredFilenamePeriod(p.sourceText)?.periodKind !== p.periodKind) throw invalid();
+    if (!exact2(p, ["month", "periodKind", "basis", "sourceText"]) || !month(p.month) || p.basis !== "filename-declared" || !texts.includes(p.sourceText) || declaredFilenamePeriod(p.sourceText)?.month !== p.month || declaredFilenamePeriod(p.sourceText)?.periodKind !== p.periodKind) throw invalid();
     const key = JSON.stringify([p.month, p.periodKind, p.basis, p.sourceText]);
     if (seen.has(key)) throw invalid();
     seen.add(key);
@@ -42744,23 +42793,23 @@ function periods(values, texts) {
 }
 function normalizeRetainedSourceRegister(input) {
   if (input === void 0) return void 0;
-  if (!exact(input, ["schemaVersion", "scopeDescription", "capturedAt", "provenance", "roots", "members"]) || input.schemaVersion !== 1 || !text(input.scopeDescription, 2e3) || !utcTimestamp(input.capturedAt) || !exact(input.provenance, ["manifestSha256", "memberInventorySha256"]) || !hash2(input.provenance.manifestSha256) || !hash2(input.provenance.memberInventorySha256) || !Array.isArray(input.roots) || input.roots.length < 1 || input.roots.length > 64 || !Array.isArray(input.members) || input.members.length > 4096 || Buffer.byteLength(JSON.stringify(input), "utf8") > 2 * 1024 * 1024) throw invalid();
+  if (!exact2(input, ["schemaVersion", "scopeDescription", "capturedAt", "provenance", "roots", "members"]) || input.schemaVersion !== 1 || !text2(input.scopeDescription, 2e3) || !utcTimestamp(input.capturedAt) || !exact2(input.provenance, ["manifestSha256", "memberInventorySha256"]) || !hash3(input.provenance.manifestSha256) || !hash3(input.provenance.memberInventorySha256) || !Array.isArray(input.roots) || input.roots.length < 1 || input.roots.length > 64 || !Array.isArray(input.members) || input.members.length > 4096 || Buffer.byteLength(JSON.stringify(input), "utf8") > 2 * 1024 * 1024) throw invalid();
   const ids = /* @__PURE__ */ new Set(), sizes = /* @__PURE__ */ new Map(), rootMap = /* @__PURE__ */ new Map(), occurrences = /* @__PURE__ */ new Set();
   const common = (r) => {
-    if (!id(r.id) || ids.has(r.id) || !hash2(r.sha256) || !bytes(r.bytes) || !formats.has(r.format)) throw invalid();
+    if (!id(r.id) || ids.has(r.id) || !hash3(r.sha256) || !bytes(r.bytes) || !formats.has(r.format)) throw invalid();
     ids.add(r.id);
     if (sizes.has(r.sha256) && sizes.get(r.sha256) !== r.bytes) throw invalid();
     sizes.set(r.sha256, r.bytes);
   };
   const roots = input.roots.map((r) => {
-    if (!exact(r, ["id", "sourceId", "filename", "format", "bytes", "sha256", "generation", "retentionVerification", "memberInventory", "periods"]) || !id(r.sourceId) || !relative(r.filename) || r.filename.includes("/") || !text(r.generation, 30) || !/^[1-9]\d{0,29}$(?![\s\S])/.test(r.generation) || !exact(r.retentionVerification, ["size", "crc32c", "md5"]) || Object.values(r.retentionVerification).some((v) => v !== null && typeof v !== "boolean") || !exact(r.memberInventory, ["status", "scope"]) || !["enumerated", "not-enumerated"].includes(r.memberInventory.status) || !text(r.memberInventory.scope, 2e3)) throw invalid();
+    if (!exact2(r, ["id", "sourceId", "filename", "format", "bytes", "sha256", "generation", "retentionVerification", "memberInventory", "periods"]) || !id(r.sourceId) || !relative(r.filename) || r.filename.includes("/") || !text2(r.generation, 30) || !/^[1-9]\d{0,29}$(?![\s\S])/.test(r.generation) || !exact2(r.retentionVerification, ["size", "crc32c", "md5"]) || Object.values(r.retentionVerification).some((v) => v !== null && typeof v !== "boolean") || !exact2(r.memberInventory, ["status", "scope"]) || !["enumerated", "not-enumerated"].includes(r.memberInventory.status) || !text2(r.memberInventory.scope, 2e3)) throw invalid();
     common(r);
     const row = { id: r.id, sourceId: r.sourceId, filename: r.filename, format: r.format, bytes: r.bytes, sha256: r.sha256, generation: r.generation, retentionVerification: { ...r.retentionVerification }, memberInventory: { ...r.memberInventory }, periods: periods(r.periods, [r.filename]) };
     rootMap.set(r.id, row);
     return row;
   }).sort((a, b) => compare(a.id, b.id));
   const members = input.members.map((r) => {
-    if (!exact(r, ["id", "rootId", "chain", "sha256", "bytes", "format", "container", "periods"]) || !id(r.rootId) || !rootMap.has(r.rootId) || !Array.isArray(r.chain) || r.chain.length < 1 || r.chain.length > 8 || r.chain.some((v) => !relative(v)) || typeof r.container !== "boolean") throw invalid();
+    if (!exact2(r, ["id", "rootId", "chain", "sha256", "bytes", "format", "container", "periods"]) || !id(r.rootId) || !rootMap.has(r.rootId) || !Array.isArray(r.chain) || r.chain.length < 1 || r.chain.length > 8 || r.chain.some((v) => !relative(v)) || typeof r.container !== "boolean") throw invalid();
     common(r);
     const root = rootMap.get(r.rootId), key = JSON.stringify([r.rootId, r.chain]);
     if (root.memberInventory.status !== "enumerated" || occurrences.has(key) || r.id !== digest([root.sha256, r.chain, r.sha256])) throw invalid();
@@ -42770,9 +42819,9 @@ function normalizeRetainedSourceRegister(input) {
   return { schemaVersion: 1, scopeDescription: input.scopeDescription, capturedAt: input.capturedAt, provenance: { ...input.provenance }, roots, members };
 }
 function validateRetainedSourceRequest(request = {}) {
-  if (!plain(request) || Object.keys(request).some((k) => !["query", "sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "offset", "limit"].includes(k))) throw fail(400, "Invalid retained source request");
+  if (!plain2(request) || Object.keys(request).some((k) => !["query", "sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "offset", "limit"].includes(k))) throw fail2(400, "Invalid retained source request");
   const { query = "", sourceId, format, kind, sourceHash, fromMonth, toMonth, offset = 0, limit = 25 } = request;
-  if (typeof query !== "string" || query.length > 200 || /[\u0000-\u001f\u007f]/.test(query) || sourceId !== void 0 && !id(sourceId) || format !== void 0 && !formats.has(format) || kind !== void 0 && !["root", "member"].includes(kind) || sourceHash !== void 0 && !hash2(sourceHash) || fromMonth !== void 0 && !month(fromMonth) || toMonth !== void 0 && !month(toMonth) || fromMonth && toMonth && fromMonth > toMonth || !Number.isInteger(offset) || offset < 0 || offset > 5e3 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, "Invalid retained source request");
+  if (typeof query !== "string" || query.length > 200 || /[\u0000-\u001f\u007f]/.test(query) || sourceId !== void 0 && !id(sourceId) || format !== void 0 && !formats.has(format) || kind !== void 0 && !["root", "member"].includes(kind) || sourceHash !== void 0 && !hash3(sourceHash) || fromMonth !== void 0 && !month(fromMonth) || toMonth !== void 0 && !month(toMonth) || fromMonth && toMonth && fromMonth > toMonth || !Number.isInteger(offset) || offset < 0 || offset > 5e3 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail2(400, "Invalid retained source request");
   return { query, sourceId, format, kind, sourceHash, fromMonth, toMonth, offset, limit };
 }
 function count(rows) {
@@ -42824,10 +42873,10 @@ function composeEvidenceDecision({ selection, month: month4, revision: revision2
 // server/defiant-store-period-coverage.js
 var invalid2 = () => Object.assign(new Error("Invalid store coverage product"), { status: 503 });
 var id2 = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(v);
-var decimal = (v) => typeof v === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(v);
+var decimal2 = (v) => typeof v === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(v);
 var scale = 1000000000000n;
-var units = (v) => {
-  if (!decimal(v)) throw invalid2();
+var units2 = (v) => {
+  if (!decimal2(v)) throw invalid2();
   const negative = v.startsWith("-"), [a, b = ""] = (negative ? v.slice(1) : v).split(".");
   const n = BigInt(a) * scale + BigInt(b.padEnd(12, "0"));
   return negative ? -n : n;
@@ -42854,7 +42903,7 @@ function normalizeStorePeriodCoverage(input, comparisons = []) {
     if (!Array.isArray(row.observations) || row.observations.length !== all.length) throw invalid2();
     const seen = /* @__PURE__ */ new Set();
     const observations = row.observations.map((o) => {
-      if (!o || seen.has(o.month) || !all.includes(o.month) || comparison.sourceReferences.find((r) => r.month === o.month)?.sourceHash !== o.sourceHash || !Number.isSafeInteger(o.rowCount) || o.rowCount < 0 || (o.rowCount === 0 ? o.amount !== null : !decimal(o.amount))) throw invalid2();
+      if (!o || seen.has(o.month) || !all.includes(o.month) || comparison.sourceReferences.find((r) => r.month === o.month)?.sourceHash !== o.sourceHash || !Number.isSafeInteger(o.rowCount) || o.rowCount < 0 || (o.rowCount === 0 ? o.amount !== null : !decimal2(o.amount))) throw invalid2();
       seen.add(o.month);
       let postingWindow = null;
       if (o.postingWindow !== null) {
@@ -42864,9 +42913,9 @@ function normalizeStorePeriodCoverage(input, comparisons = []) {
       }
       return { month: o.month, sourceHash: o.sourceHash, rowCount: o.rowCount, amount: o.amount, observation: o.rowCount === 0 ? "absent-in-supplied-grouping" : "observed", postingWindow, expectedDelivery: "unknown" };
     }).sort((a, b) => a.month < b.month ? -1 : 1);
-    const lookup = (m) => observations.find((o) => o.month === m), sum = (months) => months.reduce((n, m) => n + (lookup(m).amount === null ? 0n : units(lookup(m).amount)), 0n);
+    const lookup = (m) => observations.find((o) => o.month === m), sum = (months) => months.reduce((n, m) => n + (lookup(m).amount === null ? 0n : units2(lookup(m).amount)), 0n);
     const before = sum(comparison.beforeMonths), after = sum(comparison.afterMonths);
-    if (before !== units(group.beforeAmount) || after !== units(group.afterAmount)) throw invalid2();
+    if (before !== units2(group.beforeAmount) || after !== units2(group.afterAmount)) throw invalid2();
     const pairs = comparison.beforeMonths.map((m, i) => ({ beforeMonth: m, afterMonth: comparison.afterMonths[i] })).filter((p) => lookup(p.beforeMonth).rowCount > 0 && lookup(p.afterMonth).rowCount > 0);
     const matchedBefore = sum(pairs.map((p) => p.beforeMonth)), matchedAfter = sum(pairs.map((p) => p.afterMonth));
     return {
@@ -42893,9 +42942,9 @@ function normalizeStorePeriodCoverage(input, comparisons = []) {
 
 // server/defiant-evidence-discovery.js
 var failure = (status, message) => Object.assign(new Error(message), { status });
-var hash3 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var hash4 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
 var month2 = (v) => typeof v === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
-var text2 = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
+var text3 = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 var compare2 = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 var missing = ["originalFileBytes", "originalFileGeneration", "originalFileRecordCount", "ingestionTimestamp", "completeSourceInventoryProof"];
 function validateServedEvidenceDiscoveryRequest(request = {}) {
@@ -42907,16 +42956,16 @@ function validateServedEvidenceDiscoveryRequest(request = {}) {
 function discoverServedEvidenceCoverage(snapshot, request = {}) {
   const { query, fromMonth, toMonth, offset, limit } = validateServedEvidenceDiscoveryRequest(request);
   const unavailable2 = () => failure(503, "Normalized served evidence unavailable");
-  if (!snapshot || snapshot.schemaVersion !== 1 || !hash3(snapshot.revision) || !text2(snapshot.organizationId, 128) || !text2(snapshot.coverage, 2e3)) throw unavailable2();
+  if (!snapshot || snapshot.schemaVersion !== 1 || !hash4(snapshot.revision) || !text3(snapshot.organizationId, 128) || !text3(snapshot.coverage, 2e3)) throw unavailable2();
   for (const [field, max] of [["months", 1200], ["receipts", 1e3], ["selections", 2e3], ["comparisons", 100], ["audienceDefinitions", 200]]) if (!Array.isArray(snapshot[field] ?? []) || (snapshot[field] ?? []).length > max) throw unavailable2();
   const sources = /* @__PURE__ */ new Map();
   const source = (sourceHash) => {
-    if (!hash3(sourceHash)) throw unavailable2();
+    if (!hash4(sourceHash)) throw unavailable2();
     if (!sources.has(sourceHash)) sources.set(sourceHash, { sourceHash, kinds: /* @__PURE__ */ new Set(), members: /* @__PURE__ */ new Set(), periods: /* @__PURE__ */ new Map(), systems: /* @__PURE__ */ new Set(), accounts: /* @__PURE__ */ new Set(), labels: /* @__PURE__ */ new Set(), counts: { earningsPeriods: 0, receiptExamples: 0, aggregateSelections: 0, selectionRecordReferences: 0, audienceDefinitions: 0 } });
     return sources.get(sourceHash);
   };
   for (const row of snapshot.months ?? []) {
-    if (!month2(row.month) || !text2(row.currency, 3)) throw unavailable2();
+    if (!month2(row.month) || !text3(row.currency, 3)) throw unavailable2();
     const s = source(row.sourceHash);
     s.kinds.add("served-earnings");
     s.counts.earningsPeriods++;
@@ -42924,7 +42973,7 @@ function discoverServedEvidenceCoverage(snapshot, request = {}) {
     s.periods.get(row.month).add(row.currency);
   }
   for (const row of snapshot.receipts ?? []) {
-    if (!text2(row.member, 500)) throw unavailable2();
+    if (!text3(row.member, 500)) throw unavailable2();
     const s = source(row.sourceHash);
     s.kinds.add("receipt-examples");
     s.members.add(row.member);
@@ -42932,7 +42981,7 @@ function discoverServedEvidenceCoverage(snapshot, request = {}) {
   }
   let recordReferences = 0;
   for (const row of snapshot.selections ?? []) {
-    if (!text2(row.label, 500) || !Array.isArray(row.sourceRecords) || (recordReferences += row.sourceRecords.length) > 5e5) throw unavailable2();
+    if (!text3(row.label, 500) || !Array.isArray(row.sourceRecords) || (recordReferences += row.sourceRecords.length) > 5e5) throw unavailable2();
     const s = source(row.sourceHash);
     s.kinds.add("aggregate-selections");
     s.labels.add(row.label);
@@ -42940,7 +42989,7 @@ function discoverServedEvidenceCoverage(snapshot, request = {}) {
     s.counts.selectionRecordReferences += row.sourceRecords.length;
   }
   for (const row of snapshot.comparisons ?? []) {
-    if (!text2(row.sourceSystem, 128) || !text2(row.accountScope, 128) || !Array.isArray(row.sourceReferences) || row.sourceReferences.length > 48) throw unavailable2();
+    if (!text3(row.sourceSystem, 128) || !text3(row.accountScope, 128) || !Array.isArray(row.sourceReferences) || row.sourceReferences.length > 48) throw unavailable2();
     for (const ref2 of row.sourceReferences) {
       const s = source(ref2.sourceHash);
       s.kinds.add("comparison-references");
@@ -42949,7 +42998,7 @@ function discoverServedEvidenceCoverage(snapshot, request = {}) {
     }
   }
   for (const row of snapshot.audienceDefinitions ?? []) {
-    if (!text2(row.name, 500)) throw unavailable2();
+    if (!text3(row.name, 500)) throw unavailable2();
     const s = source(row.sourceHash);
     s.kinds.add("audience-worksheet-references");
     s.labels.add(row.name);
@@ -42979,24 +43028,24 @@ function discoverServedEvidenceCoverage(snapshot, request = {}) {
 
 // server/defiant-worksheet-cells.js
 var unavailable = () => Object.assign(new Error("Worksheet cells unavailable"), { status: 503 });
-var text3 = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
+var text4 = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 var cellText = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(v);
 var ref = (v) => typeof v === "string" && /^[A-Z]{1,3}[1-9]\d{0,6}$/.test(v);
 function normalizeWorksheetCell(cell) {
-  if (!cell || !ref(cell.cellRef) || !text3(cell.type, 32) || !cellText(cell.value, 4e3) || !(cell.rawValue === null || cellText(cell.rawValue, 4e3)) || !(cell.formula === null || cellText(cell.formula, 4e3)) || cell.formulaExecuted !== false) throw unavailable();
+  if (!cell || !ref(cell.cellRef) || !text4(cell.type, 32) || !cellText(cell.value, 4e3) || !(cell.rawValue === null || cellText(cell.rawValue, 4e3)) || !(cell.formula === null || cellText(cell.formula, 4e3)) || cell.formulaExecuted !== false) throw unavailable();
   return { cellRef: cell.cellRef, type: cell.type, rawValue: cell.rawValue, value: cell.value, formula: cell.formula, formulaExecuted: false };
 }
 
 // server/defiant-evidence-products.js
 var invalid3 = () => Object.assign(new Error("Invalid curated evidence product"), { status: 503 });
 var object2 = (v) => v && typeof v === "object" && !Array.isArray(v);
-var text4 = (v, max = 200) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
-var id3 = (v) => text4(v, 128) && /^[A-Za-z0-9_-]+$/.test(v);
-var hash4 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
-var decimal2 = (v) => typeof v === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(v);
+var text5 = (v, max = 200) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
+var id3 = (v) => text5(v, 128) && /^[A-Za-z0-9_-]+$/.test(v);
+var hash5 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var decimal3 = (v) => typeof v === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(v);
 var scale2 = 1000000000000n;
-var units2 = (v) => {
-  if (!decimal2(v)) throw invalid3();
+var units3 = (v) => {
+  if (!decimal3(v)) throw invalid3();
   const neg = v.startsWith("-");
   const [w, f = ""] = (neg ? v.slice(1) : v).split(".");
   const n = BigInt(w) * scale2 + BigInt(f.padEnd(12, "0"));
@@ -43028,12 +43077,12 @@ function normalizeComparisons(input, months) {
   let groupCount = 0, referenceCount = 0;
   const monthMap = new Map(months.map((m) => [`${m.month}:${m.currency}`, m]));
   return rows.map((row) => {
-    if (!id3(row.id) || ids.has(row.id) || !["sourceSongId", "store", "country", "salesType"].includes(row.dimension) || !text4(row.sourceSystem, 128) || !text4(row.accountScope, 128) || !["filename-declared", "content-verified"].includes(row.periodBasis) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency)) throw invalid3();
+    if (!id3(row.id) || ids.has(row.id) || !["sourceSongId", "store", "country", "salesType"].includes(row.dimension) || !text5(row.sourceSystem, 128) || !text5(row.accountScope, 128) || !["filename-declared", "content-verified"].includes(row.periodBasis) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency)) throw invalid3();
     ids.add(row.id);
     const beforeMonths = periods2(row.beforeMonths), afterMonths = periods2(row.afterMonths);
     if (beforeMonths.length !== afterMonths.length || beforeMonths.some((m) => afterMonths.includes(m)) || beforeMonths.at(-1) >= afterMonths[0]) throw invalid3();
     const allMonths = [...beforeMonths, ...afterMonths];
-    const sourceReferences = list(row.sourceReferences, 48, (v) => object2(v) && allMonths.includes(v.month) && hash4(v.sourceHash));
+    const sourceReferences = list(row.sourceReferences, 48, (v) => object2(v) && allMonths.includes(v.month) && hash5(v.sourceHash));
     unique(sourceReferences.map((v) => v.month));
     if (sourceReferences.length !== allMonths.length) throw invalid3();
     const refs = sourceReferences.map((ref2) => {
@@ -43041,20 +43090,20 @@ function normalizeComparisons(input, months) {
       if (!m || m.sourceHash !== ref2.sourceHash) throw invalid3();
       return { month: ref2.month, sourceHash: ref2.sourceHash };
     }).sort((a, b) => cmp(a.month, b.month));
-    const expected = (period) => period.reduce((n, m) => n + units2(monthMap.get(`${m}:${row.currency}`).amount), 0n);
-    const groupIds = /* @__PURE__ */ new Set(), keys = /* @__PURE__ */ new Set();
+    const expected = (period) => period.reduce((n, m) => n + units3(monthMap.get(`${m}:${row.currency}`).amount), 0n);
+    const groupIds = /* @__PURE__ */ new Set(), keys2 = /* @__PURE__ */ new Set();
     let before = 0n, after = 0n, decrease = 0n, increase = 0n;
     const groups = list(row.groups, 1e4, object2).map((group) => {
       groupCount++;
-      if (groupCount > 1e4 || !id3(group.id) || groupIds.has(group.id) || !(group.key === null || text4(group.key, 500)) || keys.has(group.key) || !text4(group.label, 500)) throw invalid3();
+      if (groupCount > 1e4 || !id3(group.id) || groupIds.has(group.id) || !(group.key === null || text5(group.key, 500)) || keys2.has(group.key) || !text5(group.label, 500)) throw invalid3();
       groupIds.add(group.id);
-      keys.add(group.key);
-      const b = units2(group.beforeAmount), a = units2(group.afterAmount), d = a - b;
+      keys2.add(group.key);
+      const b = units3(group.beforeAmount), a = units3(group.afterAmount), d = a - b;
       before += b;
       after += a;
       if (d < 0n) decrease -= d;
       else increase += d;
-      const examples = list(group.sourceReferences, 48, (v) => object2(v) && ["before", "after"].includes(v.side) && hash4(v.sourceHash));
+      const examples = list(group.sourceReferences, 48, (v) => object2(v) && ["before", "after"].includes(v.side) && hash5(v.sourceHash));
       const refKeys = /* @__PURE__ */ new Set();
       const normalized = examples.map((ref2) => {
         referenceCount++;
@@ -43079,12 +43128,12 @@ function normalizeAudienceDefinitions(input) {
   if (input === void 0) return void 0;
   const ids = /* @__PURE__ */ new Set();
   return list(input, 200, object2).map((row) => {
-    if (!id3(row.id) || ids.has(row.id) || !text4(row.name, 500) || !text4(row.criteria, 4e3) || !text4(row.scaleText, 1e3) || !text4(row.proposedOffer, 2e3) || !hash4(row.sourceHash) || !text4(row.sheet, 128)) throw invalid3();
+    if (!id3(row.id) || ids.has(row.id) || !text5(row.name, 500) || !text5(row.criteria, 4e3) || !text5(row.scaleText, 1e3) || !text5(row.proposedOffer, 2e3) || !hash5(row.sourceHash) || !text5(row.sheet, 128)) throw invalid3();
     ids.add(row.id);
     const cellRefs = unique(list(row.cellRefs, 40, (v) => typeof v === "string" && /^[A-Z]{1,3}[1-9]\d{0,6}$/.test(v)));
     if (!cellRefs.length) throw invalid3();
-    const requiredEvidence = unique(list(row.requiredEvidence, 30, (v) => text4(v, 200)));
-    const observedEvidence = unique(list(row.observedEvidence, 30, (v) => text4(v, 200)));
+    const requiredEvidence = unique(list(row.requiredEvidence, 30, (v) => text5(v, 200)));
+    const observedEvidence = unique(list(row.observedEvidence, 30, (v) => text5(v, 200)));
     if (observedEvidence.some((v) => !requiredEvidence.includes(v))) throw invalid3();
     return { id: row.id, name: row.name, criteria: row.criteria, scaleText: row.scaleText, proposedOffer: row.proposedOffer, sourceHash: row.sourceHash, sheet: row.sheet, cellRefs, requiredEvidence, observedEvidence, missingEvidence: requiredEvidence.filter((v) => !observedEvidence.includes(v)), evidenceStatus: "producer-supplied-availability-not-independent-verification", populationComputed: false, consentVerified: false, activationAuthorized: false };
   }).sort((a, b) => cmp(a.id, b.id));
@@ -43092,13 +43141,13 @@ function normalizeAudienceDefinitions(input) {
 
 // server/defiant-evidence-identity.js
 var invalid4 = () => Object.assign(new Error("Invalid catalog identity review"), { status: 503 });
-var text5 = (value, max = 200) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
-var id4 = (value) => text5(value, 128) && /^[A-Za-z0-9_-]+$/.test(value);
-var hash5 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var text6 = (value, max = 200) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
+var id4 = (value) => text6(value, 128) && /^[A-Za-z0-9_-]+$/.test(value);
+var hash6 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 var object3 = (value) => value && typeof value === "object" && !Array.isArray(value);
-var optionalText = (value, max) => value === null || text5(value, max);
+var optionalText = (value, max) => value === null || text6(value, max);
 var scale3 = 1000000000000n;
-var units3 = (value) => {
+var units4 = (value) => {
   const negative = value.startsWith("-");
   const [whole, fraction = ""] = (negative ? value.slice(1) : value).split(".");
   const amount3 = BigInt(whole) * scale3 + BigInt(fraction.padEnd(12, "0"));
@@ -43118,19 +43167,19 @@ function normalizeIdentityGroups(input, selections) {
   const groupIds = /* @__PURE__ */ new Set(), usedSelections = /* @__PURE__ */ new Set(), usedRecords = /* @__PURE__ */ new Map();
   let memberCount = 0;
   const groups = input.map((group) => {
-    if (!object3(group) || !id4(group.id) || groupIds.has(group.id) || !text5(group.artist, 500) || !text5(group.title, 500) || !["unreviewed", "needs-review"].includes(group.reviewStatus) || group.rankingBasis !== identityRankingBasis || !Array.isArray(group.members) || !group.members.length || group.members.length > 2e3) throw invalid4();
+    if (!object3(group) || !id4(group.id) || groupIds.has(group.id) || !text6(group.artist, 500) || !text6(group.title, 500) || !["unreviewed", "needs-review"].includes(group.reviewStatus) || group.rankingBasis !== identityRankingBasis || !Array.isArray(group.members) || !group.members.length || group.members.length > 2e3) throw invalid4();
     groupIds.add(group.id);
     memberCount += group.members.length;
     if (memberCount > 2e3) throw invalid4();
     const p = group.provenance;
-    if (!object3(p) || !hash5(p.upstreamSnapshotRevision) || !hash5(p.upstreamArtifactHash) || typeof p.observedPeriod !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(p.observedPeriod)) throw invalid4();
+    if (!object3(p) || !hash6(p.upstreamSnapshotRevision) || !hash6(p.upstreamArtifactHash) || typeof p.observedPeriod !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(p.observedPeriod)) throw invalid4();
     const memberIds = /* @__PURE__ */ new Set(), sourceIdentities = /* @__PURE__ */ new Set();
     let currency;
     let total = 0n;
     let selectionCount = 0;
     let selectionRowCount = 0;
     const members = group.members.map((member) => {
-      if (!object3(member) || !id4(member.id) || memberIds.has(member.id) || !text5(member.sourceSystem, 128) || !text5(member.accountScope, 128) || !optionalText(member.sourceId, 128) || !optionalText(member.releaseTitle, 500) || !optionalText(member.upc, 128) || !Array.isArray(member.selectionIds) || !member.selectionIds.length || member.selectionIds.length > 2e3) throw invalid4();
+      if (!object3(member) || !id4(member.id) || memberIds.has(member.id) || !text6(member.sourceSystem, 128) || !text6(member.accountScope, 128) || !optionalText(member.sourceId, 128) || !optionalText(member.releaseTitle, 500) || !optionalText(member.upc, 128) || !Array.isArray(member.selectionIds) || !member.selectionIds.length || member.selectionIds.length > 2e3) throw invalid4();
       memberIds.add(member.id);
       if (member.sourceId !== null) {
         const sourceKey = JSON.stringify([member.sourceSystem, member.accountScope, member.sourceId, member.releaseTitle, member.upc]);
@@ -43154,7 +43203,7 @@ function normalizeIdentityGroups(input, selections) {
         }
         if (currency !== void 0 && currency !== selected.currency) throw invalid4();
         currency = selected.currency;
-        subtotal += units3(selected.amount);
+        subtotal += units4(selected.amount);
         rowCount += selected.sourceRecords.length;
         return selectionId;
       });
@@ -43168,68 +43217,69 @@ function normalizeIdentityGroups(input, selections) {
   return groups.sort((a, b) => {
     const currencyOrder = compareText(a.currency, b.currency);
     if (currencyOrder) return currencyOrder;
-    const x = units3(a.amount), y = units3(b.amount), ax = x < 0n ? -x : x, ay = y < 0n ? -y : y;
+    const x = units4(a.amount), y = units4(b.amount), ax = x < 0n ? -x : x, ay = y < 0n ? -y : y;
     return ax > ay ? -1 : ax < ay ? 1 : compareText(a.id, b.id);
   });
 }
 
 // server/defiant-evidence.js
-import { createHash as createHash2 } from "node:crypto";
-var fail2 = (status, message) => Object.assign(new Error(message), { status });
-var plain2 = (value) => value && typeof value === "object" && !Array.isArray(value);
+import { createHash as createHash3 } from "node:crypto";
+var fail3 = (status, message) => Object.assign(new Error(message), { status });
+var plain3 = (value) => value && typeof value === "object" && !Array.isArray(value);
 var bounded = (value, max = 200) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
 var identifier = (value) => bounded(value, 128) && /^[A-Za-z0-9_-]+$/.test(value);
-var hash6 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var hash7 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 var month3 = (value) => typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
-var decimal3 = (value) => typeof value === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(value);
+var decimal4 = (value) => typeof value === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(value);
 var caps = Object.freeze({ readOnly: true, canActivate: false, canApproveRights: false });
 var METRIC = "source-total-earned";
 function normalize(input, organizationId2) {
-  if (!plain2(input) || input.organizationId !== organizationId2 || input.schemaVersion !== 1 || !bounded(input.coverage, 2e3)) throw fail2(503, "Evidence snapshot unavailable");
-  if (!Array.isArray(input.months) || input.months.length > 1200 || !Array.isArray(input.receipts) || input.receipts.length > 1e3) throw fail2(503, "Evidence snapshot exceeds bounds");
-  const keys = /* @__PURE__ */ new Set();
+  if (!plain3(input) || input.organizationId !== organizationId2 || input.schemaVersion !== 1 || !bounded(input.coverage, 2e3)) throw fail3(503, "Evidence snapshot unavailable");
+  if (!Array.isArray(input.months) || input.months.length > 1200 || !Array.isArray(input.receipts) || input.receipts.length > 1e3) throw fail3(503, "Evidence snapshot exceeds bounds");
+  const keys2 = /* @__PURE__ */ new Set();
   const months = input.months.map((row) => {
-    if (!plain2(row) || !month3(row.month) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !decimal3(row.amount) || !hash6(row.sourceHash) || row.metric !== METRIC) throw fail2(503, "Invalid earnings product");
+    if (!plain3(row) || !month3(row.month) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !decimal4(row.amount) || !hash7(row.sourceHash) || row.metric !== METRIC) throw fail3(503, "Invalid earnings product");
     const key = `${row.month}:${row.currency}`;
-    if (keys.has(key)) throw fail2(503, "Duplicate earnings period");
-    keys.add(key);
-    if (!Array.isArray(row.receiptIds) || row.receiptIds.length > 20 || row.receiptIds.some((value) => !identifier(value))) throw fail2(503, "Invalid receipt references");
+    if (keys2.has(key)) throw fail3(503, "Duplicate earnings period");
+    keys2.add(key);
+    if (!Array.isArray(row.receiptIds) || row.receiptIds.length > 20 || row.receiptIds.some((value) => !identifier(value))) throw fail3(503, "Invalid receipt references");
     return { receiptIds: [...new Set(row.receiptIds)], month: row.month, currency: row.currency, amount: row.amount, metric: METRIC, sourceHash: row.sourceHash };
   }).sort((a, b) => a.month.localeCompare(b.month) || a.currency.localeCompare(b.currency));
   const receiptIds = /* @__PURE__ */ new Set();
   const receipts = input.receipts.map((row) => {
-    if (!plain2(row) || !identifier(row.id) || receiptIds.has(row.id) || !hash6(row.sourceHash) || !bounded(row.member, 500) || !Number.isSafeInteger(row.record) || row.record < 2 || !plain2(row.cells)) throw fail2(503, "Invalid evidence receipt");
+    if (!plain3(row) || !identifier(row.id) || receiptIds.has(row.id) || !hash7(row.sourceHash) || !bounded(row.member, 500) || !Number.isSafeInteger(row.record) || row.record < 2 || !plain3(row.cells)) throw fail3(503, "Invalid evidence receipt");
     receiptIds.add(row.id);
     const entries = Object.entries(row.cells);
-    if (!entries.length || entries.length > 40 || entries.some(([key, value]) => !bounded(key, 100) || typeof value !== "string" || value.length > 2e3 || /[\u0000-\u001f\u007f]/.test(value))) throw fail2(503, "Invalid evidence cells");
+    if (!entries.length || entries.length > 40 || entries.some(([key, value]) => !bounded(key, 100) || typeof value !== "string" || value.length > 2e3 || /[\u0000-\u001f\u007f]/.test(value))) throw fail3(503, "Invalid evidence cells");
     return { id: row.id, sourceHash: row.sourceHash, member: row.member, record: row.record, cells: Object.fromEntries(entries) };
   });
   for (const row of months) for (const receiptId of row.receiptIds) {
     const receipt = receipts.find((value) => value.id === receiptId);
-    if (!receipt || receipt.sourceHash !== row.sourceHash) throw fail2(503, "Receipt source mismatch");
+    if (!receipt || receipt.sourceHash !== row.sourceHash) throw fail3(503, "Receipt source mismatch");
   }
   const selectionIds = /* @__PURE__ */ new Set();
   let recordCount = 0;
-  if (input.selections !== void 0 && (!Array.isArray(input.selections) || input.selections.length > 2e3)) throw fail2(503, "Invalid aggregate selections");
+  if (input.selections !== void 0 && (!Array.isArray(input.selections) || input.selections.length > 2e3)) throw fail3(503, "Invalid aggregate selections");
   const selections = (input.selections || []).map((row) => {
-    if (!plain2(row) || !identifier(row.id) || selectionIds.has(row.id) || !bounded(row.label, 500) || !hash6(row.sourceHash) || !decimal3(row.amount) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !Array.isArray(row.sourceRecords) || !row.sourceRecords.length) throw fail2(503, "Invalid aggregate selection");
+    if (!plain3(row) || !identifier(row.id) || selectionIds.has(row.id) || !bounded(row.label, 500) || !hash7(row.sourceHash) || !decimal4(row.amount) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !Array.isArray(row.sourceRecords) || !row.sourceRecords.length) throw fail3(503, "Invalid aggregate selection");
     selectionIds.add(row.id);
     recordCount += row.sourceRecords.length;
-    if (recordCount > 5e5) throw fail2(503, "Aggregate selections exceed bounds");
+    if (recordCount > 5e5) throw fail3(503, "Aggregate selections exceed bounds");
     let previous = 1;
     for (const record2 of row.sourceRecords) {
-      if (!Number.isSafeInteger(record2) || record2 <= previous) throw fail2(503, "Invalid selection record order");
+      if (!Number.isSafeInteger(record2) || record2 <= previous) throw fail3(503, "Invalid selection record order");
       previous = record2;
     }
     return { id: row.id, label: row.label, sourceHash: row.sourceHash, amount: row.amount, currency: row.currency, sourceRecords: [...row.sourceRecords] };
   });
+  const selectionReconciliations = normalizeSelectionReconciliations(input.selectionReconciliations, selections);
   const identityGroups = normalizeIdentityGroups(input.identityGroups, selections);
   const comparisons = normalizeComparisons(input.comparisons, months);
   const audienceDefinitions = normalizeAudienceDefinitions(input.audienceDefinitions);
   const storePeriodCoverage = normalizeStorePeriodCoverage(input.storePeriodCoverage, comparisons);
   const retainedSourceRegister = normalizeRetainedSourceRegister(input.retainedSourceRegister);
-  const data = { ...retainedSourceRegister === void 0 ? {} : { retainedSourceRegister }, schemaVersion: 1, organizationId: organizationId2, coverage: input.coverage, months, receipts, selections, ...storePeriodCoverage === void 0 ? {} : { storePeriodCoverage }, ...comparisons === void 0 ? {} : { comparisons }, ...audienceDefinitions === void 0 ? {} : { audienceDefinitions }, ...input.identityGroups === void 0 ? {} : { identityGroups } };
-  const revision2 = createHash2("sha256").update(JSON.stringify(data)).digest("hex");
+  const data = { ...selectionReconciliations === void 0 ? {} : { selectionReconciliations }, ...retainedSourceRegister === void 0 ? {} : { retainedSourceRegister }, schemaVersion: 1, organizationId: organizationId2, coverage: input.coverage, months, receipts, selections, ...storePeriodCoverage === void 0 ? {} : { storePeriodCoverage }, ...comparisons === void 0 ? {} : { comparisons }, ...audienceDefinitions === void 0 ? {} : { audienceDefinitions }, ...input.identityGroups === void 0 ? {} : { identityGroups } };
+  const revision2 = createHash3("sha256").update(JSON.stringify(data)).digest("hex");
   return { ...data, revision: revision2 };
 }
 function createDefiantEvidenceService({ organizationId: organizationId2, authorize, loadSnapshot, loadSourceRecords, loadWorksheetCells } = {}) {
@@ -43248,26 +43298,26 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         }
       };
       mark("authority_before_snapshot");
-      if (!await authorize(actor, scope)) throw fail2(403, "Evidence access denied");
+      if (!await authorize(actor, scope)) throw fail3(403, "Evidence access denied");
       mark("request_validation");
-      if (!plain2(request) || Object.keys(request).some((key) => !["resource", "revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash"].includes(key))) throw fail2(400, "Invalid evidence request");
+      if (!plain3(request) || Object.keys(request).some((key) => !["resource", "revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash"].includes(key))) throw fail3(400, "Invalid evidence request");
       const { resource = "manifest", revision: revision2, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, sourceId, format, kind, sourceHash, offset = 0, limit = 25 } = request;
-      if (!["retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"].includes(resource) || revision2 !== void 0 && !hash6(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 5e5 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail2(400, "Invalid evidence request");
-      if (resource !== "earnings" && (selectedMonth !== void 0 || currency !== void 0) || !["retained-sources", "store-coverage", "coverage", "earnings", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "june-review"].includes(resource) && (request.offset !== void 0 || request.limit !== void 0)) throw fail2(400, "Filters require earnings");
-      if (!["selection", "selection-receipts", "june-review"].includes(resource) && selectionId !== void 0 || ["selection", "selection-receipts", "june-review"].includes(resource) && (!identifier(selectionId) || revision2 === void 0)) throw fail2(400, "Invalid selection request");
-      if (resource !== "store-coverage" && storeCoverageId !== void 0 || resource === "store-coverage" && (revision2 === void 0 || storeCoverageId !== void 0 && !identifier(storeCoverageId) || offset > 100)) throw fail2(400, "Invalid store coverage request");
-      if (resource !== "identity-group" && identityGroupId !== void 0 || resource === "identity-group" && (!identifier(identityGroupId) || revision2 === void 0)) throw fail2(400, "Invalid identity group request");
-      if (["catalog-identity-review", "identity-group"].includes(resource) && offset > 2e3) throw fail2(400, "Invalid identity page");
-      if (resource === "earnings" && offset > 1200 || resource === "selections" && offset > 2e3) throw fail2(400, "Invalid page offset");
-      if (!["explain-change", "comparison-examples"].includes(resource) && comparisonId !== void 0 || ["explain-change", "comparison-examples"].includes(resource) && (!identifier(comparisonId) || revision2 === void 0)) throw fail2(400, "Invalid comparison request");
-      if (!["audience-definition", "audience-cells"].includes(resource) && audienceId !== void 0 || ["audience-definition", "audience-cells"].includes(resource) && (!identifier(audienceId) || revision2 === void 0)) throw fail2(400, "Invalid audience request");
-      if (resource !== "comparison-examples" && (groupId !== void 0 || referenceIndex !== void 0) || resource === "comparison-examples" && (!identifier(groupId) || !Number.isInteger(referenceIndex) || referenceIndex < 0 || referenceIndex >= 48)) throw fail2(400, "Invalid comparison example request");
-      if (resource === "comparisons" && offset > 100 || ["audience-readiness", "audience-definition"].includes(resource) && offset > 200) throw fail2(400, "Invalid product page");
-      if (resource === "explain-change" && offset > 1e4) throw fail2(400, "Invalid comparison page");
-      if (resource !== "receipt" && receiptId !== void 0) throw fail2(400, "Receipt ID requires receipt");
-      if (selectedMonth !== void 0 && !month3(selectedMonth) || currency !== void 0 && (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)) || resource === "receipt" && (!identifier(receiptId) || revision2 === void 0)) throw fail2(400, "Invalid evidence selection");
-      if (!["coverage", "retained-sources"].includes(resource) && (query !== void 0 || fromMonth !== void 0 || toMonth !== void 0)) throw fail2(400, "Coverage filters require coverage");
-      if (resource !== "retained-sources" && [sourceId, format, kind, sourceHash].some((v) => v !== void 0)) throw fail2(400, "Retained source filters require retained sources");
+      if (!["selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"].includes(resource) || revision2 !== void 0 && !hash7(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 5e5 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail3(400, "Invalid evidence request");
+      if (resource !== "earnings" && (selectedMonth !== void 0 || currency !== void 0) || !["retained-sources", "store-coverage", "coverage", "earnings", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "june-review"].includes(resource) && (request.offset !== void 0 || request.limit !== void 0)) throw fail3(400, "Filters require earnings");
+      if (!["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && selectionId !== void 0 || ["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && (!identifier(selectionId) || revision2 === void 0)) throw fail3(400, "Invalid selection request");
+      if (resource !== "store-coverage" && storeCoverageId !== void 0 || resource === "store-coverage" && (revision2 === void 0 || storeCoverageId !== void 0 && !identifier(storeCoverageId) || offset > 100)) throw fail3(400, "Invalid store coverage request");
+      if (resource !== "identity-group" && identityGroupId !== void 0 || resource === "identity-group" && (!identifier(identityGroupId) || revision2 === void 0)) throw fail3(400, "Invalid identity group request");
+      if (["catalog-identity-review", "identity-group"].includes(resource) && offset > 2e3) throw fail3(400, "Invalid identity page");
+      if (resource === "earnings" && offset > 1200 || resource === "selections" && offset > 2e3) throw fail3(400, "Invalid page offset");
+      if (!["explain-change", "comparison-examples"].includes(resource) && comparisonId !== void 0 || ["explain-change", "comparison-examples"].includes(resource) && (!identifier(comparisonId) || revision2 === void 0)) throw fail3(400, "Invalid comparison request");
+      if (!["audience-definition", "audience-cells"].includes(resource) && audienceId !== void 0 || ["audience-definition", "audience-cells"].includes(resource) && (!identifier(audienceId) || revision2 === void 0)) throw fail3(400, "Invalid audience request");
+      if (resource !== "comparison-examples" && (groupId !== void 0 || referenceIndex !== void 0) || resource === "comparison-examples" && (!identifier(groupId) || !Number.isInteger(referenceIndex) || referenceIndex < 0 || referenceIndex >= 48)) throw fail3(400, "Invalid comparison example request");
+      if (resource === "comparisons" && offset > 100 || ["audience-readiness", "audience-definition"].includes(resource) && offset > 200) throw fail3(400, "Invalid product page");
+      if (resource === "explain-change" && offset > 1e4) throw fail3(400, "Invalid comparison page");
+      if (resource !== "receipt" && receiptId !== void 0) throw fail3(400, "Receipt ID requires receipt");
+      if (selectedMonth !== void 0 && !month3(selectedMonth) || currency !== void 0 && (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)) || resource === "receipt" && (!identifier(receiptId) || revision2 === void 0)) throw fail3(400, "Invalid evidence selection");
+      if (!["coverage", "retained-sources"].includes(resource) && (query !== void 0 || fromMonth !== void 0 || toMonth !== void 0)) throw fail3(400, "Coverage filters require coverage");
+      if (resource !== "retained-sources" && [sourceId, format, kind, sourceHash].some((v) => v !== void 0)) throw fail3(400, "Retained source filters require retained sources");
       if (resource === "retained-sources") validateRetainedSourceRequest({ query, sourceId, format, kind, sourceHash, fromMonth, toMonth, offset, limit });
       if (resource === "coverage") validateServedEvidenceDiscoveryRequest({ query, fromMonth, toMonth, offset, limit });
       let data;
@@ -43277,32 +43327,33 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         mark("snapshot_normalize");
         data = normalize(snapshot, organizationId2);
       } catch (error47) {
-        throw fail2(503, "Evidence snapshot unavailable");
+        throw fail3(503, "Evidence snapshot unavailable");
       }
       mark("authority_after_snapshot");
-      if (!await authorize(actor, scope)) throw fail2(403, "Evidence access denied");
+      if (!await authorize(actor, scope)) throw fail3(403, "Evidence access denied");
       mark("revision_check");
-      if (revision2 !== void 0 && revision2 !== data.revision) throw fail2(409, "Evidence revision changed");
+      if (revision2 !== void 0 && revision2 !== data.revision) throw fail3(409, "Evidence revision changed");
       mark("resource_read");
       const base = { schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps };
       if (resource === "retained-sources") return searchRetainedSources(data, { query, sourceId, format, kind, sourceHash, fromMonth, toMonth, offset, limit });
       if (resource === "coverage") return discoverServedEvidenceCoverage(data, { query, fromMonth, toMonth, offset, limit });
-      if (resource === "manifest") return structuredClone({ ...base, counts: { ...data.comparisons === void 0 ? {} : { comparisons: data.comparisons.length }, ...data.audienceDefinitions === void 0 ? {} : { audienceDefinitions: data.audienceDefinitions.length }, months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...data.identityGroups === void 0 ? {} : { identityGroups: data.identityGroups.length } }, metric: METRIC });
+      if (resource === "selection-reconciliation") return structuredClone({ ...base, ...selectionReconciliationView(data, selectionId) });
+      if (resource === "manifest") return structuredClone({ ...base, counts: { ...data.selectionReconciliations === void 0 ? {} : { selectionReconciliations: data.selectionReconciliations.length }, ...data.comparisons === void 0 ? {} : { comparisons: data.comparisons.length }, ...data.audienceDefinitions === void 0 ? {} : { audienceDefinitions: data.audienceDefinitions.length }, months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...data.identityGroups === void 0 ? {} : { identityGroups: data.identityGroups.length } }, metric: METRIC });
       if (resource === "store-coverage") {
         const products = (data.storePeriodCoverage || []).map((product) => ({ ...product, settlementMaturityComparability: "not-established", limitation: product.limitation + " Settlement maturity comparability has not been established; legacy settlementMaturityComparable:false does not demonstrate unequal maturity." }));
         if (storeCoverageId !== void 0) {
           const product = products.find((p) => p.id === storeCoverageId);
-          if (!product) throw fail2(404, "Store coverage unavailable");
+          if (!product) throw fail3(404, "Store coverage unavailable");
           return structuredClone({ ...base, product });
         }
         return structuredClone({ ...base, items: products.slice(offset, offset + limit), total: products.length, nextOffset: offset + limit < products.length ? offset + limit : null });
       }
       if (resource === "june-review") {
-        if (selectedMonth !== void 0 || currency !== void 0 || receiptId !== void 0) throw fail2(400, "Invalid June review request");
+        if (selectedMonth !== void 0 || currency !== void 0 || receiptId !== void 0) throw fail3(400, "Invalid June review request");
         const selected = data.selections.find((row) => row.id === selectionId);
-        if (!selected) throw fail2(404, "Selection unavailable");
+        if (!selected) throw fail3(404, "Selection unavailable");
         const periods3 = data.months.filter((row) => row.sourceHash === selected.sourceHash && row.currency === selected.currency);
-        if (periods3.length !== 1 || periods3[0].month !== "2025-06") throw fail2(409, "June source period unavailable");
+        if (periods3.length !== 1 || periods3[0].month !== "2025-06") throw fail3(409, "June source period unavailable");
         const period = periods3[0];
         const { sourceRecords, ...selection } = selected;
         return structuredClone({
@@ -43326,42 +43377,42 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const comparison = (data.comparisons || []).find((row) => row.id === comparisonId);
         const group = comparison?.groups.find((row) => row.id === groupId);
         const reference = group?.sourceReferences[referenceIndex];
-        if (!reference) throw fail2(404, "Comparison reference unavailable");
+        if (!reference) throw fail3(404, "Comparison reference unavailable");
         mark("source_records_load");
-        if (!loadSourceRecords) throw fail2(503, "Source cells unavailable");
+        if (!loadSourceRecords) throw fail3(503, "Source cells unavailable");
         let receipts;
         try {
           const loaded = reference.exampleRecords.length ? await loadSourceRecords({ ...scope, sourceHash: reference.sourceHash, sourceRecords: [...reference.exampleRecords], revision: data.revision }) : [];
           mark("source_records_normalize");
           receipts = normalize({ schemaVersion: 1, organizationId: organizationId2, coverage: data.coverage, months: [], receipts: loaded }, organizationId2).receipts;
-          if (receipts.length !== reference.exampleRecords.length || receipts.some((row, i) => row.sourceHash !== reference.sourceHash || row.record !== reference.exampleRecords[i])) throw fail2(503, "Source examples mismatch");
+          if (receipts.length !== reference.exampleRecords.length || receipts.some((row, i) => row.sourceHash !== reference.sourceHash || row.record !== reference.exampleRecords[i])) throw fail3(503, "Source examples mismatch");
         } catch {
-          throw fail2(503, "Source cells unavailable");
+          throw fail3(503, "Source cells unavailable");
         }
         mark("authority_after_records");
-        if (!await authorize(actor, scope)) throw fail2(403, "Evidence access denied");
+        if (!await authorize(actor, scope)) throw fail3(403, "Evidence access denied");
         return structuredClone({ ...base, comparisonId, groupId, referenceIndex, reference, receipts, fullSelectionAvailable: false, limitation: "Original cells for producer-selected examples only; these examples do not reconcile or represent the full group aggregate." });
       }
       if (resource === "audience-cells") {
         const definition = (data.audienceDefinitions || []).find((row) => row.id === audienceId);
-        if (!definition) throw fail2(404, "Audience definition unavailable");
+        if (!definition) throw fail3(404, "Audience definition unavailable");
         mark("worksheet_load");
-        if (!loadWorksheetCells) throw fail2(503, "Worksheet cells unavailable");
+        if (!loadWorksheetCells) throw fail3(503, "Worksheet cells unavailable");
         let worksheet;
         try {
           const loaded = await loadWorksheetCells({ ...scope, sourceHash: definition.sourceHash, sheet: definition.sheet, cellRefs: [...definition.cellRefs], revision: data.revision });
           mark("worksheet_normalize");
-          if (!plain2(loaded) || loaded.sourceHash !== definition.sourceHash || loaded.sheet !== definition.sheet || !Array.isArray(loaded.cells) || loaded.cells.length !== definition.cellRefs.length) throw fail2(503, "Worksheet mismatch");
+          if (!plain3(loaded) || loaded.sourceHash !== definition.sourceHash || loaded.sheet !== definition.sheet || !Array.isArray(loaded.cells) || loaded.cells.length !== definition.cellRefs.length) throw fail3(503, "Worksheet mismatch");
           const cells = loaded.cells.map((cell, i) => {
-            if (!plain2(cell) || cell.cellRef !== definition.cellRefs[i]) throw fail2(503, "Worksheet mismatch");
+            if (!plain3(cell) || cell.cellRef !== definition.cellRefs[i]) throw fail3(503, "Worksheet mismatch");
             return normalizeWorksheetCell(cell);
           });
           worksheet = { sourceHash: loaded.sourceHash, sheet: loaded.sheet, cells };
         } catch {
-          throw fail2(503, "Worksheet cells unavailable");
+          throw fail3(503, "Worksheet cells unavailable");
         }
         mark("authority_after_worksheet");
-        if (!await authorize(actor, scope)) throw fail2(403, "Evidence access denied");
+        if (!await authorize(actor, scope)) throw fail3(403, "Evidence access denied");
         return structuredClone({ ...base, audienceId, worksheet, limitation: "Source cell strings from the host integrity-checked worksheet resolver; no formula execution. Supplied definitions do not verify populations or consent. Required, observed and missing evidence are analyst assessments, not workbook claims." });
       }
       if (resource === "comparisons" || resource === "explain-change") {
@@ -43370,7 +43421,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Arithmetic contribution only, not causal attribution or opportunity scoring. grossDecrease is a positive magnitude; delta = offsetIncrease - grossDecrease. Period verification is a producer assertion. Example logical record references are not complete selections or loaded source cells; full group receipt drilldown is unavailable.";
         if (resource === "comparisons") return structuredClone({ ...base, items: rows2.slice(offset, offset + limit).map(summary), total: rows2.length, nextOffset: offset + limit < rows2.length ? offset + limit : null, limitation });
         const row = rows2.find((v) => v.id === comparisonId);
-        if (!row) throw fail2(404, "Comparison unavailable");
+        if (!row) throw fail3(404, "Comparison unavailable");
         return structuredClone({ ...base, comparison: summary(row), groups: row.groups.slice(offset, offset + limit), total: row.groups.length, nextOffset: offset + limit < row.groups.length ? offset + limit : null, limitation });
       }
       if (resource === "audience-readiness" || resource === "audience-definition") {
@@ -43378,7 +43429,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Workbook-attributed segment definitions; required, observed and missing evidence are analyst assessments of availability, not workbook claims. Supplied definitions and availability only. Membership, consent, customer/listener identity and activation eligibility are not computed or verified. Offer text is a proposal, not approval.";
         if (resource === "audience-readiness") return structuredClone({ ...base, items: rows2.slice(offset, offset + limit), total: rows2.length, nextOffset: offset + limit < rows2.length ? offset + limit : null, limitation });
         const definition = rows2.find((v) => v.id === audienceId);
-        if (!definition) throw fail2(404, "Audience definition unavailable");
+        if (!definition) throw fail3(404, "Audience definition unavailable");
         return structuredClone({ ...base, definition, limitation });
       }
       if (resource === "catalog-identity-review" || resource === "identity-group") {
@@ -43387,7 +43438,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Source identities and referenced selection amounts only; recording equivalence is unreviewed. Amounts sum unique selection references, not independently recomputed source cells. Overlapping source-record memberships are rejected across the identity queue. Ranking is review priority within currency, not an opportunity score or action approval.";
         if (resource === "catalog-identity-review") return structuredClone({ ...base, items: groups.slice(offset, offset + limit).map(summary), total: groups.length, nextOffset: offset + limit < groups.length ? offset + limit : null, rankingBasis: identityRankingBasis, limitation });
         const group = groups.find((row) => row.id === identityGroupId);
-        if (!group) throw fail2(404, "Identity group unavailable");
+        if (!group) throw fail3(404, "Identity group unavailable");
         return structuredClone({ ...base, group: summary(group), members: group.members.slice(offset, offset + limit), total: group.members.length, nextOffset: offset + limit < group.members.length ? offset + limit : null, limitation });
       }
       if (resource === "selections" || resource === "selection" || resource === "selection-receipts") {
@@ -43395,22 +43446,22 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Complete producer-supplied record selection; declared aggregate is not recomputed by this read. Exact source cells require the pinned source partition.";
         if (resource === "selections") return structuredClone({ ...base, items: data.selections.slice(offset, offset + limit).map(summary), total: data.selections.length, nextOffset: offset + limit < data.selections.length ? offset + limit : null, limitation });
         const selected = data.selections.find((row) => row.id === selectionId);
-        if (!selected) throw fail2(404, "Selection unavailable");
+        if (!selected) throw fail3(404, "Selection unavailable");
         if (resource === "selection-receipts") {
           mark("source_records_load");
-          if (!loadSourceRecords) throw fail2(503, "Source cells unavailable");
+          if (!loadSourceRecords) throw fail3(503, "Source cells unavailable");
           const records = selected.sourceRecords.slice(offset, offset + limit);
           let receipts;
           try {
             const loaded = await loadSourceRecords({ ...scope, sourceHash: selected.sourceHash, sourceRecords: [...records], revision: data.revision });
             mark("source_records_normalize");
             receipts = normalize({ schemaVersion: 1, organizationId: organizationId2, coverage: data.coverage, months: [], receipts: loaded }, organizationId2).receipts;
-            if (receipts.length !== records.length || receipts.some((row, i) => row.sourceHash !== selected.sourceHash || row.record !== records[i])) throw fail2(503, "Source selection mismatch");
+            if (receipts.length !== records.length || receipts.some((row, i) => row.sourceHash !== selected.sourceHash || row.record !== records[i])) throw fail3(503, "Source selection mismatch");
           } catch {
-            throw fail2(503, "Source cells unavailable");
+            throw fail3(503, "Source cells unavailable");
           }
           mark("authority_after_records");
-          if (!await authorize(actor, scope)) throw fail2(403, "Evidence access denied");
+          if (!await authorize(actor, scope)) throw fail3(403, "Evidence access denied");
           return structuredClone({ ...base, selection: summary(selected), receipts, total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, limitation: "Exact source cells supplied by the host integrity-checked partition resolver; this page is not the entire aggregate unless it contains every contributing record." });
         }
         const matchingPeriods = data.months.filter((p) => p.sourceHash === selected.sourceHash && p.currency === selected.currency);
@@ -43420,7 +43471,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
       if (resource === "receipt") {
         mark("receipt_lookup");
         const receipt = data.receipts.find((row) => row.id === receiptId);
-        if (!receipt) throw fail2(404, "Receipt unavailable");
+        if (!receipt) throw fail3(404, "Receipt unavailable");
         return structuredClone({ ...base, receipt, rowConvention: "1-based logical CSV record including header", limitation: "A receipt is one source record; an aggregate requires its full contributing selection." });
       }
       const rows = data.months.filter((row) => (!selectedMonth || row.month === selectedMonth) && (!currency || row.currency === currency));
@@ -43430,7 +43481,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
 }
 
 // server/defiant-evidence-oauth.js
-import { createHash as createHash3, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash as createHash4, randomBytes, timingSafeEqual } from "node:crypto";
 var EVIDENCE_RESOURCE = "https://studio.chaiwithjai.com/mcp/defiant-evidence";
 var EVIDENCE_ISSUER = "https://studio.chaiwithjai.com/oauth/defiant-evidence";
 var EVIDENCE_SCOPE = "evidence:read";
@@ -43438,13 +43489,13 @@ var KEY = "defiant-evidence-oauth:v1";
 var COOKIE = "__Host-defiant_oauth";
 var FIVE = 3e5;
 var EIGHT = 288e5;
-var hash7 = (s) => createHash3("sha256").update(s).digest("hex");
+var hash8 = (s) => createHash4("sha256").update(s).digest("hex");
 var random = () => randomBytes(32).toString("base64url");
 var secret = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{43}$/.test(v);
 var identifier2 = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(v) && v !== "defiant_evidence_poc";
 var error46 = (status, code) => Object.assign(new Error(code), { status, oauthCode: code });
 var equal = (a, b) => typeof a === "string" && typeof b === "string" && a.length === 64 && b.length === 64 && timingSafeEqual(Buffer.from(a), Buffer.from(b));
-var exact2 = (o, keys) => o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === [...keys].sort().join(",");
+var exact3 = (o, keys2) => o && typeof o === "object" && !Array.isArray(o) && Object.keys(o).sort().join(",") === [...keys2].sort().join(",");
 var reject = () => {
   throw error46(400, "invalid_request");
 };
@@ -43452,7 +43503,7 @@ function oauthClientConfiguration(input = []) {
   if (!Array.isArray(input) || input.length > 2) throw TypeError("Invalid configured OAuth clients");
   const seen = /* @__PURE__ */ new Set();
   return input.map((c) => {
-    if (!exact2(c, ["clientId", "redirectUri", "clientName"]) || typeof c.clientId !== "string" || !/^https:\/\/chatgpt\.com\/oauth\/(?:client\.json|[A-Za-z0-9_-]{1,128}\/client\.json)$/.test(c.clientId) || seen.has(c.clientId) || typeof c.redirectUri !== "string" || !/^https:\/\/chatgpt\.com\/(?:connector_platform_oauth_redirect|connector\/oauth\/[A-Za-z0-9_-]{1,128})$/.test(c.redirectUri) || typeof c.clientName !== "string" || !c.clientName || c.clientName.length > 200 || /[\u0000-\u001f\u007f]/.test(c.clientName)) throw TypeError("Invalid configured OAuth client");
+    if (!exact3(c, ["clientId", "redirectUri", "clientName"]) || typeof c.clientId !== "string" || !/^https:\/\/chatgpt\.com\/oauth\/(?:client\.json|[A-Za-z0-9_-]{1,128}\/client\.json)$/.test(c.clientId) || seen.has(c.clientId) || typeof c.redirectUri !== "string" || !/^https:\/\/chatgpt\.com\/(?:connector_platform_oauth_redirect|connector\/oauth\/[A-Za-z0-9_-]{1,128})$/.test(c.redirectUri) || typeof c.clientName !== "string" || !c.clientName || c.clientName.length > 200 || /[\u0000-\u001f\u007f]/.test(c.clientName)) throw TypeError("Invalid configured OAuth client");
     seen.add(c.clientId);
     return Object.freeze({ ...c });
   });
@@ -43472,7 +43523,7 @@ function cookieProof(header, transactionId) {
   if (matches.length !== 1) throw error46(403, "access_denied");
   const parts = matches[0].slice(COOKIE.length + 1).split(".");
   if (parts.length !== 2 || parts[0] !== transactionId || !secret(parts[0]) || !secret(parts[1])) throw error46(403, "access_denied");
-  return hash7(parts[1]);
+  return hash8(parts[1]);
 }
 function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor, authorizeDelegate, engineFactory, now = () => Date.now() } = {}) {
   const configured = oauthClientConfiguration(clients);
@@ -43483,7 +43534,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
     const prior = g.accessTokens === void 0 ? [] : g.accessTokens;
     if (!Array.isArray(prior) || prior.length > 63 || !Number.isSafeInteger(g.expiresAt) || !Number.isSafeInteger(g.accessExpiresAt) || g.accessExpiresAt < 1 || g.accessExpiresAt > Math.min(g.expiresAt, now() + FIVE)) throw error46(503, "temporarily_unavailable");
     const entries = [...g.accessHash ? [{ hash: g.accessHash, expiresAt: g.accessExpiresAt }] : [], ...prior];
-    if (entries.some((a) => !exact2(a, ["hash", "expiresAt"]) || typeof a.hash !== "string" || !/^[a-f0-9]{64}$/.test(a.hash) || !Number.isSafeInteger(a.expiresAt) || a.expiresAt < 1 || a.expiresAt > g.expiresAt || a.expiresAt > g.accessExpiresAt) || new Set(entries.map((a) => a.hash)).size !== entries.length) throw error46(503, "temporarily_unavailable");
+    if (entries.some((a) => !exact3(a, ["hash", "expiresAt"]) || typeof a.hash !== "string" || !/^[a-f0-9]{64}$/.test(a.hash) || !Number.isSafeInteger(a.expiresAt) || a.expiresAt < 1 || a.expiresAt > g.expiresAt || a.expiresAt > g.accessExpiresAt) || new Set(entries.map((a) => a.hash)).size !== entries.length) throw error46(503, "temporarily_unavailable");
     return entries.filter((a) => a.expiresAt > now());
   };
   const matchesAccess = (g, digest2) => accessEntries(g).some((a) => equal(a.hash, digest2));
@@ -43551,13 +43602,13 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         await write((s) => {
           const t = transaction(s, context.transactionId, context.cookie);
           if (t.status !== "approved" || t.subject.userId !== user.userId || t.subject.uid !== user.uid || t.organizationId !== user.organizationId || t.clientId !== c.id || t.codeHash) throw error46(400, "invalid_grant");
-          return { ...s, transactions: s.transactions.map((x) => x.id === t.id ? { ...x, status: "code-issued", codeHash: hash7(code.authorizationCode), codeConsumed: false } : x) };
+          return { ...s, transactions: s.transactions.map((x) => x.id === t.id ? { ...x, status: "code-issued", codeHash: hash8(code.authorizationCode), codeConsumed: false } : x) };
         });
         return { ...code, client: c, user };
       },
       getAuthorizationCode: async (supplied) => {
         if (!secret(supplied)) return false;
-        const t = state(await store.get(KEY)).transactions.find((t2) => equal(t2.codeHash, hash7(supplied)) && !t2.codeConsumed && t2.status === "code-issued");
+        const t = state(await store.get(KEY)).transactions.find((t2) => equal(t2.codeHash, hash8(supplied)) && !t2.codeConsumed && t2.status === "code-issued");
         if (!t || !secret(t.challenge)) return false;
         const user = { ...t.subject, organizationId: t.organizationId, approvedAt: t.approvedAt, expiresAt: t.grantExpiresAt };
         await authority(user);
@@ -43578,7 +43629,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
       },
       getRefreshToken: async (supplied) => {
         if (!secret(supplied)) return false;
-        const digest2 = hash7(supplied);
+        const digest2 = hash8(supplied);
         const s = state(await store.get(KEY));
         const old = s.tombstones.find((t) => equal(t.hash, digest2));
         if (old) {
@@ -43628,7 +43679,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
             if (!t?.codeConsumed || t.status !== "code-issued" || t.grantId || !equal(t.codeHash, context.codeHash)) throw error46(400, "invalid_grant");
             if (s.families.length >= 64) throw error46(503, "temporarily_unavailable");
           }
-          const grant = { id: familyId, userId: user.userId, uid: user.uid, organizationId: user.organizationId, approvedAt: user.approvedAt, expiresAt: absolute, accessExpiresAt: accessExpiry, clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, scope: EVIDENCE_SCOPE, accessHash: hash7(token.accessToken), accessTokens: retained, refreshHash: hash7(token.refreshToken), revoked: false };
+          const grant = { id: familyId, userId: user.userId, uid: user.uid, organizationId: user.organizationId, approvedAt: user.approvedAt, expiresAt: absolute, accessExpiresAt: accessExpiry, clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, scope: EVIDENCE_SCOPE, accessHash: hash8(token.accessToken), accessTokens: retained, refreshHash: hash8(token.refreshToken), revoked: false };
           return { ...s, transactions: s.transactions.map((t) => t.id === context.codeId ? { ...t, grantId: familyId } : t), families: context.familyId ? s.families.map((g) => g.id === familyId ? { ...g, ...grant, claim: null } : g) : [...s.families, grant] };
         });
         return { ...token, accessTokenExpiresAt: new Date(accessExpiry), refreshTokenExpiresAt: new Date(absolute), scope: [EVIDENCE_SCOPE], client: c, user };
@@ -43638,19 +43689,19 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
   return {
     configuredClients: configured,
     async begin(input) {
-      const keys = ["client_id", "redirect_uri", "resource", "scope", "response_type", "state", "code_challenge", "code_challenge_method"];
+      const keys2 = ["client_id", "redirect_uri", "resource", "scope", "response_type", "state", "code_challenge", "code_challenge_method"];
       if (input && typeof input === "object" && !Array.isArray(input) && Object.hasOwn(input, "ui_locales")) {
         if (typeof input.ui_locales !== "string" || input.ui_locales.length > 128 || /[\u0000-\u001f\u007f]/.test(input.ui_locales) || !/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*(?: [A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*){0,3}(?![\s\S])/.test(input.ui_locales)) reject();
-        keys.push("ui_locales");
+        keys2.push("ui_locales");
       }
-      if (!exact2(input, keys) || input.resource !== EVIDENCE_RESOURCE || input.scope !== EVIDENCE_SCOPE || input.response_type !== "code" || input.code_challenge_method !== "S256" || !secret(input.code_challenge) || typeof input.state !== "string" || !input.state || input.state.length > 512 || /[^\x20-\x7e]/.test(input.state)) reject();
+      if (!exact3(input, keys2) || input.resource !== EVIDENCE_RESOURCE || input.scope !== EVIDENCE_SCOPE || input.response_type !== "code" || input.code_challenge_method !== "S256" || !secret(input.code_challenge) || typeof input.state !== "string" || !input.state || input.state.length > 512 || /[^\x20-\x7e]/.test(input.state)) reject();
       await write((s) => rate(s, "authorize"));
       const c = await client(input.client_id);
       if (input.redirect_uri !== c.redirectUris[0]) throw error46(400, "invalid_client");
       const id5 = random(), cookie = random(), expiresAt = now() + FIVE;
       await write((s) => {
         if (s.transactions.length >= 128) throw error46(503, "temporarily_unavailable");
-        return { ...s, transactions: [...s.transactions, { id: id5, cookieHash: hash7(cookie), clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, redirectUri: input.redirect_uri, state: input.state, challenge: input.code_challenge, expiresAt, status: "pending", inspections: [], attempts: 0, decisionAttempts: 0 }] };
+        return { ...s, transactions: [...s.transactions, { id: id5, cookieHash: hash8(cookie), clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, redirectUri: input.redirect_uri, state: input.state, challenge: input.code_challenge, expiresAt, status: "pending", inspections: [], attempts: 0, decisionAttempts: 0 }] };
       });
       return { transactionId: id5, location: `https://studio.chaiwithjai.com/?tab=strategy&remoteEvidenceTransaction=${id5}`, cookie: authorizationCookie(id5, cookie) };
     },
@@ -43661,7 +43712,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         const t = transaction(s, transactionId, cookie);
         if (t.status !== "pending" || t.attempts >= 5) throw error46(403, "access_denied");
         output = { transactionId: t.id, organizationId: organizationId2, inspectionToken: proof, clientId: t.clientId, clientName: t.clientName, resource: t.resource, scope: EVIDENCE_SCOPE, maxLifetimeMs: EIGHT, expiresAt: t.expiresAt, status: "pending", owner: { userId: subject.userId, email: subject.email } };
-        return { ...s, transactions: s.transactions.map((x) => x.id === t.id ? { ...x, attempts: x.attempts + 1, inspections: [...x.inspections, { hash: hash7(proof), subject, organizationId: organizationId2 }] } : x) };
+        return { ...s, transactions: s.transactions.map((x) => x.id === t.id ? { ...x, attempts: x.attempts + 1, inspections: [...x.inspections, { hash: hash8(proof), subject, organizationId: organizationId2 }] } : x) };
       });
       return output;
     },
@@ -43675,7 +43726,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         accepted = false;
         const t = transaction(s, transactionId, cookie);
         if (t.status !== "pending" || t.decisionAttempts >= 5) throw error46(403, "access_denied");
-        const inspection = t.inspections.find((i) => equal(i.hash, hash7(inspectionToken)));
+        const inspection = t.inspections.find((i) => equal(i.hash, hash8(inspectionToken)));
         accepted = Boolean(inspection && inspection.organizationId === organizationId2 && inspection.subject.userId === subject.userId && inspection.subject.uid === subject.uid);
         return { ...s, transactions: s.transactions.map((x) => x.id !== t.id ? x : accepted ? { ...x, status: approved ? "approved" : "denied", subject, organizationId: organizationId2, approvedAt, grantExpiresAt: now() + EIGHT, inspections: [], decisionAttempts: x.decisionAttempts + 1 } : { ...x, decisionAttempts: x.decisionAttempts + 1 }) };
       });
@@ -43708,7 +43759,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
     async token(input) {
       if (!input || typeof input !== "object" || Array.isArray(input) || input.resource !== EVIDENCE_RESOURCE || !["authorization_code", "refresh_token"].includes(input.grant_type)) reject();
       const required2 = input.grant_type === "authorization_code" ? ["grant_type", "client_id", "resource", "code", "redirect_uri", "code_verifier"] : ["grant_type", "client_id", "resource", "refresh_token"];
-      if (!exact2(input, required2)) reject();
+      if (!exact3(input, required2)) reject();
       await write((s) => rate(s, "token"));
       const c = await client(input.client_id);
       if (input.grant_type === "authorization_code" && input.redirect_uri !== c.redirectUris[0]) reject();
@@ -43723,7 +43774,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
     },
     async verifyAccessToken(supplied) {
       if (!secret(supplied)) throw error46(401, "invalid_token");
-      const digest2 = hash7(supplied);
+      const digest2 = hash8(supplied);
       let g = state(await store.get(KEY)).families.find((g2) => !g2.revoked && matchesAccess(g2, digest2));
       if (!g || g.expiresAt <= now() || g.resource !== EVIDENCE_RESOURCE || !configured.some((c) => c.clientId === g.clientId)) throw error46(401, "invalid_token");
       if (g.scope !== EVIDENCE_SCOPE) throw error46(403, "insufficient_scope");
@@ -43738,7 +43789,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         s = rate(s, "revoke");
         const c = configured.find((c2) => c2.clientId === client_id);
         if (!c || !secret(token)) return s;
-        const digest2 = hash7(token), g = s.families.find((g2) => g2.clientId === c.clientId && g2.resource === EVIDENCE_RESOURCE && (matchesAccess(g2, digest2) || equal(g2.refreshHash, digest2) || s.tombstones.some((t) => t.familyId === g2.id && equal(t.hash, digest2))));
+        const digest2 = hash8(token), g = s.families.find((g2) => g2.clientId === c.clientId && g2.resource === EVIDENCE_RESOURCE && (matchesAccess(g2, digest2) || equal(g2.refreshHash, digest2) || s.tombstones.some((t) => t.familyId === g2.id && equal(t.hash, digest2))));
         if (!g) return s;
         return { ...s, families: s.families.map((x) => x.id === g.id ? { ...x, revoked: true } : x) };
       });
@@ -43765,7 +43816,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
 var import_oauth2_server = __toESM(require_oauth2_server(), 1);
 function createEvidenceOAuthEngine(model) {
   const server = new import_oauth2_server.default({ model, authorizationCodeLifetime: 300, accessTokenLifetime: 300, refreshTokenLifetime: 28800, requirePKCE: true, enablePlainPKCE: false, alwaysIssueNewRefreshToken: true, allowEmptyState: false });
-  const request = (method, body) => new import_oauth2_server.default.Request({ method, headers: { "content-type": "application/x-www-form-urlencoded", "content-length": String(Buffer.byteLength(new URLSearchParams(body).toString())) }, query: {}, body });
+  const request = (method2, body) => new import_oauth2_server.default.Request({ method: method2, headers: { "content-type": "application/x-www-form-urlencoded", "content-length": String(Buffer.byteLength(new URLSearchParams(body).toString())) }, query: {}, body });
   const finite = (error47) => Object.assign(new Error("OAuth request unavailable"), { status: [400, 401, 403, 429, 503].includes(error47.status || error47.code) ? error47.status || error47.code : 400, oauthCode: ["invalid_client", "invalid_grant", "invalid_request", "invalid_scope", "access_denied", "temporarily_unavailable"].includes(error47.oauthCode || error47.name) ? error47.oauthCode || error47.name : "invalid_request" });
   return {
     async authorize(input, user) {
@@ -43828,7 +43879,7 @@ function createCimdInspector({ fetchImpl = fetch, now = () => Date.now() } = {})
 // server/defiant-evidence-remote.js
 var AUTH = "/oauth/defiant-evidence";
 var API = "/api/studio/remote-evidence/";
-var fail3 = (status, code) => Object.assign(new Error(code), { status, oauthCode: code });
+var fail4 = (status, code) => Object.assign(new Error(code), { status, oauthCode: code });
 var oauthErrorCodes = ["invalid_request", "invalid_client", "invalid_grant", "invalid_scope", "invalid_token", "insufficient_scope", "access_denied", "temporarily_unavailable"];
 function observeOutcome(sink, event) {
   try {
@@ -43838,8 +43889,8 @@ function observeOutcome(sink, event) {
   } catch {
   }
 }
-var plain3 = (v) => v && typeof v === "object" && !Array.isArray(v);
-var exact3 = (v, keys) => plain3(v) && Object.keys(v).sort().join(",") === [...keys].sort().join(",");
+var plain4 = (v) => v && typeof v === "object" && !Array.isArray(v);
+var exact4 = (v, keys2) => plain4(v) && Object.keys(v).sort().join(",") === [...keys2].sort().join(",");
 var json2 = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store", "Pragma": "no-cache", "Referrer-Policy": "no-referrer", ...headers } });
 async function readRemoteBody(request, max, signal = request.signal) {
   const reader = request.body?.getReader();
@@ -43848,7 +43899,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
   let size = 0, chunks = 0;
   let aborted2;
   const abort = new Promise((_, reject2) => {
-    aborted2 = () => reject2(fail3(408, "temporarily_unavailable"));
+    aborted2 = () => reject2(fail4(408, "temporarily_unavailable"));
     if (signal?.aborted) aborted2();
     else signal?.addEventListener("abort", aborted2, { once: true });
   });
@@ -43856,7 +43907,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
     for (; ; ) {
       const p = await Promise.race([reader.read(), abort]);
       if (p.done) break;
-      if (!(p.value instanceof Uint8Array) || ++chunks > 65536 || p.value.byteLength > buffer.length - size) throw fail3(400, "invalid_request");
+      if (!(p.value instanceof Uint8Array) || ++chunks > 65536 || p.value.byteLength > buffer.length - size) throw fail4(400, "invalid_request");
       buffer.set(p.value, size);
       size += p.value.byteLength;
     }
@@ -43870,7 +43921,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
 function fields(params) {
   const data = {};
   for (const [k, v] of params) {
-    if (Object.hasOwn(data, k) || k === "__proto__" || k === "constructor" || v.length > 2048) throw fail3(400, "invalid_request");
+    if (Object.hasOwn(data, k) || k === "__proto__" || k === "constructor" || v.length > 2048) throw fail4(400, "invalid_request");
     data[k] = v;
   }
   return data;
@@ -43931,15 +43982,15 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, clients =
       if (path === AUTH + "/complete") {
         if (request.method !== "GET") return json2({ error: "invalid_request" }, 405);
         const input = fields(url2.searchParams);
-        if (!exact3(input, ["transaction"])) throw fail3(400, "invalid_request");
+        if (!exact4(input, ["transaction"])) throw fail4(400, "invalid_request");
         const result = await oauth.complete({ transactionId: input.transaction, cookie: request.headers.get("cookie") });
         return new Response(null, { status: 302, headers: { Location: result.location, "Set-Cookie": result.cookie, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
       }
       if (path === AUTH + "/token" || path === AUTH + "/revoke") {
-        if (request.method !== "POST" || url2.search || !/^application\/x-www-form-urlencoded(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail3(400, "invalid_request");
+        if (request.method !== "POST" || url2.search || !/^application\/x-www-form-urlencoded(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail4(400, "invalid_request");
         const input = fields(new URLSearchParams(new TextDecoder("utf-8", { fatal: true }).decode(await readRemoteBody(request, 8192))));
         if (path.endsWith("/revoke")) {
-          if (!exact3(input, ["token", "client_id"])) throw fail3(400, "invalid_request");
+          if (!exact4(input, ["token", "client_id"])) throw fail4(400, "invalid_request");
           return json2(await oauth.revokePublic(input));
         }
         const response = json2(await oauth.token(input));
@@ -43947,13 +43998,13 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, clients =
         return response;
       }
       if (path.startsWith(API)) {
-        const operation = path.slice(API.length), keys = { inspect: ["organizationId", "transactionId"], approve: ["organizationId", "transactionId", "inspectionToken"], deny: ["organizationId", "transactionId", "inspectionToken"], list: ["organizationId"], revoke: ["organizationId", "grantId"] };
-        if (!Object.hasOwn(keys, operation)) return json2({ error: "not_found" }, 404);
-        if (request.method !== "POST" || url2.search || !/^application\/json(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail3(400, "invalid_request");
+        const operation = path.slice(API.length), keys2 = { inspect: ["organizationId", "transactionId"], approve: ["organizationId", "transactionId", "inspectionToken"], deny: ["organizationId", "transactionId", "inspectionToken"], list: ["organizationId"], revoke: ["organizationId", "grantId"] };
+        if (!Object.hasOwn(keys2, operation)) return json2({ error: "not_found" }, 404);
+        if (request.method !== "POST" || url2.search || !/^application\/json(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail4(400, "invalid_request");
         const input = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(await readRemoteBody(request, 4096)));
-        if (!exact3(input, keys[operation])) throw fail3(400, "invalid_request");
+        if (!exact4(input, keys2[operation])) throw fail4(400, "invalid_request");
         const bearer = /^Bearer ([^\s]+)$/.exec(request.headers.get("authorization") || "")?.[1];
-        if (!bearer || bearer.startsWith("ea.") || bearer.startsWith("er.")) throw fail3(403, "access_denied");
+        if (!bearer || bearer.startsWith("ea.") || bearer.startsWith("er.")) throw fail4(403, "access_denied");
         const args = { ...input, bearer, cookie: request.headers.get("cookie") };
         if (operation === "inspect") return json2(await oauth.inspect(args));
         if (operation === "approve" || operation === "deny") return json2(await oauth.decide({ ...args, approved: operation === "approve" }));
@@ -43983,19 +44034,19 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, clients =
           }, callback) };
           registerDefiantEvidenceTools(registration, { onOutcome: onToolOutcome, boundOrganizationId: verified.organizationId, unauthorizedChallenge: challenge() + ', error="invalid_token", error_description="Evidence authorization required"', resolveEvidence: async ({ organizationId: organizationId2 }) => {
             const grant = await oauth.verifyAccessToken(auth.token);
-            if (grant.organizationId !== organizationId2) throw fail3(403, "access_denied");
+            if (grant.organizationId !== organizationId2) throw fail4(403, "access_denied");
             const user = await identity.authorizeLocalEvidenceActor(grant.userId, grant.uid, grant.approvedAt);
             await strategy(organizationId2).raw(user);
             let binding;
             try {
               binding = await provider({ organizationId: organizationId2, actor: user });
             } catch {
-              throw fail3(503, "temporarily_unavailable");
+              throw fail4(503, "temporarily_unavailable");
             }
-            if (!binding || typeof binding.loadSnapshot !== "function") throw fail3(403, "access_denied");
+            if (!binding || typeof binding.loadSnapshot !== "function") throw fail4(403, "access_denied");
             const service = createDefiantEvidenceService({ organizationId: organizationId2, loadSnapshot: binding.loadSnapshot, loadSourceRecords: binding.loadSourceRecords, loadWorksheetCells: binding.loadWorksheetCells, authorize: async (actor) => {
               const current = await oauth.verifyAccessToken(auth.token);
-              if (current.organizationId !== organizationId2 || current.userId !== actor.id) throw fail3(403, "access_denied");
+              if (current.organizationId !== organizationId2 || current.userId !== actor.id) throw fail4(403, "access_denied");
               await strategy(organizationId2).raw(actor);
               return true;
             } });
@@ -44028,11 +44079,11 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, clients =
     const abort = new Promise((_, reject2) => {
       onAbort = () => {
         controller.abort();
-        reject2(fail3(408, "temporarily_unavailable"));
+        reject2(fail4(408, "temporarily_unavailable"));
       };
       if (request.signal.aborted) onAbort();
       else request.signal.addEventListener("abort", onAbort, { once: true });
-      controller.signal.addEventListener("abort", () => reject2(fail3(408, "temporarily_unavailable")), { once: true });
+      controller.signal.addEventListener("abort", () => reject2(fail4(408, "temporarily_unavailable")), { once: true });
     });
     try {
       return await Promise.race([route(new Request(request, { signal: controller.signal }), controller.signal), abort]);
