@@ -1,6 +1,7 @@
 <script>
  import {onDestroy,untrack} from 'svelte';
  import SemanticMetadataSearch from './SemanticMetadataSearch.svelte';
+ import ClaimEvaluations from './ClaimEvaluations.svelte';
  import HypothesisReview from './HypothesisReview.svelte';
  import AnswerObservations from './AnswerObservations.svelte';
  import SelectionReconciliation from './SelectionReconciliation.svelte';
@@ -35,6 +36,7 @@
   <button disabled={view.loading} onclick={()=>root('audience')} aria-pressed={active.mode==='audience'}>Audience definitions</button>
   <button disabled={view.loading} onclick={refresh}>Refresh evidence</button>
  </ResearchToolbar>
+ <ClaimEvaluations {request}/>
  <HypothesisReview {request} revision={view.revision||active.revision} onEvidence={next=>navigate({...cleared,evidenceOffset:0,...next})}/>
  {#if active.mode==='retained'}
    <form class="retained-filters" onsubmit={event=>{event.preventDefault();navigate({...cleared,evidenceMode:'retained',retainedFilters:{...retainedDraft}});}}>
