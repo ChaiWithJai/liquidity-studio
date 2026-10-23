@@ -46,9 +46,11 @@ function responseResult(data) {
   return { model: MODEL, answers: clone(data.answers), usage: clone(data.usage), reportedCostUsd: cost, modelVersion: null, modelVersionQualification: 'provider-model-alias; immutable checkpoint not supplied' };
 }
 
-export function jevEvaluationConfigurationSha256(limits) {
+export function jevEvaluationConfigurationSha256(limits, deterministicVersion = 'earnings-claim-exact-v1', trustedBindingSha256 = null) {
+  requireValue(['earnings-claim-exact-v1', 'historical-store-period-comparability-v1'].includes(deterministicVersion));
+  requireValue(deterministicVersion === 'earnings-claim-exact-v1' ? trustedBindingSha256 === null : hash(trustedBindingSha256));
   requireValue(exact(limits,['timeoutMs','maxRequests','maxInputBytes','maxResponseBytes']));
-  return sha(JSON.stringify({endpoint:ENDPOINT,model:MODEL,questions,providerOptions:{gateway:{only:['typesafe-ai'],zeroDataRetention:true}},limits,evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion:'earnings-claim-exact-v1'}));
+  return sha(JSON.stringify({endpoint:ENDPOINT,model:MODEL,questions,providerOptions:{gateway:{only:['typesafe-ai'],zeroDataRetention:true}},limits,evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion,...(trustedBindingSha256===null?{}:{trustedBindingSha256})}));
 }
 
 export function createJevDecisionAdapter({ enabled = false, getCredential = () => null, fetch: fetchImpl = globalThis.fetch, timeoutMs = 15000, maxRequests = 1, maxInputBytes = 16384, maxResponseBytes = 65536 } = {}) {

@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {historicalFixture} from './historical-jev-fixture.js';
+import {HISTORICAL_COMPARABILITY_VERSION} from './defiant-jev-historical-case-pack.js';
+import {jevEvaluationConfigurationSha256} from './defiant-jev-evaluation.js';
 import {createDurableClaimEvaluations} from './defiant-jev-durable.js';
 import {transactionValues} from './storage-transaction.js';
 const revision='a'.repeat(64),config='f'.repeat(64),actor={id:'owner',uid:'uid'};
@@ -20,3 +23,18 @@ test('changed UID and malformed input fail before reservation/provider; missing 
 test('request mutation during authority await cannot change frozen case/key',async()=>{const f=fixture(),gate=deferred();let first=true;const s=f.make({authorizeCurrent:async a=>{if(first){first=false;await gate.promise;}return a;}});const input={...request};const pending=s.evaluate(actor,input);input.caseId='unknown';input.idempotencyKey='changed';gate.resolve();const record=await pending;assert.equal(record.caseId,'case');assert.deepEqual(await s.evaluate(actor,request),record);assert.equal(f.counts().calls,1);});
 test('lost response after durable completion is recovered without another provider call',async()=>{const f=fixture();let lost=false;const store={transact:async(keys,callback)=>{const values=await f.store.transact(keys,callback);if(!lost&&values.at(-1)?.status==='completed'){lost=true;throw new Error('response lost after commit');}return values;}};const s=f.make({store});const record=await s.evaluate(actor,request);assert.equal(record.status,'completed');assert.deepEqual(await s.evaluate(actor,request),record);assert.equal(f.counts().calls,1);});
 test('malformed index fields and oversized entries fail read and reservation without provider dispatch',async()=>{for(const entry of [{recordId:'a'.repeat(64),createdAt:'2026-10-23T19:00:00.000Z',caseId:'case',privateField:'PRIVATE_SENTINEL'},{recordId:'a'.repeat(64),createdAt:'2026-10-23T19:00:00.000Z',caseId:'x'.repeat(129)},{recordId:'a'.repeat(64),createdAt:'not-time',caseId:'case'}]){const f=fixture();f.data.set('defiant-evaluations:v1:org:index',{schemaVersion:1,organizationId:'org',entries:[entry]});await assert.rejects(f.make().list(actor),{status:409});await assert.rejects(f.make().evaluate(actor,request),{status:409});assert.deepEqual(f.counts(),{calls:0,resolves:0});assert.equal(f.data.has('defiant-evaluations:v1:account:account-experiment'),false);}});
+
+test('historical resolver version binds fingerprint, reservation/replay and saved finite provenance while legacy defaults stay exact',async()=>{
+ const h=historicalFixture(),pack=h.make(),f=fixture(),limits={timeoutMs:15000,maxRequests:1,maxInputBytes:16384,maxResponseBytes:65536};
+ const legacy=jevEvaluationConfigurationSha256(limits),historical=jevEvaluationConfigurationSha256(limits,HISTORICAL_COMPARABILITY_VERSION,'a'.repeat(64));
+ assert.notEqual(historical,legacy);assert.notEqual(historical,jevEvaluationConfigurationSha256(limits,HISTORICAL_COMPARABILITY_VERSION,'b'.repeat(64)));assert.throws(()=>jevEvaluationConfigurationSha256(limits,HISTORICAL_COMPARABILITY_VERSION));
+ const service=f.make({pack,deterministicVersion:HISTORICAL_COMPARABILITY_VERSION,evaluatorConfigSha256:historical,accountExperimentId:'historical-separate'}),input={caseId:'observed',idempotencyKey:'historical-once'};
+ const record=await service.evaluate(actor,input);assert.equal(record.deterministicVersion,HISTORICAL_COMPARABILITY_VERSION);assert.equal(record.evaluation.deterministicVersion,HISTORICAL_COMPARABILITY_VERSION);assert.equal(record.evaluation.case.evidenceRevision,h.row.evidenceRevision);assert.equal(record.evaluation.historicalProvenance.answer.sha256,h.row.answer.sha256);assert.equal(record.evaluation.historicalProvenance.answer.quoteStart,h.row.answer.quote.start);assert.equal(record.evaluatorConfigSha256,historical);assert.ok(!JSON.stringify(record).includes(h.claim));assert.ok(!JSON.stringify(record).includes('PRIVATE_LABEL'));
+ assert.deepEqual(await service.detail(actor,record.recordId),record);assert.deepEqual(await service.evaluate(actor,input),record);assert.equal(f.counts().calls,1);
+ await assert.rejects(f.make({pack,accountExperimentId:'historical-separate',evaluatorConfigSha256:historical}).evaluate(actor,input),{status:409});assert.equal(f.counts().calls,1);
+});
+test('historical wrong version or arbitrary provenance consumes reservation without provider dispatch or label persistence',async()=>{
+ for(const mode of ['version','provenance']){const h=historicalFixture(),original=h.make(),f=fixture();const pack={...original,resolve:async(...args)=>{const value=await original.resolve(...args);if(mode==='version')value.deterministicVersion='earnings-claim-exact-v1';else value.provenance.expectedLabel='PRIVATE_LABEL';return value;}};
+ const record=await f.make({pack,deterministicVersion:HISTORICAL_COMPARABILITY_VERSION,accountExperimentId:'historical-separate'}).evaluate(actor,{caseId:'observed',idempotencyKey:'once'});assert.equal(record.status,'indeterminate');assert.equal(record.evaluation,null);assert.equal(f.counts().calls,0);assert.ok(!JSON.stringify(record).includes('PRIVATE_LABEL'));assert.equal(f.data.get('defiant-evaluations:v1:account:historical-separate').attempts.length,1);
+ }
+});

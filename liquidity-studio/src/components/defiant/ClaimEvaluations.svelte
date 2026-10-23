@@ -43,6 +43,25 @@
       <dl>{#each ['causalOverreach','temporalComparability','identityOverreach','citationSufficiency'] as label (label)}<dt>{label}</dt><dd>{value.outcome.answers[label].probability}</dd>{/each}</dl>
       <p>Input tokens {value.outcome.usage.inputTokens} · Output tokens {value.outcome.usage.outputTokens} · Reported cost USD {value.outcome.reportedCostUsd??'unknown'} · Latency {value.outcome.latencyMs} ms</p>
      {/if}
+     {#if value.historicalProvenance}
+      {@const history=value.historicalProvenance}
+      <section aria-label="Historical evidence provenance">
+       <h4>Historical evidence provenance</h4>
+       <p>This evaluation uses the pinned historical answer and evidence, not the current snapshot.</p>
+       <dl>
+        <dt>Answer SHA256</dt><dd><code>{history.answer.sha256}</code> · {history.answer.bytes} bytes</dd>
+        <dt>Quoted span (Unicode code points, end exclusive)</dt><dd>{history.answer.quoteStart}–{history.answer.quoteEnd}</dd>
+        <dt>Historical snapshot SHA256</dt><dd><code>{history.historicalSnapshot.sha256}</code> · {history.historicalSnapshot.bytes} bytes</dd>
+        <dt>Neutral state SHA256</dt><dd><code>{history.neutralState.sha256}</code> · {history.neutralState.bytes} bytes</dd>
+        <dt>Dataset</dt><dd>{history.dataset.kind} · <code>{history.dataset.sha256}</code></dd>
+        <dt>Projection</dt><dd>{history.projection.version}</dd>
+        <dt>Reviewed normalizer Git blob</dt><dd><code>{history.projection.normalizerGitBlob}</code></dd>
+        <dt>Historical normalizer Git blob</dt><dd><code>{history.historicalNormalizerGitBlob}</code></dd>
+        <dt>Evidence selectors</dt><dd>Coverage {history.selector.coverageId} · Comparison {history.selector.comparisonId}</dd>
+       </dl>
+       <p>{history.dataset.verification}</p><p>{history.historicalRevisionVerification}</p><p>{history.projection.verification}</p><p>{history.qualification}</p>
+      </section>
+     {/if}
      <p>{value.qualification}</p>
     {/if}
     <p>Pack <code>{detail.packSha256}</code> · Configuration <code>{detail.evaluatorConfigSha256}</code></p>

@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createClaimEvaluation} from './defiant-jev-evaluation.js';
+import {checkedHistoricalComparabilityProvenance,HISTORICAL_COMPARABILITY_VERSION} from './defiant-jev-historical-case-pack.js';
 const sha=v=>createHash('sha256').update(v).digest('hex');
 const fail=(status,message)=>Object.assign(new Error(message),{status});
 const id=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,128}(?![\s\S])/.test(v);
@@ -9,8 +10,9 @@ const copy=v=>structuredClone(v);
 const iso=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z(?![\s\S])/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString()===v;
 const VERSION='earnings-claim-exact-v1';
 /** No HTTP mount here. Account experiment identity must be constructor-owned and shared across replicas. */
-export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,pack,adapter,accountExperimentId,evaluatorConfigSha256,now=()=>new Date().toISOString()}={}){
+export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,pack,adapter,accountExperimentId,evaluatorConfigSha256,deterministicVersion=VERSION,now=()=>new Date().toISOString()}={}){
  if(!store?.transact||!strategy?.assertCurrent||!strategy?.raw||typeof authorizeCurrent!=='function'||typeof pack?.get!=='function'||typeof pack?.resolve!=='function'||!hash(pack.sha256)||pack.organizationId!==strategy.organizationId||!id(accountExperimentId)||!hash(evaluatorConfigSha256)||!adapter?.decide||typeof now!=='function')throw TypeError('Scoped evaluation dependencies required');
+ if(![VERSION,HISTORICAL_COMPARABILITY_VERSION].includes(deterministicVersion))throw TypeError('Supported evaluation version required');
  const packSha256=pack.sha256,getCase=pack.get.bind(pack),resolveCase=pack.resolve.bind(pack),decisionAdapter=Object.freeze({decide:adapter.decide.bind(adapter)});
  const org=strategy.organizationId,accountKey=`defiant-evaluations:v1:account:${accountExperimentId}`,indexKey=`defiant-evaluations:v1:${org}:index`;
  const recordKey=recordId=>`defiant-evaluations:v1:${org}:${recordId}`;
@@ -30,7 +32,7 @@ export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,p
   if(!exact(input,['caseId','idempotencyKey'])||!id(input.caseId)||!id(input.idempotencyKey)||!id(inputActor?.id)||typeof inputActor.uid!=='string'||!inputActor.uid||inputActor.uid.length>128)throw fail(400,'Invalid evaluation request');
   const actor=Object.freeze({...inputActor}),request=copy(input);await current(actor);
   const recordId=sha(JSON.stringify([org,actor.id,actor.uid,request.idempotencyKey]));
-  const payloadHash=sha(JSON.stringify({caseId:request.caseId,packSha256,accountExperimentId,evaluatorConfigSha256,deterministicVersion:VERSION,evaluatorVersion:'defiant-claim-decisions-v1'}));
+  const payloadHash=sha(JSON.stringify({caseId:request.caseId,packSha256,accountExperimentId,evaluatorConfigSha256,deterministicVersion,evaluatorVersion:'defiant-claim-decisions-v1'}));
   const createdAt=now();if(!iso(createdAt))throw fail(503,'Evaluation clock unavailable');
   const keys=['identity',strategy.key,accountKey,indexKey,recordKey(recordId)];
   let acquired=false;
@@ -43,7 +45,7 @@ export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,p
    if(budget.attempts.length===1)throw fail(409,'Evaluation attempt capacity reached');
    index=checkedIndex(index);
    if(index.entries.length>=100)throw fail(409,'Evaluation index unavailable');
-   const candidate={schemaVersion:1,recordId,organizationId:org,actorId:actor.id,actorUid:actor.uid,createdAt,payloadHash,caseId:request.caseId,packSha256,accountExperimentId,evaluatorConfigSha256,status:'reserved',evaluation:null,qualification:'One account attempt reserved; pending or uncertain completion never authorizes automatic retry.'};
+   const candidate={schemaVersion:1,recordId,organizationId:org,actorId:actor.id,actorUid:actor.uid,createdAt,payloadHash,caseId:request.caseId,packSha256,accountExperimentId,evaluatorConfigSha256,deterministicVersion,status:'reserved',evaluation:null,qualification:'One account attempt reserved; pending or uncertain completion never authorizes automatic retry.'};
    acquired=true;return [identity,state,{...budget,attempts:[{recordId,organizationId:org,createdAt}]},{...index,entries:[...index.entries,{recordId,createdAt,caseId:request.caseId}]},candidate];
   });
   if(!acquired){await current(actor);return result(reserved[4]);}
@@ -59,8 +61,10 @@ export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,p
   }
   try{
    await current(actor);const prepared=await resolveCase(actor,request.caseId);await current(actor);
+   if(deterministicVersion===HISTORICAL_COMPARABILITY_VERSION&&prepared.deterministicVersion!==deterministicVersion)throw fail(503,'Historical evaluation version unavailable');
+   const historicalProvenance=deterministicVersion===HISTORICAL_COMPARABILITY_VERSION?checkedHistoricalComparabilityProvenance(prepared.provenance):null;
    let completed;
-   const evaluation=createClaimEvaluation({manifest:[prepared.ref],authorize:async ctx=>{if(ctx.organizationId!==org||ctx.actorId!==actor.id)throw fail(403,'Evaluation scope changed');await current(actor);},resolveCase:async()=>prepared.state,deterministicCheck:async()=>prepared.deterministic,deterministicVersion:VERSION,adapter:decisionAdapter,createId:()=>recordId,now,persistRecord:async record=>{completed=await finish(record,'completed');}});
+   const evaluation=createClaimEvaluation({manifest:[prepared.ref],authorize:async ctx=>{if(ctx.organizationId!==org||ctx.actorId!==actor.id)throw fail(403,'Evaluation scope changed');await current(actor);},resolveCase:async()=>prepared.state,deterministicCheck:async()=>prepared.deterministic,deterministicVersion,adapter:decisionAdapter,createId:()=>recordId,now,persistRecord:async record=>{completed=await finish(historicalProvenance===null?record:{...record,historicalProvenance},'completed');}});
    await evaluation.evaluate({organizationId:org,actorId:actor.id},{caseId:request.caseId});
    return completed;
   }catch(error){
