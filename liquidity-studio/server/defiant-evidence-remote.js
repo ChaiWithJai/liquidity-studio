@@ -7,6 +7,8 @@ import {createEvidenceOAuthEngine} from './defiant-evidence-oauth-engine.js';
 import {createCimdInspector} from './defiant-evidence-oauth-client.js';
 const AUTH='/oauth/defiant-evidence',API='/api/studio/remote-evidence/';
 const fail=(status,code)=>Object.assign(new Error(code),{status,oauthCode:code});
+const oauthErrorCodes=['invalid_request','invalid_client','invalid_grant','invalid_scope','invalid_token','insufficient_scope','access_denied','temporarily_unavailable'];
+function observeOutcome(sink,event){try{const result=sink(event);if(result&&typeof result.then==='function')Promise.resolve(result).catch(()=>{});}catch{}}
 const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
 const exact=(v,keys)=>plain(v)&&Object.keys(v).sort().join(',')===[...keys].sort().join(',');
 const json=(body,status=200,headers={})=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','Pragma':'no-cache','Referrer-Policy':'no-referrer',...headers}});
@@ -17,9 +19,9 @@ export async function readRemoteBody(request,max,signal=request.signal){
 function fields(params){const data={};for(const [k,v] of params){if(Object.hasOwn(data,k)||k==='__proto__'||k==='constructor'||v.length>2048)throw fail(400,'invalid_request');data[k]=v;}return data;}
 export function remoteEvidenceConfiguration(raw='[]'){if(typeof raw!=='string'||raw.length>8192)throw TypeError('Invalid remote evidence clients');return oauthClientConfiguration(JSON.parse(raw));}
 /** Constructor-only private provider and managed current authority. No anonymous or synthetic fallback. */
-export function createRemoteEvidence({platform,provider,authorizeEvidence,clients=[],allowedHosts=['studio.chaiwithjai.com'],fetchImpl=fetch,onToolOutcome=event=>console.info(JSON.stringify(event))}={}){
+export function createRemoteEvidence({platform,provider,authorizeEvidence,clients=[],allowedHosts=['studio.chaiwithjai.com'],fetchImpl=fetch,onToolOutcome=event=>console.info(JSON.stringify(event)),onOAuthOutcome=event=>console.info(JSON.stringify(event))}={}){
  if(platform?.identity?.mode!=='google'||typeof provider!=='function'||typeof authorizeEvidence!=='function'||!Array.isArray(allowedHosts)||!allowedHosts.length||allowedHosts.length>4||allowedHosts.some(h=>typeof h!=='string'||!h||/[\s/:]/.test(h)))throw TypeError('Managed private remote evidence wiring required');
- if(typeof onToolOutcome!=='function')throw TypeError('Evidence outcome sink required');
+ if(typeof onToolOutcome!=='function'||typeof onOAuthOutcome!=='function')throw TypeError('Evidence outcome sink required');
  const identity=platform.identity,strategy=organizationId=>({raw:actor=>authorizeEvidence(actor,organizationId)});
  const oauth=createEvidenceOAuth({store:platform.store,clients,inspectClient:createCimdInspector({fetchImpl}),engineFactory:createEvidenceOAuthEngine,
   approveActor:async({token},organizationId)=>{const user=await identity.authenticateLocalEvidenceApproval(token);await strategy(organizationId).raw(user);return {userId:user.id,uid:user.uid,email:user.email};},
@@ -32,6 +34,7 @@ export function createRemoteEvidence({platform,provider,authorizeEvidence,client
   if(!allowedHosts.includes(url.host)||(request.headers.has('origin')&&!['https://studio.chaiwithjai.com','https://chatgpt.com'].includes(request.headers.get('origin'))))return json({error:'access_denied'},403);
   if(path==='/.well-known/oauth-authorization-server/oauth/defiant-evidence'){if(url.search)return json({error:'invalid_request'},400);if(request.method==='OPTIONS')return new Response(null,{status:204,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, OPTIONS'}});if(request.method!=='GET')return json({error:'invalid_request'},405);return json(oauthMetadata,200,{'Access-Control-Allow-Origin':'*'});}
   const metadata=oauthMetadataResponse(request,{oauthMetadata,resourceServerUrl:new URL(EVIDENCE_RESOURCE),scopesSupported:[EVIDENCE_SCOPE]});if(metadata)return metadata;
+  let tokenOutcome;
   try{
    if(path===AUTH+'/authorize'){
     if(request.method!=='GET')return json({error:'invalid_request'},405);const result=await oauth.begin(fields(url.searchParams));return new Response(null,{status:302,headers:{Location:result.location,'Set-Cookie':result.cookie,'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
@@ -41,7 +44,7 @@ export function createRemoteEvidence({platform,provider,authorizeEvidence,client
    }
    if(path===AUTH+'/token'||path===AUTH+'/revoke'){
     if(request.method!=='POST'||url.search||!/^application\/x-www-form-urlencoded(?:;|$)/i.test(request.headers.get('content-type')||''))throw fail(400,'invalid_request');const input=fields(new URLSearchParams(new TextDecoder('utf-8',{fatal:true}).decode(await readRemoteBody(request,8192))));
-    if(path.endsWith('/revoke')){if(!exact(input,['token','client_id']))throw fail(400,'invalid_request');return json(await oauth.revokePublic(input));}return json(await oauth.token(input));
+    if(path.endsWith('/revoke')){if(!exact(input,['token','client_id']))throw fail(400,'invalid_request');return json(await oauth.revokePublic(input));}const response=json(await oauth.token(input));tokenOutcome={status:200,errorCode:null};return response;
    }
    if(path.startsWith(API)){
     const operation=path.slice(API.length),keys={inspect:['organizationId','transactionId'],approve:['organizationId','transactionId','inspectionToken'],deny:['organizationId','transactionId','inspectionToken'],list:['organizationId'],revoke:['organizationId','grantId']};
@@ -64,7 +67,7 @@ export function createRemoteEvidence({platform,provider,authorizeEvidence,client
     try{const response=await handler.fetch(request,{authInfo:auth});const body=await readRemoteBody(response,4*1024*1024,operationSignal);return new Response(body,{status:response.status,headers:response.headers});}finally{await handler.close();}
    }
    return json({error:'not_found'},404);
-  }catch(error){const status=[400,401,403,429,503].includes(error.status)?error.status:400;return json({error:['invalid_request','invalid_client','invalid_grant','invalid_scope','invalid_token','insufficient_scope','access_denied','temporarily_unavailable'].includes(error.oauthCode)?error.oauthCode:'invalid_request'},status,status===401?{'WWW-Authenticate':challenge()}:{});}
+  }catch(error){const status=[400,401,403,429,503].includes(error.status)?error.status:400;const errorCode=oauthErrorCodes.includes(error.oauthCode)?error.oauthCode:'invalid_request';const response=json({error:errorCode},status,status===401?{'WWW-Authenticate':challenge()}:{});if(path===AUTH+'/token')tokenOutcome={status,errorCode};return response;}finally{if(tokenOutcome)observeOutcome(onOAuthOutcome,Object.freeze({event:'defiant_evidence_oauth_outcome',operation:'token',...tokenOutcome}));}
  }
  // Raw Node adapter bounds the body before SDK parsing. Deadline destroys the request;
  // no API credential is read from cookies on the MCP route.
