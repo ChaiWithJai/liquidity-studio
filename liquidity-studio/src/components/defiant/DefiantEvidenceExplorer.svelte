@@ -1,5 +1,6 @@
 <script>
  import {onDestroy,untrack} from 'svelte';
+ import SemanticMetadataSearch from './SemanticMetadataSearch.svelte';
  import HypothesisReview from './HypothesisReview.svelte';
  import AnswerObservations from './AnswerObservations.svelte';
  import SelectionReconciliation from './SelectionReconciliation.svelte';
@@ -8,12 +9,12 @@
  import ResearchInspector from './ResearchInspector.svelte';
  import {createEvidenceExplorer,emptyEvidenceView,evidenceLocation} from '../../lib/defiant-evidence-explorer.js';
  let {request,location,onNavigate=()=>{}}=$props();
- let retainedDraft=$state({query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:''});
+ let retainedDraft=$state({query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:'',periodPresence:''});
  let view=$state(emptyEvidenceView()),field=$state('Total Earned'),refreshEpoch=$state(0);
- const cleared={evidenceReconciliation:false,evidenceJuneReview:false,evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
+ const cleared={retainedSessionId:'',retainedSessionOffset:0,evidenceReconciliation:false,evidenceJuneReview:false,evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
  const active=$derived(evidenceLocation(location));
  const controller=createEvidenceExplorer({request:(...args)=>request(...args),onState:value=>view=value});
- $effect(()=>{const input=location;refreshEpoch;untrack(()=>{retainedDraft={query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:'',...evidenceLocation(input).retainedFilters};field='Total Earned';void controller.load(input);});});
+ $effect(()=>{const input=location;refreshEpoch;untrack(()=>{retainedDraft={query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:'',periodPresence:'',...evidenceLocation(input).retainedFilters};field='Total Earned';void controller.load(input);});});
  onDestroy(()=>controller.cancel());
  function navigate(next){onNavigate({...location,view:'evidence',sample:'',evidenceRevision:view.revision||active.revision,evidenceOffset:0,...next});}
  function root(mode=active.mode){navigate({...cleared,evidenceMode:mode});}
@@ -43,6 +44,7 @@
      <label>File format<select bind:value={retainedDraft.format}><option value="">All formats</option>{#each ['csv','xlsx','xls','pdf','png','jpg','zip','tar.gz','json','other'] as format (format)}<option value={format}>{format}</option>{/each}</select></label>
      <label>Record kind<select bind:value={retainedDraft.kind}><option value="">Roots and members</option><option value="root">Root objects</option><option value="member">Archive members</option></select></label>
      <label>Exact source hash<input maxlength="64" bind:value={retainedDraft.sourceHash}/></label>
+     <label>Period presence<select bind:value={retainedDraft.periodPresence}><option value="">All metadata</option><option value="dated">Explicit filename period</option><option value="undated">No explicit filename period</option></select></label>
      <label>Declared period from<input type="month" bind:value={retainedDraft.fromMonth}/></label><label>Declared period to<input type="month" bind:value={retainedDraft.toMonth}/></label>
      <button type="submit">Search retained sources</button><button type="button" onclick={()=>navigate({...cleared,evidenceMode:'retained',retainedFilters:{}})}>Clear source filters</button>
     </fieldset>
@@ -55,6 +57,7 @@
   <div class="coverage"><h3>Evidence coverage</h3><p>{view.manifest.coverage}</p><p class="research-meta">{view.manifest.counts.months} reported periods · {view.manifest.counts.selections} source selections{#if view.manifest.counts.identityGroups !== undefined} · {view.manifest.counts.identityGroups} identity review groups{/if}</p><details><summary>Snapshot details</summary><p>Organization: <code>{view.manifest.scope.organizationId}</code></p><p>Revision: <code>{view.revision}</code></p></details></div>
   {#if active.groupId||active.selectionId||active.receiptId||active.comparisonId||active.audienceId}<nav class="breadcrumbs" aria-label="Evidence trail"><button onclick={()=>navigate({...cleared,evidenceMode:active.mode,evidenceOffset:active.receiptId&&active.mode==='earnings'?active.offset:0})}>Back to {modeLabel}</button>{#if active.comparisonGroupId}<button onclick={()=>navigate({evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceOffset:active.offset})}>Back to comparison</button>{/if}</nav>{/if}
   {#if active.mode==='retained'}
+   {#key view.revision}<SemanticMetadataSearch {request} revision={view.revision} organizationId={view.manifest.scope.organizationId} configured={view.list?.semanticSearch?.configured===true} filters={retainedDraft} sessionId={active.retainedSessionId||''} offset={active.retainedSessionOffset||0} onSession={(sessionId,offset)=>navigate({retainedSessionId:sessionId,retainedSessionOffset:offset})} onSource={sourceHash=>navigate({...cleared,retainedFilters:{sourceHash}})}/>{/key}
 
    {#if view.list}
     {#if !view.list.availability}<p role="status" class="message">Retained intake register unavailable. This does not mean no files were retained.</p>

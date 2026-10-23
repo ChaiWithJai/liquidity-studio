@@ -1,3 +1,5 @@
+import {createQueryEmbedding} from './defiant-query-embedding.js';
+import {AIGateway} from './gateway.js';
 import {createEvidenceHypotheses} from './defiant-evidence-hypotheses.js';
 import {createAnswerObservations} from './defiant-answer-observations.js';
 import {oauthClientConfiguration,oauthHostConfiguration} from './defiant-evidence-oauth.js';
@@ -214,6 +216,7 @@ export function createHttpServer(
     trustedTestMode = false,
     defiantDatasetProvider = null,
     defiantEvidenceProvider = null,
+    defiantQueryEmbedding,
     enableLocalEvidenceGrants = process.env.STUDIO_LOCAL_EVIDENCE_GRANTS_ENABLED === "true",
     enableRemoteEvidence = process.env.STUDIO_DEFIANT_REMOTE_MCP_ENABLED === "true",
     remoteEvidenceClients,
@@ -264,8 +267,11 @@ export function createHttpServer(
   if(enableRemoteEvidence&&(trustedTestMode||!defiantEvidenceProvider||platform?.identity?.mode!=='google'))throw Error('Remote evidence requires private evidence and managed Google identity');
   const remoteClients=enableRemoteEvidence?oauthClientConfiguration(remoteEvidenceClients??JSON.parse((()=>{const raw=process.env.STUDIO_DEFIANT_REMOTE_MCP_CLIENTS||'[]';if(raw.length>8192)throw Error('Invalid remote evidence client configuration');return raw;})())):[];
   const remoteHosts=enableRemoteEvidence?oauthHostConfiguration(remoteEvidenceHosts??process.env.STUDIO_DEFIANT_REMOTE_MCP_HOSTS):[];
+  if(defiantQueryEmbedding!==undefined&&typeof defiantQueryEmbedding!=='function')throw TypeError('Query embedding must be constructor-owned');
+  let semanticQueryEmbed=defiantQueryEmbedding;
+  const semanticDependencies=organizationId=>({store:platform.store,strategy:new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId}),embed:(query,options)=>{semanticQueryEmbed??=createQueryEmbedding({gateway:new AIGateway()});return semanticQueryEmbed(query,options);}});
   let remoteEvidence;
-  const loadRemoteEvidence=()=>remoteEvidence??=import(new URL('../dist/mcp/defiant-evidence-remote.mjs',import.meta.url).href).then(module=>module.createRemoteEvidence({platform,provider:defiantEvidenceProvider,authorizeEvidence:async(actor,organizationId)=>{await new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId}).raw(actor);},clients:remoteClients,allowedHosts:remoteHosts}));
+  const loadRemoteEvidence=()=>remoteEvidence??=import(new URL('../dist/mcp/defiant-evidence-remote.mjs',import.meta.url).href).then(module=>module.createRemoteEvidence({platform,provider:defiantEvidenceProvider,semanticDependencies,authorizeEvidence:async(actor,organizationId)=>{await new DefiantStrategyService({store:platform.store,identity:platform.identity,organizationId}).raw(actor);},clients:remoteClients,allowedHosts:remoteHosts}));
   let syntheticDemo;
   const loadSyntheticDemo=()=>syntheticDemo??=import(new URL('../dist/mcp/defiant-demo-server.mjs',import.meta.url).href).then(module=>module.createDefiantSyntheticDemo({enabled:true,publicOrigins:defiantSyntheticDemoOrigins}));
   // One bounded portable operation per server, including response serialization/backpressure.
@@ -675,7 +681,7 @@ export function createHttpServer(
         return json(200,await localEvidence.request({route,method:req.method,body,bearer}));
       }
       const evidenceScope=/^\/api\/studio\/defiant-evidence\/([A-Za-z0-9_-]{1,128})\/[a-z-]+$/.exec(route)?.[1];
-      const delegated=Boolean(localEvidence&&evidenceScope&&req.method==='GET'&&bearer?.startsWith('ea.'));
+      const delegated=Boolean(localEvidence&&evidenceScope&&(req.method==='GET'||(req.method==='POST'&&route.endsWith('/retained-sources')))&&bearer?.startsWith('ea.'));
       let user = trustedTestMode
         ? { id: "test", username: "test", role: "founder" }
         : delegated ? await localEvidence.authorize(bearer,evidenceScope) : await identity.authenticate(token(req, identity.mode));
@@ -784,13 +790,14 @@ export function createHttpServer(
         }
       }
       if(route.startsWith("/api/studio/strategy/")&&!trustedTestMode&&await clipBinaryRequest({platform,user,route,req,res}))return;
+      const semanticBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/retained-sources$/.test(route);
       const hypothesisBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/hypotheses(?:\/[a-f0-9]{64}\/(?:outcome|correction))?$/.test(route);
       const observationBody=/^\/api\/studio\/defiant-evidence\/[A-Za-z0-9_-]{1,128}\/observations(?:\/[a-f0-9]{64}\/correction)?$/.test(route);
       const body =
         req.method === "POST"
           ? await readBody(
               req,
-              hypothesisBody?16384:observationBody?65536:["/api/admin/import", "/api/admin/editor-pack/install"].includes(
+              semanticBody?4096:hypothesisBody?16384:observationBody?65536:["/api/admin/import", "/api/admin/editor-pack/install"].includes(
                 route,
               )
                 ? (route === "/api/admin/editor-pack/install" ? 49 : 32) *
@@ -809,7 +816,7 @@ export function createHttpServer(
                         route.startsWith("/api/studio/native-editor/")
                       ? 768 * 1024
                       : 262144,
-              (observationBody||hypothesisBody)?5000:portableBody ? portableBodyTimeoutMs : 0,
+              (semanticBody||observationBody||hypothesisBody)?5000:portableBody ? portableBodyTimeoutMs : 0,
             )
           : {};
       if(route.startsWith("/api/studio/defiant-evidence/")) {
@@ -854,12 +861,12 @@ export function createHttpServer(
           try{return json(200,await Promise.race([execute(),interrupted]));}
           finally{clearTimeout(timer);controller.signal.removeEventListener('abort',stop);req.removeListener('aborted',aborted);controller.abort();}
         }
-        if(req.method!=='GET')throw fail(405,"Evidence is read-only");
+        if(req.method!=='GET'&&!(req.method==='POST'&&semanticBody))throw fail(405,"Evidence is read-only");
         let binding;
         try{binding=await defiantEvidenceProvider({organizationId,actor:user});}catch{throw fail(503,"Evidence provider unavailable");}
         if(!binding||typeof binding.loadSnapshot!=='function')throw fail(404,"Evidence unavailable for this organization");
-        const service=createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,loadSourceRecords:binding.loadSourceRecords,loadWorksheetCells:binding.loadWorksheetCells,authorize:async actor=>{if(delegated)await localEvidence.authorize(bearer,organizationId);await strategy.raw(actor);return true;}});
-        return json(200,await defiantEvidenceRequest({service,user,route,method:req.method,url}));
+        const service=createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,loadSourceRecords:binding.loadSourceRecords,loadWorksheetCells:binding.loadWorksheetCells,loadSemanticIndex:binding.loadSemanticIndex,semanticDependencies:binding.loadSemanticIndex?semanticDependencies(organizationId):undefined,authorize:async actor=>{if(delegated)await localEvidence.authorize(bearer,organizationId);else if(binding.loadSemanticIndex&&(body?.mode==='semantic'||url.searchParams.get('mode')==='semantic-page')){if(identity.mode!=='google')throw fail(403,'Semantic retrieval requires maintained identity');const current=await identity.authenticateLocalEvidenceApproval(token(req,identity.mode));if(current.id!==actor.id||current.uid!==actor.uid)throw fail(403,'Semantic retrieval account changed');}await strategy.raw(actor);return true;}});
+        return json(200,await defiantEvidenceRequest({service,user,route,method:req.method,url,body}));
       }
       if(route.startsWith("/api/studio/defiant-data/")) {
         if(trustedTestMode||!defiantDatasetProvider)throw fail(404,"Defiant data is not configured");
