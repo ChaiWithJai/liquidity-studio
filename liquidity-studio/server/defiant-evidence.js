@@ -106,7 +106,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if(resource==='coverage')return discoverServedEvidenceCoverage(data,{query,fromMonth,toMonth,offset,limit});
       if (resource === 'manifest') return structuredClone({...base, counts: {...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
       if (resource === 'store-coverage') {
-        const products=data.storePeriodCoverage||[];
+        const products=(data.storePeriodCoverage||[]).map(product=>({...product,settlementMaturityComparability:'not-established',limitation:product.limitation+' Settlement maturity comparability has not been established; legacy settlementMaturityComparable:false does not demonstrate unequal maturity.'}));
         if(storeCoverageId!==undefined){const product=products.find(p=>p.id===storeCoverageId);if(!product)throw fail(404,'Store coverage unavailable');return structuredClone({...base,product});}
         return structuredClone({...base,items:products.slice(offset,offset+limit),total:products.length,nextOffset:offset+limit<products.length?offset+limit:null});
       }
@@ -171,7 +171,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       }
       if (resource === 'comparisons' || resource === 'explain-change') {
         const rows = data.comparisons || [];
-        const summary = ({groups, ...row}) => ({...row, groupCount:groups.length});
+        const summary = ({groups, ...row}) => ({...row, groupCount:groups.length,arithmeticReconciliation:{status:'checked',basis:'curated-group-sums-equal-supplied-period-totals',exclusions:['complete-source-cell-recomputation','usage-rate-adjustment-explanation','provider-completeness','settlement-maturity-comparability','causal-attribution']}});
         const limitation = 'Arithmetic contribution only, not causal attribution or opportunity scoring. grossDecrease is a positive magnitude; delta = offsetIncrease - grossDecrease. Period verification is a producer assertion. Example logical record references are not complete selections or loaded source cells; full group receipt drilldown is unavailable.';
         if (resource === 'comparisons') return structuredClone({...base, items:rows.slice(offset,offset+limit).map(summary), total:rows.length, nextOffset:offset+limit<rows.length?offset+limit:null, limitation});
         const row = rows.find(v=>v.id===comparisonId);

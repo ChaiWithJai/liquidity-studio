@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {normalizeComparisons} from './defiant-evidence-products.js';
 import {normalizeStorePeriodCoverage} from './defiant-store-period-coverage.js';
 import {createDefiantEvidenceService} from './defiant-evidence.js';
 import {defiantEvidenceRequest} from './defiant-evidence-http.js';
@@ -13,7 +15,7 @@ test('observed zero is retained; absent observation is null; matched pairs exclu
  const service=make(),{revision}=await service.read('owner');const result=await service.read('owner',{resource:'store-coverage',revision,storeCoverageId:'coverage_one'}),p=result.product;
  assert.equal(p.observations[1].amount,'0');assert.equal(p.observations[1].observation,'observed');assert.equal(p.observations[3].amount,null);assert.equal(p.observations[3].observation,'absent-in-supplied-grouping');
  assert.equal(p.observations[0].postingWindow.scope,'source-file');assert.equal(p.observations[3].postingWindow.scope,'source-file');assert.equal(p.observations[3].observation,'absent-in-supplied-grouping');assert.match(p.limitation,/whole source file, not this store/);
- assert.equal(p.allPeriod.delta,'-5');assert.deepEqual(p.mutuallyObserved.pairs,[{beforeMonth:'2024-01',afterMonth:'2025-01'}]);assert.equal(p.mutuallyObserved.delta,'-5');assert.equal(p.expectedDelivery,'unknown');assert.equal(p.settlementMaturityComparable,false);
+ assert.equal(p.allPeriod.delta,'-5');assert.deepEqual(p.mutuallyObserved.pairs,[{beforeMonth:'2024-01',afterMonth:'2025-01'}]);assert.equal(p.mutuallyObserved.delta,'-5');assert.equal(p.expectedDelivery,'unknown');assert.equal(p.settlementMaturityComparable,false);assert.equal(p.settlementMaturityComparability,'not-established');assert.match(p.limitation,/does not demonstrate unequal maturity/);const listed=await service.read('owner',{resource:'store-coverage',revision});assert.deepEqual(listed.items[0],p);
  const june=await service.read('owner',{resource:'june-review',revision,selectionId:'june'});assert.equal(june.storeCoverage[0].observation.amount,null);assert.equal(june.storeCoverage[0].followUp.revision,revision);assert.equal(june.commercialReadiness.readiness,'not-ready');
 });
 test('invalid coverage does not promote mismatched sources or malformed observation semantics',async()=>{
@@ -79,4 +81,17 @@ test('decision receipt follow-up separates availability from callable request wi
  const evidence=packet.decisionCard.evidence.find(e=>e.followUp.resource==='selection-receipts');assert.equal(evidence.available,true);assert.equal('available' in evidence.followUp,false);
  const receipts=await service.read('owner',evidence.followUp);assert.equal(receipts.receipts[0].record,2);assert.equal(receipts.receipts[0].sourceHash,hashes[3]);assert.deepEqual(calls[0].sourceRecords,[2]);assert.equal(calls[0].revision,revision);
  const without=make(),withoutRevision=(await without.read('owner')).revision;const unavailable=(await without.read('owner',{resource:'june-review',revision:withoutRevision,selectionId:'june'})).decisionCard.evidence.find(e=>e.followUp.resource==='selection-receipts');assert.equal(unavailable.available,false);await assert.rejects(without.read('owner',unavailable.followUp),{status:503});
+});
+
+test('response qualifications preserve the legacy normalized revision with present products',async()=>{
+ const d=snapshot();
+ const months=d.months.map(m=>({receiptIds:[],month:m.month,currency:m.currency,amount:m.amount,metric:m.metric,sourceHash:m.sourceHash}));
+ const comparisons=normalizeComparisons(d.comparisons,months);
+ const coverage=normalizeStorePeriodCoverage(d.storePeriodCoverage,comparisons);
+ const legacy={schemaVersion:1,organizationId:d.organizationId,coverage:d.coverage,months,receipts:[],selections:d.selections,storePeriodCoverage:coverage,comparisons};
+ assert.equal(Object.hasOwn(coverage[0],'settlementMaturityComparability'),false);
+ assert.equal(Object.hasOwn(comparisons[0],'arithmeticReconciliation'),false);
+ const expected=createHash('sha256').update(JSON.stringify(legacy)).digest('hex');
+ const service=make(),manifest=await service.read('owner');assert.equal(manifest.revision,expected);
+ for(const request of [{resource:'store-coverage',revision:expected},{resource:'comparisons',revision:expected},{resource:'explain-change',comparisonId:'stores',revision:expected}])assert.equal((await service.read('owner',request)).revision,expected);
 });
