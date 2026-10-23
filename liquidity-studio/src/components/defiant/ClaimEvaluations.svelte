@@ -1,7 +1,7 @@
 <script>
  import {onDestroy} from 'svelte';
  let {request}=$props();
- let open=$state(false),busy=$state(false),error=$state(''),cases=$state([]),items=$state([]),selected=$state(''),available=$state(false),detail=$state(null),pending=$state(null);
+ let open=$state(false),busy=$state(false),error=$state(''),cases=$state([]),items=$state([]),selected=$state(''),available=$state(false),attemptConsumed=$state(null),detail=$state(null),pending=$state(null);
  let alive=true,sequence=0,controller=null;
  const validationStages=['content-type','length','body','chunk','utf8','json','model','answers','support','booleans','usage','routing','cost'];
  function validationStage(outcome){const value=outcome?.responseValidation;return value&&Object.keys(value).length===2&&value.schemaVersion===1&&validationStages.includes(value.stage)?value.stage:null;}
@@ -10,10 +10,10 @@
  async function perform(task,execution=false){
   if(busy)return;const ticket=++sequence;controller=new AbortController();busy=true;error='';
   try{const value=await task(controller.signal);if(!alive||ticket!==sequence)return null;return value;}
-  catch(e){if(alive&&ticket===sequence){if(e.status===401||e.status===403){cases=[];items=[];detail=null;available=false;}error=execution&&(!e.status||e.status===408||e.status>=500)?'The outcome may be uncertain. Recover using the same request key. An existing reservation is never executed again.':e.status===404?'Hosted evaluation is not configured for this organization.':e.status===403||e.status===401?'Current Studio access is required.':e.status===409?'This request or the single-attempt capacity is no longer available. Reopen saved results.':'Evaluation is unavailable. No automatic retry was made.';}return null;}
+  catch(e){if(alive&&ticket===sequence){if(e.status===401||e.status===403){cases=[];items=[];detail=null;available=false;attemptConsumed=null;}error=execution&&(!e.status||e.status===408||e.status>=500)?'The outcome may be uncertain. Recover using the same request key. An existing reservation is never executed again.':e.status===404?'Hosted evaluation is not configured for this organization.':e.status===403||e.status===401?'Current Studio access is required.':e.status===409?'This request or the single-attempt capacity is no longer available. Reopen saved results.':'Evaluation is unavailable. No automatic retry was made.';}return null;}
   finally{if(alive&&ticket===sequence)busy=false;}
  }
- async function refresh(){const result=await perform(async signal=>({discovery:await request('/evaluations/cases',{signal}),saved:await request('/evaluations',{signal})}));if(result){cases=result.discovery.cases;available=result.discovery.executionAvailable;items=result.saved.items;if(!selected)selected=cases[0]?.caseId||'';}}
+ async function refresh(){available=false;attemptConsumed=null;const result=await perform(async signal=>({discovery:await request('/evaluations/cases',{signal}),saved:await request('/evaluations',{signal})}));if(result){cases=result.discovery.cases;available=result.discovery.executionAvailable===true;items=result.saved.items;attemptConsumed=typeof result.saved.attemptConsumed==='boolean'?result.saved.attemptConsumed:null;if(!selected)selected=cases[0]?.caseId||'';}}
  async function reveal(){open=!open;if(open)await refresh();}
  async function submit(){if(!pending){if(!selected)return;pending={caseId:selected,idempotencyKey:crypto.randomUUID()};}const body=JSON.stringify(pending);const result=await perform(signal=>request('/evaluations',{method:'POST',body,signal}),true);if(result){detail=result;await refresh();}}
  async function show(recordId){const result=await perform(signal=>request('/evaluations/'+recordId,{signal}));if(result)detail=result;}
@@ -27,7 +27,9 @@
    <label>Configured case<select bind:value={selected} disabled={busy||!!pending}>{#each cases as item (item.caseId)}<option value={item.caseId}>{item.caseId} · {item.origin}</option>{/each}</select></label>
    {#if selectedCase}<p>{selectedCase.claim}</p><p>Origin: {selectedCase.origin} · Evidence revision <code>{selectedCase.evidenceRevision}</code></p>{/if}
    {#if !available}<p>Evaluation credentials are unavailable. No provider request will be sent.</p>{/if}
-   <button onclick={submit} disabled={busy||!available||!selected||(!pending&&items.length>0)}>{pending?'Recover the same evaluation attempt':'Run one hosted evaluation'}</button>
+   <button onclick={submit} disabled={busy||!available||!selected||(!pending&&attemptConsumed!==false)}>{pending?'Recover the same evaluation attempt':'Run one hosted evaluation'}</button>
+   {#if available&&attemptConsumed===null}<p>The configured experiment’s attempt availability could not be verified. Refresh before starting a new evaluation.</p>{/if}
+   {#if attemptConsumed===true&&!pending}<p>The configured experiment has already consumed its attempt. Saved results remain available.</p>{/if}
    {#if pending}<p>The request is fixed to case {pending.caseId}. Recovery reuses the same request key. An existing reservation is never executed again.</p>{/if}
   {/if}
   <ul>{#each items as item (item.recordId)}<li><button onclick={()=>show(item.recordId)} disabled={busy}>Reopen {item.caseId} · {item.createdAt}</button></li>{/each}</ul>
