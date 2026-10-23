@@ -5,7 +5,8 @@ export async function defiantEvidenceRequest({service,user,route,method,url,body
  const match=/^\/api\/studio\/defiant-evidence\/([A-Za-z0-9_-]{1,128})\/([a-z-]+)$/.exec(route);
  if(!match||!resources.has(match[2]))throw fail(404,'Unknown evidence resource');
  if(method==='POST'){
-  if(match[2]!=='retained-sources'||url.search||!body||Array.isArray(body)||body.mode!=='semantic'||Object.keys(body).some(k=>!['revision','query','idempotencyKey','mode','sourceId','format','kind','sourceHash','fromMonth','toMonth','periodPresence'].includes(k))||Buffer.byteLength(JSON.stringify(body))>4096)throw fail(400,'Invalid explicit semantic request');
+  if(match[2]!=='retained-sources')throw fail(405,'Evidence is read-only');
+  if(url.search||!body||Array.isArray(body)||body.mode!=='semantic'||Object.keys(body).some(k=>!['revision','query','idempotencyKey','mode','sourceId','format','kind','sourceHash','fromMonth','toMonth','periodPresence'].includes(k))||Buffer.byteLength(JSON.stringify(body))>4096)throw fail(400,'Invalid explicit semantic request');
   const result=await service.read(user,{...body,resource:'retained-sources'});if(result?.scope?.organizationId!==match[1])throw fail(403,'Evidence scope mismatch');return result;
  }
  if(method!=='GET')throw fail(405,'Evidence is read-only');

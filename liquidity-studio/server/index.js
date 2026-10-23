@@ -881,8 +881,14 @@ export function createHttpServer(
         let binding;
         try{binding=await defiantEvidenceProvider({organizationId,actor:user});}catch{throw fail(503,"Evidence provider unavailable");}
         if(!binding||typeof binding.loadSnapshot!=='function')throw fail(404,"Evidence unavailable for this organization");
+        let evidenceActor=user;
+        if(binding.loadSemanticIndex&&!delegated&&(body?.mode==='semantic'||url.searchParams.get('mode')==='semantic-page')){
+          if(identity.mode!=='google')throw fail(403,'Semantic retrieval requires maintained identity');
+          evidenceActor=await identity.authenticateLocalEvidenceApproval(bearer);
+          if(evidenceActor.id!==user.id)throw fail(403,'Semantic retrieval account changed');
+        }
         const service=createDefiantEvidenceService({organizationId,loadSnapshot:binding.loadSnapshot,loadSourceRecords:binding.loadSourceRecords,loadWorksheetCells:binding.loadWorksheetCells,loadSemanticIndex:binding.loadSemanticIndex,semanticDependencies:binding.loadSemanticIndex?semanticDependencies(organizationId):undefined,authorize:async actor=>{if(delegated)await localEvidence.authorize(bearer,organizationId);else if(binding.loadSemanticIndex&&(body?.mode==='semantic'||url.searchParams.get('mode')==='semantic-page')){if(identity.mode!=='google')throw fail(403,'Semantic retrieval requires maintained identity');const current=await identity.authenticateLocalEvidenceApproval(token(req,identity.mode));if(current.id!==actor.id||current.uid!==actor.uid)throw fail(403,'Semantic retrieval account changed');}await strategy.raw(actor);return true;}});
-        return json(200,await defiantEvidenceRequest({service,user,route,method:req.method,url,body}));
+        return json(200,await defiantEvidenceRequest({service,user:evidenceActor,route,method:req.method,url,body}));
       }
       if(route.startsWith("/api/studio/defiant-data/")) {
         if(trustedTestMode||!defiantDatasetProvider)throw fail(404,"Defiant data is not configured");
