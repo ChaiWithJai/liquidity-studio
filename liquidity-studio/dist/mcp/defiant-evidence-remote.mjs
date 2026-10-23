@@ -43321,10 +43321,23 @@ function cookieProof(header, transactionId) {
 function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor, authorizeDelegate, engineFactory, now = () => Date.now() } = {}) {
   const configured = oauthClientConfiguration(clients);
   if (typeof store?.get !== "function" || typeof store?.update !== "function" || [inspectClient, approveActor, authorizeDelegate, engineFactory].some((v) => typeof v !== "function")) throw TypeError("OAuth authority, client verifier and engine required");
+  const plainFamily = (g) => g && typeof g === "object" && !Array.isArray(g);
+  const accessEntries = (g) => {
+    if (!plainFamily(g) || g.accessHash !== null && (typeof g.accessHash !== "string" || !/^[a-f0-9]{64}$/.test(g.accessHash))) throw error46(503, "temporarily_unavailable");
+    const prior = g.accessTokens === void 0 ? [] : g.accessTokens;
+    if (!Array.isArray(prior) || prior.length > 63 || !Number.isSafeInteger(g.expiresAt) || !Number.isSafeInteger(g.accessExpiresAt) || g.accessExpiresAt < 1 || g.accessExpiresAt > Math.min(g.expiresAt, now() + FIVE)) throw error46(503, "temporarily_unavailable");
+    const entries = [...g.accessHash ? [{ hash: g.accessHash, expiresAt: g.accessExpiresAt }] : [], ...prior];
+    if (entries.some((a) => !exact(a, ["hash", "expiresAt"]) || typeof a.hash !== "string" || !/^[a-f0-9]{64}$/.test(a.hash) || !Number.isSafeInteger(a.expiresAt) || a.expiresAt < 1 || a.expiresAt > g.expiresAt || a.expiresAt > g.accessExpiresAt) || new Set(entries.map((a) => a.hash)).size !== entries.length) throw error46(503, "temporarily_unavailable");
+    return entries.filter((a) => a.expiresAt > now());
+  };
+  const matchesAccess = (g, digest) => accessEntries(g).some((a) => equal(a.hash, digest));
   const state = (old) => {
     const s = old || { version: 1, transactions: [], families: [], tombstones: [], rates: { window: 0, authorize: 0, token: 0, revoke: 0 } };
     if (s.version !== 1 || !Array.isArray(s.transactions) || s.transactions.length > 128 || !Array.isArray(s.families) || s.families.length > 64 || !Array.isArray(s.tombstones) || s.tombstones.length > 4096) throw error46(503, "temporarily_unavailable");
-    return { ...s, transactions: s.transactions.filter((t) => t.expiresAt > now()), families: s.families.filter((g) => g.expiresAt > now()), tombstones: s.tombstones.filter((t) => t.expiresAt > now()) };
+    return { ...s, transactions: s.transactions.filter((t) => t.expiresAt > now()), families: s.families.map((g) => {
+      accessEntries(g);
+      return { ...g, accessTokens: (g.accessTokens || []).filter((a) => a.expiresAt > now()) };
+    }).filter((g) => g.expiresAt > now()), tombstones: s.tombstones.filter((t) => t.expiresAt > now()) };
   };
   const write = (fn) => store.update(KEY, (old) => fn(state(old)));
   const rate = (s, kind) => {
@@ -43430,13 +43443,14 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
           accepted = false;
           const g = s.families.find((g2) => g2.id === context.familyId);
           if (!g || g.revoked || g.clientId !== context.clientId || !equal(g.refreshHash, context.refreshHash)) return s;
+          if (accessEntries(g).length >= 64) throw error46(429, "temporarily_unavailable");
           if (s.tombstones.length >= 4096) throw error46(503, "temporarily_unavailable");
           const window = Math.floor(now() / 6e4);
           const count = g.refreshWindow === window ? g.refreshCount || 0 : 0;
           if (count >= 10) throw error46(429, "temporarily_unavailable");
           accepted = true;
           context.claim = random();
-          return { ...s, tombstones: [...s.tombstones, { hash: g.refreshHash, familyId: g.id, expiresAt: g.expiresAt }], families: s.families.map((x) => x.id === g.id ? { ...x, accessHash: null, refreshHash: null, claim: context.claim, refreshWindow: window, refreshCount: count + 1 } : x) };
+          return { ...s, tombstones: [...s.tombstones, { hash: g.refreshHash, familyId: g.id, expiresAt: g.expiresAt }], families: s.families.map((x) => x.id === g.id ? { ...x, refreshHash: null, claim: context.claim, refreshWindow: window, refreshCount: count + 1 } : x) };
         });
         return accepted;
       },
@@ -43446,15 +43460,19 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         if (!Number.isSafeInteger(absolute) || absolute <= now()) throw error46(400, "invalid_grant");
         const accessExpiry = Math.min(now() + FIVE, absolute), familyId = context.familyId || randomBytes(16).toString("hex");
         await write((s) => {
+          let retained = [];
           if (context.familyId) {
             const g = s.families.find((g2) => g2.id === familyId);
             if (!g || g.revoked || g.claim !== context.claim || g.expiresAt !== absolute || g.clientId !== c.id) throw error46(400, "invalid_grant");
+            retained = accessEntries(g);
+            if (retained.length >= 64) throw error46(429, "temporarily_unavailable");
+            if (retained.some((a) => a.expiresAt > accessExpiry)) throw error46(503, "temporarily_unavailable");
           } else {
             const t = s.transactions.find((t2) => t2.id === context.codeId);
             if (!t?.codeConsumed || t.status !== "code-issued" || t.grantId || !equal(t.codeHash, context.codeHash)) throw error46(400, "invalid_grant");
             if (s.families.length >= 64) throw error46(503, "temporarily_unavailable");
           }
-          const grant = { id: familyId, userId: user.userId, uid: user.uid, organizationId: user.organizationId, approvedAt: user.approvedAt, expiresAt: absolute, accessExpiresAt: accessExpiry, clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, scope: EVIDENCE_SCOPE, accessHash: hash6(token.accessToken), refreshHash: hash6(token.refreshToken), revoked: false };
+          const grant = { id: familyId, userId: user.userId, uid: user.uid, organizationId: user.organizationId, approvedAt: user.approvedAt, expiresAt: absolute, accessExpiresAt: accessExpiry, clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, scope: EVIDENCE_SCOPE, accessHash: hash6(token.accessToken), accessTokens: retained, refreshHash: hash6(token.refreshToken), revoked: false };
           return { ...s, transactions: s.transactions.map((t) => t.id === context.codeId ? { ...t, grantId: familyId } : t), families: context.familyId ? s.families.map((g) => g.id === familyId ? { ...g, ...grant, claim: null } : g) : [...s.families, grant] };
         });
         return { ...token, accessTokenExpiresAt: new Date(accessExpiry), refreshTokenExpiresAt: new Date(absolute), scope: [EVIDENCE_SCOPE], client: c, user };
@@ -43539,24 +43557,32 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
       const c = await client(input.client_id);
       if (input.grant_type === "authorization_code" && input.redirect_uri !== c.redirectUris[0]) reject();
       const context = { clientId: c.id }, engine = await engineFactory(tokenModel(context));
-      return engine.token(input);
+      try {
+        return await engine.token(input);
+      } catch (failure2) {
+        if (context.claim) await write((s) => ({ ...s, families: s.families.map((g) => g.id === context.familyId && g.claim === context.claim ? { ...g, revoked: true, claim: null } : g) })).catch(() => {
+        });
+        throw failure2;
+      }
     },
     async verifyAccessToken(supplied) {
       if (!secret(supplied)) throw error46(401, "invalid_token");
-      let g = state(await store.get(KEY)).families.find((g2) => !g2.revoked && equal(g2.accessHash, hash6(supplied)));
-      if (!g || g.accessExpiresAt <= now() || g.expiresAt <= now() || g.resource !== EVIDENCE_RESOURCE || !configured.some((c) => c.clientId === g.clientId)) throw error46(401, "invalid_token");
+      const digest = hash6(supplied);
+      let g = state(await store.get(KEY)).families.find((g2) => !g2.revoked && matchesAccess(g2, digest));
+      if (!g || g.expiresAt <= now() || g.resource !== EVIDENCE_RESOURCE || !configured.some((c) => c.clientId === g.clientId)) throw error46(401, "invalid_token");
       if (g.scope !== EVIDENCE_SCOPE) throw error46(403, "insufficient_scope");
       await authority(g);
-      const latest = state(await store.get(KEY)).families.find((x) => x.id === g.id && !x.revoked && equal(x.accessHash, hash6(supplied)) && x.accessExpiresAt > now());
-      if (!latest || latest.resource !== EVIDENCE_RESOURCE || latest.clientId !== g.clientId || latest.organizationId !== g.organizationId || latest.userId !== g.userId || latest.uid !== g.uid) throw error46(401, "invalid_token");
-      return { ...latest };
+      const latest = state(await store.get(KEY)).families.find((x) => x.id === g.id && !x.revoked);
+      const issued = latest && accessEntries(latest).find((a) => equal(a.hash, digest));
+      if (!latest || !issued || latest.resource !== EVIDENCE_RESOURCE || latest.clientId !== g.clientId || latest.organizationId !== g.organizationId || latest.userId !== g.userId || latest.uid !== g.uid) throw error46(401, "invalid_token");
+      return { ...latest, accessExpiresAt: issued.expiresAt };
     },
     async revokePublic({ token, client_id }) {
       await write((s) => {
         s = rate(s, "revoke");
         const c = configured.find((c2) => c2.clientId === client_id);
         if (!c || !secret(token)) return s;
-        const digest = hash6(token), g = s.families.find((g2) => g2.clientId === c.clientId && g2.resource === EVIDENCE_RESOURCE && (equal(g2.accessHash, digest) || equal(g2.refreshHash, digest) || s.tombstones.some((t) => t.familyId === g2.id && equal(t.hash, digest))));
+        const digest = hash6(token), g = s.families.find((g2) => g2.clientId === c.clientId && g2.resource === EVIDENCE_RESOURCE && (matchesAccess(g2, digest) || equal(g2.refreshHash, digest) || s.tombstones.some((t) => t.familyId === g2.id && equal(t.hash, digest))));
         if (!g) return s;
         return { ...s, families: s.families.map((x) => x.id === g.id ? { ...x, revoked: true } : x) };
       });
