@@ -28351,6 +28351,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
       observe(onOutcome, Object.freeze({ event: "defiant_evidence_tool_outcome", tool: name, outcome, status, stage }));
     }
   });
+  register2("defiant_selection_reconciliation", "Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/) }, "selection-reconciliation");
   register2("defiant_search_retained_sources", "Search retained source and archive-member metadata within the registered intake scope. Explicit filename sales/reporting periods only; no semantic ranking or provider completeness claim.", {
     revision: revision.optional(),
     query: external_exports.string().max(200).refine((v) => !/[\u0000-\u001f\u007f]/.test(v)).optional(),
@@ -28446,7 +28447,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
 // server/defiant-evidence-bridge.js
 var origin = EVIDENCE_ORIGIN;
 var fail2 = (status = 503) => Object.assign(new Error("Private evidence unavailable"), { status });
-var resources = /* @__PURE__ */ new Set(["retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"]);
+var resources = /* @__PURE__ */ new Set(["selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"]);
 var fields = /* @__PURE__ */ new Set(["revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash"]);
 async function createPrivateEvidenceBridge({ configurationPath, fetchImpl = fetch, now = () => Date.now() } = {}) {
   const authClient = await createEvidenceClientAuth({ configurationPath, fetchImpl, now });
