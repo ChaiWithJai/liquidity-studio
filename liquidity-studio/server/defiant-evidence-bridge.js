@@ -3,7 +3,7 @@ import {McpServer} from '@modelcontextprotocol/server';
 import {registerDefiantEvidenceTools} from './defiant-evidence-mcp.js';
 const origin=EVIDENCE_ORIGIN;
 const fail=(status=503)=>Object.assign(new Error('Private evidence unavailable'),{status});
-const resources=new Set(['retained-sources','store-coverage','coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
+const resources=new Set(['selection-reconciliation','retained-sources','store-coverage','coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
 const fields=new Set(['revision','month','currency','receiptId','selectionId','identityGroupId','comparisonId','audienceId','groupId','referenceIndex','offset','limit','query','fromMonth','toMonth','storeCoverageId','sourceId','format','kind','sourceHash']);
 /** Scoped local grant only: no Firebase bearer or ADC fallback. */
 export async function createPrivateEvidenceBridge({configurationPath,fetchImpl=fetch,now=()=>Date.now()}={}){
