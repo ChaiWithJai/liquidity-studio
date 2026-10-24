@@ -1,7 +1,7 @@
 <script>
  import {onDestroy} from 'svelte';
  let {request}=$props();
- let open=$state(false),busy=$state(false),error=$state(''),cases=$state([]),items=$state([]),selected=$state(''),available=$state(false),attemptConsumed=$state(null),detail=$state(null),pending=$state(null);
+ let open=$state(false),busy=$state(false),error=$state(''),cases=$state([]),items=$state([]),selected=$state(''),available=$state(false),semanticsUnavailable=$state(false),attemptConsumed=$state(null),detail=$state(null),pending=$state(null);
  let alive=true,sequence=0,controller=null;
  const validationStages=['content-type','length','body','chunk','utf8','json','model','answers','support','support-object', 'support-type', 'support-choice', 'support-labels', 'support-probability', 'support-sum','booleans','usage','routing','cost'];
  function validationStage(outcome){const value=outcome?.responseValidation;return value&&Object.keys(value).length===2&&value.schemaVersion===1&&validationStages.includes(value.stage)?value.stage:null;}
@@ -10,10 +10,10 @@
  async function perform(task,execution=false){
   if(busy)return;const ticket=++sequence;controller=new AbortController();busy=true;error='';
   try{const value=await task(controller.signal);if(!alive||ticket!==sequence)return null;return value;}
-  catch(e){if(alive&&ticket===sequence){if(e.status===401||e.status===403){cases=[];items=[];detail=null;available=false;attemptConsumed=null;}error=execution&&(!e.status||e.status===408||e.status>=500)?'The outcome may be uncertain. Recover using the same request key. An existing reservation is never executed again.':e.status===404?'Hosted evaluation is not configured for this organization.':e.status===403||e.status===401?'Current Studio access is required.':e.status===409?'This request or the single-attempt capacity is no longer available. Reopen saved results.':'Evaluation is unavailable. No automatic retry was made.';}return null;}
+  catch(e){if(alive&&ticket===sequence){if(e.status===401||e.status===403){cases=[];items=[];detail=null;available=false;semanticsUnavailable=false;attemptConsumed=null;}error=execution&&(!e.status||e.status===408||e.status>=500)?'The outcome may be uncertain. Recover using the same request key. An existing reservation is never executed again.':e.status===404?'Hosted evaluation is not configured for this organization.':e.status===403||e.status===401?'Current Studio access is required.':e.status===409?'This request or the single-attempt capacity is no longer available. Reopen saved results.':'Evaluation is unavailable. No automatic retry was made.';}return null;}
   finally{if(alive&&ticket===sequence)busy=false;}
  }
- async function refresh(){available=false;attemptConsumed=null;const result=await perform(async signal=>({discovery:await request('/evaluations/cases',{signal}),saved:await request('/evaluations',{signal})}));if(result){cases=result.discovery.cases;available=result.discovery.executionAvailable===true;items=result.saved.items;attemptConsumed=typeof result.saved.attemptConsumed==='boolean'?result.saved.attemptConsumed:null;if(!selected)selected=cases[0]?.caseId||'';}}
+ async function refresh(){available=false;semanticsUnavailable=false;attemptConsumed=null;const result=await perform(async signal=>({discovery:await request('/evaluations/cases',{signal}),saved:await request('/evaluations',{signal})}));if(result){cases=result.discovery.cases;available=result.discovery.executionAvailable===true;semanticsUnavailable=result.discovery.executionUnavailableReason==='ambiguous-evidence-semantics';items=result.saved.items;attemptConsumed=typeof result.saved.attemptConsumed==='boolean'?result.saved.attemptConsumed:null;if(!selected)selected=cases[0]?.caseId||'';}}
  async function reveal(){open=!open;if(open)await refresh();}
  async function submit(){if(!pending){if(!selected)return;pending={caseId:selected,idempotencyKey:crypto.randomUUID()};}const body=JSON.stringify(pending);const result=await perform(signal=>request('/evaluations',{method:'POST',body,signal}),true);if(result){detail=result;await refresh();}}
  async function show(recordId){const result=await perform(signal=>request('/evaluations/'+recordId,{signal}));if(result)detail=result;}
@@ -26,8 +26,8 @@
   {#if cases.length}
    <label>Configured case<select bind:value={selected} disabled={busy||!!pending}>{#each cases as item (item.caseId)}<option value={item.caseId}>{item.caseId} · {item.origin}</option>{/each}</select></label>
    {#if selectedCase}<p>{selectedCase.claim}</p><p>Origin: {selectedCase.origin} · Evidence revision <code>{selectedCase.evidenceRevision}</code></p>{/if}
-   {#if !available}<p>Evaluation credentials are unavailable. No provider request will be sent.</p>{/if}
-   <button onclick={submit} disabled={busy||!available||!selected||(!pending&&attemptConsumed!==false)}>{pending?'Recover the same evaluation attempt':'Run one hosted evaluation'}</button>
+   {#if semanticsUnavailable}<p>New evaluation is unavailable because the configured evidence uses ambiguous legacy comparability semantics. Saved results remain available.</p>{:else if !available}<p>Evaluation credentials are unavailable. No provider request will be sent.</p>{/if}
+   <button onclick={submit} disabled={busy||(!available&&!(pending&&semanticsUnavailable))||!selected||(!pending&&attemptConsumed!==false)}>{pending?'Recover the same evaluation attempt':'Run one hosted evaluation'}</button>
    {#if available&&attemptConsumed===null}<p>The configured experiment’s attempt availability could not be verified. Refresh before starting a new evaluation.</p>{/if}
    {#if attemptConsumed===true&&!pending}<p>The configured experiment has already consumed its attempt. Saved results remain available.</p>{/if}
    {#if pending}<p>The request is fixed to case {pending.caseId}. Recovery reuses the same request key. An existing reservation is never executed again.</p>{/if}
@@ -55,6 +55,7 @@
       {@const history=value.historicalProvenance}
       <section aria-label="Historical evidence provenance">
        <h4>Historical evidence provenance</h4>
+       {#if history.projection.version==='historical-store-period-comparability-v1'}<p>This observation used legacy comparability semantics. A false comparable flag did not distinguish unestablished comparability from established non-comparability. The recorded model result is unchanged.</p>{:else if history.projection.version==='historical-store-period-comparability-v2'}<p>Evidence comparability status: not-established. Interpretation: settlement-comparability-status-v1. This is evidence context, separate from the model support decision.</p>{/if}
        <p>This evaluation uses the pinned historical answer and evidence, not the current snapshot.</p>
        <dl>
         <dt>Answer SHA256</dt><dd><code>{history.answer.sha256}</code> · {history.answer.bytes} bytes</dd>

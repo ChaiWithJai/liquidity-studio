@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {createClaimEvaluation} from './defiant-jev-evaluation.js';
-import {checkedHistoricalComparabilityProvenance,HISTORICAL_COMPARABILITY_VERSION} from './defiant-jev-historical-case-pack.js';
+import {checkedHistoricalComparabilityProvenance,HISTORICAL_COMPARABILITY_VERSION,EXPLICIT_COMPARABILITY_VERSION} from './defiant-jev-historical-case-pack.js';
 const sha=v=>createHash('sha256').update(v).digest('hex');
 const fail=(status,message)=>Object.assign(new Error(message),{status});
 const id=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,128}(?![\s\S])/.test(v);
@@ -12,8 +12,9 @@ const VERSION='earnings-claim-exact-v1';
 /** No HTTP mount here. Account experiment identity must be constructor-owned and shared across replicas. */
 export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,pack,adapter,accountExperimentId,evaluatorConfigSha256,deterministicVersion=VERSION,now=()=>new Date().toISOString()}={}){
  if(!store?.transact||!strategy?.assertCurrent||!strategy?.raw||typeof authorizeCurrent!=='function'||typeof pack?.get!=='function'||typeof pack?.resolve!=='function'||!hash(pack.sha256)||pack.organizationId!==strategy.organizationId||!id(accountExperimentId)||!hash(evaluatorConfigSha256)||!adapter?.decide||typeof now!=='function')throw TypeError('Scoped evaluation dependencies required');
- if(![VERSION,HISTORICAL_COMPARABILITY_VERSION].includes(deterministicVersion))throw TypeError('Supported evaluation version required');
- const packSha256=pack.sha256,getCase=pack.get.bind(pack),resolveCase=pack.resolve.bind(pack),decisionAdapter=Object.freeze({decide:adapter.decide.bind(adapter)});
+ if(![VERSION,HISTORICAL_COMPARABILITY_VERSION,EXPLICIT_COMPARABILITY_VERSION].includes(deterministicVersion))throw TypeError('Supported evaluation version required');
+ if(deterministicVersion===EXPLICIT_COMPARABILITY_VERSION&&typeof adapter.validateInput!=='function')throw TypeError('Explicit evaluation preflight required');
+ const packSha256=pack.sha256,getCase=pack.get.bind(pack),resolveCase=pack.resolve.bind(pack),decisionAdapter=Object.freeze({decide:adapter.decide.bind(adapter),...(typeof adapter.validateInput==='function'?{validateInput:adapter.validateInput.bind(adapter)}:{})});
  const org=strategy.organizationId,accountKey=`defiant-evaluations:v1:account:${accountExperimentId}`,indexKey=`defiant-evaluations:v1:${org}:index`;
  const recordKey=recordId=>`defiant-evaluations:v1:${org}:${recordId}`;
  function checkedIndex(index){
@@ -35,10 +36,26 @@ export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,p
   const payloadHash=sha(JSON.stringify({caseId:request.caseId,packSha256,accountExperimentId,evaluatorConfigSha256,deterministicVersion,evaluatorVersion:'defiant-claim-decisions-v1'}));
   const createdAt=now();if(!iso(createdAt))throw fail(503,'Evaluation clock unavailable');
   const keys=['identity',strategy.key,accountKey,indexKey,recordKey(recordId)];
+  async function prepare(){
+   await current(actor);const prepared=await resolveCase(actor,request.caseId);await current(actor);
+   if(deterministicVersion!==VERSION&&prepared.deterministicVersion!==deterministicVersion)throw fail(503,'Historical evaluation version unavailable');
+   const historicalProvenance=deterministicVersion!==VERSION?checkedHistoricalComparabilityProvenance(prepared.provenance):null;
+   if(historicalProvenance&&historicalProvenance.projection.version!==deterministicVersion)throw fail(503,'Historical provenance version unavailable');
+   return {prepared,historicalProvenance};
+  }
+  let preflight=null;
+  if(deterministicVersion===EXPLICIT_COMPARABILITY_VERSION){
+   // Existing requests return before object reads. This transaction may materialize null slots.
+   const existing=await store.transact(keys,values=>{const [identity,state,,,record]=values;checked(identity,state,actor);if(record&&(record.payloadHash!==payloadHash||record.actorId!==actor.id||record.actorUid!==actor.uid||record.organizationId!==org))throw fail(409,'Evaluation key already used');return values;});
+   await current(actor);if(existing[4])return result(existing[4]);
+   preflight=await prepare();decisionAdapter.validateInput({claim:preflight.prepared.state.claim,evidence:preflight.prepared.state.evidence});await current(actor);
+  }
   let acquired=false;
   const reserved=await store.transact(keys,([identity,state,budget,index,record])=>{
    checked(identity,state,actor);
    if(record){if(record.payloadHash!==payloadHash||record.actorId!==actor.id||record.actorUid!==actor.uid||record.organizationId!==org)throw fail(409,'Evaluation key already used');acquired=false;return [identity,state,budget,index,record];}
+   // Existing records above replay unchanged; only new ambiguous reservations are denied.
+   if(deterministicVersion===HISTORICAL_COMPARABILITY_VERSION)throw fail(503,'Ambiguous evaluation evidence semantics');
    getCase(request.caseId);
    budget=budget||{schemaVersion:1,accountExperimentId,maximumAttempts:1,attempts:[]};
    if(!exact(budget,['schemaVersion','accountExperimentId','maximumAttempts','attempts'])||budget.schemaVersion!==1||budget.accountExperimentId!==accountExperimentId||budget.maximumAttempts!==1||!Array.isArray(budget.attempts)||budget.attempts.length>1)throw fail(409,'Evaluation budget unavailable');
@@ -60,9 +77,7 @@ export function createDurableClaimEvaluations({store,strategy,authorizeCurrent,p
    });await current(actor);return result(values[4]);
   }
   try{
-   await current(actor);const prepared=await resolveCase(actor,request.caseId);await current(actor);
-   if(deterministicVersion===HISTORICAL_COMPARABILITY_VERSION&&prepared.deterministicVersion!==deterministicVersion)throw fail(503,'Historical evaluation version unavailable');
-   const historicalProvenance=deterministicVersion===HISTORICAL_COMPARABILITY_VERSION?checkedHistoricalComparabilityProvenance(prepared.provenance):null;
+   const {prepared,historicalProvenance}=preflight||await prepare();
    let completed;
    const evaluation=createClaimEvaluation({manifest:[prepared.ref],authorize:async ctx=>{if(ctx.organizationId!==org||ctx.actorId!==actor.id)throw fail(403,'Evaluation scope changed');await current(actor);},resolveCase:async()=>prepared.state,deterministicCheck:async()=>prepared.deterministic,deterministicVersion,adapter:decisionAdapter,createId:()=>recordId,now,persistRecord:async record=>{completed=await finish(historicalProvenance===null?record:{...record,historicalProvenance},'completed');}});
    await evaluation.evaluate({organizationId:org,actorId:actor.id},{caseId:request.caseId});

@@ -60,22 +60,28 @@ function responseResult(data, {wire=false}={}) {
   return { model: MODEL, answers, usage: clone(data.usage), reportedCostUsd: cost, modelVersion: null, modelVersionQualification: 'provider-model-alias; immutable checkpoint not supplied' };
 }
 
+const explicitSemantics='Comparability status not-established means the evidence does not establish either comparable or incomparable settlement maturity. It is not evidence of inequality. Established-incomparable requires explicit settlement evidence; source-file posting windows alone do not establish it. Assess the claim against this distinction without treating an unknown status as a negative fact.';
+const explicitQuestions=freeze({...questions,support:{...questions.support,instructions:questions.support.instructions+' '+explicitSemantics}});
+const questionsFor=version=>version==='historical-store-period-comparability-v2'?explicitQuestions:questions;
+
 export function jevEvaluationConfigurationSha256(limits, deterministicVersion = 'earnings-claim-exact-v1', trustedBindingSha256 = null) {
-  requireValue(['earnings-claim-exact-v1', 'historical-store-period-comparability-v1'].includes(deterministicVersion));
+  requireValue(['earnings-claim-exact-v1', 'historical-store-period-comparability-v1', 'historical-store-period-comparability-v2'].includes(deterministicVersion));
   requireValue(deterministicVersion === 'earnings-claim-exact-v1' ? trustedBindingSha256 === null : hash(trustedBindingSha256));
   requireValue(exact(limits,['timeoutMs','maxRequests','maxInputBytes','maxResponseBytes']));
-  return sha(JSON.stringify({endpoint:ENDPOINT,model:MODEL,questions,providerOptions:{gateway:{only:['typesafe-ai'],zeroDataRetention:true}},limits,evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion,...(trustedBindingSha256===null?{}:{trustedBindingSha256}),responseParserVersion:JEV_RESPONSE_PARSER_VERSION}));
+  return sha(JSON.stringify({endpoint:ENDPOINT,model:MODEL,questions:questionsFor(deterministicVersion),providerOptions:{gateway:{only:['typesafe-ai'],zeroDataRetention:true}},limits,evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion,...(trustedBindingSha256===null?{}:{trustedBindingSha256}),responseParserVersion:JEV_RESPONSE_PARSER_VERSION}));
 }
 
-export function createJevDecisionAdapter({ enabled = false, getCredential = () => null, fetch: fetchImpl = globalThis.fetch, timeoutMs = 15000, maxRequests = 1, maxInputBytes = 16384, maxResponseBytes = 65536 } = {}) {
+export function createJevDecisionAdapter({ deterministicVersion = 'earnings-claim-exact-v1', enabled = false, getCredential = () => null, fetch: fetchImpl = globalThis.fetch, timeoutMs = 15000, maxRequests = 1, maxInputBytes = 16384, maxResponseBytes = 65536 } = {}) {
+  requireValue(['earnings-claim-exact-v1','historical-store-period-comparability-v1','historical-store-period-comparability-v2'].includes(deterministicVersion));
   requireValue(typeof enabled === 'boolean' && typeof getCredential === 'function' && typeof fetchImpl === 'function');
   requireValue(Number.isInteger(timeoutMs) && timeoutMs >= 1 && timeoutMs <= 15000 && Number.isInteger(maxRequests) && maxRequests >= 1 && maxRequests <= 32 && Number.isInteger(maxInputBytes) && maxInputBytes >= 128 && maxInputBytes <= 16384 && Number.isInteger(maxResponseBytes) && maxResponseBytes >= 128 && maxResponseBytes <= 65536);
+  const serialize=input=>{const state=stateInput(input);const body=JSON.stringify({model:MODEL,state,questions:questionsFor(deterministicVersion),providerOptions:{gateway:{only:['typesafe-ai'],zeroDataRetention:true}}});requireValue(Buffer.byteLength(body)<=maxInputBytes);return body;};
   let reserved = 0;
-  return Object.freeze({ async decide(input) {
-    const state = stateInput(input);
+  return Object.freeze({ validateInput(input){serialize(input);}, async decide(input) {
+    // Keep legacy disabled-input validation behavior; preflight and dispatch share the exact serializer.
+    stateInput(input);
     if (!enabled) return freeze({ status: 'unavailable', reason: 'disabled' });
-    const body = JSON.stringify({ model: MODEL, state, questions, providerOptions: { gateway: { only: ['typesafe-ai'], zeroDataRetention: true } } });
-    requireValue(Buffer.byteLength(body) <= maxInputBytes);
+    const body=serialize(input);
     let key;
     try { key = getCredential(); } catch { return freeze({ status: 'unavailable', reason: 'credential-unavailable' }); }
     if (key && (typeof key === 'object' || typeof key === 'function')) Promise.resolve(key).catch(() => {});
@@ -153,7 +159,7 @@ export function createClaimEvaluation({ manifest, authorize, resolveCase, determ
     await current();
     const recordedAt = now(); requireValue(typeof recordedAt === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z(?![\s\S])/.test(recordedAt) && new Date(recordedAt).toISOString() === recordedAt);
     const recordId = createId(); requireValue(id(recordId));
-    const record = freeze({ schemaVersion: 1, evaluatorVersion: 'defiant-claim-decisions-v1', responseParserVersion:JEV_RESPONSE_PARSER_VERSION, questionsSha256: sha(JSON.stringify(questions)), deterministicVersion, recordId, organizationId, actorId, recordedAt, case: clone(ref), claimSha256: sha(state.claim), evidenceSha256: sha(state.evidence), deterministic, outcome: finiteOutcome(outcome), assessmentOrigin: 'automated-evaluation', humanLabel: null, qualification: 'Typed model observation only; no whole-answer accuracy, independent human label or causal validation.' });
+    const record = freeze({ schemaVersion: 1, evaluatorVersion: 'defiant-claim-decisions-v1', responseParserVersion:JEV_RESPONSE_PARSER_VERSION, questionsSha256: sha(JSON.stringify(questionsFor(deterministicVersion))), deterministicVersion, recordId, organizationId, actorId, recordedAt, case: clone(ref), claimSha256: sha(state.claim), evidenceSha256: sha(state.evidence), deterministic, outcome: finiteOutcome(outcome), assessmentOrigin: 'automated-evaluation', humanLabel: null, qualification: 'Typed model observation only; no whole-answer accuracy, independent human label or causal validation.' });
     await persistRecord(record, operationContext);
     await current();
     return record;

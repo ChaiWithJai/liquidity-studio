@@ -29,15 +29,16 @@ export async function configuredHistoricalJevProvider({configuration,environment
  const unavailable=async()=>{throw invalid();};
  const metadata=createPinnedHistoricalComparabilityCasePack({...options,loadAnswer:unavailable,loadHistoricalSnapshot:unavailable,loadState:unavailable,authorize:unavailable});
  if(metadata.organizationId!==config.organizationId)throw invalid();
+ const deterministicVersion=metadata.deterministicVersion;
  const key=await loadCredential(environment.STUDIO_PENPOT_MANAGED_CONFIG);
  const bindingSha256=createHash('sha256').update(canonical(config.trustedHistoricalBinding)).digest('hex');
- const evaluatorConfigSha256=jevEvaluationConfigurationSha256(LIMITS,HISTORICAL_COMPARABILITY_VERSION,bindingSha256);
+ const evaluatorConfigSha256=jevEvaluationConfigurationSha256(LIMITS,deterministicVersion,bindingSha256);
  return Object.freeze(({organizationId,store,strategy,authorizeCurrent})=>{
   if(organizationId!==config.organizationId)throw Object.assign(new Error('Evaluation unavailable for this organization'),{status:404});
   const authorize=async actor=>{const next=await authorizeCurrent(actor);if(!next||next.id!==actor.id||next.uid!==actor.uid)throw Object.assign(new Error('Evaluation authority changed'),{status:403});await strategy.raw(next);};
   const loader=name=>async descriptor=>{const pin=config.artifacts[name];if(descriptor.sha256!==pin.sha256||descriptor.bytes!==pin.bytes)throw invalid();return readPinnedObject(bucket,pin);};
   const pack=createPinnedHistoricalComparabilityCasePack({...options,loadAnswer:loader('answer'),loadHistoricalSnapshot:loader('historicalSnapshot'),loadState:loader('neutralState'),authorize});
-  const adapter=createJevDecisionAdapter({enabled:true,getCredential:()=>key,fetch:fetchImpl,...LIMITS});
-  return {cases:pack.list(),executionAvailable:!!key,service:createDurableClaimEvaluations({store,strategy,authorizeCurrent,pack,adapter,accountExperimentId:config.accountExperimentId,evaluatorConfigSha256,deterministicVersion:HISTORICAL_COMPARABILITY_VERSION})};
+  const adapter=createJevDecisionAdapter({deterministicVersion,enabled:true,getCredential:()=>key,fetch:fetchImpl,...LIMITS});
+  return {cases:pack.list(),executionAvailable:!!key&&pack.executionAvailable,executionUnavailableReason:pack.executionUnavailableReason,service:createDurableClaimEvaluations({store,strategy,authorizeCurrent,pack,adapter,accountExperimentId:config.accountExperimentId,evaluatorConfigSha256,deterministicVersion})};
  });
 }
