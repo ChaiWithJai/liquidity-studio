@@ -28318,7 +28318,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
   if (onOutcome !== void 0 && typeof onOutcome !== "function") throw new TypeError("Evidence outcome sink required");
   if (unauthorizedChallenge !== void 0 && (typeof unauthorizedChallenge !== "string" || unauthorizedChallenge.length > 1024 || /[\r\n]/.test(unauthorizedChallenge))) throw new TypeError("Invalid evidence auth challenge");
   if (boundOrganizationId !== void 0 && !/^[A-Za-z0-9_-]{1,128}$/.test(boundOrganizationId)) throw new TypeError("Invalid bound evidence organization");
-  const register2 = (name, description, shape, resource) => server.registerTool(name, {
+  const register2 = (name, description, shape, resource, fixedMode) => server.registerTool(name, {
     description,
     annotations,
     inputSchema: external_exports.object({ organizationId: boundOrganizationId === void 0 ? organizationId : organizationId.optional(), ...shape }).strict()
@@ -28335,7 +28335,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
       const binding = await resolveEvidence({ organizationId: requestedScope, context });
       if (!binding?.actor || binding.organizationId !== requestedScope || typeof binding.service?.read !== "function") throw Object.assign(new Error("Denied"), { status: 403 });
       stage = "service_read";
-      const data = await binding.service.read(binding.actor, { ...request, resource }, { onStage });
+      const data = await binding.service.read(binding.actor, { ...request, ...fixedMode === void 0 ? {} : { mode: fixedMode }, resource }, { onStage });
       stage = "response_scope";
       if (data?.scope?.organizationId !== requestedScope) throw Object.assign(new Error("Denied"), { status: 403 });
       stage = "response_serialize";
@@ -28353,7 +28353,20 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
   });
   register2("defiant_source_evidence", "Find existing served evidence references for an exact registered source hash. Follow typed links to original financial records or worksheet cells; these navigation references do not prove complete source coverage.", { revision, sourceHash: external_exports.string().regex(/^[a-f0-9]{64}(?![\s\S])/), offset: external_exports.number().int().min(0).max(24400).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "source-evidence");
   register2("defiant_selection_reconciliation", "Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/) }, "selection-reconciliation");
-  register2("defiant_search_retained_sources", "Search retained source and archive-member metadata within the registered intake scope. Keyword search by default. Explicit semantic mode invokes one capped metadata query embedding; semantic-page reuses its session. Suggestions never prove facts, identity or provider completeness.", {
+  const semanticFilters = { periodPresence: external_exports.enum(["dated", "undated"]).optional(), sourceId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/).optional(), format: external_exports.enum(["csv", "xlsx", "xls", "pdf", "png", "jpg", "zip", "tar.gz", "json", "other"]).optional(), kind: external_exports.enum(["root", "member"]).optional(), sourceHash: external_exports.string().length(64).regex(/^[a-f0-9]{64}$/).optional(), fromMonth: external_exports.string().length(7).regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(), toMonth: external_exports.string().length(7).regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional() };
+  register2("defiant_start_semantic_source_search", "Explicitly start one capped retained-source metadata query embedding. Supply current revision, a nonblank query, and a stable idempotencyKey. Omit every exact-filter field for no restrictions; do not send a nested filters object. Do not send mode, sessionId, offset or limit: the first page is always offset 0, limit 25. Use defiant_page_semantic_source_search for later pages. After an uncertain start, reuse exactly the same key and arguments; never retry with a new key. Suggestions are metadata ranking, not factual support, identity or completeness.", {
+    revision,
+    query: external_exports.string().max(200).regex(/^[^\u0000-\u001f\u007f]*$(?![\s\S])/).regex(/\S/),
+    idempotencyKey: external_exports.string().min(1).max(128).regex(/^[A-Za-z0-9_-]+$(?![\s\S])/),
+    ...semanticFilters
+  }, "retained-sources", "semantic");
+  register2("defiant_page_semantic_source_search", "Read an existing retained-source semantic session without another embedding. Supply the returned current revision and sessionId, plus offset and limit (for example 25 and 25). Do not supply mode, query, idempotencyKey or exact filters. Expired, revoked or changed sessions remain unavailable; this tool never starts a replacement search.", {
+    revision,
+    sessionId: external_exports.string().length(64).regex(/^[a-f0-9]+$/),
+    offset: external_exports.number().int().min(0).max(256),
+    limit: external_exports.number().int().min(1).max(100)
+  }, "retained-sources", "semantic-page");
+  register2("defiant_search_retained_sources", "Search retained source and archive-member metadata within the registered intake scope. Keyword search by default. Prefer defiant_start_semantic_source_search and defiant_page_semantic_source_search for explicit semantic operations; legacy mode inputs remain supported. Explicit semantic mode invokes one capped metadata query embedding; semantic-page reuses its session. Suggestions never prove facts, identity or provider completeness.", {
     mode: external_exports.enum(["keyword", "semantic", "semantic-page"]).optional(),
     sessionId: external_exports.string().length(64).regex(/^[a-f0-9]+$/).optional(),
     idempotencyKey: external_exports.string().max(128).regex(/^[A-Za-z0-9_-]+$(?![\s\S])/).optional(),
