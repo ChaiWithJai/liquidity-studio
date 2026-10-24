@@ -1,5 +1,5 @@
 import {fail} from './auth.js';
-const resources=new Set(['source-evidence','selection-reconciliation','retained-sources','store-coverage','coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
+const resources=new Set(['royalty-review','source-evidence','selection-reconciliation','retained-sources','store-coverage','coverage','manifest','earnings','receipt','selections','selection','selection-receipts','catalog-identity-review','identity-group','comparisons','explain-change','audience-readiness','audience-definition','comparison-examples','audience-cells','june-review']);
 /** Existing Studio authentication owns identity; this adapter only parses bounded reads. */
 export async function defiantEvidenceRequest({service,user,route,method,url,body}) {
  const match=/^\/api\/studio\/defiant-evidence\/([A-Za-z0-9_-]{1,128})\/([a-z-]+)$/.exec(route);

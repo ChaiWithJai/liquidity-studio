@@ -15886,24 +15886,24 @@ var $ZodObjectJIT = /* @__PURE__ */ $constructor("$ZodObjectJIT", (inst, def) =>
     }
     doc.write(`const newResult = {};`);
     for (const key of normalized.keys) {
-      const id6 = ids[key];
+      const id7 = ids[key];
       const k = esc(key);
-      doc.write(`const ${id6} = ${parseStr(key)};`);
+      doc.write(`const ${id7} = ${parseStr(key)};`);
       doc.write(`
-        if (${id6}.issues.length) {
-          payload.issues = payload.issues.concat(${id6}.issues.map(iss => ({
+        if (${id7}.issues.length) {
+          payload.issues = payload.issues.concat(${id7}.issues.map(iss => ({
             ...iss,
             path: iss.path ? [${k}, ...iss.path] : [${k}]
           })));
         }
         
         
-        if (${id6}.value === undefined) {
+        if (${id7}.value === undefined) {
           if (${k} in input) {
             newResult[${k}] = undefined;
           }
         } else {
-          newResult[${k}] = ${id6}.value;
+          newResult[${k}] = ${id7}.value;
         }
         
       `);
@@ -23823,13 +23823,13 @@ function extractDefs(ctx, schema) {
     const defsSegment = ctx.target === "draft-2020-12" ? "$defs" : "definitions";
     if (ctx.external) {
       const externalId = ctx.external.registry.get(entry[0])?.id;
-      const uriGenerator = ctx.external.uri ?? ((id7) => id7);
+      const uriGenerator = ctx.external.uri ?? ((id8) => id8);
       if (externalId) {
         return { ref: uriGenerator(externalId) };
       }
-      const id6 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
-      entry[1].defId = id6;
-      return { defId: id6, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id6}` };
+      const id7 = entry[1].defId ?? entry[1].schema.id ?? `schema${ctx.counter++}`;
+      entry[1].defId = id7;
+      return { defId: id7, ref: `${uriGenerator("__shared")}#/${defsSegment}/${id7}` };
     }
     if (entry[1] === root) {
       return { ref: "#" };
@@ -23877,8 +23877,8 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
         continue;
       }
     }
-    const id6 = ctx.metadataRegistry.get(entry[0])?.id;
-    if (id6) {
+    const id7 = ctx.metadataRegistry.get(entry[0])?.id;
+    if (id7) {
       extractToDef(entry);
       continue;
     }
@@ -23939,10 +23939,10 @@ function finalize(ctx, schema) {
   } else {
   }
   if (ctx.external?.uri) {
-    const id6 = ctx.external.registry.get(schema)?.id;
-    if (!id6)
+    const id7 = ctx.external.registry.get(schema)?.id;
+    if (!id7)
       throw new Error("Schema is missing an `id` property");
-    result.$id = ctx.external.uri(id6);
+    result.$id = ctx.external.uri(id7);
   }
   Object.assign(result, root.def ?? root.schema);
   const defs = ctx.external?.defs ?? {};
@@ -28315,8 +28315,8 @@ var REF_REWRITE_NAME_MAP_KEYS = /* @__PURE__ */ new Set([
   "dependentSchemas",
   "dependencies"
 ]);
-function establishesNewBase(id6) {
-  return id6 !== void 0 && !(typeof id6 === "string" && id6.startsWith("#"));
+function establishesNewBase(id7) {
+  return id7 !== void 0 && !(typeof id7 === "string" && id7.startsWith("#"));
 }
 function wrapOutputSchemaForLegacy(natural) {
   const $schema = typeof natural["$schema"] === "string" ? natural["$schema"] : void 0;
@@ -34033,9 +34033,9 @@ var require_resolve = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     return count3;
   }
-  function getFullPath(resolver, id6 = "", normalize2) {
-    if (normalize2 !== false) id6 = normalizeId(id6);
-    return _getFullPath(resolver, resolver.parse(id6));
+  function getFullPath(resolver, id7 = "", normalize2) {
+    if (normalize2 !== false) id7 = normalizeId(id7);
+    return _getFullPath(resolver, resolver.parse(id7));
   }
   exports.getFullPath = getFullPath;
   function _getFullPath(resolver, p) {
@@ -34043,13 +34043,13 @@ var require_resolve = /* @__PURE__ */ __commonJSMin(((exports) => {
   }
   exports._getFullPath = _getFullPath;
   const TRAILING_SLASH_HASH = /#\/?$/;
-  function normalizeId(id6) {
-    return id6 ? id6.replace(TRAILING_SLASH_HASH, "") : "";
+  function normalizeId(id7) {
+    return id7 ? id7.replace(TRAILING_SLASH_HASH, "") : "";
   }
   exports.normalizeId = normalizeId;
-  function resolveUrl(resolver, baseId, id6) {
-    id6 = normalizeId(id6);
-    return resolver.resolve(baseId, id6);
+  function resolveUrl(resolver, baseId, id7) {
+    id7 = normalizeId(id7);
+    return resolver.resolve(baseId, id7);
   }
   exports.resolveUrl = resolveUrl;
   const ANCHOR = /^[a-z_][-a-z0-9._]*$/i;
@@ -34694,8 +34694,8 @@ var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
     const refPath = (0, resolve_1._getFullPath)(this.opts.uriResolver, p);
     let baseId = (0, resolve_1.getFullPath)(this.opts.uriResolver, root.baseId, void 0);
     if (Object.keys(root.schema).length > 0 && refPath === baseId) return getJsonPointer.call(this, p, root);
-    const id6 = (0, resolve_1.normalizeId)(refPath);
-    const schOrRef = this.refs[id6] || this.schemas[id6];
+    const id7 = (0, resolve_1.normalizeId)(refPath);
+    const schOrRef = this.refs[id7] || this.schemas[id7];
     if (typeof schOrRef == "string") {
       const sch = resolveSchema.call(this, root, schOrRef);
       if (typeof (sch === null || sch === void 0 ? void 0 : sch.schema) !== "object") return;
@@ -34703,7 +34703,7 @@ var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
     }
     if (typeof (schOrRef === null || schOrRef === void 0 ? void 0 : schOrRef.schema) !== "object") return;
     if (!schOrRef.validate) compileSchema.call(this, schOrRef);
-    if (id6 === (0, resolve_1.normalizeId)(ref2)) {
+    if (id7 === (0, resolve_1.normalizeId)(ref2)) {
       const { schema } = schOrRef;
       const { schemaId } = this.opts;
       const schId = schema[schemaId];
@@ -35571,13 +35571,13 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
         for (const sch of schema) this.addSchema(sch, void 0, _meta, _validateSchema);
         return this;
       }
-      let id6;
+      let id7;
       if (typeof schema === "object") {
         const { schemaId } = this.opts;
-        id6 = schema[schemaId];
-        if (id6 !== void 0 && typeof id6 != "string") throw new Error(`schema ${schemaId} must be string`);
+        id7 = schema[schemaId];
+        if (id7 !== void 0 && typeof id7 != "string") throw new Error(`schema ${schemaId} must be string`);
       }
-      key = (0, resolve_1.normalizeId)(key || id6);
+      key = (0, resolve_1.normalizeId)(key || id7);
       this._checkUnique(key);
       this.schemas[key] = this._addSchema(schema, _meta, key, _validateSchema, true);
       return this;
@@ -35642,11 +35642,11 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
         case "object": {
           const cacheKey2 = schemaKeyRef;
           this._cache.delete(cacheKey2);
-          let id6 = schemaKeyRef[this.opts.schemaId];
-          if (id6) {
-            id6 = (0, resolve_1.normalizeId)(id6);
-            delete this.schemas[id6];
-            delete this.refs[id6];
+          let id7 = schemaKeyRef[this.opts.schemaId];
+          if (id7) {
+            id7 = (0, resolve_1.normalizeId)(id7);
+            delete this.schemas[id7];
+            delete this.refs[id7];
           }
           return this;
         }
@@ -35738,14 +35738,14 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
       }
     }
     _addSchema(schema, meta3, baseId, validateSchema = this.opts.validateSchema, addSchema = this.opts.addUsedSchema) {
-      let id6;
+      let id7;
       const { schemaId } = this.opts;
-      if (typeof schema == "object") id6 = schema[schemaId];
+      if (typeof schema == "object") id7 = schema[schemaId];
       else if (this.opts.jtd) throw new Error("schema must be object");
       else if (typeof schema != "boolean") throw new Error("schema must be object or boolean");
       let sch = this._cache.get(schema);
       if (sch !== void 0) return sch;
-      baseId = (0, resolve_1.normalizeId)(id6 || baseId);
+      baseId = (0, resolve_1.normalizeId)(id7 || baseId);
       const localRefs = resolve_1.getSchemaRefs.call(this, schema, baseId);
       sch = new compile_1.SchemaEnv({
         schema,
@@ -35762,8 +35762,8 @@ var require_core$3 = /* @__PURE__ */ __commonJSMin(((exports) => {
       if (validateSchema) this.validateSchema(schema, true);
       return sch;
     }
-    _checkUnique(id6) {
-      if (this.schemas[id6] || this.refs[id6]) throw new Error(`schema with key or id "${id6}" already exists`);
+    _checkUnique(id7) {
+      if (this.schemas[id7] || this.refs[id7]) throw new Error(`schema with key or id "${id7}" already exists`);
     }
     _compileSchemaEnv(sch) {
       if (sch.meta) this._compileMetaSchema(sch);
@@ -39189,14 +39189,14 @@ function serverEventToNotification(event) {
   }
 }
 var DEFAULT_MAX_SUBSCRIPTIONS = 1024;
-function jsonRpcError(id6, code, message) {
+function jsonRpcError(id7, code, message) {
   return Response.json({
     jsonrpc: "2.0",
     error: {
       code,
       message
     },
-    id: id6
+    id: id7
   }, { status: 200 });
 }
 function stampSubscriptionId(notification, subscriptionId) {
@@ -40128,7 +40128,7 @@ var Server = class extends Protocol {
       if (hasPreviousToolUse) {
         const toolUseIds = new Set(previousContent.filter((c) => c.type === "tool_use").map((c) => c.id));
         const toolResultIds = new Set(lastContent.filter((c) => c.type === "tool_result").map((c) => c.toolUseId));
-        if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id6) => toolResultIds.has(id6))) throw new ProtocolError(ProtocolErrorCode.InvalidParams, "ids of tool_result blocks and tool_use blocks from previous message do not match");
+        if (toolUseIds.size !== toolResultIds.size || ![...toolUseIds].every((id7) => toolResultIds.has(id7))) throw new ProtocolError(ProtocolErrorCode.InvalidParams, "ids of tool_result blocks and tool_use blocks from previous message do not match");
       }
     }
     const hasTools = Boolean(params.tools || params.toolChoice);
@@ -41804,28 +41804,28 @@ data:
     }
     if (isJSONRPCResultResponse(message) || isJSONRPCErrorResponse(message)) {
       this._requestResponseMap.set(requestId, message);
-      const relatedIds = [...this._requestToStreamMapping.entries()].filter(([_, sid]) => sid === streamId).map(([id6]) => id6);
-      if (relatedIds.every((id6) => this._requestResponseMap.has(id6))) {
+      const relatedIds = [...this._requestToStreamMapping.entries()].filter(([_, sid]) => sid === streamId).map(([id7]) => id7);
+      if (relatedIds.every((id7) => this._requestResponseMap.has(id7))) {
         if (!stream) {
           if (this._enableJsonResponse) throw new Error(`No connection established for request ID: ${String(requestId)}`);
           if (!this._eventStore) {
             this.onerror?.(/* @__PURE__ */ new Error(`Response for request ID ${String(requestId)} is undeliverable: per-request stream is disconnected and no eventStore is configured`));
-            for (const id6 of relatedIds) {
-              this._requestResponseMap.delete(id6);
-              this._requestToStreamMapping.delete(id6);
+            for (const id7 of relatedIds) {
+              this._requestResponseMap.delete(id7);
+              this._requestToStreamMapping.delete(id7);
             }
             return;
           }
-          for (const id6 of relatedIds) {
-            this._requestResponseMap.delete(id6);
-            this._requestToStreamMapping.delete(id6);
+          for (const id7 of relatedIds) {
+            this._requestResponseMap.delete(id7);
+            this._requestToStreamMapping.delete(id7);
           }
           return;
         }
         if (this._enableJsonResponse && stream.resolveJson) {
           const headers = { "Content-Type": "application/json" };
           if (this.sessionId !== void 0) headers["mcp-session-id"] = this.sessionId;
-          const responses = relatedIds.map((id6) => this._requestResponseMap.get(id6));
+          const responses = relatedIds.map((id7) => this._requestResponseMap.get(id7));
           if (responses.length === 1) stream.resolveJson(Response.json(responses[0], {
             status: 200,
             headers
@@ -41836,9 +41836,9 @@ data:
           }));
           stream.cleanup();
         } else stream.cleanup();
-        for (const id6 of relatedIds) {
-          this._requestResponseMap.delete(id6);
-          this._requestToStreamMapping.delete(id6);
+        for (const id7 of relatedIds) {
+          this._requestResponseMap.delete(id7);
+          this._requestToStreamMapping.delete(id7);
         }
       }
     }
@@ -41846,11 +41846,11 @@ data:
 };
 function echoableRequestId(body) {
   if (body === null || typeof body !== "object" || Array.isArray(body)) return null;
-  const { method: method2, id: id6 } = body;
+  const { method: method2, id: id7 } = body;
   if (typeof method2 !== "string") return null;
-  return typeof id6 === "string" || typeof id6 === "number" ? id6 : null;
+  return typeof id7 === "string" || typeof id7 === "number" ? id7 : null;
 }
-function jsonRpcErrorResponse(httpStatus, code, message, data, id6 = null) {
+function jsonRpcErrorResponse(httpStatus, code, message, data, id7 = null) {
   return Response.json({
     jsonrpc: "2.0",
     error: {
@@ -41858,17 +41858,17 @@ function jsonRpcErrorResponse(httpStatus, code, message, data, id6 = null) {
       message,
       ...data !== void 0 && { data }
     },
-    id: id6
+    id: id7
   }, { status: httpStatus });
 }
-function rejectionResponse(rejection2, id6 = null) {
-  return jsonRpcErrorResponse(rejection2.httpStatus, rejection2.code, rejection2.message, rejection2.data, id6);
+function rejectionResponse(rejection2, id7 = null) {
+  return jsonRpcErrorResponse(rejection2.httpStatus, rejection2.code, rejection2.message, rejection2.data, id7);
 }
 function toError(value) {
   return value instanceof Error ? value : new Error(String(value));
 }
-function internalServerErrorResponse(id6 = null) {
-  return jsonRpcErrorResponse(500, -32603, "Internal server error", void 0, id6);
+function internalServerErrorResponse(id7 = null) {
+  return jsonRpcErrorResponse(500, -32603, "Internal server error", void 0, id7);
 }
 function assertNotServing(server) {
   if (server.transport !== void 0) throw new Error("The factory returned an instance that is still serving another request. Return a new instance for each request.");
@@ -42546,18 +42546,18 @@ async function toWebRequest(req, parsedBody, options) {
 }
 function echoableRequestId2(body) {
   if (body === null || typeof body !== "object" || Array.isArray(body)) return null;
-  const { method: method2, id: id6 } = body;
+  const { method: method2, id: id7 } = body;
   if (typeof method2 !== "string") return null;
-  return typeof id6 === "string" || typeof id6 === "number" ? id6 : null;
+  return typeof id7 === "string" || typeof id7 === "number" ? id7 : null;
 }
-function internalServerErrorResponse2(id6) {
+function internalServerErrorResponse2(id7) {
   return Response.json({
     jsonrpc: "2.0",
     error: {
       code: -32603,
       message: "Internal server error"
     },
-    id: id6
+    id: id7
   }, { status: 500 });
 }
 
@@ -42612,6 +42612,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
       observe(onOutcome, Object.freeze({ event: "defiant_evidence_tool_outcome", tool: name, outcome, status, stage }));
     }
   });
+  register2("defiant_royalty_evidence_review", "Compose a factual royalty review from existing evidence: supply current revision and exactly one discovered selectionId or comparisonId. For a store-specific comparison optionally supply its storeCoverageId; whole-dimension totals remain distinct. Inspect original receipt follow-ups and known limits. No new calculations, semantic search or model calls.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/).optional(), comparisonId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/).optional(), storeCoverageId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/).optional(), offset: external_exports.number().int().min(0).max(5e5).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "royalty-review");
   register2("defiant_source_evidence", "Find existing served evidence references for an exact registered source hash. Use kindNavigation to jump directly to receipt-example, selection or audience-definition references, then follow their original-cell links; these navigation references do not prove complete source coverage.", { revision, sourceHash: external_exports.string().regex(/^[a-f0-9]{64}(?![\s\S])/), offset: external_exports.number().int().min(0).max(24400).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "source-evidence");
   register2("defiant_selection_reconciliation", "Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/) }, "selection-reconciliation");
   const semanticFilters = { periodPresence: external_exports.enum(["dated", "undated"]).optional(), sourceId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/).optional(), format: external_exports.enum(["csv", "xlsx", "xls", "pdf", "png", "jpg", "zip", "tar.gz", "json", "other"]).optional(), kind: external_exports.enum(["root", "member"]).optional(), sourceHash: external_exports.string().length(64).regex(/^[a-f0-9]{64}$/).optional(), fromMonth: external_exports.string().length(7).regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(), toMonth: external_exports.string().length(7).regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional() };
@@ -42723,7 +42724,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
   }, "receipt");
 }
 
-// server/defiant-selection-metadata-breakdown.js
+// server/defiant-selection-reconciliation.js
 import { createHash } from "node:crypto";
 
 // server/auth.js
@@ -42731,23 +42732,64 @@ function fail(status, message) {
   return Object.assign(new Error(message), { status });
 }
 
-// server/defiant-selection-metadata-breakdown.js
+// server/defiant-selection-reconciliation.js
+var method = "selected-derived-cells-signed-decimal-v1";
+var metric = "source-total-earned";
 var plain = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
 var exact = (v, keys2) => plain(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
 var hash2 = (v) => typeof v === "string" && /^[a-f0-9]{64}$(?![\s\S])/.test(v);
-var text = (v) => typeof v === "string" && v.length <= 500 && !/[\u0000-\u001f\u007f\u2028\u2029]/.test(v);
 var decimal = (v) => typeof v === "string" && /^-?(0|[1-9][0-9]{0,25})(\.[0-9]{1,12})?$(?![\s\S])/.test(v);
+var text = (v) => typeof v === "string" && v.length > 0 && Buffer.byteLength(v, "utf8") <= 500 && !/[\u0000-\u001f\u007f]/.test(v);
 var units = (v) => {
+  const negative = v.startsWith("-");
+  const [whole, fraction = ""] = (negative ? v.slice(1) : v).split(".");
+  const n = BigInt(whole) * 10n ** 12n + BigInt(fraction.padEnd(12, "0"));
+  return negative ? -n : n;
+};
+var keys = ["schemaVersion", "method", "selectionId", "sourceHash", "currency", "metric", "month", "selectedRecordCount", "selectionRecordSetSha256", "declaredAmount", "recomputedAmount", "positiveAmount", "negativeAmount", "zeroRows", "predicates", "provenance"];
+var provenanceKeys = ["crossTabSha256", "selectedReceiptsSha256", "producerReceiptSha256", "independentReviewSha256"];
+function normalizeSelectionReconciliations(input, selections) {
+  if (input === void 0) return void 0;
+  if (!Array.isArray(input) || input.length > 2e3 || Buffer.byteLength(JSON.stringify(input), "utf8") > 1024 * 1024) throw fail(503, "Invalid selection reconciliation");
+  const byId = new Map(selections.map((s) => [s.id, s]));
+  const seen = /* @__PURE__ */ new Set();
+  return input.map((row) => {
+    if (!exact(row, keys) || row.schemaVersion !== 1 || row.method !== method || row.metric !== metric || (typeof row.selectionId !== "string" || !/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/.test(row.selectionId)) || seen.has(row.selectionId) || !hash2(row.sourceHash) || !hash2(row.selectionRecordSetSha256) || typeof row.currency !== "string" || !/^[A-Z]{3}$(?![\s\S])/.test(row.currency) || typeof row.month !== "string" || !/^[0-9]{4}-(0[1-9]|1[0-2])$(?![\s\S])/.test(row.month) || !Number.isSafeInteger(row.selectedRecordCount) || row.selectedRecordCount < 1 || !Number.isSafeInteger(row.zeroRows) || row.zeroRows < 0 || row.zeroRows > row.selectedRecordCount || !exact(row.predicates, ["sourceSongId", "store"]) || !text(row.predicates.sourceSongId) || !text(row.predicates.store) || !exact(row.provenance, provenanceKeys) || !provenanceKeys.every((k) => hash2(row.provenance[k])) || !["declaredAmount", "recomputedAmount", "positiveAmount", "negativeAmount"].every((k) => decimal(row[k]))) throw fail(503, "Invalid selection reconciliation");
+    const selected = byId.get(row.selectionId);
+    if (!selected || selected.sourceHash !== row.sourceHash || selected.currency !== row.currency || selected.sourceRecords.length !== row.selectedRecordCount || createHash("sha256").update(JSON.stringify(selected.sourceRecords)).digest("hex") !== row.selectionRecordSetSha256 || units(selected.amount) !== units(row.declaredAmount) || units(row.declaredAmount) !== units(row.recomputedAmount) || units(row.positiveAmount) < 0n || units(row.negativeAmount) > 0n || units(row.positiveAmount) + units(row.negativeAmount) !== units(row.recomputedAmount)) throw fail(503, "Selection reconciliation binding mismatch");
+    const nonzero = row.selectedRecordCount - row.zeroRows;
+    const buckets = Number(units(row.positiveAmount) > 0n) + Number(units(row.negativeAmount) < 0n);
+    if (nonzero < buckets || buckets === 0 && nonzero !== 0) throw fail(503, "Selection reconciliation sign counts infeasible");
+    seen.add(row.selectionId);
+    return structuredClone(row);
+  });
+}
+function selectionReconciliationView(data, selectionId) {
+  const selection = data.selections.find((row) => row.id === selectionId);
+  if (!selection) throw fail(404, "Evidence selection unavailable");
+  const proof = data.selectionReconciliations?.find((row) => row.selectionId === selectionId);
+  if (!proof) return { available: false, selectionId, reason: "not-prepared", limitation: "No retained reconciliation proof is prepared for this selection; absence does not establish incorrect arithmetic." };
+  return { available: true, selectionId, rowConvention: "1-based-logical-csv-record-including-header", proof: structuredClone(proof), runtimeBinding: { status: "checked", scope: "selection-metadata-and-arithmetic" }, retainedDerivedReview: { status: "reported-pass", scope: "selected-derived-records", basis: "supplied-retained-review" }, periodQualification: "producer-declared-group-month; not independently established by this read", predicateColumns: { sourceSongId: "TC Song ID", store: "Store Name" }, followUp: { resource: "selection-receipts", selectionId, revision: data.revision }, limitation: "Runtime checked proof metadata against the current selection and signed totals, not source cells or predicate truth. Retained review reports selected derived-cell recomputation; it is not a second whole-source scan, complete provider intake, settlement maturity, causal finding, identity equivalence, rights or economic correctness." };
+}
+
+// server/defiant-selection-metadata-breakdown.js
+import { createHash as createHash2 } from "node:crypto";
+var plain2 = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
+var exact2 = (v, keys2) => plain2(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
+var hash3 = (v) => typeof v === "string" && /^[a-f0-9]{64}$(?![\s\S])/.test(v);
+var text2 = (v) => typeof v === "string" && v.length <= 500 && !/[\u0000-\u001f\u007f\u2028\u2029]/.test(v);
+var decimal2 = (v) => typeof v === "string" && /^-?(0|[1-9][0-9]{0,25})(\.[0-9]{1,12})?$(?![\s\S])/.test(v);
+var units2 = (v) => {
   const neg = v.startsWith("-");
   const [a, b = ""] = (neg ? v.slice(1) : v).split(".");
   const n = BigInt(a) * 10n ** 12n + BigInt(b.padEnd(12, "0"));
   return neg ? -n : n;
 };
-var digest = (v) => createHash("sha256").update(JSON.stringify(v)).digest("hex");
+var digest = (v) => createHash2("sha256").update(JSON.stringify(v)).digest("hex");
 var count = (v, max) => Number.isSafeInteger(v) && v >= 0 && v <= max;
 var productKeys = ["schemaVersion", "method", "selectionId", "sourceHash", "currency", "month", "sourceSongId", "store", "parentRecordSetSha256", "parentRecordCount", "declaredAmount", "buckets", "provenance"];
 var bucketKeys = ["videoIdPresent", "policyPresent", "policy", "salesType", "currency", "recordSetSha256", "rows", "amount", "positiveAmount", "negativeAmount", "zeroRows", "unitsSum", "unitsNumericRows", "unitsMissingRows", "unitsInvalidRows", "unitsNegativeRows", "unitsZeroRows", "unitsNonintegerRows", "samples"];
-var provenanceKeys = ["selectedReceiptsSha256", "crossTabSha256", "producerResultSha256", "independentReviewSha256"];
+var provenanceKeys2 = ["selectedReceiptsSha256", "crossTabSha256", "producerResultSha256", "independentReviewSha256"];
 var bad = () => {
   throw fail(503, "Invalid selection metadata breakdown");
 };
@@ -42756,26 +42798,26 @@ function normalizeSelectionMetadataBreakdowns(input, selections, proofs) {
   if (!Array.isArray(input) || input.length > 100 || Buffer.byteLength(JSON.stringify(input)) > 2 * 1024 * 1024) bad();
   const seen = /* @__PURE__ */ new Set();
   return input.map((p) => {
-    if (!exact(p, productKeys) || Buffer.byteLength(JSON.stringify(p)) > 65536 || p.schemaVersion !== 1 || p.method !== "youtube-video-policy-presence-v1" || typeof p.selectionId !== "string" || seen.has(p.selectionId) || !hash2(p.sourceHash) || !hash2(p.parentRecordSetSha256) || !decimal(p.declaredAmount) || !text(p.sourceSongId) || !p.sourceSongId || p.store !== "YouTube" || !exact(p.provenance, provenanceKeys) || !provenanceKeys.every((k) => hash2(p.provenance[k])) || !Array.isArray(p.buckets) || !p.buckets.length || p.buckets.length > 32) bad();
+    if (!exact2(p, productKeys) || Buffer.byteLength(JSON.stringify(p)) > 65536 || p.schemaVersion !== 1 || p.method !== "youtube-video-policy-presence-v1" || typeof p.selectionId !== "string" || seen.has(p.selectionId) || !hash3(p.sourceHash) || !hash3(p.parentRecordSetSha256) || !decimal2(p.declaredAmount) || !text2(p.sourceSongId) || !p.sourceSongId || p.store !== "YouTube" || !exact2(p.provenance, provenanceKeys2) || !provenanceKeys2.every((k) => hash3(p.provenance[k])) || !Array.isArray(p.buckets) || !p.buckets.length || p.buckets.length > 32) bad();
     const s = selections.find((s2) => s2.id === p.selectionId), proof = proofs?.find((v) => v.selectionId === p.selectionId);
-    if (!s || !proof || s.sourceHash !== p.sourceHash || s.currency !== p.currency || proof.month !== p.month || proof.sourceHash !== p.sourceHash || proof.currency !== p.currency || proof.predicates.sourceSongId !== p.sourceSongId || proof.predicates.store !== p.store || p.parentRecordCount !== s.sourceRecords.length || p.parentRecordSetSha256 !== digest(s.sourceRecords) || units(p.declaredAmount) !== units(s.amount)) bad();
+    if (!s || !proof || s.sourceHash !== p.sourceHash || s.currency !== p.currency || proof.month !== p.month || proof.sourceHash !== p.sourceHash || proof.currency !== p.currency || proof.predicates.sourceSongId !== p.sourceSongId || proof.predicates.store !== p.store || p.parentRecordCount !== s.sourceRecords.length || p.parentRecordSetSha256 !== digest(s.sourceRecords) || units2(p.declaredAmount) !== units2(s.amount)) bad();
     let rows = 0, total = 0n, positive = 0n, negative = 0n, zeros = 0;
     const keys2 = /* @__PURE__ */ new Set(), sampleOffsets = /* @__PURE__ */ new Set();
     for (const b of p.buckets) {
-      if (!exact(b, bucketKeys) || typeof b.videoIdPresent !== "boolean" || typeof b.policyPresent !== "boolean" || !text(b.policy) || b.policyPresent !== (b.policy !== "") || !text(b.salesType) || !b.salesType || b.currency !== p.currency || !hash2(b.recordSetSha256) || !count(b.rows, p.parentRecordCount) || b.rows === 0 || !["amount", "positiveAmount", "negativeAmount", "unitsSum"].every((k) => decimal(b[k])) || !["zeroRows", "unitsNumericRows", "unitsMissingRows", "unitsInvalidRows", "unitsNegativeRows", "unitsZeroRows", "unitsNonintegerRows"].every((k) => count(b[k], b.rows))) bad();
+      if (!exact2(b, bucketKeys) || typeof b.videoIdPresent !== "boolean" || typeof b.policyPresent !== "boolean" || !text2(b.policy) || b.policyPresent !== (b.policy !== "") || !text2(b.salesType) || !b.salesType || b.currency !== p.currency || !hash3(b.recordSetSha256) || !count(b.rows, p.parentRecordCount) || b.rows === 0 || !["amount", "positiveAmount", "negativeAmount", "unitsSum"].every((k) => decimal2(b[k])) || !["zeroRows", "unitsNumericRows", "unitsMissingRows", "unitsInvalidRows", "unitsNegativeRows", "unitsZeroRows", "unitsNonintegerRows"].every((k) => count(b[k], b.rows))) bad();
       const key = JSON.stringify([b.videoIdPresent, b.policyPresent, b.policy, b.salesType, b.currency]);
       if (keys2.has(key)) bad();
       keys2.add(key);
-      if (b.unitsNumericRows + b.unitsMissingRows + b.unitsInvalidRows !== b.rows || b.unitsNegativeRows + b.unitsZeroRows > b.unitsNumericRows || b.unitsNonintegerRows > b.unitsNumericRows - b.unitsZeroRows || !b.unitsNumericRows && units(b.unitsSum) !== 0n) bad();
-      const unitTotal = units(b.unitsSum), unitPositive = b.unitsNumericRows - b.unitsNegativeRows - b.unitsZeroRows;
+      if (b.unitsNumericRows + b.unitsMissingRows + b.unitsInvalidRows !== b.rows || b.unitsNegativeRows + b.unitsZeroRows > b.unitsNumericRows || b.unitsNonintegerRows > b.unitsNumericRows - b.unitsZeroRows || !b.unitsNumericRows && units2(b.unitsSum) !== 0n) bad();
+      const unitTotal = units2(b.unitsSum), unitPositive = b.unitsNumericRows - b.unitsNegativeRows - b.unitsZeroRows;
       if (b.unitsNonintegerRows === 0 && unitTotal % 10n ** 12n !== 0n || b.unitsZeroRows === b.unitsNumericRows && unitTotal !== 0n || b.unitsNegativeRows === 0 && unitTotal < 0n || unitPositive === 0 && unitTotal > 0n || unitPositive > 0 && b.unitsNegativeRows === 0 && unitTotal <= 0n || b.unitsNegativeRows > 0 && unitPositive === 0 && unitTotal >= 0n) bad();
       if (b.unitsNonintegerRows === 0 && (b.unitsNegativeRows === 0 && unitTotal < BigInt(unitPositive) * 10n ** 12n || unitPositive === 0 && unitTotal > -BigInt(b.unitsNegativeRows) * 10n ** 12n)) bad();
-      const a = units(b.amount), pos = units(b.positiveAmount), neg = units(b.negativeAmount);
+      const a = units2(b.amount), pos = units2(b.positiveAmount), neg = units2(b.negativeAmount);
       if (pos < 0n || neg > 0n || pos + neg !== a || b.rows - b.zeroRows < Number(pos > 0n) + Number(neg < 0n) || pos === 0n && neg === 0n && b.zeroRows !== b.rows) bad();
       if (!Array.isArray(b.samples) || !b.samples.length || b.samples.length > Math.min(3, b.rows)) bad();
       let prior = -1;
       for (const sample of b.samples) {
-        if (!exact(sample, ["offset", "record"]) || !count(sample.offset, s.sourceRecords.length - 1) || sample.offset <= prior || sampleOffsets.has(sample.offset) || sample.record !== s.sourceRecords[sample.offset]) bad();
+        if (!exact2(sample, ["offset", "record"]) || !count(sample.offset, s.sourceRecords.length - 1) || sample.offset <= prior || sampleOffsets.has(sample.offset) || sample.record !== s.sourceRecords[sample.offset]) bad();
         prior = sample.offset;
         sampleOffsets.add(sample.offset);
       }
@@ -42785,7 +42827,7 @@ function normalizeSelectionMetadataBreakdowns(input, selections, proofs) {
       negative += neg;
       zeros += b.zeroRows;
     }
-    if (rows !== p.parentRecordCount || total !== units(p.declaredAmount) || positive !== units(proof.positiveAmount) || negative !== units(proof.negativeAmount) || zeros !== proof.zeroRows) bad();
+    if (rows !== p.parentRecordCount || total !== units2(p.declaredAmount) || positive !== units2(proof.positiveAmount) || negative !== units2(proof.negativeAmount) || zeros !== proof.zeroRows) bad();
     seen.add(p.selectionId);
     return structuredClone(p);
   });
@@ -42798,28 +42840,91 @@ function selectionMetadataBreakdownView(data, selectionId) {
   return view;
 }
 
-// server/defiant-source-evidence.js
+// server/defiant-royalty-review.js
 var fail2 = (status, message) => Object.assign(new Error(message), { status });
-var hash3 = (v) => typeof v === "string" && /^[a-f0-9]{64}(?![\s\S])/.test(v);
+var id = (value) => typeof value === "string" && /^[A-Za-z0-9_-]{1,128}$(?![\s\S])/.test(value);
+var limits = Object.freeze({
+  issue: "https://github.com/ChaiWithJai/liquidity-studio/issues/374",
+  codes: ["provider-completeness-unverified", "settlement-comparability-not-established", "usage-rate-adjustment-attribution-incomplete", "recording-equivalence-unreviewed", "commercial-activation-unverified"],
+  qualification: "Missing inputs limit these conclusions, not the availability of supplied statement facts. No zero imputation, causal attribution, identity equivalence or campaign approval."
+});
+var arithmetic = Object.freeze({ status: "checked", basis: "curated-group-sums-equal-supplied-period-totals", exclusions: ["complete-source-cell-recomputation", "usage-rate-adjustment-explanation", "provider-completeness", "settlement-maturity-comparability", "causal-attribution"] });
+function validateRoyaltyReviewRequest(request) {
+  const { revision: revision2, selectionId, comparisonId, storeCoverageId, offset = 0, limit = 25 } = request;
+  if (Object.keys(request).some((key) => !["resource", "revision", "selectionId", "comparisonId", "storeCoverageId", "offset", "limit"].includes(key)) || typeof revision2 !== "string" || !/^[a-f0-9]{64}$(?![\s\S])/.test(revision2) || selectionId === void 0 === (comparisonId === void 0) || selectionId !== void 0 && !id(selectionId) || comparisonId !== void 0 && !id(comparisonId) || storeCoverageId !== void 0 && (!id(storeCoverageId) || comparisonId === void 0) || !Number.isInteger(offset) || offset < 0 || offset > (comparisonId === void 0 ? 5e5 : 1e4) || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail2(400, "Invalid royalty review request");
+}
+function royaltyReviewView(data, request, { receiptsAvailable = false } = {}) {
+  validateRoyaltyReviewRequest(request);
+  if (request.revision !== data.revision) throw fail2(409, "Evidence revision changed");
+  const { selectionId, comparisonId, storeCoverageId, offset = 0, limit = 25 } = request;
+  const common = {
+    purpose: "royalty-evidence-review",
+    readiness: "qualified",
+    knownLimits: limits,
+    settlementMaturityComparability: "not-established",
+    limitation: "Supplied curated facts and existing checked metadata only. This read does not recompute source cells, prove complete provider delivery, or explain causes. Original receipt follow-ups retain their own source and completeness limits."
+  };
+  if (selectionId !== void 0) {
+    const selected2 = data.selections.find((row) => row.id === selectionId);
+    if (!selected2) throw fail2(404, "Selection unavailable");
+    const periods3 = data.months.filter((row) => row.sourceHash === selected2.sourceHash && row.currency === selected2.currency);
+    if (periods3.length !== 1) throw fail2(409, "Unique selection source period unavailable");
+    const { sourceRecords, ...selection } = selected2;
+    const { receiptIds, ...period } = periods3[0];
+    return {
+      ...common,
+      mode: "selection",
+      facts: { selection: { ...selection, rowCount: sourceRecords.length }, period, periodScope: "entire supplied source-period amount, not this selection amount" },
+      reconciliation: selectionReconciliationView(data, selectionId),
+      metadataBreakdown: selectionMetadataBreakdownView(data, selectionId),
+      lineage: { sourceHash: selected2.sourceHash, rowConvention: "1-based logical CSV record including header", sourceRecords: sourceRecords.slice(offset, offset + limit), offset, limit, total: sourceRecords.length, nextOffset: offset + limit < sourceRecords.length ? offset + limit : null },
+      followUp: { resource: "selection-receipts", selectionId, revision: data.revision, offset, limit, available: receiptsAvailable },
+      nextAction: "Read original selection receipts. Treat any supplied units or metadata categories as source-defined; do not infer missing unit, rate or adjustment facts."
+    };
+  }
+  const selected = (data.comparisons || []).find((row) => row.id === comparisonId);
+  if (!selected) throw fail2(404, "Comparison unavailable");
+  const { groups, ...comparison } = selected;
+  const applicable = (data.storePeriodCoverage || []).filter((product) => product.comparisonId === comparisonId);
+  const coverage = storeCoverageId === void 0 ? null : applicable.find((product) => product.id === storeCoverageId);
+  if (storeCoverageId !== void 0 && !coverage) throw fail2(409, "Store coverage does not apply to this comparison");
+  const coverageView = coverage ? Object.fromEntries(Object.entries(coverage).filter(([key]) => key !== "settlementMaturityComparable")) : null;
+  const selectedGroup = coverage ? groups.find((group) => group.id === coverage.groupId) : null;
+  if (coverage && (!selectedGroup || coverage.currency !== comparison.currency)) throw fail2(503, "Store coverage binding unavailable");
+  const groupView = (group) => ({ ...group, originalReceiptFollowUps: group.sourceReferences.map((reference, referenceIndex) => ({ resource: "comparison-examples", comparisonId, groupId: group.id, referenceIndex, revision: data.revision, sourceHash: reference.sourceHash, exampleCount: reference.exampleRecords.length, available: receiptsAvailable && reference.exampleRecords.length > 0, scope: "producer-selected examples, not full group receipts" })) });
+  return {
+    ...common,
+    mode: "comparison",
+    comparison: { ...comparison, groupCount: groups.length, arithmeticReconciliation: arithmetic, scope: "whole comparison dimension; not the selected store alone" },
+    contributions: { items: groups.slice(offset, offset + limit).map(groupView), offset, limit, total: groups.length, nextOffset: offset + limit < groups.length ? offset + limit : null },
+    selectedStore: coverage ? { group: groupView(selectedGroup), coverage: { ...coverageView, settlementMaturityComparability: "not-established" }, scope: "only the explicitly selected normalized store group; allPeriod and mutuallyObserved retain their distinct supplied bases" } : null,
+    availableStoreCoverage: applicable.map((product) => ({ id: product.id, groupId: product.groupId, storeKey: product.storeKey, followUp: { resource: "royalty-review", comparisonId, storeCoverageId: product.id, revision: data.revision, offset: 0, limit } })),
+    nextAction: "Use selectedStore for a store-specific question; compare its existing allPeriod and mutuallyObserved views separately. Follow a nonempty originalReceiptFollowUp to inspect example cells; examples do not reconcile the full aggregate."
+  };
+}
+
+// server/defiant-source-evidence.js
+var fail3 = (status, message) => Object.assign(new Error(message), { status });
+var hash4 = (v) => typeof v === "string" && /^[a-f0-9]{64}(?![\s\S])/.test(v);
 var cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 var kinds = ["selection", "receipt-example", "earnings-period", "audience-definition", "comparison-example"];
 function validateSourceEvidenceRequest(request) {
-  if (!request || typeof request !== "object" || Array.isArray(request) || Object.keys(request).some((k) => !["sourceHash", "revision", "offset", "limit"].includes(k))) throw fail2(400, "Invalid source evidence request");
+  if (!request || typeof request !== "object" || Array.isArray(request) || Object.keys(request).some((k) => !["sourceHash", "revision", "offset", "limit"].includes(k))) throw fail3(400, "Invalid source evidence request");
   const { sourceHash, revision: revision2, offset = 0, limit = 25 } = request;
-  if (!hash3(sourceHash) || !hash3(revision2) || !Number.isSafeInteger(offset) || offset < 0 || offset > 24400 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw fail2(400, "Invalid source evidence request");
+  if (!hash4(sourceHash) || !hash4(revision2) || !Number.isSafeInteger(offset) || offset < 0 || offset > 24400 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw fail3(400, "Invalid source evidence request");
   return { sourceHash, revision: revision2, offset, limit };
 }
 function sourceEvidenceView(snapshot, request) {
   const q = validateSourceEvidenceRequest(request);
-  if (snapshot.revision !== q.revision) throw fail2(409, "Evidence revision changed");
+  if (snapshot.revision !== q.revision) throw fail3(409, "Evidence revision changed");
   const base = { schemaVersion: 1, sourceHash: q.sourceHash, revision: q.revision, offset: q.offset, limit: q.limit };
   const register2 = snapshot.retainedSourceRegister;
   if (!register2) return { ...base, availability: false, reason: "register-unavailable", kindNavigation: null, items: [], total: null, nextOffset: null };
   const occurrences = [...register2.roots, ...register2.members].filter((r) => r.sha256 === q.sourceHash);
-  if (!occurrences.length) throw fail2(404, "Registered source unavailable");
+  if (!occurrences.length) throw fail3(404, "Registered source unavailable");
   const rows = [], follow = (resource, fields2 = {}) => ({ resource, ...fields2, revision: q.revision });
   const add = (kind, parts, fields2) => {
-    if (rows.length >= 24400) throw fail2(503, "Source references exceed bounds");
+    if (rows.length >= 24400) throw fail3(503, "Source references exceed bounds");
     rows.push({ key: JSON.stringify([kind, ...parts]), kind, sourceHash: q.sourceHash, ...fields2 });
   };
   for (const s of snapshot.selections) if (s.sourceHash === q.sourceHash) add("selection", [s.id], { id: s.id, label: s.label, currency: s.currency, amount: s.amount, rowCount: s.sourceRecords.length, qualification: "Declared selection amount; not recomputed by this lookup.", followUp: follow("selection", { selectionId: s.id }), cells: follow("selection-receipts", { selectionId: s.id, offset: 0, limit: 25 }) });
@@ -42829,14 +42934,14 @@ function sourceEvidenceView(snapshot, request) {
   for (const c of snapshot.comparisons || []) for (const g of c.groups) g.sourceReferences.forEach((r, referenceIndex) => {
     if (r.sourceHash === q.sourceHash) add("comparison-example", [c.id, g.id, referenceIndex], { comparisonId: c.id, groupId: g.id, referenceIndex, label: g.label, month: r.month, currency: c.currency, exampleCount: r.exampleRecords.length, qualification: "Producer-selected examples only; not complete group receipts.", followUp: follow("comparison-examples", { comparisonId: c.id, groupId: g.id, referenceIndex }) });
   });
-  if (rows.length > 24400 || new Set(rows.map((r) => r.key)).size !== rows.length) throw fail2(503, "Source references exceed bounds");
+  if (rows.length > 24400 || new Set(rows.map((r) => r.key)).size !== rows.length) throw fail3(503, "Source references exceed bounds");
   rows.sort((a, b) => cmp(a.kind, b.kind) || cmp(a.key, b.key));
   const kindNavigation = kinds.map((kind) => {
     const offset = rows.findIndex((row) => row.kind === kind), count3 = rows.filter((row) => row.kind === kind).length;
     return { kind, count: count3, followUp: offset < 0 ? null : follow("source-evidence", { sourceHash: q.sourceHash, offset, limit: Math.min(25, count3) }) };
   });
   const result = { ...base, availability: true, reason: rows.length ? null : "no-supported-evidence-reference", occurrenceCount: occurrences.length, occurrences: follow("retained-sources", { sourceHash: q.sourceHash, offset: 0, limit: 25 }), kindNavigation, counts: Object.fromEntries(kinds.map((k) => [k, rows.filter((r) => r.kind === k).length])), items: rows.slice(q.offset, q.offset + q.limit), total: rows.length, nextOffset: q.offset + q.limit < rows.length ? q.offset + q.limit : null, limitation: "Exact content-hash references in served products. References can overlap and are not financial row counts or complete source coverage. Original cell availability is established only by the follow-up read." };
-  if (Buffer.byteLength(JSON.stringify(result), "utf8") > 262144) throw fail2(503, "Source reference response exceeds bounds");
+  if (Buffer.byteLength(JSON.stringify(result), "utf8") > 262144) throw fail3(503, "Source reference response exceeds bounds");
   return result;
 }
 
@@ -42844,30 +42949,30 @@ function sourceEvidenceView(snapshot, request) {
 import { randomUUID } from "node:crypto";
 
 // server/defiant-semantic-index.js
-import { createHash as createHash3 } from "node:crypto";
+import { createHash as createHash4 } from "node:crypto";
 
 // server/defiant-retained-sources.js
-import { createHash as createHash2 } from "node:crypto";
-var fail3 = (status, message) => Object.assign(new Error(message), { status });
-var invalid = () => fail3(503, "Retained source register unavailable");
-var plain2 = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
-var exact2 = (v, keys2) => plain2(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
-var text2 = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
-var id = (v) => text2(v, 128) && /^[A-Za-z0-9_-]+$(?![\s\S])/.test(v);
-var hash4 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]{64}$/.test(v);
+import { createHash as createHash3 } from "node:crypto";
+var fail4 = (status, message) => Object.assign(new Error(message), { status });
+var invalid = () => fail4(503, "Retained source register unavailable");
+var plain3 = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+var exact3 = (v, keys2) => plain3(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
+var text3 = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
+var id2 = (v) => text3(v, 128) && /^[A-Za-z0-9_-]+$(?![\s\S])/.test(v);
+var hash5 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]{64}$/.test(v);
 var month = (v) => typeof v === "string" && v.length === 7 && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 var bytes = (v) => Number.isSafeInteger(v) && v >= 0;
 var formats = /* @__PURE__ */ new Set(["csv", "xlsx", "xls", "pdf", "png", "jpg", "zip", "tar.gz", "json", "other"]);
 var compare = (a, b) => a < b ? -1 : a > b ? 1 : 0;
-var relative = (v) => text2(v, 500) && !v.startsWith("/") && !v.includes("\\") && !/^[A-Za-z]:/.test(v) && v.split("/").every((p) => p && p !== "." && p !== "..");
+var relative = (v) => text3(v, 500) && !v.startsWith("/") && !v.includes("\\") && !/^[A-Za-z]:/.test(v) && v.split("/").every((p) => p && p !== "." && p !== "..");
 var utcTimestamp = (v) => {
-  if (!text2(v, 32) || /[\u2028\u2029]/.test(v)) return false;
+  if (!text3(v, 32) || /[\u2028\u2029]/.test(v)) return false;
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?Z$/.exec(v);
   if (!m) return false;
   const d = new Date(v);
   return Number.isFinite(d.getTime()) && [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()].every((n, i) => n === Number(m[i + 1]));
 };
-var digest2 = (v) => createHash2("sha256").update(JSON.stringify(v)).digest("hex");
+var digest2 = (v) => createHash3("sha256").update(JSON.stringify(v)).digest("hex");
 function declaredFilenamePeriod(value) {
   if (typeof value !== "string") return null;
   const filename = value.split("/").at(-1), match = /(?:^|[-_ ])(sales_period|sales-period|reporting_period)-(0[1-9]|1[0-2])-(\d{4})\.csv$(?![\s\S])/i.exec(filename);
@@ -42877,7 +42982,7 @@ function periods(values, texts) {
   if (!Array.isArray(values) || values.length > 24) throw invalid();
   const seen = /* @__PURE__ */ new Set();
   return values.map((p) => {
-    if (!exact2(p, ["month", "periodKind", "basis", "sourceText"]) || !month(p.month) || p.basis !== "filename-declared" || !texts.includes(p.sourceText) || declaredFilenamePeriod(p.sourceText)?.month !== p.month || declaredFilenamePeriod(p.sourceText)?.periodKind !== p.periodKind) throw invalid();
+    if (!exact3(p, ["month", "periodKind", "basis", "sourceText"]) || !month(p.month) || p.basis !== "filename-declared" || !texts.includes(p.sourceText) || declaredFilenamePeriod(p.sourceText)?.month !== p.month || declaredFilenamePeriod(p.sourceText)?.periodKind !== p.periodKind) throw invalid();
     const key = JSON.stringify([p.month, p.periodKind, p.basis, p.sourceText]);
     if (seen.has(key)) throw invalid();
     seen.add(key);
@@ -42886,23 +42991,23 @@ function periods(values, texts) {
 }
 function normalizeRetainedSourceRegister(input) {
   if (input === void 0) return void 0;
-  if (!exact2(input, ["schemaVersion", "scopeDescription", "capturedAt", "provenance", "roots", "members"]) || input.schemaVersion !== 1 || !text2(input.scopeDescription, 2e3) || !utcTimestamp(input.capturedAt) || !exact2(input.provenance, ["manifestSha256", "memberInventorySha256"]) || !hash4(input.provenance.manifestSha256) || !hash4(input.provenance.memberInventorySha256) || !Array.isArray(input.roots) || input.roots.length < 1 || input.roots.length > 64 || !Array.isArray(input.members) || input.members.length > 4096 || Buffer.byteLength(JSON.stringify(input), "utf8") > 2 * 1024 * 1024) throw invalid();
+  if (!exact3(input, ["schemaVersion", "scopeDescription", "capturedAt", "provenance", "roots", "members"]) || input.schemaVersion !== 1 || !text3(input.scopeDescription, 2e3) || !utcTimestamp(input.capturedAt) || !exact3(input.provenance, ["manifestSha256", "memberInventorySha256"]) || !hash5(input.provenance.manifestSha256) || !hash5(input.provenance.memberInventorySha256) || !Array.isArray(input.roots) || input.roots.length < 1 || input.roots.length > 64 || !Array.isArray(input.members) || input.members.length > 4096 || Buffer.byteLength(JSON.stringify(input), "utf8") > 2 * 1024 * 1024) throw invalid();
   const ids = /* @__PURE__ */ new Set(), sizes = /* @__PURE__ */ new Map(), rootMap = /* @__PURE__ */ new Map(), occurrences = /* @__PURE__ */ new Set();
   const common = (r) => {
-    if (!id(r.id) || ids.has(r.id) || !hash4(r.sha256) || !bytes(r.bytes) || !formats.has(r.format)) throw invalid();
+    if (!id2(r.id) || ids.has(r.id) || !hash5(r.sha256) || !bytes(r.bytes) || !formats.has(r.format)) throw invalid();
     ids.add(r.id);
     if (sizes.has(r.sha256) && sizes.get(r.sha256) !== r.bytes) throw invalid();
     sizes.set(r.sha256, r.bytes);
   };
   const roots = input.roots.map((r) => {
-    if (!exact2(r, ["id", "sourceId", "filename", "format", "bytes", "sha256", "generation", "retentionVerification", "memberInventory", "periods"]) || !id(r.sourceId) || !relative(r.filename) || r.filename.includes("/") || !text2(r.generation, 30) || !/^[1-9]\d{0,29}$(?![\s\S])/.test(r.generation) || !exact2(r.retentionVerification, ["size", "crc32c", "md5"]) || Object.values(r.retentionVerification).some((v) => v !== null && typeof v !== "boolean") || !exact2(r.memberInventory, ["status", "scope"]) || !["enumerated", "not-enumerated"].includes(r.memberInventory.status) || !text2(r.memberInventory.scope, 2e3)) throw invalid();
+    if (!exact3(r, ["id", "sourceId", "filename", "format", "bytes", "sha256", "generation", "retentionVerification", "memberInventory", "periods"]) || !id2(r.sourceId) || !relative(r.filename) || r.filename.includes("/") || !text3(r.generation, 30) || !/^[1-9]\d{0,29}$(?![\s\S])/.test(r.generation) || !exact3(r.retentionVerification, ["size", "crc32c", "md5"]) || Object.values(r.retentionVerification).some((v) => v !== null && typeof v !== "boolean") || !exact3(r.memberInventory, ["status", "scope"]) || !["enumerated", "not-enumerated"].includes(r.memberInventory.status) || !text3(r.memberInventory.scope, 2e3)) throw invalid();
     common(r);
     const row = { id: r.id, sourceId: r.sourceId, filename: r.filename, format: r.format, bytes: r.bytes, sha256: r.sha256, generation: r.generation, retentionVerification: { ...r.retentionVerification }, memberInventory: { ...r.memberInventory }, periods: periods(r.periods, [r.filename]) };
     rootMap.set(r.id, row);
     return row;
   }).sort((a, b) => compare(a.id, b.id));
   const members = input.members.map((r) => {
-    if (!exact2(r, ["id", "rootId", "chain", "sha256", "bytes", "format", "container", "periods"]) || !id(r.rootId) || !rootMap.has(r.rootId) || !Array.isArray(r.chain) || r.chain.length < 1 || r.chain.length > 8 || r.chain.some((v) => !relative(v)) || typeof r.container !== "boolean") throw invalid();
+    if (!exact3(r, ["id", "rootId", "chain", "sha256", "bytes", "format", "container", "periods"]) || !id2(r.rootId) || !rootMap.has(r.rootId) || !Array.isArray(r.chain) || r.chain.length < 1 || r.chain.length > 8 || r.chain.some((v) => !relative(v)) || typeof r.container !== "boolean") throw invalid();
     common(r);
     const root = rootMap.get(r.rootId), key = JSON.stringify([r.rootId, r.chain]);
     if (root.memberInventory.status !== "enumerated" || occurrences.has(key) || r.id !== digest2([root.sha256, r.chain, r.sha256])) throw invalid();
@@ -42912,9 +43017,9 @@ function normalizeRetainedSourceRegister(input) {
   return { schemaVersion: 1, scopeDescription: input.scopeDescription, capturedAt: input.capturedAt, provenance: { ...input.provenance }, roots, members };
 }
 function validateRetainedSourceRequest(request = {}) {
-  if (!plain2(request) || Object.keys(request).some((k) => !["query", "sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "periodPresence", "offset", "limit"].includes(k))) throw fail3(400, "Invalid retained source request");
+  if (!plain3(request) || Object.keys(request).some((k) => !["query", "sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "periodPresence", "offset", "limit"].includes(k))) throw fail4(400, "Invalid retained source request");
   const { query = "", sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence, offset = 0, limit = 25 } = request;
-  if (typeof query !== "string" || query.length > 200 || /[\u0000-\u001f\u007f]/.test(query) || periodPresence !== void 0 && !["dated", "undated"].includes(periodPresence) || sourceId !== void 0 && !id(sourceId) || format !== void 0 && !formats.has(format) || kind !== void 0 && !["root", "member"].includes(kind) || sourceHash !== void 0 && !hash4(sourceHash) || fromMonth !== void 0 && !month(fromMonth) || toMonth !== void 0 && !month(toMonth) || fromMonth && toMonth && fromMonth > toMonth || !Number.isInteger(offset) || offset < 0 || offset > 5e3 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail3(400, "Invalid retained source request");
+  if (typeof query !== "string" || query.length > 200 || /[\u0000-\u001f\u007f]/.test(query) || periodPresence !== void 0 && !["dated", "undated"].includes(periodPresence) || sourceId !== void 0 && !id2(sourceId) || format !== void 0 && !formats.has(format) || kind !== void 0 && !["root", "member"].includes(kind) || sourceHash !== void 0 && !hash5(sourceHash) || fromMonth !== void 0 && !month(fromMonth) || toMonth !== void 0 && !month(toMonth) || fromMonth && toMonth && fromMonth > toMonth || !Number.isInteger(offset) || offset < 0 || offset > 5e3 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail4(400, "Invalid retained source request");
   return { query, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence, offset, limit };
 }
 function count2(rows) {
@@ -42940,7 +43045,7 @@ function searchRetainedSources(snapshot, request = {}) {
 // server/defiant-semantic-index.js
 var invalid2 = () => Object.assign(new Error("Semantic metadata index unavailable"), { status: 503 });
 var SEMANTIC_MODEL = Object.freeze({ model: "gemini-embedding-001", location: "us-east4", dimensions: 768, rendererVersion: "retained-filename-metadata-v1" });
-var sha256 = (value) => createHash3("sha256").update(value).digest("hex");
+var sha256 = (value) => createHash4("sha256").update(value).digest("hex");
 function canonicalMetadata(value) {
   if (value === null || ["string", "boolean"].includes(typeof value)) return JSON.stringify(value);
   if (typeof value === "number" && Number.isFinite(value)) return JSON.stringify(value);
@@ -42959,15 +43064,15 @@ function retainedSemanticDocuments(input) {
   }).sort((a, b) => a.rootId < b.rootId ? -1 : a.rootId > b.rootId ? 1 : a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   return { registerSha256: sha256(canonicalMetadata(register2)), documents };
 }
-var exact3 = (v, keys2) => v && Object.getPrototypeOf(v) === Object.prototype && Object.keys(v).sort().join(",") === [...keys2].sort().join(",");
-var hash5 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]+$/.test(v);
+var exact4 = (v, keys2) => v && Object.getPrototypeOf(v) === Object.prototype && Object.keys(v).sort().join(",") === [...keys2].sort().join(",");
+var hash6 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]+$/.test(v);
 function normalizeSemanticIndex(input, { organizationId: organizationId2, register: register2 } = {}) {
-  if (!exact3(input, ["schemaVersion", "organizationId", "registerSha256", "rendererVersion", "model", "location", "dimensions", "task", "corpusPackSha256", "entries"]) || input.schemaVersion !== 1 || input.organizationId !== organizationId2 || input.task !== "RETRIEVAL_DOCUMENT" || !hash5(input.corpusPackSha256) || Object.entries(SEMANTIC_MODEL).some(([k, v]) => input[k] !== v) || Buffer.byteLength(JSON.stringify(input)) > 4 * 1024 * 1024) throw invalid2();
+  if (!exact4(input, ["schemaVersion", "organizationId", "registerSha256", "rendererVersion", "model", "location", "dimensions", "task", "corpusPackSha256", "entries"]) || input.schemaVersion !== 1 || input.organizationId !== organizationId2 || input.task !== "RETRIEVAL_DOCUMENT" || !hash6(input.corpusPackSha256) || Object.entries(SEMANTIC_MODEL).some(([k, v]) => input[k] !== v) || Buffer.byteLength(JSON.stringify(input)) > 4 * 1024 * 1024) throw invalid2();
   const projection = retainedSemanticDocuments(register2);
   if (input.registerSha256 !== projection.registerSha256 || !Array.isArray(input.entries) || input.entries.length !== projection.documents.length || input.entries.length > 256) throw invalid2();
   const expected = new Map(projection.documents.map((r) => [r.id, r])), seen = /* @__PURE__ */ new Set();
   const entries = input.entries.map((entry) => {
-    if (!exact3(entry, ["id", "inputSha256", "resultSha256", "vector"]) || seen.has(entry.id) || entry.inputSha256 !== expected.get(entry.id)?.inputSha256 || !hash5(entry.resultSha256) || !Array.isArray(entry.vector) || entry.vector.length !== 768 || entry.vector.some((n) => typeof n !== "number" || !Number.isFinite(n))) throw invalid2();
+    if (!exact4(entry, ["id", "inputSha256", "resultSha256", "vector"]) || seen.has(entry.id) || entry.inputSha256 !== expected.get(entry.id)?.inputSha256 || !hash6(entry.resultSha256) || !Array.isArray(entry.vector) || entry.vector.length !== 768 || entry.vector.some((n) => typeof n !== "number" || !Number.isFinite(n))) throw invalid2();
     const norm = entry.vector.reduce((sum, n) => sum + n * n, 0);
     if (Math.abs(norm - 1) > 1e-9) throw invalid2();
     seen.add(entry.id);
@@ -42977,23 +43082,23 @@ function normalizeSemanticIndex(input, { organizationId: organizationId2, regist
 }
 
 // server/defiant-semantic-sessions.js
-var fail4 = (status, message) => Object.assign(new Error(message), { status });
-var hash6 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]+$/.test(v);
-var id2 = (v) => typeof v === "string" && v.length > 0 && v.length <= 128 && /^[A-Za-z0-9_-]+$(?![\s\S])/.test(v);
-var exact4 = (v, keys2) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys2].sort().join(",");
+var fail5 = (status, message) => Object.assign(new Error(message), { status });
+var hash7 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]+$/.test(v);
+var id3 = (v) => typeof v === "string" && v.length > 0 && v.length <= 128 && /^[A-Za-z0-9_-]+$(?![\s\S])/.test(v);
+var exact5 = (v, keys2) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys2].sort().join(",");
 var BUDGET = "defiant-semantic:v1:pilot-budget";
 var TTL = 15 * 60 * 1e3;
 function createSemanticSessions({ store, strategy, readContext, embed, signal, now = () => Date.now() } = {}) {
-  if (typeof store?.transact !== "function" || typeof strategy?.assertCurrent !== "function" || typeof readContext !== "function" || typeof embed !== "function" || !id2(strategy.organizationId)) throw TypeError("Scoped durable semantic dependencies required");
+  if (typeof store?.transact !== "function" || typeof strategy?.assertCurrent !== "function" || typeof readContext !== "function" || typeof embed !== "function" || !id3(strategy.organizationId)) throw TypeError("Scoped durable semantic dependencies required");
   const org = strategy.organizationId, recordKey = (sessionId) => `defiant-semantic:v1:${org}:${sessionId}`;
   const active = () => {
-    if (signal?.aborted) throw fail4(408, "Semantic request expired; reserved attempt may have completed");
+    if (signal?.aborted) throw fail5(408, "Semantic request expired; reserved attempt may have completed");
   };
   async function context(actor) {
     active();
     const c = await readContext(actor);
     active();
-    if (!c || c.actor?.id !== actor.id || c.actor?.uid !== actor.uid || c.snapshot?.organizationId !== org || c.index?.organizationId !== org || !hash6(c.snapshot.revision) || !hash6(c.index.indexSha256)) throw fail4(503, "Semantic metadata index unavailable");
+    if (!c || c.actor?.id !== actor.id || c.actor?.uid !== actor.uid || c.snapshot?.organizationId !== org || c.index?.organizationId !== org || !hash7(c.snapshot.revision) || !hash7(c.index.indexSha256)) throw fail5(503, "Semantic metadata index unavailable");
     return c;
   }
   function authority(identity, state, actor) {
@@ -43007,9 +43112,9 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
     });
   }
   function publicPage(c, record2, offset, limit) {
-    if (record2.status !== "complete") throw fail4(409, "Semantic attempt pending or failed; no automatic retry");
-    if (record2.expiresAt <= now()) throw fail4(409, "Semantic session expired; explicitly submit a new search");
-    if (record2.revision !== c.snapshot.revision || record2.indexSha256 !== c.index.indexSha256) throw fail4(409, "Semantic evidence context changed");
+    if (record2.status !== "complete") throw fail5(409, "Semantic attempt pending or failed; no automatic retry");
+    if (record2.expiresAt <= now()) throw fail5(409, "Semantic session expired; explicitly submit a new search");
+    if (record2.revision !== c.snapshot.revision || record2.indexSha256 !== c.index.indexSha256) throw fail5(409, "Semantic evidence context changed");
     const rows = [];
     for (let offset2 = 0; offset2 < 256; offset2 += 100) {
       const p = searchRetainedSources(c.snapshot, { ...record2.filters, query: "", offset: offset2, limit: 100 });
@@ -43017,40 +43122,40 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
       if (p.nextOffset === null) break;
     }
     const byId = new Map(rows.map((r) => [r.id, r]));
-    if (record2.ranked.some((r) => !byId.has(r.id))) throw fail4(503, "Semantic results unavailable");
+    if (record2.ranked.some((r) => !byId.has(r.id))) throw fail5(503, "Semantic results unavailable");
     return { schemaVersion: 1, scope: { organizationId: org }, revision: record2.revision, availability: true, mode: "semantic", sessionId: record2.sessionId, expiresAt: new Date(record2.expiresAt).toISOString(), indexSha256: record2.indexSha256, registerSha256: c.index.registerSha256, ...SEMANTIC_MODEL, querySha256: record2.querySha256, filters: record2.filters, offset, limit, total: record2.ranked.length, items: record2.ranked.slice(offset, offset + limit).map((r) => ({ ...byId.get(r.id), similarity: r.similarity })), nextOffset: offset + limit < record2.ranked.length ? offset + limit : null, tokenCount: record2.tokenCount, limitations: ["Metadata similarity is a ranking signal, not factual support, identity, calibrated confidence or commercial readiness.", "Exact filters are applied before ranking. No similarity threshold establishes that a query is supported.", "Paging and readback reuse this expiring authorized session; no automatic model retry or hidden embedding."] };
   }
   return Object.freeze({
     async start(actor, input) {
-      if (!exact4(input, ["revision", "query", "filters", "idempotencyKey"]) || !hash6(input.revision) || !id2(input.idempotencyKey) || typeof input.query !== "string" || !input.query.trim() || input.query.length > 200 || Buffer.byteLength(input.query) > 1536 || /[\u0000-\u001f\u007f]/.test(input.query) || !input.filters || Object.getPrototypeOf(input.filters) !== Object.prototype || Object.keys(input.filters).some((k) => !["sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "periodPresence"].includes(k))) throw fail4(400, "Invalid explicit semantic search");
+      if (!exact5(input, ["revision", "query", "filters", "idempotencyKey"]) || !hash7(input.revision) || !id3(input.idempotencyKey) || typeof input.query !== "string" || !input.query.trim() || input.query.length > 200 || Buffer.byteLength(input.query) > 1536 || /[\u0000-\u001f\u007f]/.test(input.query) || !input.filters || Object.getPrototypeOf(input.filters) !== Object.prototype || Object.keys(input.filters).some((k) => !["sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "periodPresence"].includes(k))) throw fail5(400, "Invalid explicit semantic search");
       validateRetainedSourceRequest({ ...input.filters, query: "" });
-      if (!id2(actor?.id) || !id2(actor?.uid)) throw fail4(403, "Semantic identity unavailable");
+      if (!id3(actor?.id) || !id3(actor?.uid)) throw fail5(403, "Semantic identity unavailable");
       const frozenActor = Object.freeze({ ...actor }), payload = structuredClone(input), payloadHash = sha256(canonicalMetadata(payload)), sessionId = sha256(canonicalMetadata([org, actor.id, actor.uid, payload.idempotencyKey])), createdAt = now(), expiresAt = createdAt + TTL, owner = randomUUID();
       let c = await context(frozenActor);
-      if (c.snapshot.revision !== payload.revision) throw fail4(409, "Evidence revision changed");
+      if (c.snapshot.revision !== payload.revision) throw fail5(409, "Evidence revision changed");
       const reservation = { schemaVersion: 1, organizationId: org, actorId: frozenActor.id, actorUid: frozenActor.uid, sessionId, payloadHash, querySha256: sha256(payload.query), filters: payload.filters, revision: payload.revision, indexSha256: c.index.indexSha256, createdAt, expiresAt, owner, status: "pending" };
       const values = await transaction(frozenActor, sessionId, ([identity, state, budget, prior]) => {
         if (prior) {
-          if (prior.payloadHash !== payloadHash) throw fail4(409, "Semantic idempotency conflict");
+          if (prior.payloadHash !== payloadHash) throw fail5(409, "Semantic idempotency conflict");
           return [identity, state, budget, prior];
         }
         budget = budget || { schemaVersion: 1, reservations: 0 };
-        if (budget.schemaVersion !== 1 || !Number.isInteger(budget.reservations) || budget.reservations < 0 || budget.reservations >= 100) throw fail4(409, "Pilot semantic query capacity reached");
+        if (budget.schemaVersion !== 1 || !Number.isInteger(budget.reservations) || budget.reservations < 0 || budget.reservations >= 100) throw fail5(409, "Pilot semantic query capacity reached");
         return [identity, state, { ...budget, reservations: budget.reservations + 1 }, reservation];
       });
       if (values[3].status === "complete") {
         c = await context(frozenActor);
         return publicPage(c, values[3], 0, 25);
       }
-      if (values[3].owner !== owner || values[3].status !== "pending") throw fail4(409, "Semantic attempt already reserved; read its session");
+      if (values[3].owner !== owner || values[3].status !== "pending") throw fail5(409, "Semantic attempt already reserved; read its session");
       try {
         c = await context(frozenActor);
-        if (c.snapshot.revision !== reservation.revision || c.index.indexSha256 !== reservation.indexSha256) throw fail4(409, "Evidence context changed");
-        if (now() >= reservation.expiresAt) throw fail4(409, "Semantic reservation expired");
+        if (c.snapshot.revision !== reservation.revision || c.index.indexSha256 !== reservation.indexSha256) throw fail5(409, "Evidence context changed");
+        if (now() >= reservation.expiresAt) throw fail5(409, "Semantic reservation expired");
         const result = await embed(payload.query, { signal });
-        if (Object.entries(SEMANTIC_MODEL).some(([key, value]) => result[key] !== value) || result.task !== "RETRIEVAL_QUERY" || result.inputSha256 !== reservation.querySha256 || !Array.isArray(result.vector) || result.vector.length !== 768 || result.vector.some((v) => !Number.isFinite(v)) || Math.abs(result.vector.reduce((sum, n) => sum + n * n, 0) - 1) > 1e-9 || result.truncated !== false || !Number.isInteger(result.tokenCount) || result.tokenCount < 1 || result.tokenCount > 2048) throw fail4(503, "Query embedding unavailable");
+        if (Object.entries(SEMANTIC_MODEL).some(([key, value]) => result[key] !== value) || result.task !== "RETRIEVAL_QUERY" || result.inputSha256 !== reservation.querySha256 || !Array.isArray(result.vector) || result.vector.length !== 768 || result.vector.some((v) => !Number.isFinite(v)) || Math.abs(result.vector.reduce((sum, n) => sum + n * n, 0) - 1) > 1e-9 || result.truncated !== false || !Number.isInteger(result.tokenCount) || result.tokenCount < 1 || result.tokenCount > 2048) throw fail5(503, "Query embedding unavailable");
         c = await context(frozenActor);
-        if (c.snapshot.revision !== reservation.revision || c.index.indexSha256 !== reservation.indexSha256) throw fail4(409, "Evidence context changed");
+        if (c.snapshot.revision !== reservation.revision || c.index.indexSha256 !== reservation.indexSha256) throw fail5(409, "Evidence context changed");
         const allowed = /* @__PURE__ */ new Set();
         for (let offset = 0; offset < 256; offset += 100) {
           const page = searchRetainedSources(c.snapshot, { ...payload.filters, query: "", offset, limit: 100 });
@@ -43059,7 +43164,7 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
         }
         const ranked = c.index.entries.filter((e) => allowed.has(e.id)).map((e) => ({ id: e.id, similarity: e.vector.reduce((sum, v, i) => sum + v * result.vector[i], 0) })).sort((a, b) => b.similarity - a.similarity || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
         const done = await transaction(frozenActor, sessionId, ([identity, state, budget, record2]) => {
-          if (record2.owner !== owner || record2.status !== "pending" || record2.expiresAt <= now()) throw fail4(409, "Semantic reservation unavailable");
+          if (record2.owner !== owner || record2.status !== "pending" || record2.expiresAt <= now()) throw fail5(409, "Semantic reservation unavailable");
           return [identity, state, budget, { ...record2, status: "complete", ranked, tokenCount: result.tokenCount }];
         });
         c = await context(frozenActor);
@@ -43074,59 +43179,18 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
       }
     },
     async page(actor, { sessionId, revision: revision2, offset = 0, limit = 25 } = {}) {
-      if (!hash6(sessionId) || !hash6(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 256 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail4(400, "Invalid semantic page");
+      if (!hash7(sessionId) || !hash7(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 256 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail5(400, "Invalid semantic page");
       const frozenActor = Object.freeze({ ...actor });
       let c = await context(frozenActor);
-      if (c.snapshot.revision !== revision2) throw fail4(409, "Evidence revision changed");
+      if (c.snapshot.revision !== revision2) throw fail5(409, "Evidence revision changed");
       const values = await transaction(frozenActor, sessionId, ([identity, state, budget, record2]) => {
-        if (!record2 || record2.organizationId !== org || record2.actorId !== frozenActor.id || record2.actorUid !== frozenActor.uid) throw fail4(404, "Semantic session unavailable");
+        if (!record2 || record2.organizationId !== org || record2.actorId !== frozenActor.id || record2.actorUid !== frozenActor.uid) throw fail5(404, "Semantic session unavailable");
         return [identity, state, budget, record2];
       });
       c = await context(frozenActor);
       return publicPage(c, values[3], offset, limit);
     }
   });
-}
-
-// server/defiant-selection-reconciliation.js
-import { createHash as createHash4 } from "node:crypto";
-var method = "selected-derived-cells-signed-decimal-v1";
-var metric = "source-total-earned";
-var plain3 = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
-var exact5 = (v, keys2) => plain3(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
-var hash7 = (v) => typeof v === "string" && /^[a-f0-9]{64}$(?![\s\S])/.test(v);
-var decimal2 = (v) => typeof v === "string" && /^-?(0|[1-9][0-9]{0,25})(\.[0-9]{1,12})?$(?![\s\S])/.test(v);
-var text3 = (v) => typeof v === "string" && v.length > 0 && Buffer.byteLength(v, "utf8") <= 500 && !/[\u0000-\u001f\u007f]/.test(v);
-var units2 = (v) => {
-  const negative = v.startsWith("-");
-  const [whole, fraction = ""] = (negative ? v.slice(1) : v).split(".");
-  const n = BigInt(whole) * 10n ** 12n + BigInt(fraction.padEnd(12, "0"));
-  return negative ? -n : n;
-};
-var keys = ["schemaVersion", "method", "selectionId", "sourceHash", "currency", "metric", "month", "selectedRecordCount", "selectionRecordSetSha256", "declaredAmount", "recomputedAmount", "positiveAmount", "negativeAmount", "zeroRows", "predicates", "provenance"];
-var provenanceKeys2 = ["crossTabSha256", "selectedReceiptsSha256", "producerReceiptSha256", "independentReviewSha256"];
-function normalizeSelectionReconciliations(input, selections) {
-  if (input === void 0) return void 0;
-  if (!Array.isArray(input) || input.length > 2e3 || Buffer.byteLength(JSON.stringify(input), "utf8") > 1024 * 1024) throw fail(503, "Invalid selection reconciliation");
-  const byId = new Map(selections.map((s) => [s.id, s]));
-  const seen = /* @__PURE__ */ new Set();
-  return input.map((row) => {
-    if (!exact5(row, keys) || row.schemaVersion !== 1 || row.method !== method || row.metric !== metric || (typeof row.selectionId !== "string" || !/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/.test(row.selectionId)) || seen.has(row.selectionId) || !hash7(row.sourceHash) || !hash7(row.selectionRecordSetSha256) || typeof row.currency !== "string" || !/^[A-Z]{3}$(?![\s\S])/.test(row.currency) || typeof row.month !== "string" || !/^[0-9]{4}-(0[1-9]|1[0-2])$(?![\s\S])/.test(row.month) || !Number.isSafeInteger(row.selectedRecordCount) || row.selectedRecordCount < 1 || !Number.isSafeInteger(row.zeroRows) || row.zeroRows < 0 || row.zeroRows > row.selectedRecordCount || !exact5(row.predicates, ["sourceSongId", "store"]) || !text3(row.predicates.sourceSongId) || !text3(row.predicates.store) || !exact5(row.provenance, provenanceKeys2) || !provenanceKeys2.every((k) => hash7(row.provenance[k])) || !["declaredAmount", "recomputedAmount", "positiveAmount", "negativeAmount"].every((k) => decimal2(row[k]))) throw fail(503, "Invalid selection reconciliation");
-    const selected = byId.get(row.selectionId);
-    if (!selected || selected.sourceHash !== row.sourceHash || selected.currency !== row.currency || selected.sourceRecords.length !== row.selectedRecordCount || createHash4("sha256").update(JSON.stringify(selected.sourceRecords)).digest("hex") !== row.selectionRecordSetSha256 || units2(selected.amount) !== units2(row.declaredAmount) || units2(row.declaredAmount) !== units2(row.recomputedAmount) || units2(row.positiveAmount) < 0n || units2(row.negativeAmount) > 0n || units2(row.positiveAmount) + units2(row.negativeAmount) !== units2(row.recomputedAmount)) throw fail(503, "Selection reconciliation binding mismatch");
-    const nonzero = row.selectedRecordCount - row.zeroRows;
-    const buckets = Number(units2(row.positiveAmount) > 0n) + Number(units2(row.negativeAmount) < 0n);
-    if (nonzero < buckets || buckets === 0 && nonzero !== 0) throw fail(503, "Selection reconciliation sign counts infeasible");
-    seen.add(row.selectionId);
-    return structuredClone(row);
-  });
-}
-function selectionReconciliationView(data, selectionId) {
-  const selection = data.selections.find((row) => row.id === selectionId);
-  if (!selection) throw fail(404, "Evidence selection unavailable");
-  const proof = data.selectionReconciliations?.find((row) => row.selectionId === selectionId);
-  if (!proof) return { available: false, selectionId, reason: "not-prepared", limitation: "No retained reconciliation proof is prepared for this selection; absence does not establish incorrect arithmetic." };
-  return { available: true, selectionId, rowConvention: "1-based-logical-csv-record-including-header", proof: structuredClone(proof), runtimeBinding: { status: "checked", scope: "selection-metadata-and-arithmetic" }, retainedDerivedReview: { status: "reported-pass", scope: "selected-derived-records", basis: "supplied-retained-review" }, periodQualification: "producer-declared-group-month; not independently established by this read", predicateColumns: { sourceSongId: "TC Song ID", store: "Store Name" }, followUp: { resource: "selection-receipts", selectionId, revision: data.revision }, limitation: "Runtime checked proof metadata against the current selection and signed totals, not source cells or predicate truth. Retained review reports selected derived-cell recomputation; it is not a second whole-source scan, complete provider intake, settlement maturity, causal finding, identity equivalence, rights or economic correctness." };
 }
 
 // server/defiant-evidence-decision.js
@@ -43157,7 +43221,7 @@ function composeEvidenceDecision({ selection, month: month4, revision: revision2
 
 // server/defiant-store-period-coverage.js
 var invalid3 = () => Object.assign(new Error("Invalid store coverage product"), { status: 503 });
-var id3 = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(v);
+var id4 = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(v);
 var decimal3 = (v) => typeof v === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(v);
 var scale = 1000000000000n;
 var units3 = (v) => {
@@ -43176,7 +43240,7 @@ function normalizeStorePeriodCoverage(input, comparisons = []) {
   if (!Array.isArray(input) || input.length > 100) throw invalid3();
   const ids = /* @__PURE__ */ new Set(), bindings = /* @__PURE__ */ new Set();
   return input.map((row) => {
-    if (!row || row.schemaVersion !== 1 || !id3(row.id) || ids.has(row.id) || !id3(row.comparisonId) || typeof row.storeKey !== "string") throw invalid3();
+    if (!row || row.schemaVersion !== 1 || !id4(row.id) || ids.has(row.id) || !id4(row.comparisonId) || typeof row.storeKey !== "string") throw invalid3();
     ids.add(row.id);
     const comparison = comparisons.find((c) => c.id === row.comparisonId && c.dimension === "store");
     const group = comparison?.groups.find((g) => g.key === row.storeKey);
@@ -43325,7 +43389,7 @@ function normalizeWorksheetCell(cell) {
 var invalid4 = () => Object.assign(new Error("Invalid curated evidence product"), { status: 503 });
 var object2 = (v) => v && typeof v === "object" && !Array.isArray(v);
 var text6 = (v, max = 200) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
-var id4 = (v) => text6(v, 128) && /^[A-Za-z0-9_-]+$/.test(v);
+var id5 = (v) => text6(v, 128) && /^[A-Za-z0-9_-]+$/.test(v);
 var hash9 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
 var decimal4 = (v) => typeof v === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(v);
 var scale2 = 1000000000000n;
@@ -43362,7 +43426,7 @@ function normalizeComparisons(input, months) {
   let groupCount = 0, referenceCount = 0;
   const monthMap = new Map(months.map((m) => [`${m.month}:${m.currency}`, m]));
   return rows.map((row) => {
-    if (!id4(row.id) || ids.has(row.id) || !["sourceSongId", "store", "country", "salesType"].includes(row.dimension) || !text6(row.sourceSystem, 128) || !text6(row.accountScope, 128) || !["filename-declared", "content-verified"].includes(row.periodBasis) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency)) throw invalid4();
+    if (!id5(row.id) || ids.has(row.id) || !["sourceSongId", "store", "country", "salesType"].includes(row.dimension) || !text6(row.sourceSystem, 128) || !text6(row.accountScope, 128) || !["filename-declared", "content-verified"].includes(row.periodBasis) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency)) throw invalid4();
     ids.add(row.id);
     const beforeMonths = periods2(row.beforeMonths), afterMonths = periods2(row.afterMonths);
     if (beforeMonths.length !== afterMonths.length || beforeMonths.some((m) => afterMonths.includes(m)) || beforeMonths.at(-1) >= afterMonths[0]) throw invalid4();
@@ -43380,7 +43444,7 @@ function normalizeComparisons(input, months) {
     let before = 0n, after = 0n, decrease = 0n, increase = 0n;
     const groups = list(row.groups, 1e4, object2).map((group) => {
       groupCount++;
-      if (groupCount > 1e4 || !id4(group.id) || groupIds.has(group.id) || !(group.key === null || text6(group.key, 500)) || keys2.has(group.key) || !text6(group.label, 500)) throw invalid4();
+      if (groupCount > 1e4 || !id5(group.id) || groupIds.has(group.id) || !(group.key === null || text6(group.key, 500)) || keys2.has(group.key) || !text6(group.label, 500)) throw invalid4();
       groupIds.add(group.id);
       keys2.add(group.key);
       const b = units4(group.beforeAmount), a = units4(group.afterAmount), d = a - b;
@@ -43413,7 +43477,7 @@ function normalizeAudienceDefinitions(input) {
   if (input === void 0) return void 0;
   const ids = /* @__PURE__ */ new Set();
   return list(input, 200, object2).map((row) => {
-    if (!id4(row.id) || ids.has(row.id) || !text6(row.name, 500) || !text6(row.criteria, 4e3) || !text6(row.scaleText, 1e3) || !text6(row.proposedOffer, 2e3) || !hash9(row.sourceHash) || !text6(row.sheet, 128)) throw invalid4();
+    if (!id5(row.id) || ids.has(row.id) || !text6(row.name, 500) || !text6(row.criteria, 4e3) || !text6(row.scaleText, 1e3) || !text6(row.proposedOffer, 2e3) || !hash9(row.sourceHash) || !text6(row.sheet, 128)) throw invalid4();
     ids.add(row.id);
     const cellRefs = unique(list(row.cellRefs, 40, (v) => typeof v === "string" && /^[A-Z]{1,3}[1-9]\d{0,6}$/.test(v)));
     if (!cellRefs.length) throw invalid4();
@@ -43427,7 +43491,7 @@ function normalizeAudienceDefinitions(input) {
 // server/defiant-evidence-identity.js
 var invalid5 = () => Object.assign(new Error("Invalid catalog identity review"), { status: 503 });
 var text7 = (value, max = 200) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
-var id5 = (value) => text7(value, 128) && /^[A-Za-z0-9_-]+$/.test(value);
+var id6 = (value) => text7(value, 128) && /^[A-Za-z0-9_-]+$/.test(value);
 var hash10 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 var object3 = (value) => value && typeof value === "object" && !Array.isArray(value);
 var optionalText = (value, max) => value === null || text7(value, max);
@@ -43452,7 +43516,7 @@ function normalizeIdentityGroups(input, selections) {
   const groupIds = /* @__PURE__ */ new Set(), usedSelections = /* @__PURE__ */ new Set(), usedRecords = /* @__PURE__ */ new Map();
   let memberCount = 0;
   const groups = input.map((group) => {
-    if (!object3(group) || !id5(group.id) || groupIds.has(group.id) || !text7(group.artist, 500) || !text7(group.title, 500) || !["unreviewed", "needs-review"].includes(group.reviewStatus) || group.rankingBasis !== identityRankingBasis || !Array.isArray(group.members) || !group.members.length || group.members.length > 2e3) throw invalid5();
+    if (!object3(group) || !id6(group.id) || groupIds.has(group.id) || !text7(group.artist, 500) || !text7(group.title, 500) || !["unreviewed", "needs-review"].includes(group.reviewStatus) || group.rankingBasis !== identityRankingBasis || !Array.isArray(group.members) || !group.members.length || group.members.length > 2e3) throw invalid5();
     groupIds.add(group.id);
     memberCount += group.members.length;
     if (memberCount > 2e3) throw invalid5();
@@ -43464,7 +43528,7 @@ function normalizeIdentityGroups(input, selections) {
     let selectionCount = 0;
     let selectionRowCount = 0;
     const members = group.members.map((member) => {
-      if (!object3(member) || !id5(member.id) || memberIds.has(member.id) || !text7(member.sourceSystem, 128) || !text7(member.accountScope, 128) || !optionalText(member.sourceId, 128) || !optionalText(member.releaseTitle, 500) || !optionalText(member.upc, 128) || !Array.isArray(member.selectionIds) || !member.selectionIds.length || member.selectionIds.length > 2e3) throw invalid5();
+      if (!object3(member) || !id6(member.id) || memberIds.has(member.id) || !text7(member.sourceSystem, 128) || !text7(member.accountScope, 128) || !optionalText(member.sourceId, 128) || !optionalText(member.releaseTitle, 500) || !optionalText(member.upc, 128) || !Array.isArray(member.selectionIds) || !member.selectionIds.length || member.selectionIds.length > 2e3) throw invalid5();
       memberIds.add(member.id);
       if (member.sourceId !== null) {
         const sourceKey = JSON.stringify([member.sourceSystem, member.accountScope, member.sourceId, member.releaseTitle, member.upc]);
@@ -43474,7 +43538,7 @@ function normalizeIdentityGroups(input, selections) {
       let subtotal = 0n;
       let rowCount = 0;
       const selectionIds = member.selectionIds.map((selectionId) => {
-        const selected = id5(selectionId) && selectionById.get(selectionId);
+        const selected = id6(selectionId) && selectionById.get(selectionId);
         if (!selected || usedSelections.has(selectionId)) throw invalid5();
         usedSelections.add(selectionId);
         let seen = usedRecords.get(selected.sourceHash);
@@ -43509,7 +43573,7 @@ function normalizeIdentityGroups(input, selections) {
 
 // server/defiant-evidence.js
 import { createHash as createHash5 } from "node:crypto";
-var fail5 = (status, message) => Object.assign(new Error(message), { status });
+var fail6 = (status, message) => Object.assign(new Error(message), { status });
 var plain4 = (value) => value && typeof value === "object" && !Array.isArray(value);
 var bounded = (value, max = 200) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
 var identifier = (value) => bounded(value, 128) && /^[A-Za-z0-9_-]+$/.test(value);
@@ -43519,40 +43583,40 @@ var decimal5 = (value) => typeof value === "string" && /^-?(0|[1-9]\d{0,25})(\.\
 var caps = Object.freeze({ readOnly: true, canActivate: false, canApproveRights: false });
 var METRIC = "source-total-earned";
 function normalize(input, organizationId2) {
-  if (!plain4(input) || input.organizationId !== organizationId2 || input.schemaVersion !== 1 || !bounded(input.coverage, 2e3)) throw fail5(503, "Evidence snapshot unavailable");
-  if (!Array.isArray(input.months) || input.months.length > 1200 || !Array.isArray(input.receipts) || input.receipts.length > 1e3) throw fail5(503, "Evidence snapshot exceeds bounds");
+  if (!plain4(input) || input.organizationId !== organizationId2 || input.schemaVersion !== 1 || !bounded(input.coverage, 2e3)) throw fail6(503, "Evidence snapshot unavailable");
+  if (!Array.isArray(input.months) || input.months.length > 1200 || !Array.isArray(input.receipts) || input.receipts.length > 1e3) throw fail6(503, "Evidence snapshot exceeds bounds");
   const keys2 = /* @__PURE__ */ new Set();
   const months = input.months.map((row) => {
-    if (!plain4(row) || !month3(row.month) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !decimal5(row.amount) || !hash11(row.sourceHash) || row.metric !== METRIC) throw fail5(503, "Invalid earnings product");
+    if (!plain4(row) || !month3(row.month) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !decimal5(row.amount) || !hash11(row.sourceHash) || row.metric !== METRIC) throw fail6(503, "Invalid earnings product");
     const key = `${row.month}:${row.currency}`;
-    if (keys2.has(key)) throw fail5(503, "Duplicate earnings period");
+    if (keys2.has(key)) throw fail6(503, "Duplicate earnings period");
     keys2.add(key);
-    if (!Array.isArray(row.receiptIds) || row.receiptIds.length > 20 || row.receiptIds.some((value) => !identifier(value))) throw fail5(503, "Invalid receipt references");
+    if (!Array.isArray(row.receiptIds) || row.receiptIds.length > 20 || row.receiptIds.some((value) => !identifier(value))) throw fail6(503, "Invalid receipt references");
     return { receiptIds: [...new Set(row.receiptIds)], month: row.month, currency: row.currency, amount: row.amount, metric: METRIC, sourceHash: row.sourceHash };
   }).sort((a, b) => a.month.localeCompare(b.month) || a.currency.localeCompare(b.currency));
   const receiptIds = /* @__PURE__ */ new Set();
   const receipts = input.receipts.map((row) => {
-    if (!plain4(row) || !identifier(row.id) || receiptIds.has(row.id) || !hash11(row.sourceHash) || !bounded(row.member, 500) || !Number.isSafeInteger(row.record) || row.record < 2 || !plain4(row.cells)) throw fail5(503, "Invalid evidence receipt");
+    if (!plain4(row) || !identifier(row.id) || receiptIds.has(row.id) || !hash11(row.sourceHash) || !bounded(row.member, 500) || !Number.isSafeInteger(row.record) || row.record < 2 || !plain4(row.cells)) throw fail6(503, "Invalid evidence receipt");
     receiptIds.add(row.id);
     const entries = Object.entries(row.cells);
-    if (!entries.length || entries.length > 40 || entries.some(([key, value]) => !bounded(key, 100) || typeof value !== "string" || value.length > 2e3 || /[\u0000-\u001f\u007f]/.test(value))) throw fail5(503, "Invalid evidence cells");
+    if (!entries.length || entries.length > 40 || entries.some(([key, value]) => !bounded(key, 100) || typeof value !== "string" || value.length > 2e3 || /[\u0000-\u001f\u007f]/.test(value))) throw fail6(503, "Invalid evidence cells");
     return { id: row.id, sourceHash: row.sourceHash, member: row.member, record: row.record, cells: Object.fromEntries(entries) };
   });
   for (const row of months) for (const receiptId of row.receiptIds) {
     const receipt = receipts.find((value) => value.id === receiptId);
-    if (!receipt || receipt.sourceHash !== row.sourceHash) throw fail5(503, "Receipt source mismatch");
+    if (!receipt || receipt.sourceHash !== row.sourceHash) throw fail6(503, "Receipt source mismatch");
   }
   const selectionIds = /* @__PURE__ */ new Set();
   let recordCount = 0;
-  if (input.selections !== void 0 && (!Array.isArray(input.selections) || input.selections.length > 2e3)) throw fail5(503, "Invalid aggregate selections");
+  if (input.selections !== void 0 && (!Array.isArray(input.selections) || input.selections.length > 2e3)) throw fail6(503, "Invalid aggregate selections");
   const selections = (input.selections || []).map((row) => {
-    if (!plain4(row) || !identifier(row.id) || selectionIds.has(row.id) || !bounded(row.label, 500) || !hash11(row.sourceHash) || !decimal5(row.amount) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !Array.isArray(row.sourceRecords) || !row.sourceRecords.length) throw fail5(503, "Invalid aggregate selection");
+    if (!plain4(row) || !identifier(row.id) || selectionIds.has(row.id) || !bounded(row.label, 500) || !hash11(row.sourceHash) || !decimal5(row.amount) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !Array.isArray(row.sourceRecords) || !row.sourceRecords.length) throw fail6(503, "Invalid aggregate selection");
     selectionIds.add(row.id);
     recordCount += row.sourceRecords.length;
-    if (recordCount > 5e5) throw fail5(503, "Aggregate selections exceed bounds");
+    if (recordCount > 5e5) throw fail6(503, "Aggregate selections exceed bounds");
     let previous = 1;
     for (const record2 of row.sourceRecords) {
-      if (!Number.isSafeInteger(record2) || record2 <= previous) throw fail5(503, "Invalid selection record order");
+      if (!Number.isSafeInteger(record2) || record2 <= previous) throw fail6(503, "Invalid selection record order");
       previous = record2;
     }
     return { id: row.id, label: row.label, sourceHash: row.sourceHash, amount: row.amount, currency: row.currency, sourceRecords: [...row.sourceRecords] };
@@ -43574,10 +43638,10 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
   if (loadWorksheetCells !== void 0 && typeof loadWorksheetCells !== "function") throw new TypeError("Server-owned worksheet resolver required");
   const scope = Object.freeze({ organizationId: organizationId2 });
   const semantic = typeof loadSemanticIndex === "function" && semanticDependencies ? createSemanticSessions({ ...semanticDependencies, readContext: async (actor) => {
-    if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
+    if (!await authorize(actor, scope)) throw fail6(403, "Evidence access denied");
     const snapshot = normalize(await loadSnapshot(scope), organizationId2);
     const index = normalizeSemanticIndex(await loadSemanticIndex(scope), { organizationId: organizationId2, register: snapshot.retainedSourceRegister });
-    if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
+    if (!await authorize(actor, scope)) throw fail6(403, "Evidence access denied");
     return { actor, snapshot, index };
   } }) : null;
   return Object.freeze({
@@ -43591,33 +43655,34 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         }
       };
       mark("authority_before_snapshot");
-      if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
+      if (!await authorize(actor, scope)) throw fail6(403, "Evidence access denied");
       mark("request_validation");
-      if (!plain4(request) || Object.keys(request).some((key) => !["resource", "revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash", "periodPresence", "mode", "sessionId", "idempotencyKey"].includes(key))) throw fail5(400, "Invalid evidence request");
+      if (!plain4(request) || Object.keys(request).some((key) => !["resource", "revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash", "periodPresence", "mode", "sessionId", "idempotencyKey"].includes(key))) throw fail6(400, "Invalid evidence request");
       const { resource = "manifest", revision: revision2, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, sourceId, format, kind, sourceHash, periodPresence, mode, sessionId, idempotencyKey, offset = 0, limit = 25 } = request;
-      if (!["source-evidence", "selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"].includes(resource) || revision2 !== void 0 && !hash11(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 5e5 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail5(400, "Invalid evidence request");
-      if (resource !== "earnings" && (selectedMonth !== void 0 || currency !== void 0) || !["source-evidence", "retained-sources", "store-coverage", "coverage", "earnings", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "june-review"].includes(resource) && (request.offset !== void 0 || request.limit !== void 0)) throw fail5(400, "Filters require earnings");
-      if (!["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && selectionId !== void 0 || ["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && (!identifier(selectionId) || revision2 === void 0)) throw fail5(400, "Invalid selection request");
-      if (resource !== "store-coverage" && storeCoverageId !== void 0 || resource === "store-coverage" && (revision2 === void 0 || storeCoverageId !== void 0 && !identifier(storeCoverageId) || offset > 100)) throw fail5(400, "Invalid store coverage request");
-      if (resource !== "identity-group" && identityGroupId !== void 0 || resource === "identity-group" && (!identifier(identityGroupId) || revision2 === void 0)) throw fail5(400, "Invalid identity group request");
-      if (["catalog-identity-review", "identity-group"].includes(resource) && offset > 2e3) throw fail5(400, "Invalid identity page");
-      if (resource === "earnings" && offset > 1200 || resource === "selections" && offset > 2e3) throw fail5(400, "Invalid page offset");
-      if (!["explain-change", "comparison-examples"].includes(resource) && comparisonId !== void 0 || ["explain-change", "comparison-examples"].includes(resource) && (!identifier(comparisonId) || revision2 === void 0)) throw fail5(400, "Invalid comparison request");
-      if (!["audience-definition", "audience-cells"].includes(resource) && audienceId !== void 0 || ["audience-definition", "audience-cells"].includes(resource) && (!identifier(audienceId) || revision2 === void 0)) throw fail5(400, "Invalid audience request");
-      if (resource !== "comparison-examples" && (groupId !== void 0 || referenceIndex !== void 0) || resource === "comparison-examples" && (!identifier(groupId) || !Number.isInteger(referenceIndex) || referenceIndex < 0 || referenceIndex >= 48)) throw fail5(400, "Invalid comparison example request");
-      if (resource === "comparisons" && offset > 100 || ["audience-readiness", "audience-definition"].includes(resource) && offset > 200) throw fail5(400, "Invalid product page");
-      if (resource === "explain-change" && offset > 1e4) throw fail5(400, "Invalid comparison page");
-      if (resource !== "receipt" && receiptId !== void 0) throw fail5(400, "Receipt ID requires receipt");
-      if (selectedMonth !== void 0 && !month3(selectedMonth) || currency !== void 0 && (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)) || resource === "receipt" && (!identifier(receiptId) || revision2 === void 0)) throw fail5(400, "Invalid evidence selection");
-      if (!["coverage", "retained-sources"].includes(resource) && (query !== void 0 || fromMonth !== void 0 || toMonth !== void 0)) throw fail5(400, "Coverage filters require coverage");
-      if (resource !== "retained-sources" && [sourceId, format, kind, periodPresence, mode, sessionId, idempotencyKey].some((v) => v !== void 0)) throw fail5(400, "Retained source filters require retained sources");
-      if (!["source-evidence", "retained-sources"].includes(resource) && sourceHash !== void 0) throw fail5(400, "Source hash requires a source resource");
+      if (!["royalty-review", "source-evidence", "selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"].includes(resource) || revision2 !== void 0 && !hash11(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 5e5 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail6(400, "Invalid evidence request");
+      if (resource !== "earnings" && (selectedMonth !== void 0 || currency !== void 0) || !["royalty-review", "source-evidence", "retained-sources", "store-coverage", "coverage", "earnings", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "june-review"].includes(resource) && (request.offset !== void 0 || request.limit !== void 0)) throw fail6(400, "Filters require earnings");
+      if (!["royalty-review", "selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && selectionId !== void 0 || ["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && (!identifier(selectionId) || revision2 === void 0)) throw fail6(400, "Invalid selection request");
+      if (!["royalty-review", "store-coverage"].includes(resource) && storeCoverageId !== void 0 || resource === "store-coverage" && (revision2 === void 0 || storeCoverageId !== void 0 && !identifier(storeCoverageId) || offset > 100)) throw fail6(400, "Invalid store coverage request");
+      if (resource !== "identity-group" && identityGroupId !== void 0 || resource === "identity-group" && (!identifier(identityGroupId) || revision2 === void 0)) throw fail6(400, "Invalid identity group request");
+      if (["catalog-identity-review", "identity-group"].includes(resource) && offset > 2e3) throw fail6(400, "Invalid identity page");
+      if (resource === "earnings" && offset > 1200 || resource === "selections" && offset > 2e3) throw fail6(400, "Invalid page offset");
+      if (!["royalty-review", "explain-change", "comparison-examples"].includes(resource) && comparisonId !== void 0 || ["explain-change", "comparison-examples"].includes(resource) && (!identifier(comparisonId) || revision2 === void 0)) throw fail6(400, "Invalid comparison request");
+      if (!["audience-definition", "audience-cells"].includes(resource) && audienceId !== void 0 || ["audience-definition", "audience-cells"].includes(resource) && (!identifier(audienceId) || revision2 === void 0)) throw fail6(400, "Invalid audience request");
+      if (resource !== "comparison-examples" && (groupId !== void 0 || referenceIndex !== void 0) || resource === "comparison-examples" && (!identifier(groupId) || !Number.isInteger(referenceIndex) || referenceIndex < 0 || referenceIndex >= 48)) throw fail6(400, "Invalid comparison example request");
+      if (resource === "comparisons" && offset > 100 || ["audience-readiness", "audience-definition"].includes(resource) && offset > 200) throw fail6(400, "Invalid product page");
+      if (resource === "explain-change" && offset > 1e4) throw fail6(400, "Invalid comparison page");
+      if (resource !== "receipt" && receiptId !== void 0) throw fail6(400, "Receipt ID requires receipt");
+      if (selectedMonth !== void 0 && !month3(selectedMonth) || currency !== void 0 && (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)) || resource === "receipt" && (!identifier(receiptId) || revision2 === void 0)) throw fail6(400, "Invalid evidence selection");
+      if (!["coverage", "retained-sources"].includes(resource) && (query !== void 0 || fromMonth !== void 0 || toMonth !== void 0)) throw fail6(400, "Coverage filters require coverage");
+      if (resource !== "retained-sources" && [sourceId, format, kind, periodPresence, mode, sessionId, idempotencyKey].some((v) => v !== void 0)) throw fail6(400, "Retained source filters require retained sources");
+      if (!["source-evidence", "retained-sources"].includes(resource) && sourceHash !== void 0) throw fail6(400, "Source hash requires a source resource");
       if (resource === "source-evidence") {
         const { resource: _, ...fields2 } = request;
         validateSourceEvidenceRequest(fields2);
       }
       if (resource === "retained-sources") validateRetainedSourceRequest({ query, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence, offset, limit });
       if (resource === "coverage") validateServedEvidenceDiscoveryRequest({ query, fromMonth, toMonth, offset, limit });
+      if (resource === "royalty-review") validateRoyaltyReviewRequest(request);
       let data;
       try {
         mark("snapshot_load");
@@ -43625,35 +43690,40 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         mark("snapshot_normalize");
         data = normalize(snapshot, organizationId2);
       } catch (error47) {
-        throw fail5(503, "Evidence snapshot unavailable");
+        throw fail6(503, "Evidence snapshot unavailable");
       }
       mark("authority_after_snapshot");
-      if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
+      if (!await authorize(actor, scope)) throw fail6(403, "Evidence access denied");
       mark("revision_check");
-      if (revision2 !== void 0 && revision2 !== data.revision) throw fail5(409, "Evidence revision changed");
+      if (revision2 !== void 0 && revision2 !== data.revision) throw fail6(409, "Evidence revision changed");
       mark("resource_read");
       const base = { schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps };
       if (resource === "retained-sources" && mode !== void 0 && mode !== "keyword") {
-        if (!semantic) throw fail5(503, "Semantic metadata index unavailable");
+        if (!semantic) throw fail6(503, "Semantic metadata index unavailable");
         if (mode === "semantic") {
-          if (sessionId !== void 0 || request.offset !== void 0 || request.limit !== void 0) throw fail5(400, "Invalid explicit semantic request");
+          if (sessionId !== void 0 || request.offset !== void 0 || request.limit !== void 0) throw fail6(400, "Invalid explicit semantic request");
           return semantic.start(actor, { revision: revision2, query, idempotencyKey, filters: Object.fromEntries(Object.entries({ sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence }).filter(([, v]) => v !== void 0)) });
         }
         if (mode === "semantic-page") {
-          if ([query, idempotencyKey, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence].some((v) => v !== void 0)) throw fail5(400, "Invalid semantic page request");
+          if ([query, idempotencyKey, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence].some((v) => v !== void 0)) throw fail6(400, "Invalid semantic page request");
           return semantic.page(actor, { revision: revision2, sessionId, offset, limit });
         }
-        throw fail5(400, "Invalid retained search mode");
+        throw fail6(400, "Invalid retained search mode");
       }
-      if (resource === "retained-sources" && (sessionId !== void 0 || idempotencyKey !== void 0)) throw fail5(400, "Session fields require explicit semantic search");
+      if (resource === "retained-sources" && (sessionId !== void 0 || idempotencyKey !== void 0)) throw fail6(400, "Session fields require explicit semantic search");
       if (resource === "retained-sources") {
         const result = searchRetainedSources(data, { query, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence, offset, limit });
         return semantic ? { ...result, semanticSearch: { configured: true, requiresExplicitInvocation: true, indexVerified: false } } : result;
       }
       if (resource === "source-evidence") {
         const result = { scope, ...sourceEvidenceView(data, { sourceHash, revision: revision2, offset, limit }) };
-        if (Buffer.byteLength(JSON.stringify(result), "utf8") > 262144) throw fail5(503, "Source reference response exceeds bounds");
+        if (Buffer.byteLength(JSON.stringify(result), "utf8") > 262144) throw fail6(503, "Source reference response exceeds bounds");
         return result;
+      }
+      if (resource === "royalty-review") {
+        const result = { ...base, ...royaltyReviewView(data, request, { receiptsAvailable: typeof loadSourceRecords === "function" }) };
+        if (Buffer.byteLength(JSON.stringify(result), "utf8") > 262144) throw fail6(503, "Royalty review response exceeds bounds");
+        return structuredClone(result);
       }
       if (resource === "coverage") return discoverServedEvidenceCoverage(data, { query, fromMonth, toMonth, offset, limit });
       if (resource === "selection-reconciliation") return structuredClone({ ...base, ...selectionReconciliationView(data, selectionId), metadataBreakdown: selectionMetadataBreakdownView(data, selectionId) });
@@ -43662,17 +43732,17 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const products = (data.storePeriodCoverage || []).map((product) => ({ ...product, settlementMaturityComparability: "not-established", limitation: product.limitation + " Settlement maturity comparability has not been established; legacy settlementMaturityComparable:false does not demonstrate unequal maturity." }));
         if (storeCoverageId !== void 0) {
           const product = products.find((p) => p.id === storeCoverageId);
-          if (!product) throw fail5(404, "Store coverage unavailable");
+          if (!product) throw fail6(404, "Store coverage unavailable");
           return structuredClone({ ...base, product });
         }
         return structuredClone({ ...base, items: products.slice(offset, offset + limit), total: products.length, nextOffset: offset + limit < products.length ? offset + limit : null });
       }
       if (resource === "june-review") {
-        if (selectedMonth !== void 0 || currency !== void 0 || receiptId !== void 0) throw fail5(400, "Invalid June review request");
+        if (selectedMonth !== void 0 || currency !== void 0 || receiptId !== void 0) throw fail6(400, "Invalid June review request");
         const selected = data.selections.find((row) => row.id === selectionId);
-        if (!selected) throw fail5(404, "Selection unavailable");
+        if (!selected) throw fail6(404, "Selection unavailable");
         const periods3 = data.months.filter((row) => row.sourceHash === selected.sourceHash && row.currency === selected.currency);
-        if (periods3.length !== 1 || periods3[0].month !== "2025-06") throw fail5(409, "June source period unavailable");
+        if (periods3.length !== 1 || periods3[0].month !== "2025-06") throw fail6(409, "June source period unavailable");
         const period = periods3[0];
         const { sourceRecords, ...selection } = selected;
         return structuredClone({
@@ -43696,42 +43766,42 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const comparison = (data.comparisons || []).find((row) => row.id === comparisonId);
         const group = comparison?.groups.find((row) => row.id === groupId);
         const reference = group?.sourceReferences[referenceIndex];
-        if (!reference) throw fail5(404, "Comparison reference unavailable");
+        if (!reference) throw fail6(404, "Comparison reference unavailable");
         mark("source_records_load");
-        if (!loadSourceRecords) throw fail5(503, "Source cells unavailable");
+        if (!loadSourceRecords) throw fail6(503, "Source cells unavailable");
         let receipts;
         try {
           const loaded = reference.exampleRecords.length ? await loadSourceRecords({ ...scope, sourceHash: reference.sourceHash, sourceRecords: [...reference.exampleRecords], revision: data.revision }) : [];
           mark("source_records_normalize");
           receipts = normalize({ schemaVersion: 1, organizationId: organizationId2, coverage: data.coverage, months: [], receipts: loaded }, organizationId2).receipts;
-          if (receipts.length !== reference.exampleRecords.length || receipts.some((row, i) => row.sourceHash !== reference.sourceHash || row.record !== reference.exampleRecords[i])) throw fail5(503, "Source examples mismatch");
+          if (receipts.length !== reference.exampleRecords.length || receipts.some((row, i) => row.sourceHash !== reference.sourceHash || row.record !== reference.exampleRecords[i])) throw fail6(503, "Source examples mismatch");
         } catch {
-          throw fail5(503, "Source cells unavailable");
+          throw fail6(503, "Source cells unavailable");
         }
         mark("authority_after_records");
-        if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
+        if (!await authorize(actor, scope)) throw fail6(403, "Evidence access denied");
         return structuredClone({ ...base, comparisonId, groupId, referenceIndex, reference, receipts, fullSelectionAvailable: false, limitation: "Original cells for producer-selected examples only; these examples do not reconcile or represent the full group aggregate." });
       }
       if (resource === "audience-cells") {
         const definition = (data.audienceDefinitions || []).find((row) => row.id === audienceId);
-        if (!definition) throw fail5(404, "Audience definition unavailable");
+        if (!definition) throw fail6(404, "Audience definition unavailable");
         mark("worksheet_load");
-        if (!loadWorksheetCells) throw fail5(503, "Worksheet cells unavailable");
+        if (!loadWorksheetCells) throw fail6(503, "Worksheet cells unavailable");
         let worksheet;
         try {
           const loaded = await loadWorksheetCells({ ...scope, sourceHash: definition.sourceHash, sheet: definition.sheet, cellRefs: [...definition.cellRefs], revision: data.revision });
           mark("worksheet_normalize");
-          if (!plain4(loaded) || loaded.sourceHash !== definition.sourceHash || loaded.sheet !== definition.sheet || !Array.isArray(loaded.cells) || loaded.cells.length !== definition.cellRefs.length) throw fail5(503, "Worksheet mismatch");
+          if (!plain4(loaded) || loaded.sourceHash !== definition.sourceHash || loaded.sheet !== definition.sheet || !Array.isArray(loaded.cells) || loaded.cells.length !== definition.cellRefs.length) throw fail6(503, "Worksheet mismatch");
           const cells = loaded.cells.map((cell, i) => {
-            if (!plain4(cell) || cell.cellRef !== definition.cellRefs[i]) throw fail5(503, "Worksheet mismatch");
+            if (!plain4(cell) || cell.cellRef !== definition.cellRefs[i]) throw fail6(503, "Worksheet mismatch");
             return normalizeWorksheetCell(cell);
           });
           worksheet = { sourceHash: loaded.sourceHash, sheet: loaded.sheet, cells };
         } catch {
-          throw fail5(503, "Worksheet cells unavailable");
+          throw fail6(503, "Worksheet cells unavailable");
         }
         mark("authority_after_worksheet");
-        if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
+        if (!await authorize(actor, scope)) throw fail6(403, "Evidence access denied");
         return structuredClone({ ...base, audienceId, worksheet, limitation: "Source cell strings from the host integrity-checked worksheet resolver; no formula execution. Supplied definitions do not verify populations or consent. Required, observed and missing evidence are analyst assessments, not workbook claims." });
       }
       if (resource === "comparisons" || resource === "explain-change") {
@@ -43740,7 +43810,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Arithmetic contribution only, not causal attribution or opportunity scoring. grossDecrease is a positive magnitude; delta = offsetIncrease - grossDecrease. Period verification is a producer assertion. Example logical record references are not complete selections or loaded source cells; full group receipt drilldown is unavailable.";
         if (resource === "comparisons") return structuredClone({ ...base, items: rows2.slice(offset, offset + limit).map(summary), total: rows2.length, nextOffset: offset + limit < rows2.length ? offset + limit : null, limitation });
         const row = rows2.find((v) => v.id === comparisonId);
-        if (!row) throw fail5(404, "Comparison unavailable");
+        if (!row) throw fail6(404, "Comparison unavailable");
         return structuredClone({ ...base, comparison: summary(row), groups: row.groups.slice(offset, offset + limit), total: row.groups.length, nextOffset: offset + limit < row.groups.length ? offset + limit : null, limitation });
       }
       if (resource === "audience-readiness" || resource === "audience-definition") {
@@ -43748,7 +43818,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Workbook-attributed segment definitions; required, observed and missing evidence are analyst assessments of availability, not workbook claims. Supplied definitions and availability only. Membership, consent, customer/listener identity and activation eligibility are not computed or verified. Offer text is a proposal, not approval.";
         if (resource === "audience-readiness") return structuredClone({ ...base, items: rows2.slice(offset, offset + limit), total: rows2.length, nextOffset: offset + limit < rows2.length ? offset + limit : null, limitation });
         const definition = rows2.find((v) => v.id === audienceId);
-        if (!definition) throw fail5(404, "Audience definition unavailable");
+        if (!definition) throw fail6(404, "Audience definition unavailable");
         return structuredClone({ ...base, definition, limitation });
       }
       if (resource === "catalog-identity-review" || resource === "identity-group") {
@@ -43757,7 +43827,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Source identities and referenced selection amounts only; recording equivalence is unreviewed. Amounts sum unique selection references, not independently recomputed source cells. Overlapping source-record memberships are rejected across the identity queue. Ranking is review priority within currency, not an opportunity score or action approval.";
         if (resource === "catalog-identity-review") return structuredClone({ ...base, items: groups.slice(offset, offset + limit).map(summary), total: groups.length, nextOffset: offset + limit < groups.length ? offset + limit : null, rankingBasis: identityRankingBasis, limitation });
         const group = groups.find((row) => row.id === identityGroupId);
-        if (!group) throw fail5(404, "Identity group unavailable");
+        if (!group) throw fail6(404, "Identity group unavailable");
         return structuredClone({ ...base, group: summary(group), members: group.members.slice(offset, offset + limit), total: group.members.length, nextOffset: offset + limit < group.members.length ? offset + limit : null, limitation });
       }
       if (resource === "selections" || resource === "selection" || resource === "selection-receipts") {
@@ -43765,22 +43835,22 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Complete producer-supplied record selection; declared aggregate is not recomputed by this read. Exact source cells require the pinned source partition.";
         if (resource === "selections") return structuredClone({ ...base, items: data.selections.slice(offset, offset + limit).map(summary), total: data.selections.length, nextOffset: offset + limit < data.selections.length ? offset + limit : null, limitation });
         const selected = data.selections.find((row) => row.id === selectionId);
-        if (!selected) throw fail5(404, "Selection unavailable");
+        if (!selected) throw fail6(404, "Selection unavailable");
         if (resource === "selection-receipts") {
           mark("source_records_load");
-          if (!loadSourceRecords) throw fail5(503, "Source cells unavailable");
+          if (!loadSourceRecords) throw fail6(503, "Source cells unavailable");
           const records = selected.sourceRecords.slice(offset, offset + limit);
           let receipts;
           try {
             const loaded = await loadSourceRecords({ ...scope, sourceHash: selected.sourceHash, sourceRecords: [...records], revision: data.revision });
             mark("source_records_normalize");
             receipts = normalize({ schemaVersion: 1, organizationId: organizationId2, coverage: data.coverage, months: [], receipts: loaded }, organizationId2).receipts;
-            if (receipts.length !== records.length || receipts.some((row, i) => row.sourceHash !== selected.sourceHash || row.record !== records[i])) throw fail5(503, "Source selection mismatch");
+            if (receipts.length !== records.length || receipts.some((row, i) => row.sourceHash !== selected.sourceHash || row.record !== records[i])) throw fail6(503, "Source selection mismatch");
           } catch {
-            throw fail5(503, "Source cells unavailable");
+            throw fail6(503, "Source cells unavailable");
           }
           mark("authority_after_records");
-          if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
+          if (!await authorize(actor, scope)) throw fail6(403, "Evidence access denied");
           return structuredClone({ ...base, selection: summary(selected), receipts, total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, limitation: "Exact source cells supplied by the host integrity-checked partition resolver; this page is not the entire aggregate unless it contains every contributing record." });
         }
         const matchingPeriods = data.months.filter((p) => p.sourceHash === selected.sourceHash && p.currency === selected.currency);
@@ -43790,7 +43860,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
       if (resource === "receipt") {
         mark("receipt_lookup");
         const receipt = data.receipts.find((row) => row.id === receiptId);
-        if (!receipt) throw fail5(404, "Receipt unavailable");
+        if (!receipt) throw fail6(404, "Receipt unavailable");
         return structuredClone({ ...base, receipt, rowConvention: "1-based logical CSV record including header", limitation: "A receipt is one source record; an aggregate requires its full contributing selection." });
       }
       const rows = data.months.filter((row) => (!selectedMonth || row.month === selectedMonth) && (!currency || row.currency === currency));
@@ -43872,8 +43942,8 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
     if (++rates[kind] > (kind === "authorize" ? 30 : 120)) throw error46(429, "temporarily_unavailable");
     return { ...s, rates };
   };
-  const client = async (id6) => {
-    const c = configured.find((c2) => c2.clientId === id6);
+  const client = async (id7) => {
+    const c = configured.find((c2) => c2.clientId === id7);
     if (!c) throw error46(400, "invalid_client");
     selectCimdAuthentication(await inspectClient(c), c);
     return { id: c.clientId, redirectUris: [c.redirectUri], grants: ["authorization_code", "refresh_token"], name: c.clientName };
@@ -43896,17 +43966,17 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
     if (!identifier2(subject?.userId) || typeof subject.uid !== "string" || !subject.uid || subject.uid.length > 128 || typeof subject.email !== "string" || subject.email.length > 320) throw error46(403, "access_denied");
     return subject;
   };
-  const transaction = (s, id6, header) => {
-    if (!secret(id6)) reject();
-    const t = s.transactions.find((t2) => t2.id === id6);
-    if (!t || !equal(t.cookieHash, cookieProof(header, id6))) throw error46(403, "access_denied");
+  const transaction = (s, id7, header) => {
+    if (!secret(id7)) reject();
+    const t = s.transactions.find((t2) => t2.id === id7);
+    if (!t || !equal(t.cookieHash, cookieProof(header, id7))) throw error46(403, "access_denied");
     return t;
   };
   function tokenModel(context) {
     return {
-      getClient: async (id6, clientSecret) => {
+      getClient: async (id7, clientSecret) => {
         if (clientSecret !== void 0 && clientSecret !== null && clientSecret !== "") throw error46(400, "invalid_client");
-        return client(id6);
+        return client(id7);
       },
       validateScope: async (user, _client, scope) => {
         if (!Array.isArray(scope) || scope.length !== 1 || scope[0] !== EVIDENCE_SCOPE) throw error46(400, "invalid_scope");
@@ -44017,12 +44087,12 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
       await write((s) => rate(s, "authorize"));
       const c = await client(input.client_id);
       if (input.redirect_uri !== c.redirectUris[0]) throw error46(400, "invalid_client");
-      const id6 = random(), cookie = random(), expiresAt = now() + FIVE;
+      const id7 = random(), cookie = random(), expiresAt = now() + FIVE;
       await write((s) => {
         if (s.transactions.length >= 128) throw error46(503, "temporarily_unavailable");
-        return { ...s, transactions: [...s.transactions, { id: id6, cookieHash: hash12(cookie), clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, redirectUri: input.redirect_uri, state: input.state, challenge: input.code_challenge, expiresAt, status: "pending", inspections: [], attempts: 0, decisionAttempts: 0 }] };
+        return { ...s, transactions: [...s.transactions, { id: id7, cookieHash: hash12(cookie), clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, redirectUri: input.redirect_uri, state: input.state, challenge: input.code_challenge, expiresAt, status: "pending", inspections: [], attempts: 0, decisionAttempts: 0 }] };
       });
-      return { transactionId: id6, location: `https://studio.chaiwithjai.com/?tab=strategy&remoteEvidenceTransaction=${id6}`, cookie: authorizationCookie(id6, cookie) };
+      return { transactionId: id7, location: `https://studio.chaiwithjai.com/?tab=strategy&remoteEvidenceTransaction=${id7}`, cookie: authorizationCookie(id7, cookie) };
     },
     async inspect({ bearer, organizationId: organizationId2, transactionId, cookie }) {
       const subject = await owner(bearer, organizationId2), proof = random();
@@ -44198,7 +44268,7 @@ function createCimdInspector({ fetchImpl = fetch, now = () => Date.now() } = {})
 // server/defiant-evidence-remote.js
 var AUTH = "/oauth/defiant-evidence";
 var API = "/api/studio/remote-evidence/";
-var fail6 = (status, code) => Object.assign(new Error(code), { status, oauthCode: code });
+var fail7 = (status, code) => Object.assign(new Error(code), { status, oauthCode: code });
 var oauthErrorCodes = ["invalid_request", "invalid_client", "invalid_grant", "invalid_scope", "invalid_token", "insufficient_scope", "access_denied", "temporarily_unavailable"];
 function observeOutcome(sink, event) {
   try {
@@ -44218,7 +44288,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
   let size = 0, chunks = 0;
   let aborted2;
   const abort = new Promise((_, reject2) => {
-    aborted2 = () => reject2(fail6(408, "temporarily_unavailable"));
+    aborted2 = () => reject2(fail7(408, "temporarily_unavailable"));
     if (signal?.aborted) aborted2();
     else signal?.addEventListener("abort", aborted2, { once: true });
   });
@@ -44226,7 +44296,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
     for (; ; ) {
       const p = await Promise.race([reader.read(), abort]);
       if (p.done) break;
-      if (!(p.value instanceof Uint8Array) || ++chunks > 65536 || p.value.byteLength > buffer.length - size) throw fail6(400, "invalid_request");
+      if (!(p.value instanceof Uint8Array) || ++chunks > 65536 || p.value.byteLength > buffer.length - size) throw fail7(400, "invalid_request");
       buffer.set(p.value, size);
       size += p.value.byteLength;
     }
@@ -44240,7 +44310,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
 function fields(params) {
   const data = {};
   for (const [k, v] of params) {
-    if (Object.hasOwn(data, k) || k === "__proto__" || k === "constructor" || v.length > 2048) throw fail6(400, "invalid_request");
+    if (Object.hasOwn(data, k) || k === "__proto__" || k === "constructor" || v.length > 2048) throw fail7(400, "invalid_request");
     data[k] = v;
   }
   return data;
@@ -44301,15 +44371,15 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
       if (path === AUTH + "/complete") {
         if (request.method !== "GET") return json2({ error: "invalid_request" }, 405);
         const input = fields(url2.searchParams);
-        if (!exact7(input, ["transaction"])) throw fail6(400, "invalid_request");
+        if (!exact7(input, ["transaction"])) throw fail7(400, "invalid_request");
         const result = await oauth.complete({ transactionId: input.transaction, cookie: request.headers.get("cookie") });
         return new Response(null, { status: 302, headers: { Location: result.location, "Set-Cookie": result.cookie, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
       }
       if (path === AUTH + "/token" || path === AUTH + "/revoke") {
-        if (request.method !== "POST" || url2.search || !/^application\/x-www-form-urlencoded(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail6(400, "invalid_request");
+        if (request.method !== "POST" || url2.search || !/^application\/x-www-form-urlencoded(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail7(400, "invalid_request");
         const input = fields(new URLSearchParams(new TextDecoder("utf-8", { fatal: true }).decode(await readRemoteBody(request, 8192))));
         if (path.endsWith("/revoke")) {
-          if (!exact7(input, ["token", "client_id"])) throw fail6(400, "invalid_request");
+          if (!exact7(input, ["token", "client_id"])) throw fail7(400, "invalid_request");
           return json2(await oauth.revokePublic(input));
         }
         const response = json2(await oauth.token(input));
@@ -44319,11 +44389,11 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
       if (path.startsWith(API)) {
         const operation = path.slice(API.length), keys2 = { inspect: ["organizationId", "transactionId"], approve: ["organizationId", "transactionId", "inspectionToken"], deny: ["organizationId", "transactionId", "inspectionToken"], list: ["organizationId"], revoke: ["organizationId", "grantId"] };
         if (!Object.hasOwn(keys2, operation)) return json2({ error: "not_found" }, 404);
-        if (request.method !== "POST" || url2.search || !/^application\/json(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail6(400, "invalid_request");
+        if (request.method !== "POST" || url2.search || !/^application\/json(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail7(400, "invalid_request");
         const input = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(await readRemoteBody(request, 4096)));
-        if (!exact7(input, keys2[operation])) throw fail6(400, "invalid_request");
+        if (!exact7(input, keys2[operation])) throw fail7(400, "invalid_request");
         const bearer = /^Bearer ([^\s]+)$/.exec(request.headers.get("authorization") || "")?.[1];
-        if (!bearer || bearer.startsWith("ea.") || bearer.startsWith("er.")) throw fail6(403, "access_denied");
+        if (!bearer || bearer.startsWith("ea.") || bearer.startsWith("er.")) throw fail7(403, "access_denied");
         const args = { ...input, bearer, cookie: request.headers.get("cookie") };
         if (operation === "inspect") return json2(await oauth.inspect(args));
         if (operation === "approve" || operation === "deny") return json2(await oauth.decide({ ...args, approved: operation === "approve" }));
@@ -44353,19 +44423,19 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
           }, callback) };
           registerDefiantEvidenceTools(registration, { onOutcome: onToolOutcome, boundOrganizationId: verified.organizationId, unauthorizedChallenge: challenge() + ', error="invalid_token", error_description="Evidence authorization required"', resolveEvidence: async ({ organizationId: organizationId2 }) => {
             const grant = await oauth.verifyAccessToken(auth.token);
-            if (grant.organizationId !== organizationId2) throw fail6(403, "access_denied");
+            if (grant.organizationId !== organizationId2) throw fail7(403, "access_denied");
             const user = await identity.authorizeLocalEvidenceActor(grant.userId, grant.uid, grant.approvedAt);
             await strategy(organizationId2).raw(user);
             let binding;
             try {
               binding = await provider({ organizationId: organizationId2, actor: user });
             } catch {
-              throw fail6(503, "temporarily_unavailable");
+              throw fail7(503, "temporarily_unavailable");
             }
-            if (!binding || typeof binding.loadSnapshot !== "function") throw fail6(403, "access_denied");
+            if (!binding || typeof binding.loadSnapshot !== "function") throw fail7(403, "access_denied");
             const service = createDefiantEvidenceService({ organizationId: organizationId2, loadSnapshot: binding.loadSnapshot, loadSourceRecords: binding.loadSourceRecords, loadWorksheetCells: binding.loadWorksheetCells, loadSemanticIndex: binding.loadSemanticIndex, semanticDependencies: binding.loadSemanticIndex ? semanticDependencies?.(organizationId2) : void 0, authorize: async (actor) => {
               const current = await oauth.verifyAccessToken(auth.token);
-              if (current.organizationId !== organizationId2 || current.userId !== actor.id || current.uid !== actor.uid) throw fail6(403, "access_denied");
+              if (current.organizationId !== organizationId2 || current.userId !== actor.id || current.uid !== actor.uid) throw fail7(403, "access_denied");
               await strategy(organizationId2).raw(actor);
               return true;
             } });
@@ -44398,11 +44468,11 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
     const abort = new Promise((_, reject2) => {
       onAbort = () => {
         controller.abort();
-        reject2(fail6(408, "temporarily_unavailable"));
+        reject2(fail7(408, "temporarily_unavailable"));
       };
       if (request.signal.aborted) onAbort();
       else request.signal.addEventListener("abort", onAbort, { once: true });
-      controller.signal.addEventListener("abort", () => reject2(fail6(408, "temporarily_unavailable")), { once: true });
+      controller.signal.addEventListener("abort", () => reject2(fail7(408, "temporarily_unavailable")), { once: true });
     });
     try {
       return await Promise.race([route(new Request(request, { signal: controller.signal }), controller.signal), abort]);
