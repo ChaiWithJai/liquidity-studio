@@ -8,3 +8,19 @@ test('stable page union matches full references without duplicate or foreign sou
 test('absent register, unmatched registered source, unregistered hash and stale revision remain distinct',()=>{const s=fixture();delete s.retainedSourceRegister;const missing=sourceEvidenceView(s,{sourceHash,revision});assert.equal(missing.availability,false);assert.equal(missing.total,null);const empty=sourceEvidenceView(fixture(),{sourceHash:other,revision});assert.equal(empty.availability,true);assert.equal(empty.total,0);assert.equal(empty.reason,'no-supported-evidence-reference');assert.throws(()=>sourceEvidenceView(fixture(),{sourceHash:'d'.repeat(64),revision}),{status:404});assert.throws(()=>sourceEvidenceView(fixture(),{sourceHash,revision:other}),{status:409});for(const extra of [{limit:101},{offset:24401},{sourceHash:sourceHash+'\n'},{arbitraryPath:'private'}])assert.throws(()=>sourceEvidenceView(fixture(),{sourceHash,revision,...extra}),{status:400});});
 
 test('explicit reference and serialized page bounds fail without partial success',()=>{const many=fixture();many.selections=Array.from({length:24401},(_,i)=>({...many.selections[0],id:'selection_'+i}));assert.throws(()=>sourceEvidenceView(many,{sourceHash,revision,limit:1}),{status:503});const oversized=fixture();oversized.selections=[];oversized.receipts=[];oversized.months=[];oversized.comparisons=[];oversized.audienceDefinitions=Array.from({length:100},(_,i)=>({id:('audience_'+i+'_').padEnd(128,'x'),sourceHash,name:'界'.repeat(500),sheet:'界'.repeat(128),cellRefs:Array.from({length:40},(_,j)=>'A'+(1000000+j))}));const first=sourceEvidenceView(oversized,{sourceHash,revision,limit:1});assert.equal(first.items.length,1);assert.throws(()=>sourceEvidenceView(oversized,{sourceHash,revision,limit:100}),{status:503});});
+
+test('kind links jump over many comparison references without changing existing row pagination',()=>{
+ const s=fixture();s.comparisons[0].groups=Array.from({length:487},(_,i)=>({...s.comparisons[0].groups[0],id:'group_'+i}));
+ const first=sourceEvidenceView(s,{sourceHash,revision});assert.equal(first.total,491);assert.equal(first.items.some(x=>x.kind==='receipt-example'),false);
+ for(const entry of first.kindNavigation){
+  assert.equal(entry.count,first.counts[entry.kind]);assert.equal(entry.followUp.resource,'source-evidence');const {resource,...request}=entry.followUp;
+  assert.equal(request.sourceHash,sourceHash);assert.equal(request.revision,revision);assert.equal(request.limit,Math.min(25,entry.count));
+  const page=sourceEvidenceView(s,request);assert.equal(page.items.length,request.limit);assert.equal(page.items.every(x=>x.kind===entry.kind),true);
+  if(request.offset>0)assert.notEqual(sourceEvidenceView(s,{sourceHash,revision,offset:request.offset-1,limit:1}).items[0].kind,entry.kind);
+ }
+ const receiptLink=first.kindNavigation.find(x=>x.kind==='receipt-example').followUp;assert.equal(receiptLink.offset,489);
+ const {resource,...request}=receiptLink;assert.deepEqual(sourceEvidenceView(s,request).items[0].followUp,{resource:'receipt',receiptId:'receipt',revision});
+ assert.deepEqual(sourceEvidenceView(s,{sourceHash,revision,offset:25}).kindNavigation,first.kindNavigation);
+ const empty=sourceEvidenceView(s,{sourceHash:other,revision});assert.equal(empty.kindNavigation.every(x=>x.count===0&&x.followUp===null),true);
+ delete s.retainedSourceRegister;assert.equal(sourceEvidenceView(s,{sourceHash,revision}).kindNavigation,null);
+});

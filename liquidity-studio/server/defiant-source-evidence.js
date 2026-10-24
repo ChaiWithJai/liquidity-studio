@@ -13,7 +13,7 @@ export function sourceEvidenceView(snapshot,request){
  const q=validateSourceEvidenceRequest(request);if(snapshot.revision!==q.revision)throw fail(409,'Evidence revision changed');
  const base={schemaVersion:1,sourceHash:q.sourceHash,revision:q.revision,offset:q.offset,limit:q.limit};
  const register=snapshot.retainedSourceRegister;
- if(!register)return {...base,availability:false,reason:'register-unavailable',items:[],total:null,nextOffset:null};
+ if(!register)return {...base,availability:false,reason:'register-unavailable',kindNavigation:null,items:[],total:null,nextOffset:null};
  const occurrences=[...register.roots,...register.members].filter(r=>r.sha256===q.sourceHash);if(!occurrences.length)throw fail(404,'Registered source unavailable');
  const rows=[],follow=(resource,fields={})=>({resource,...fields,revision:q.revision});
  // Explicit API cap, also equal to current normalized totals:1200+1000+2000+200+20000.
@@ -25,7 +25,8 @@ export function sourceEvidenceView(snapshot,request){
  for(const c of snapshot.comparisons||[])for(const g of c.groups)g.sourceReferences.forEach((r,referenceIndex)=>{if(r.sourceHash===q.sourceHash)add('comparison-example',[c.id,g.id,referenceIndex],{comparisonId:c.id,groupId:g.id,referenceIndex,label:g.label,month:r.month,currency:c.currency,exampleCount:r.exampleRecords.length,qualification:'Producer-selected examples only; not complete group receipts.',followUp:follow('comparison-examples',{comparisonId:c.id,groupId:g.id,referenceIndex})});});
  if(rows.length>24400||new Set(rows.map(r=>r.key)).size!==rows.length)throw fail(503,'Source references exceed bounds');
  rows.sort((a,b)=>cmp(a.kind,b.kind)||cmp(a.key,b.key));
- const result={...base,availability:true,reason:rows.length?null:'no-supported-evidence-reference',occurrenceCount:occurrences.length,occurrences:follow('retained-sources',{sourceHash:q.sourceHash,offset:0,limit:25}),counts:Object.fromEntries(kinds.map(k=>[k,rows.filter(r=>r.kind===k).length])),items:rows.slice(q.offset,q.offset+q.limit),total:rows.length,nextOffset:q.offset+q.limit<rows.length?q.offset+q.limit:null,limitation:'Exact content-hash references in served products. References can overlap and are not financial row counts or complete source coverage. Original cell availability is established only by the follow-up read.'};
+ const kindNavigation=kinds.map(kind=>{const offset=rows.findIndex(row=>row.kind===kind),count=rows.filter(row=>row.kind===kind).length;return {kind,count,followUp:offset<0?null:follow('source-evidence',{sourceHash:q.sourceHash,offset,limit:Math.min(25,count)})};});
+ const result={...base,availability:true,reason:rows.length?null:'no-supported-evidence-reference',occurrenceCount:occurrences.length,occurrences:follow('retained-sources',{sourceHash:q.sourceHash,offset:0,limit:25}),kindNavigation,counts:Object.fromEntries(kinds.map(k=>[k,rows.filter(r=>r.kind===k).length])),items:rows.slice(q.offset,q.offset+q.limit),total:rows.length,nextOffset:q.offset+q.limit<rows.length?q.offset+q.limit:null,limitation:'Exact content-hash references in served products. References can overlap and are not financial row counts or complete source coverage. Original cell availability is established only by the follow-up read.'};
  if(Buffer.byteLength(JSON.stringify(result),'utf8')>262144)throw fail(503,'Source reference response exceeds bounds');
  return result;
 }
