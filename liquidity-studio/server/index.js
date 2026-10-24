@@ -850,9 +850,9 @@ export function createHttpServer(
               const authorizeCurrent=async()=>{if(controller.signal.aborted)throw fail(408,'Evaluation request expired');const next=await identity.authenticateLocalEvidenceApproval(bearer);if(next.id!==owner.id||next.uid!==owner.uid)throw fail(403,'Evaluation account changed');return next;};
               const binding=await defiantEvaluationProvider({organizationId,store:platform.store,strategy,evidence,authorizeCurrent});
               if(!binding?.service||!Array.isArray(binding.cases))throw fail(503,'Evaluation unavailable');
-              if(observationRoute==='evaluations/cases'&&req.method==='GET'){const current=await authorizeCurrent();await strategy.raw(current);return {organizationId,executionAvailable:binding.executionAvailable===true,maximumAttempts:1,cases:binding.cases};}
+              if(observationRoute==='evaluations/cases'&&req.method==='GET'){const current=await authorizeCurrent();await strategy.raw(current);return {organizationId,executionAvailable:binding.executionAvailable===true,...(binding.executionUnavailableReason==='ambiguous-evidence-semantics'?{executionUnavailableReason:'ambiguous-evidence-semantics'}:{}),maximumAttempts:1,cases:binding.cases};}
               if(observationRoute==='evaluations'&&req.method==='GET')return binding.service.list(owner);
-              if(observationRoute==='evaluations'&&req.method==='POST'){if(binding.executionAvailable!==true)throw fail(503,'Evaluation credential unavailable');return binding.service.evaluate(owner,body);}
+              if(observationRoute==='evaluations'&&req.method==='POST'){if(binding.executionAvailable!==true&&binding.executionUnavailableReason!=='ambiguous-evidence-semantics')throw fail(503,'Evaluation credential unavailable');return binding.service.evaluate(owner,body);}
               const selected=/^evaluations\/([a-f0-9]{64})$/.exec(observationRoute);
               if(selected&&req.method==='GET')return binding.service.detail(owner,selected[1]);
               throw fail(404,'Unknown evaluation operation');
