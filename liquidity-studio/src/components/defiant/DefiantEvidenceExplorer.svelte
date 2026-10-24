@@ -1,5 +1,7 @@
 <script>
  import {onDestroy,untrack} from 'svelte';
+ import SourceEvidenceReferences from './SourceEvidenceReferences.svelte';
+ import {createSourceTrail,sourceTrailLocation,sourceFollowUpLocation} from '../../lib/defiant-source-trail.js';
  import SemanticMetadataSearch from './SemanticMetadataSearch.svelte';
  import ClaimEvaluations from './ClaimEvaluations.svelte';
  import HypothesisReview from './HypothesisReview.svelte';
@@ -12,12 +14,15 @@
  let {request,location,onNavigate=()=>{}}=$props();
  let retainedDraft=$state({query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:'',periodPresence:''});
  let view=$state(emptyEvidenceView()),field=$state('Total Earned'),refreshEpoch=$state(0);
- const cleared={retainedSessionId:'',retainedSessionOffset:0,evidenceReconciliation:false,evidenceJuneReview:false,evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
+ const cleared={evidenceSourceHash:'',evidenceSourceTrail:null,evidenceMonth:'',evidenceCurrency:'',retainedSessionId:'',retainedSessionOffset:0,evidenceReconciliation:false,evidenceJuneReview:false,evidenceGroupId:'',evidenceSelectionId:'',evidenceReceiptId:'',evidenceComparisonId:'',evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceAudienceId:'',evidenceAudienceCells:false};
  const active=$derived(evidenceLocation(location));
  const controller=createEvidenceExplorer({request:(...args)=>request(...args),onState:value=>view=value});
  $effect(()=>{const input=location;refreshEpoch;untrack(()=>{retainedDraft={query:'',sourceId:'',format:'',kind:'',sourceHash:'',fromMonth:'',toMonth:'',periodPresence:'',...evidenceLocation(input).retainedFilters};field='Total Earned';void controller.load(input);});});
  onDestroy(()=>controller.cancel());
  function navigate(next){onNavigate({...location,view:'evidence',sample:'',evidenceRevision:view.revision||active.revision,evidenceOffset:0,...next});}
+ function inspectSource(sourceHash){const trail=createSourceTrail(sourceHash,location,view.revision);if(trail)navigate({...cleared,...sourceTrailLocation(trail)});}
+ function openSourceReference(input){const next=sourceFollowUpLocation(input,active.sourceTrail);if(next)navigate({...cleared,...next});}
+ function returnSource(search=false){const next=sourceTrailLocation(active.sourceTrail,{search});if(next)navigate({...cleared,...next});}
  function root(mode=active.mode){navigate({...cleared,evidenceMode:mode});}
  function refresh(){const next={...location,view:'evidence',evidenceRevision:'',...cleared,evidenceOffset:0};onNavigate(next);refreshEpoch++;}
  const page=$derived(active.mode==='retained'&&view.list?.availability===false?null:view.comparison||view.selection||view.group||view.list);
@@ -36,9 +41,11 @@
   <button disabled={view.loading} onclick={()=>root('audience')} aria-pressed={active.mode==='audience'}>Audience definitions</button>
   <button disabled={view.loading} onclick={refresh}>Refresh evidence</button>
  </ResearchToolbar>
+ {#if !view.loading&&!view.error&&view.mode===active.mode&&view.sourceEvidence}<SourceEvidenceReferences packet={view.sourceEvidence} onOpen={openSourceReference} onPage={offset=>navigate({evidenceOffset:offset,evidenceSourceTrail:{...active.sourceTrail,offset}})}/>{/if}
  <ClaimEvaluations {request}/>
  <HypothesisReview {request} revision={view.revision||active.revision} onEvidence={next=>navigate({...cleared,evidenceOffset:0,...next})}/>
- {#if active.mode==='retained'}
+ {#if active.sourceTrail}<nav aria-label="Source return trail"><button onclick={()=>returnSource(true)}>Back to retained search</button>{#if !active.sourceHash}<button onclick={()=>returnSource()}>Back to source references</button>{/if}</nav>{/if}
+ {#if active.mode==='retained'&&!active.sourceHash}
    <form class="retained-filters" onsubmit={event=>{event.preventDefault();navigate({...cleared,evidenceMode:'retained',retainedFilters:{...retainedDraft}});}}>
     <fieldset disabled={view.loading}><legend>Find retained source metadata</legend>
      <label>Filename, member path or hash<input maxlength="200" bind:value={retainedDraft.query}/></label>
@@ -58,14 +65,14 @@
   {#key view.revision}<AnswerObservations {request} revision={view.revision}/>{/key}
   <div class="coverage"><h3>Evidence coverage</h3><p>{view.manifest.coverage}</p><p class="research-meta">{view.manifest.counts.months} reported periods · {view.manifest.counts.selections} source selections{#if view.manifest.counts.identityGroups !== undefined} · {view.manifest.counts.identityGroups} identity review groups{/if}</p><details><summary>Snapshot details</summary><p>Organization: <code>{view.manifest.scope.organizationId}</code></p><p>Revision: <code>{view.revision}</code></p></details></div>
   {#if active.groupId||active.selectionId||active.receiptId||active.comparisonId||active.audienceId}<nav class="breadcrumbs" aria-label="Evidence trail"><button onclick={()=>navigate({...cleared,evidenceMode:active.mode,evidenceOffset:active.receiptId&&active.mode==='earnings'?active.offset:0})}>Back to {modeLabel}</button>{#if active.comparisonGroupId}<button onclick={()=>navigate({evidenceComparisonGroupId:'',evidenceReferenceIndex:null,evidenceOffset:active.offset})}>Back to comparison</button>{/if}</nav>{/if}
-  {#if active.mode==='retained'}
-   {#key view.revision}<SemanticMetadataSearch {request} revision={view.revision} organizationId={view.manifest.scope.organizationId} configured={view.list?.semanticSearch?.configured===true} filters={retainedDraft} sessionId={active.retainedSessionId||''} offset={active.retainedSessionOffset||0} onSession={(sessionId,offset)=>navigate({retainedSessionId:sessionId,retainedSessionOffset:offset})} onSource={sourceHash=>navigate({...cleared,retainedFilters:{sourceHash}})}/>{/key}
+  {#if active.mode==='retained'&&!active.sourceHash}
+   {#key view.revision}<SemanticMetadataSearch {request} revision={view.revision} organizationId={view.manifest.scope.organizationId} configured={view.list?.semanticSearch?.configured===true} filters={retainedDraft} sessionId={active.retainedSessionId||''} offset={active.retainedSessionOffset||0} onSession={(sessionId,offset)=>navigate({retainedSessionId:sessionId,retainedSessionOffset:offset})} onSource={inspectSource}/>{/key}
 
    {#if view.list}
     {#if !view.list.availability}<p role="status" class="message">Retained intake register unavailable. This does not mean no files were retained.</p>
     {:else}
      <div class="coverage"><h3>Retained intake metadata</h3><p>{view.list.scopeDescription}</p><p>Captured: {view.list.capturedAt}</p><p>Matching filters: {view.list.matchingCounts.rootObjects} root objects · {view.list.matchingCounts.memberOccurrences} archive member occurrences · {view.list.matchingCounts.undatedRecords} undated records</p><h4>Whole retained register</h4><p>{view.list.globalCounts.rootObjects} root objects · {view.list.globalCounts.memberOccurrences} archive member occurrences · {view.list.globalCounts.leafOccurrences} member leaves · {view.list.globalCounts.uniqueLeafHashes} unique member leaf hashes · {view.list.globalCounts.duplicateLeafHashGroups} repeated member leaf hash groups</p><p>{view.list.globalCounts.undatedRecords} undated records in this register. Period filters exclude undated records. No complete provider or Downloads inventory is claimed; repeated content hashes are not deduplicated sales.</p></div>
-     <div class="members">{#each view.list.items as row(row.id)}<article><h3>{row.kind==='root'?row.filename:row.chain.at(-1)}</h3><p>{row.kind==='root'?'Root object':row.container?'Archive container member':'Archive member'} · {row.format} · {row.bytes} bytes</p><dl><dt>Source</dt><dd>{row.sourceId}</dd><dt>Source hash</dt><dd><code>{row.sha256}</code></dd><dt>Occurrence</dt><dd><code>{row.id}</code></dd>{#if row.kind==='member'}<dt>Root reference</dt><dd><code>{row.rootId}</code></dd><dt>Member chain</dt><dd>{row.chain.join(' → ')}</dd>{:else}<dt>Original generation</dt><dd>{row.generation}</dd><dt>Member inventory</dt><dd>{row.memberInventory.status}: {row.memberInventory.scope}</dd><dt>Supplied transfer checks</dt><dd>Size: {String(row.retentionVerification.size)} · CRC32C: {String(row.retentionVerification.crc32c)} · MD5: {String(row.retentionVerification.md5)} (null means unknown)</dd>{/if}<dt>Declared periods</dt><dd>{#each row.periods as period (period.month+period.periodKind+period.sourceText)}<p>{period.month} · {period.periodKind} · {period.basis}<br/>{period.sourceText}</p>{:else}No explicit filename period registered{/each}</dd><dt>Served association</dt><dd>{row.servedAssociation}</dd></dl></article>{:else}<p role="status">No retained metadata matches these filters or this page. This is not evidence of missing provider delivery.</p>{/each}</div>
+     <div class="members">{#each view.list.items as row(row.id)}<article><h3>{row.kind==='root'?row.filename:row.chain.at(-1)}</h3><p>{row.kind==='root'?'Root object':row.container?'Archive container member':'Archive member'} · {row.format} · {row.bytes} bytes</p><dl><dt>Source</dt><dd>{row.sourceId}</dd><dt>Source hash</dt><dd><code>{row.sha256}</code></dd><dt>Occurrence</dt><dd><code>{row.id}</code></dd>{#if row.kind==='member'}<dt>Root reference</dt><dd><code>{row.rootId}</code></dd><dt>Member chain</dt><dd>{row.chain.join(' → ')}</dd>{:else}<dt>Original generation</dt><dd>{row.generation}</dd><dt>Member inventory</dt><dd>{row.memberInventory.status}: {row.memberInventory.scope}</dd><dt>Supplied transfer checks</dt><dd>Size: {String(row.retentionVerification.size)} · CRC32C: {String(row.retentionVerification.crc32c)} · MD5: {String(row.retentionVerification.md5)} (null means unknown)</dd>{/if}<dt>Declared periods</dt><dd>{#each row.periods as period (period.month+period.periodKind+period.sourceText)}<p>{period.month} · {period.periodKind} · {period.basis}<br/>{period.sourceText}</p>{:else}No explicit filename period registered{/each}</dd><dt>Served association</dt><dd>{row.servedAssociation}</dd></dl><button onclick={()=>inspectSource(row.sha256)}>Find served evidence</button></article>{:else}<p role="status">No retained metadata matches these filters or this page. This is not evidence of missing provider delivery.</p>{/each}</div>
      <div class="coverage">{#each view.list.limitations as limitation (limitation)}<p>{limitation}</p>{/each}</div>
     {/if}
    {/if}

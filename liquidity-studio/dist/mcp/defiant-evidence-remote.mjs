@@ -10568,8 +10568,8 @@ var require_pkce = __commonJS({
           return verifier;
         }
         if (method2 === "S256") {
-          const hash11 = createHash6({ data: verifier });
-          return base64URLEncode(hash11);
+          const hash12 = createHash6({ data: verifier });
+          return base64URLEncode(hash12);
         }
       }
     }
@@ -11441,14 +11441,14 @@ var require_authorization_code_grant_type = __commonJS({
           if (!pkce.codeChallengeMatchesABNF(request.body.code_verifier)) {
             throw new InvalidRequestError("Invalid parameter: `code_verifier`");
           }
-          const hash11 = pkce.getHashForCodeChallenge({
+          const hash12 = pkce.getHashForCodeChallenge({
             verifier: request.body.code_verifier,
             method: method2
           });
-          if (!hash11) {
+          if (!hash12) {
             throw new ServerError("Server error: no valid hash algorithm available to verify `code_verifier`");
           }
-          if (!this.hashesAreEqual(hash11, code.codeChallenge)) {
+          if (!this.hashesAreEqual(hash12, code.codeChallenge)) {
             throw new InvalidGrantError("Invalid grant: code verifier is invalid");
           }
         } else {
@@ -33031,9 +33031,9 @@ var require_util = /* @__PURE__ */ __commonJSMin(((exports) => {
   const codegen_1 = require_codegen();
   const code_1 = require_code$1();
   function toHash(arr) {
-    const hash11 = {};
-    for (const item of arr) hash11[item] = true;
-    return hash11;
+    const hash12 = {};
+    for (const item of arr) hash12[item] = true;
+    return hash12;
   }
   exports.toHash = toHash;
   function alwaysValidSchema(it, schema) {
@@ -39335,8 +39335,8 @@ data: ${JSON.stringify({
 }
 function comparableResource(value) {
   const text7 = String(value);
-  const hash11 = text7.indexOf("#");
-  return (hash11 === -1 ? text7 : text7.slice(0, hash11)).replace(/\/$/, "");
+  const hash12 = text7.indexOf("#");
+  return (hash12 === -1 ? text7 : text7.slice(0, hash12)).replace(/\/$/, "");
 }
 function sameResource(reported, expected) {
   if (!reported) return false;
@@ -42612,6 +42612,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
       observe(onOutcome, Object.freeze({ event: "defiant_evidence_tool_outcome", tool: name, outcome, status, stage }));
     }
   });
+  register2("defiant_source_evidence", "Find existing served evidence references for an exact registered source hash. Follow typed links to original financial records or worksheet cells; these navigation references do not prove complete source coverage.", { revision, sourceHash: external_exports.string().regex(/^[a-f0-9]{64}(?![\s\S])/), offset: external_exports.number().int().min(0).max(24400).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "source-evidence");
   register2("defiant_selection_reconciliation", "Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/) }, "selection-reconciliation");
   register2("defiant_search_retained_sources", "Search retained source and archive-member metadata within the registered intake scope. Keyword search by default. Explicit semantic mode invokes one capped metadata query embedding; semantic-page reuses its session. Suggestions never prove facts, identity or provider completeness.", {
     mode: external_exports.enum(["keyword", "semantic", "semantic-page"]).optional(),
@@ -42709,6 +42710,44 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
   }, "receipt");
 }
 
+// server/defiant-source-evidence.js
+var fail = (status, message) => Object.assign(new Error(message), { status });
+var hash2 = (v) => typeof v === "string" && /^[a-f0-9]{64}(?![\s\S])/.test(v);
+var cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+var kinds = ["selection", "receipt-example", "earnings-period", "audience-definition", "comparison-example"];
+function validateSourceEvidenceRequest(request) {
+  if (!request || typeof request !== "object" || Array.isArray(request) || Object.keys(request).some((k) => !["sourceHash", "revision", "offset", "limit"].includes(k))) throw fail(400, "Invalid source evidence request");
+  const { sourceHash, revision: revision2, offset = 0, limit = 25 } = request;
+  if (!hash2(sourceHash) || !hash2(revision2) || !Number.isSafeInteger(offset) || offset < 0 || offset > 24400 || !Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw fail(400, "Invalid source evidence request");
+  return { sourceHash, revision: revision2, offset, limit };
+}
+function sourceEvidenceView(snapshot, request) {
+  const q = validateSourceEvidenceRequest(request);
+  if (snapshot.revision !== q.revision) throw fail(409, "Evidence revision changed");
+  const base = { schemaVersion: 1, sourceHash: q.sourceHash, revision: q.revision, offset: q.offset, limit: q.limit };
+  const register2 = snapshot.retainedSourceRegister;
+  if (!register2) return { ...base, availability: false, reason: "register-unavailable", items: [], total: null, nextOffset: null };
+  const occurrences = [...register2.roots, ...register2.members].filter((r) => r.sha256 === q.sourceHash);
+  if (!occurrences.length) throw fail(404, "Registered source unavailable");
+  const rows = [], follow = (resource, fields2 = {}) => ({ resource, ...fields2, revision: q.revision });
+  const add = (kind, parts, fields2) => {
+    if (rows.length >= 24400) throw fail(503, "Source references exceed bounds");
+    rows.push({ key: JSON.stringify([kind, ...parts]), kind, sourceHash: q.sourceHash, ...fields2 });
+  };
+  for (const s of snapshot.selections) if (s.sourceHash === q.sourceHash) add("selection", [s.id], { id: s.id, label: s.label, currency: s.currency, amount: s.amount, rowCount: s.sourceRecords.length, qualification: "Declared selection amount; not recomputed by this lookup.", followUp: follow("selection", { selectionId: s.id }), cells: follow("selection-receipts", { selectionId: s.id, offset: 0, limit: 25 }) });
+  for (const r of snapshot.receipts) if (r.sourceHash === q.sourceHash) add("receipt-example", [r.id], { id: r.id, label: r.member, record: r.record, qualification: "One retained source record, not an aggregate.", followUp: follow("receipt", { receiptId: r.id }) });
+  for (const m of snapshot.months) if (m.sourceHash === q.sourceHash) add("earnings-period", [m.month, m.currency, q.sourceHash], { month: m.month, currency: m.currency, amount: m.amount, metric: m.metric, receiptIds: [...m.receiptIds], qualification: "Supplied earnings total; referenced receipt examples do not establish full reconciliation.", followUp: follow("earnings", { month: m.month, currency: m.currency, offset: 0, limit: 25 }) });
+  for (const a of snapshot.audienceDefinitions || []) if (a.sourceHash === q.sourceHash) add("audience-definition", [a.id], { id: a.id, label: a.name, sheet: a.sheet, cellRefs: [...a.cellRefs], qualification: "Source workbook definition; no verified population, consent or activation.", followUp: follow("audience-definition", { audienceId: a.id }), cells: follow("audience-cells", { audienceId: a.id }) });
+  for (const c of snapshot.comparisons || []) for (const g of c.groups) g.sourceReferences.forEach((r, referenceIndex) => {
+    if (r.sourceHash === q.sourceHash) add("comparison-example", [c.id, g.id, referenceIndex], { comparisonId: c.id, groupId: g.id, referenceIndex, label: g.label, month: r.month, currency: c.currency, exampleCount: r.exampleRecords.length, qualification: "Producer-selected examples only; not complete group receipts.", followUp: follow("comparison-examples", { comparisonId: c.id, groupId: g.id, referenceIndex }) });
+  });
+  if (rows.length > 24400 || new Set(rows.map((r) => r.key)).size !== rows.length) throw fail(503, "Source references exceed bounds");
+  rows.sort((a, b) => cmp(a.kind, b.kind) || cmp(a.key, b.key));
+  const result = { ...base, availability: true, reason: rows.length ? null : "no-supported-evidence-reference", occurrenceCount: occurrences.length, occurrences: follow("retained-sources", { sourceHash: q.sourceHash, offset: 0, limit: 25 }), counts: Object.fromEntries(kinds.map((k) => [k, rows.filter((r) => r.kind === k).length])), items: rows.slice(q.offset, q.offset + q.limit), total: rows.length, nextOffset: q.offset + q.limit < rows.length ? q.offset + q.limit : null, limitation: "Exact content-hash references in served products. References can overlap and are not financial row counts or complete source coverage. Original cell availability is established only by the follow-up read." };
+  if (Buffer.byteLength(JSON.stringify(result), "utf8") > 262144) throw fail(503, "Source reference response exceeds bounds");
+  return result;
+}
+
 // server/defiant-semantic-sessions.js
 import { randomUUID } from "node:crypto";
 
@@ -42717,13 +42756,13 @@ import { createHash as createHash2 } from "node:crypto";
 
 // server/defiant-retained-sources.js
 import { createHash } from "node:crypto";
-var fail = (status, message) => Object.assign(new Error(message), { status });
-var invalid = () => fail(503, "Retained source register unavailable");
+var fail2 = (status, message) => Object.assign(new Error(message), { status });
+var invalid = () => fail2(503, "Retained source register unavailable");
 var plain = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 var exact = (v, keys2) => plain(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
 var text = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 var id = (v) => text(v, 128) && /^[A-Za-z0-9_-]+$(?![\s\S])/.test(v);
-var hash2 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]{64}$/.test(v);
+var hash3 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]{64}$/.test(v);
 var month = (v) => typeof v === "string" && v.length === 7 && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 var bytes = (v) => Number.isSafeInteger(v) && v >= 0;
 var formats = /* @__PURE__ */ new Set(["csv", "xlsx", "xls", "pdf", "png", "jpg", "zip", "tar.gz", "json", "other"]);
@@ -42755,10 +42794,10 @@ function periods(values, texts) {
 }
 function normalizeRetainedSourceRegister(input) {
   if (input === void 0) return void 0;
-  if (!exact(input, ["schemaVersion", "scopeDescription", "capturedAt", "provenance", "roots", "members"]) || input.schemaVersion !== 1 || !text(input.scopeDescription, 2e3) || !utcTimestamp(input.capturedAt) || !exact(input.provenance, ["manifestSha256", "memberInventorySha256"]) || !hash2(input.provenance.manifestSha256) || !hash2(input.provenance.memberInventorySha256) || !Array.isArray(input.roots) || input.roots.length < 1 || input.roots.length > 64 || !Array.isArray(input.members) || input.members.length > 4096 || Buffer.byteLength(JSON.stringify(input), "utf8") > 2 * 1024 * 1024) throw invalid();
+  if (!exact(input, ["schemaVersion", "scopeDescription", "capturedAt", "provenance", "roots", "members"]) || input.schemaVersion !== 1 || !text(input.scopeDescription, 2e3) || !utcTimestamp(input.capturedAt) || !exact(input.provenance, ["manifestSha256", "memberInventorySha256"]) || !hash3(input.provenance.manifestSha256) || !hash3(input.provenance.memberInventorySha256) || !Array.isArray(input.roots) || input.roots.length < 1 || input.roots.length > 64 || !Array.isArray(input.members) || input.members.length > 4096 || Buffer.byteLength(JSON.stringify(input), "utf8") > 2 * 1024 * 1024) throw invalid();
   const ids = /* @__PURE__ */ new Set(), sizes = /* @__PURE__ */ new Map(), rootMap = /* @__PURE__ */ new Map(), occurrences = /* @__PURE__ */ new Set();
   const common = (r) => {
-    if (!id(r.id) || ids.has(r.id) || !hash2(r.sha256) || !bytes(r.bytes) || !formats.has(r.format)) throw invalid();
+    if (!id(r.id) || ids.has(r.id) || !hash3(r.sha256) || !bytes(r.bytes) || !formats.has(r.format)) throw invalid();
     ids.add(r.id);
     if (sizes.has(r.sha256) && sizes.get(r.sha256) !== r.bytes) throw invalid();
     sizes.set(r.sha256, r.bytes);
@@ -42781,9 +42820,9 @@ function normalizeRetainedSourceRegister(input) {
   return { schemaVersion: 1, scopeDescription: input.scopeDescription, capturedAt: input.capturedAt, provenance: { ...input.provenance }, roots, members };
 }
 function validateRetainedSourceRequest(request = {}) {
-  if (!plain(request) || Object.keys(request).some((k) => !["query", "sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "periodPresence", "offset", "limit"].includes(k))) throw fail(400, "Invalid retained source request");
+  if (!plain(request) || Object.keys(request).some((k) => !["query", "sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "periodPresence", "offset", "limit"].includes(k))) throw fail2(400, "Invalid retained source request");
   const { query = "", sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence, offset = 0, limit = 25 } = request;
-  if (typeof query !== "string" || query.length > 200 || /[\u0000-\u001f\u007f]/.test(query) || periodPresence !== void 0 && !["dated", "undated"].includes(periodPresence) || sourceId !== void 0 && !id(sourceId) || format !== void 0 && !formats.has(format) || kind !== void 0 && !["root", "member"].includes(kind) || sourceHash !== void 0 && !hash2(sourceHash) || fromMonth !== void 0 && !month(fromMonth) || toMonth !== void 0 && !month(toMonth) || fromMonth && toMonth && fromMonth > toMonth || !Number.isInteger(offset) || offset < 0 || offset > 5e3 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail(400, "Invalid retained source request");
+  if (typeof query !== "string" || query.length > 200 || /[\u0000-\u001f\u007f]/.test(query) || periodPresence !== void 0 && !["dated", "undated"].includes(periodPresence) || sourceId !== void 0 && !id(sourceId) || format !== void 0 && !formats.has(format) || kind !== void 0 && !["root", "member"].includes(kind) || sourceHash !== void 0 && !hash3(sourceHash) || fromMonth !== void 0 && !month(fromMonth) || toMonth !== void 0 && !month(toMonth) || fromMonth && toMonth && fromMonth > toMonth || !Number.isInteger(offset) || offset < 0 || offset > 5e3 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail2(400, "Invalid retained source request");
   return { query, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence, offset, limit };
 }
 function count(rows) {
@@ -42829,14 +42868,14 @@ function retainedSemanticDocuments(input) {
   return { registerSha256: sha256(canonicalMetadata(register2)), documents };
 }
 var exact2 = (v, keys2) => v && Object.getPrototypeOf(v) === Object.prototype && Object.keys(v).sort().join(",") === [...keys2].sort().join(",");
-var hash3 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]+$/.test(v);
+var hash4 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]+$/.test(v);
 function normalizeSemanticIndex(input, { organizationId: organizationId2, register: register2 } = {}) {
-  if (!exact2(input, ["schemaVersion", "organizationId", "registerSha256", "rendererVersion", "model", "location", "dimensions", "task", "corpusPackSha256", "entries"]) || input.schemaVersion !== 1 || input.organizationId !== organizationId2 || input.task !== "RETRIEVAL_DOCUMENT" || !hash3(input.corpusPackSha256) || Object.entries(SEMANTIC_MODEL).some(([k, v]) => input[k] !== v) || Buffer.byteLength(JSON.stringify(input)) > 4 * 1024 * 1024) throw invalid2();
+  if (!exact2(input, ["schemaVersion", "organizationId", "registerSha256", "rendererVersion", "model", "location", "dimensions", "task", "corpusPackSha256", "entries"]) || input.schemaVersion !== 1 || input.organizationId !== organizationId2 || input.task !== "RETRIEVAL_DOCUMENT" || !hash4(input.corpusPackSha256) || Object.entries(SEMANTIC_MODEL).some(([k, v]) => input[k] !== v) || Buffer.byteLength(JSON.stringify(input)) > 4 * 1024 * 1024) throw invalid2();
   const projection = retainedSemanticDocuments(register2);
   if (input.registerSha256 !== projection.registerSha256 || !Array.isArray(input.entries) || input.entries.length !== projection.documents.length || input.entries.length > 256) throw invalid2();
   const expected = new Map(projection.documents.map((r) => [r.id, r])), seen = /* @__PURE__ */ new Set();
   const entries = input.entries.map((entry) => {
-    if (!exact2(entry, ["id", "inputSha256", "resultSha256", "vector"]) || seen.has(entry.id) || entry.inputSha256 !== expected.get(entry.id)?.inputSha256 || !hash3(entry.resultSha256) || !Array.isArray(entry.vector) || entry.vector.length !== 768 || entry.vector.some((n) => typeof n !== "number" || !Number.isFinite(n))) throw invalid2();
+    if (!exact2(entry, ["id", "inputSha256", "resultSha256", "vector"]) || seen.has(entry.id) || entry.inputSha256 !== expected.get(entry.id)?.inputSha256 || !hash4(entry.resultSha256) || !Array.isArray(entry.vector) || entry.vector.length !== 768 || entry.vector.some((n) => typeof n !== "number" || !Number.isFinite(n))) throw invalid2();
     const norm = entry.vector.reduce((sum, n) => sum + n * n, 0);
     if (Math.abs(norm - 1) > 1e-9) throw invalid2();
     seen.add(entry.id);
@@ -42846,8 +42885,8 @@ function normalizeSemanticIndex(input, { organizationId: organizationId2, regist
 }
 
 // server/defiant-semantic-sessions.js
-var fail2 = (status, message) => Object.assign(new Error(message), { status });
-var hash4 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]+$/.test(v);
+var fail3 = (status, message) => Object.assign(new Error(message), { status });
+var hash5 = (v) => typeof v === "string" && v.length === 64 && /^[a-f0-9]+$/.test(v);
 var id2 = (v) => typeof v === "string" && v.length > 0 && v.length <= 128 && /^[A-Za-z0-9_-]+$(?![\s\S])/.test(v);
 var exact3 = (v, keys2) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys2].sort().join(",");
 var BUDGET = "defiant-semantic:v1:pilot-budget";
@@ -42856,13 +42895,13 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
   if (typeof store?.transact !== "function" || typeof strategy?.assertCurrent !== "function" || typeof readContext !== "function" || typeof embed !== "function" || !id2(strategy.organizationId)) throw TypeError("Scoped durable semantic dependencies required");
   const org = strategy.organizationId, recordKey = (sessionId) => `defiant-semantic:v1:${org}:${sessionId}`;
   const active = () => {
-    if (signal?.aborted) throw fail2(408, "Semantic request expired; reserved attempt may have completed");
+    if (signal?.aborted) throw fail3(408, "Semantic request expired; reserved attempt may have completed");
   };
   async function context(actor) {
     active();
     const c = await readContext(actor);
     active();
-    if (!c || c.actor?.id !== actor.id || c.actor?.uid !== actor.uid || c.snapshot?.organizationId !== org || c.index?.organizationId !== org || !hash4(c.snapshot.revision) || !hash4(c.index.indexSha256)) throw fail2(503, "Semantic metadata index unavailable");
+    if (!c || c.actor?.id !== actor.id || c.actor?.uid !== actor.uid || c.snapshot?.organizationId !== org || c.index?.organizationId !== org || !hash5(c.snapshot.revision) || !hash5(c.index.indexSha256)) throw fail3(503, "Semantic metadata index unavailable");
     return c;
   }
   function authority(identity, state, actor) {
@@ -42876,9 +42915,9 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
     });
   }
   function publicPage(c, record2, offset, limit) {
-    if (record2.status !== "complete") throw fail2(409, "Semantic attempt pending or failed; no automatic retry");
-    if (record2.expiresAt <= now()) throw fail2(409, "Semantic session expired; explicitly submit a new search");
-    if (record2.revision !== c.snapshot.revision || record2.indexSha256 !== c.index.indexSha256) throw fail2(409, "Semantic evidence context changed");
+    if (record2.status !== "complete") throw fail3(409, "Semantic attempt pending or failed; no automatic retry");
+    if (record2.expiresAt <= now()) throw fail3(409, "Semantic session expired; explicitly submit a new search");
+    if (record2.revision !== c.snapshot.revision || record2.indexSha256 !== c.index.indexSha256) throw fail3(409, "Semantic evidence context changed");
     const rows = [];
     for (let offset2 = 0; offset2 < 256; offset2 += 100) {
       const p = searchRetainedSources(c.snapshot, { ...record2.filters, query: "", offset: offset2, limit: 100 });
@@ -42886,40 +42925,40 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
       if (p.nextOffset === null) break;
     }
     const byId = new Map(rows.map((r) => [r.id, r]));
-    if (record2.ranked.some((r) => !byId.has(r.id))) throw fail2(503, "Semantic results unavailable");
+    if (record2.ranked.some((r) => !byId.has(r.id))) throw fail3(503, "Semantic results unavailable");
     return { schemaVersion: 1, scope: { organizationId: org }, revision: record2.revision, availability: true, mode: "semantic", sessionId: record2.sessionId, expiresAt: new Date(record2.expiresAt).toISOString(), indexSha256: record2.indexSha256, registerSha256: c.index.registerSha256, ...SEMANTIC_MODEL, querySha256: record2.querySha256, filters: record2.filters, offset, limit, total: record2.ranked.length, items: record2.ranked.slice(offset, offset + limit).map((r) => ({ ...byId.get(r.id), similarity: r.similarity })), nextOffset: offset + limit < record2.ranked.length ? offset + limit : null, tokenCount: record2.tokenCount, limitations: ["Metadata similarity is a ranking signal, not factual support, identity, calibrated confidence or commercial readiness.", "Exact filters are applied before ranking. No similarity threshold establishes that a query is supported.", "Paging and readback reuse this expiring authorized session; no automatic model retry or hidden embedding."] };
   }
   return Object.freeze({
     async start(actor, input) {
-      if (!exact3(input, ["revision", "query", "filters", "idempotencyKey"]) || !hash4(input.revision) || !id2(input.idempotencyKey) || typeof input.query !== "string" || !input.query.trim() || input.query.length > 200 || Buffer.byteLength(input.query) > 1536 || /[\u0000-\u001f\u007f]/.test(input.query) || !input.filters || Object.getPrototypeOf(input.filters) !== Object.prototype || Object.keys(input.filters).some((k) => !["sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "periodPresence"].includes(k))) throw fail2(400, "Invalid explicit semantic search");
+      if (!exact3(input, ["revision", "query", "filters", "idempotencyKey"]) || !hash5(input.revision) || !id2(input.idempotencyKey) || typeof input.query !== "string" || !input.query.trim() || input.query.length > 200 || Buffer.byteLength(input.query) > 1536 || /[\u0000-\u001f\u007f]/.test(input.query) || !input.filters || Object.getPrototypeOf(input.filters) !== Object.prototype || Object.keys(input.filters).some((k) => !["sourceId", "format", "kind", "sourceHash", "fromMonth", "toMonth", "periodPresence"].includes(k))) throw fail3(400, "Invalid explicit semantic search");
       validateRetainedSourceRequest({ ...input.filters, query: "" });
-      if (!id2(actor?.id) || !id2(actor?.uid)) throw fail2(403, "Semantic identity unavailable");
+      if (!id2(actor?.id) || !id2(actor?.uid)) throw fail3(403, "Semantic identity unavailable");
       const frozenActor = Object.freeze({ ...actor }), payload = structuredClone(input), payloadHash = sha256(canonicalMetadata(payload)), sessionId = sha256(canonicalMetadata([org, actor.id, actor.uid, payload.idempotencyKey])), createdAt = now(), expiresAt = createdAt + TTL, owner = randomUUID();
       let c = await context(frozenActor);
-      if (c.snapshot.revision !== payload.revision) throw fail2(409, "Evidence revision changed");
+      if (c.snapshot.revision !== payload.revision) throw fail3(409, "Evidence revision changed");
       const reservation = { schemaVersion: 1, organizationId: org, actorId: frozenActor.id, actorUid: frozenActor.uid, sessionId, payloadHash, querySha256: sha256(payload.query), filters: payload.filters, revision: payload.revision, indexSha256: c.index.indexSha256, createdAt, expiresAt, owner, status: "pending" };
       const values = await transaction(frozenActor, sessionId, ([identity, state, budget, prior]) => {
         if (prior) {
-          if (prior.payloadHash !== payloadHash) throw fail2(409, "Semantic idempotency conflict");
+          if (prior.payloadHash !== payloadHash) throw fail3(409, "Semantic idempotency conflict");
           return [identity, state, budget, prior];
         }
         budget = budget || { schemaVersion: 1, reservations: 0 };
-        if (budget.schemaVersion !== 1 || !Number.isInteger(budget.reservations) || budget.reservations < 0 || budget.reservations >= 100) throw fail2(409, "Pilot semantic query capacity reached");
+        if (budget.schemaVersion !== 1 || !Number.isInteger(budget.reservations) || budget.reservations < 0 || budget.reservations >= 100) throw fail3(409, "Pilot semantic query capacity reached");
         return [identity, state, { ...budget, reservations: budget.reservations + 1 }, reservation];
       });
       if (values[3].status === "complete") {
         c = await context(frozenActor);
         return publicPage(c, values[3], 0, 25);
       }
-      if (values[3].owner !== owner || values[3].status !== "pending") throw fail2(409, "Semantic attempt already reserved; read its session");
+      if (values[3].owner !== owner || values[3].status !== "pending") throw fail3(409, "Semantic attempt already reserved; read its session");
       try {
         c = await context(frozenActor);
-        if (c.snapshot.revision !== reservation.revision || c.index.indexSha256 !== reservation.indexSha256) throw fail2(409, "Evidence context changed");
-        if (now() >= reservation.expiresAt) throw fail2(409, "Semantic reservation expired");
+        if (c.snapshot.revision !== reservation.revision || c.index.indexSha256 !== reservation.indexSha256) throw fail3(409, "Evidence context changed");
+        if (now() >= reservation.expiresAt) throw fail3(409, "Semantic reservation expired");
         const result = await embed(payload.query, { signal });
-        if (Object.entries(SEMANTIC_MODEL).some(([key, value]) => result[key] !== value) || result.task !== "RETRIEVAL_QUERY" || result.inputSha256 !== reservation.querySha256 || !Array.isArray(result.vector) || result.vector.length !== 768 || result.vector.some((v) => !Number.isFinite(v)) || Math.abs(result.vector.reduce((sum, n) => sum + n * n, 0) - 1) > 1e-9 || result.truncated !== false || !Number.isInteger(result.tokenCount) || result.tokenCount < 1 || result.tokenCount > 2048) throw fail2(503, "Query embedding unavailable");
+        if (Object.entries(SEMANTIC_MODEL).some(([key, value]) => result[key] !== value) || result.task !== "RETRIEVAL_QUERY" || result.inputSha256 !== reservation.querySha256 || !Array.isArray(result.vector) || result.vector.length !== 768 || result.vector.some((v) => !Number.isFinite(v)) || Math.abs(result.vector.reduce((sum, n) => sum + n * n, 0) - 1) > 1e-9 || result.truncated !== false || !Number.isInteger(result.tokenCount) || result.tokenCount < 1 || result.tokenCount > 2048) throw fail3(503, "Query embedding unavailable");
         c = await context(frozenActor);
-        if (c.snapshot.revision !== reservation.revision || c.index.indexSha256 !== reservation.indexSha256) throw fail2(409, "Evidence context changed");
+        if (c.snapshot.revision !== reservation.revision || c.index.indexSha256 !== reservation.indexSha256) throw fail3(409, "Evidence context changed");
         const allowed = /* @__PURE__ */ new Set();
         for (let offset = 0; offset < 256; offset += 100) {
           const page = searchRetainedSources(c.snapshot, { ...payload.filters, query: "", offset, limit: 100 });
@@ -42928,7 +42967,7 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
         }
         const ranked = c.index.entries.filter((e) => allowed.has(e.id)).map((e) => ({ id: e.id, similarity: e.vector.reduce((sum, v, i) => sum + v * result.vector[i], 0) })).sort((a, b) => b.similarity - a.similarity || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
         const done = await transaction(frozenActor, sessionId, ([identity, state, budget, record2]) => {
-          if (record2.owner !== owner || record2.status !== "pending" || record2.expiresAt <= now()) throw fail2(409, "Semantic reservation unavailable");
+          if (record2.owner !== owner || record2.status !== "pending" || record2.expiresAt <= now()) throw fail3(409, "Semantic reservation unavailable");
           return [identity, state, budget, { ...record2, status: "complete", ranked, tokenCount: result.tokenCount }];
         });
         c = await context(frozenActor);
@@ -42943,12 +42982,12 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
       }
     },
     async page(actor, { sessionId, revision: revision2, offset = 0, limit = 25 } = {}) {
-      if (!hash4(sessionId) || !hash4(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 256 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail2(400, "Invalid semantic page");
+      if (!hash5(sessionId) || !hash5(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 256 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail3(400, "Invalid semantic page");
       const frozenActor = Object.freeze({ ...actor });
       let c = await context(frozenActor);
-      if (c.snapshot.revision !== revision2) throw fail2(409, "Evidence revision changed");
+      if (c.snapshot.revision !== revision2) throw fail3(409, "Evidence revision changed");
       const values = await transaction(frozenActor, sessionId, ([identity, state, budget, record2]) => {
-        if (!record2 || record2.organizationId !== org || record2.actorId !== frozenActor.id || record2.actorUid !== frozenActor.uid) throw fail2(404, "Semantic session unavailable");
+        if (!record2 || record2.organizationId !== org || record2.actorId !== frozenActor.id || record2.actorUid !== frozenActor.uid) throw fail3(404, "Semantic session unavailable");
         return [identity, state, budget, record2];
       });
       c = await context(frozenActor);
@@ -42961,7 +43000,7 @@ function createSemanticSessions({ store, strategy, readContext, embed, signal, n
 import { createHash as createHash3 } from "node:crypto";
 
 // server/auth.js
-function fail3(status, message) {
+function fail4(status, message) {
   return Object.assign(new Error(message), { status });
 }
 
@@ -42970,7 +43009,7 @@ var method = "selected-derived-cells-signed-decimal-v1";
 var metric = "source-total-earned";
 var plain2 = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && Object.getPrototypeOf(v) === Object.prototype;
 var exact4 = (v, keys2) => plain2(v) && Object.keys(v).length === keys2.length && keys2.every((k) => Object.hasOwn(v, k));
-var hash5 = (v) => typeof v === "string" && /^[a-f0-9]{64}$(?![\s\S])/.test(v);
+var hash6 = (v) => typeof v === "string" && /^[a-f0-9]{64}$(?![\s\S])/.test(v);
 var decimal = (v) => typeof v === "string" && /^-?(0|[1-9][0-9]{0,25})(\.[0-9]{1,12})?$(?![\s\S])/.test(v);
 var text2 = (v) => typeof v === "string" && v.length > 0 && Buffer.byteLength(v, "utf8") <= 500 && !/[\u0000-\u001f\u007f]/.test(v);
 var units = (v) => {
@@ -42983,23 +43022,23 @@ var keys = ["schemaVersion", "method", "selectionId", "sourceHash", "currency", 
 var provenanceKeys = ["crossTabSha256", "selectedReceiptsSha256", "producerReceiptSha256", "independentReviewSha256"];
 function normalizeSelectionReconciliations(input, selections) {
   if (input === void 0) return void 0;
-  if (!Array.isArray(input) || input.length > 2e3 || Buffer.byteLength(JSON.stringify(input), "utf8") > 1024 * 1024) throw fail3(503, "Invalid selection reconciliation");
+  if (!Array.isArray(input) || input.length > 2e3 || Buffer.byteLength(JSON.stringify(input), "utf8") > 1024 * 1024) throw fail4(503, "Invalid selection reconciliation");
   const byId = new Map(selections.map((s) => [s.id, s]));
   const seen = /* @__PURE__ */ new Set();
   return input.map((row) => {
-    if (!exact4(row, keys) || row.schemaVersion !== 1 || row.method !== method || row.metric !== metric || (typeof row.selectionId !== "string" || !/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/.test(row.selectionId)) || seen.has(row.selectionId) || !hash5(row.sourceHash) || !hash5(row.selectionRecordSetSha256) || typeof row.currency !== "string" || !/^[A-Z]{3}$(?![\s\S])/.test(row.currency) || typeof row.month !== "string" || !/^[0-9]{4}-(0[1-9]|1[0-2])$(?![\s\S])/.test(row.month) || !Number.isSafeInteger(row.selectedRecordCount) || row.selectedRecordCount < 1 || !Number.isSafeInteger(row.zeroRows) || row.zeroRows < 0 || row.zeroRows > row.selectedRecordCount || !exact4(row.predicates, ["sourceSongId", "store"]) || !text2(row.predicates.sourceSongId) || !text2(row.predicates.store) || !exact4(row.provenance, provenanceKeys) || !provenanceKeys.every((k) => hash5(row.provenance[k])) || !["declaredAmount", "recomputedAmount", "positiveAmount", "negativeAmount"].every((k) => decimal(row[k]))) throw fail3(503, "Invalid selection reconciliation");
+    if (!exact4(row, keys) || row.schemaVersion !== 1 || row.method !== method || row.metric !== metric || (typeof row.selectionId !== "string" || !/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/.test(row.selectionId)) || seen.has(row.selectionId) || !hash6(row.sourceHash) || !hash6(row.selectionRecordSetSha256) || typeof row.currency !== "string" || !/^[A-Z]{3}$(?![\s\S])/.test(row.currency) || typeof row.month !== "string" || !/^[0-9]{4}-(0[1-9]|1[0-2])$(?![\s\S])/.test(row.month) || !Number.isSafeInteger(row.selectedRecordCount) || row.selectedRecordCount < 1 || !Number.isSafeInteger(row.zeroRows) || row.zeroRows < 0 || row.zeroRows > row.selectedRecordCount || !exact4(row.predicates, ["sourceSongId", "store"]) || !text2(row.predicates.sourceSongId) || !text2(row.predicates.store) || !exact4(row.provenance, provenanceKeys) || !provenanceKeys.every((k) => hash6(row.provenance[k])) || !["declaredAmount", "recomputedAmount", "positiveAmount", "negativeAmount"].every((k) => decimal(row[k]))) throw fail4(503, "Invalid selection reconciliation");
     const selected = byId.get(row.selectionId);
-    if (!selected || selected.sourceHash !== row.sourceHash || selected.currency !== row.currency || selected.sourceRecords.length !== row.selectedRecordCount || createHash3("sha256").update(JSON.stringify(selected.sourceRecords)).digest("hex") !== row.selectionRecordSetSha256 || units(selected.amount) !== units(row.declaredAmount) || units(row.declaredAmount) !== units(row.recomputedAmount) || units(row.positiveAmount) < 0n || units(row.negativeAmount) > 0n || units(row.positiveAmount) + units(row.negativeAmount) !== units(row.recomputedAmount)) throw fail3(503, "Selection reconciliation binding mismatch");
+    if (!selected || selected.sourceHash !== row.sourceHash || selected.currency !== row.currency || selected.sourceRecords.length !== row.selectedRecordCount || createHash3("sha256").update(JSON.stringify(selected.sourceRecords)).digest("hex") !== row.selectionRecordSetSha256 || units(selected.amount) !== units(row.declaredAmount) || units(row.declaredAmount) !== units(row.recomputedAmount) || units(row.positiveAmount) < 0n || units(row.negativeAmount) > 0n || units(row.positiveAmount) + units(row.negativeAmount) !== units(row.recomputedAmount)) throw fail4(503, "Selection reconciliation binding mismatch");
     const nonzero = row.selectedRecordCount - row.zeroRows;
     const buckets = Number(units(row.positiveAmount) > 0n) + Number(units(row.negativeAmount) < 0n);
-    if (nonzero < buckets || buckets === 0 && nonzero !== 0) throw fail3(503, "Selection reconciliation sign counts infeasible");
+    if (nonzero < buckets || buckets === 0 && nonzero !== 0) throw fail4(503, "Selection reconciliation sign counts infeasible");
     seen.add(row.selectionId);
     return structuredClone(row);
   });
 }
 function selectionReconciliationView(data, selectionId) {
   const selection = data.selections.find((row) => row.id === selectionId);
-  if (!selection) throw fail3(404, "Evidence selection unavailable");
+  if (!selection) throw fail4(404, "Evidence selection unavailable");
   const proof = data.selectionReconciliations?.find((row) => row.selectionId === selectionId);
   if (!proof) return { available: false, selectionId, reason: "not-prepared", limitation: "No retained reconciliation proof is prepared for this selection; absence does not establish incorrect arithmetic." };
   return { available: true, selectionId, rowConvention: "1-based-logical-csv-record-including-header", proof: structuredClone(proof), runtimeBinding: { status: "checked", scope: "selection-metadata-and-arithmetic" }, retainedDerivedReview: { status: "reported-pass", scope: "selected-derived-records", basis: "supplied-retained-review" }, periodQualification: "producer-declared-group-month; not independently established by this read", predicateColumns: { sourceSongId: "TC Song ID", store: "Store Name" }, followUp: { resource: "selection-receipts", selectionId, revision: data.revision }, limitation: "Runtime checked proof metadata against the current selection and signed totals, not source cells or predicate truth. Retained review reports selected derived-cell recomputation; it is not a second whole-source scan, complete provider intake, settlement maturity, causal finding, identity equivalence, rights or economic correctness." };
@@ -43103,7 +43142,7 @@ function normalizeStorePeriodCoverage(input, comparisons = []) {
 
 // server/defiant-evidence-discovery.js
 var failure = (status, message) => Object.assign(new Error(message), { status });
-var hash6 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var hash7 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
 var month2 = (v) => typeof v === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 var text3 = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 var compare2 = (a, b) => a < b ? -1 : a > b ? 1 : 0;
@@ -43117,11 +43156,11 @@ function validateServedEvidenceDiscoveryRequest(request = {}) {
 function discoverServedEvidenceCoverage(snapshot, request = {}) {
   const { query, fromMonth, toMonth, offset, limit } = validateServedEvidenceDiscoveryRequest(request);
   const unavailable2 = () => failure(503, "Normalized served evidence unavailable");
-  if (!snapshot || snapshot.schemaVersion !== 1 || !hash6(snapshot.revision) || !text3(snapshot.organizationId, 128) || !text3(snapshot.coverage, 2e3)) throw unavailable2();
+  if (!snapshot || snapshot.schemaVersion !== 1 || !hash7(snapshot.revision) || !text3(snapshot.organizationId, 128) || !text3(snapshot.coverage, 2e3)) throw unavailable2();
   for (const [field, max] of [["months", 1200], ["receipts", 1e3], ["selections", 2e3], ["comparisons", 100], ["audienceDefinitions", 200]]) if (!Array.isArray(snapshot[field] ?? []) || (snapshot[field] ?? []).length > max) throw unavailable2();
   const sources = /* @__PURE__ */ new Map();
   const source = (sourceHash) => {
-    if (!hash6(sourceHash)) throw unavailable2();
+    if (!hash7(sourceHash)) throw unavailable2();
     if (!sources.has(sourceHash)) sources.set(sourceHash, { sourceHash, kinds: /* @__PURE__ */ new Set(), members: /* @__PURE__ */ new Set(), periods: /* @__PURE__ */ new Map(), systems: /* @__PURE__ */ new Set(), accounts: /* @__PURE__ */ new Set(), labels: /* @__PURE__ */ new Set(), counts: { earningsPeriods: 0, receiptExamples: 0, aggregateSelections: 0, selectionRecordReferences: 0, audienceDefinitions: 0 } });
     return sources.get(sourceHash);
   };
@@ -43202,7 +43241,7 @@ var invalid4 = () => Object.assign(new Error("Invalid curated evidence product")
 var object2 = (v) => v && typeof v === "object" && !Array.isArray(v);
 var text5 = (v, max = 200) => typeof v === "string" && v.length > 0 && v.length <= max && !/[\u0000-\u001f\u007f]/.test(v);
 var id4 = (v) => text5(v, 128) && /^[A-Za-z0-9_-]+$/.test(v);
-var hash7 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var hash8 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
 var decimal3 = (v) => typeof v === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(v);
 var scale2 = 1000000000000n;
 var units3 = (v) => {
@@ -43217,7 +43256,7 @@ var amount2 = (n) => {
   const f = String(a % scale2).padStart(12, "0").replace(/0+$/, "");
   return `${n < 0n ? "-" : ""}${a / scale2}${f ? "." + f : ""}`;
 };
-var cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+var cmp2 = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 var abs = (n) => n < 0n ? -n : n;
 function list(value, max, validate) {
   if (!Array.isArray(value) || value.length > max || value.some((v) => !validate(v))) throw invalid4();
@@ -43243,14 +43282,14 @@ function normalizeComparisons(input, months) {
     const beforeMonths = periods2(row.beforeMonths), afterMonths = periods2(row.afterMonths);
     if (beforeMonths.length !== afterMonths.length || beforeMonths.some((m) => afterMonths.includes(m)) || beforeMonths.at(-1) >= afterMonths[0]) throw invalid4();
     const allMonths = [...beforeMonths, ...afterMonths];
-    const sourceReferences = list(row.sourceReferences, 48, (v) => object2(v) && allMonths.includes(v.month) && hash7(v.sourceHash));
+    const sourceReferences = list(row.sourceReferences, 48, (v) => object2(v) && allMonths.includes(v.month) && hash8(v.sourceHash));
     unique(sourceReferences.map((v) => v.month));
     if (sourceReferences.length !== allMonths.length) throw invalid4();
     const refs = sourceReferences.map((ref2) => {
       const m = monthMap.get(`${ref2.month}:${row.currency}`);
       if (!m || m.sourceHash !== ref2.sourceHash) throw invalid4();
       return { month: ref2.month, sourceHash: ref2.sourceHash };
-    }).sort((a, b) => cmp(a.month, b.month));
+    }).sort((a, b) => cmp2(a.month, b.month));
     const expected = (period) => period.reduce((n, m) => n + units3(monthMap.get(`${m}:${row.currency}`).amount), 0n);
     const groupIds = /* @__PURE__ */ new Set(), keys2 = /* @__PURE__ */ new Set();
     let before = 0n, after = 0n, decrease = 0n, increase = 0n;
@@ -43264,7 +43303,7 @@ function normalizeComparisons(input, months) {
       after += a;
       if (d < 0n) decrease -= d;
       else increase += d;
-      const examples = list(group.sourceReferences, 48, (v) => object2(v) && ["before", "after"].includes(v.side) && hash7(v.sourceHash));
+      const examples = list(group.sourceReferences, 48, (v) => object2(v) && ["before", "after"].includes(v.side) && hash8(v.sourceHash));
       const refKeys = /* @__PURE__ */ new Set();
       const normalized = examples.map((ref2) => {
         referenceCount++;
@@ -43279,17 +43318,17 @@ function normalizeComparisons(input, months) {
       return { rankMagnitude: abs(d), id: group.id, key: group.key, label: group.label, beforeAmount: amount2(b), afterAmount: amount2(a), delta: amount2(d), sourceReferences: normalized, fullSelectionAvailable: false };
     }).sort((a, b) => {
       const x = a.rankMagnitude, y = b.rankMagnitude;
-      return x > y ? -1 : x < y ? 1 : cmp(a.id, b.id);
+      return x > y ? -1 : x < y ? 1 : cmp2(a.id, b.id);
     }).map(({ rankMagnitude, ...group }) => group);
     if (!groups.length || before !== expected(beforeMonths) || after !== expected(afterMonths)) throw invalid4();
     return { id: row.id, dimension: row.dimension, currency: row.currency, sourceSystem: row.sourceSystem, accountScope: row.accountScope, periodBasis: row.periodBasis, periodVerification: "producer-assertion-not-service-verification", beforeMonths, afterMonths, sourceReferences: refs, summary: { beforeAmount: amount2(before), afterAmount: amount2(after), delta: amount2(after - before), grossDecrease: amount2(decrease), offsetIncrease: amount2(increase) }, groups, rankingBasis: "absolute-arithmetic-contribution", fullSelectionAvailable: false };
-  }).sort((a, b) => cmp(a.id, b.id));
+  }).sort((a, b) => cmp2(a.id, b.id));
 }
 function normalizeAudienceDefinitions(input) {
   if (input === void 0) return void 0;
   const ids = /* @__PURE__ */ new Set();
   return list(input, 200, object2).map((row) => {
-    if (!id4(row.id) || ids.has(row.id) || !text5(row.name, 500) || !text5(row.criteria, 4e3) || !text5(row.scaleText, 1e3) || !text5(row.proposedOffer, 2e3) || !hash7(row.sourceHash) || !text5(row.sheet, 128)) throw invalid4();
+    if (!id4(row.id) || ids.has(row.id) || !text5(row.name, 500) || !text5(row.criteria, 4e3) || !text5(row.scaleText, 1e3) || !text5(row.proposedOffer, 2e3) || !hash8(row.sourceHash) || !text5(row.sheet, 128)) throw invalid4();
     ids.add(row.id);
     const cellRefs = unique(list(row.cellRefs, 40, (v) => typeof v === "string" && /^[A-Z]{1,3}[1-9]\d{0,6}$/.test(v)));
     if (!cellRefs.length) throw invalid4();
@@ -43297,14 +43336,14 @@ function normalizeAudienceDefinitions(input) {
     const observedEvidence = unique(list(row.observedEvidence, 30, (v) => text5(v, 200)));
     if (observedEvidence.some((v) => !requiredEvidence.includes(v))) throw invalid4();
     return { id: row.id, name: row.name, criteria: row.criteria, scaleText: row.scaleText, proposedOffer: row.proposedOffer, sourceHash: row.sourceHash, sheet: row.sheet, cellRefs, requiredEvidence, observedEvidence, missingEvidence: requiredEvidence.filter((v) => !observedEvidence.includes(v)), evidenceStatus: "producer-supplied-availability-not-independent-verification", populationComputed: false, consentVerified: false, activationAuthorized: false };
-  }).sort((a, b) => cmp(a.id, b.id));
+  }).sort((a, b) => cmp2(a.id, b.id));
 }
 
 // server/defiant-evidence-identity.js
 var invalid5 = () => Object.assign(new Error("Invalid catalog identity review"), { status: 503 });
 var text6 = (value, max = 200) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
 var id5 = (value) => text6(value, 128) && /^[A-Za-z0-9_-]+$/.test(value);
-var hash8 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var hash9 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 var object3 = (value) => value && typeof value === "object" && !Array.isArray(value);
 var optionalText = (value, max) => value === null || text6(value, max);
 var scale3 = 1000000000000n;
@@ -43333,7 +43372,7 @@ function normalizeIdentityGroups(input, selections) {
     memberCount += group.members.length;
     if (memberCount > 2e3) throw invalid5();
     const p = group.provenance;
-    if (!object3(p) || !hash8(p.upstreamSnapshotRevision) || !hash8(p.upstreamArtifactHash) || typeof p.observedPeriod !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(p.observedPeriod)) throw invalid5();
+    if (!object3(p) || !hash9(p.upstreamSnapshotRevision) || !hash9(p.upstreamArtifactHash) || typeof p.observedPeriod !== "string" || !/^\d{4}-(0[1-9]|1[0-2])$/.test(p.observedPeriod)) throw invalid5();
     const memberIds = /* @__PURE__ */ new Set(), sourceIdentities = /* @__PURE__ */ new Set();
     let currency;
     let total = 0n;
@@ -43385,50 +43424,50 @@ function normalizeIdentityGroups(input, selections) {
 
 // server/defiant-evidence.js
 import { createHash as createHash4 } from "node:crypto";
-var fail4 = (status, message) => Object.assign(new Error(message), { status });
+var fail5 = (status, message) => Object.assign(new Error(message), { status });
 var plain3 = (value) => value && typeof value === "object" && !Array.isArray(value);
 var bounded = (value, max = 200) => typeof value === "string" && value.length > 0 && value.length <= max && !/[\u0000-\u001f\u007f]/.test(value);
 var identifier = (value) => bounded(value, 128) && /^[A-Za-z0-9_-]+$/.test(value);
-var hash9 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var hash10 = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
 var month3 = (value) => typeof value === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
 var decimal4 = (value) => typeof value === "string" && /^-?(0|[1-9]\d{0,25})(\.\d{1,12})?$/.test(value);
 var caps = Object.freeze({ readOnly: true, canActivate: false, canApproveRights: false });
 var METRIC = "source-total-earned";
 function normalize(input, organizationId2) {
-  if (!plain3(input) || input.organizationId !== organizationId2 || input.schemaVersion !== 1 || !bounded(input.coverage, 2e3)) throw fail4(503, "Evidence snapshot unavailable");
-  if (!Array.isArray(input.months) || input.months.length > 1200 || !Array.isArray(input.receipts) || input.receipts.length > 1e3) throw fail4(503, "Evidence snapshot exceeds bounds");
+  if (!plain3(input) || input.organizationId !== organizationId2 || input.schemaVersion !== 1 || !bounded(input.coverage, 2e3)) throw fail5(503, "Evidence snapshot unavailable");
+  if (!Array.isArray(input.months) || input.months.length > 1200 || !Array.isArray(input.receipts) || input.receipts.length > 1e3) throw fail5(503, "Evidence snapshot exceeds bounds");
   const keys2 = /* @__PURE__ */ new Set();
   const months = input.months.map((row) => {
-    if (!plain3(row) || !month3(row.month) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !decimal4(row.amount) || !hash9(row.sourceHash) || row.metric !== METRIC) throw fail4(503, "Invalid earnings product");
+    if (!plain3(row) || !month3(row.month) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !decimal4(row.amount) || !hash10(row.sourceHash) || row.metric !== METRIC) throw fail5(503, "Invalid earnings product");
     const key = `${row.month}:${row.currency}`;
-    if (keys2.has(key)) throw fail4(503, "Duplicate earnings period");
+    if (keys2.has(key)) throw fail5(503, "Duplicate earnings period");
     keys2.add(key);
-    if (!Array.isArray(row.receiptIds) || row.receiptIds.length > 20 || row.receiptIds.some((value) => !identifier(value))) throw fail4(503, "Invalid receipt references");
+    if (!Array.isArray(row.receiptIds) || row.receiptIds.length > 20 || row.receiptIds.some((value) => !identifier(value))) throw fail5(503, "Invalid receipt references");
     return { receiptIds: [...new Set(row.receiptIds)], month: row.month, currency: row.currency, amount: row.amount, metric: METRIC, sourceHash: row.sourceHash };
   }).sort((a, b) => a.month.localeCompare(b.month) || a.currency.localeCompare(b.currency));
   const receiptIds = /* @__PURE__ */ new Set();
   const receipts = input.receipts.map((row) => {
-    if (!plain3(row) || !identifier(row.id) || receiptIds.has(row.id) || !hash9(row.sourceHash) || !bounded(row.member, 500) || !Number.isSafeInteger(row.record) || row.record < 2 || !plain3(row.cells)) throw fail4(503, "Invalid evidence receipt");
+    if (!plain3(row) || !identifier(row.id) || receiptIds.has(row.id) || !hash10(row.sourceHash) || !bounded(row.member, 500) || !Number.isSafeInteger(row.record) || row.record < 2 || !plain3(row.cells)) throw fail5(503, "Invalid evidence receipt");
     receiptIds.add(row.id);
     const entries = Object.entries(row.cells);
-    if (!entries.length || entries.length > 40 || entries.some(([key, value]) => !bounded(key, 100) || typeof value !== "string" || value.length > 2e3 || /[\u0000-\u001f\u007f]/.test(value))) throw fail4(503, "Invalid evidence cells");
+    if (!entries.length || entries.length > 40 || entries.some(([key, value]) => !bounded(key, 100) || typeof value !== "string" || value.length > 2e3 || /[\u0000-\u001f\u007f]/.test(value))) throw fail5(503, "Invalid evidence cells");
     return { id: row.id, sourceHash: row.sourceHash, member: row.member, record: row.record, cells: Object.fromEntries(entries) };
   });
   for (const row of months) for (const receiptId of row.receiptIds) {
     const receipt = receipts.find((value) => value.id === receiptId);
-    if (!receipt || receipt.sourceHash !== row.sourceHash) throw fail4(503, "Receipt source mismatch");
+    if (!receipt || receipt.sourceHash !== row.sourceHash) throw fail5(503, "Receipt source mismatch");
   }
   const selectionIds = /* @__PURE__ */ new Set();
   let recordCount = 0;
-  if (input.selections !== void 0 && (!Array.isArray(input.selections) || input.selections.length > 2e3)) throw fail4(503, "Invalid aggregate selections");
+  if (input.selections !== void 0 && (!Array.isArray(input.selections) || input.selections.length > 2e3)) throw fail5(503, "Invalid aggregate selections");
   const selections = (input.selections || []).map((row) => {
-    if (!plain3(row) || !identifier(row.id) || selectionIds.has(row.id) || !bounded(row.label, 500) || !hash9(row.sourceHash) || !decimal4(row.amount) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !Array.isArray(row.sourceRecords) || !row.sourceRecords.length) throw fail4(503, "Invalid aggregate selection");
+    if (!plain3(row) || !identifier(row.id) || selectionIds.has(row.id) || !bounded(row.label, 500) || !hash10(row.sourceHash) || !decimal4(row.amount) || typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) || !Array.isArray(row.sourceRecords) || !row.sourceRecords.length) throw fail5(503, "Invalid aggregate selection");
     selectionIds.add(row.id);
     recordCount += row.sourceRecords.length;
-    if (recordCount > 5e5) throw fail4(503, "Aggregate selections exceed bounds");
+    if (recordCount > 5e5) throw fail5(503, "Aggregate selections exceed bounds");
     let previous = 1;
     for (const record2 of row.sourceRecords) {
-      if (!Number.isSafeInteger(record2) || record2 <= previous) throw fail4(503, "Invalid selection record order");
+      if (!Number.isSafeInteger(record2) || record2 <= previous) throw fail5(503, "Invalid selection record order");
       previous = record2;
     }
     return { id: row.id, label: row.label, sourceHash: row.sourceHash, amount: row.amount, currency: row.currency, sourceRecords: [...row.sourceRecords] };
@@ -43449,10 +43488,10 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
   if (loadWorksheetCells !== void 0 && typeof loadWorksheetCells !== "function") throw new TypeError("Server-owned worksheet resolver required");
   const scope = Object.freeze({ organizationId: organizationId2 });
   const semantic = typeof loadSemanticIndex === "function" && semanticDependencies ? createSemanticSessions({ ...semanticDependencies, readContext: async (actor) => {
-    if (!await authorize(actor, scope)) throw fail4(403, "Evidence access denied");
+    if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
     const snapshot = normalize(await loadSnapshot(scope), organizationId2);
     const index = normalizeSemanticIndex(await loadSemanticIndex(scope), { organizationId: organizationId2, register: snapshot.retainedSourceRegister });
-    if (!await authorize(actor, scope)) throw fail4(403, "Evidence access denied");
+    if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
     return { actor, snapshot, index };
   } }) : null;
   return Object.freeze({
@@ -43466,26 +43505,31 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         }
       };
       mark("authority_before_snapshot");
-      if (!await authorize(actor, scope)) throw fail4(403, "Evidence access denied");
+      if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
       mark("request_validation");
-      if (!plain3(request) || Object.keys(request).some((key) => !["resource", "revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash", "periodPresence", "mode", "sessionId", "idempotencyKey"].includes(key))) throw fail4(400, "Invalid evidence request");
+      if (!plain3(request) || Object.keys(request).some((key) => !["resource", "revision", "month", "currency", "receiptId", "selectionId", "identityGroupId", "comparisonId", "audienceId", "groupId", "referenceIndex", "offset", "limit", "query", "fromMonth", "toMonth", "storeCoverageId", "sourceId", "format", "kind", "sourceHash", "periodPresence", "mode", "sessionId", "idempotencyKey"].includes(key))) throw fail5(400, "Invalid evidence request");
       const { resource = "manifest", revision: revision2, month: selectedMonth, currency, receiptId, selectionId, identityGroupId, comparisonId, audienceId, groupId, referenceIndex, query, fromMonth, toMonth, storeCoverageId, sourceId, format, kind, sourceHash, periodPresence, mode, sessionId, idempotencyKey, offset = 0, limit = 25 } = request;
-      if (!["selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"].includes(resource) || revision2 !== void 0 && !hash9(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 5e5 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail4(400, "Invalid evidence request");
-      if (resource !== "earnings" && (selectedMonth !== void 0 || currency !== void 0) || !["retained-sources", "store-coverage", "coverage", "earnings", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "june-review"].includes(resource) && (request.offset !== void 0 || request.limit !== void 0)) throw fail4(400, "Filters require earnings");
-      if (!["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && selectionId !== void 0 || ["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && (!identifier(selectionId) || revision2 === void 0)) throw fail4(400, "Invalid selection request");
-      if (resource !== "store-coverage" && storeCoverageId !== void 0 || resource === "store-coverage" && (revision2 === void 0 || storeCoverageId !== void 0 && !identifier(storeCoverageId) || offset > 100)) throw fail4(400, "Invalid store coverage request");
-      if (resource !== "identity-group" && identityGroupId !== void 0 || resource === "identity-group" && (!identifier(identityGroupId) || revision2 === void 0)) throw fail4(400, "Invalid identity group request");
-      if (["catalog-identity-review", "identity-group"].includes(resource) && offset > 2e3) throw fail4(400, "Invalid identity page");
-      if (resource === "earnings" && offset > 1200 || resource === "selections" && offset > 2e3) throw fail4(400, "Invalid page offset");
-      if (!["explain-change", "comparison-examples"].includes(resource) && comparisonId !== void 0 || ["explain-change", "comparison-examples"].includes(resource) && (!identifier(comparisonId) || revision2 === void 0)) throw fail4(400, "Invalid comparison request");
-      if (!["audience-definition", "audience-cells"].includes(resource) && audienceId !== void 0 || ["audience-definition", "audience-cells"].includes(resource) && (!identifier(audienceId) || revision2 === void 0)) throw fail4(400, "Invalid audience request");
-      if (resource !== "comparison-examples" && (groupId !== void 0 || referenceIndex !== void 0) || resource === "comparison-examples" && (!identifier(groupId) || !Number.isInteger(referenceIndex) || referenceIndex < 0 || referenceIndex >= 48)) throw fail4(400, "Invalid comparison example request");
-      if (resource === "comparisons" && offset > 100 || ["audience-readiness", "audience-definition"].includes(resource) && offset > 200) throw fail4(400, "Invalid product page");
-      if (resource === "explain-change" && offset > 1e4) throw fail4(400, "Invalid comparison page");
-      if (resource !== "receipt" && receiptId !== void 0) throw fail4(400, "Receipt ID requires receipt");
-      if (selectedMonth !== void 0 && !month3(selectedMonth) || currency !== void 0 && (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)) || resource === "receipt" && (!identifier(receiptId) || revision2 === void 0)) throw fail4(400, "Invalid evidence selection");
-      if (!["coverage", "retained-sources"].includes(resource) && (query !== void 0 || fromMonth !== void 0 || toMonth !== void 0)) throw fail4(400, "Coverage filters require coverage");
-      if (resource !== "retained-sources" && [sourceId, format, kind, sourceHash, periodPresence, mode, sessionId, idempotencyKey].some((v) => v !== void 0)) throw fail4(400, "Retained source filters require retained sources");
+      if (!["source-evidence", "selection-reconciliation", "retained-sources", "store-coverage", "coverage", "manifest", "earnings", "receipt", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "audience-definition", "comparison-examples", "audience-cells", "june-review"].includes(resource) || revision2 !== void 0 && !hash10(revision2) || !Number.isInteger(offset) || offset < 0 || offset > 5e5 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw fail5(400, "Invalid evidence request");
+      if (resource !== "earnings" && (selectedMonth !== void 0 || currency !== void 0) || !["source-evidence", "retained-sources", "store-coverage", "coverage", "earnings", "selections", "selection", "selection-receipts", "catalog-identity-review", "identity-group", "comparisons", "explain-change", "audience-readiness", "june-review"].includes(resource) && (request.offset !== void 0 || request.limit !== void 0)) throw fail5(400, "Filters require earnings");
+      if (!["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && selectionId !== void 0 || ["selection-reconciliation", "selection", "selection-receipts", "june-review"].includes(resource) && (!identifier(selectionId) || revision2 === void 0)) throw fail5(400, "Invalid selection request");
+      if (resource !== "store-coverage" && storeCoverageId !== void 0 || resource === "store-coverage" && (revision2 === void 0 || storeCoverageId !== void 0 && !identifier(storeCoverageId) || offset > 100)) throw fail5(400, "Invalid store coverage request");
+      if (resource !== "identity-group" && identityGroupId !== void 0 || resource === "identity-group" && (!identifier(identityGroupId) || revision2 === void 0)) throw fail5(400, "Invalid identity group request");
+      if (["catalog-identity-review", "identity-group"].includes(resource) && offset > 2e3) throw fail5(400, "Invalid identity page");
+      if (resource === "earnings" && offset > 1200 || resource === "selections" && offset > 2e3) throw fail5(400, "Invalid page offset");
+      if (!["explain-change", "comparison-examples"].includes(resource) && comparisonId !== void 0 || ["explain-change", "comparison-examples"].includes(resource) && (!identifier(comparisonId) || revision2 === void 0)) throw fail5(400, "Invalid comparison request");
+      if (!["audience-definition", "audience-cells"].includes(resource) && audienceId !== void 0 || ["audience-definition", "audience-cells"].includes(resource) && (!identifier(audienceId) || revision2 === void 0)) throw fail5(400, "Invalid audience request");
+      if (resource !== "comparison-examples" && (groupId !== void 0 || referenceIndex !== void 0) || resource === "comparison-examples" && (!identifier(groupId) || !Number.isInteger(referenceIndex) || referenceIndex < 0 || referenceIndex >= 48)) throw fail5(400, "Invalid comparison example request");
+      if (resource === "comparisons" && offset > 100 || ["audience-readiness", "audience-definition"].includes(resource) && offset > 200) throw fail5(400, "Invalid product page");
+      if (resource === "explain-change" && offset > 1e4) throw fail5(400, "Invalid comparison page");
+      if (resource !== "receipt" && receiptId !== void 0) throw fail5(400, "Receipt ID requires receipt");
+      if (selectedMonth !== void 0 && !month3(selectedMonth) || currency !== void 0 && (typeof currency !== "string" || !/^[A-Z]{3}$/.test(currency)) || resource === "receipt" && (!identifier(receiptId) || revision2 === void 0)) throw fail5(400, "Invalid evidence selection");
+      if (!["coverage", "retained-sources"].includes(resource) && (query !== void 0 || fromMonth !== void 0 || toMonth !== void 0)) throw fail5(400, "Coverage filters require coverage");
+      if (resource !== "retained-sources" && [sourceId, format, kind, periodPresence, mode, sessionId, idempotencyKey].some((v) => v !== void 0)) throw fail5(400, "Retained source filters require retained sources");
+      if (!["source-evidence", "retained-sources"].includes(resource) && sourceHash !== void 0) throw fail5(400, "Source hash requires a source resource");
+      if (resource === "source-evidence") {
+        const { resource: _, ...fields2 } = request;
+        validateSourceEvidenceRequest(fields2);
+      }
       if (resource === "retained-sources") validateRetainedSourceRequest({ query, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence, offset, limit });
       if (resource === "coverage") validateServedEvidenceDiscoveryRequest({ query, fromMonth, toMonth, offset, limit });
       let data;
@@ -43495,30 +43539,35 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         mark("snapshot_normalize");
         data = normalize(snapshot, organizationId2);
       } catch (error47) {
-        throw fail4(503, "Evidence snapshot unavailable");
+        throw fail5(503, "Evidence snapshot unavailable");
       }
       mark("authority_after_snapshot");
-      if (!await authorize(actor, scope)) throw fail4(403, "Evidence access denied");
+      if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
       mark("revision_check");
-      if (revision2 !== void 0 && revision2 !== data.revision) throw fail4(409, "Evidence revision changed");
+      if (revision2 !== void 0 && revision2 !== data.revision) throw fail5(409, "Evidence revision changed");
       mark("resource_read");
       const base = { schemaVersion: 1, scope, revision: data.revision, coverage: data.coverage, capabilities: caps };
       if (resource === "retained-sources" && mode !== void 0 && mode !== "keyword") {
-        if (!semantic) throw fail4(503, "Semantic metadata index unavailable");
+        if (!semantic) throw fail5(503, "Semantic metadata index unavailable");
         if (mode === "semantic") {
-          if (sessionId !== void 0 || request.offset !== void 0 || request.limit !== void 0) throw fail4(400, "Invalid explicit semantic request");
+          if (sessionId !== void 0 || request.offset !== void 0 || request.limit !== void 0) throw fail5(400, "Invalid explicit semantic request");
           return semantic.start(actor, { revision: revision2, query, idempotencyKey, filters: Object.fromEntries(Object.entries({ sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence }).filter(([, v]) => v !== void 0)) });
         }
         if (mode === "semantic-page") {
-          if ([query, idempotencyKey, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence].some((v) => v !== void 0)) throw fail4(400, "Invalid semantic page request");
+          if ([query, idempotencyKey, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence].some((v) => v !== void 0)) throw fail5(400, "Invalid semantic page request");
           return semantic.page(actor, { revision: revision2, sessionId, offset, limit });
         }
-        throw fail4(400, "Invalid retained search mode");
+        throw fail5(400, "Invalid retained search mode");
       }
-      if (resource === "retained-sources" && (sessionId !== void 0 || idempotencyKey !== void 0)) throw fail4(400, "Session fields require explicit semantic search");
+      if (resource === "retained-sources" && (sessionId !== void 0 || idempotencyKey !== void 0)) throw fail5(400, "Session fields require explicit semantic search");
       if (resource === "retained-sources") {
         const result = searchRetainedSources(data, { query, sourceId, format, kind, sourceHash, fromMonth, toMonth, periodPresence, offset, limit });
         return semantic ? { ...result, semanticSearch: { configured: true, requiresExplicitInvocation: true, indexVerified: false } } : result;
+      }
+      if (resource === "source-evidence") {
+        const result = { scope, ...sourceEvidenceView(data, { sourceHash, revision: revision2, offset, limit }) };
+        if (Buffer.byteLength(JSON.stringify(result), "utf8") > 262144) throw fail5(503, "Source reference response exceeds bounds");
+        return result;
       }
       if (resource === "coverage") return discoverServedEvidenceCoverage(data, { query, fromMonth, toMonth, offset, limit });
       if (resource === "selection-reconciliation") return structuredClone({ ...base, ...selectionReconciliationView(data, selectionId) });
@@ -43527,17 +43576,17 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const products = (data.storePeriodCoverage || []).map((product) => ({ ...product, settlementMaturityComparability: "not-established", limitation: product.limitation + " Settlement maturity comparability has not been established; legacy settlementMaturityComparable:false does not demonstrate unequal maturity." }));
         if (storeCoverageId !== void 0) {
           const product = products.find((p) => p.id === storeCoverageId);
-          if (!product) throw fail4(404, "Store coverage unavailable");
+          if (!product) throw fail5(404, "Store coverage unavailable");
           return structuredClone({ ...base, product });
         }
         return structuredClone({ ...base, items: products.slice(offset, offset + limit), total: products.length, nextOffset: offset + limit < products.length ? offset + limit : null });
       }
       if (resource === "june-review") {
-        if (selectedMonth !== void 0 || currency !== void 0 || receiptId !== void 0) throw fail4(400, "Invalid June review request");
+        if (selectedMonth !== void 0 || currency !== void 0 || receiptId !== void 0) throw fail5(400, "Invalid June review request");
         const selected = data.selections.find((row) => row.id === selectionId);
-        if (!selected) throw fail4(404, "Selection unavailable");
+        if (!selected) throw fail5(404, "Selection unavailable");
         const periods3 = data.months.filter((row) => row.sourceHash === selected.sourceHash && row.currency === selected.currency);
-        if (periods3.length !== 1 || periods3[0].month !== "2025-06") throw fail4(409, "June source period unavailable");
+        if (periods3.length !== 1 || periods3[0].month !== "2025-06") throw fail5(409, "June source period unavailable");
         const period = periods3[0];
         const { sourceRecords, ...selection } = selected;
         return structuredClone({
@@ -43561,42 +43610,42 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const comparison = (data.comparisons || []).find((row) => row.id === comparisonId);
         const group = comparison?.groups.find((row) => row.id === groupId);
         const reference = group?.sourceReferences[referenceIndex];
-        if (!reference) throw fail4(404, "Comparison reference unavailable");
+        if (!reference) throw fail5(404, "Comparison reference unavailable");
         mark("source_records_load");
-        if (!loadSourceRecords) throw fail4(503, "Source cells unavailable");
+        if (!loadSourceRecords) throw fail5(503, "Source cells unavailable");
         let receipts;
         try {
           const loaded = reference.exampleRecords.length ? await loadSourceRecords({ ...scope, sourceHash: reference.sourceHash, sourceRecords: [...reference.exampleRecords], revision: data.revision }) : [];
           mark("source_records_normalize");
           receipts = normalize({ schemaVersion: 1, organizationId: organizationId2, coverage: data.coverage, months: [], receipts: loaded }, organizationId2).receipts;
-          if (receipts.length !== reference.exampleRecords.length || receipts.some((row, i) => row.sourceHash !== reference.sourceHash || row.record !== reference.exampleRecords[i])) throw fail4(503, "Source examples mismatch");
+          if (receipts.length !== reference.exampleRecords.length || receipts.some((row, i) => row.sourceHash !== reference.sourceHash || row.record !== reference.exampleRecords[i])) throw fail5(503, "Source examples mismatch");
         } catch {
-          throw fail4(503, "Source cells unavailable");
+          throw fail5(503, "Source cells unavailable");
         }
         mark("authority_after_records");
-        if (!await authorize(actor, scope)) throw fail4(403, "Evidence access denied");
+        if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
         return structuredClone({ ...base, comparisonId, groupId, referenceIndex, reference, receipts, fullSelectionAvailable: false, limitation: "Original cells for producer-selected examples only; these examples do not reconcile or represent the full group aggregate." });
       }
       if (resource === "audience-cells") {
         const definition = (data.audienceDefinitions || []).find((row) => row.id === audienceId);
-        if (!definition) throw fail4(404, "Audience definition unavailable");
+        if (!definition) throw fail5(404, "Audience definition unavailable");
         mark("worksheet_load");
-        if (!loadWorksheetCells) throw fail4(503, "Worksheet cells unavailable");
+        if (!loadWorksheetCells) throw fail5(503, "Worksheet cells unavailable");
         let worksheet;
         try {
           const loaded = await loadWorksheetCells({ ...scope, sourceHash: definition.sourceHash, sheet: definition.sheet, cellRefs: [...definition.cellRefs], revision: data.revision });
           mark("worksheet_normalize");
-          if (!plain3(loaded) || loaded.sourceHash !== definition.sourceHash || loaded.sheet !== definition.sheet || !Array.isArray(loaded.cells) || loaded.cells.length !== definition.cellRefs.length) throw fail4(503, "Worksheet mismatch");
+          if (!plain3(loaded) || loaded.sourceHash !== definition.sourceHash || loaded.sheet !== definition.sheet || !Array.isArray(loaded.cells) || loaded.cells.length !== definition.cellRefs.length) throw fail5(503, "Worksheet mismatch");
           const cells = loaded.cells.map((cell, i) => {
-            if (!plain3(cell) || cell.cellRef !== definition.cellRefs[i]) throw fail4(503, "Worksheet mismatch");
+            if (!plain3(cell) || cell.cellRef !== definition.cellRefs[i]) throw fail5(503, "Worksheet mismatch");
             return normalizeWorksheetCell(cell);
           });
           worksheet = { sourceHash: loaded.sourceHash, sheet: loaded.sheet, cells };
         } catch {
-          throw fail4(503, "Worksheet cells unavailable");
+          throw fail5(503, "Worksheet cells unavailable");
         }
         mark("authority_after_worksheet");
-        if (!await authorize(actor, scope)) throw fail4(403, "Evidence access denied");
+        if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
         return structuredClone({ ...base, audienceId, worksheet, limitation: "Source cell strings from the host integrity-checked worksheet resolver; no formula execution. Supplied definitions do not verify populations or consent. Required, observed and missing evidence are analyst assessments, not workbook claims." });
       }
       if (resource === "comparisons" || resource === "explain-change") {
@@ -43605,7 +43654,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Arithmetic contribution only, not causal attribution or opportunity scoring. grossDecrease is a positive magnitude; delta = offsetIncrease - grossDecrease. Period verification is a producer assertion. Example logical record references are not complete selections or loaded source cells; full group receipt drilldown is unavailable.";
         if (resource === "comparisons") return structuredClone({ ...base, items: rows2.slice(offset, offset + limit).map(summary), total: rows2.length, nextOffset: offset + limit < rows2.length ? offset + limit : null, limitation });
         const row = rows2.find((v) => v.id === comparisonId);
-        if (!row) throw fail4(404, "Comparison unavailable");
+        if (!row) throw fail5(404, "Comparison unavailable");
         return structuredClone({ ...base, comparison: summary(row), groups: row.groups.slice(offset, offset + limit), total: row.groups.length, nextOffset: offset + limit < row.groups.length ? offset + limit : null, limitation });
       }
       if (resource === "audience-readiness" || resource === "audience-definition") {
@@ -43613,7 +43662,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Workbook-attributed segment definitions; required, observed and missing evidence are analyst assessments of availability, not workbook claims. Supplied definitions and availability only. Membership, consent, customer/listener identity and activation eligibility are not computed or verified. Offer text is a proposal, not approval.";
         if (resource === "audience-readiness") return structuredClone({ ...base, items: rows2.slice(offset, offset + limit), total: rows2.length, nextOffset: offset + limit < rows2.length ? offset + limit : null, limitation });
         const definition = rows2.find((v) => v.id === audienceId);
-        if (!definition) throw fail4(404, "Audience definition unavailable");
+        if (!definition) throw fail5(404, "Audience definition unavailable");
         return structuredClone({ ...base, definition, limitation });
       }
       if (resource === "catalog-identity-review" || resource === "identity-group") {
@@ -43622,7 +43671,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Source identities and referenced selection amounts only; recording equivalence is unreviewed. Amounts sum unique selection references, not independently recomputed source cells. Overlapping source-record memberships are rejected across the identity queue. Ranking is review priority within currency, not an opportunity score or action approval.";
         if (resource === "catalog-identity-review") return structuredClone({ ...base, items: groups.slice(offset, offset + limit).map(summary), total: groups.length, nextOffset: offset + limit < groups.length ? offset + limit : null, rankingBasis: identityRankingBasis, limitation });
         const group = groups.find((row) => row.id === identityGroupId);
-        if (!group) throw fail4(404, "Identity group unavailable");
+        if (!group) throw fail5(404, "Identity group unavailable");
         return structuredClone({ ...base, group: summary(group), members: group.members.slice(offset, offset + limit), total: group.members.length, nextOffset: offset + limit < group.members.length ? offset + limit : null, limitation });
       }
       if (resource === "selections" || resource === "selection" || resource === "selection-receipts") {
@@ -43630,22 +43679,22 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
         const limitation = "Complete producer-supplied record selection; declared aggregate is not recomputed by this read. Exact source cells require the pinned source partition.";
         if (resource === "selections") return structuredClone({ ...base, items: data.selections.slice(offset, offset + limit).map(summary), total: data.selections.length, nextOffset: offset + limit < data.selections.length ? offset + limit : null, limitation });
         const selected = data.selections.find((row) => row.id === selectionId);
-        if (!selected) throw fail4(404, "Selection unavailable");
+        if (!selected) throw fail5(404, "Selection unavailable");
         if (resource === "selection-receipts") {
           mark("source_records_load");
-          if (!loadSourceRecords) throw fail4(503, "Source cells unavailable");
+          if (!loadSourceRecords) throw fail5(503, "Source cells unavailable");
           const records = selected.sourceRecords.slice(offset, offset + limit);
           let receipts;
           try {
             const loaded = await loadSourceRecords({ ...scope, sourceHash: selected.sourceHash, sourceRecords: [...records], revision: data.revision });
             mark("source_records_normalize");
             receipts = normalize({ schemaVersion: 1, organizationId: organizationId2, coverage: data.coverage, months: [], receipts: loaded }, organizationId2).receipts;
-            if (receipts.length !== records.length || receipts.some((row, i) => row.sourceHash !== selected.sourceHash || row.record !== records[i])) throw fail4(503, "Source selection mismatch");
+            if (receipts.length !== records.length || receipts.some((row, i) => row.sourceHash !== selected.sourceHash || row.record !== records[i])) throw fail5(503, "Source selection mismatch");
           } catch {
-            throw fail4(503, "Source cells unavailable");
+            throw fail5(503, "Source cells unavailable");
           }
           mark("authority_after_records");
-          if (!await authorize(actor, scope)) throw fail4(403, "Evidence access denied");
+          if (!await authorize(actor, scope)) throw fail5(403, "Evidence access denied");
           return structuredClone({ ...base, selection: summary(selected), receipts, total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, limitation: "Exact source cells supplied by the host integrity-checked partition resolver; this page is not the entire aggregate unless it contains every contributing record." });
         }
         const matchingPeriods = data.months.filter((p) => p.sourceHash === selected.sourceHash && p.currency === selected.currency);
@@ -43655,7 +43704,7 @@ function createDefiantEvidenceService({ organizationId: organizationId2, authori
       if (resource === "receipt") {
         mark("receipt_lookup");
         const receipt = data.receipts.find((row) => row.id === receiptId);
-        if (!receipt) throw fail4(404, "Receipt unavailable");
+        if (!receipt) throw fail5(404, "Receipt unavailable");
         return structuredClone({ ...base, receipt, rowConvention: "1-based logical CSV record including header", limitation: "A receipt is one source record; an aggregate requires its full contributing selection." });
       }
       const rows = data.months.filter((row) => (!selectedMonth || row.month === selectedMonth) && (!currency || row.currency === currency));
@@ -43673,7 +43722,7 @@ var KEY = "defiant-evidence-oauth:v1";
 var COOKIE = "__Host-defiant_oauth";
 var FIVE = 3e5;
 var EIGHT = 288e5;
-var hash10 = (s) => createHash5("sha256").update(s).digest("hex");
+var hash11 = (s) => createHash5("sha256").update(s).digest("hex");
 var random = () => randomBytes(32).toString("base64url");
 var secret = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{43}$/.test(v);
 var identifier2 = (v) => typeof v === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(v) && v !== "defiant_evidence_poc";
@@ -43707,7 +43756,7 @@ function cookieProof(header, transactionId) {
   if (matches.length !== 1) throw error46(403, "access_denied");
   const parts = matches[0].slice(COOKIE.length + 1).split(".");
   if (parts.length !== 2 || parts[0] !== transactionId || !secret(parts[0]) || !secret(parts[1])) throw error46(403, "access_denied");
-  return hash10(parts[1]);
+  return hash11(parts[1]);
 }
 function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor, authorizeDelegate, engineFactory, now = () => Date.now() } = {}) {
   const configured = oauthClientConfiguration(clients);
@@ -43786,13 +43835,13 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         await write((s) => {
           const t = transaction(s, context.transactionId, context.cookie);
           if (t.status !== "approved" || t.subject.userId !== user.userId || t.subject.uid !== user.uid || t.organizationId !== user.organizationId || t.clientId !== c.id || t.codeHash) throw error46(400, "invalid_grant");
-          return { ...s, transactions: s.transactions.map((x) => x.id === t.id ? { ...x, status: "code-issued", codeHash: hash10(code.authorizationCode), codeConsumed: false } : x) };
+          return { ...s, transactions: s.transactions.map((x) => x.id === t.id ? { ...x, status: "code-issued", codeHash: hash11(code.authorizationCode), codeConsumed: false } : x) };
         });
         return { ...code, client: c, user };
       },
       getAuthorizationCode: async (supplied) => {
         if (!secret(supplied)) return false;
-        const t = state(await store.get(KEY)).transactions.find((t2) => equal(t2.codeHash, hash10(supplied)) && !t2.codeConsumed && t2.status === "code-issued");
+        const t = state(await store.get(KEY)).transactions.find((t2) => equal(t2.codeHash, hash11(supplied)) && !t2.codeConsumed && t2.status === "code-issued");
         if (!t || !secret(t.challenge)) return false;
         const user = { ...t.subject, organizationId: t.organizationId, approvedAt: t.approvedAt, expiresAt: t.grantExpiresAt };
         await authority(user);
@@ -43813,7 +43862,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
       },
       getRefreshToken: async (supplied) => {
         if (!secret(supplied)) return false;
-        const digest2 = hash10(supplied);
+        const digest2 = hash11(supplied);
         const s = state(await store.get(KEY));
         const old = s.tombstones.find((t) => equal(t.hash, digest2));
         if (old) {
@@ -43863,7 +43912,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
             if (!t?.codeConsumed || t.status !== "code-issued" || t.grantId || !equal(t.codeHash, context.codeHash)) throw error46(400, "invalid_grant");
             if (s.families.length >= 64) throw error46(503, "temporarily_unavailable");
           }
-          const grant = { id: familyId, userId: user.userId, uid: user.uid, organizationId: user.organizationId, approvedAt: user.approvedAt, expiresAt: absolute, accessExpiresAt: accessExpiry, clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, scope: EVIDENCE_SCOPE, accessHash: hash10(token.accessToken), accessTokens: retained, refreshHash: hash10(token.refreshToken), revoked: false };
+          const grant = { id: familyId, userId: user.userId, uid: user.uid, organizationId: user.organizationId, approvedAt: user.approvedAt, expiresAt: absolute, accessExpiresAt: accessExpiry, clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, scope: EVIDENCE_SCOPE, accessHash: hash11(token.accessToken), accessTokens: retained, refreshHash: hash11(token.refreshToken), revoked: false };
           return { ...s, transactions: s.transactions.map((t) => t.id === context.codeId ? { ...t, grantId: familyId } : t), families: context.familyId ? s.families.map((g) => g.id === familyId ? { ...g, ...grant, claim: null } : g) : [...s.families, grant] };
         });
         return { ...token, accessTokenExpiresAt: new Date(accessExpiry), refreshTokenExpiresAt: new Date(absolute), scope: [EVIDENCE_SCOPE], client: c, user };
@@ -43885,7 +43934,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
       const id6 = random(), cookie = random(), expiresAt = now() + FIVE;
       await write((s) => {
         if (s.transactions.length >= 128) throw error46(503, "temporarily_unavailable");
-        return { ...s, transactions: [...s.transactions, { id: id6, cookieHash: hash10(cookie), clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, redirectUri: input.redirect_uri, state: input.state, challenge: input.code_challenge, expiresAt, status: "pending", inspections: [], attempts: 0, decisionAttempts: 0 }] };
+        return { ...s, transactions: [...s.transactions, { id: id6, cookieHash: hash11(cookie), clientId: c.id, clientName: c.name, resource: EVIDENCE_RESOURCE, redirectUri: input.redirect_uri, state: input.state, challenge: input.code_challenge, expiresAt, status: "pending", inspections: [], attempts: 0, decisionAttempts: 0 }] };
       });
       return { transactionId: id6, location: `https://studio.chaiwithjai.com/?tab=strategy&remoteEvidenceTransaction=${id6}`, cookie: authorizationCookie(id6, cookie) };
     },
@@ -43896,7 +43945,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         const t = transaction(s, transactionId, cookie);
         if (t.status !== "pending" || t.attempts >= 5) throw error46(403, "access_denied");
         output = { transactionId: t.id, organizationId: organizationId2, inspectionToken: proof, clientId: t.clientId, clientName: t.clientName, resource: t.resource, scope: EVIDENCE_SCOPE, maxLifetimeMs: EIGHT, expiresAt: t.expiresAt, status: "pending", owner: { userId: subject.userId, email: subject.email } };
-        return { ...s, transactions: s.transactions.map((x) => x.id === t.id ? { ...x, attempts: x.attempts + 1, inspections: [...x.inspections, { hash: hash10(proof), subject, organizationId: organizationId2 }] } : x) };
+        return { ...s, transactions: s.transactions.map((x) => x.id === t.id ? { ...x, attempts: x.attempts + 1, inspections: [...x.inspections, { hash: hash11(proof), subject, organizationId: organizationId2 }] } : x) };
       });
       return output;
     },
@@ -43910,7 +43959,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         accepted = false;
         const t = transaction(s, transactionId, cookie);
         if (t.status !== "pending" || t.decisionAttempts >= 5) throw error46(403, "access_denied");
-        const inspection = t.inspections.find((i) => equal(i.hash, hash10(inspectionToken)));
+        const inspection = t.inspections.find((i) => equal(i.hash, hash11(inspectionToken)));
         accepted = Boolean(inspection && inspection.organizationId === organizationId2 && inspection.subject.userId === subject.userId && inspection.subject.uid === subject.uid);
         return { ...s, transactions: s.transactions.map((x) => x.id !== t.id ? x : accepted ? { ...x, status: approved ? "approved" : "denied", subject, organizationId: organizationId2, approvedAt, grantExpiresAt: now() + EIGHT, inspections: [], decisionAttempts: x.decisionAttempts + 1 } : { ...x, decisionAttempts: x.decisionAttempts + 1 }) };
       });
@@ -43958,7 +44007,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
     },
     async verifyAccessToken(supplied) {
       if (!secret(supplied)) throw error46(401, "invalid_token");
-      const digest2 = hash10(supplied);
+      const digest2 = hash11(supplied);
       let g = state(await store.get(KEY)).families.find((g2) => !g2.revoked && matchesAccess(g2, digest2));
       if (!g || g.expiresAt <= now() || g.resource !== EVIDENCE_RESOURCE || !configured.some((c) => c.clientId === g.clientId)) throw error46(401, "invalid_token");
       if (g.scope !== EVIDENCE_SCOPE) throw error46(403, "insufficient_scope");
@@ -43973,7 +44022,7 @@ function createEvidenceOAuth({ store, clients = [], inspectClient, approveActor,
         s = rate(s, "revoke");
         const c = configured.find((c2) => c2.clientId === client_id);
         if (!c || !secret(token)) return s;
-        const digest2 = hash10(token), g = s.families.find((g2) => g2.clientId === c.clientId && g2.resource === EVIDENCE_RESOURCE && (matchesAccess(g2, digest2) || equal(g2.refreshHash, digest2) || s.tombstones.some((t) => t.familyId === g2.id && equal(t.hash, digest2))));
+        const digest2 = hash11(token), g = s.families.find((g2) => g2.clientId === c.clientId && g2.resource === EVIDENCE_RESOURCE && (matchesAccess(g2, digest2) || equal(g2.refreshHash, digest2) || s.tombstones.some((t) => t.familyId === g2.id && equal(t.hash, digest2))));
         if (!g) return s;
         return { ...s, families: s.families.map((x) => x.id === g.id ? { ...x, revoked: true } : x) };
       });
@@ -44063,7 +44112,7 @@ function createCimdInspector({ fetchImpl = fetch, now = () => Date.now() } = {})
 // server/defiant-evidence-remote.js
 var AUTH = "/oauth/defiant-evidence";
 var API = "/api/studio/remote-evidence/";
-var fail5 = (status, code) => Object.assign(new Error(code), { status, oauthCode: code });
+var fail6 = (status, code) => Object.assign(new Error(code), { status, oauthCode: code });
 var oauthErrorCodes = ["invalid_request", "invalid_client", "invalid_grant", "invalid_scope", "invalid_token", "insufficient_scope", "access_denied", "temporarily_unavailable"];
 function observeOutcome(sink, event) {
   try {
@@ -44083,7 +44132,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
   let size = 0, chunks = 0;
   let aborted2;
   const abort = new Promise((_, reject2) => {
-    aborted2 = () => reject2(fail5(408, "temporarily_unavailable"));
+    aborted2 = () => reject2(fail6(408, "temporarily_unavailable"));
     if (signal?.aborted) aborted2();
     else signal?.addEventListener("abort", aborted2, { once: true });
   });
@@ -44091,7 +44140,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
     for (; ; ) {
       const p = await Promise.race([reader.read(), abort]);
       if (p.done) break;
-      if (!(p.value instanceof Uint8Array) || ++chunks > 65536 || p.value.byteLength > buffer.length - size) throw fail5(400, "invalid_request");
+      if (!(p.value instanceof Uint8Array) || ++chunks > 65536 || p.value.byteLength > buffer.length - size) throw fail6(400, "invalid_request");
       buffer.set(p.value, size);
       size += p.value.byteLength;
     }
@@ -44105,7 +44154,7 @@ async function readRemoteBody(request, max, signal = request.signal) {
 function fields(params) {
   const data = {};
   for (const [k, v] of params) {
-    if (Object.hasOwn(data, k) || k === "__proto__" || k === "constructor" || v.length > 2048) throw fail5(400, "invalid_request");
+    if (Object.hasOwn(data, k) || k === "__proto__" || k === "constructor" || v.length > 2048) throw fail6(400, "invalid_request");
     data[k] = v;
   }
   return data;
@@ -44166,15 +44215,15 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
       if (path === AUTH + "/complete") {
         if (request.method !== "GET") return json2({ error: "invalid_request" }, 405);
         const input = fields(url2.searchParams);
-        if (!exact6(input, ["transaction"])) throw fail5(400, "invalid_request");
+        if (!exact6(input, ["transaction"])) throw fail6(400, "invalid_request");
         const result = await oauth.complete({ transactionId: input.transaction, cookie: request.headers.get("cookie") });
         return new Response(null, { status: 302, headers: { Location: result.location, "Set-Cookie": result.cookie, "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
       }
       if (path === AUTH + "/token" || path === AUTH + "/revoke") {
-        if (request.method !== "POST" || url2.search || !/^application\/x-www-form-urlencoded(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail5(400, "invalid_request");
+        if (request.method !== "POST" || url2.search || !/^application\/x-www-form-urlencoded(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail6(400, "invalid_request");
         const input = fields(new URLSearchParams(new TextDecoder("utf-8", { fatal: true }).decode(await readRemoteBody(request, 8192))));
         if (path.endsWith("/revoke")) {
-          if (!exact6(input, ["token", "client_id"])) throw fail5(400, "invalid_request");
+          if (!exact6(input, ["token", "client_id"])) throw fail6(400, "invalid_request");
           return json2(await oauth.revokePublic(input));
         }
         const response = json2(await oauth.token(input));
@@ -44184,11 +44233,11 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
       if (path.startsWith(API)) {
         const operation = path.slice(API.length), keys2 = { inspect: ["organizationId", "transactionId"], approve: ["organizationId", "transactionId", "inspectionToken"], deny: ["organizationId", "transactionId", "inspectionToken"], list: ["organizationId"], revoke: ["organizationId", "grantId"] };
         if (!Object.hasOwn(keys2, operation)) return json2({ error: "not_found" }, 404);
-        if (request.method !== "POST" || url2.search || !/^application\/json(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail5(400, "invalid_request");
+        if (request.method !== "POST" || url2.search || !/^application\/json(?:;|$)/i.test(request.headers.get("content-type") || "")) throw fail6(400, "invalid_request");
         const input = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(await readRemoteBody(request, 4096)));
-        if (!exact6(input, keys2[operation])) throw fail5(400, "invalid_request");
+        if (!exact6(input, keys2[operation])) throw fail6(400, "invalid_request");
         const bearer = /^Bearer ([^\s]+)$/.exec(request.headers.get("authorization") || "")?.[1];
-        if (!bearer || bearer.startsWith("ea.") || bearer.startsWith("er.")) throw fail5(403, "access_denied");
+        if (!bearer || bearer.startsWith("ea.") || bearer.startsWith("er.")) throw fail6(403, "access_denied");
         const args = { ...input, bearer, cookie: request.headers.get("cookie") };
         if (operation === "inspect") return json2(await oauth.inspect(args));
         if (operation === "approve" || operation === "deny") return json2(await oauth.decide({ ...args, approved: operation === "approve" }));
@@ -44218,19 +44267,19 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
           }, callback) };
           registerDefiantEvidenceTools(registration, { onOutcome: onToolOutcome, boundOrganizationId: verified.organizationId, unauthorizedChallenge: challenge() + ', error="invalid_token", error_description="Evidence authorization required"', resolveEvidence: async ({ organizationId: organizationId2 }) => {
             const grant = await oauth.verifyAccessToken(auth.token);
-            if (grant.organizationId !== organizationId2) throw fail5(403, "access_denied");
+            if (grant.organizationId !== organizationId2) throw fail6(403, "access_denied");
             const user = await identity.authorizeLocalEvidenceActor(grant.userId, grant.uid, grant.approvedAt);
             await strategy(organizationId2).raw(user);
             let binding;
             try {
               binding = await provider({ organizationId: organizationId2, actor: user });
             } catch {
-              throw fail5(503, "temporarily_unavailable");
+              throw fail6(503, "temporarily_unavailable");
             }
-            if (!binding || typeof binding.loadSnapshot !== "function") throw fail5(403, "access_denied");
+            if (!binding || typeof binding.loadSnapshot !== "function") throw fail6(403, "access_denied");
             const service = createDefiantEvidenceService({ organizationId: organizationId2, loadSnapshot: binding.loadSnapshot, loadSourceRecords: binding.loadSourceRecords, loadWorksheetCells: binding.loadWorksheetCells, loadSemanticIndex: binding.loadSemanticIndex, semanticDependencies: binding.loadSemanticIndex ? semanticDependencies?.(organizationId2) : void 0, authorize: async (actor) => {
               const current = await oauth.verifyAccessToken(auth.token);
-              if (current.organizationId !== organizationId2 || current.userId !== actor.id) throw fail5(403, "access_denied");
+              if (current.organizationId !== organizationId2 || current.userId !== actor.id) throw fail6(403, "access_denied");
               await strategy(organizationId2).raw(actor);
               return true;
             } });
@@ -44263,11 +44312,11 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
     const abort = new Promise((_, reject2) => {
       onAbort = () => {
         controller.abort();
-        reject2(fail5(408, "temporarily_unavailable"));
+        reject2(fail6(408, "temporarily_unavailable"));
       };
       if (request.signal.aborted) onAbort();
       else request.signal.addEventListener("abort", onAbort, { once: true });
-      controller.signal.addEventListener("abort", () => reject2(fail5(408, "temporarily_unavailable")), { once: true });
+      controller.signal.addEventListener("abort", () => reject2(fail6(408, "temporarily_unavailable")), { once: true });
     });
     try {
       return await Promise.race([route(new Request(request, { signal: controller.signal }), controller.signal), abort]);
