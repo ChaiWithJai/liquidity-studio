@@ -1,0 +1,155 @@
+{
+  "sourceCommit": "107b4893bca5ffb9a0ddc2201507db69ee7183e6",
+  "sourceTree": "49cbc55ba4bef4c3901a7d6056bce004380c09a2",
+  "ciMergeCommit": "0dfd21d1aeddb620998d8ec6ecefac0c54561555",
+  "workflowRun": 40056862175,
+  "artifactId": 12545561876,
+  "zipSha256": "85ce73db55c23f6604e90c77c1c2cd0136d9a7a84e3e1c0541e4eba57b90d315",
+  "packageLockSha256": "2521f2a87536e7d65ad84e151c1c8574992566c820bd128391be492cdc21c67e",
+  "outputs": [
+    {
+      "path": "liquidity-studio/dist/assets/index-0NXfrFEL.js",
+      "bytes": 826450,
+      "sha256": "fcf7b4d32285ac45762dd09a5646f18af938bef272ae1c1e150753a9431b1918"
+    },
+    {
+      "path": "liquidity-studio/dist/assets/index-DryX9fHL.css",
+      "bytes": 105152,
+      "sha256": "94d42c531211e54a035e141d53bf811bc21f2e9e99715505fb04660db7ccbad3"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/DejaVuSans-Bold.ttf",
+      "bytes": 708920,
+      "sha256": "0d977336a6d5fba34eab8e3199eb218327161b5143749f802982c2bc34df0c96"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/DejaVuSans.ttf",
+      "bytes": 759720,
+      "sha256": "abdc775b21b1bc470d50c97e790d276f2054b7504e56e5bd3e64f48d68582322"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/InstrumentSerif-OFL.txt",
+      "bytes": 4405,
+      "sha256": "129ed7618959716959f2941fdd5b49e0ad6e6c1d78726761786a00253d865521"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/InstrumentSerif-Regular.ttf",
+      "bytes": 70012,
+      "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/Inter-LICENSE.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/InterVariable.ttf",
+      "bytes": 879708,
+      "sha256": "4989b125924991b90d05b2d16e0e388c48f7d5bb8b30539bbf9c755278d0ccaf"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/LICENSE.txt",
+      "bytes": 3859,
+      "sha256": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/MonaSans-Bold.otf",
+      "bytes": 116248,
+      "sha256": "ba4df1f0cf8aab1b0ce44418aebfb62dda8baf3458688a4f06d8afa9df128641"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/MonaSans-OFL.txt",
+      "bytes": 4419,
+      "sha256": "9261dcb61fb5e3c587d50d7a9fdae12bc7422d8822d7ac06b8f34550479575de"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/MonaSans-Regular.otf",
+      "bytes": 113784,
+      "sha256": "0ef5b943f0f6be872a7a5b442f12db306c37a332c86f70f6b7aacb97c11cbe39"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/NotoSansDevanagari-OFL.txt",
+      "bytes": 4386,
+      "sha256": "a216f6f8d85c7228093e0ee5e258d9d377e6671f68acb4db1930b29583d0f331"
+    },
+    {
+      "path": "liquidity-studio/dist/fonts/NotoSansDevanagari.ttf",
+      "bytes": 641944,
+      "sha256": "14ec4af41f27482216d1c2229f417ff9b1425e1babb014e57d1d40d03229853e"
+    },
+    {
+      "path": "liquidity-studio/dist/index.html",
+      "bytes": 455,
+      "sha256": "8c572973a61236a8bd100b2501cd279279985925dfda6acd1b0ac43490b628ce"
+    },
+    {
+      "path": "liquidity-studio/dist/mcp/defiant-demo-server.mjs",
+      "bytes": 1223066,
+      "sha256": "36c781d678a0caa2b988f4b5a7d0c2410043ce686b5ca0ad8e98d63d9b2809e0"
+    },
+    {
+      "path": "liquidity-studio/dist/mcp/defiant-domain-review.html",
+      "bytes": 288696,
+      "sha256": "21c01ad6763d12e38e1215aa247ecac225e83a6f157d47ad8f0aeb10d74252d8"
+    },
+    {
+      "path": "liquidity-studio/dist/mcp/defiant-evidence-remote.mjs",
+      "bytes": 1701706,
+      "sha256": "b282580b80890525026e02d092c85da5b5916e0e2bb8959e9dfc80a7e58cea91"
+    },
+    {
+      "path": "liquidity-studio/dist/mcp/defiant-evidence-stdio.mjs",
+      "bytes": 1123948,
+      "sha256": "69187c014cfa3258a1dec9aaf21ea2c62dd5bc3b27091b4ca96f90be39a1e5fb"
+    },
+    {
+      "path": "liquidity-studio/dist/mcp/defiant-research.html",
+      "bytes": 276716,
+      "sha256": "9951b1eaf65437b096c5e8b56aa16c4e778164bd71e750a2b797dfa99a21bbda"
+    },
+    {
+      "path": "liquidity-studio/dist/mcp/defiant-stdio.mjs",
+      "bytes": 1149942,
+      "sha256": "58473976528ae974ad3ce4f68e22971aede86273338a0c05f02348ce7a693d31"
+    },
+    {
+      "path": "liquidity-studio/dist/mcp/defiant-synthetic-portfolio.json",
+      "bytes": 999502,
+      "sha256": "9f5525862ee613cf71be8639320cfba28458828478e7046b6e4355f056e6ad4e"
+    },
+    {
+      "path": "liquidity-studio/dist/mcp/defiant-third-party-notices.txt",
+      "bytes": 91111,
+      "sha256": "0dc8b6cc6875f9eaf04892a960b71c0c297c02d07bab7ef4e0cb268a0dce9f7d"
+    }
+  ],
+  "bundleImports": {
+    "mcp/defiant-evidence-remote.mjs": [
+      "crypto",
+      "node:crypto",
+      "node:module",
+      "stream"
+    ],
+    "mcp/defiant-evidence-stdio.mjs": [
+      "node:crypto",
+      "node:fs",
+      "node:fs/promises",
+      "node:module",
+      "node:path",
+      "node:process"
+    ]
+  },
+  "sourceContractOutcome": {
+    "passed": 1023,
+    "skipped": 10,
+    "failed": 0,
+    "auxiliaryPassed": 40,
+    "onlyFailure": "committed generated asset parity"
+  },
+  "sourceBrowserOutcome": {
+    "passed": 150,
+    "skipped": 20,
+    "failed": 0
+  },
+  "qualification": "Exact hosted source artifact; source checks passed except expected committed asset parity. Final canonical CI and actual runtime acceptance remain separate gates."
+}

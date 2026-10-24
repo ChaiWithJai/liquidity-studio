@@ -1,3 +1,4 @@
+import {normalizeSelectionMetadataBreakdowns,selectionMetadataBreakdownView} from './defiant-selection-metadata-breakdown.js';
 import {sourceEvidenceView,validateSourceEvidenceRequest} from './defiant-source-evidence.js';
 import {createSemanticSessions} from './defiant-semantic-sessions.js';
 import {normalizeSemanticIndex} from './defiant-semantic-index.js';
@@ -60,12 +61,13 @@ function normalize(input, organizationId) {
     return {id: row.id, label: row.label, sourceHash: row.sourceHash, amount: row.amount, currency: row.currency, sourceRecords: [...row.sourceRecords]};
   });
   const selectionReconciliations = normalizeSelectionReconciliations(input.selectionReconciliations, selections);
+  const selectionMetadataBreakdowns = normalizeSelectionMetadataBreakdowns(input.selectionMetadataBreakdowns, selections, selectionReconciliations);
   const identityGroups = normalizeIdentityGroups(input.identityGroups, selections);
   const comparisons = normalizeComparisons(input.comparisons, months);
   const audienceDefinitions = normalizeAudienceDefinitions(input.audienceDefinitions);
   const storePeriodCoverage = normalizeStorePeriodCoverage(input.storePeriodCoverage, comparisons);
   const retainedSourceRegister = normalizeRetainedSourceRegister(input.retainedSourceRegister);
-  const data = {...(selectionReconciliations === undefined ? {} : {selectionReconciliations}), ...(retainedSourceRegister === undefined ? {} : {retainedSourceRegister}), schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(storePeriodCoverage === undefined ? {} : {storePeriodCoverage}), ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
+  const data = {...(selectionMetadataBreakdowns === undefined ? {} : {selectionMetadataBreakdowns}), ...(selectionReconciliations === undefined ? {} : {selectionReconciliations}), ...(retainedSourceRegister === undefined ? {} : {retainedSourceRegister}), schemaVersion: 1, organizationId, coverage: input.coverage, months, receipts, selections, ...(storePeriodCoverage === undefined ? {} : {storePeriodCoverage}), ...(comparisons === undefined ? {} : {comparisons}), ...(audienceDefinitions === undefined ? {} : {audienceDefinitions}), ...(input.identityGroups === undefined ? {} : {identityGroups})};
   const revision = createHash('sha256').update(JSON.stringify(data)).digest('hex');
   return {...data, revision};
 }
@@ -137,7 +139,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
       if(resource==='retained-sources'){const result=searchRetainedSources(data,{query,sourceId,format,kind,sourceHash,fromMonth,toMonth,periodPresence,offset,limit});return semantic?{...result,semanticSearch:{configured:true,requiresExplicitInvocation:true,indexVerified:false}}:result;}
       if(resource==='source-evidence'){const result={scope,...sourceEvidenceView(data,{sourceHash,revision,offset,limit})};if(Buffer.byteLength(JSON.stringify(result),'utf8')>262144)throw fail(503,'Source reference response exceeds bounds');return result;}
       if(resource==='coverage')return discoverServedEvidenceCoverage(data,{query,fromMonth,toMonth,offset,limit});
-      if (resource === 'selection-reconciliation') return structuredClone({...base,...selectionReconciliationView(data,selectionId)});
+      if (resource === 'selection-reconciliation') return structuredClone({...base,...selectionReconciliationView(data,selectionId),metadataBreakdown:selectionMetadataBreakdownView(data,selectionId)});
       if (resource === 'manifest') return structuredClone({...base, counts: {...(data.selectionReconciliations === undefined ? {} : {selectionReconciliations:data.selectionReconciliations.length}), ...(data.comparisons === undefined ? {} : {comparisons:data.comparisons.length}), ...(data.audienceDefinitions === undefined ? {} : {audienceDefinitions:data.audienceDefinitions.length}), months: data.months.length, receipts: data.receipts.length, selections: data.selections.length, ...(data.identityGroups === undefined ? {} : {identityGroups: data.identityGroups.length})}, metric: METRIC});
       if (resource === 'store-coverage') {
         const products=(data.storePeriodCoverage||[]).map(product=>({...product,settlementMaturityComparability:'not-established',limitation:product.limitation+' Settlement maturity comparability has not been established; legacy settlementMaturityComparable:false does not demonstrate unequal maturity.'}));
@@ -252,7 +254,7 @@ export function createDefiantEvidenceService({organizationId, authorize, loadSna
         }
         const matchingPeriods=data.months.filter(p=>p.sourceHash===selected.sourceHash&&p.currency===selected.currency);
         const juneReviewAvailable=matchingPeriods.length===1&&matchingPeriods[0].month==='2025-06';
-        return structuredClone({...base, juneReviewAvailable, selection: summary(selected), sourceRecords: selected.sourceRecords.slice(offset, offset + limit), total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, rowConvention: '1-based logical CSV record including header', limitation});
+        return structuredClone({...base, metadataBreakdown:{available:Boolean(data.selectionMetadataBreakdowns?.some(p=>p.selectionId===selectionId)),followUp:{resource:'selection-reconciliation',selectionId,revision:data.revision}}, juneReviewAvailable, selection: summary(selected), sourceRecords: selected.sourceRecords.slice(offset, offset + limit), total: selected.sourceRecords.length, nextOffset: offset + limit < selected.sourceRecords.length ? offset + limit : null, rowConvention: '1-based logical CSV record including header', limitation});
       }
       if (resource === 'receipt') {
         mark('receipt_lookup');
