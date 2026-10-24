@@ -42612,7 +42612,7 @@ function registerDefiantEvidenceTools(server, { resolveEvidence, unauthorizedCha
       observe(onOutcome, Object.freeze({ event: "defiant_evidence_tool_outcome", tool: name, outcome, status, stage }));
     }
   });
-  register2("defiant_source_evidence", "Find existing served evidence references for an exact registered source hash. Follow typed links to original financial records or worksheet cells; these navigation references do not prove complete source coverage.", { revision, sourceHash: external_exports.string().regex(/^[a-f0-9]{64}(?![\s\S])/), offset: external_exports.number().int().min(0).max(24400).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "source-evidence");
+  register2("defiant_source_evidence", "Find existing served evidence references for an exact registered source hash. Use kindNavigation to jump directly to receipt-example, selection or audience-definition references, then follow their original-cell links; these navigation references do not prove complete source coverage.", { revision, sourceHash: external_exports.string().regex(/^[a-f0-9]{64}(?![\s\S])/), offset: external_exports.number().int().min(0).max(24400).optional(), limit: external_exports.number().int().min(1).max(100).optional() }, "source-evidence");
   register2("defiant_selection_reconciliation", "Inspect retained selected-derived-cell reconciliation evidence bound to a current selection. Runtime verifies metadata and signed totals, not source cells, provider completeness or predicate truth.", { revision, selectionId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/) }, "selection-reconciliation");
   const semanticFilters = { periodPresence: external_exports.enum(["dated", "undated"]).optional(), sourceId: external_exports.string().regex(/^[A-Za-z0-9_-]{1,128}$(?![\s\S])/).optional(), format: external_exports.enum(["csv", "xlsx", "xls", "pdf", "png", "jpg", "zip", "tar.gz", "json", "other"]).optional(), kind: external_exports.enum(["root", "member"]).optional(), sourceHash: external_exports.string().length(64).regex(/^[a-f0-9]{64}$/).optional(), fromMonth: external_exports.string().length(7).regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(), toMonth: external_exports.string().length(7).regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional() };
   register2("defiant_start_semantic_source_search", "Explicitly start one capped retained-source metadata query embedding. Supply current revision, a nonblank query, and a stable idempotencyKey. Omit every exact-filter field for no restrictions; do not send a nested filters object. Do not send mode, sessionId, offset or limit: the first page is always offset 0, limit 25. Use defiant_page_semantic_source_search for later pages. After an uncertain start, reuse exactly the same key and arguments; never retry with a new key. Suggestions are metadata ranking, not factual support, identity or completeness.", {
@@ -42739,7 +42739,7 @@ function sourceEvidenceView(snapshot, request) {
   if (snapshot.revision !== q.revision) throw fail(409, "Evidence revision changed");
   const base = { schemaVersion: 1, sourceHash: q.sourceHash, revision: q.revision, offset: q.offset, limit: q.limit };
   const register2 = snapshot.retainedSourceRegister;
-  if (!register2) return { ...base, availability: false, reason: "register-unavailable", items: [], total: null, nextOffset: null };
+  if (!register2) return { ...base, availability: false, reason: "register-unavailable", kindNavigation: null, items: [], total: null, nextOffset: null };
   const occurrences = [...register2.roots, ...register2.members].filter((r) => r.sha256 === q.sourceHash);
   if (!occurrences.length) throw fail(404, "Registered source unavailable");
   const rows = [], follow = (resource, fields2 = {}) => ({ resource, ...fields2, revision: q.revision });
@@ -42756,7 +42756,11 @@ function sourceEvidenceView(snapshot, request) {
   });
   if (rows.length > 24400 || new Set(rows.map((r) => r.key)).size !== rows.length) throw fail(503, "Source references exceed bounds");
   rows.sort((a, b) => cmp(a.kind, b.kind) || cmp(a.key, b.key));
-  const result = { ...base, availability: true, reason: rows.length ? null : "no-supported-evidence-reference", occurrenceCount: occurrences.length, occurrences: follow("retained-sources", { sourceHash: q.sourceHash, offset: 0, limit: 25 }), counts: Object.fromEntries(kinds.map((k) => [k, rows.filter((r) => r.kind === k).length])), items: rows.slice(q.offset, q.offset + q.limit), total: rows.length, nextOffset: q.offset + q.limit < rows.length ? q.offset + q.limit : null, limitation: "Exact content-hash references in served products. References can overlap and are not financial row counts or complete source coverage. Original cell availability is established only by the follow-up read." };
+  const kindNavigation = kinds.map((kind) => {
+    const offset = rows.findIndex((row) => row.kind === kind), count2 = rows.filter((row) => row.kind === kind).length;
+    return { kind, count: count2, followUp: offset < 0 ? null : follow("source-evidence", { sourceHash: q.sourceHash, offset, limit: Math.min(25, count2) }) };
+  });
+  const result = { ...base, availability: true, reason: rows.length ? null : "no-supported-evidence-reference", occurrenceCount: occurrences.length, occurrences: follow("retained-sources", { sourceHash: q.sourceHash, offset: 0, limit: 25 }), kindNavigation, counts: Object.fromEntries(kinds.map((k) => [k, rows.filter((r) => r.kind === k).length])), items: rows.slice(q.offset, q.offset + q.limit), total: rows.length, nextOffset: q.offset + q.limit < rows.length ? q.offset + q.limit : null, limitation: "Exact content-hash references in served products. References can overlap and are not financial row counts or complete source coverage. Original cell availability is established only by the follow-up read." };
   if (Buffer.byteLength(JSON.stringify(result), "utf8") > 262144) throw fail(503, "Source reference response exceeds bounds");
   return result;
 }
