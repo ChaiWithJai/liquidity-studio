@@ -44292,11 +44292,11 @@ function createRemoteEvidence({ platform, provider, authorizeEvidence, semanticD
             if (!binding || typeof binding.loadSnapshot !== "function") throw fail6(403, "access_denied");
             const service = createDefiantEvidenceService({ organizationId: organizationId2, loadSnapshot: binding.loadSnapshot, loadSourceRecords: binding.loadSourceRecords, loadWorksheetCells: binding.loadWorksheetCells, loadSemanticIndex: binding.loadSemanticIndex, semanticDependencies: binding.loadSemanticIndex ? semanticDependencies?.(organizationId2) : void 0, authorize: async (actor) => {
               const current = await oauth.verifyAccessToken(auth.token);
-              if (current.organizationId !== organizationId2 || current.userId !== actor.id) throw fail6(403, "access_denied");
+              if (current.organizationId !== organizationId2 || current.userId !== actor.id || current.uid !== actor.uid) throw fail6(403, "access_denied");
               await strategy(organizationId2).raw(actor);
               return true;
             } });
-            return { organizationId: organizationId2, actor: user, service };
+            return { organizationId: organizationId2, actor: { ...user, uid: grant.uid }, service };
           } });
           return server;
         }, { responseMode: "json" });
