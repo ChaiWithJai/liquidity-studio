@@ -12,12 +12,17 @@ const copy=v=>structuredClone(v);
 const NORMALIZER='a77152e9dd06fbcb7a2dfe335b26efb42d7c817c';
 const LIMITATION='Absence means no observation in the supplied grouping, not zero listening or missing provider delivery. Posting windows describe the whole source file, not this store, including when the store observation is absent. Mutually observed periods can still differ in posting and settlement maturity. Exact supplied-amount arithmetic, not causal demand analysis.';
 export const HISTORICAL_COMPARABILITY_VERSION='historical-store-period-comparability-v1';
+export const EXPLICIT_COMPARABILITY_VERSION='historical-store-period-comparability-v2';
+export const COMPARABILITY_SEMANTICS_VERSION='settlement-comparability-status-v1';
+const versions=[HISTORICAL_COMPARABILITY_VERSION,EXPLICIT_COMPARABILITY_VERSION];
+const explicitStatus=()=>({status:'not-established',basis:'source-file-posting-windows-without-store-settlement-verification',normalizerGitBlob:NORMALIZER,interpretationVersion:COMPARABILITY_SEMANTICS_VERSION});
+const verification=version=>version===HISTORICAL_COMPARABILITY_VERSION?'reviewed-normalizer-interpretation; false/unknown/limitation are not stored snapshot fields and historical JavaScript is not executed':'reviewed-normalizer-interpretation; not-established is not established-incomparable; historical JavaScript is not executed';
 function pin(v,max){need(exact(v,['sha256','bytes'])&&hash(v.sha256)&&Number.isSafeInteger(v.bytes)&&v.bytes>0&&v.bytes<=max);}
 function decoded(input,p){need(input instanceof Uint8Array);const bytes=Buffer.from(input);need(bytes.length===p.bytes&&sha(bytes)===p.sha256);try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch{throw error();}}
 function parsed(input,p){try{return JSON.parse(decoded(input,p));}catch{throw error();}}
 function canonical(v){if(Array.isArray(v))return '['+v.map(canonical).join(',')+']';if(v&&typeof v==='object')return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';return JSON.stringify(v);}
 function unique(rows,key){need(Array.isArray(rows)&&rows.length<=1000);const found=rows.filter(key);need(found.length===1);return found[0];}
-function projection(snapshot,row){
+function projection(snapshot,row,version){
  need(snapshot?.schemaVersion===1&&snapshot.organizationId===row.organizationId);
  const source=unique(snapshot.storePeriodCoverage,x=>x?.id===row.selector.coverageId);
  const comparison=unique(snapshot.comparisons,x=>x?.id===row.selector.comparisonId&&x.dimension==='store');
@@ -31,7 +36,7 @@ function projection(snapshot,row){
   let postingWindow=null;if(o.postingWindow!==null){need(exact(o.postingWindow,['first','last'])&&date(o.postingWindow.first)&&date(o.postingWindow.last)&&o.postingWindow.first<=o.postingWindow.last);postingWindow=copy(o.postingWindow);}
   return {month:o.month,sourceHash:o.sourceHash,rowCount:o.rowCount,postingWindow};
  }).sort((a,b)=>a.month<b.month?-1:a.month>b.month?1:0);
- return {storeKey:source.storeKey,periodBasis:comparison.periodBasis,beforeMonths:copy(comparison.beforeMonths),afterMonths:copy(comparison.afterMonths),postingWindowScope:'source-file',postingWindowVerification:'producer-supplied-profile',observations,expectedDelivery:'unknown',settlementMaturityComparable:false,limitation:LIMITATION};
+ return {storeKey:source.storeKey,periodBasis:comparison.periodBasis,beforeMonths:copy(comparison.beforeMonths),afterMonths:copy(comparison.afterMonths),postingWindowScope:'source-file',postingWindowVerification:'producer-supplied-profile',observations,expectedDelivery:'unknown',...(version===HISTORICAL_COMPARABILITY_VERSION?{settlementMaturityComparable:false}:{settlementComparability:explicitStatus()}),limitation:LIMITATION};
 }
 export function checkedTrustedHistoricalBinding(input){
  const b=copy(input);need(exact(b,['schemaVersion','organizationId','caseId','dataset','answer','historicalSnapshot','neutralState','projection'])&&b.schemaVersion===1&&id(b.organizationId)&&id(b.caseId));
@@ -39,14 +44,14 @@ export function checkedTrustedHistoricalBinding(input){
  need(exact(b.answer,['sha256','bytes','quoteStart','quoteEnd']));pin({sha256:b.answer.sha256,bytes:b.answer.bytes},65536);
  need(Number.isSafeInteger(b.answer.quoteStart)&&Number.isSafeInteger(b.answer.quoteEnd)&&b.answer.quoteStart>=0&&b.answer.quoteEnd>b.answer.quoteStart&&b.answer.quoteEnd-b.answer.quoteStart<=4096);
  need(exact(b.historicalSnapshot,['sha256','bytes','evidenceRevision'])&&hash(b.historicalSnapshot.evidenceRevision));pin({sha256:b.historicalSnapshot.sha256,bytes:b.historicalSnapshot.bytes},4194304);pin(b.neutralState,12000);
- need(exact(b.projection,['version','normalizerGitBlob'])&&b.projection.version===HISTORICAL_COMPARABILITY_VERSION&&b.projection.normalizerGitBlob===NORMALIZER);return b;
+ need(exact(b.projection,['version','normalizerGitBlob'])&&versions.includes(b.projection.version)&&b.projection.normalizerGitBlob===NORMALIZER);return b;
 }
 /** Persist only the finite reviewed provenance envelope, never arbitrary resolver data. */
 export function checkedHistoricalComparabilityProvenance(input){
  const p=copy(input);need(exact(p,['dataset','historicalRevisionVerification','projection','answer','historicalSnapshot','historicalNormalizerGitBlob','neutralState','selector','qualification']));
  need(exact(p.dataset,['kind','sha256','verification'])&&p.dataset.kind==='retained-observed-report-cases-v1'&&hash(p.dataset.sha256)&&p.dataset.verification==='trusted-reviewed-case-artifact-binding; dataset bytes not loaded by this resolver');
  need(p.historicalRevisionVerification==='trusted-reviewed-snapshot-to-revision-binding; runtime does not recompute the historical normalized revision');
- need(exact(p.projection,['version','normalizerGitBlob','verification'])&&p.projection.version===HISTORICAL_COMPARABILITY_VERSION&&p.projection.normalizerGitBlob===NORMALIZER&&p.projection.verification==='reviewed-normalizer-interpretation; false/unknown/limitation are not stored snapshot fields and historical JavaScript is not executed');
+ need(exact(p.projection,['version','normalizerGitBlob','verification'])&&versions.includes(p.projection.version)&&p.projection.normalizerGitBlob===NORMALIZER&&p.projection.verification===verification(p.projection.version));
  need(exact(p.answer,['sha256','bytes','quoteStart','quoteEnd']));pin({sha256:p.answer.sha256,bytes:p.answer.bytes},65536);
  need(Number.isSafeInteger(p.answer.quoteStart)&&Number.isSafeInteger(p.answer.quoteEnd)&&p.answer.quoteStart>=0&&p.answer.quoteEnd>p.answer.quoteStart&&p.answer.quoteEnd-p.answer.quoteStart<=4096);
  pin(p.historicalSnapshot,4*1024*1024);pin(p.neutralState,12000);need(p.historicalNormalizerGitBlob===NORMALIZER);
@@ -66,17 +71,17 @@ export function createPinnedHistoricalComparabilityCasePack({bytes,sha256,loadAn
  need(exact(binding.answer,['sha256','bytes','quoteStart','quoteEnd'])&&binding.answer.sha256===r.answer.sha256&&binding.answer.bytes===r.answer.bytes&&binding.answer.quoteStart===q.start&&binding.answer.quoteEnd===q.end);
  need(exact(binding.historicalSnapshot,['sha256','bytes','evidenceRevision'])&&binding.historicalSnapshot.sha256===r.historicalSnapshot.sha256&&binding.historicalSnapshot.bytes===r.historicalSnapshot.bytes&&binding.historicalSnapshot.evidenceRevision===r.evidenceRevision);
  need(exact(binding.neutralState,['sha256','bytes'])&&canonical(binding.neutralState)===canonical(r.state));
- need(exact(binding.projection,['version','normalizerGitBlob'])&&binding.projection.version===HISTORICAL_COMPARABILITY_VERSION&&binding.projection.normalizerGitBlob===NORMALIZER);
- const row=copy({...r,organizationId:pack.organizationId}),organizationId=pack.organizationId;
+ need(exact(binding.projection,['version','normalizerGitBlob'])&&versions.includes(binding.projection.version)&&binding.projection.normalizerGitBlob===NORMALIZER);
+ const row=copy({...r,organizationId:pack.organizationId}),organizationId=pack.organizationId,version=binding.projection.version;
  const get=caseId=>{if(!id(caseId)||caseId!==row.caseId)throw Object.assign(new Error('Historical evaluation case unavailable'),{status:404});return copy(row);};
  async function load(actor,loader,p){await authorize(actor);const value=await loader(Object.freeze(copy(p)));await authorize(actor);return value;}
- return Object.freeze({organizationId,sha256,get,list:()=>[{caseId:row.caseId,origin:row.origin,evidenceRevision:row.evidenceRevision,claim:row.answer.quote.text}],async resolve(actor,caseId){
+ return Object.freeze({organizationId,sha256,deterministicVersion:version,executionAvailable:version===EXPLICIT_COMPARABILITY_VERSION,executionUnavailableReason:version===HISTORICAL_COMPARABILITY_VERSION?'ambiguous-evidence-semantics':null,get,list:()=>[{caseId:row.caseId,origin:row.origin,evidenceRevision:row.evidenceRevision,claim:row.answer.quote.text}],async resolve(actor,caseId){
   await authorize(actor);const selected=get(caseId),answer=decoded(await load(actor,loadAnswer,{sha256:selected.answer.sha256,bytes:selected.answer.bytes}),selected.answer);
   const quote=selected.answer.quote;const answerCharacters=Array.from(answer);need(quote.end<=answerCharacters.length&&answerCharacters.slice(quote.start,quote.end).join('')===quote.text);
   const snapshot=parsed(await load(actor,loadHistoricalSnapshot,selected.historicalSnapshot),selected.historicalSnapshot);
   const state=parsed(await load(actor,loadState,selected.state),selected.state);need(exact(state,['claim','evidence'])&&state.claim===quote.text);
-  const evidence=projection(snapshot,selected);need(canonical(state.evidence)===canonical(evidence));const serialized=JSON.stringify(evidence);need(Buffer.byteLength(serialized)<=12000);
+  const evidence=projection(snapshot,selected,version);need(canonical(state.evidence)===canonical(evidence));const serialized=JSON.stringify(evidence);need(Buffer.byteLength(serialized)<=12000);
   await authorize(actor);
-  return {ref:{caseId:selected.caseId,datasetSha256:selected.datasetSha256,origin:selected.origin,evidenceRevision:selected.evidenceRevision},state:{organizationId,evidenceRevision:selected.evidenceRevision,claim:quote.text,evidence:serialized},deterministic:{status:'pass',reasons:[]},deterministicVersion:HISTORICAL_COMPARABILITY_VERSION,provenance:{dataset:{kind:binding.dataset.kind,sha256:binding.dataset.sha256,verification:'trusted-reviewed-case-artifact-binding; dataset bytes not loaded by this resolver'},historicalRevisionVerification:'trusted-reviewed-snapshot-to-revision-binding; runtime does not recompute the historical normalized revision',projection:{...binding.projection,verification:'reviewed-normalizer-interpretation; false/unknown/limitation are not stored snapshot fields and historical JavaScript is not executed'},answer:{sha256:selected.answer.sha256,bytes:selected.answer.bytes,quoteStart:quote.start,quoteEnd:quote.end},historicalSnapshot:copy(selected.historicalSnapshot),historicalNormalizerGitBlob:NORMALIZER,neutralState:copy(selected.state),selector:copy(selected.selector),qualification:'Mechanical historical metadata and exact-quote binding only; no expected semantic label, current-snapshot substitution or historical JavaScript execution.'}};
+  return {ref:{caseId:selected.caseId,datasetSha256:selected.datasetSha256,origin:selected.origin,evidenceRevision:selected.evidenceRevision},state:{organizationId,evidenceRevision:selected.evidenceRevision,claim:quote.text,evidence:serialized},deterministic:{status:'pass',reasons:[]},deterministicVersion:version,provenance:{dataset:{kind:binding.dataset.kind,sha256:binding.dataset.sha256,verification:'trusted-reviewed-case-artifact-binding; dataset bytes not loaded by this resolver'},historicalRevisionVerification:'trusted-reviewed-snapshot-to-revision-binding; runtime does not recompute the historical normalized revision',projection:{...binding.projection,verification:verification(version)},answer:{sha256:selected.answer.sha256,bytes:selected.answer.bytes,quoteStart:quote.start,quoteEnd:quote.end},historicalSnapshot:copy(selected.historicalSnapshot),historicalNormalizerGitBlob:NORMALIZER,neutralState:copy(selected.state),selector:copy(selected.selector),qualification:'Mechanical historical metadata and exact-quote binding only; no expected semantic label, current-snapshot substitution or historical JavaScript execution.'}};
  }});
 }

@@ -1,7 +1,8 @@
 import test from 'node:test';
+import {historicalFixture} from './historical-jev-fixture.js';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {createPinnedHistoricalComparabilityCasePack,HISTORICAL_COMPARABILITY_VERSION} from './defiant-jev-historical-case-pack.js';
+import {createPinnedHistoricalComparabilityCasePack,HISTORICAL_COMPARABILITY_VERSION,EXPLICIT_COMPARABILITY_VERSION} from './defiant-jev-historical-case-pack.js';
 const sha=v=>createHash('sha256').update(v).digest('hex'),encode=v=>Buffer.from(JSON.stringify(v));
 const normalizer='a77152e9dd06fbcb7a2dfe335b26efb42d7c817c';
 const limitation='Absence means no observation in the supplied grouping, not zero listening or missing provider delivery. Posting windows describe the whole source file, not this store, including when the store observation is absent. Mutually observed periods can still differ in posting and settlement maturity. Exact supplied-amount arithmetic, not causal demand analysis.';
@@ -37,4 +38,16 @@ test('authority loss at each independently loaded artifact denies protected stat
 
 test('independent trusted historical binding rejects current-revision or dataset self-assertion and missing configuration before loads',()=>{
  const f=fixture();for(const change of [p=>p.cases[0].evidenceRevision='f'.repeat(64),p=>p.cases[0].datasetSha256='f'.repeat(64),p=>p.cases[0].answer.quote.start++,p=>p.cases[0].historicalSnapshot.sha256='f'.repeat(64)])assert.throws(()=>f.make(change),{status:503});assert.throws(()=>f.make(()=>{},{trustedHistoricalBinding:undefined}));assert.throws(()=>f.make(()=>{},{sha256:'f'.repeat(64)}),{status:503});assert.equal(f.counts().loads,0);
+});
+
+
+test('explicit historical recipe distinguishes unestablished status from asserted inequality without inventing settlement proof',async()=>{
+ const h=historicalFixture({version:EXPLICIT_COMPARABILITY_VERSION}),pack=h.make();assert.equal(pack.executionAvailable,true);assert.equal(pack.executionUnavailableReason,null);const resolved=await pack.resolve({},'observed'),evidence=JSON.parse(resolved.state.evidence);
+ assert.deepEqual(evidence.settlementComparability,{status:'not-established',basis:'source-file-posting-windows-without-store-settlement-verification',normalizerGitBlob:normalizer,interpretationVersion:'settlement-comparability-status-v1'});assert.equal(Object.hasOwn(evidence,'settlementMaturityComparable'),false);assert.equal(resolved.deterministicVersion,EXPLICIT_COMPARABILITY_VERSION);assert.equal(resolved.provenance.projection.version,EXPLICIT_COMPARABILITY_VERSION);
+ // An invented explicit-inequality assertion is a different meaning, not a synonym for absence of proof.
+ for(const status of ['established-incomparable','established-comparable','unknown']){
+  const f=historicalFixture({version:EXPLICIT_COMPARABILITY_VERSION});f.state.evidence.settlementComparability.status=status;f.artifacts.state=encode(f.state);const pin={sha256:sha(f.artifacts.state),bytes:f.artifacts.state.length};f.row.state=pin;f.binding.neutralState=pin;
+  await assert.rejects(f.make().resolve({},'observed'),{status:503});
+ }
+ const legacy=historicalFixture(),old=legacy.make();assert.equal(old.executionAvailable,false);assert.equal(old.executionUnavailableReason,'ambiguous-evidence-semantics');assert.equal(JSON.parse((await old.resolve({},'observed')).state.evidence).settlementMaturityComparable,false);
 });

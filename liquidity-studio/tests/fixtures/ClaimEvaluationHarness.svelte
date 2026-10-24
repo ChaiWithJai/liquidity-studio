@@ -1,12 +1,12 @@
 <script>
  import ClaimEvaluations from '../../src/components/defiant/ClaimEvaluations.svelte';
- let epoch=$state(0),posts=$state([]),calls=$state(0),hold=$state(false),release=$state(null),uncertain=$state(false),available=$state(true),responseMode=$state('unavailable'),omitCapacity=$state(false);
+ let epoch=$state(0),posts=$state([]),calls=$state(0),hold=$state(false),release=$state(null),uncertain=$state(false),available=$state(true),responseMode=$state('unavailable'),omitCapacity=$state(false),ambiguous=$state(false);
  const revision='a'.repeat(64),id='b'.repeat(64),key='claim-evaluation-fixture';
  const read=()=>JSON.parse(localStorage.getItem(key)||'null');
  const prior=()=>JSON.parse(localStorage.getItem(key+'-prior')||'null');
  async function request(path,options={}){
   const captured=epoch;calls++;
-  if(path==='/evaluations/cases')return {executionAvailable:available,cases:[{caseId:'invented-control',origin:'authored-development',claim:'Reported cash <img src=x onerror=alert(1)>',evidenceRevision:revision}]};
+  if(path==='/evaluations/cases')return {executionAvailable:available&&!ambiguous,...(ambiguous?{executionUnavailableReason:'ambiguous-evidence-semantics'}:{}),cases:[{caseId:'invented-control',origin:'authored-development',claim:'Reported cash <img src=x onerror=alert(1)>',evidenceRevision:revision}]};
   if(options.method==='POST'){
    const body=JSON.parse(options.body);posts=[...posts,body];let saved=read();
    if(!saved){saved={recordId:id,caseId:body.caseId,createdAt:'2026-10-23T12:00:00.000Z',status:'completed',packSha256:'c'.repeat(64),evaluatorConfigSha256:'d'.repeat(64),evaluation:{deterministic:{status:'pass',reasons:[]},case:{evidenceRevision:revision},evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion:'earnings-claim-exact-v1',outcome:{status:'unavailable',reason:'fixture-no-provider'},qualification:'Invented contract response; no model was called.'}};if(responseMode!=='unavailable')saved.evaluation.outcome={status:'failed',reason:'provider-response',...(responseMode==='diagnostic'?{responseValidation:{schemaVersion:1,stage:'usage'}}:{})};localStorage.setItem(key,JSON.stringify(saved));}
@@ -18,8 +18,10 @@
   return path.endsWith('/'+'e'.repeat(64))?prior():read();
  }
  function historical(){localStorage.setItem(key,JSON.stringify({recordId:id,caseId:'invented-history',createdAt:'2026-10-23T12:00:00.000Z',status:'completed',packSha256:'c'.repeat(64),evaluatorConfigSha256:'d'.repeat(64),evaluation:{deterministic:{status:'pass',reasons:[]},case:{evidenceRevision:revision},evaluatorVersion:'defiant-claim-decisions-v1',deterministicVersion:'historical-fixture-v1',outcome:{status:'unavailable',reason:'fixture-no-provider'},qualification:'Invented saved result; no provider call.',historicalProvenance:{answer:{sha256:'e'.repeat(64),bytes:200,quoteStart:12,quoteEnd:42},historicalSnapshot:{sha256:'f'.repeat(64),bytes:1000},neutralState:{sha256:'1'.repeat(64),bytes:300},dataset:{kind:'retained-observed-report-cases-v1',sha256:'2'.repeat(64),verification:'trusted-reviewed-case-artifact-binding; dataset bytes not loaded by this resolver'},projection:{version:'historical-fixture-v1',normalizerGitBlob:'3'.repeat(40),verification:'reviewed-normalizer-interpretation; false/unknown/limitation are not stored snapshot fields and historical JavaScript is not executed'},historicalNormalizerGitBlob:'3'.repeat(40),historicalRevisionVerification:'trusted-reviewed-snapshot-to-revision-binding; runtime does not recompute the historical normalized revision',selector:{coverageId:'coverage-fixture',comparisonId:'comparison-fixture'},qualification:'Mechanical historical metadata and exact-quote binding only; no expected semantic label, current-snapshot substitution or historical JavaScript execution.'}}}));}
- function change(){epoch++;localStorage.removeItem(key);localStorage.removeItem(key+'-prior');}
+ function change(){ambiguous=false;epoch++;localStorage.removeItem(key);localStorage.removeItem(key+'-prior');}
 </script>
+<button onclick={()=>{ambiguous=true;historical();const saved=read();saved.evaluation.deterministicVersion='historical-store-period-comparability-v1';saved.evaluation.historicalProvenance.projection.version='historical-store-period-comparability-v1';saved.evaluation.outcome={status:'observed',model:'typesafe-ai/jev',answers:{support:{choice:'supported',probabilities:{supported:1,contradicted:0,unsupported:0,'insufficient-context':0}},...Object.fromEntries(['causalOverreach','temporalComparability','identityOverreach','citationSufficiency'].map(k=>[k,{probability:0.25}]))},usage:{inputTokens:10,outputTokens:2},reportedCostUsd:null,latencyMs:1};localStorage.setItem(key,JSON.stringify(saved));}}>Load legacy semantics supported result</button>
+<button onclick={()=>ambiguous=true}>Use ambiguous legacy semantics</button>
 <button onclick={()=>responseMode='diagnostic'}>Use finite response diagnostic fixture</button>
 <button onclick={()=>responseMode='legacy'}>Use legacy response failure fixture</button>
 <button onclick={()=>{historical();const value=read();value.recordId='e'.repeat(64);value.caseId='prior-dev-control';localStorage.setItem(key+'-prior',JSON.stringify(value));localStorage.removeItem(key);}}>Load prior experiment result</button>
