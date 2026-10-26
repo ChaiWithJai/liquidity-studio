@@ -2,6 +2,12 @@
 
 A brand-scoped content workspace for The Liquidity Desk and Chai With Jai. Start with a story, prepare a sourced preview, edit saved copy, plan it on the calendar, and create or reopen its linked design. Source review, native layout approval and publication are separate actions.
 
+## Use Defiant OS MCP from your agent
+
+Connect your coding agent to retained royalty evidence with the shipped stdio bridge and your own scoped read-only grant. You do not need to run the application or copy the private dataset. Start with [MCP setup and usage](docs/mcp/README.md). Repository agents should also read [AGENTS.md](AGENTS.md).
+
+Royalty Evidence Review returns supported comparisons with coverage and original receipt references. Missing analytical inputs remain tracked in [#374](https://github.com/ChaiWithJai/liquidity-studio/issues/374); they do not prevent factual reviews with current golden data.
+
 ## Start locally without SSO
 
 With Node.js 22+ and the project's installed dependencies:
