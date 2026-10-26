@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { IdentityService, fail } from "./auth.js";
 
@@ -18,6 +18,30 @@ export function googleAuthConfiguration(env = process.env) {
   }));
   if (principals[0].email === principals[1].email)
     throw fail(503, "Google principal emails must differ");
+  if (env.STUDIO_GOOGLE_ADDITIONAL_EMAILS !== undefined) {
+    let addresses;
+    try {
+      addresses = JSON.parse(env.STUDIO_GOOGLE_ADDITIONAL_EMAILS);
+    } catch {
+      throw fail(503, "Additional Google emails must be a JSON array");
+    }
+    if (!Array.isArray(addresses) || addresses.length > 100)
+      throw fail(503, "Additional Google emails must be an array of at most 100 addresses");
+    for (const address of addresses) {
+      const normalized = email(address);
+      if (normalized.length > 128 || principals.some(
+        (principal) => principal.email === normalized || principal.username === normalized,
+      )) throw fail(503, "Additional Google accounts must have distinct emails and usernames");
+      principals.push({
+        // Stable across restarts and rollback migrations that retain only IDs,
+        // usernames and roles. This namespace cannot collide with legacy UUIDs.
+        id: `google_member_${createHash("sha256").update(normalized).digest("hex")}`,
+        username: normalized,
+        email: normalized,
+        role: "marketer",
+      });
+    }
+  }
   let emulator;
   if (
     env.FIREBASE_AUTH_EMULATOR_HOST ||
@@ -90,8 +114,9 @@ export class GoogleIdentityService extends IdentityService {
         for (const principal of configuration.principals) {
           const matches = state.users.filter(
             (user) =>
-              user.role === principal.role &&
-              user.username === principal.username,
+              principal.id ? user.id === principal.id :
+                user.role === principal.role &&
+                user.username === principal.username,
           );
           if (matches.length > 1)
             throw fail(
@@ -99,14 +124,18 @@ export class GoogleIdentityService extends IdentityService {
               "Ambiguous principal migration requires operator review",
             );
           let user = matches[0];
+          if (principal.id && (
+            (user && (user.role !== principal.role || user.username !== principal.username)) ||
+            state.users.some((existing) => existing.username === principal.username && existing.id !== principal.id)
+          )) throw fail(503, "Additional Google account conflicts with an existing principal");
           if (!user) {
             user = {
-              id: randomUUID(),
+              id: principal.id || randomUUID(),
               username: principal.username,
               role: principal.role,
             };
             state.users.push(user);
-            state.memberships.push({
+            if (!principal.id) state.memberships.push({
               userId: user.id,
               organizationId: "org_default",
               brandIds: ["brand_default", "brand_vedic"],
