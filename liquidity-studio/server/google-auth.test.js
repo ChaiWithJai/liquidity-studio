@@ -319,6 +319,7 @@ test("additional Google collaborators require explicit scoped membership and ret
   const open = (config) => new GoogleIdentityService(store, {
     configuration: config,
     verifyIdToken: async (token) => valid(token),
+    lookupJobUser: async (email) => ({ uid: "managed-collaborator", email, emailVerified: true, disabled: false, providerData: [{ providerId: "google.com" }] }),
   });
   const original = open(configuration);
   await original.ready;
@@ -345,7 +346,34 @@ test("additional Google collaborators require explicit scoped membership and ret
   await restarted.ready;
   assert.equal((await restarted.authenticate(address)).id, member.id);
   assert.equal((await restarted.organizations(member))[0].brands.length, 1);
+  // An older tagged revision can start against the shared database while this
+  // expanded-config service remains alive. Its migration clears extra metadata.
+  const older = open(configuration);
+  await older.ready;
+  const stripped = (await store.get("identity")).users.find((user) => user.id === member.id);
+  assert.equal(stripped.email, undefined);
+  assert.equal(stripped.authProvider, undefined);
+  assert.equal((await restarted.authenticate(address)).id, member.id);
+  assert.equal((await restarted.authorizeJobActor(member.id)).email, address);
+  assert.equal(await older.authenticate(address), null);
+  await restarted.authorize(member, organization.id, brand.id);
+  await assert.rejects(restarted.authorize(member, organization.id, otherBrand.id), { status: 403 });
+  for (const patch of [{ role: "founder" }, { username: "another@example.com" }]) {
+    await store.update("identity", (state) => {
+      Object.assign(state.users.find((user) => user.id === member.id), patch);
+      return state;
+    });
+    assert.equal(await restarted.authenticate(address), null);
+    await assert.rejects(restarted.authorizeJobActor(member.id), { status: 403 });
+    await store.update("identity", (state) => {
+      Object.assign(state.users.find((user) => user.id === member.id), { username: address, role: "marketer" });
+      return state;
+    });
+  }
   await restarted.setMembership(founder, { userId: member.id, organizationId: organization.id, brandIds: [] });
+  const olderAfterRevocation = open(configuration);
+  await olderAfterRevocation.ready;
+  await assert.rejects(restarted.authorize(member, organization.id, brand.id), { status: 403 });
   const revoked = open(expanded);
   await revoked.ready;
   await assert.rejects(revoked.authorize(member, organization.id, brand.id), { status: 403 });

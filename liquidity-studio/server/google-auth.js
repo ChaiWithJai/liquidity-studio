@@ -7,6 +7,13 @@ function email(value) {
     throw fail(503, "Google principal email configuration required");
   return value.trim().toLowerCase();
 }
+function matchesPrincipal(user, principal) {
+  return Boolean(user && user.role === principal.role && (
+    principal.id
+      ? user.id === principal.id && user.username === principal.username
+      : user.email === principal.email && user.authProvider === "google"
+  ));
+}
 export function googleAuthConfiguration(env = process.env) {
   const projectId = env.STUDIO_FIREBASE_PROJECT_ID;
   if (!projectId || !/^[a-z][a-z0-9-]{4,62}$/.test(projectId))
@@ -244,21 +251,20 @@ export class GoogleIdentityService extends IdentityService {
     const allowed =
       user &&
       this.configuration.principals.find(
-        (principal) =>
-          principal.email === user.email && principal.role === user.role,
+        (principal) => matchesPrincipal(user, principal),
       );
-    if (!allowed || user.authProvider !== "google")
+    if (!allowed)
       throw fail(403, "Job principal is no longer allowed");
     let managed;
     try {
-      managed = await this.lookupManagedJobUser(user.email);
+      managed = await this.lookupManagedJobUser(allowed.email);
     } catch {
       throw fail(403, "Managed Google account could not be verified");
     }
     if (
       managed.disabled ||
       !managed.emailVerified ||
-      managed.email?.toLowerCase() !== user.email ||
+      managed.email?.toLowerCase() !== allowed.email ||
       !managed.providerData?.some(
         (provider) => provider.providerId === "google.com",
       ) ||
@@ -274,7 +280,7 @@ export class GoogleIdentityService extends IdentityService {
       id: user.id,
       username: user.username,
       role: user.role,
-      email: user.email,
+      email: allowed.email,
     }};
   }
   async authenticate(token) {
@@ -310,17 +316,14 @@ export class GoogleIdentityService extends IdentityService {
     );
     if (!allowed) return null;
     const user = (await this.store.get("identity")).users.find(
-      (user) =>
-        user.email === allowed.email &&
-        user.authProvider === "google" &&
-        user.role === allowed.role,
+      (user) => matchesPrincipal(user, allowed),
     );
     return user
       ? {
           id: user.id,
           username: user.username,
           role: user.role,
-          email: user.email,
+          email: allowed.email,
         }
       : null;
   }
