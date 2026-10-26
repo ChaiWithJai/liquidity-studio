@@ -324,7 +324,7 @@ test("additional Google collaborators require explicit scoped membership and ret
   await original.ready;
   const founder = await original.authenticate(env.STUDIO_GOOGLE_FOUNDER_EMAIL);
   const before = await store.get("identity");
-  const organization = await original.createOrganization(founder, { name: "Music catalog" });
+  const organization = await original.createOrganization(founder, "Music catalog");
   const brand = await original.createBrand(founder, { organizationId: organization.id, name: "Catalog" });
   const otherBrand = await original.createBrand(founder, { organizationId: organization.id, name: "Other catalog" });
   const identity = open(expanded);
@@ -333,7 +333,7 @@ test("additional Google collaborators require explicit scoped membership and ret
   assert.equal(member.role, "marketer");
   assert.deepEqual(await identity.organizations(member), []);
   await assert.rejects(identity.authorize(member, "org_default", "brand_default"), { status: 403 });
-  await assert.rejects(identity.createOrganization(member, { name: "Not allowed" }), { status: 403 });
+  await assert.rejects(identity.createOrganization(member, "Not allowed"), { status: 403 });
   const after = await store.get("identity");
   assert.deepEqual(after.users.filter((user) => user.id !== member.id), before.users);
   assert.deepEqual(identity.publicConfiguration(), original.publicConfiguration());
